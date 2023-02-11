@@ -238,7 +238,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn run(&mut self);
 
     /// Execute the parser once and get the test result
-    fn execute(&mut self, _source_type: &SourceType) -> TestResult {
+    fn execute(&mut self, _source_type: SourceType) -> TestResult {
         self.parser_return_to_test_result(Err(String::new()))
     }
 
