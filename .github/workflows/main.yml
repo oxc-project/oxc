@@ -138,7 +138,7 @@ jobs:
           cargo doc --all --no-deps
           echo "<meta http-equiv=\"refresh\" content=\"0; url=oxc_parser\">" > target/doc/index.html
 
-      - name: Deploy Doc to gh-pages
+      - name: Deploy Rust Doc
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
