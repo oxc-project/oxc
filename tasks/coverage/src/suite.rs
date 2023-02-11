@@ -9,7 +9,9 @@ use std::{
 use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
+use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_parser::Parser;
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
 use walkdir::WalkDir;
@@ -26,9 +28,11 @@ pub enum TestResult {
     CorrectError(String),
 }
 
+#[allow(unused)]
 pub struct CoverageReport<'a, T> {
     failed_positives: Vec<&'a T>,
     failed_negatives: Vec<&'a T>,
+    parsed_positives: usize,
     passed_positives: usize,
     passed_negatives: usize,
     all_positives: usize,
@@ -117,6 +121,7 @@ pub trait Suite<T: Case> {
             tests.iter().partition(|case| case.should_fail());
 
         let all_positives = positives.len();
+        let not_parsed_positives = positives.iter().filter(|case| !case.test_parsed()).count();
 
         let mut failed_positives =
             positives.into_iter().filter(|case| !case.test_passed()).collect::<Vec<_>>();
@@ -124,6 +129,7 @@ pub trait Suite<T: Case> {
         failed_positives.sort_by_key(|case| case.path().to_string_lossy().to_string());
 
         let passed_positives = all_positives - failed_positives.len();
+        let parsed_positives = all_positives - not_parsed_positives;
 
         let all_negatives = negatives.len();
         let mut failed_negatives =
@@ -135,6 +141,7 @@ pub trait Suite<T: Case> {
         CoverageReport {
             failed_positives,
             failed_negatives,
+            parsed_positives,
             passed_positives,
             passed_negatives,
             all_positives,
@@ -152,18 +159,28 @@ pub trait Suite<T: Case> {
         writer: &mut W,
     ) -> std::io::Result<()> {
         let CoverageReport {
-            passed_positives, passed_negatives, all_positives, all_negatives, ..
+            parsed_positives,
+
+            // passed_positives,
+            // passed_negatives,
+            all_positives,
+            // all_negatives,
+            ..
         } = report;
 
-        let positive_diff = (*passed_positives as f64 / *all_positives as f64) * 100.0;
-        let negative_diff = (*passed_negatives as f64 / *all_negatives as f64) * 100.0;
+        let parsed_diff = (*parsed_positives as f64 / *all_positives as f64) * 100.0;
+        // let positive_diff = (*passed_positives as f64 / *all_positives as f64) * 100.0;
+        // let negative_diff = (*passed_negatives as f64 / *all_negatives as f64) * 100.0;
         writer.write_all(format!("{name} Summary:\n").as_bytes())?;
         let msg =
-            format!("Positive Passed: {passed_positives}/{all_positives} ({positive_diff:.2}%)\n");
+            format!("AST Parsed     : {parsed_positives}/{all_positives} ({parsed_diff:.2}%)\n");
         writer.write_all(msg.as_bytes())?;
-        let msg =
-            format!("Negative Passed: {passed_negatives}/{all_negatives} ({negative_diff:.2}%)\n");
-        writer.write_all(msg.as_bytes())?;
+        // let msg =
+        // format!("Positive Passed: {passed_positives}/{all_positives} ({positive_diff:.2}%)\n");
+        // writer.write_all(msg.as_bytes())?;
+        // let msg =
+        // format!("Negative Passed: {passed_negatives}/{all_negatives} ({negative_diff:.2}%)\n");
+        // writer.write_all(msg.as_bytes())?;
 
         if args.should_print_detail() {
             for case in &report.failed_negatives {
@@ -238,8 +255,13 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn run(&mut self);
 
     /// Execute the parser once and get the test result
-    fn execute(&mut self, _source_type: SourceType) -> TestResult {
-        self.parser_return_to_test_result(Err(String::new()))
+    fn execute(&mut self, source_type: SourceType) -> TestResult {
+        let allocator = Allocator::default();
+        let source = self.code();
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        let passed = ret.errors.is_empty() && !ret.program.node.range().is_empty();
+        let result = if passed { Ok(String::new()) } else { Err(String::new()) };
+        self.parser_return_to_test_result(result)
     }
 
     fn parser_return_to_test_result(&self, result: Result<String, String>) -> TestResult {
@@ -256,6 +278,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn print<W: Write>(&self, args: &AppArgs, writer: &mut W) -> std::io::Result<()> {
         match self.test_result() {
             TestResult::ParseError(error) => {
+                writer.write_all(format!("Expect to Parse: {:?}\n", self.path()).as_bytes())?;
                 writer.write_all(error.as_bytes())?;
             }
             TestResult::Mismatch(ast_string, expected_ast_string) => {
@@ -264,9 +287,9 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                     println!("Mismatch: {:?}", self.path());
                 }
             }
-            TestResult::IncorrectlyPassed => {
-                writer.write_all(format!("Incorrect: {:?}\n", self.path()).as_bytes())?;
-            }
+            // TestResult::IncorrectlyPassed => {
+            // writer.write_all(format!("Expect Syntax Error: {:?}\n", self.path()).as_bytes())?;
+            // }
             _ => {}
         }
         Ok(())

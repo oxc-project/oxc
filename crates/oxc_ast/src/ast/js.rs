@@ -23,7 +23,7 @@ unsafe impl<'a> Sync for Program<'a> {}
 impl<'a> Program<'a> {
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.body.is_empty()
+        self.body.is_empty() && self.directives.is_empty()
     }
 }
 

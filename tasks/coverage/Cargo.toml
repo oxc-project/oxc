@@ -11,6 +11,8 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
+oxc_allocator = { path = "../../crates/oxc_allocator" }
+oxc_parser = { path = "../../crates/oxc_parser" }
 oxc_ast = { path = "../../crates/oxc_ast" }
 serde = { workspace = true, features = ["derive"] }
 rayon = { workspace = true }
