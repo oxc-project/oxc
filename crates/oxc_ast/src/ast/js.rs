@@ -3,17 +3,8 @@ use std::fmt::Display;
 use oxc_allocator::{Box, Vec};
 use serde::Serialize;
 
-use super::{
-    AssignmentOperator, BigintLiteral, BinaryOperator, BooleanLiteral, Decorator,
-    ImportOrExportKind, JSXElement, JSXFragment, LogicalOperator, NullLiteral, NumberLiteral,
-    RegExpLiteral, StringLiteral, TSAbstractMethodDefinition, TSAbstractPropertyDefinition,
-    TSAccessibility, TSAsExpression, TSClassImplements, TSEnumDeclaration, TSExportAssignment,
-    TSImportEqualsDeclaration, TSIndexSignature, TSInstantiationExpression, TSInterfaceDeclaration,
-    TSModuleDeclaration, TSNamespaceExportDeclaration, TSNonNullExpression, TSTypeAliasDeclaration,
-    TSTypeAnnotation, TSTypeAssertion, TSTypeParameterDeclaration, TSTypeParameterInstantiation,
-    UnaryOperator, UpdateOperator,
-};
-use crate::{Atom, Node, SourceType};
+#[allow(clippy::wildcard_imports)]
+use crate::{ast::*, Atom, Node, SourceType};
 
 #[derive(Debug, PartialEq, Hash)]
 pub struct Program<'a> {
@@ -912,7 +903,6 @@ pub struct VariableDeclarator<'a> {
     pub kind: VariableDeclarationKind,
     pub id: BindingPattern<'a>,
     pub init: Option<Expression<'a>>,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub definite: bool,
 }
 
@@ -1124,7 +1114,6 @@ pub struct BindingPattern<'a> {
     pub kind: BindingPatternKind<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_annotation: Option<TSTypeAnnotation<'a>>,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub optional: bool,
 }
 
@@ -1205,7 +1194,6 @@ pub struct Function<'a> {
     pub params: FormalParameters<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<Box<'a, FunctionBody<'a>>>,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub declare: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1262,7 +1250,6 @@ pub struct FormalParameter<'a> {
     pub pattern: BindingPattern<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub readonly: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<'a, Decorator<'a>>>,
@@ -1341,11 +1328,9 @@ pub struct Class<'a> {
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub r#abstract: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<'a, Decorator<'a>>>,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub declare: bool,
 }
 
@@ -1461,9 +1446,7 @@ pub struct MethodDefinition<'a> {
     pub kind: MethodDefinitionKind,
     pub computed: bool,
     pub r#static: bool,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub r#override: bool,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub optional: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
@@ -1481,15 +1464,10 @@ pub struct PropertyDefinition<'a> {
     pub value: Option<Expression<'a>>,
     pub computed: bool,
     pub r#static: bool,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub declare: bool,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub r#override: bool,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub optional: bool,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub definite: bool,
-    #[serde(skip_serializing_if = "crate::is_false")]
     pub readonly: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_annotation: Option<TSTypeAnnotation<'a>>,

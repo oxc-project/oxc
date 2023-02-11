@@ -2,7 +2,7 @@
 
 use serde::Serialize;
 
-use crate::{Node, TSType};
+use crate::{ast::TSType, Node};
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
 #[serde(tag = "type", rename_all = "camelCase")]

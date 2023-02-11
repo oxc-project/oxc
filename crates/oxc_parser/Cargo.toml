@@ -14,5 +14,8 @@ oxc_allocator = { path = "../oxc_allocator" }
 oxc_ast = { path = "../oxc_ast" }
 oxc_diagnostics = { path = "../oxc_diagnostics" }
 
+bitflags = { workspace = true }
+rustc-hash = { workspace = true }
+
 unicode-id-start = "1.0.3"
 num-bigint = "0.4.3"

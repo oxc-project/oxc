@@ -23,7 +23,7 @@ use oxc_allocator::{Allocator, String};
 use oxc_ast::{Atom, SourceType, Span};
 use oxc_diagnostics::{Diagnostic, Diagnostics};
 use string_builder::AutoCow;
-use token::{RegExp, Token, TokenValue};
+pub use token::{RegExp, Token, TokenValue};
 
 #[derive(Debug, Clone)]
 pub struct LexerCheckpoint<'a> {
