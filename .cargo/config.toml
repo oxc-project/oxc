@@ -1,3 +1,6 @@
+[alias]
+lint = "clippy --workspace --all-targets"
+
 [build]
 rustflags = ["-C", "target-cpu=native"]
 

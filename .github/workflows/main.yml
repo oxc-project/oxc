@@ -1,0 +1,146 @@
+name: CI on main
+on:
+  push:
+    branches:
+      - main
+
+env:
+  RUST_LOG: info
+  RUST_BACKTRACE: 1
+
+jobs:
+  format:
+    name: Format Rust Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v3
+        with:
+          submodules: false
+
+      - name: Support longpaths
+        run: git config core.longpaths true
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        run: rustup show
+
+      - name: Run rustfmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  lint:
+    name: Lint Rust Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        run: rustup show
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: check
+
+      - name: Run cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --workspace --all-targets --release
+
+      - name: Run clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: lint
+          args: -- --deny warnings
+
+  check-dependencies:
+    name: Check Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v3
+        with:
+          submodules: false
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "dependencies"
+
+      - name: Install toolchain
+        run: rustup show
+
+      - name: Install udeps
+        run: cargo install cargo-udeps --locked
+
+      - name: Run udeps
+        run: cargo udeps
+
+
+  test:
+    strategy:
+      matrix:
+        include:
+          - os: windows-2022
+          - os: ubuntu-20.04
+          - os: macos-11
+
+    name: Test
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        run: rustup show
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: test
+
+      - name: Compile for tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --no-run --workspace
+
+      - name: Run tests on ${{ matrix.os }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --workspace
+
+  documentation:
+    name: Deploy Rust Doc
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        run: rustup show
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build Doc
+        run: |
+          # https://dev.to/deciduously/prepare-your-rust-api-docs-for-github-pages-2n5i
+          cargo doc --all --no-deps
+          echo "<meta http-equiv=\"refresh\" content=\"0; url=oxc_parser\">" > target/doc/index.html
+
+      - name: Deploy Doc to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
+          publish_branch: docs
