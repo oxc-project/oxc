@@ -1,0 +1,18 @@
+[build]
+rustflags = ["-C", "target-cpu=native"]
+
+[target.'cfg(all())']
+rustflags = [
+    # CLIPPY LINT SETTINGS
+    # This is a workaround to configure lints for the entire workspace, pending the ability to configure this via TOML.
+    # See: `https://github.com/rust-lang/cargo/issues/5034`
+    #      `https://github.com/EmbarkStudios/rust-ecosystem/issues/22#issuecomment-947011395`
+    "-Wclippy::all",
+
+    # I want to write the best Rust code so both pedantic and nursery is enabled.
+    # We should only disable rules globally if they are: false positives, chaotic, or does not make sense.
+    "-Wclippy::pedantic",
+    "-Wclippy::nursery",
+
+    "-Wclippy::dbg_macro",
+]
