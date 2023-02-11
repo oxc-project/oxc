@@ -1,0 +1,14 @@
+version = "Two"
+
+# Make Rust more readable given most people have wide screens nowadays.
+# This is also the setting used by [rustc](https://github.com/rust-lang/rust/blob/master/rustfmt.toml)
+use_small_heuristics = "Max"
+
+# Supported by nightly Rust
+unstable_features = true
+
+# Provide a cleaner import sort order
+group_imports = "StdExternalCrate"
+
+# Provide a cleaner impl order
+reorder_impl_items = true
