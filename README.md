@@ -4,7 +4,7 @@
 
 The aim of this project is to:
 
-* Create a modestly JavaScript Compiler written in Rust.
+* Create a blazingly fast JavaScript Compiler written in Rust.
 * Provide good documentation on learning Rust and compiler techniques.
 
 And mostly importantly, an invitation for you to come and learn Rust with me.
