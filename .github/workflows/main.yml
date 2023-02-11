@@ -19,6 +19,9 @@ permissions:
 env:
   RUST_LOG: info
   RUST_BACKTRACE: 1
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+  CARGO_UNSTABLE_SPARSE_REGISTRY: true
 
 jobs:
   format:
@@ -34,10 +37,7 @@ jobs:
         run: rustup show
 
       - name: Run rustfmt
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
   lint:
     name: Lint Rust Files
@@ -55,16 +55,10 @@ jobs:
           shared-key: check
 
       - name: Run cargo check
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          command: check
-          args: --workspace --all-targets --all-features --release
+        run: cargo check --workspace --all-targets --all-features --release
 
       - name: Run clippy
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          command: lint
-          args: -- --deny warnings
+        run: cargo lint -- --deny warnings
 
   check-dependencies:
     name: Check Dependencies
@@ -111,17 +105,8 @@ jobs:
         with:
           shared-key: test
 
-      - name: Compile for tests
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          command: test
-          args: --no-run --workspace
-
       - name: Run tests on ${{ matrix.os }}
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          command: test
-          args: --workspace
+        run: cargo test --workspace
 
   documentation:
     if: github.ref == 'refs/heads/main'
