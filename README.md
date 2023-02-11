@@ -19,6 +19,8 @@ We now have a fully working parser as a baseline, it is not polished yet,
 so it would be much appreciated if I can invite you and review any of the code and point out for improvements.
 I welcome all nitpickings and bikesheddings.
 
+I have crated some [discussions](https://github.com/Boshen/oxc/discussions).
+
 ## Milestone
 
 The current objective is to write a JavaScript parser which can parse most of the language conformance tests from
