@@ -1,1 +1,3 @@
-pub struct Parser;
+mod lexer;
+
+pub use lexer::Lexer;

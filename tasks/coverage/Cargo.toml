@@ -11,6 +11,7 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
+oxc_ast = { path = "../../crates/oxc_ast" }
 serde = { workspace = true, features = ["derive"] }
 rayon = { workspace = true }
 
