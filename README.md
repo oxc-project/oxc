@@ -2,7 +2,7 @@
 
 ## Why this project?
 
-The aim of this project is to:
+The goal of this project is to:
 
 * Create a blazingly fast JavaScript Compiler written in Rust.
 * Provide good documentation on learning Rust and compiler techniques.
@@ -13,9 +13,15 @@ We will learn a lot from each other!
 You can watch this project and also [follow me on twitter](https://twitter.com/boshen_c) if you don't have the time to
 Rust but would like to learn things.
 
+## Call for action
+
+We now have a fully working parser as a baseline, it is not polished yet,
+so it would be much appreciated if I can invite you and review any of the code and point out for improvements.
+I welcome all nitpickings and bikesheddings.
+
 ## Milestone
 
-The current goal is to write a JavaScript parser which can parse most of the language conformance tests from
+The current objective is to write a JavaScript parser which can parse most of the language conformance tests from
 Test262, Babel and TypeScript.
 
 ## Learning Resources
