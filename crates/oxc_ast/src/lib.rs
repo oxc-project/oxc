@@ -11,13 +11,13 @@ pub mod ast_builder;
 pub mod context;
 pub mod node;
 pub mod source_type;
+pub mod syntax_directed_operations;
 
 pub use num_bigint::BigUint;
 
-pub use self::ast::*;
-pub use self::ast_builder::*;
-pub use self::node::*;
-pub use self::source_type::*;
+pub use crate::ast_builder::*;
+pub use crate::node::*;
+pub use crate::source_type::*;
 
 pub type Atom = compact_str::CompactString;
 
@@ -47,6 +47,9 @@ pub type Atom = compact_str::CompactString;
 #[test]
 fn no_bloat_enum_sizes() {
     use std::mem::size_of;
+
+    #[allow(clippy::wildcard_imports)]
+    use crate::ast::*;
     assert_eq!(size_of::<Statement>(), 16);
     assert_eq!(size_of::<Expression>(), 16);
     assert_eq!(size_of::<Declaration>(), 16);

@@ -3,7 +3,8 @@
 use oxc_allocator::{Box, Vec};
 use serde::Serialize;
 
-use crate::{Atom, Expression, Node, StringLiteral, TSTypeParameterInstantiation};
+#[allow(clippy::wildcard_imports)]
+use crate::{ast::*, Atom, Node};
 
 // 1.2 JSX Elements
 

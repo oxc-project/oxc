@@ -1,0 +1,412 @@
+use oxc_allocator::{Box, Vec};
+use oxc_ast::{ast::*, context::Context, Node};
+use oxc_diagnostics::{Diagnostic, Result};
+
+use super::function::FunctionKind;
+use super::list::{AssertEntries, ExportNamedSpecifiers};
+use crate::lexer::Kind;
+use crate::list::SeparatedList;
+use crate::Parser;
+
+impl<'a> Parser<'a> {
+    /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
+    /// `ImportCall` : import ( `AssignmentExpression` )
+    pub fn parse_import_expression(&mut self, node: Node) -> Result<Expression<'a>> {
+        self.bump_any(); // advance '('
+
+        let has_in = self.ctx.has_in();
+        self.ctx = self.ctx.and_in(true);
+
+        let expression = self.parse_assignment_expression_base()?;
+        let mut arguments = self.ast.new_vec();
+        if self.eat(Kind::Comma) && !self.at(Kind::RParen) {
+            arguments.push(self.parse_assignment_expression_base()?);
+        }
+
+        self.ctx = self.ctx.and_in(has_in);
+        self.ctx = self.ctx.and_in(has_in);
+        self.bump(Kind::Comma);
+        self.expect(Kind::RParen)?;
+        Ok(self.ast.import_expression(self.end_node(node), expression, arguments))
+    }
+
+    /// Section 16.2.2 Import Declaration
+    pub fn parse_import_declaration(&mut self) -> Result<Statement<'a>> {
+        let node = self.start_node();
+
+        self.bump_any(); // advance `import`
+
+        if self.ts_enabled()
+            && ((self.cur_kind().is_binding_identifier() && self.peek_at(Kind::Eq))
+                || (self.at(Kind::Type)
+                    && self.peek_kind().is_binding_identifier()
+                    && self.nth_at(2, Kind::Eq)))
+        {
+            let decl = self.parse_ts_import_equals_declaration(node, false)?;
+            return Ok(Statement::Declaration(decl));
+        }
+
+        // `import type ...`
+        let import_kind = self.parse_import_or_export_kind();
+
+        let specifiers = if self.at(Kind::Str) {
+            // import "source"
+            self.ast.new_vec()
+        } else {
+            self.parse_import_declaration_specifiers()?
+        };
+
+        let source = self.parse_literal_string()?;
+        let assertions = self.parse_import_attributes()?;
+        self.asi()?;
+
+        let node = self.end_node(node);
+        let kind = ModuleDeclarationKind::ImportDeclaration(self.ast.import_declaration(
+            specifiers,
+            source,
+            assertions,
+            import_kind,
+        ));
+
+        Ok(self.ast.module_declaration(node, kind))
+    }
+
+    // Full Syntax:
+    // `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax`
+    fn parse_import_declaration_specifiers(
+        &mut self,
+    ) -> Result<Vec<'a, ImportDeclarationSpecifier>> {
+        let mut specifiers = self.ast.new_vec();
+        // import defaultExport from "module-name";
+        if self.cur_kind().is_binding_identifier() {
+            specifiers.push(self.parse_import_default_specifier()?);
+            if self.eat(Kind::Comma) {
+                match self.cur_kind() {
+                    // import defaultExport, * as name from "module-name";
+                    Kind::Star => specifiers.push(self.parse_import_namespace_specifier()?),
+                    // import defaultExport, { export1 [ , [...] ] } from "module-name";
+                    Kind::LCurly => {
+                        let mut import_specifiers = self.parse_import_specifiers()?;
+                        specifiers.append(&mut import_specifiers);
+                    }
+                    _ => return self.unexpected(),
+                }
+            }
+        // import * as name from "module-name";
+        } else if self.at(Kind::Star) {
+            specifiers.push(self.parse_import_namespace_specifier()?);
+        // import { export1 , export2 as alias2 , [...] } from "module-name";
+        } else if self.at(Kind::LCurly) {
+            let mut import_specifiers = self.parse_import_specifiers()?;
+            specifiers.append(&mut import_specifiers);
+        };
+
+        self.expect(Kind::From)?;
+        Ok(specifiers)
+    }
+
+    // import default from "module-name"
+    fn parse_import_default_specifier(&mut self) -> Result<ImportDeclarationSpecifier> {
+        let node = self.start_node();
+        let local = self.parse_binding_identifier()?;
+        Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(ImportDefaultSpecifier {
+            node: self.end_node(node),
+            local,
+        }))
+    }
+
+    // import * as name from "module-name"
+    fn parse_import_namespace_specifier(&mut self) -> Result<ImportDeclarationSpecifier> {
+        let node = self.start_node();
+        self.bump_any(); // advance `*`
+        self.expect(Kind::As)?;
+        let local = self.parse_binding_identifier()?;
+        Ok(ImportDeclarationSpecifier::ImportNamespaceSpecifier(ImportNamespaceSpecifier {
+            node: self.end_node(node),
+            local,
+        }))
+    }
+
+    // import { export1 , export2 as alias2 , [...] } from "module-name";
+    fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier>> {
+        self.bump_any(); // advance `{`
+        let mut first = true;
+        let mut specifiers = self.ast.new_vec();
+        // TODO: move to list.rs
+        while !self.at(Kind::RCurly) && !self.at(Kind::Eof) {
+            if first {
+                first = false;
+            } else {
+                self.expect(Kind::Comma)?;
+                if self.at(Kind::RCurly) {
+                    break;
+                }
+            }
+            let import_specifier = self.parse_import_specifier()?;
+            let specifier = ImportDeclarationSpecifier::ImportSpecifier(import_specifier);
+            specifiers.push(specifier);
+        }
+        self.expect(Kind::RCurly)?;
+        Ok(specifiers)
+    }
+
+    // import assertion
+    // https://tc39.es/proposal-import-assertions
+    fn parse_import_attributes(&mut self) -> Result<Option<Vec<'a, ImportAttribute>>> {
+        if !self.at(Kind::Assert) || self.cur_token().is_on_new_line {
+            return Ok(None);
+        }
+        self.bump_any();
+
+        let ctx = self.ctx;
+        self.ctx = Context::default();
+        let entries = AssertEntries::parse(self)?.elements;
+        self.ctx = ctx;
+
+        Ok(Some(entries))
+    }
+
+    pub fn parse_ts_export_assignment_declaration(
+        &mut self,
+    ) -> Result<Box<'a, TSExportAssignment<'a>>> {
+        let node = self.start_node();
+        self.expect(Kind::Eq)?;
+
+        let expression = self.parse_assignment_expression_base()?;
+        self.asi()?;
+
+        Ok(self.ast.alloc(TSExportAssignment { node: self.end_node(node), expression }))
+    }
+
+    pub fn parse_ts_export_namespace(&mut self) -> Result<Box<'a, TSNamespaceExportDeclaration>> {
+        let node = self.start_node();
+        self.expect(Kind::As)?;
+        self.expect(Kind::Namespace)?;
+
+        let id = self.parse_identifier_name()?;
+        self.asi()?;
+
+        Ok(self.ast.alloc(TSNamespaceExportDeclaration { node: self.end_node(node), id }))
+    }
+
+    /// Exports
+    /// `https://tc39.es/ecma262/#sec-exports`
+    pub fn parse_export_declaration(&mut self) -> Result<Statement<'a>> {
+        let node = self.start_node();
+        self.bump_any(); // advance `export`
+
+        let kind = match self.cur_kind() {
+            Kind::Eq if self.ts_enabled() => self
+                .parse_ts_export_assignment_declaration()
+                .map(ModuleDeclarationKind::TSExportAssignment),
+            Kind::As if self.peek_at(Kind::Namespace) && self.ts_enabled() => self
+                .parse_ts_export_namespace()
+                .map(ModuleDeclarationKind::TSNamespaceExportDeclaration),
+            Kind::Default => self
+                .parse_export_default_declaration()
+                .map(ModuleDeclarationKind::ExportDefaultDeclaration),
+            Kind::Star => {
+                self.parse_export_all_declaration().map(ModuleDeclarationKind::ExportAllDeclaration)
+            }
+            Kind::LCurly => self
+                .parse_export_named_specifiers()
+                .map(ModuleDeclarationKind::ExportNamedDeclaration),
+            Kind::Type if self.peek_at(Kind::LCurly) && self.ts_enabled() => self
+                .parse_export_named_specifiers()
+                .map(ModuleDeclarationKind::ExportNamedDeclaration),
+            _ => self
+                .parse_export_named_declaration()
+                .map(ModuleDeclarationKind::ExportNamedDeclaration),
+        }?;
+        Ok(self.ast.module_declaration(self.end_node(node), kind))
+    }
+
+    // export NamedExports ;
+    // NamedExports :
+    //   { }
+    //   { ExportsList }
+    //   { ExportsList , }
+    // ExportsList :
+    //   ExportSpecifier
+    //   ExportsList , ExportSpecifier
+    // ExportSpecifier :
+    //   ModuleExportName
+    //   ModuleExportName as ModuleExportName
+    fn parse_export_named_specifiers(&mut self) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
+        let export_kind = self.parse_import_or_export_kind();
+
+        let ctx = self.ctx;
+        self.ctx = Context::default();
+        let specifiers = ExportNamedSpecifiers::parse(self)?.elements;
+        self.ctx = ctx;
+
+        let source = if self.eat(Kind::From) && self.cur_kind().is_literal() {
+            let source = self.parse_literal_string()?;
+            Some(source)
+        } else {
+            None
+        };
+
+        // ExportDeclaration : export NamedExports ;
+        // * It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
+        if source.is_none() {
+            for specifier in &specifiers {
+                if let ModuleExportName::StringLiteral(literal) = &specifier.local {
+                    self.error(Diagnostic::ExportNamedString(
+                        literal.value.clone(),
+                        specifier.local.name().clone(),
+                        literal.node.range(),
+                    ));
+                }
+            }
+        }
+
+        self.asi()?;
+        Ok(self.ast.export_named_declaration(None, specifiers, source, export_kind))
+    }
+
+    // export Declaration
+    fn parse_export_named_declaration(&mut self) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
+        let declaration = self.parse_declaration_clause()?;
+        Ok(self.ast.export_named_declaration(Some(declaration), self.ast.new_vec(), None, None))
+    }
+
+    // export default HoistableDeclaration[~Yield, +Await, +Default]
+    // export default ClassDeclaration[~Yield, +Await, +Default]
+    // export default AssignmentExpression[+In, ~Yield, +Await] ;
+    fn parse_export_default_declaration(
+        &mut self,
+    ) -> Result<Box<'a, ExportDefaultDeclaration<'a>>> {
+        let exported = self.parse_keyword_identifier(Kind::Default);
+        let declaration = match self.cur_kind() {
+            Kind::Class => self
+                .parse_class_declaration(/* declare */ false)
+                .map(ExportDefaultDeclarationKind::ClassDeclaration)?,
+            _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.ts_enabled() => {
+                self.parse_class_declaration(/* declare */ false)
+                    .map(ExportDefaultDeclarationKind::ClassDeclaration)?
+            }
+            _ if self.at(Kind::Interface)
+                && !self.peek_token().is_on_new_line
+                && self.ts_enabled() =>
+            {
+                self.parse_ts_interface_declaration(false, self.start_node()).map(
+                    |decl| match decl {
+                        Declaration::TSInterfaceDeclaration(decl) => {
+                            ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
+                        }
+                        _ => unreachable!(),
+                    },
+                )?
+            }
+            _ if self.at(Kind::Enum) && self.ts_enabled() => {
+                self.parse_ts_enum_declaration(false, self.start_node()).map(|decl| match decl {
+                    Declaration::TSEnumDeclaration(decl) => {
+                        ExportDefaultDeclarationKind::TSEnumDeclaration(decl)
+                    }
+                    _ => unreachable!(),
+                })?
+            }
+            _ if self.at_function_with_async() => self
+                .parse_function_impl(FunctionKind::DefaultExport)
+                .map(ExportDefaultDeclarationKind::FunctionDeclaration)?,
+            _ => {
+                let decl = self
+                    .parse_assignment_expression_base()
+                    .map(ExportDefaultDeclarationKind::Expression)?;
+                self.asi()?;
+                decl
+            }
+        };
+        let exported = ModuleExportName::Identifier(exported);
+        Ok(self.ast.export_default_declaration(declaration, exported))
+    }
+
+    // export ExportFromClause FromClause ;
+    // ExportFromClause :
+    //   *
+    //   * as ModuleExportName
+    //   NamedExports
+    fn parse_export_all_declaration(&mut self) -> Result<Box<'a, ExportAllDeclaration<'a>>> {
+        self.bump_any(); // bump `star`
+        let exported = self.eat(Kind::As).then(|| self.parse_module_export_name()).transpose()?;
+        self.expect(Kind::From)?;
+        let source = self.parse_literal_string()?;
+        let assertions = self.parse_import_attributes()?;
+        self.asi()?;
+        Ok(self.ast.export_all_declaration(exported, source, assertions))
+    }
+
+    // ImportSpecifier :
+    //   ImportedBinding
+    //   ModuleExportName as ImportedBinding
+    fn parse_import_specifier(&mut self) -> Result<ImportSpecifier> {
+        let specifier_node = self.start_node();
+        let peek_kind = self.peek_kind();
+        let mut import_kind = ImportOrExportKind::Value;
+        if self.ts_enabled() && self.at(Kind::Type) {
+            if self.peek_at(Kind::As) {
+                if self.nth_at(2, Kind::As) {
+                    if self.nth_kind(3).is_identifier_name() {
+                        import_kind = ImportOrExportKind::Type;
+                    }
+                } else if !self.nth_kind(2).is_identifier_name() {
+                    import_kind = ImportOrExportKind::Type;
+                }
+            } else if peek_kind.is_identifier_name() {
+                import_kind = ImportOrExportKind::Type;
+            }
+        }
+
+        if import_kind == ImportOrExportKind::Type {
+            self.bump_any();
+        }
+        let (imported, local) = if self.peek_at(Kind::As) {
+            let imported = self.parse_module_export_name()?;
+            self.bump(Kind::As);
+            let local = self.parse_binding_identifier()?;
+            (imported, local)
+        } else {
+            let local = self.parse_binding_identifier()?;
+            let imported = IdentifierName { node: local.node, name: local.name.clone() };
+            (ModuleExportName::Identifier(imported), local)
+        };
+        Ok(ImportSpecifier { node: self.end_node(specifier_node), imported, local })
+    }
+
+    // ModuleExportName :
+    //   IdentifierName
+    //   StringLiteral
+    pub fn parse_module_export_name(&mut self) -> Result<ModuleExportName> {
+        match self.cur_kind() {
+            Kind::Str => {
+                let literal = self.parse_literal_string()?;
+                // ModuleExportName : StringLiteral
+                // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
+                if !literal.is_string_well_formed_unicode() {
+                    self.error(Diagnostic::ExportLoneSurrogate(literal.node.range()));
+                };
+                Ok(ModuleExportName::StringLiteral(literal))
+            }
+            _ => Ok(ModuleExportName::Identifier(self.parse_identifier_name()?)),
+        }
+    }
+
+    fn parse_import_or_export_kind(&mut self) -> Option<ImportOrExportKind> {
+        if !self.ts_enabled() {
+            return None;
+        }
+
+        // import type { bar } from 'foo';
+        // import type * as React from 'react';
+        // import type ident from 'foo';
+        // export type { bar } from 'foo';
+        if matches!(self.peek_kind(), Kind::LCurly | Kind::Star | Kind::Ident)
+            && self.eat(Kind::Type)
+        {
+            return Some(ImportOrExportKind::Type);
+        }
+
+        Some(ImportOrExportKind::Value)
+    }
+}

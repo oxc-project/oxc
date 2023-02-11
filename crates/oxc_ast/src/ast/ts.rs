@@ -3,12 +3,8 @@
 use oxc_allocator::{Box, Vec};
 use serde::Serialize;
 
-use crate::{
-    Atom, BigintLiteral, BindingIdentifier, BooleanLiteral, Expression, FormalParameters,
-    IdentifierName, JSDocNullableType, JSDocUnknownType, MethodDefinition, Node, NullLiteral,
-    NumberLiteral, PropertyDefinition, PropertyKey, RegExpLiteral, Statement, StringLiteral,
-    TemplateElement, TemplateLiteral, UnaryExpression,
-};
+#[allow(clippy::wildcard_imports)]
+use crate::{ast::*, Atom, Node};
 
 #[allow(clippy::trivially_copy_pass_by_ref)]
 #[must_use]

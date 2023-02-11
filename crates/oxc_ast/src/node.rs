@@ -5,7 +5,8 @@ use std::{
 
 use serde::Serialize;
 
-use crate::{context::Context, Argument, AssignmentTarget, AssignmentTargetPattern, BindingPattern, BindingPatternKind, ClassElement, Declaration, ExportDefaultDeclarationKind, Expression, ForStatementInit, ImportAttributeKey, JSXElementName, MemberExpression, ModuleExportName, ObjectPatternProperty, ObjectProperty, PropertyKey, PropertyValue, SimpleAssignmentTarget, Statement, TSModuleDeclarationName, TSSignature, TSType};
+#[allow(clippy::wildcard_imports)]
+use crate::{ast::*, context::Context};
 
 pub type Span = Range<usize>;
 
