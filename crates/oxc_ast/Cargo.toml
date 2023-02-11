@@ -10,5 +10,14 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-thiserror = { workspace = true }
+oxc_allocator = { path = "../oxc_allocator" }
+
+bitflags = { workspace = true }
 compact_str = { workspace = true, features = ["serde"] }
+thiserror = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true, optional = true }
+
+num-bigint = "0.4.3"
+ryu-js = "0.2.2"
+ordered-float = { version = "3.4.0", features = ["serde"] }

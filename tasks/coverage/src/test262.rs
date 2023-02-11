@@ -172,18 +172,18 @@ impl Case for Test262Case {
 
         self.result = if flags.contains(&TestFlag::OnlyStrict) {
             // always_strict = true;
-            self.execute(&source_type)
+            self.execute(source_type)
         } else if flags.contains(&TestFlag::Module) {
             source_type.set_module();
-            self.execute(&source_type)
+            self.execute(source_type)
         } else if flags.contains(&TestFlag::NoStrict) || flags.contains(&TestFlag::Raw) {
-            self.execute(&source_type)
+            self.execute(source_type)
         } else {
             // always_strict = true;
-            let res = self.execute(&source_type);
+            let res = self.execute(source_type);
             if matches!(res, TestResult::Passed) {
                 // always_strict = false;
-                self.execute(&source_type)
+                self.execute(source_type)
             } else {
                 res
             }
