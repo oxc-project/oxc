@@ -1,5 +1,6 @@
 [alias]
 lint = "clippy --workspace --all-targets"
+coverage = "run -p coverage --release --"
 
 [build]
 rustflags = ["-C", "target-cpu=native"]
@@ -18,4 +19,6 @@ rustflags = [
     "-Wclippy::nursery",
 
     "-Wclippy::dbg_macro",
+
+    "-Aclippy::module_name_repetitions"
 ]

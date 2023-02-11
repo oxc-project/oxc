@@ -1,0 +1,6 @@
+[submodule "tasks/coverage/test262"]
+	path = tasks/coverage/test262
+	url = git@github.com:tc39/test262.git
+	shallow = true
+	branch = main
+	ignore = dirty
