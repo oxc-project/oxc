@@ -4,6 +4,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write # For documentation deployment
+
 env:
   RUST_LOG: info
   RUST_BACKTRACE: 1
