@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = [
+	"crates/*",
+]
+
+[workspace.package]
+authors = ["Boshen <boshenc@gmail.com>"]
+description = "The JavaScript Oxidation Compiler"
+edition = "2021"
+homepage = "https://github.com/Boshen/oxc"
+keywords = ["JavaScript", "TypeScript", "compiler", "parser"]
+license = "MIT"
+repository = "https://github.com/Boshen/oxc"
+version = "0.0.0"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+strip = true
+
+# DO NOT SET PANIC TO ABORT
+# we are using catch_unwind for panic recovery
+panic = "unwind"
