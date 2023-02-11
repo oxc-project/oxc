@@ -1,6 +1,6 @@
 [alias]
 lint = "clippy --workspace --all-targets"
-coverage = "run -p coverage --release --"
+coverage = "run -p oxc_coverage --release --"
 
 [build]
 rustflags = ["-C", "target-cpu=native"]

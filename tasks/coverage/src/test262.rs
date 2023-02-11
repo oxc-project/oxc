@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use oxc_ast::SourceType;
 use serde::Deserialize;
 
 use crate::project_root;
@@ -166,23 +167,23 @@ impl Case for Test262Case {
     fn run(&mut self) {
         let flags = &self.meta.flags;
 
-        // let mut always_strict = false;
-        // let mut module = false;
+        let mut source_type = SourceType::default();
+        source_type.set_script();
 
         self.result = if flags.contains(&TestFlag::OnlyStrict) {
             // always_strict = true;
-            self.execute()
+            self.execute(&source_type)
         } else if flags.contains(&TestFlag::Module) {
-            // module = true;
-            self.execute()
+            source_type.set_module();
+            self.execute(&source_type)
         } else if flags.contains(&TestFlag::NoStrict) || flags.contains(&TestFlag::Raw) {
-            self.execute()
+            self.execute(&source_type)
         } else {
             // always_strict = true;
-            let res = self.execute();
+            let res = self.execute(&source_type);
             if matches!(res, TestResult::Passed) {
                 // always_strict = false;
-                self.execute()
+                self.execute(&source_type)
             } else {
                 res
             }

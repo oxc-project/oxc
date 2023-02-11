@@ -99,6 +99,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     }
 
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)] // the destructor for this type cannot be evaluated in constant functions
     pub fn into_inner(self) -> collections::Vec<'alloc, T> {
         self.0
     }

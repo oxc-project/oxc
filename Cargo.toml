@@ -17,9 +17,12 @@ version = "0.0.0"
 
 [workspace.dependencies]
 bumpalo = "3.12.0"
+compact_str = "0.6.1"
+miette = "5.5.0"
 rayon = "1.6.1"
 serde = "1.0.152"
 serde_json = "1.0.93"
+thiserror = "1.0.38"
 
 [profile.release]
 lto = "fat"
