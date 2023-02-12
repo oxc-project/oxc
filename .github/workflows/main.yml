@@ -20,8 +20,6 @@ env:
   RUST_LOG: info
   RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0
-  CARGO_TERM_COLOR: always
-  CARGO_UNSTABLE_SPARSE_REGISTRY: true
 
 jobs:
   format:
