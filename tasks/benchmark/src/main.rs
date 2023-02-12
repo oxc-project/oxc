@@ -8,6 +8,10 @@ use oxc_benchmark::get_code;
 use oxc_parser::Parser;
 use pico_args::Arguments;
 
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
 /// # Panics
 pub fn main() {
     let mut args = Arguments::from_env();
