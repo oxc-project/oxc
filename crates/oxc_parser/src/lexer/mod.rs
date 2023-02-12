@@ -15,7 +15,7 @@ use std::{collections::VecDeque, str::Chars};
 
 use constants::{
     is_identifier_part, is_identifier_start, is_irregular_line_terminator, is_irregular_whitespace,
-    is_line_terminator, is_regular_line_terminator, is_regular_whitespace, EOF, SINGLE_CHAR_TOKENS,
+    is_line_terminator, EOF, JUMP_TABLE,
 };
 pub use kind::Kind;
 use number::{parse_big_int, parse_float, parse_int};
@@ -327,62 +327,63 @@ impl<'a> Lexer<'a> {
         let mut builder = AutoCow::new(self);
 
         while let Some(c) = self.current.chars.next() {
-            // fast path for single character tokens
-            // '{'  '}'  '('  ')'  '['  ']'  ';' ',' ':' '~'
+            let mut kind = Kind::Undetermined;
+
             let size = c as usize;
             if size <= 127 {
-                let kind = SINGLE_CHAR_TOKENS[size];
-                if kind != Kind::Undetermined {
-                    return kind;
-                }
+                kind = JUMP_TABLE[size];
             }
 
             // NOTE: matching order is significant here, by real world occurrences
             // see https://blog.mozilla.org/nnethercote/2011/07/01/faster-javascript-parsing/
             // > the rough order of frequency for different token kinds is as follows:
             // identifiers/keywords, ‘.’, ‘=’, strings, decimal numbers, ‘:’, ‘+’, hex/octal numbers, and then everything else
-            let kind = match c {
-                // fast path for white space
-                c if is_regular_whitespace(c) => Kind::WhiteSpace,
-                // fast path for identifiers
-                c if c.is_ascii_alphabetic() => {
+            kind = match kind {
+                Kind::WhiteSpace
+                | Kind::Comma
+                | Kind::LBrack
+                | Kind::LCurly
+                | Kind::LParen
+                | Kind::RAngle
+                | Kind::RBrack
+                | Kind::RCurly
+                | Kind::RParen
+                | Kind::Semicolon
+                | Kind::Tilde => kind,
+                Kind::Ident => {
                     builder.push_matching(c);
                     self.identifier_name_or_keyword(builder)
                 }
-                '.' => {
+                Kind::Dot => {
                     let kind = self.read_dot(&mut builder);
                     if kind.is_number() {
                         self.set_numeric_value(kind, builder.finish(self));
                     }
                     kind
                 }
-                '=' => self.read_equal(),
-                '"' | '\'' => {
+                Kind::Eq => self.read_equal(),
+                Kind::Str => {
                     if self.context == LexerContext::JsxAttributeValue {
                         self.read_jsx_string_literal(c)
                     } else {
                         self.read_string_literal(c)
                     }
                 }
-                '1'..='9' => {
+                Kind::Decimal => {
                     let kind = self.decimal_literal_after_first_digit(&mut builder);
                     self.set_numeric_value(kind, builder.finish(self));
                     kind
                 }
-                '+' => self.read_plus(),
-                '-' => {
-                    self.read_minus().map_or_else(|| self.skip_single_line_comment(), |kind| kind)
-                }
-                '0' => {
+                // placeholder for `0`
+                Kind::Octal => {
                     let kind = self.read_zero(&mut builder);
                     self.set_numeric_value(kind, builder.finish(self));
                     kind
                 }
-                c if is_regular_line_terminator(c) => {
-                    self.current.token.is_on_new_line = true;
-                    Kind::NewLine
-                }
-                '/' => {
+                Kind::Colon => kind,
+                Kind::Plus => self.read_plus(),
+                Kind::Minus => self.read_minus().unwrap_or_else(|| self.skip_single_line_comment()),
+                Kind::Slash => {
                     if self.next_eq('/') {
                         self.skip_single_line_comment()
                     } else if self.next_eq('*') {
@@ -392,18 +393,24 @@ impl<'a> Lexer<'a> {
                         self.read_slash()
                     }
                 }
-                '`' => self.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate),
-                '!' => self.read_exclamation(),
-                '%' => self.read_percent(),
-                '*' => self.read_star(),
-                '&' => self.read_ampersand(),
-                '|' => self.read_pipe(),
-                '?' => self.read_question(),
-                '<' => self
-                    .read_left_angle()
-                    .map_or_else(|| self.skip_single_line_comment(), |kind| kind),
-                '^' => self.read_caret(),
-                '#' => {
+                Kind::NoSubstitutionTemplate => {
+                    self.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate)
+                }
+                Kind::NewLine => {
+                    self.current.token.is_on_new_line = true;
+                    Kind::NewLine
+                }
+                Kind::Bang => self.read_exclamation(),
+                Kind::Percent => self.read_percent(),
+                Kind::Star => self.read_star(),
+                Kind::Amp => self.read_ampersand(),
+                Kind::Pipe => self.read_pipe(),
+                Kind::Question => self.read_question(),
+                Kind::LAngle => {
+                    self.read_left_angle().unwrap_or_else(|| self.skip_single_line_comment())
+                }
+                Kind::Caret => self.read_caret(),
+                Kind::PrivateIdentifier => {
                     // https://tc39.es/proposal-hashbang/out.html
                     // HashbangComment ::
                     //     `#!` SingleLineCommentChars?
@@ -414,25 +421,30 @@ impl<'a> Lexer<'a> {
                         self.private_identifier(builder)
                     }
                 }
-                '@' => Kind::At,
-                '\\' => {
+                // placeholder for '\'
+                Kind::Unknown => {
                     builder.force_allocation_without_current_ascii_char(self);
                     self.identifier_unicode_escape_sequence(&mut builder, true);
                     self.identifier_name_or_keyword(builder)
                 }
-                c if is_identifier_start(c) => {
-                    builder.push_matching(c);
-                    self.identifier_name_or_keyword(builder)
-                }
-                c if is_irregular_whitespace(c) => Kind::WhiteSpace,
-                c if is_irregular_line_terminator(c) => {
-                    self.current.token.is_on_new_line = true;
-                    Kind::NewLine
-                }
-                _ => {
-                    self.error(Diagnostic::InvalidCharacter(c, self.unterminated_range()));
-                    Kind::Undetermined
-                }
+                Kind::At | Kind::Eof => kind,
+                Kind::Undetermined => match c {
+                    c if is_irregular_whitespace(c) => Kind::WhiteSpace,
+                    c if is_irregular_line_terminator(c) => {
+                        self.current.token.is_on_new_line = true;
+                        Kind::NewLine
+                    }
+                    c if unicode_id_start::is_id_start(c) => {
+                        builder.push_matching(c);
+                        self.identifier_name_or_keyword(builder)
+                    }
+                    _ => {
+                        self.error(Diagnostic::InvalidCharacter(c, self.unterminated_range()));
+                        Kind::Undetermined
+                    }
+                },
+                // All tokens should be handled at this point
+                _ => unreachable!(),
             };
 
             if !kind.is_trivia() {
