@@ -1,8 +1,7 @@
 name: Benchmark
 
 on:
-  pull_request: {}
-  push:
+  pull_request:
     paths:
       - 'crates/**'
       - 'Cargo.toml'

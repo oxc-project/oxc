@@ -1,4 +1,4 @@
-name: Main
+name: Check and Test
 
 on:
   pull_request: {}
