@@ -23,8 +23,29 @@ I have crated some [discussions](https://github.com/Boshen/oxc/discussions).
 
 ## Milestone
 
-The current objective is to write a JavaScript parser which can parse most of the language conformance tests from
-Test262, Babel and TypeScript.
+The current objective is to improve the parser for real usage. Areas include:
+
+* API
+* Diagnostics reporting
+* Performance
+* Pass more conformance tests
+
+## Conformance
+
+The `cargo coverage` currently reports the following summary
+
+```
+Test262 Summary:
+AST Parsed     : 43934/43934 (100.00%)
+
+Babel Summary:
+AST Parsed     : 2043/2057 (99.32%)
+
+TypeScript Summary:
+AST Parsed     : 4287/4861 (88.19%)
+```
+
+(The parser is failing some of the TypeScript recoverable parser tests.)
 
 ## Learning Resources
 
