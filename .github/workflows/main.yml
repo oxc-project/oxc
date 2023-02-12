@@ -57,7 +57,7 @@ jobs:
           shared-key: check
 
       - name: Run cargo check
-        run: cargo check --workspace --all-targets --all-features --release
+        run: cargo check --workspace --all-targets --all-features --release --locked
 
       - name: Run clippy
         run: cargo lint -- --deny warnings

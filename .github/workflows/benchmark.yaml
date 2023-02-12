@@ -31,7 +31,7 @@ jobs:
         run: cargo install critcmp
 
       - name: Compile
-        run: cargo build --release --locked -p oxc_benchmark
+        run: cargo build --release -p oxc_benchmark
 
       - name: Run Bench on PR Branch
         run: cargo benchmark --save-baseline pr
