@@ -1,5 +1,5 @@
 TypeScript Summary:
-AST Parsed     : 4287/4861 (88.19%)
+AST Parsed     : 4290/4861 (88.25%)
 Expect to Parse: "async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts"
 Expect to Parse: "async/es2017/asyncArrowFunction/asyncArrowFunction7_es2017.ts"
 Expect to Parse: "async/es2017/asyncArrowFunction/asyncArrowFunction8_es2017.ts"
@@ -396,7 +396,6 @@ Expect to Parse: "parser/ecmascript5/Expressions/parserUnaryExpression2.ts"
 Expect to Parse: "parser/ecmascript5/Expressions/parserUnaryExpression3.ts"
 Expect to Parse: "parser/ecmascript5/Expressions/parserUnaryExpression4.ts"
 Expect to Parse: "parser/ecmascript5/Expressions/parserUnaryExpression5.ts"
-Expect to Parse: "parser/ecmascript5/Expressions/parserUnaryExpression6.ts"
 Expect to Parse: "parser/ecmascript5/Expressions/parserUnaryExpression7.ts"
 Expect to Parse: "parser/ecmascript5/Fuzz/parser0_004152.ts"
 Expect to Parse: "parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity11.ts"
@@ -497,7 +496,6 @@ Expect to Parse: "parser/ecmascript5/VariableDeclarations/parserVariableDeclarat
 Expect to Parse: "parser/ecmascript5/VariableDeclarations/parserVariableDeclaration5.ts"
 Expect to Parse: "parser/ecmascript5/VariableDeclarations/parserVariableDeclaration6.ts"
 Expect to Parse: "parser/ecmascript5/VariableDeclarations/parserVariableDeclaration8.ts"
-Expect to Parse: "parser/ecmascript5/parserEmptyFile1.ts"
 Expect to Parse: "parser/ecmascript5/parserKeywordsAsIdentifierName2.ts"
 Expect to Parse: "parser/ecmascript5/parserObjectCreationArrayLiteral1.ts"
 Expect to Parse: "parser/ecmascript5/parserObjectCreationArrayLiteral3.ts"
@@ -573,4 +571,3 @@ Expect to Parse: "types/typeParameters/typeArgumentLists/instantiationExpression
 Expect to Parse: "types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts"
 Expect to Parse: "types/typeParameters/typeParameterLists/varianceAnnotations.ts"
 Expect to Parse: "types/typeParameters/typeParameterLists/varianceAnnotationsWithCircularlyReferencesError.ts"
-Expect to Parse: "types/typeRelationships/assignmentCompatibility/assignmentCompatWithWithGenericConstructSignatures.ts"

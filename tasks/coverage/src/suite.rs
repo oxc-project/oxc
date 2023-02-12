@@ -259,7 +259,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let allocator = Allocator::default();
         let source = self.code();
         let ret = Parser::new(&allocator, source, source_type).parse();
-        let passed = ret.errors.is_empty() && !ret.program.node.range().is_empty();
+        let passed = ret.errors.is_empty();
         let result = if passed { Ok(String::new()) } else { Err(String::new()) };
         self.parser_return_to_test_result(result)
     }

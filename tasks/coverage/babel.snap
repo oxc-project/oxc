@@ -1,7 +1,6 @@
 Babel Summary:
-AST Parsed     : 2043/2057 (99.32%)
+AST Parsed     : 2044/2057 (99.37%)
 Expect to Parse: "comments/decorators/decorators-after-export/input.js"
-Expect to Parse: "core/uncategorised/316/input.js"
 Expect to Parse: "es2015/for-of/valid-script-await-as-lhs/input.js"
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 Expect to Parse: "typescript/cast/satisfies/input.ts"
