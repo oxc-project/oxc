@@ -79,7 +79,6 @@ jobs:
       - name: Write a new comment
         uses: peter-evans/create-or-update-comment@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ github.event.pull_request.number }}
           edit-mode: replace
           comment-id: ${{ steps.fc.outputs.comment-id }}
