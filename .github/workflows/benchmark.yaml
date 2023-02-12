@@ -65,8 +65,8 @@ jobs:
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
-        comment-author: 'github-actions[bot]'
-        body-includes: Parser Benchmark Results
+          comment-author: 'github-actions[bot]'
+          body-includes: Parser Benchmark Results
 
       - name: Write a new comment
         uses: peter-evans/create-or-update-comment@v2
