@@ -10,3 +10,9 @@
 	shallow = true
 	branch = main
 	ignore = dirty
+[submodule "tasks/coverage/typescript"]
+	path = tasks/coverage/typescript
+	url = git@github.com:microsoft/TypeScript.git
+	shallow = true
+	branch = main
+	ignore = dirty
