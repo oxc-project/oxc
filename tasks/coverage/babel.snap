@@ -1,4 +1,4 @@
-jabel Summary:
+Babel Summary:
 AST Parsed     : 2043/2057 (99.32%)
 Expect to Parse: "comments/decorators/decorators-after-export/input.js"
 Expect to Parse: "core/uncategorised/316/input.js"

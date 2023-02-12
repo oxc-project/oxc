@@ -35,6 +35,7 @@ fn main() {
         _ => {
             run_test262();
             run_babel();
+            run_typescript();
         }
     };
 }
