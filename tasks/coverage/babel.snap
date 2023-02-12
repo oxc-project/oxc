@@ -1,0 +1,16 @@
+jabel Summary:
+AST Parsed     : 2043/2057 (99.32%)
+Expect to Parse: "comments/decorators/decorators-after-export/input.js"
+Expect to Parse: "core/uncategorised/316/input.js"
+Expect to Parse: "es2015/for-of/valid-script-await-as-lhs/input.js"
+Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
+Expect to Parse: "typescript/cast/satisfies/input.ts"
+Expect to Parse: "typescript/class/accessor/input.ts"
+Expect to Parse: "typescript/declare/function-rest-trailing-comma/input.ts"
+Expect to Parse: "typescript/dts/no-initializer/input.ts"
+Expect to Parse: "typescript/dts/valid-trailing-comma-for-rest/input.ts"
+Expect to Parse: "typescript/interface/get-set-properties/input.ts"
+Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
+Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input.ts"
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/decorator-call-expression/input.ts"
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like/decorator-call-expression/input.ts"

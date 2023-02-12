@@ -1,13 +1,13 @@
 # Coverage
 
-The parser is tested against [test262] for conformance.
+The parser is tested against [test262], [babel] for conformance.
 
 Note: tests against regexp are disabled for now.
 
 Clone the test files beforehand
 
 ```bash
-git submodule update --init --recursive --remote --merge
+git submodule update --init --recursive --remote
 ```
 
 ## Development
@@ -15,6 +15,8 @@ git submodule update --init --recursive --remote --merge
 ```bash
 # full run
 cargo coverage
+cargo coverage js # for test262
+cargo coverage babel # for babel
 
 # run in watch
 cargo watch -x 'coverage js'
@@ -25,3 +27,4 @@ cargo watch -x 'coverage js --filter filter-file-path'
 
 <!-- Links -->
 [test262]: https://github.com/tc39/test262
+[babel]: https://github.com/babel/babel

@@ -558,6 +558,7 @@ dependencies = [
  "pico-args",
  "rayon",
  "serde",
+ "serde_json",
  "serde_yaml",
  "similar",
  "walkdir",
