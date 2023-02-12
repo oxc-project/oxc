@@ -1,0 +1,82 @@
+name: Benchmark
+
+on: pull_request
+
+env:
+  RUST_LOG: info
+  RUST_BACKTRACE: 1
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+  CARGO_UNSTABLE_SPARSE_REGISTRY: true
+
+jobs:
+  benchmark:
+    name: Run benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: false
+
+      - name: Install toolchain
+        run: rustup show
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: benchmark
+
+      - name: Install critcmp
+        run: cargo install critcmp
+
+      - name: Compile
+        run: cargo build --release --locked -p oxc_benchmark
+
+      - name: Run Bench on PR Branch
+        run: cargo benchmark --save-baseline pr
+
+      - name: Checkout Main Branch
+        uses: actions/checkout@v3
+        with:
+          clean: false
+          ref: main
+
+      - name: Run Bench on Main Branch
+        run: cargo benchmark --save-baseline main
+
+      - name: Compare Bench Results
+        id: bench_comparison
+        shell: bash
+        run: |
+          echo "### Parser Benchmark Results" > output
+          echo "\`\`\`"  >> output
+          critcmp main pr >> output
+          echo "\`\`\`" >> output
+          cat output
+          comment="$(cat output)"
+          comment="${comment//'%'/'%25'}"
+          comment="${comment//$'\n'/'%0A'}"
+          comment="${comment//$'\r'/'%0D'}"
+          echo "::set-output name=comment::$comment"
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: Parser Benchmark Results
+
+      - name: Write a new comment
+        uses: peter-evans/create-or-update-comment@v2
+        continue-on-error: true
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          body: |
+            ${{ steps.bench_comparison.outputs.comment }}
+
+      - name: Remove Criterion Artifact
+        run: rm -rf ./target/criterion
