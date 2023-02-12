@@ -28,9 +28,9 @@ pub use token::{RegExp, Token, TokenValue};
 #[derive(Debug, Clone)]
 pub struct LexerCheckpoint<'a> {
     /// Remaining chars to be tokenized
-    pub(crate) chars: Chars<'a>,
+    chars: Chars<'a>,
 
-    pub(crate) token: Token,
+    token: Token,
 
     errors_pos: usize,
 }
@@ -45,19 +45,19 @@ pub enum LexerContext {
 }
 
 pub struct Lexer<'a> {
-    pub(crate) allocator: &'a Allocator,
+    allocator: &'a Allocator,
 
     source: &'a str,
 
     source_type: SourceType,
 
-    pub(crate) current: LexerCheckpoint<'a>,
+    current: LexerCheckpoint<'a>,
 
     errors: Diagnostics,
 
     lookahead: VecDeque<LexerCheckpoint<'a>>,
 
-    pub context: LexerContext,
+    context: LexerContext,
 }
 
 #[allow(clippy::unused_self)]
@@ -87,13 +87,13 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    /// Remaining string from `Chars`
     #[must_use]
     pub fn remaining(&self) -> &'a str {
         self.current.chars.as_str()
     }
 
     /// Creates a checkpoint storing the current lexer state.
-    ///
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
     #[must_use]
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
@@ -143,6 +143,11 @@ impl<'a> Lexer<'a> {
         self.current = checkpoint;
 
         &self.lookahead[n - 1].token
+    }
+
+    /// Set context
+    pub fn set_context(&mut self, context: LexerContext) {
+        self.context = context;
     }
 
     /// Main entry point
@@ -414,7 +419,6 @@ impl<'a> Lexer<'a> {
                         self.private_identifier(builder)
                     }
                 }
-                '@' => Kind::At,
                 '\\' => {
                     builder.force_allocation_without_current_ascii_char(self);
                     self.identifier_unicode_escape_sequence(&mut builder, true);

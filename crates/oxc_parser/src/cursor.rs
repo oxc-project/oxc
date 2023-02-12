@@ -186,18 +186,18 @@ impl<'a> Parser<'a> {
     /// Expect the next next token to be a `JsxChild`, i.e. `<` or `{` or `JSXText`
     /// # Errors
     pub fn expect_jsx_child(&mut self, kind: Kind) -> Result<()> {
-        self.lexer.context = LexerContext::JsxChild;
+        self.lexer.set_context(LexerContext::JsxChild);
         self.expect(kind)?;
-        self.lexer.context = LexerContext::Regular;
+        self.lexer.set_context(LexerContext::Regular);
         Ok(())
     }
 
     /// Expect the next next token to be a `JsxString` or any other token
     /// # Errors
     pub fn expect_jsx_attribute_value(&mut self, kind: Kind) -> Result<()> {
-        self.lexer.context = LexerContext::JsxAttributeValue;
+        self.lexer.set_context(LexerContext::JsxAttributeValue);
         self.expect(kind)?;
-        self.lexer.context = LexerContext::Regular;
+        self.lexer.set_context(LexerContext::Regular);
         Ok(())
     }
 
