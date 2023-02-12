@@ -25,9 +25,9 @@ pub fn get_code(lib: &str) -> Result<(String, String), String> {
             Ok(response) => {
                 let mut reader = response.into_reader();
 
-                std::fs::remove_file(&file).unwrap();
+                let _drop = std::fs::remove_file(&file);
                 let mut writer = std::fs::File::create(&file).map_err(err_to_string)?;
-                std::io::copy(&mut reader, &mut writer).unwrap();
+                let _drop = std::io::copy(&mut reader, &mut writer);
 
                 std::fs::read_to_string(&file)
                     .map_err(err_to_string)
