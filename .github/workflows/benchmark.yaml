@@ -1,6 +1,12 @@
 name: Benchmark
 
-on: pull_request
+on:
+  pull_request: {}
+  paths:
+    - 'crates/**'
+    - 'Cargo.toml'
+    - 'Cargo.lock'
+    - 'rust-toolchain.toml'
 
 permissions:
   pull-requests: write # For comment
