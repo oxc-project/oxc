@@ -4,3 +4,9 @@
 	shallow = true
 	branch = main
 	ignore = dirty
+[submodule "tasks/coverage/babel"]
+	path = tasks/coverage/babel
+	url = git@github.com:babel/babel.git
+	shallow = true
+	branch = main
+	ignore = dirty

@@ -1,3 +1,4 @@
+mod babel;
 mod suite;
 mod test262;
 
@@ -6,6 +7,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+pub use crate::babel::{BabelCase, BabelSuite};
 pub use crate::suite::Suite;
 pub use crate::test262::{Test262Case, Test262Suite};
 

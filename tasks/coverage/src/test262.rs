@@ -9,6 +9,8 @@ use serde::Deserialize;
 use crate::project_root;
 use crate::suite::{Case, Suite, TestResult};
 
+const FIXTURES_PATH: &str = "tasks/coverage/test262/test";
+
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct MetaData {
     pub description: Box<str>,
@@ -78,7 +80,7 @@ impl<T: Case> Default for Test262Suite<T> {
 impl<T: Case> Test262Suite<T> {
     #[must_use]
     pub fn new() -> Self {
-        Self { test_root: project_root().join("tasks/coverage/test262/test/"), test_cases: vec![] }
+        Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
     }
 }
 
