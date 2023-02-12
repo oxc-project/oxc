@@ -39,10 +39,10 @@ Test262 Summary:
 AST Parsed     : 43934/43934 (100.00%)
 
 Babel Summary:
-AST Parsed     : 2043/2057 (99.32%)
+AST Parsed     : 2044/2057 (99.37%)
 
 TypeScript Summary:
-AST Parsed     : 4287/4861 (88.19%)
+AST Parsed     : 4290/4861 (88.25%)
 ```
 
 (The parser is failing some of the TypeScript recoverable parser tests.)
@@ -50,7 +50,7 @@ AST Parsed     : 4287/4861 (88.19%)
 ## Learning Resources
 
 * My [small tutorial on how to write a JavaScript Parser in Rust](https://boshen.github.io/javascript-parser-in-rust/)
-* [Insert your aspirational learning resources here]
+* [Insert your inspirational learning resources here]
 
 ## Credits
 
