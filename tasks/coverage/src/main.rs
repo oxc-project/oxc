@@ -1,4 +1,7 @@
-use oxc_coverage::{AppArgs, BabelCase, BabelSuite, Suite, Test262Case, Test262Suite};
+use oxc_coverage::{
+    AppArgs, BabelCase, BabelSuite, Suite, Test262Case, Test262Suite, TypeScriptCase,
+    TypeScriptSuite,
+};
 use pico_args::Arguments;
 
 fn main() {
@@ -21,9 +24,14 @@ fn main() {
         BabelSuite::<BabelCase>::new().run("Babel", &args);
     };
 
+    let run_typescript = || {
+        TypeScriptSuite::<TypeScriptCase>::new().run("TypeScript", &args);
+    };
+
     match task {
         "js" | "test262" => run_test262(),
         "babel" => run_babel(),
+        "ts" | "typescript" => run_typescript(),
         _ => {
             run_test262();
             run_babel();

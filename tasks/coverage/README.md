@@ -1,6 +1,6 @@
 # Coverage
 
-The parser is tested against [test262], [babel] for conformance.
+The parser is tested against [test262], [babel] and TypeScript for conformance.
 
 Note: tests against regexp are disabled for now.
 
@@ -17,6 +17,7 @@ git submodule update --init --recursive --remote
 cargo coverage
 cargo coverage js # for test262
 cargo coverage babel # for babel
+cargo coverage ts # for typescript
 
 # run in watch
 cargo watch -x 'coverage js'
