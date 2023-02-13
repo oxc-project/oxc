@@ -24,6 +24,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           submodules: false
 
       - name: Install toolchain
@@ -48,6 +49,9 @@ jobs:
         with:
           clean: false
           ref: main
+
+      - name: Compile
+        run: cargo build --release -p oxc_benchmark
 
       - name: Run Bench on Main Branch
         run: cargo benchmark --save-baseline main
