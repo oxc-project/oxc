@@ -8,6 +8,7 @@
 mod constants;
 mod kind;
 mod number;
+mod simd;
 mod string_builder;
 mod token;
 
@@ -22,6 +23,7 @@ use number::{parse_big_int, parse_float, parse_int};
 use oxc_allocator::{Allocator, String};
 use oxc_ast::{Atom, SourceType, Span};
 use oxc_diagnostics::{Diagnostic, Diagnostics};
+use simd::MultiLineComment;
 use string_builder::AutoCow;
 pub use token::{RegExp, Token, TokenValue};
 
@@ -466,14 +468,21 @@ impl<'a> Lexer<'a> {
     /// Section 12.4 Multi Line Comment
     #[must_use]
     fn skip_multi_line_comment(&mut self) -> Kind {
-        while let Some(c) = self.current.chars.next() {
-            if c == '*' && self.next_eq('/') {
-                return Kind::MultiLineComment;
-            }
-            if is_line_terminator(c) {
-                self.current.token.is_on_new_line = true;
-            }
+        let remaining = self.remaining().as_bytes();
+        let state = MultiLineComment::new(remaining).simd(remaining);
+
+        // SAFETY: offset is computed to the boundary
+        self.current.chars =
+            unsafe { std::str::from_utf8_unchecked(&remaining[state.offset..]) }.chars();
+
+        if state.newline {
+            self.current.token.is_on_new_line = state.newline;
         }
+
+        if state.found {
+            return Kind::MultiLineComment;
+        }
+
         self.error(Diagnostic::UnterminatedMultiLineComment(self.unterminated_range()));
         Kind::Eof
     }

@@ -19,3 +19,4 @@ rustc-hash = { workspace = true }
 
 unicode-id-start = "1.0.3"
 num-bigint = "0.4.3"
+lazy_static = "1.4.0"

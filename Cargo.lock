@@ -595,6 +595,7 @@ name = "oxc_parser"
 version = "0.0.0"
 dependencies = [
  "bitflags",
+ "lazy_static",
  "num-bigint",
  "oxc_allocator",
  "oxc_ast",
