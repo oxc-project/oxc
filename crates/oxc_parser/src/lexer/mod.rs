@@ -8,6 +8,7 @@
 mod constants;
 mod kind;
 mod number;
+mod simd;
 mod string_builder;
 mod token;
 
@@ -15,13 +16,14 @@ use std::{collections::VecDeque, str::Chars};
 
 use constants::{
     is_identifier_part, is_identifier_start, is_irregular_line_terminator, is_irregular_whitespace,
-    is_line_terminator, is_regular_line_terminator, is_regular_whitespace, EOF, SINGLE_CHAR_TOKENS,
+    is_line_terminator, EOF, SINGLE_CHAR_TOKENS,
 };
 pub use kind::Kind;
 use number::{parse_big_int, parse_float, parse_int};
 use oxc_allocator::{Allocator, String};
 use oxc_ast::{Atom, SourceType, Span};
 use oxc_diagnostics::{Diagnostic, Diagnostics};
+use simd::SkipWhitespace;
 use string_builder::AutoCow;
 pub use token::{RegExp, Token, TokenValue};
 
@@ -321,7 +323,6 @@ impl<'a> Lexer<'a> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
-    #[allow(clippy::too_many_lines)]
     fn read_next_token(&mut self) -> Kind {
         self.current.token.start = self.offset();
 
@@ -329,126 +330,149 @@ impl<'a> Lexer<'a> {
             return self.read_jsx_child();
         }
 
-        let mut builder = AutoCow::new(self);
-
-        while let Some(c) = self.current.chars.next() {
-            // fast path for single character tokens
-            // '{'  '}'  '('  ')'  '['  ']'  ';' ',' ':' '~'
-            let size = c as usize;
-            if size <= 127 {
-                let kind = SINGLE_CHAR_TOKENS[size];
-                if kind != Kind::Undetermined {
-                    return kind;
-                }
-            }
-
-            // NOTE: matching order is significant here, by real world occurrences
-            // see https://blog.mozilla.org/nnethercote/2011/07/01/faster-javascript-parsing/
-            // > the rough order of frequency for different token kinds is as follows:
-            // identifiers/keywords, ‘.’, ‘=’, strings, decimal numbers, ‘:’, ‘+’, hex/octal numbers, and then everything else
-            let kind = match c {
-                // fast path for white space
-                c if is_regular_whitespace(c) => Kind::WhiteSpace,
-                // fast path for identifiers
-                c if c.is_ascii_alphabetic() => {
-                    builder.push_matching(c);
-                    self.identifier_name_or_keyword(builder)
-                }
-                '.' => {
-                    let kind = self.read_dot(&mut builder);
-                    if kind.is_number() {
-                        self.set_numeric_value(kind, builder.finish(self));
-                    }
-                    kind
-                }
-                '=' => self.read_equal(),
-                '"' | '\'' => {
-                    if self.context == LexerContext::JsxAttributeValue {
-                        self.read_jsx_string_literal(c)
-                    } else {
-                        self.read_string_literal(c)
-                    }
-                }
-                '1'..='9' => {
-                    let kind = self.decimal_literal_after_first_digit(&mut builder);
-                    self.set_numeric_value(kind, builder.finish(self));
-                    kind
-                }
-                '+' => self.read_plus(),
-                '-' => {
-                    self.read_minus().map_or_else(|| self.skip_single_line_comment(), |kind| kind)
-                }
-                '0' => {
-                    let kind = self.read_zero(&mut builder);
-                    self.set_numeric_value(kind, builder.finish(self));
-                    kind
-                }
-                c if is_regular_line_terminator(c) => {
-                    self.current.token.is_on_new_line = true;
-                    Kind::NewLine
-                }
-                '/' => {
-                    if self.next_eq('/') {
-                        self.skip_single_line_comment()
-                    } else if self.next_eq('*') {
-                        self.skip_multi_line_comment()
-                    } else {
-                        // regex is handled separately, see `next_regex`
-                        self.read_slash()
-                    }
-                }
-                '`' => self.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate),
-                '!' => self.read_exclamation(),
-                '%' => self.read_percent(),
-                '*' => self.read_star(),
-                '&' => self.read_ampersand(),
-                '|' => self.read_pipe(),
-                '?' => self.read_question(),
-                '<' => self
-                    .read_left_angle()
-                    .map_or_else(|| self.skip_single_line_comment(), |kind| kind),
-                '^' => self.read_caret(),
-                '#' => {
-                    // https://tc39.es/proposal-hashbang/out.html
-                    // HashbangComment ::
-                    //     `#!` SingleLineCommentChars?
-                    if self.current.token.start == 0 && self.next_eq('!') {
-                        self.skip_single_line_comment()
-                    } else {
-                        builder.get_mut_string_without_current_ascii_char(self);
-                        self.private_identifier(builder)
-                    }
-                }
-                '\\' => {
-                    builder.force_allocation_without_current_ascii_char(self);
-                    self.identifier_unicode_escape_sequence(&mut builder, true);
-                    self.identifier_name_or_keyword(builder)
-                }
-                c if is_identifier_start(c) => {
-                    builder.push_matching(c);
-                    self.identifier_name_or_keyword(builder)
-                }
-                c if is_irregular_whitespace(c) => Kind::WhiteSpace,
-                c if is_irregular_line_terminator(c) => {
-                    self.current.token.is_on_new_line = true;
-                    Kind::NewLine
-                }
-                _ => {
-                    self.error(Diagnostic::InvalidCharacter(c, self.unterminated_range()));
-                    Kind::Undetermined
-                }
-            };
-
-            if !kind.is_trivia() {
-                return kind;
-            }
+        loop {
+            self.skip_whitespace();
 
             let offset = self.offset();
-            builder = AutoCow::new(self);
             self.current.token.start = offset;
+            let builder = AutoCow::new(self);
+
+            if let Some(c) = self.current.chars.next() {
+                let kind = self.match_char(c, builder);
+                if !kind.is_trivia() {
+                    return kind;
+                }
+            } else {
+                return Kind::Eof;
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_lines)]
+    fn match_char(&mut self, c: char, mut builder: AutoCow<'a>) -> Kind {
+        // fast path for single character tokens
+        // '{'  '}'  '('  ')'  '['  ']'  ';' ',' ':' '~'
+        let size = c as usize;
+        if size <= 127 {
+            let kind = SINGLE_CHAR_TOKENS[size];
+            if kind != Kind::Undetermined {
+                return kind;
+            }
+        }
+        // NOTE: matching order is significant here, by real world occurrences
+        // see https://blog.mozilla.org/nnethercote/2011/07/01/faster-javascript-parsing/
+        // > the rough order of frequency for different token kinds is as follows:
+        // identifiers/keywords, ‘.’, ‘=’, strings, decimal numbers, ‘:’, ‘+’, hex/octal numbers, and then everything else
+        match c {
+            // fast path for identifiers
+            c if c.is_ascii_alphabetic() => {
+                builder.push_matching(c);
+                self.identifier_name_or_keyword(builder)
+            }
+            '.' => {
+                let kind = self.read_dot(&mut builder);
+                if kind.is_number() {
+                    self.set_numeric_value(kind, builder.finish(self));
+                }
+                kind
+            }
+            '=' => self.read_equal(),
+            '"' | '\'' => {
+                if self.context == LexerContext::JsxAttributeValue {
+                    self.read_jsx_string_literal(c)
+                } else {
+                    self.read_string_literal(c)
+                }
+            }
+            '1'..='9' => {
+                let kind = self.decimal_literal_after_first_digit(&mut builder);
+                self.set_numeric_value(kind, builder.finish(self));
+                kind
+            }
+            '+' => self.read_plus(),
+            '-' => self.read_minus().map_or_else(|| self.skip_single_line_comment(), |kind| kind),
+            '0' => {
+                let kind = self.read_zero(&mut builder);
+                self.set_numeric_value(kind, builder.finish(self));
+                kind
+            }
+            '/' => {
+                if self.next_eq('/') {
+                    self.skip_single_line_comment()
+                } else if self.next_eq('*') {
+                    self.skip_multi_line_comment()
+                } else {
+                    // regex is handled separately, see `next_regex`
+                    self.read_slash()
+                }
+            }
+            '`' => self.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate),
+            '!' => self.read_exclamation(),
+            '%' => self.read_percent(),
+            '*' => self.read_star(),
+            '&' => self.read_ampersand(),
+            '|' => self.read_pipe(),
+            '?' => self.read_question(),
+            '<' => {
+                self.read_left_angle().map_or_else(|| self.skip_single_line_comment(), |kind| kind)
+            }
+            '^' => self.read_caret(),
+            '#' => {
+                // https://tc39.es/proposal-hashbang/out.html
+                // HashbangComment ::
+                //     `#!` SingleLineCommentChars?
+                if self.current.token.start == 0 && self.next_eq('!') {
+                    self.skip_single_line_comment()
+                } else {
+                    builder.get_mut_string_without_current_ascii_char(self);
+                    self.private_identifier(builder)
+                }
+            }
+            '\\' => {
+                builder.force_allocation_without_current_ascii_char(self);
+                self.identifier_unicode_escape_sequence(&mut builder, true);
+                self.identifier_name_or_keyword(builder)
+            }
+            c if is_identifier_start(c) => {
+                builder.push_matching(c);
+                self.identifier_name_or_keyword(builder)
+            }
+            c if is_irregular_whitespace(c) => Kind::WhiteSpace,
+            c if is_irregular_line_terminator(c) => {
+                self.current.token.is_on_new_line = true;
+                Kind::NewLine
+            }
+            _ => {
+                self.error(Diagnostic::InvalidCharacter(c, self.unterminated_range()));
+                Kind::Undetermined
+            }
+        }
+    }
+
+    fn skip_whitespace(&mut self) {
+        let c = self.peek();
+        let any_newline = c == '\r' || c == '\n';
+        let any_white = c == ' ' || c == '\t' || any_newline;
+        // Fast path for single non-whitespace
+        if any_white {
+            self.current.chars.next();
+            if any_newline {
+                self.current.token.is_on_new_line = true;
+            }
+        } else {
+            return;
         }
 
-        Kind::Eof
+        let remaining = self.remaining().as_bytes();
+        let state = SkipWhitespace::new(self.current.token.is_on_new_line).simd(remaining);
+
+        // SAFETY: offset is computed to the boundary
+        self.current.chars =
+            unsafe { std::str::from_utf8_unchecked(&remaining[state.offset..]) }.chars();
+
+        if state.newline {
+            self.current.token.is_on_new_line = true;
+        }
     }
 
     /// Section 12.4 Single Line Comment

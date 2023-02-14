@@ -31,10 +31,6 @@ pub const FF: char = '\u{c}';
 /// U+00A0 NON-BREAKING SPACE, abbreviated <NBSP>.
 pub const NBSP: char = '\u{a0}';
 
-pub const fn is_regular_whitespace(c: char) -> bool {
-    matches!(c, ' ' | '\t')
-}
-
 pub const fn is_irregular_whitespace(c: char) -> bool {
     matches!(
         c,
