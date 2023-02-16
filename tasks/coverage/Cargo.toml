@@ -14,6 +14,7 @@ version.workspace = true
 oxc_allocator = { path = "../../crates/oxc_allocator" }
 oxc_parser = { path = "../../crates/oxc_parser" }
 oxc_ast = { path = "../../crates/oxc_ast" }
+oxc_printer = { path = "../../crates/oxc_printer" }
 
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

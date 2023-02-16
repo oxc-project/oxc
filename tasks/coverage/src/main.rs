@@ -1,6 +1,6 @@
 use oxc_coverage::{
-    AppArgs, BabelCase, BabelSuite, Suite, Test262Case, Test262Suite, TypeScriptCase,
-    TypeScriptSuite,
+    AppArgs, BabelCase, BabelSuite, PrinterTest262Case, Suite, Test262Case, Test262Suite,
+    TypeScriptCase, TypeScriptSuite,
 };
 use pico_args::Arguments;
 
@@ -28,14 +28,20 @@ fn main() {
         TypeScriptSuite::<TypeScriptCase>::new().run("TypeScript", &args);
     };
 
+    let run_printer = || {
+        Test262Suite::<PrinterTest262Case>::new().run("Printer", &args);
+    };
+
     match task {
         "js" | "test262" => run_test262(),
         "babel" => run_babel(),
         "ts" | "typescript" => run_typescript(),
+        "printer" => run_printer(),
         _ => {
             run_test262();
             run_babel();
             run_typescript();
+            run_printer();
         }
     };
 }
