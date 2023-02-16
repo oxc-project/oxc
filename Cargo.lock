@@ -604,6 +604,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_printer"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
