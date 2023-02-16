@@ -1,4 +1,5 @@
 mod babel;
+mod printer;
 mod suite;
 mod test262;
 mod typescript;
@@ -9,6 +10,7 @@ use std::{
 };
 
 pub use crate::babel::{BabelCase, BabelSuite};
+pub use crate::printer::PrinterTest262Case;
 pub use crate::suite::Suite;
 pub use crate::test262::{Test262Case, Test262Suite};
 pub use crate::typescript::{TypeScriptCase, TypeScriptSuite};

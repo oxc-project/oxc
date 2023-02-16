@@ -115,12 +115,21 @@ pub struct Test262Case {
 }
 
 impl Test262Case {
+    #[must_use]
+    pub const fn meta(&self) -> &MetaData {
+        &self.meta
+    }
+
     /// # Errors
     /// # Panics
     pub fn read_metadata(code: &str) -> io::Result<MetaData> {
         let (start, end) = (code.find("/*---").unwrap(), code.find("---*/").unwrap());
         let yaml = &code[start + 5..end].replace('\r', "\n");
         serde_yaml::from_str(yaml).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+    }
+
+    pub fn set_result(&mut self, result: TestResult) {
+        self.result = result;
     }
 
     fn should_fail(meta: &MetaData) -> bool {
