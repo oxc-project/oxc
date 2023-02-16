@@ -12,8 +12,9 @@ use pico_args::Arguments;
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
+/// # Errors
 /// # Panics
-pub fn main() {
+pub fn main() -> Result<(), &'static str> {
     let mut args = Arguments::from_env();
     let baseline: Option<String> = args.opt_value_from_str("--save-baseline").unwrap();
 
@@ -25,6 +26,18 @@ pub fn main() {
 
     let codes =
         include_str!("./libs.txt").lines().map(|lib| get_code(lib).unwrap()).collect::<Vec<_>>();
+
+    // Check files
+    for (_, code) in &codes {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, black_box(code), SourceType::default()).parse();
+        if !ret.errors.is_empty() {
+            for error in &ret.errors {
+                println!("{error:?}");
+            }
+            return Err("Parse Failed.");
+        }
+    }
 
     // Bench Parser
     let mut group = criterion.benchmark_group("parser");
@@ -39,4 +52,6 @@ pub fn main() {
     }
 
     group.finish();
+
+    Ok(())
 }
