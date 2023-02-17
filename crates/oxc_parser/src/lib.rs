@@ -1,8 +1,6 @@
 //! Recursive Descent Parser for ECMAScript and TypeScript
 
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
-#![feature(portable_simd)]
-#![feature(slice_as_chunks)]
 
 mod cursor;
 mod list;
