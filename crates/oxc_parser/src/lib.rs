@@ -123,7 +123,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Return error info at current token
-    /// Panics
+    /// # Panics
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
     fn unexpected<T>(&self) -> Result<T> {
         // The lexer should have reported a more meaningful diagnostic
