@@ -23,7 +23,7 @@ use number::{parse_big_int, parse_float, parse_int};
 use oxc_allocator::{Allocator, String};
 use oxc_ast::{Atom, SourceType, Span};
 use oxc_diagnostics::{Diagnostic, Diagnostics};
-use simd::{SkipMultilineComment, SkipWhitespace};
+use simd::{SkipMultilineComment, SkipSinglineComment, SkipWhitespace};
 use string_builder::AutoCow;
 pub use token::{RegExp, Token, TokenValue};
 
@@ -428,7 +428,10 @@ impl<'a> Lexer<'a> {
                 // HashbangComment ::
                 //     `#!` SingleLineCommentChars?
                 if self.current.token.start == 0 && self.next_eq('!') {
-                    self.skip_single_line_comment()
+                    // HashbangComment are terminated by the first LineTerminator,
+                    // use the scalar version because the simd version is eager which will find
+                    // the last LineTerminator.
+                    self.skip_hashbang_comment()
                 } else {
                     builder.get_mut_string_without_current_ascii_char(self);
                     self.private_identifier(builder)
@@ -484,11 +487,18 @@ impl<'a> Lexer<'a> {
     /// Section 12.4 Single Line Comment
     #[must_use]
     fn skip_single_line_comment(&mut self) -> Kind {
-        while let Some(c) = self.current.chars.next().as_ref() {
-            if is_line_terminator(*c) {
-                break;
-            }
-        }
+        let remaining = self.remaining().as_bytes();
+        let state = SkipSinglineComment::new(remaining).simd();
+
+        // SAFETY: offset is computed to the boundary
+        self.current.chars =
+            unsafe { std::str::from_utf8_unchecked(&remaining[state.offset..]) }.chars();
+
+        // while let Some(c) = self.current.chars.next().as_ref() {
+        // if is_line_terminator(*c) {
+        // break;
+        // }
+        // }
         self.current.token.is_on_new_line = true;
         Kind::Comment
     }
@@ -498,7 +508,7 @@ impl<'a> Lexer<'a> {
     fn skip_multi_line_comment(&mut self) -> Kind {
         let remaining = self.remaining().as_bytes();
         let newline = self.current.token.is_on_new_line;
-        let state = SkipMultilineComment::new(newline, remaining).simd(remaining);
+        let state = SkipMultilineComment::new(newline, remaining).simd();
 
         // SAFETY: offset is computed to the boundary
         self.current.chars =
@@ -514,6 +524,17 @@ impl<'a> Lexer<'a> {
         }
 
         Kind::MultiLineComment
+    }
+
+    /// Section 12.5 Hashbang Comments
+    fn skip_hashbang_comment(&mut self) -> Kind {
+        while let Some(c) = self.current.chars.next().as_ref() {
+            if is_line_terminator(*c) {
+                break;
+            }
+        }
+        self.current.token.is_on_new_line = true;
+        Kind::Comment
     }
 
     /// Section 12.6.1 Identifier Names

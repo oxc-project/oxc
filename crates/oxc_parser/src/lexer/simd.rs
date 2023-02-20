@@ -119,8 +119,8 @@ impl<'a> SkipMultilineComment<'a> {
         }
     }
 
-    pub fn simd(mut self, remaining: &[u8]) -> Self {
-        let (chunks, remainder) = remaining.as_chunks::<ELEMENTS>();
+    pub fn simd(mut self) -> Self {
+        let (chunks, remainder) = self.remaining.as_chunks::<ELEMENTS>();
 
         for chunk in chunks {
             self.check(chunk, chunk.len());
@@ -176,9 +176,9 @@ impl<'a> SkipMultilineComment<'a> {
             self.newline = (newline_mask.trailing_zeros() as usize) < chunk_offset;
             // Look for LS '\u{2028}' [226, 128, 168] and PS '\u{2029}' [226, 128, 169]
             if !self.newline {
-                let lspf_mask = s.simd_eq(self.lsps).to_bitmask();
-                if lspf_mask > 0 {
-                    let offset_by = lspf_mask.trailing_zeros() as usize;
+                let lsps_mask = s.simd_eq(self.lsps).to_bitmask();
+                if lsps_mask > 0 {
+                    let offset_by = lsps_mask.trailing_zeros() as usize;
                     if offset_by < chunk_offset {
                         let second = self.offset + offset_by + 1;
                         // Using scalar version `.get` instead of simd
@@ -189,6 +189,96 @@ impl<'a> SkipMultilineComment<'a> {
                             if matches!(third, Some(&168 | &169)) {
                                 self.newline = true;
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        self.offset += chunk_offset;
+    }
+}
+
+pub struct SkipSinglineComment<'a> {
+    /// Total offset
+    pub offset: usize,
+
+    /// Found multiline comment end '*/'?
+    pub found: bool,
+
+    /// Remaining char bytes from the lexer
+    remaining: &'a [u8],
+
+    lf: SimdVec,
+    cr: SimdVec,
+    lsps: SimdVec,
+}
+
+impl<'a> SkipSinglineComment<'a> {
+    pub fn new(remaining: &'a [u8]) -> Self {
+        Self {
+            offset: 0,
+            found: false,
+            remaining,
+            lf: SimdVec::splat(b'\n'),
+            cr: SimdVec::splat(b'\r'),
+            lsps: SimdVec::splat(226),
+        }
+    }
+
+    pub fn simd(mut self) -> Self {
+        let (chunks, remainder) = self.remaining.as_chunks::<ELEMENTS>();
+
+        for chunk in chunks {
+            self.check(chunk, chunk.len());
+            if self.found {
+                return self;
+            }
+        }
+
+        if !remainder.is_empty() {
+            // Align the last chunk for avoiding the use of a scalar version
+            let mut chunk = [0; ELEMENTS];
+            let len = remainder.len();
+            chunk[..len].copy_from_slice(remainder);
+            self.check(&chunk, len);
+        }
+
+        self
+    }
+
+    /// Check and compute state for a single chunk
+    /// `chunk_len` can be < ELEMENTS for the last chunk
+    fn check(&mut self, chunk: &[u8], chunk_len: usize) {
+        let s = SimdVec::from_slice(chunk);
+
+        let any_newline = s.simd_eq(self.lf) | s.simd_eq(self.cr);
+        let newline_mask = any_newline.to_bitmask();
+
+        let advance_by = newline_mask.trailing_zeros() as usize;
+
+        let mut chunk_offset = if advance_by < ELEMENTS {
+            self.found = true;
+            advance_by
+        } else {
+            chunk_len
+        };
+
+        // Look for LS '\u{2028}' [226, 128, 168] and PS '\u{2029}' [226, 128, 169]
+        if !self.found {
+            let lspf_mask = s.simd_eq(self.lsps).to_bitmask();
+            if lspf_mask > 0 {
+                let offset_by = lspf_mask.trailing_zeros() as usize;
+                if offset_by < chunk_offset {
+                    let second = self.offset + offset_by + 1;
+                    // Using scalar version `.get` instead of simd
+                    // to avoid checking on the next chunk
+                    // because this may be on the chunk boundary
+                    if self.remaining.get(second) == Some(&128) {
+                        let third = self.remaining.get(second + 1);
+                        if matches!(third, Some(&168 | &169)) {
+                            self.found = true;
+                            chunk_offset = offset_by;
                         }
                     }
                 }
