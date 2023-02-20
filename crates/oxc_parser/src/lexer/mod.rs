@@ -23,7 +23,7 @@ use number::{parse_big_int, parse_float, parse_int};
 use oxc_allocator::{Allocator, String};
 use oxc_ast::{Atom, SourceType, Span};
 use oxc_diagnostics::{Diagnostic, Diagnostics};
-use simd::SkipWhitespace;
+use simd::{SkipMultilineComment, SkipWhitespace};
 use string_builder::AutoCow;
 pub use token::{RegExp, Token, TokenValue};
 
@@ -397,13 +397,19 @@ impl<'a> Lexer<'a> {
                 kind
             }
             '/' => {
-                if self.next_eq('/') {
-                    self.skip_single_line_comment()
-                } else if self.next_eq('*') {
-                    self.skip_multi_line_comment()
-                } else {
-                    // regex is handled separately, see `next_regex`
-                    self.read_slash()
+                match self.peek() {
+                    '/' => {
+                        self.current.chars.next();
+                        self.skip_single_line_comment()
+                    }
+                    '*' => {
+                        self.current.chars.next();
+                        self.skip_multi_line_comment()
+                    }
+                    _ => {
+                        // regex is handled separately, see `next_regex`
+                        self.read_slash()
+                    }
                 }
             }
             '`' => self.read_template_literal(Kind::TemplateHead, Kind::NoSubstitutionTemplate),
@@ -490,16 +496,24 @@ impl<'a> Lexer<'a> {
     /// Section 12.4 Multi Line Comment
     #[must_use]
     fn skip_multi_line_comment(&mut self) -> Kind {
-        while let Some(c) = self.current.chars.next() {
-            if c == '*' && self.next_eq('/') {
-                return Kind::MultiLineComment;
-            }
-            if is_line_terminator(c) {
-                self.current.token.is_on_new_line = true;
-            }
+        let remaining = self.remaining().as_bytes();
+        let newline = self.current.token.is_on_new_line;
+        let state = SkipMultilineComment::new(newline, remaining).simd(remaining);
+
+        // SAFETY: offset is computed to the boundary
+        self.current.chars =
+            unsafe { std::str::from_utf8_unchecked(&remaining[state.offset..]) }.chars();
+
+        if state.newline && !newline {
+            self.current.token.is_on_new_line = true;
         }
-        self.error(Diagnostic::UnterminatedMultiLineComment(self.unterminated_range()));
-        Kind::Eof
+
+        if !state.found {
+            self.error(Diagnostic::UnterminatedMultiLineComment(self.unterminated_range()));
+            return Kind::Eof;
+        }
+
+        Kind::MultiLineComment
     }
 
     /// Section 12.6.1 Identifier Names
