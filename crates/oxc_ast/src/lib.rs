@@ -8,10 +8,12 @@ mod serialize;
 
 pub mod ast;
 pub mod ast_builder;
+pub mod ast_kind;
 pub mod context;
 pub mod node;
 pub mod source_type;
 pub mod syntax_directed_operations;
+pub mod visit;
 
 pub use num_bigint::BigUint;
 
