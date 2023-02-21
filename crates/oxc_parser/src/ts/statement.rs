@@ -183,7 +183,7 @@ impl<'a> Parser<'a> {
         self.nth_at(offset + 2, Kind::Colon)
     }
 
-    pub fn is_nth_at_modifier(&mut self, n: usize, is_constructor_parameter: bool) -> bool {
+    pub fn is_nth_at_modifier(&mut self, n: u8, is_constructor_parameter: bool) -> bool {
         let nth = self.nth(n);
         if !(matches!(
             nth.kind,
@@ -299,7 +299,7 @@ impl<'a> Parser<'a> {
             .map(|decl| Statement::Declaration(Declaration::TSModuleDeclaration(decl)))
     }
 
-    pub fn is_nth_at_ts_namespace_declaration(&mut self, n: usize) -> bool {
+    pub fn is_nth_at_ts_namespace_declaration(&mut self, n: u8) -> bool {
         if self.nth(n + 1).is_on_new_line {
             return false;
         }
