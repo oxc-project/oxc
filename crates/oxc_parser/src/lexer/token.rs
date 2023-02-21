@@ -1,7 +1,7 @@
 //! Token
 
 use num_bigint::BigUint;
-use oxc_ast::{ast::RegExpFlags, Atom, Node};
+use oxc_ast::{ast::RegExpFlags, Atom, Span};
 
 use super::kind::Kind;
 
@@ -34,8 +34,8 @@ fn no_bloat_token() {
 
 impl Token {
     #[must_use]
-    pub const fn node(&self) -> Node {
-        Node::new(self.start, self.end)
+    pub const fn span(&self) -> Span {
+        Span::new(self.start, self.end)
     }
 }
 

@@ -4,11 +4,11 @@ use oxc_allocator::{Box, Vec};
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, Atom, Node, SourceType};
+use crate::{ast::*, Atom, SourceType, Span};
 
 #[derive(Debug, PartialEq, Hash)]
 pub struct Program<'a> {
-    pub node: Node,
+    pub span: Span,
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
     pub source_type: SourceType,
@@ -171,7 +171,7 @@ impl<'a> Expression<'a> {
 #[cfg_attr(feature = "acorn", serde(rename = "Identifier"))]
 pub struct IdentifierName {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: Atom,
 }
 
@@ -181,7 +181,7 @@ pub struct IdentifierName {
 #[cfg_attr(feature = "acorn", serde(rename = "Identifier"))]
 pub struct IdentifierReference {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: Atom,
 }
 
@@ -191,7 +191,7 @@ pub struct IdentifierReference {
 #[cfg_attr(feature = "acorn", serde(rename = "Identifier"))]
 pub struct BindingIdentifier {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: Atom,
 }
 
@@ -201,7 +201,7 @@ pub struct BindingIdentifier {
 #[cfg_attr(feature = "acorn", serde(rename = "Identifier"))]
 pub struct LabelIdentifier {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: Atom,
 }
 
@@ -210,7 +210,7 @@ pub struct LabelIdentifier {
 #[serde(tag = "type")]
 pub struct ThisExpression {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 /// Section 13.2.5 Array Expression
@@ -218,10 +218,10 @@ pub struct ThisExpression {
 #[serde(tag = "type")]
 pub struct ArrayExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub elements: Vec<'a, Option<Argument<'a>>>,
     #[cfg_attr(feature = "acorn", serde(skip))]
-    pub trailing_comma: Option<Node>,
+    pub trailing_comma: Option<Span>,
 }
 
 /// Section 13.2.6 Object Expression
@@ -229,10 +229,10 @@ pub struct ArrayExpression<'a> {
 #[serde(tag = "type")]
 pub struct ObjectExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub properties: Vec<'a, ObjectProperty<'a>>,
     #[cfg_attr(feature = "acorn", serde(skip))]
-    pub trailing_comma: Option<Node>,
+    pub trailing_comma: Option<Span>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
@@ -246,7 +246,7 @@ pub enum ObjectProperty<'a> {
 #[serde(tag = "type")]
 pub struct Property<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
     pub value: PropertyValue<'a>,
@@ -310,7 +310,7 @@ pub enum PropertyKind {
 #[serde(tag = "type")]
 pub struct TemplateLiteral<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub quasis: Vec<'a, TemplateElement>,
     pub expressions: Vec<'a, Expression<'a>>,
 }
@@ -332,7 +332,7 @@ impl<'a> TemplateLiteral<'a> {
 #[serde(tag = "type")]
 pub struct TaggedTemplateExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub tag: Expression<'a>,
     pub quasi: TemplateLiteral<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -343,7 +343,7 @@ pub struct TaggedTemplateExpression<'a> {
 #[serde(tag = "type")]
 pub struct TemplateElement {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub tail: bool,
     pub value: TemplateElementValue,
 }
@@ -403,7 +403,7 @@ impl<'a> MemberExpression<'a> {
 
 #[derive(Debug, PartialEq, Hash)]
 pub struct ComputedMemberExpression<'a> {
-    pub node: Node,
+    pub span: Span,
     pub object: Expression<'a>,
     pub expression: Expression<'a>,
     pub optional: bool, // for optional chaining
@@ -411,7 +411,7 @@ pub struct ComputedMemberExpression<'a> {
 
 #[derive(Debug, PartialEq, Hash)]
 pub struct StaticMemberExpression<'a> {
-    pub node: Node,
+    pub span: Span,
     pub object: Expression<'a>,
     pub property: IdentifierName,
     pub optional: bool, // for optional chaining
@@ -419,7 +419,7 @@ pub struct StaticMemberExpression<'a> {
 
 #[derive(Debug, PartialEq, Hash)]
 pub struct PrivateFieldExpression<'a> {
-    pub node: Node,
+    pub span: Span,
     pub object: Expression<'a>,
     pub field: PrivateIdentifier,
     pub optional: bool, // for optional chaining
@@ -430,7 +430,7 @@ pub struct PrivateFieldExpression<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct CallExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
@@ -488,7 +488,7 @@ impl<'a> CallExpression<'a> {
 #[serde(tag = "type")]
 pub struct NewExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -501,7 +501,7 @@ pub struct NewExpression<'a> {
 #[serde(tag = "type")]
 pub struct MetaProperty {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub meta: IdentifierName,
     pub property: IdentifierName,
 }
@@ -511,7 +511,7 @@ pub struct MetaProperty {
 #[serde(tag = "type")]
 pub struct SpreadElement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub argument: Expression<'a>,
 }
 
@@ -528,7 +528,7 @@ pub enum Argument<'a> {
 #[serde(tag = "type")]
 pub struct UpdateExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub operator: UpdateOperator,
     pub prefix: bool,
     pub argument: SimpleAssignmentTarget<'a>,
@@ -539,7 +539,7 @@ pub struct UpdateExpression<'a> {
 #[serde(tag = "type")]
 pub struct UnaryExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub operator: UnaryOperator,
     pub prefix: bool,
     pub argument: Expression<'a>,
@@ -550,7 +550,7 @@ pub struct UnaryExpression<'a> {
 #[serde(tag = "type")]
 pub struct BinaryExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub left: Expression<'a>,
     pub operator: BinaryOperator,
     pub right: Expression<'a>,
@@ -563,7 +563,7 @@ pub struct BinaryExpression<'a> {
 #[cfg_attr(feature = "acorn", serde(rename = "BinaryExpression"))]
 pub struct PrivateInExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub left: PrivateIdentifier,
     pub operator: BinaryOperator, // BinaryOperator::In
     pub right: Expression<'a>,
@@ -574,7 +574,7 @@ pub struct PrivateInExpression<'a> {
 #[serde(tag = "type")]
 pub struct LogicalExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub left: Expression<'a>,
     pub operator: LogicalOperator,
     pub right: Expression<'a>,
@@ -585,7 +585,7 @@ pub struct LogicalExpression<'a> {
 #[serde(tag = "type")]
 pub struct ConditionalExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub test: Expression<'a>,
     pub consequent: Expression<'a>,
     pub alternate: Expression<'a>,
@@ -596,7 +596,7 @@ pub struct ConditionalExpression<'a> {
 #[serde(tag = "type")]
 pub struct AssignmentExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub operator: AssignmentOperator,
     pub left: AssignmentTarget<'a>,
     pub right: Expression<'a>,
@@ -650,17 +650,17 @@ pub enum AssignmentTargetPattern<'a> {
 #[serde(tag = "type")]
 pub struct ArrayAssignmentTarget<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     pub rest: Option<AssignmentTarget<'a>>,
-    pub trailing_comma: Option<Node>,
+    pub trailing_comma: Option<Span>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
 #[serde(tag = "type")]
 pub struct ObjectAssignmentTarget<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
     pub rest: Option<AssignmentTarget<'a>>,
 }
@@ -695,7 +695,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
 #[serde(tag = "type")]
 pub struct AssignmentTargetWithDefault<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub binding: AssignmentTarget<'a>,
     pub init: Expression<'a>,
 }
@@ -713,7 +713,7 @@ pub enum AssignmentTargetProperty<'a> {
 #[serde(tag = "type")]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub binding: IdentifierReference,
     pub init: Option<Expression<'a>>,
 }
@@ -724,7 +724,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 #[serde(tag = "type")]
 pub struct AssignmentTargetPropertyProperty<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: PropertyKey<'a>,
     pub binding: AssignmentTargetMaybeDefault<'a>,
 }
@@ -734,7 +734,7 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 #[serde(tag = "type")]
 pub struct SequenceExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
@@ -742,7 +742,7 @@ pub struct SequenceExpression<'a> {
 #[serde(tag = "type")]
 pub struct Super {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 /// Section 15.8 Await Expression
@@ -750,7 +750,7 @@ pub struct Super {
 #[serde(tag = "type")]
 pub struct AwaitExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub argument: Expression<'a>,
 }
 
@@ -758,7 +758,7 @@ pub struct AwaitExpression<'a> {
 #[serde(tag = "type")]
 pub struct ChainExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: ChainElement<'a>,
 }
 
@@ -774,7 +774,7 @@ pub enum ChainElement<'a> {
 #[serde(tag = "type")]
 pub struct ParenthesizedExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: Expression<'a>,
 }
 
@@ -811,7 +811,7 @@ pub enum Statement<'a> {
 #[serde(tag = "type", rename = "ExpressionStatement")]
 pub struct Directive<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: StringLiteral,
     // directives should always use the unescaped raw string
     pub directive: &'a str,
@@ -822,7 +822,7 @@ pub struct Directive<'a> {
 #[serde(tag = "type")]
 pub struct BlockStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -858,7 +858,7 @@ impl<'a> Declaration<'a> {
 #[serde(tag = "type")]
 pub struct VariableDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
 }
@@ -898,7 +898,7 @@ impl Display for VariableDeclarationKind {
 #[serde(tag = "type")]
 pub struct VariableDeclarator<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     #[serde(skip)]
     pub kind: VariableDeclarationKind,
     pub id: BindingPattern<'a>,
@@ -911,7 +911,7 @@ pub struct VariableDeclarator<'a> {
 #[serde(tag = "type")]
 pub struct EmptyStatement {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 /// Section 14.5 Expression Statement
@@ -919,7 +919,7 @@ pub struct EmptyStatement {
 #[serde(tag = "type")]
 pub struct ExpressionStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: Expression<'a>,
 }
 
@@ -928,7 +928,7 @@ pub struct ExpressionStatement<'a> {
 #[serde(tag = "type")]
 pub struct IfStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub test: Expression<'a>,
     pub consequent: Statement<'a>,
     pub alternate: Option<Statement<'a>>,
@@ -939,7 +939,7 @@ pub struct IfStatement<'a> {
 #[serde(tag = "type")]
 pub struct DoWhileStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub body: Statement<'a>,
     pub test: Expression<'a>,
 }
@@ -949,7 +949,7 @@ pub struct DoWhileStatement<'a> {
 #[serde(tag = "type")]
 pub struct WhileStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub test: Expression<'a>,
     pub body: Statement<'a>,
 }
@@ -959,7 +959,7 @@ pub struct WhileStatement<'a> {
 #[serde(tag = "type")]
 pub struct ForStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub init: Option<ForStatementInit<'a>>,
     pub test: Option<Expression<'a>>,
     pub update: Option<Expression<'a>>,
@@ -978,7 +978,7 @@ pub enum ForStatementInit<'a> {
 #[serde(tag = "type")]
 pub struct ForInStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
@@ -989,7 +989,7 @@ pub struct ForInStatement<'a> {
 #[serde(tag = "type")]
 pub struct ForOfStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub r#await: bool,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
@@ -1008,7 +1008,7 @@ pub enum ForStatementLeft<'a> {
 #[serde(tag = "type")]
 pub struct ContinueStatement {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub label: Option<LabelIdentifier>,
 }
 
@@ -1017,7 +1017,7 @@ pub struct ContinueStatement {
 #[serde(tag = "type")]
 pub struct BreakStatement {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub label: Option<LabelIdentifier>,
 }
 
@@ -1026,7 +1026,7 @@ pub struct BreakStatement {
 #[serde(tag = "type")]
 pub struct ReturnStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub argument: Option<Expression<'a>>,
 }
 
@@ -1035,7 +1035,7 @@ pub struct ReturnStatement<'a> {
 #[serde(tag = "type")]
 pub struct WithStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub object: Expression<'a>,
     pub body: Statement<'a>,
 }
@@ -1045,7 +1045,7 @@ pub struct WithStatement<'a> {
 #[serde(tag = "type")]
 pub struct SwitchStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub discriminant: Expression<'a>,
     pub cases: Vec<'a, SwitchCase<'a>>,
 }
@@ -1054,7 +1054,7 @@ pub struct SwitchStatement<'a> {
 #[serde(tag = "type")]
 pub struct SwitchCase<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub test: Option<Expression<'a>>,
     pub consequent: Vec<'a, Statement<'a>>,
 }
@@ -1064,7 +1064,7 @@ pub struct SwitchCase<'a> {
 #[serde(tag = "type")]
 pub struct LabeledStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub label: LabelIdentifier,
     pub body: Statement<'a>,
 }
@@ -1074,7 +1074,7 @@ pub struct LabeledStatement<'a> {
 #[serde(tag = "type")]
 pub struct ThrowStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub argument: Expression<'a>,
 }
 
@@ -1083,7 +1083,7 @@ pub struct ThrowStatement<'a> {
 #[serde(tag = "type")]
 pub struct TryStatement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub block: Box<'a, BlockStatement<'a>>,
     pub handler: Option<Box<'a, CatchClause<'a>>>,
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
@@ -1093,7 +1093,7 @@ pub struct TryStatement<'a> {
 #[serde(tag = "type")]
 pub struct CatchClause<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub param: Option<BindingPattern<'a>>,
     pub body: Box<'a, BlockStatement<'a>>,
 }
@@ -1103,7 +1103,7 @@ pub struct CatchClause<'a> {
 #[serde(tag = "type")]
 pub struct DebuggerStatement {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 /// Section 14.3.3 Destructuring Binding Patterns
@@ -1143,7 +1143,7 @@ impl<'a> BindingPatternKind<'a> {
 #[serde(tag = "type")]
 pub struct AssignmentPattern<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub left: BindingPattern<'a>,
     pub right: Expression<'a>,
 }
@@ -1152,7 +1152,7 @@ pub struct AssignmentPattern<'a> {
 #[serde(tag = "type")]
 pub struct ObjectPattern<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub properties: Vec<'a, ObjectPatternProperty<'a>>,
 }
 
@@ -1167,7 +1167,7 @@ pub enum ObjectPatternProperty<'a> {
 #[serde(tag = "type")]
 pub struct ArrayPattern<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
 }
 
@@ -1175,7 +1175,7 @@ pub struct ArrayPattern<'a> {
 #[serde(tag = "type")]
 pub struct RestElement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub argument: BindingPattern<'a>,
 }
 
@@ -1186,7 +1186,7 @@ pub struct RestElement<'a> {
 pub struct Function<'a> {
     pub r#type: FunctionType,
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub id: Option<BindingIdentifier>,
     pub expression: bool,
     pub generator: bool,
@@ -1237,7 +1237,7 @@ pub enum FunctionType {
 
 #[derive(Debug, PartialEq, Hash)]
 pub struct FormalParameters<'a> {
-    pub node: Node,
+    pub span: Span,
     pub kind: FormalParameterKind,
     pub items: Vec<'a, FormalParameter<'a>>,
 }
@@ -1245,7 +1245,7 @@ pub struct FormalParameters<'a> {
 #[derive(Debug, PartialEq, Hash, Serialize)]
 pub struct FormalParameter<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     #[serde(flatten)]
     pub pattern: BindingPattern<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1276,7 +1276,7 @@ impl<'a> FormalParameters<'a> {
 
 #[derive(Debug, PartialEq, Hash)]
 pub struct FunctionBody<'a> {
-    pub node: Node,
+    pub span: Span,
     pub directives: Vec<'a, Directive<'a>>,
     pub statements: Vec<'a, Statement<'a>>,
 }
@@ -1291,7 +1291,7 @@ impl<'a> FunctionBody<'a> {
 /// Section 15.3 Arrow Function Definitions
 #[derive(Debug, PartialEq, Hash)]
 pub struct ArrowExpression<'a> {
-    pub node: Node,
+    pub span: Span,
     pub expression: bool,
     pub generator: bool,
     pub r#async: bool,
@@ -1307,7 +1307,7 @@ pub struct ArrowExpression<'a> {
 #[serde(tag = "type")]
 pub struct YieldExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub delegate: bool,
     pub argument: Option<Expression<'a>>,
 }
@@ -1318,7 +1318,7 @@ pub struct YieldExpression<'a> {
 pub struct Class<'a> {
     pub r#type: ClassType,
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub id: Option<BindingIdentifier>,
     pub super_class: Option<Expression<'a>>,
     pub body: ClassBody<'a>,
@@ -1356,7 +1356,7 @@ pub enum ClassType {
 #[serde(tag = "type")]
 pub struct ClassBody<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub body: Vec<'a, ClassElement<'a>>,
 }
 
@@ -1440,7 +1440,7 @@ impl<'a> ClassElement<'a> {
 #[allow(clippy::struct_excessive_bools)]
 pub struct MethodDefinition<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub key: PropertyKey<'a>,
     pub value: Box<'a, Function<'a>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
@@ -1459,7 +1459,7 @@ pub struct MethodDefinition<'a> {
 #[allow(clippy::struct_excessive_bools)]
 pub struct PropertyDefinition<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub key: PropertyKey<'a>,
     pub value: Option<Expression<'a>>,
     pub computed: bool,
@@ -1490,7 +1490,7 @@ pub enum MethodDefinitionKind {
 #[serde(tag = "type")]
 pub struct PrivateIdentifier {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: Atom,
 }
 
@@ -1498,7 +1498,7 @@ pub struct PrivateIdentifier {
 #[serde(tag = "type")]
 pub struct StaticBlock<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -1506,7 +1506,7 @@ pub struct StaticBlock<'a> {
 #[derive(Debug, Serialize, PartialEq, Hash)]
 pub struct ModuleDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     #[serde(flatten)]
     pub kind: ModuleDeclarationKind<'a>,
 }
@@ -1541,7 +1541,7 @@ impl<'a> ModuleDeclarationKind<'a> {
 #[serde(tag = "type")]
 pub struct AccessorProperty<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub key: PropertyKey<'a>,
     pub value: Option<Expression<'a>>,
     pub computed: bool,
@@ -1552,7 +1552,7 @@ pub struct AccessorProperty<'a> {
 #[serde(tag = "type")]
 pub struct ImportExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub source: Expression<'a>,
     #[cfg_attr(feature = "acorn", serde(skip_serializing_if = "Vec::is_empty"))]
     pub arguments: Vec<'a, Expression<'a>>,
@@ -1583,7 +1583,7 @@ pub enum ImportDeclarationSpecifier {
 #[serde(tag = "type")]
 pub struct ImportSpecifier {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub imported: ModuleExportName,
     pub local: BindingIdentifier,
 }
@@ -1593,7 +1593,7 @@ pub struct ImportSpecifier {
 #[serde(tag = "type")]
 pub struct ImportDefaultSpecifier {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub local: BindingIdentifier,
 }
 
@@ -1602,7 +1602,7 @@ pub struct ImportDefaultSpecifier {
 #[serde(tag = "type")]
 pub struct ImportNamespaceSpecifier {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub local: BindingIdentifier,
 }
 
@@ -1610,7 +1610,7 @@ pub struct ImportNamespaceSpecifier {
 #[serde(tag = "type")]
 pub struct ImportAttribute {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub key: ImportAttributeKey,
     pub value: StringLiteral,
 }
@@ -1673,7 +1673,7 @@ pub struct ExportAllDeclaration<'a> {
 #[serde(tag = "type")]
 pub struct ExportSpecifier {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub local: ModuleExportName,
     pub exported: ModuleExportName,
 }

@@ -2,7 +2,7 @@ use oxc_allocator::Box;
 use oxc_ast::{
     ast::*,
     context::{Context, StatementContext},
-    GetNode, Node,
+    GetSpan, Span,
 };
 use oxc_diagnostics::{Diagnostic, Result};
 
@@ -16,7 +16,7 @@ type ArrowFunctionHead<'a> = (
     Box<'a, FormalParameters<'a>>,
     Option<TSTypeAnnotation<'a>>,
     bool,
-    Node,
+    Span,
 );
 
 #[derive(Debug, Copy, Clone)]
@@ -57,7 +57,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_function_body(&mut self) -> Result<Box<'a, FunctionBody<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.expect(Kind::LCurly)?;
 
         // We may be in a [Decorator] context when parsing a function expression or
@@ -76,21 +76,21 @@ impl<'a> Parser<'a> {
         }
 
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.function_body(self.end_node(node), directives, statements))
+        Ok(self.ast.function_body(self.end_span(span), directives, statements))
     }
 
     pub fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
     ) -> Result<Box<'a, FormalParameters<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let elements = FormalParameterList::parse(self)?.elements;
-        Ok(self.ast.formal_parameters(self.end_node(node), params_kind, elements))
+        Ok(self.ast.formal_parameters(self.end_span(span), params_kind, elements))
     }
 
     pub fn parse_function(
         &mut self,
-        node: Node,
+        span: Span,
         id: Option<BindingIdentifier>,
         r#async: bool,
         generator: bool,
@@ -132,7 +132,7 @@ impl<'a> Parser<'a> {
 
         Ok(self.ast.function(
             function_type,
-            self.end_node(node),
+            self.end_span(span),
             id,
             false, // expression
             generator,
@@ -155,14 +155,14 @@ impl<'a> Parser<'a> {
         let decl = self.parse_function_impl(func_kind)?;
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
-                self.error(Diagnostic::AsyncFunctionDeclaration(Node::new(
-                    decl.node.start,
-                    decl.params.node.end,
+                self.error(Diagnostic::AsyncFunctionDeclaration(Span::new(
+                    decl.span.start,
+                    decl.params.span.end,
                 )));
             } else if decl.generator {
-                self.error(Diagnostic::GeneratorFunctionDeclaration(Node::new(
-                    decl.node.start,
-                    decl.params.node.end,
+                self.error(Diagnostic::GeneratorFunctionDeclaration(Span::new(
+                    decl.span.start,
+                    decl.params.span.end,
                 )));
             }
         }
@@ -174,18 +174,18 @@ impl<'a> Parser<'a> {
         &mut self,
         func_kind: FunctionKind,
     ) -> Result<Box<'a, Function<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let r#async = self.eat(Kind::Async);
         self.expect(Kind::Function)?;
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator);
-        self.parse_function(node, id, r#async, generator, func_kind)
+        self.parse_function(span, id, r#async, generator, func_kind)
     }
 
     /// [Function Expression](https://tc39.es/ecma262/#prod-FunctionExpression)
     pub fn parse_function_expression(
         &mut self,
-        node: Node,
+        span: Span,
         r#async: bool,
     ) -> Result<Expression<'a>> {
         let func_kind = FunctionKind::Expression;
@@ -196,7 +196,7 @@ impl<'a> Parser<'a> {
 
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator);
-        let function = self.parse_function(node, id, r#async, generator, func_kind)?;
+        let function = self.parse_function(span, id, r#async, generator, func_kind)?;
 
         self.ctx = self.ctx.and_decorator(save_decorator_context);
 
@@ -205,7 +205,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_single_param_function_expression(
         &mut self,
-        node: Node,
+        span: Span,
         r#async: bool,
         generator: bool,
     ) -> Result<Expression<'a>> {
@@ -213,14 +213,14 @@ impl<'a> Parser<'a> {
         let has_yield = self.ctx.has_yield();
 
         self.ctx = self.ctx.union_await_if(r#async).union_yield_if(generator);
-        let params_node = self.start_node();
+        let params_span = self.start_span();
         let param = self.parse_binding_identifier()?;
         let ident = self.ast.binding_identifier(param);
         let pattern = self.ast.binding_pattern(ident, None, false);
-        let params_node = self.end_node(params_node);
-        let formal_parameter = self.ast.formal_parameter(params_node, pattern, None, false, None);
+        let params_span = self.end_span(params_span);
+        let formal_parameter = self.ast.formal_parameter(params_span, pattern, None, false, None);
         let params = self.ast.formal_parameters(
-            params_node,
+            params_span,
             FormalParameterKind::ArrowFormalParameters,
             self.ast.new_vec_single(formal_parameter),
         );
@@ -231,16 +231,16 @@ impl<'a> Parser<'a> {
         let expression = !self.at(Kind::LCurly);
         let body = if expression {
             let expr = self.parse_assignment_expression_base()?;
-            let node = expr.node();
-            let expr_stmt = self.ast.expression_statement(node, expr);
-            self.ast.function_body(node, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
+            let span = expr.span();
+            let expr_stmt = self.ast.expression_statement(span, expr);
+            self.ast.function_body(span, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
         } else {
             self.parse_function_body()?
         };
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
         Ok(self.ast.arrow_expression(
-            self.end_node(node),
+            self.end_span(span),
             expression,
             false,
             r#async,
@@ -264,8 +264,8 @@ impl<'a> Parser<'a> {
         r#async: bool,
         generator: bool,
     ) -> Result<Box<'a, Function<'a>>> {
-        let node = self.start_node();
-        self.parse_function(node, None, r#async, generator, FunctionKind::Expression)
+        let span = self.start_span();
+        self.parse_function(span, None, r#async, generator, FunctionKind::Expression)
     }
 
     /// Section 15.5 Yield Expression
@@ -273,7 +273,7 @@ impl<'a> Parser<'a> {
     /// yield [no `LineTerminator` here] `AssignmentExpression`
     /// yield [no `LineTerminator` here] * `AssignmentExpression`
     pub fn parse_yield_expression(&mut self) -> Result<Expression<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // advance `yield`
 
         let mut delegate = false;
@@ -299,7 +299,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(self.ast.yield_expression(self.end_node(node), delegate, argument))
+        Ok(self.ast.yield_expression(self.end_span(span), delegate, argument))
     }
 
     // id: None - for AnonymousDefaultExportedFunctionDeclaration
@@ -314,13 +314,13 @@ impl<'a> Parser<'a> {
             self.ctx = self.ctx.and_await(r#async).and_yield(generator);
         }
         let id = self.cur_kind().is_binding_identifier().then(|| {
-            let (node, name) = self.parse_identifier_kind(Kind::Ident);
-            BindingIdentifier { node, name }
+            let (span, name) = self.parse_identifier_kind(Kind::Ident);
+            BindingIdentifier { span, name }
         });
         self.ctx = ctx;
 
         if kind.is_id_required() && id.is_none() {
-            self.error(Diagnostic::ExpectFunctionName(self.cur_token().node()));
+            self.error(Diagnostic::ExpectFunctionName(self.cur_token().span()));
         }
 
         id
@@ -418,7 +418,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_parenthesized_arrow_function_head(&mut self) -> Result<ArrowFunctionHead<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let r#async = self.eat(Kind::Async);
 
         let has_await = self.ctx.has_await();
@@ -433,12 +433,12 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.and_await(has_await);
 
         if self.cur_token().is_on_new_line {
-            self.error(Diagnostic::LineterminatorBeforeArrow(self.cur_token().node()));
+            self.error(Diagnostic::LineterminatorBeforeArrow(self.cur_token().span()));
         }
 
         self.expect(Kind::Arrow)?;
 
-        Ok((type_parameters, params, return_type, r#async, node))
+        Ok((type_parameters, params, return_type, r#async, span))
     }
 
     /// [`ConciseBody`](https://tc39.es/ecma262/#prod-ConciseBody)
@@ -448,7 +448,7 @@ impl<'a> Parser<'a> {
     ///     `AssignmentExpression`[?In, ~Yield, ?Await]
     pub fn parse_arrow_function_body(
         &mut self,
-        node: Node,
+        span: Span,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Option<TSTypeAnnotation<'a>>,
@@ -461,9 +461,9 @@ impl<'a> Parser<'a> {
         let expression = !self.at(Kind::LCurly);
         let body = if expression {
             let expr = self.parse_assignment_expression_base()?;
-            let node = expr.node();
-            let expr_stmt = self.ast.expression_statement(node, expr);
-            self.ast.function_body(node, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
+            let span = expr.span();
+            let expr_stmt = self.ast.expression_statement(span, expr);
+            self.ast.function_body(span, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
         } else {
             self.parse_function_body()?
         };
@@ -471,7 +471,7 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
         Ok(self.ast.arrow_expression(
-            self.end_node(node),
+            self.end_span(span),
             expression,
             false,
             r#async,
@@ -486,8 +486,8 @@ impl<'a> Parser<'a> {
     /// `ArrowFunction`[In, Yield, Await] :
     ///     `ArrowParameters`[?Yield, ?Await] [no `LineTerminator` here] => `ConciseBody`[?In]
     pub fn parse_parenthesized_arrow_function(&mut self) -> Result<Expression<'a>> {
-        let (type_parameters, params, return_type, r#async, node) =
+        let (type_parameters, params, return_type, r#async, span) =
             self.parse_parenthesized_arrow_function_head()?;
-        self.parse_arrow_function_body(node, type_parameters, params, return_type, r#async)
+        self.parse_arrow_function_body(span, type_parameters, params, return_type, r#async)
     }
 }

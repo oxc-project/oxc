@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, context::Context, Node};
+use oxc_ast::{ast::*, context::Context, Span};
 use oxc_diagnostics::{Diagnostic, Result};
 
 use super::function::FunctionKind;
@@ -11,7 +11,7 @@ use crate::Parser;
 impl<'a> Parser<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
     /// `ImportCall` : import ( `AssignmentExpression` )
-    pub fn parse_import_expression(&mut self, node: Node) -> Result<Expression<'a>> {
+    pub fn parse_import_expression(&mut self, span: Span) -> Result<Expression<'a>> {
         self.bump_any(); // advance '('
 
         let has_in = self.ctx.has_in();
@@ -27,12 +27,12 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.and_in(has_in);
         self.bump(Kind::Comma);
         self.expect(Kind::RParen)?;
-        Ok(self.ast.import_expression(self.end_node(node), expression, arguments))
+        Ok(self.ast.import_expression(self.end_span(span), expression, arguments))
     }
 
     /// Section 16.2.2 Import Declaration
     pub fn parse_import_declaration(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
 
         self.bump_any(); // advance `import`
 
@@ -42,7 +42,7 @@ impl<'a> Parser<'a> {
                     && self.peek_kind().is_binding_identifier()
                     && self.nth_at(2, Kind::Eq)))
         {
-            let decl = self.parse_ts_import_equals_declaration(node, false)?;
+            let decl = self.parse_ts_import_equals_declaration(span, false)?;
             return Ok(Statement::Declaration(decl));
         }
 
@@ -60,7 +60,7 @@ impl<'a> Parser<'a> {
         let assertions = self.parse_import_attributes()?;
         self.asi()?;
 
-        let node = self.end_node(node);
+        let span = self.end_span(span);
         let kind = ModuleDeclarationKind::ImportDeclaration(self.ast.import_declaration(
             specifiers,
             source,
@@ -68,7 +68,7 @@ impl<'a> Parser<'a> {
             import_kind,
         ));
 
-        Ok(self.ast.module_declaration(node, kind))
+        Ok(self.ast.module_declaration(span, kind))
     }
 
     // Full Syntax:
@@ -107,22 +107,22 @@ impl<'a> Parser<'a> {
 
     // import default from "module-name"
     fn parse_import_default_specifier(&mut self) -> Result<ImportDeclarationSpecifier> {
-        let node = self.start_node();
+        let span = self.start_span();
         let local = self.parse_binding_identifier()?;
         Ok(ImportDeclarationSpecifier::ImportDefaultSpecifier(ImportDefaultSpecifier {
-            node: self.end_node(node),
+            span: self.end_span(span),
             local,
         }))
     }
 
     // import * as name from "module-name"
     fn parse_import_namespace_specifier(&mut self) -> Result<ImportDeclarationSpecifier> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // advance `*`
         self.expect(Kind::As)?;
         let local = self.parse_binding_identifier()?;
         Ok(ImportDeclarationSpecifier::ImportNamespaceSpecifier(ImportNamespaceSpecifier {
-            node: self.end_node(node),
+            span: self.end_span(span),
             local,
         }))
     }
@@ -169,30 +169,30 @@ impl<'a> Parser<'a> {
     pub fn parse_ts_export_assignment_declaration(
         &mut self,
     ) -> Result<Box<'a, TSExportAssignment<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.expect(Kind::Eq)?;
 
         let expression = self.parse_assignment_expression_base()?;
         self.asi()?;
 
-        Ok(self.ast.alloc(TSExportAssignment { node: self.end_node(node), expression }))
+        Ok(self.ast.alloc(TSExportAssignment { span: self.end_span(span), expression }))
     }
 
     pub fn parse_ts_export_namespace(&mut self) -> Result<Box<'a, TSNamespaceExportDeclaration>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.expect(Kind::As)?;
         self.expect(Kind::Namespace)?;
 
         let id = self.parse_identifier_name()?;
         self.asi()?;
 
-        Ok(self.ast.alloc(TSNamespaceExportDeclaration { node: self.end_node(node), id }))
+        Ok(self.ast.alloc(TSNamespaceExportDeclaration { span: self.end_span(span), id }))
     }
 
     /// Exports
     /// `https://tc39.es/ecma262/#sec-exports`
     pub fn parse_export_declaration(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // advance `export`
 
         let kind = match self.cur_kind() {
@@ -218,7 +218,7 @@ impl<'a> Parser<'a> {
                 .parse_export_named_declaration()
                 .map(ModuleDeclarationKind::ExportNamedDeclaration),
         }?;
-        Ok(self.ast.module_declaration(self.end_node(node), kind))
+        Ok(self.ast.module_declaration(self.end_span(span), kind))
     }
 
     // export NamedExports ;
@@ -255,7 +255,7 @@ impl<'a> Parser<'a> {
                     self.error(Diagnostic::ExportNamedString(
                         literal.value.clone(),
                         specifier.local.name().clone(),
-                        literal.node,
+                        literal.span,
                     ));
                 }
             }
@@ -290,7 +290,7 @@ impl<'a> Parser<'a> {
                 && !self.peek_token().is_on_new_line
                 && self.ts_enabled() =>
             {
-                self.parse_ts_interface_declaration(false, self.start_node()).map(
+                self.parse_ts_interface_declaration(false, self.start_span()).map(
                     |decl| match decl {
                         Declaration::TSInterfaceDeclaration(decl) => {
                             ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
@@ -300,7 +300,7 @@ impl<'a> Parser<'a> {
                 )?
             }
             _ if self.at(Kind::Enum) && self.ts_enabled() => {
-                self.parse_ts_enum_declaration(false, self.start_node()).map(|decl| match decl {
+                self.parse_ts_enum_declaration(false, self.start_span()).map(|decl| match decl {
                     Declaration::TSEnumDeclaration(decl) => {
                         ExportDefaultDeclarationKind::TSEnumDeclaration(decl)
                     }
@@ -341,7 +341,7 @@ impl<'a> Parser<'a> {
     //   ImportedBinding
     //   ModuleExportName as ImportedBinding
     fn parse_import_specifier(&mut self) -> Result<ImportSpecifier> {
-        let specifier_node = self.start_node();
+        let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
         if self.ts_enabled() && self.at(Kind::Type) {
@@ -368,10 +368,10 @@ impl<'a> Parser<'a> {
             (imported, local)
         } else {
             let local = self.parse_binding_identifier()?;
-            let imported = IdentifierName { node: local.node, name: local.name.clone() };
+            let imported = IdentifierName { span: local.span, name: local.name.clone() };
             (ModuleExportName::Identifier(imported), local)
         };
-        Ok(ImportSpecifier { node: self.end_node(specifier_node), imported, local })
+        Ok(ImportSpecifier { span: self.end_span(specifier_span), imported, local })
     }
 
     // ModuleExportName :
@@ -384,7 +384,7 @@ impl<'a> Parser<'a> {
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 if !literal.is_string_well_formed_unicode() {
-                    self.error(Diagnostic::ExportLoneSurrogate(literal.node));
+                    self.error(Diagnostic::ExportLoneSurrogate(literal.span));
                 };
                 Ok(ModuleExportName::StringLiteral(literal))
             }

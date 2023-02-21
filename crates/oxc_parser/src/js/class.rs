@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, context::StatementContext, syntax_directed_operations::PropName, Node};
+use oxc_ast::{ast::*, context::StatementContext, syntax_directed_operations::PropName, Span};
 use oxc_diagnostics::{Diagnostic, Result};
 
 use super::list::ClassElements;
@@ -8,7 +8,7 @@ use crate::list::NormalList;
 use crate::Parser;
 
 type Extends<'a> =
-    Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Node)>;
+    Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
 
 type Implements<'a> = Vec<'a, Box<'a, TSClassImplements<'a>>>;
 
@@ -18,9 +18,9 @@ impl<'a> Parser<'a> {
         let decl = self.parse_class_declaration(/* declare */ false)?;
 
         if stmt_ctx.is_single_statement() {
-            self.error(Diagnostic::ClassDeclaration(Node::new(
-                decl.node.start,
-                decl.body.node.start,
+            self.error(Diagnostic::ClassDeclaration(Span::new(
+                decl.span.start,
+                decl.body.span.start,
             )));
         }
 
@@ -41,7 +41,7 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_class(&mut self, declare: bool, r#type: ClassType) -> Result<Box<'a, Class<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
 
         let r#abstract = self.eat(Kind::Abstract);
 
@@ -71,7 +71,7 @@ impl<'a> Parser<'a> {
 
         Ok(self.ast.class(
             r#type,
-            self.end_node(node),
+            self.end_span(span),
             id,
             super_class,
             body,
@@ -111,7 +111,7 @@ impl<'a> Parser<'a> {
         self.bump_any(); // bump `extends`
         let mut extends = self.ast.new_vec();
 
-        let node = self.start_node();
+        let span = self.start_span();
         let mut first_extends = self.parse_lhs_expression()?;
         let first_type_argument;
         if let Expression::TSInstantiationExpression(expr) = first_extends {
@@ -121,10 +121,10 @@ impl<'a> Parser<'a> {
         } else {
             first_type_argument = self.parse_ts_type_arguments()?;
         }
-        extends.push((first_extends, first_type_argument, self.end_node(node)));
+        extends.push((first_extends, first_type_argument, self.end_span(span)));
 
         while self.eat(Kind::Comma) {
-            let node = self.start_node();
+            let span = self.start_span();
             let mut extend = self.parse_lhs_expression()?;
             let type_argument;
             if let Expression::TSInstantiationExpression(expr) = extend {
@@ -135,25 +135,25 @@ impl<'a> Parser<'a> {
                 type_argument = self.parse_ts_type_arguments()?;
             }
 
-            extends.push((extend, type_argument, self.end_node(node)));
+            extends.push((extend, type_argument, self.end_span(span)));
         }
 
         Ok(extends)
     }
 
     fn parse_class_body(&mut self) -> Result<ClassBody<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
 
         let mut class_elements = ClassElements::new(self);
         class_elements.parse(self)?;
         let body = class_elements.elements;
 
-        Ok(ClassBody { node: self.end_node(node), body })
+        Ok(ClassBody { span: self.end_span(span), body })
     }
 
     #[allow(clippy::too_many_lines)]
     pub fn parse_class_element(&mut self) -> Result<ClassElement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
 
         self.eat_decorators()?;
 
@@ -179,7 +179,7 @@ impl<'a> Parser<'a> {
             // static { block }
             if self.peek_at(Kind::LCurly) {
                 self.bump(Kind::Static);
-                return self.parse_class_static_block(node);
+                return self.parse_class_static_block(span);
             }
 
             // static ...
@@ -241,19 +241,19 @@ impl<'a> Parser<'a> {
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             if private_ident.name == "constructor" {
-                self.error(Diagnostic::PrivateNameConstructor(private_ident.node));
+                self.error(Diagnostic::PrivateNameConstructor(private_ident.span));
             }
         }
 
         if accessor {
-            return self.parse_class_accessor_property(node, key, computed, r#static);
+            return self.parse_class_accessor_property(span, key, computed, r#static);
         }
 
         // LAngle for start of type parameters `foo<T>`
         //                                         ^
         if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
             let definition = self.parse_class_method_definition(
-                node,
+                span,
                 kind,
                 key,
                 computed,
@@ -265,26 +265,26 @@ impl<'a> Parser<'a> {
                 accessibility,
                 optional,
             )?;
-            if let Some((name, node)) = definition.prop_name() {
+            if let Some((name, span)) = definition.prop_name() {
                 if r#static && name == "prototype" {
-                    self.error(Diagnostic::StaticPrototype(node));
+                    self.error(Diagnostic::StaticPrototype(span));
                 }
                 if !r#static && name == "constructor" {
                     if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
-                        self.error(Diagnostic::ConstructorGetterSetter(node));
+                        self.error(Diagnostic::ConstructorGetterSetter(span));
                     }
                     if r#async {
-                        self.error(Diagnostic::ConstructorAsync(node));
+                        self.error(Diagnostic::ConstructorAsync(span));
                     }
                     if generator {
-                        self.error(Diagnostic::ConstructorGenerator(node));
+                        self.error(Diagnostic::ConstructorGenerator(span));
                     }
                 }
             }
             Ok(definition)
         } else {
             let definition = self.parse_class_property_definition(
-                node,
+                span,
                 key,
                 computed,
                 r#static,
@@ -296,12 +296,12 @@ impl<'a> Parser<'a> {
                 optional,
                 definite,
             )?;
-            if let Some((name, node)) = definition.prop_name() {
+            if let Some((name, span)) = definition.prop_name() {
                 if name == "constructor" {
-                    self.error(Diagnostic::FieldConstructor(node));
+                    self.error(Diagnostic::FieldConstructor(span));
                 }
                 if r#static && name == "prototype" {
-                    self.error(Diagnostic::StaticPrototype(node));
+                    self.error(Diagnostic::StaticPrototype(span));
                 }
             }
             Ok(definition)
@@ -321,7 +321,7 @@ impl<'a> Parser<'a> {
     #[allow(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
     fn parse_class_method_definition(
         &mut self,
-        node: Node,
+        span: Span,
         kind: MethodDefinitionKind,
         key: PropertyKey<'a>,
         computed: bool,
@@ -347,23 +347,23 @@ impl<'a> Parser<'a> {
         let value = self.parse_method(r#async, generator)?;
 
         if kind == MethodDefinitionKind::Get && !value.params.is_empty() {
-            self.error(Diagnostic::GetterParameters(value.params.node));
+            self.error(Diagnostic::GetterParameters(value.params.span));
         }
 
         if kind == MethodDefinitionKind::Set {
             if value.params.items.len() != 1 {
-                self.error(Diagnostic::SetterParameters(value.params.node));
+                self.error(Diagnostic::SetterParameters(value.params.span));
             }
 
             if value.params.items.len() == 1 {
                 if let BindingPatternKind::RestElement(elem) = &value.params.items[0].pattern.kind {
-                    self.error(Diagnostic::SetterParametersRestPattern(elem.node));
+                    self.error(Diagnostic::SetterParametersRestPattern(elem.span));
                 }
             }
         }
 
         let method_definition = MethodDefinition {
-            node: self.end_node(node),
+            span: self.end_span(span),
             key,
             value,
             kind,
@@ -388,7 +388,7 @@ impl<'a> Parser<'a> {
     #[allow(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
     fn parse_class_property_definition(
         &mut self,
-        node: Node,
+        span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         r#static: bool,
@@ -414,7 +414,7 @@ impl<'a> Parser<'a> {
         self.asi()?;
 
         let property_definition = PropertyDefinition {
-            node: self.end_node(node),
+            span: self.end_span(span),
             key,
             value,
             computed,
@@ -440,26 +440,26 @@ impl<'a> Parser<'a> {
 
     /// `ClassStaticBlockStatementList` :
     ///    `StatementList`[~Yield, +Await, ~Return]
-    fn parse_class_static_block(&mut self, node: Node) -> Result<ClassElement<'a>> {
+    fn parse_class_static_block(&mut self, span: Span) -> Result<ClassElement<'a>> {
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
         let has_return = self.ctx.has_return();
         self.ctx = self.ctx.and_await(true).and_yield(false).and_return(false);
         let block = self.parse_block()?;
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield).and_return(has_return);
-        Ok(self.ast.static_block(self.end_node(node), block.unbox().body))
+        Ok(self.ast.static_block(self.end_span(span), block.unbox().body))
     }
 
     /// `https://github.com/tc39/proposal-decorators`
     fn parse_class_accessor_property(
         &mut self,
-        node: Node,
+        span: Span,
         key: PropertyKey<'a>,
         computed: bool,
         r#static: bool,
     ) -> Result<ClassElement<'a>> {
         let value =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_base()).transpose()?;
-        Ok(self.ast.accessor_property(self.end_node(node), key, value, computed, r#static))
+        Ok(self.ast.accessor_property(self.end_span(span), key, value, computed, r#static))
     }
 }

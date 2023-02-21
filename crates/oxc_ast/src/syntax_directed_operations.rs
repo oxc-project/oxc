@@ -1,7 +1,7 @@
 //! [Syntax-Directed Operations](https://tc39.es/ecma262/#sec-syntax-directed-operations)
 
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, Node};
+use crate::{ast::*, Span};
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
 pub trait BoundName {
@@ -175,11 +175,11 @@ impl<'a> IsSimpleParameterList for FormalParameters<'a> {
 
 /// [`PropName`](https://tc39.es/ecma262/#sec-static-semantics-propname)
 pub trait PropName {
-    fn prop_name(&self) -> Option<(&str, Node)>;
+    fn prop_name(&self) -> Option<(&str, Span)>;
 }
 
 impl<'a> PropName for ObjectProperty<'a> {
-    fn prop_name(&self) -> Option<(&str, Node)> {
+    fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             ObjectProperty::Property(prop) => prop.prop_name(),
             ObjectProperty::SpreadProperty(_) => None,
@@ -188,7 +188,7 @@ impl<'a> PropName for ObjectProperty<'a> {
 }
 
 impl<'a> PropName for Property<'a> {
-    fn prop_name(&self) -> Option<(&str, Node)> {
+    fn prop_name(&self) -> Option<(&str, Span)> {
         if self.kind != PropertyKind::Init || self.method || self.shorthand || self.computed {
             return None;
         }
@@ -197,13 +197,13 @@ impl<'a> PropName for Property<'a> {
 }
 
 impl<'a> PropName for PropertyKey<'a> {
-    fn prop_name(&self) -> Option<(&str, Node)> {
+    fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
-            PropertyKey::Identifier(ident) => Some((&ident.name, ident.node)),
+            PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
             PropertyKey::PrivateIdentifier(_) => None,
             PropertyKey::Expression(expr) => match &expr {
-                Expression::Identifier(ident) => Some((&ident.name, ident.node)),
-                Expression::StringLiteral(lit) => Some((&lit.value, lit.node)),
+                Expression::Identifier(ident) => Some((&ident.name, ident.span)),
+                Expression::StringLiteral(lit) => Some((&lit.value, lit.span)),
                 _ => None,
             },
         }
@@ -211,7 +211,7 @@ impl<'a> PropName for PropertyKey<'a> {
 }
 
 impl<'a> PropName for ClassElement<'a> {
-    fn prop_name(&self) -> Option<(&str, Node)> {
+    fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
             ClassElement::MethodDefinition(def) => def.prop_name(),
             ClassElement::TSAbstractMethodDefinition(def) => def.method_definition.prop_name(),
@@ -223,7 +223,7 @@ impl<'a> PropName for ClassElement<'a> {
 }
 
 impl<'a> PropName for MethodDefinition<'a> {
-    fn prop_name(&self) -> Option<(&str, Node)> {
+    fn prop_name(&self) -> Option<(&str, Span)> {
         if self.computed {
             return None;
         }
@@ -232,7 +232,7 @@ impl<'a> PropName for MethodDefinition<'a> {
 }
 
 impl<'a> PropName for PropertyDefinition<'a> {
-    fn prop_name(&self) -> Option<(&str, Node)> {
+    fn prop_name(&self) -> Option<(&str, Span)> {
         if self.computed {
             return None;
         }
