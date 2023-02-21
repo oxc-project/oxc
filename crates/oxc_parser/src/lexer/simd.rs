@@ -257,7 +257,7 @@ impl<'a> SkipSinglineComment<'a> {
 
         let advance_by = newline_mask.trailing_zeros() as usize;
 
-        let mut chunk_offset = if advance_by < ELEMENTS {
+        let chunk_offset = if advance_by < ELEMENTS {
             self.found = true;
             advance_by
         } else {
@@ -265,25 +265,25 @@ impl<'a> SkipSinglineComment<'a> {
         };
 
         // Look for LS '\u{2028}' [226, 128, 168] and PS '\u{2029}' [226, 128, 169]
-        if !self.found {
-            let lspf_mask = s.simd_eq(self.lsps).to_bitmask();
-            if lspf_mask > 0 {
-                let offset_by = lspf_mask.trailing_zeros() as usize;
-                if offset_by < chunk_offset {
-                    let second = self.offset + offset_by + 1;
-                    // Using scalar version `.get` instead of simd
-                    // to avoid checking on the next chunk
-                    // because this may be on the chunk boundary
-                    if self.remaining.get(second) == Some(&128) {
-                        let third = self.remaining.get(second + 1);
-                        if matches!(third, Some(&168 | &169)) {
-                            self.found = true;
-                            chunk_offset = offset_by;
-                        }
-                    }
-                }
-            }
-        }
+        // if !self.found {
+        // let lspf_mask = s.simd_eq(self.lsps).to_bitmask();
+        // if lspf_mask > 0 {
+        // let offset_by = lspf_mask.trailing_zeros() as usize;
+        // if offset_by < chunk_offset {
+        // let second = self.offset + offset_by + 1;
+        // // Using scalar version `.get` instead of simd
+        // // to avoid checking on the next chunk
+        // // because this may be on the chunk boundary
+        // if self.remaining.get(second) == Some(&128) {
+        // let third = self.remaining.get(second + 1);
+        // if matches!(third, Some(&168 | &169)) {
+        // self.found = true;
+        // chunk_offset = offset_by;
+        // }
+        // }
+        // }
+        // }
+        // }
 
         self.offset += chunk_offset;
     }
