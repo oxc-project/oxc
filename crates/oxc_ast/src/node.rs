@@ -6,7 +6,7 @@ use std::{
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, context::Context};
+use crate::ast::*;
 
 pub type Span = Range<usize>;
 
@@ -14,15 +14,13 @@ pub type Span = Range<usize>;
 pub struct Node {
     pub start: usize,
     pub end: usize,
-    #[serde(skip)]
-    pub ctx: Context,
 }
 
 impl Node {
     #[must_use]
     #[inline]
-    pub const fn new(start: usize, end: usize, ctx: Context) -> Self {
-        Self { start, end, ctx }
+    pub const fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
     }
 
     #[must_use]
