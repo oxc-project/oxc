@@ -101,56 +101,67 @@ impl Context {
     }
 
     #[must_use]
+    #[inline]
     pub const fn union_await_if(self, include: bool) -> Self {
         self.union_if(Self::Await, include)
     }
 
     #[must_use]
+    #[inline]
     pub const fn union_yield_if(self, include: bool) -> Self {
         self.union_if(Self::Yield, include)
     }
 
     #[must_use]
+    #[inline]
     const fn union_if(self, other: Self, include: bool) -> Self {
         if include { self.union(other) } else { self }
     }
 
     #[must_use]
+    #[inline]
     pub fn and_in(self, include: bool) -> Self {
         self.and(Self::In, include)
     }
 
     #[must_use]
+    #[inline]
     pub fn and_yield(self, include: bool) -> Self {
         self.and(Self::Yield, include)
     }
 
     #[must_use]
+    #[inline]
     pub fn and_await(self, include: bool) -> Self {
         self.and(Self::Await, include)
     }
 
     #[must_use]
+    #[inline]
     pub fn and_return(self, include: bool) -> Self {
         self.and(Self::Return, include)
     }
 
     #[must_use]
+    #[inline]
     pub fn and_disallow_conditional_types(self, include: bool) -> Self {
         self.and(Self::DisallowConditionalTypes, include)
     }
 
     #[must_use]
+    #[inline]
     pub fn and_ambient(self, include: bool) -> Self {
         self.and(Self::Ambient, include)
     }
 
     #[must_use]
+    #[inline]
     pub fn and_decorator(self, include: bool) -> Self {
         self.and(Self::Decorator, include)
     }
 
     #[must_use]
+    #[inline]
     fn and(self, flag: Self, set: bool) -> Self {
         if set { self | flag } else { self - flag }
     }
