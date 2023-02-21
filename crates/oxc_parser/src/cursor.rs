@@ -17,7 +17,7 @@ impl<'a> Parser<'a> {
     #[must_use]
     pub const fn start_node(&self) -> Node {
         let token = self.cur_token();
-        Node::new(token.start, 0, self.ctx)
+        Node::new(token.start, 0)
     }
 
     #[must_use]

@@ -109,7 +109,7 @@ impl<'a> Parser<'a> {
         let (directives, statements) =
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
-        let node = Node::new(0, self.source.len(), self.ctx);
+        let node = Node::new(0, self.source.len());
         Ok(self.ast.program(node, directives, statements, self.source_type))
     }
 
