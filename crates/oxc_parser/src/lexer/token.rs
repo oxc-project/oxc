@@ -1,7 +1,7 @@
 //! Token
 
 use num_bigint::BigUint;
-use oxc_ast::{Atom, Node};
+use oxc_ast::{ast::RegExpFlags, Atom, Node};
 
 use super::kind::Kind;
 
@@ -25,6 +25,13 @@ pub struct Token {
     pub value: TokenValue,
 }
 
+#[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
+#[test]
+fn no_bloat_token() {
+    use std::mem::size_of;
+    assert_eq!(size_of::<Token>(), 56);
+}
+
 impl Token {
     #[must_use]
     pub const fn node(&self) -> Node {
@@ -44,7 +51,7 @@ pub enum TokenValue {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RegExp {
     pub pattern: Atom,
-    pub flags: Atom,
+    pub flags: RegExpFlags,
 }
 
 impl Default for TokenValue {

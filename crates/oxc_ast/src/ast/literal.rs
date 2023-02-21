@@ -5,6 +5,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
+use bitflags::bitflags;
 use num_bigint::BigUint;
 use ordered_float::NotNan;
 use serde::{
@@ -110,12 +111,65 @@ pub struct RegExpLiteral {
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 pub struct RegExp {
     pub pattern: Atom,
-    pub flags: Atom,
+    pub flags: RegExpFlags,
 }
 
 impl fmt::Display for RegExp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "/{}/{}", self.pattern, self.flags)
+    }
+}
+
+bitflags! {
+    pub struct RegExpFlags: u8 {
+        const G = 1 << 0;
+        const I = 1 << 1;
+        const M = 1 << 2;
+        const S = 1 << 3;
+        const U = 1 << 4;
+        const Y = 1 << 5;
+        const D = 1 << 6;
+        /// v flag from `https://github.com/tc39/proposal-regexp-set-notation`
+        const V = 1 << 7;
+    }
+}
+
+impl fmt::Display for RegExpFlags {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.contains(Self::G) {
+            write!(f, "g")?;
+        }
+        if self.contains(Self::I) {
+            write!(f, "i")?;
+        }
+        if self.contains(Self::M) {
+            write!(f, "m")?;
+        }
+        if self.contains(Self::S) {
+            write!(f, "s")?;
+        }
+        if self.contains(Self::U) {
+            write!(f, "u")?;
+        }
+        if self.contains(Self::Y) {
+            write!(f, "y")?;
+        }
+        if self.contains(Self::D) {
+            write!(f, "d")?;
+        }
+        if self.contains(Self::V) {
+            write!(f, "v")?;
+        }
+        Ok(())
+    }
+}
+
+impl Serialize for RegExpFlags {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }
 
