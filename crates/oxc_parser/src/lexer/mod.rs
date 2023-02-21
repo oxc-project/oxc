@@ -84,7 +84,7 @@ impl<'a> Lexer<'a> {
             source_type,
             current,
             errors,
-            lookahead: VecDeque::new(),
+            lookahead: VecDeque::with_capacity(4),
             context: LexerContext::Regular,
         }
     }
@@ -499,7 +499,7 @@ impl<'a> Lexer<'a> {
     fn skip_multi_line_comment(&mut self) -> Kind {
         let remaining = self.remaining().as_bytes();
         let newline = self.current.token.is_on_new_line;
-        let state = SkipMultilineComment::new(newline, remaining).simd(remaining);
+        let state = SkipMultilineComment::new(newline, remaining).simd();
 
         // SAFETY: offset is computed to the boundary
         self.current.chars =

@@ -106,7 +106,7 @@ impl<'a> Parser<'a> {
 
         let return_type = self.parse_ts_return_type_annotation()?;
 
-        let body = self.at(Kind::LCurly).then(|| self.parse_function_body()).transpose()?;
+        let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()?) } else { None };
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
