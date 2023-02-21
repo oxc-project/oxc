@@ -1,6 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_ast::{context::Context, Atom, Node};
+use oxc_ast::{context::Context, Atom, Span};
 use oxc_diagnostics::{Diagnostic, Result};
 
 use crate::lexer::{Kind, LexerCheckpoint, LexerContext, Token};
@@ -9,22 +9,22 @@ use crate::Parser;
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
-    prev_node_end: u32,
+    prev_span_end: u32,
     errors_pos: usize,
 }
 
 impl<'a> Parser<'a> {
     #[must_use]
-    pub const fn start_node(&self) -> Node {
+    pub const fn start_span(&self) -> Span {
         let token = self.cur_token();
-        Node::new(token.start, 0)
+        Span::new(token.start, 0)
     }
 
     #[must_use]
-    pub const fn end_node(&self, node: Node) -> Node {
-        let mut node = node;
-        node.end = self.prev_token_end;
-        node
+    pub const fn end_span(&self, span: Span) -> Span {
+        let mut span = span;
+        span.end = self.prev_token_end;
+        span
     }
 
     /// Get current token
@@ -42,7 +42,7 @@ impl<'a> Parser<'a> {
     /// Get current source text
     #[must_use]
     pub fn cur_src(&self) -> &'a str {
-        let range = self.cur_token().node().range();
+        let range = self.cur_token().span();
         unsafe { self.source.get_unchecked(range.start as usize..range.end as usize) }
     }
 
@@ -101,8 +101,8 @@ impl<'a> Parser<'a> {
         // in IdentifierName hence such escapes cannot be used to write an Identifier
         // whose code point sequence is the same as a ReservedWord.
         if self.cur_token().escaped && kind.is_all_keyword() {
-            let node = self.cur_token().node();
-            self.error(Diagnostic::EscapedKeyword(node));
+            let span = self.cur_token().span();
+            self.error(Diagnostic::EscapedKeyword(span));
         }
         self.prev_token_end = self.token.end;
         self.token = self.lexer.next_token();
@@ -140,8 +140,8 @@ impl<'a> Parser<'a> {
     /// # Errors
     pub fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
-            let node = Node::new(self.prev_token_end, self.cur_token().start);
-            return Err(Diagnostic::AutoSemicolonInsertion(node));
+            let span = Span::new(self.prev_token_end, self.cur_token().start);
+            return Err(Diagnostic::AutoSemicolonInsertion(span));
         }
         if self.at(Kind::Semicolon) {
             self.advance(Kind::Semicolon);
@@ -170,17 +170,17 @@ impl<'a> Parser<'a> {
     }
 
     #[must_use]
-    pub const fn current_range(&self) -> Node {
+    pub const fn current_range(&self) -> Span {
         let cur_token = self.cur_token();
         match self.cur_kind() {
             Kind::Eof => {
                 if self.prev_token_end < cur_token.end {
-                    Node::new(self.prev_token_end, self.prev_token_end)
+                    Span::new(self.prev_token_end, self.prev_token_end)
                 } else {
-                    Node::new(self.prev_token_end - 1, self.prev_token_end)
+                    Span::new(self.prev_token_end - 1, self.prev_token_end)
                 }
             }
-            _ => cur_token.node(),
+            _ => cur_token.span(),
         }
     }
 
@@ -255,18 +255,18 @@ impl<'a> Parser<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token.clone(),
-            prev_node_end: self.prev_token_end,
+            prev_span_end: self.prev_token_end,
             errors_pos: self.errors.borrow().len(),
         }
     }
 
     pub fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_node_end, errors_pos: errors_lens } =
+        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos: errors_lens } =
             checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
-        self.prev_token_end = prev_node_end;
+        self.prev_token_end = prev_span_end;
         self.errors.borrow_mut().truncate(errors_lens);
     }
 

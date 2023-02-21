@@ -15,7 +15,7 @@ mod ts;
 mod lexer;
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, context::Context, AstBuilder, Node, SourceType};
+use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span};
 use oxc_diagnostics::{Diagnostic, Diagnostics, Result};
 
 use crate::{
@@ -51,10 +51,10 @@ pub struct Parser<'a> {
     /// Parser state
     state: ParserState<'a>,
 
-    /// Parsing context saved into every AST node
+    /// Parsing context saved into every AST span
     ctx: Context,
 
-    /// Ast builder for creating AST nodes
+    /// Ast builder for creating AST spans
     ast: AstBuilder<'a>,
 }
 
@@ -91,7 +91,7 @@ impl<'a> Parser<'a> {
             Err(error) => {
                 self.error(self.flow_error().unwrap_or(error));
                 let program = self.ast.program(
-                    Node::default(),
+                    Span::default(),
                     self.ast.new_vec(),
                     self.ast.new_vec(),
                     self.source_type,
@@ -110,8 +110,8 @@ impl<'a> Parser<'a> {
         let (directives, statements) =
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
-        let node = Node::new(0, self.source.len() as u32);
-        Ok(self.ast.program(node, directives, statements, self.source_type))
+        let span = Span::new(0, self.source.len() as u32);
+        Ok(self.ast.program(span, directives, statements, self.source_type))
     }
 
     /// Check for Flow declaration if the file cannot be parsed.
@@ -120,7 +120,7 @@ impl<'a> Parser<'a> {
         if self.source_type.is_javascript()
             && (self.source.starts_with("// @flow") || self.source.starts_with("/* @flow */"))
         {
-            return Some(Diagnostic::Flow(Node::new(0, 8)));
+            return Some(Diagnostic::Flow(Span::new(0, 8)));
         }
         None
     }

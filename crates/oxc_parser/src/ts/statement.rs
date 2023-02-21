@@ -2,7 +2,7 @@ use oxc_allocator::Box;
 use oxc_ast::{
     ast::*,
     context::{Context, StatementContext},
-    Node,
+    Span,
 };
 use oxc_diagnostics::Result;
 
@@ -24,24 +24,24 @@ impl<'a> Parser<'a> {
     pub fn parse_ts_enum_declaration(
         &mut self,
         declare: bool,
-        node: Node,
+        span: Span,
     ) -> Result<Declaration<'a>> {
         let r#const = self.eat(Kind::Const);
         self.expect(Kind::Enum)?;
 
         let id = self.parse_binding_identifier()?;
         let members = TSEnumMemberList::parse(self)?.members;
-        Ok(self.ast.ts_enum_declaration(node, id, members, declare, r#const))
+        Ok(self.ast.ts_enum_declaration(span, id, members, declare, r#const))
     }
 
     pub fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let id = self.parse_ts_enum_member_name()?;
 
         let initializer =
             if self.eat(Kind::Eq) { Some(self.parse_assignment_expression_base()?) } else { None };
 
-        Ok(TSEnumMember { node: self.end_node(node), id, initializer })
+        Ok(TSEnumMember { span: self.end_span(span), id, initializer })
     }
 
     fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a>> {
@@ -61,10 +61,10 @@ impl<'a> Parser<'a> {
 
     pub fn parse_ts_type_annotation(&mut self) -> Result<Option<TSTypeAnnotation<'a>>> {
         if self.at(Kind::Colon) {
-            let node = self.start_node();
+            let span = self.start_span();
             self.bump_any(); // bump ':'
             let type_annotation = self.parse_ts_type()?;
-            Ok(Some(self.ast.ts_type_annotation(self.end_node(node), type_annotation)))
+            Ok(Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)))
         } else {
             Ok(None)
         }
@@ -79,12 +79,12 @@ impl<'a> Parser<'a> {
             return Ok((None, false));
         }
 
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump(Kind::Bang);
 
         if self.eat(Kind::Colon) {
             let type_annotation = self.parse_ts_type()?;
-            Ok((Some(self.ast.ts_type_annotation(self.end_node(node), type_annotation)), true))
+            Ok((Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)), true))
         } else {
             self.unexpected()
         }
@@ -93,7 +93,7 @@ impl<'a> Parser<'a> {
     pub fn parse_ts_type_alias_declaration(
         &mut self,
         declare: bool,
-        node: Node,
+        span: Span,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Type)?;
 
@@ -104,7 +104,7 @@ impl<'a> Parser<'a> {
         let annotation = self.parse_ts_type()?;
 
         self.asi()?;
-        Ok(self.ast.ts_type_alias_declaration(node, id, annotation, params, declare))
+        Ok(self.ast.ts_type_alias_declaration(span, id, annotation, params, declare))
     }
 
     /** ---------------------  Interface  ------------------------ */
@@ -112,7 +112,7 @@ impl<'a> Parser<'a> {
     pub fn parse_ts_interface_declaration(
         &mut self,
         declare: bool,
-        node: Node,
+        span: Span,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Interface)?; // bump interface
         let id = self.parse_binding_identifier()?;
@@ -121,7 +121,7 @@ impl<'a> Parser<'a> {
         let body = self.parse_ts_interface_body()?;
         let extends = extends.map(|e| self.ast.ts_interface_heritages(e));
         Ok(self.ast.ts_interface_declaration(
-            self.end_node(node),
+            self.end_span(span),
             id,
             body,
             type_parameters,
@@ -131,10 +131,10 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_ts_interface_body(&mut self) -> Result<Box<'a, TSInterfaceBody<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let mut body_list = TSInterfaceOrObjectBodyList::new(self);
         body_list.parse(self)?;
-        Ok(self.ast.ts_interface_body(self.end_node(node), body_list.body))
+        Ok(self.ast.ts_interface_body(self.end_span(span), body_list.body))
     }
 
     pub fn is_at_interface_declaration(&mut self) -> bool {
@@ -219,7 +219,7 @@ impl<'a> Parser<'a> {
     /** ----------------------- Namespace & Module ----------------------- */
 
     fn parse_ts_module_block(&mut self) -> Result<Box<'a, TSModuleBlock<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
 
         let mut statements = self.ast.new_vec();
 
@@ -232,7 +232,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(self.ast.ts_module_block(self.end_node(node), statements))
+        Ok(self.ast.ts_module_block(self.end_span(span), statements))
     }
 
     fn parse_ts_module_item(&mut self) -> Result<Statement<'a>> {
@@ -251,7 +251,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_ts_namespace_or_module_declaration_body(
         &mut self,
-        node: Node,
+        span: Span,
         declare: bool,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
         let id = match self.cur_kind() {
@@ -260,8 +260,8 @@ impl<'a> Parser<'a> {
         }?;
 
         let body = if self.eat(Kind::Dot) {
-            let node = self.start_node();
-            let decl = self.parse_ts_namespace_or_module_declaration_body(node, false)?;
+            let span = self.start_span();
+            let decl = self.parse_ts_namespace_or_module_declaration_body(span, false)?;
             TSModuleDeclarationBody::TSModuleDeclaration(decl)
         } else {
             let block = self.parse_ts_module_block()?;
@@ -269,21 +269,21 @@ impl<'a> Parser<'a> {
             TSModuleDeclarationBody::TSModuleBlock(block)
         };
 
-        Ok(self.ast.ts_module_declaration(self.end_node(node), id, body, declare))
+        Ok(self.ast.ts_module_declaration(self.end_span(span), id, body, declare))
     }
 
     pub fn parse_ts_namespace_or_module_declaration(
         &mut self,
         declare: bool,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.expect(Kind::Namespace).or_else(|_| self.expect(Kind::Module))?;
-        self.parse_ts_namespace_or_module_declaration_body(node, declare)
+        self.parse_ts_namespace_or_module_declaration_body(span, declare)
     }
 
     pub fn parse_ts_global_declaration(&mut self) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
-        let node = self.start_node();
-        self.parse_ts_namespace_or_module_declaration_body(node, false)
+        let span = self.start_span();
+        self.parse_ts_namespace_or_module_declaration_body(span, false)
     }
 
     pub fn parse_ts_namespace_or_module_statement(
@@ -368,7 +368,7 @@ impl<'a> Parser<'a> {
             self.ctx = self.ctx.and_ambient(true);
         }
 
-        let start_node = self.start_node();
+        let start_span = self.start_span();
 
         let result = match self.cur_kind() {
             Kind::Namespace | Kind::Module => self
@@ -378,25 +378,25 @@ impl<'a> Parser<'a> {
                 let decl = if self.peek_at(Kind::LCurly) {
                     // valid syntax for
                     // declare global { }
-                    self.parse_ts_namespace_or_module_declaration_body(start_node, declare)
+                    self.parse_ts_namespace_or_module_declaration_body(start_span, declare)
                 } else {
                     self.parse_ts_global_declaration()
                 }?;
                 Ok(Declaration::TSModuleDeclaration(decl))
             }
-            Kind::Type => self.parse_ts_type_alias_declaration(declare, start_node),
+            Kind::Type => self.parse_ts_type_alias_declaration(declare, start_span),
             Kind::Const | Kind::Enum if self.is_at_enum_declaration() => {
-                self.parse_ts_enum_declaration(declare, start_node)
+                self.parse_ts_enum_declaration(declare, start_span)
             }
             Kind::Interface if self.is_at_interface_declaration() => {
-                self.parse_ts_interface_declaration(declare, start_node)
+                self.parse_ts_interface_declaration(declare, start_span)
             }
             Kind::Class | Kind::Abstract => {
                 self.parse_class_declaration(declare).map(Declaration::ClassDeclaration)
             }
             Kind::Import => {
                 self.bump_any();
-                self.parse_ts_import_equals_declaration(start_node, true)
+                self.parse_ts_import_equals_declaration(start_span, true)
             }
             kind if kind.is_variable_declaration() => self
                 .parse_variable_declaration(VariableDeclarationContext::new(
@@ -419,28 +419,28 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_ts_declare_function(&mut self) -> Result<Box<'a, Function<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let r#async = self.eat(Kind::Async);
         self.expect(Kind::Function)?;
         let func_kind = FunctionKind::TSDeclaration;
         let id = self.parse_function_id(func_kind, r#async, false);
-        self.parse_function(node, id, r#async, false, func_kind)
+        self.parse_function(span, id, r#async, false, func_kind)
     }
 
     pub fn parse_ts_type_assertion(&mut self) -> Result<Expression<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.re_lex_ts_l_angle();
         self.expect(Kind::LAngle)?;
         let type_annotation = self.parse_ts_type()?;
         self.expect(Kind::RAngle)?;
-        let lhs_node = self.start_node();
-        let expression = self.parse_unary_expression_base(lhs_node)?;
-        Ok(self.ast.ts_type_assertion(self.end_node(node), type_annotation, expression))
+        let lhs_span = self.start_span();
+        let expression = self.parse_unary_expression_base(lhs_span)?;
+        Ok(self.ast.ts_type_assertion(self.end_span(span), type_annotation, expression))
     }
 
     pub fn parse_ts_import_equals_declaration(
         &mut self,
-        node: Node,
+        span: Span,
         is_export: bool,
     ) -> Result<Declaration<'a>> {
         let import_kind = if !self.peek_at(Kind::Eq) && self.eat(Kind::Type) {
@@ -453,13 +453,13 @@ impl<'a> Parser<'a> {
 
         self.expect(Kind::Eq)?;
 
-        let reference_node = self.start_node();
+        let reference_span = self.start_span();
         let module_reference = if self.eat(Kind::Require) {
             self.expect(Kind::LParen)?;
             let expression = self.parse_literal_string()?;
             self.expect(Kind::RParen)?;
             TSModuleReference::ExternalModuleReference(TSExternalModuleReference {
-                node: self.end_node(reference_node),
+                span: self.end_span(reference_span),
                 expression,
             })
         } else {
@@ -469,7 +469,7 @@ impl<'a> Parser<'a> {
         self.asi()?;
 
         Ok(self.ast.ts_import_equals_declaration(
-            self.end_node(node),
+            self.end_span(span),
             id,
             module_reference,
             is_export,
@@ -505,8 +505,8 @@ impl<'a> Parser<'a> {
 
     fn parse_decorator(&mut self) -> Result<Decorator<'a>> {
         self.bump_any(); // bump @
-        let node = self.start_node();
+        let span = self.start_span();
         let expr = self.with_context(Context::Decorator, Self::parse_lhs_expression)?;
-        Ok(self.ast.decorator(self.end_node(node), expr))
+        Ok(self.ast.decorator(self.end_span(span), expr))
     }
 }

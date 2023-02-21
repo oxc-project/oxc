@@ -2,13 +2,13 @@
 
 use serde::Serialize;
 
-use crate::{ast::TSType, Node};
+use crate::{ast::TSType, Span};
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSDocNullableType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub type_annotation: TSType<'a>,
     pub postfix: bool,
 }
@@ -17,5 +17,5 @@ pub struct JSDocNullableType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSDocUnknownType {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }

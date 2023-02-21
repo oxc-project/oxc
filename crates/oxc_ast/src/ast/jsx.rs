@@ -4,7 +4,7 @@ use oxc_allocator::{Box, Vec};
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, Atom, Node};
+use crate::{ast::*, Atom, Span};
 
 // 1.2 JSX Elements
 
@@ -15,7 +15,7 @@ use crate::{ast::*, Atom, Node};
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSXElement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub opening_element: Box<'a, JSXOpeningElement<'a>>,
     pub closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
     pub children: Vec<'a, JSXChild<'a>>,
@@ -27,7 +27,7 @@ pub struct JSXElement<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSXOpeningElement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub self_closing: bool,
     pub name: JSXElementName<'a>,
     pub attributes: Vec<'a, JSXAttributeItem<'a>>,
@@ -41,7 +41,7 @@ pub struct JSXOpeningElement<'a> {
 #[serde(tag = "type")]
 pub struct JSXClosingElement<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: JSXElementName<'a>,
 }
 
@@ -51,7 +51,7 @@ pub struct JSXClosingElement<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSXFragment<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub opening_fragment: JSXOpeningFragment,
     pub closing_fragment: JSXClosingFragment,
     pub children: Vec<'a, JSXChild<'a>>,
@@ -61,14 +61,14 @@ pub struct JSXFragment<'a> {
 #[serde(tag = "type")]
 pub struct JSXOpeningFragment {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct JSXClosingFragment {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 /// `JSXElementName` :
@@ -89,7 +89,7 @@ pub enum JSXElementName<'a> {
 #[serde(tag = "type")]
 pub struct JSXNamespacedName {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub namespace: JSXIdentifier,
     pub property: JSXIdentifier,
 }
@@ -101,7 +101,7 @@ pub struct JSXNamespacedName {
 #[serde(tag = "type")]
 pub struct JSXMemberExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub object: JSXMemberExpressionObject<'a>,
     pub property: JSXIdentifier,
 }
@@ -127,7 +127,7 @@ pub enum JSXMemberExpressionObject<'a> {
 #[serde(tag = "type")]
 pub struct JSXExpressionContainer<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: JSXExpression<'a>,
 }
 
@@ -142,7 +142,7 @@ pub enum JSXExpression<'a> {
 #[serde(tag = "type")]
 pub struct JSXEmptyExpression {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 // 1.3 JSX Attributes
@@ -163,7 +163,7 @@ pub enum JSXAttributeItem<'a> {
 #[serde(tag = "type")]
 pub struct JSXAttribute<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: JSXAttributeName<'a>,
     pub value: Option<JSXAttributeValue<'a>>,
 }
@@ -174,7 +174,7 @@ pub struct JSXAttribute<'a> {
 #[serde(tag = "type")]
 pub struct JSXSpreadAttribute<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub argument: Expression<'a>,
 }
 
@@ -207,7 +207,7 @@ pub enum JSXAttributeValue<'a> {
 #[serde(tag = "type")]
 pub struct JSXIdentifier {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: Atom,
 }
 
@@ -232,7 +232,7 @@ pub enum JSXChild<'a> {
 #[serde(tag = "type")]
 pub struct JSXSpreadChild<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: Expression<'a>,
 }
 
@@ -244,6 +244,6 @@ pub struct JSXSpreadChild<'a> {
 #[serde(tag = "type")]
 pub struct JSXText {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub value: Atom,
 }

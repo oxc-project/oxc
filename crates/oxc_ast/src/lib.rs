@@ -10,16 +10,16 @@ pub mod ast;
 pub mod ast_builder;
 pub mod ast_kind;
 pub mod context;
-pub mod node;
 pub mod source_type;
+pub mod span;
 pub mod syntax_directed_operations;
 pub mod visit;
 
 pub use num_bigint::BigUint;
 
 pub use crate::ast_builder::*;
-pub use crate::node::*;
 pub use crate::source_type::*;
+pub use crate::span::*;
 
 pub type Atom = compact_str::CompactString;
 

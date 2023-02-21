@@ -1,5 +1,5 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, syntax_directed_operations::PrivateBoundIdentifiers, Atom, GetNode, Node};
+use oxc_ast::{ast::*, syntax_directed_operations::PrivateBoundIdentifiers, Atom, GetSpan, Span};
 use oxc_diagnostics::{Diagnostic, Result};
 use rustc_hash::FxHashMap;
 
@@ -10,7 +10,7 @@ use crate::Parser;
 /// ObjectExpression.properties
 pub struct ObjectExpressionProperties<'a> {
     pub elements: Vec<'a, ObjectProperty<'a>>,
-    pub trailing_comma: Option<Node>,
+    pub trailing_comma: Option<Span>,
 }
 
 impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
@@ -33,7 +33,7 @@ impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
         }?;
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
-            self.trailing_comma = Some(p.end_node(p.start_node()));
+            self.trailing_comma = Some(p.end_span(p.start_span()));
         }
 
         self.elements.push(element);
@@ -65,7 +65,7 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
                 let rest_element = p.parse_rest_element()?;
 
                 if !matches!(rest_element.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
-                    p.error(Diagnostic::InvalidRestArgument(rest_element.node));
+                    p.error(Diagnostic::InvalidRestArgument(rest_element.span));
                 }
 
                 ObjectPatternProperty::RestElement(rest_element)
@@ -83,7 +83,7 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
 /// ArrayExpression.elements, with optional element
 pub struct ArrayExpressionList<'a> {
     pub elements: Vec<'a, Option<Argument<'a>>>,
-    pub trailing_comma: Option<Node>,
+    pub trailing_comma: Option<Span>,
 }
 
 impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
@@ -107,7 +107,7 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
         };
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
-            self.trailing_comma = Some(p.end_node(p.start_node()));
+            self.trailing_comma = Some(p.end_span(p.start_span()));
         }
 
         self.elements.push(element?);
@@ -149,7 +149,7 @@ impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
 /// Section 13.3 Arguments for `CallExpression`, `NewExpression`
 pub struct CallArguments<'a> {
     pub elements: Vec<'a, Argument<'a>>,
-    pub rest_element_with_trilling_comma: Option<Node>,
+    pub rest_element_with_trilling_comma: Option<Span>,
 }
 
 impl<'a> SeparatedList<'a> for CallArguments<'a> {
@@ -170,7 +170,7 @@ impl<'a> SeparatedList<'a> for CallArguments<'a> {
             let result = p.parse_spread_element().map(Argument::SpreadElement);
             if p.at(Kind::Comma) {
                 if let Ok(Argument::SpreadElement(argument)) = &result {
-                    self.rest_element_with_trilling_comma = Some(argument.node);
+                    self.rest_element_with_trilling_comma = Some(argument.span);
                 }
             }
             result
@@ -183,13 +183,13 @@ impl<'a> SeparatedList<'a> for CallArguments<'a> {
 }
 
 pub struct SequenceExpressionList<'a> {
-    pub node: Node,
+    pub span: Span,
     pub elements: Vec<'a, Expression<'a>>,
 }
 
 impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
     fn new(p: &Parser<'a>) -> Self {
-        Self { elements: p.ast.new_vec(), node: Node::default() }
+        Self { elements: p.ast.new_vec(), span: Span::default() }
     }
 
     fn open(&self) -> Kind {
@@ -201,11 +201,11 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
     }
 
     fn start_sequence(&mut self, p: &mut Parser) {
-        self.node = p.start_node();
+        self.span = p.start_span();
     }
 
     fn finish_sequence(&mut self, p: &mut Parser) {
-        self.node = p.end_node(self.node);
+        self.span = p.end_span(self.span);
     }
 
     // read everything as expression and map to it to either
@@ -237,7 +237,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
 
     // Section 15.1 Parameter Lists
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
-        let node = p.start_node();
+        let span = p.start_span();
         p.eat_decorators()?;
 
         let modifiers = p.parse_class_element_modifiers(true);
@@ -248,7 +248,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
             Kind::Dot3 => p.parse_rest_element().map(|rest| p.ast.rest_element_pattern(rest))?,
             Kind::This if p.ts_enabled() => {
                 p.parse_ts_this_parameter()?;
-                // don't add this to ast fow now, the ast node shouldn't be in BindingIdentifier
+                // don't add this to ast fow now, the ast span shouldn't be in BindingIdentifier
                 return Ok(());
             }
             _ => p.parse_binding_element()?,
@@ -256,7 +256,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
 
         let decorators = p.state.consume_decorators();
         let formal_parameter =
-            p.ast.formal_parameter(p.end_node(node), pattern, accessibility, readonly, decorators);
+            p.ast.formal_parameter(p.end_span(span), pattern, accessibility, readonly, decorators);
         self.elements.push(formal_parameter);
 
         Ok(())
@@ -267,7 +267,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
 /// `https://tc39.es/proposal-import-assertions`
 pub struct AssertEntries<'a> {
     pub elements: Vec<'a, ImportAttribute>,
-    keys: FxHashMap<Atom, Node>,
+    keys: FxHashMap<Atom, Span>,
 }
 
 impl<'a> SeparatedList<'a> for AssertEntries<'a> {
@@ -284,21 +284,21 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
     }
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
-        let node = p.start_node();
+        let span = p.start_span();
         let key = match p.cur_kind() {
             Kind::Str => ImportAttributeKey::StringLiteral(p.parse_literal_string()?),
             _ => ImportAttributeKey::Identifier(p.parse_identifier_name()?),
         };
 
-        if let Some(old_node) = self.keys.get(&key.as_atom()) {
-            p.error(Diagnostic::Redeclaration(key.as_atom(), *old_node, key.node()));
+        if let Some(old_span) = self.keys.get(&key.as_atom()) {
+            p.error(Diagnostic::Redeclaration(key.as_atom(), *old_span, key.span()));
         } else {
-            self.keys.insert(key.as_atom(), key.node());
+            self.keys.insert(key.as_atom(), key.span());
         }
 
         p.expect(Kind::Colon)?;
         let value = p.parse_literal_string()?;
-        let element = ImportAttribute { node: p.end_node(node), key, value };
+        let element = ImportAttribute { span: p.end_span(span), key, value };
         self.elements.push(element);
         Ok(())
     }
@@ -322,7 +322,7 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
     }
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
-        let specifier_node = p.start_node();
+        let specifier_span = p.start_span();
         let peek_kind = p.peek_kind();
 
         // export { type}              // name: `type`
@@ -351,14 +351,14 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
 
         let local = p.parse_module_export_name()?;
         let exported = if p.eat(Kind::As) { p.parse_module_export_name()? } else { local.clone() };
-        let element = ExportSpecifier { node: p.end_node(specifier_node), local, exported };
+        let element = ExportSpecifier { span: p.end_span(specifier_span), local, exported };
         self.elements.push(element);
         Ok(())
     }
 }
 
 pub struct PrivateBoundIdentifierMeta {
-    node: Node,
+    span: Span,
     r#static: bool,
     kind: Option<MethodDefinitionKind>,
 }
@@ -396,8 +396,8 @@ impl<'a> ClassElements<'a> {
             {
                 p.error(Diagnostic::Redeclaration(
                     private_ident.name.clone(),
-                    existed.node,
-                    private_ident.node,
+                    existed.span,
+                    private_ident.span,
                 ));
             }
         }
@@ -414,7 +414,7 @@ impl<'a> ClassElements<'a> {
 
         self.private_bound_identifiers.insert(
             private_ident.name.clone(),
-            PrivateBoundIdentifierMeta { r#static, kind, node: private_ident.node },
+            PrivateBoundIdentifierMeta { r#static, kind, span: private_ident.span },
         );
     }
 }

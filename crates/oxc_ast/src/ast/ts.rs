@@ -4,7 +4,7 @@ use oxc_allocator::{Box, Vec};
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, Atom, Node};
+use crate::{ast::*, Atom, Span};
 
 #[allow(clippy::trivially_copy_pass_by_ref)]
 #[must_use]
@@ -18,7 +18,7 @@ pub fn is_false(val: &bool) -> bool {
 #[serde(tag = "type")]
 pub struct TSEnumDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub id: BindingIdentifier,
     pub members: Vec<'a, TSEnumMember<'a>>,
     #[serde(skip_serializing_if = "is_false")]
@@ -31,7 +31,7 @@ pub struct TSEnumDeclaration<'a> {
 #[serde(tag = "type")]
 pub struct TSEnumMember<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub id: TSEnumMemberName<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub initializer: Option<Expression<'a>>,
@@ -52,7 +52,7 @@ pub enum TSEnumMemberName<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeAnnotation<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub type_annotation: TSType<'a>,
 }
 
@@ -60,7 +60,7 @@ pub struct TSTypeAnnotation<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSLiteralType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub literal: TSLiteral<'a>,
 }
 
@@ -132,7 +132,7 @@ impl<'a> TSType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSConditionalType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub check_type: TSType<'a>,
     pub extends_type: TSType<'a>,
     pub true_type: TSType<'a>,
@@ -145,7 +145,7 @@ pub struct TSConditionalType<'a> {
 #[serde(tag = "type")]
 pub struct TSUnionType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub types: Vec<'a, TSType<'a>>,
 }
 
@@ -155,7 +155,7 @@ pub struct TSUnionType<'a> {
 #[serde(tag = "type")]
 pub struct TSIntersectionType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub types: Vec<'a, TSType<'a>>,
 }
 
@@ -165,7 +165,7 @@ pub struct TSIntersectionType<'a> {
 #[serde(tag = "type", rename = "TSTypeOperator")]
 pub struct TSTypeOperatorType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub operator: TSTypeOperator,
     pub type_annotation: TSType<'a>,
 }
@@ -199,7 +199,7 @@ impl TSTypeOperator {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSArrayType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub element_type: TSType<'a>,
 }
 
@@ -209,7 +209,7 @@ pub struct TSArrayType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSIndexedAccessType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub object_type: TSType<'a>,
     pub index_type: TSType<'a>,
 }
@@ -220,7 +220,7 @@ pub struct TSIndexedAccessType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTupleType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub element_types: Vec<'a, TSTupleElement<'a>>,
 }
 
@@ -228,7 +228,7 @@ pub struct TSTupleType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSNamedTupleMember<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub element_type: TSType<'a>,
     pub label: IdentifierName,
     pub optional: bool,
@@ -238,7 +238,7 @@ pub struct TSNamedTupleMember<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSOptionalType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub type_annotation: TSType<'a>,
 }
 
@@ -246,7 +246,7 @@ pub struct TSOptionalType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSRestType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub type_annotation: TSType<'a>,
 }
 
@@ -263,91 +263,91 @@ pub enum TSTupleElement<'a> {
 #[serde(tag = "type")]
 pub struct TSAnyKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSStringKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSBooleanKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSNumberKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSNeverKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSUnknownKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSNullKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSUndefinedKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSVoidKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSSymbolKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSThisKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSObjectKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
 pub struct TSBigIntKeyword {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
 }
 
 /// type C = A;
@@ -357,7 +357,7 @@ pub struct TSBigIntKeyword {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeReference<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub type_name: TSTypeName<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -404,7 +404,7 @@ impl<'a> TSTypeName<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSQualifiedName<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub left: TSTypeName<'a>,
     pub right: IdentifierName,
 }
@@ -413,7 +413,7 @@ pub struct TSQualifiedName<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeParameterInstantiation<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub params: Vec<'a, TSType<'a>>,
 }
 
@@ -421,7 +421,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeParameter<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: BindingIdentifier,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub constraint: Option<TSType<'a>>,
@@ -437,7 +437,7 @@ pub struct TSTypeParameter<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeParameterDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub params: Vec<'a, Box<'a, TSTypeParameter<'a>>>,
 }
 
@@ -445,7 +445,7 @@ pub struct TSTypeParameterDeclaration<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeAliasDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub id: BindingIdentifier,
     pub type_annotation: TSType<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -480,7 +480,7 @@ pub enum TSAccessibility {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSClassImplements<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: TSTypeName<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -492,7 +492,7 @@ pub struct TSClassImplements<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInterfaceDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub id: BindingIdentifier,
     pub body: Box<'a, TSInterfaceBody<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -507,7 +507,7 @@ pub struct TSInterfaceDeclaration<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInterfaceBody<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub body: Vec<'a, TSSignature<'a>>,
 }
 
@@ -515,7 +515,7 @@ pub struct TSInterfaceBody<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSPropertySignature<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub computed: bool,
     #[serde(skip_serializing_if = "is_false")]
     pub optional: bool,
@@ -540,7 +540,7 @@ pub enum TSSignature<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSIndexSignature<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
     pub type_annotation: TSTypeAnnotation<'a>,
 }
@@ -549,7 +549,7 @@ pub struct TSIndexSignature<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSCallSignatureDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_type: Option<TSTypeAnnotation<'a>>,
@@ -569,7 +569,7 @@ pub enum TSMethodSignatureKind {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSMethodSignature<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub key: PropertyKey<'a>,
     pub computed: bool,
     #[serde(skip_serializing_if = "is_false")]
@@ -586,7 +586,7 @@ pub struct TSMethodSignature<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSConstructSignatureDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_type: Option<TSTypeAnnotation<'a>>,
@@ -598,7 +598,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 #[serde(tag = "type", rename_all = "camelCase", rename = "Identifier")]
 pub struct TSIndexSignatureName<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub name: Atom,
     pub type_annotation: TSTypeAnnotation<'a>,
 }
@@ -607,7 +607,7 @@ pub struct TSIndexSignatureName<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInterfaceHeritage<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: Expression<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -617,7 +617,7 @@ pub struct TSInterfaceHeritage<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypePredicate<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub parameter_name: TSTypePredicateName,
     pub asserts: bool,
     pub type_annotation: Option<TSTypeAnnotation<'a>>,
@@ -634,7 +634,7 @@ pub enum TSTypePredicateName {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSModuleDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub id: TSModuleDeclarationName,
     pub body: TSModuleDeclarationBody<'a>,
     pub declare: bool,
@@ -668,7 +668,7 @@ pub enum TSModuleDeclarationBody<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSModuleBlock<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -676,7 +676,7 @@ pub struct TSModuleBlock<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeLiteral<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub members: Vec<'a, TSSignature<'a>>,
 }
 
@@ -684,7 +684,7 @@ pub struct TSTypeLiteral<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInferType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
 }
 
@@ -692,7 +692,7 @@ pub struct TSInferType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeQuery<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expr_name: TSTypeName<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -702,7 +702,7 @@ pub struct TSTypeQuery<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSImportType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub is_type_of: bool,
     pub parameter: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
@@ -713,7 +713,7 @@ pub struct TSImportType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSFunctionType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: TSTypeAnnotation<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -724,7 +724,7 @@ pub struct TSFunctionType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSConstructorType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub r#abstract: bool,
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: TSTypeAnnotation<'a>,
@@ -736,7 +736,7 @@ pub struct TSConstructorType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSMappedType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
     pub name_type: Option<TSType<'a>>,
     pub type_annotation: TSType<'a>,
@@ -761,7 +761,7 @@ pub enum TSMappedTypeModifierOperator {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTemplateLiteralType<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub quasis: Vec<'a, TemplateElement>,
     pub types: Vec<'a, TSType<'a>>,
 }
@@ -770,7 +770,7 @@ pub struct TSTemplateLiteralType<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSAsExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
 }
@@ -779,7 +779,7 @@ pub struct TSAsExpression<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeAssertion<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub type_annotation: TSType<'a>,
     pub expression: Expression<'a>,
 }
@@ -788,7 +788,7 @@ pub struct TSTypeAssertion<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSImportEqualsDeclaration<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub id: BindingIdentifier,
     pub module_reference: Box<'a, TSModuleReference<'a>>,
     pub is_export: bool,
@@ -806,7 +806,7 @@ pub enum TSModuleReference<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSExternalModuleReference {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: StringLiteral,
 }
 
@@ -814,7 +814,7 @@ pub struct TSExternalModuleReference {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSNonNullExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: Expression<'a>,
 }
 
@@ -822,7 +822,7 @@ pub struct TSNonNullExpression<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct Decorator<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: Expression<'a>,
 }
 
@@ -830,7 +830,7 @@ pub struct Decorator<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSExportAssignment<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: Expression<'a>,
 }
 
@@ -838,7 +838,7 @@ pub struct TSExportAssignment<'a> {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSNamespaceExportDeclaration {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub id: IdentifierName,
 }
 
@@ -846,7 +846,7 @@ pub struct TSNamespaceExportDeclaration {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSInstantiationExpression<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub expression: Expression<'a>,
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
 }

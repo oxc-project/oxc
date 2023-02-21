@@ -47,8 +47,8 @@ impl<'a> Serialize for Program<'a> {
     {
         let mut state = serializer.serialize_struct("Program", 5)?;
         state.serialize_field("type", &"Program")?;
-        state.serialize_field("start", &self.node.start)?;
-        state.serialize_field("end", &self.node.end)?;
+        state.serialize_field("start", &self.span.start)?;
+        state.serialize_field("end", &self.span.end)?;
         let source_type = match self.source_type.module_kind() {
             ModuleKind::Script => "script",
             ModuleKind::Module => "module",
@@ -101,24 +101,24 @@ impl<'a> Serialize for MemberExpression<'a> {
         state.serialize_field("type", &"MemberExpression")?;
         match &self {
             MemberExpression::ComputedMemberExpression(expr) => {
-                state.serialize_field("start", &expr.node.start)?;
-                state.serialize_field("end", &expr.node.end)?;
+                state.serialize_field("start", &expr.span.start)?;
+                state.serialize_field("end", &expr.span.end)?;
                 state.serialize_field("object", &expr.object)?;
                 state.serialize_field("property", &expr.expression)?;
                 state.serialize_field("computed", &true)?;
                 state.serialize_field("optional", &expr.optional)?;
             }
             MemberExpression::StaticMemberExpression(expr) => {
-                state.serialize_field("start", &expr.node.start)?;
-                state.serialize_field("end", &expr.node.end)?;
+                state.serialize_field("start", &expr.span.start)?;
+                state.serialize_field("end", &expr.span.end)?;
                 state.serialize_field("object", &expr.object)?;
                 state.serialize_field("property", &expr.property)?;
                 state.serialize_field("computed", &false)?;
                 state.serialize_field("optional", &expr.optional)?;
             }
             MemberExpression::PrivateFieldExpression(expr) => {
-                state.serialize_field("start", &expr.node.start)?;
-                state.serialize_field("end", &expr.node.end)?;
+                state.serialize_field("start", &expr.span.start)?;
+                state.serialize_field("end", &expr.span.end)?;
                 state.serialize_field("object", &expr.object)?;
                 state.serialize_field("property", &expr.field)?;
                 state.serialize_field("computed", &false)?;
@@ -151,8 +151,8 @@ impl<'a> Serialize for FunctionBody<'a> {
     {
         let mut state = serializer.serialize_struct("FunctionBody", 4)?;
         state.serialize_field("type", &"BlockStatement")?;
-        state.serialize_field("start", &self.node.start)?;
-        state.serialize_field("end", &self.node.end)?;
+        state.serialize_field("start", &self.span.start)?;
+        state.serialize_field("end", &self.span.end)?;
         let body = BlockWrapper { directives: &self.directives, body: &self.statements };
         state.serialize_field("body", &body)?;
         state.end()
@@ -173,8 +173,8 @@ impl<'a> Serialize for ArrowExpression<'a> {
         }
         let mut state = serializer.serialize_struct("ArrowExpression", len)?;
         state.serialize_field("type", &"ArrowFunctionExpression")?;
-        state.serialize_field("start", &self.node.start)?;
-        state.serialize_field("end", &self.node.end)?;
+        state.serialize_field("start", &self.span.start)?;
+        state.serialize_field("end", &self.span.end)?;
         state.serialize_field("id", &None as &Option<()>)?; // Always none in oxc_ast
         state.serialize_field("expression", &self.expression)?;
         state.serialize_field("generator", &self.generator)?;

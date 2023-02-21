@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, context::StatementContext, GetNode};
+use oxc_ast::{ast::*, context::StatementContext, GetSpan};
 use oxc_diagnostics::{Diagnostic, Result};
 
 use crate::lexer::Kind;
@@ -25,18 +25,18 @@ impl VariableDeclarationContext {
 
 impl<'a> Parser<'a> {
     pub fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let peeked = self.peek_kind();
         // let = foo, let instanceof x, let + 1
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
             let expr = self.parse_assignment_expression_base()?;
-            self.parse_expression_statement(node, expr)
+            self.parse_expression_statement(span, expr)
         // single statement let declaration: while (0) let
         } else if (stmt_ctx.is_single_statement() && peeked != Kind::LBrack)
             || peeked == Kind::Semicolon
         {
             let expr = self.parse_identifier_expression()?;
-            self.parse_expression_statement(node, expr)
+            self.parse_expression_statement(span, expr)
         } else {
             self.parse_variable_statement(stmt_ctx)
         }
@@ -46,7 +46,7 @@ impl<'a> Parser<'a> {
         &mut self,
         decl_ctx: VariableDeclarationContext,
     ) -> Result<Box<'a, VariableDeclaration<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let kind = match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,
             Kind::Const => VariableDeclarationKind::Const,
@@ -71,7 +71,7 @@ impl<'a> Parser<'a> {
             self.asi()?;
         }
 
-        Ok(self.ast.variable_declaration(self.end_node(node), kind, declarations))
+        Ok(self.ast.variable_declaration(self.end_span(span), kind, declarations))
     }
 
     fn parse_variable_declarator(
@@ -79,7 +79,7 @@ impl<'a> Parser<'a> {
         decl_ctx: VariableDeclarationContext,
         kind: VariableDeclarationKind,
     ) -> Result<VariableDeclarator<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
 
         let (id, definite) = self.parse_binding_pattern()?;
 
@@ -92,13 +92,13 @@ impl<'a> Parser<'a> {
             //   BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
             // the grammar forbids `let []`, `let {}`
             if !matches!(id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                self.error(Diagnostic::InvalidDestrucuringDeclaration(id.node()));
+                self.error(Diagnostic::InvalidDestrucuringDeclaration(id.span()));
             } else if kind == VariableDeclarationKind::Const && !self.ctx.has_ambient() {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(Diagnostic::MissinginitializerInConst(id.node()));
+                self.error(Diagnostic::MissinginitializerInConst(id.span()));
             }
         }
 
-        Ok(self.ast.variable_declarator(self.end_node(node), kind, id, init, definite))
+        Ok(self.ast.variable_declarator(self.end_span(span), kind, id, init, definite))
     }
 }

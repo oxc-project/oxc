@@ -13,13 +13,13 @@ use serde::{
     Serialize,
 };
 
-use crate::{Atom, Node};
+use crate::{Atom, Span};
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type", rename = "Literal")]
 pub struct BooleanLiteral {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub value: bool,
 }
 
@@ -32,7 +32,7 @@ impl BooleanLiteral {
 
 #[derive(Debug, Clone, Eq)]
 pub struct NullLiteral {
-    pub node: Node,
+    pub span: Span,
 }
 
 impl Hash for NullLiteral {
@@ -54,8 +54,8 @@ impl Serialize for NullLiteral {
     {
         let mut state = serializer.serialize_struct("NullLiteral", 4)?;
         state.serialize_field("type", &"Literal")?;
-        state.serialize_field("start", &self.node.start)?;
-        state.serialize_field("end", &self.node.end)?;
+        state.serialize_field("start", &self.span.start)?;
+        state.serialize_field("end", &self.span.end)?;
         state.serialize_field("value", &())?;
         state.end()
     }
@@ -65,7 +65,7 @@ impl Serialize for NullLiteral {
 #[serde(tag = "type", rename = "Literal")]
 pub struct NumberLiteral<'a> {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub value: NotNan<f64>, // using NotNan for `Hash`
     #[serde(skip)]
     pub raw: &'a str,
@@ -75,9 +75,9 @@ pub struct NumberLiteral<'a> {
 
 impl<'a> NumberLiteral<'a> {
     #[must_use]
-    pub const fn new(node: Node, value: f64, raw: &'a str, base: NumberBase) -> Self {
+    pub const fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
         let value = unsafe { NotNan::new_unchecked(value) };
-        Self { node, value, raw, base }
+        Self { span, value, raw, base }
     }
 }
 
@@ -92,7 +92,7 @@ impl<'a> Hash for NumberLiteral<'a> {
 #[serde(tag = "type", rename = "Literal")]
 pub struct BigintLiteral {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     #[serde(serialize_with = "crate::serialize::serialize_bigint")]
     pub value: BigUint,
 }
@@ -101,7 +101,7 @@ pub struct BigintLiteral {
 #[serde(tag = "type", rename = "Literal")]
 pub struct RegExpLiteral {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     // valid regex is printed as {}
     // invalid regex is printed as null, which we can't implement yet
     pub value: EmptyObject,
@@ -180,7 +180,7 @@ pub struct EmptyObject {}
 #[serde(tag = "type", rename = "Literal")]
 pub struct StringLiteral {
     #[serde(flatten)]
-    pub node: Node,
+    pub span: Span,
     pub value: Atom,
 }
 

@@ -2,7 +2,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::{
     ast::*,
     context::{Context, StatementContext},
-    Node,
+    Span,
 };
 use oxc_diagnostics::{Diagnostic, Result};
 
@@ -51,9 +51,9 @@ impl<'a> Parser<'a> {
                         if let Statement::ExpressionStatement(expr) = &stmt {
                             if let Expression::StringLiteral(string) = &expr.expression {
                                 let src = &self.source
-                                    [string.node.start as usize + 1..string.node.end as usize - 1];
+                                    [string.span.start as usize + 1..string.span.end as usize - 1];
                                 let directive =
-                                    self.ast.directive(expr.node, (*string).clone(), src);
+                                    self.ast.directive(expr.span, (*string).clone(), src);
                                 directives.push(directive);
                                 continue;
                             }
@@ -76,14 +76,14 @@ impl<'a> Parser<'a> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         if self.ts_enabled() {
             if self.at(Kind::Type)
                 && self.peek_kind().is_identifier_name()
                 && !self.peek_token().is_on_new_line
             {
                 return self
-                    .parse_ts_type_alias_declaration(false, node)
+                    .parse_ts_type_alias_declaration(false, span)
                     .map(Statement::Declaration);
             }
             if self.at(Kind::Abstract) && !self.peek_token().is_on_new_line {
@@ -107,11 +107,11 @@ impl<'a> Parser<'a> {
             }
             match self.cur_kind() {
                 Kind::Const | Kind::Enum if self.is_at_enum_declaration() => {
-                    return self.parse_ts_enum_declaration(false, node).map(Statement::Declaration);
+                    return self.parse_ts_enum_declaration(false, span).map(Statement::Declaration);
                 }
                 Kind::Interface if self.is_at_interface_declaration() => {
                     return self
-                        .parse_ts_interface_declaration(false, node)
+                        .parse_ts_interface_declaration(false, span)
                         .map(Statement::Declaration);
                 }
                 _ => (),
@@ -151,23 +151,23 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_expression_or_labeled_statment(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let expr = self.parse_expression()?;
         if let Expression::Identifier(ident) = &expr {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
             if self.eat(Kind::Colon) {
-                let label = LabelIdentifier { node: ident.node, name: ident.name.clone() };
+                let label = LabelIdentifier { span: ident.span, name: ident.name.clone() };
                 let body = self.parse_statement_list_item(StatementContext::Label)?;
-                return Ok(self.ast.labeled_statement(self.end_node(node), label, body));
+                return Ok(self.ast.labeled_statement(self.end_span(span), label, body));
             }
         }
-        self.parse_expression_statement(node, expr)
+        self.parse_expression_statement(span, expr)
     }
 
     /// Section 14.2 Block Statement
     pub fn parse_block(&mut self) -> Result<Box<'a, BlockStatement<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.expect(Kind::LCurly)?;
         let mut body = self.ast.new_vec();
         while !self.at(Kind::RCurly) && !self.at(Kind::Eof) {
@@ -175,7 +175,7 @@ impl<'a> Parser<'a> {
             body.push(stmt);
         }
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.block(self.end_node(node), body))
+        Ok(self.ast.block(self.end_span(span), body))
     }
 
     pub fn parse_block_statement(&mut self) -> Result<Statement<'a>> {
@@ -193,7 +193,7 @@ impl<'a> Parser<'a> {
         ))?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
-            self.error(Diagnostic::LexicalDeclarationSingleStatement(decl.node));
+            self.error(Diagnostic::LexicalDeclarationSingleStatement(decl.span));
         }
 
         Ok(Statement::Declaration(Declaration::VariableDeclaration(decl)))
@@ -201,24 +201,24 @@ impl<'a> Parser<'a> {
 
     /// Section 14.4 Empty Statement
     fn parse_empty_statement(&mut self) -> Statement<'a> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // bump `;`
-        self.ast.empty_statement(self.end_node(node))
+        self.ast.empty_statement(self.end_span(span))
     }
 
     /// Section 14.5 Expression Statement
     pub fn parse_expression_statement(
         &mut self,
-        node: Node,
+        span: Span,
         expression: Expression<'a>,
     ) -> Result<Statement<'a>> {
         self.asi()?;
-        Ok(self.ast.expression_statement(self.end_node(node), expression))
+        Ok(self.ast.expression_statement(self.end_span(span), expression))
     }
 
     /// Section 14.6 If Statement
     fn parse_if_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // bump `if`
         let test = self.parse_paren_expression()?;
         let consequent = self.parse_statement_list_item(StatementContext::If)?;
@@ -226,32 +226,32 @@ impl<'a> Parser<'a> {
             .eat(Kind::Else)
             .then(|| self.parse_statement_list_item(StatementContext::If))
             .transpose()?;
-        Ok(self.ast.if_statement(self.end_node(node), test, consequent, alternate))
+        Ok(self.ast.if_statement(self.end_span(span), test, consequent, alternate))
     }
 
     /// Section 14.7.2 Do-While Statement
     fn parse_do_while_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // advance `do`
         let body = self.parse_statement_list_item(StatementContext::Do)?;
         self.expect(Kind::While)?;
         let test = self.parse_paren_expression()?;
         self.bump(Kind::Semicolon);
-        Ok(self.ast.do_while_statement(self.end_node(node), body, test))
+        Ok(self.ast.do_while_statement(self.end_span(span), body, test))
     }
 
     /// Section 14.7.3 While Statement
     fn parse_while_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // bump `while`
         let test = self.parse_paren_expression()?;
         let body = self.parse_statement_list_item(StatementContext::While)?;
-        Ok(self.ast.while_statement(self.end_node(node), test, body))
+        Ok(self.ast.while_statement(self.end_span(span), test, body))
     }
 
     /// Section 14.7.4 For Statement
     fn parse_for_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // bump `for`
 
         // [+Await]
@@ -261,7 +261,7 @@ impl<'a> Parser<'a> {
 
         // for (;..
         if self.at(Kind::Semicolon) {
-            return self.parse_for_loop(node, None, r#await);
+            return self.parse_for_loop(span, None, r#await);
         }
 
         // for (let | for (const | for (var
@@ -281,43 +281,43 @@ impl<'a> Parser<'a> {
             // for (.. a in) for (.. a of)
             if matches!(kind, Kind::In | Kind::Of) {
                 let init = ForStatementLeft::VariableDeclaration(init_declaration);
-                return self.parse_for_in_or_of_loop(node, r#await, init);
+                return self.parse_for_in_or_of_loop(span, r#await, init);
             }
 
             let init = Some(ForStatementInit::VariableDeclaration(init_declaration));
-            return self.parse_for_loop(node, init, r#await);
+            return self.parse_for_loop(span, init, r#await);
         }
 
         let is_let_of = self.at(Kind::Let) && self.peek_at(Kind::Of);
         let is_async_of =
             self.at(Kind::Async) && !self.cur_token().escaped && self.peek_at(Kind::Of);
-        let expression_node = self.start_node();
+        let expression_span = self.start_span();
 
         let init_expression = self.without_context(Context::In, Parser::parse_expression)?;
 
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
             let target = AssignmentTarget::cover(init_expression, self)
-                .map_err(|_| Diagnostic::UnexpectedToken(self.end_node(expression_node)))?;
+                .map_err(|_| Diagnostic::UnexpectedToken(self.end_span(expression_span)))?;
             let for_stmt_left = ForStatementLeft::AssignmentTarget(target);
 
             if !r#await && is_async_of {
-                self.error(Diagnostic::ForLoopAsyncOf(self.end_node(expression_node)));
+                self.error(Diagnostic::ForLoopAsyncOf(self.end_span(expression_span)));
             }
 
             if is_let_of {
-                self.error(Diagnostic::UnexpectedKeyword("let", self.end_node(expression_node)));
+                self.error(Diagnostic::UnexpectedKeyword("let", self.end_span(expression_span)));
             }
 
-            return self.parse_for_in_or_of_loop(node, r#await, for_stmt_left);
+            return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
         }
 
-        self.parse_for_loop(node, Some(ForStatementInit::Expression(init_expression)), r#await)
+        self.parse_for_loop(span, Some(ForStatementInit::Expression(init_expression)), r#await)
     }
 
     fn parse_for_loop(
         &mut self,
-        node: Node,
+        span: Span,
         init: Option<ForStatementInit<'a>>,
         r#await: bool,
     ) -> Result<Statement<'a>> {
@@ -328,17 +328,17 @@ impl<'a> Parser<'a> {
         self.expect(Kind::RParen)?;
 
         if r#await {
-            self.error(Diagnostic::ForAwait(self.end_node(node)));
+            self.error(Diagnostic::ForAwait(self.end_span(span)));
         }
 
         let body = self.parse_statement_list_item(StatementContext::For)?;
 
-        Ok(self.ast.for_statement(self.end_node(node), init, test, update, body))
+        Ok(self.ast.for_statement(self.end_span(span), init, test, update, body))
     }
 
     fn parse_for_in_or_of_loop(
         &mut self,
-        node: Node,
+        span: Span,
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Result<Statement<'a>> {
@@ -352,32 +352,32 @@ impl<'a> Parser<'a> {
         self.expect(Kind::RParen)?;
 
         if r#await && is_for_in {
-            self.error(Diagnostic::ForAwait(self.end_node(node)));
+            self.error(Diagnostic::ForAwait(self.end_span(span)));
         }
 
         let body = self.parse_statement_list_item(StatementContext::For)?;
-        let node = self.end_node(node);
+        let span = self.end_span(span);
 
         if is_for_in {
-            Ok(self.ast.for_in_statement(node, left, right, body))
+            Ok(self.ast.for_in_statement(span, left, right, body))
         } else {
-            Ok(self.ast.for_of_statement(node, r#await, left, right, body))
+            Ok(self.ast.for_of_statement(span, r#await, left, right, body))
         }
     }
 
     /// Section 14.8 Continue Statement
     /// Section 14.9 Break Statement
     fn parse_break_or_continue_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let kind = self.cur_kind();
         self.bump_any(); // bump `break` or `continue`
         let label =
             if self.can_insert_semicolon() { None } else { Some(self.parse_label_identifier()?) };
         self.asi()?;
-        let end_node = self.end_node(node);
+        let end_span = self.end_span(span);
         match kind {
-            Kind::Break => Ok(self.ast.break_statement(end_node, label)),
-            Kind::Continue => Ok(self.ast.continue_statement(end_node, label)),
+            Kind::Break => Ok(self.ast.break_statement(end_span, label)),
+            Kind::Continue => Ok(self.ast.continue_statement(end_span, label)),
             _ => unreachable!(),
         }
     }
@@ -387,7 +387,7 @@ impl<'a> Parser<'a> {
     ///   return ;
     ///   return [no `LineTerminator` here] Expression[+In, ?Yield, ?Await] ;
     fn parse_return_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // advance `return`
         let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             None
@@ -396,22 +396,22 @@ impl<'a> Parser<'a> {
             self.asi()?;
             Some(expr)
         };
-        Ok(self.ast.return_statement(self.end_node(node), argument))
+        Ok(self.ast.return_statement(self.end_span(span), argument))
     }
 
     /// Section 14.11 With Statement
     fn parse_with_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // bump `with`
         let object = self.parse_paren_expression()?;
         let body = self.parse_statement_list_item(StatementContext::With)?;
-        let node = self.end_node(node);
-        Ok(self.ast.with_statement(node, object, body))
+        let span = self.end_span(span);
+        Ok(self.ast.with_statement(span, object, body))
     }
 
     /// Section 14.12 Switch Statement
     fn parse_switch_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // advance `switch`
         let discriminant = self.parse_paren_expression()?;
         let cases = {
@@ -419,11 +419,11 @@ impl<'a> Parser<'a> {
             switch_cases.parse(self)?;
             switch_cases.elements
         };
-        Ok(self.ast.switch_statement(self.end_node(node), discriminant, cases))
+        Ok(self.ast.switch_statement(self.end_span(span), discriminant, cases))
     }
 
     pub fn parse_switch_case(&mut self) -> Result<SwitchCase<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         let test = match self.cur_kind() {
             Kind::Default => {
                 self.bump_any();
@@ -442,28 +442,28 @@ impl<'a> Parser<'a> {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
             consequent.push(stmt);
         }
-        Ok(self.ast.switch_case(self.end_node(node), test, consequent))
+        Ok(self.ast.switch_case(self.end_span(span), test, consequent))
     }
 
     /// Section 14.14 Throw Statement
     fn parse_throw_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // advance `throw`
         if self.cur_token().is_on_new_line {
             self.error(Diagnostic::IllegalNewline(
                 "throw",
-                self.end_node(node),
-                self.cur_token().node(),
+                self.end_span(span),
+                self.cur_token().span(),
             ));
         }
         let argument = self.parse_expression()?;
         self.asi()?;
-        Ok(self.ast.throw_statement(self.end_node(node), argument))
+        Ok(self.ast.throw_statement(self.end_span(span), argument))
     }
 
     /// Section 14.15 Try Statement
     fn parse_try_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // bump `try`
 
         let block = self.parse_block()?;
@@ -472,16 +472,16 @@ impl<'a> Parser<'a> {
 
         let finalizer = self.eat(Kind::Finally).then(|| self.parse_block()).transpose()?;
 
-        let range = Node::new(self.prev_token_end, self.prev_token_end + 1);
+        let range = Span::new(self.prev_token_end, self.prev_token_end + 1);
         if handler.is_none() && finalizer.is_none() {
             self.error(Diagnostic::ExpectCatchFinally(range));
         }
 
-        Ok(self.ast.try_statement(self.end_node(node), block, handler, finalizer))
+        Ok(self.ast.try_statement(self.end_span(span), block, handler, finalizer))
     }
 
     fn parse_catch_clause(&mut self) -> Result<Box<'a, CatchClause<'a>>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any(); // advance `catch`
         let param = if self.eat(Kind::LParen) {
             let pattern = self.parse_binding_pattern()?.0;
@@ -491,14 +491,14 @@ impl<'a> Parser<'a> {
             None
         };
         let body = self.parse_block()?;
-        Ok(self.ast.catch_clause(self.end_node(node), param, body))
+        Ok(self.ast.catch_clause(self.end_span(span), param, body))
     }
 
     /// Section 14.16 Debugger Statement
     fn parse_debugger_statement(&mut self) -> Result<Statement<'a>> {
-        let node = self.start_node();
+        let span = self.start_span();
         self.bump_any();
         self.asi()?;
-        Ok(self.ast.debugger_statement(self.end_node(node)))
+        Ok(self.ast.debugger_statement(self.end_span(span)))
     }
 }

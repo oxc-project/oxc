@@ -48,7 +48,7 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
     }
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
-        let node = p.start_node();
+        let span = p.start_span();
         if p.is_at_named_tuple_element() {
             let _is_rest = p.eat(Kind::Dot3);
             let label = p.parse_identifier_name()?;
@@ -57,7 +57,7 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
 
             let element_type = p.parse_ts_type()?;
             self.elements.push(TSTupleElement::TSNamedTupleMember(p.ast.alloc(
-                TSNamedTupleMember { node: p.end_node(node), element_type, label, optional },
+                TSNamedTupleMember { span: p.end_span(span), element_type, label, optional },
             )));
 
             return Ok(());
@@ -66,7 +66,7 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
         if p.eat(Kind::Dot3) {
             let type_annotation = p.parse_ts_type()?;
             self.elements.push(TSTupleElement::TSRestType(
-                p.ast.alloc(TSRestType { node: p.end_node(node), type_annotation }),
+                p.ast.alloc(TSRestType { span: p.end_span(span), type_annotation }),
             ));
             return Ok(());
         }
@@ -74,7 +74,7 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
         let type_annotation = p.parse_ts_type()?;
         if p.eat(Kind::Question) {
             self.elements.push(TSTupleElement::TSOptionalType(
-                p.ast.alloc(TSOptionalType { node: p.end_node(node), type_annotation }),
+                p.ast.alloc(TSOptionalType { span: p.end_span(span), type_annotation }),
             ));
         } else {
             self.elements.push(TSTupleElement::TSType(type_annotation));
