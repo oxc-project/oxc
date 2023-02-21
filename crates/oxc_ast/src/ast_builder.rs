@@ -349,7 +349,7 @@ impl<'a> AstBuilder<'a> {
         expression: bool,
         generator: bool,
         r#async: bool,
-        params: FormalParameters<'a>,
+        params: Box<'a, FormalParameters<'a>>,
         body: Box<'a, FunctionBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<TSTypeAnnotation<'a>>,
@@ -680,8 +680,8 @@ impl<'a> AstBuilder<'a> {
         node: Node,
         kind: FormalParameterKind,
         items: Vec<'a, FormalParameter<'a>>,
-    ) -> FormalParameters<'a> {
-        FormalParameters { node, kind, items }
+    ) -> Box<'a, FormalParameters<'a>> {
+        self.alloc(FormalParameters { node, kind, items })
     }
 
     #[must_use]
@@ -708,7 +708,7 @@ impl<'a> AstBuilder<'a> {
         expression: bool,
         generator: bool,
         r#async: bool,
-        params: FormalParameters<'a>,
+        params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<TSTypeAnnotation<'a>>,
@@ -1324,7 +1324,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_call_signature_declaration(
         &self,
         node: Node,
-        params: FormalParameters<'a>,
+        params: Box<'a, FormalParameters<'a>>,
         return_type: Option<TSTypeAnnotation<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSSignature<'a> {
@@ -1341,7 +1341,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_construct_signature_declaration(
         &self,
         node: Node,
-        params: FormalParameters<'a>,
+        params: Box<'a, FormalParameters<'a>>,
         return_type: Option<TSTypeAnnotation<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSSignature<'a> {
@@ -1362,7 +1362,7 @@ impl<'a> AstBuilder<'a> {
         computed: bool,
         optional: bool,
         kind: TSMethodSignatureKind,
-        params: FormalParameters<'a>,
+        params: Box<'a, FormalParameters<'a>>,
         return_type: Option<TSTypeAnnotation<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSSignature<'a> {
@@ -1668,7 +1668,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         node: Node,
         r#abstract: bool,
-        params: FormalParameters<'a>,
+        params: Box<'a, FormalParameters<'a>>,
         return_type: TSTypeAnnotation<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSType<'a> {
@@ -1686,7 +1686,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_function_type(
         &self,
         node: Node,
-        params: FormalParameters<'a>,
+        params: Box<'a, FormalParameters<'a>>,
         return_type: TSTypeAnnotation<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSType<'a> {

@@ -1191,7 +1191,7 @@ pub struct Function<'a> {
     pub expression: bool,
     pub generator: bool,
     pub r#async: bool,
-    pub params: FormalParameters<'a>,
+    pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub declare: bool,
@@ -1295,7 +1295,7 @@ pub struct ArrowExpression<'a> {
     pub expression: bool,
     pub generator: bool,
     pub r#async: bool,
-    pub params: FormalParameters<'a>, // UniqueFormalParameters in spec
+    pub params: Box<'a, FormalParameters<'a>>, // UniqueFormalParameters in spec
     pub body: Box<'a, FunctionBody<'a>>,
 
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

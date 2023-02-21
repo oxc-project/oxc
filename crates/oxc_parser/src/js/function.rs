@@ -13,7 +13,7 @@ use crate::Parser;
 
 type ArrowFunctionHead<'a> = (
     Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    FormalParameters<'a>,
+    Box<'a, FormalParameters<'a>>,
     Option<TSTypeAnnotation<'a>>,
     bool,
     Node,
@@ -82,7 +82,7 @@ impl<'a> Parser<'a> {
     pub fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
-    ) -> Result<FormalParameters<'a>> {
+    ) -> Result<Box<'a, FormalParameters<'a>>> {
         let node = self.start_node();
         let elements = FormalParameterList::parse(self)?.elements;
         Ok(self.ast.formal_parameters(self.end_node(node), params_kind, elements))
@@ -448,7 +448,7 @@ impl<'a> Parser<'a> {
         &mut self,
         node: Node,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        params: FormalParameters<'a>,
+        params: Box<'a, FormalParameters<'a>>,
         return_type: Option<TSTypeAnnotation<'a>>,
         r#async: bool,
     ) -> Result<Expression<'a>> {
