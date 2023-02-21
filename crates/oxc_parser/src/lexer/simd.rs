@@ -119,8 +119,8 @@ impl<'a> SkipMultilineComment<'a> {
         }
     }
 
-    pub fn simd(mut self, remaining: &[u8]) -> Self {
-        let (chunks, remainder) = remaining.as_chunks::<ELEMENTS>();
+    pub fn simd(mut self) -> Self {
+        let (chunks, remainder) = self.remaining.as_chunks::<ELEMENTS>();
 
         for chunk in chunks {
             self.check(chunk, chunk.len());

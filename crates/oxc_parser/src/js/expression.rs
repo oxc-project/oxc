@@ -458,8 +458,8 @@ impl<'a> Parser<'a> {
         in_optional_chain: &mut bool,
     ) -> Result<Expression<'a>> {
         let node = self.start_node();
-        let lhs = self.parse_primary_expression()?;
-        self.parse_member_expression_rhs(node, lhs, in_optional_chain)
+        self.parse_primary_expression()
+            .and_then(|lhs| self.parse_member_expression_rhs(node, lhs, in_optional_chain))
     }
 
     /// Section 13.3 Super Call

@@ -16,6 +16,7 @@ impl<'a> AstBuilder<'a> {
         Self { allocator }
     }
 
+    #[inline]
     pub fn alloc<T>(&self, value: T) -> Box<'a, T> {
         Box(self.allocator.alloc(value))
     }
