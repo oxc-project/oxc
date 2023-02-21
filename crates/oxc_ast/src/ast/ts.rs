@@ -550,7 +550,7 @@ pub struct TSIndexSignature<'a> {
 pub struct TSCallSignatureDeclaration<'a> {
     #[serde(flatten)]
     pub node: Node,
-    pub params: FormalParameters<'a>,
+    pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_type: Option<TSTypeAnnotation<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -575,7 +575,7 @@ pub struct TSMethodSignature<'a> {
     #[serde(skip_serializing_if = "is_false")]
     pub optional: bool,
     pub kind: TSMethodSignatureKind,
-    pub params: FormalParameters<'a>,
+    pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_type: Option<TSTypeAnnotation<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -587,7 +587,7 @@ pub struct TSMethodSignature<'a> {
 pub struct TSConstructSignatureDeclaration<'a> {
     #[serde(flatten)]
     pub node: Node,
-    pub params: FormalParameters<'a>,
+    pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_type: Option<TSTypeAnnotation<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -714,7 +714,7 @@ pub struct TSImportType<'a> {
 pub struct TSFunctionType<'a> {
     #[serde(flatten)]
     pub node: Node,
-    pub params: FormalParameters<'a>,
+    pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: TSTypeAnnotation<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -726,7 +726,7 @@ pub struct TSConstructorType<'a> {
     #[serde(flatten)]
     pub node: Node,
     pub r#abstract: bool,
-    pub params: FormalParameters<'a>,
+    pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: TSTypeAnnotation<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
