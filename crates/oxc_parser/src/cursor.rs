@@ -70,7 +70,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Peek nth token
-    pub fn nth(&mut self, n: usize) -> &Token {
+    pub fn nth(&mut self, n: u8) -> &Token {
         if n == 0 {
             return self.cur_token();
         }
@@ -78,12 +78,12 @@ impl<'a> Parser<'a> {
     }
 
     /// Peek at nth kind
-    pub fn nth_at(&mut self, n: usize, kind: Kind) -> bool {
+    pub fn nth_at(&mut self, n: u8, kind: Kind) -> bool {
         self.nth(n).kind == kind
     }
 
     /// Peek nth kind
-    pub fn nth_kind(&mut self, n: usize) -> Kind {
+    pub fn nth_kind(&mut self, n: u8) -> Kind {
         self.nth(n).kind
     }
 

@@ -328,7 +328,7 @@ impl<'a> Parser<'a> {
         &mut self,
         r#async: bool,
     ) -> IsParenthesizedArrowFunction {
-        let offset = usize::from(r#async);
+        let offset = u8::from(r#async);
 
         match self.nth_kind(offset) {
             Kind::LParen => match self.nth_kind(offset + 1) {

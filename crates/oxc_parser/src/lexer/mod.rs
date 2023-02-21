@@ -114,7 +114,8 @@ impl<'a> Lexer<'a> {
     }
 
     /// Find the nth lookahead token lazily
-    pub fn lookahead(&mut self, n: usize) -> &Token {
+    pub fn lookahead(&mut self, n: u8) -> &Token {
+        let n = n as usize;
         debug_assert!(n > 0);
 
         if self.lookahead.len() > n - 1 {
