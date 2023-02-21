@@ -46,7 +46,7 @@ pub struct Parser<'a> {
     token: Token,
 
     /// The end range of the previous token
-    prev_token_end: usize,
+    prev_token_end: u32,
 
     /// Parser state
     state: ParserState<'a>,
@@ -102,6 +102,7 @@ impl<'a> Parser<'a> {
         ParserReturn { program, errors: self.errors.borrow().clone() }
     }
 
+    #[allow(clippy::cast_possible_truncation)]
     fn parse_program(&mut self) -> Result<Program<'a>> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
@@ -109,7 +110,7 @@ impl<'a> Parser<'a> {
         let (directives, statements) =
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
-        let node = Node::new(0, self.source.len());
+        let node = Node::new(0, self.source.len() as u32);
         Ok(self.ast.program(node, directives, statements, self.source_type))
     }
 
@@ -119,7 +120,7 @@ impl<'a> Parser<'a> {
         if self.source_type.is_javascript()
             && (self.source.starts_with("// @flow") || self.source.starts_with("/* @flow */"))
         {
-            return Some(Diagnostic::Flow(0..8));
+            return Some(Diagnostic::Flow(Node::new(0, 8)));
         }
         None
     }

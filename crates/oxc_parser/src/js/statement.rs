@@ -50,7 +50,8 @@ impl<'a> Parser<'a> {
                     if expecting_diretives {
                         if let Statement::ExpressionStatement(expr) = &stmt {
                             if let Expression::StringLiteral(string) = &expr.expression {
-                                let src = &self.source[string.node.start + 1..string.node.end - 1];
+                                let src = &self.source
+                                    [string.node.start as usize + 1..string.node.end as usize - 1];
                                 let directive =
                                     self.ast.directive(expr.node, (*string).clone(), src);
                                 directives.push(directive);
@@ -192,7 +193,7 @@ impl<'a> Parser<'a> {
         ))?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
-            self.error(Diagnostic::LexicalDeclarationSingleStatement(decl.node.range()));
+            self.error(Diagnostic::LexicalDeclarationSingleStatement(decl.node));
         }
 
         Ok(Statement::Declaration(Declaration::VariableDeclaration(decl)))
@@ -297,18 +298,15 @@ impl<'a> Parser<'a> {
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
             let target = AssignmentTarget::cover(init_expression, self)
-                .map_err(|_| Diagnostic::UnexpectedToken(self.end_node(expression_node).range()))?;
+                .map_err(|_| Diagnostic::UnexpectedToken(self.end_node(expression_node)))?;
             let for_stmt_left = ForStatementLeft::AssignmentTarget(target);
 
             if !r#await && is_async_of {
-                self.error(Diagnostic::ForLoopAsyncOf(self.end_node(expression_node).range()));
+                self.error(Diagnostic::ForLoopAsyncOf(self.end_node(expression_node)));
             }
 
             if is_let_of {
-                self.error(Diagnostic::UnexpectedKeyword(
-                    "let",
-                    self.end_node(expression_node).range(),
-                ));
+                self.error(Diagnostic::UnexpectedKeyword("let", self.end_node(expression_node)));
             }
 
             return self.parse_for_in_or_of_loop(node, r#await, for_stmt_left);
@@ -330,7 +328,7 @@ impl<'a> Parser<'a> {
         self.expect(Kind::RParen)?;
 
         if r#await {
-            self.error(Diagnostic::ForAwait(self.end_node(node).range()));
+            self.error(Diagnostic::ForAwait(self.end_node(node)));
         }
 
         let body = self.parse_statement_list_item(StatementContext::For)?;
@@ -354,7 +352,7 @@ impl<'a> Parser<'a> {
         self.expect(Kind::RParen)?;
 
         if r#await && is_for_in {
-            self.error(Diagnostic::ForAwait(self.end_node(node).range()));
+            self.error(Diagnostic::ForAwait(self.end_node(node)));
         }
 
         let body = self.parse_statement_list_item(StatementContext::For)?;
@@ -454,8 +452,8 @@ impl<'a> Parser<'a> {
         if self.cur_token().is_on_new_line {
             self.error(Diagnostic::IllegalNewline(
                 "throw",
-                self.end_node(node).range(),
-                self.cur_token().range(),
+                self.end_node(node),
+                self.cur_token().node(),
             ));
         }
         let argument = self.parse_expression()?;
@@ -474,8 +472,7 @@ impl<'a> Parser<'a> {
 
         let finalizer = self.eat(Kind::Finally).then(|| self.parse_block()).transpose()?;
 
-        #[allow(clippy::range_plus_one)]
-        let range = self.prev_token_end..self.prev_token_end + 1;
+        let range = Node::new(self.prev_token_end, self.prev_token_end + 1);
         if handler.is_none() && finalizer.is_none() {
             self.error(Diagnostic::ExpectCatchFinally(range));
         }

@@ -537,6 +537,7 @@ version = "0.0.0"
 dependencies = [
  "bitflags",
  "compact_str",
+ "miette",
  "num-bigint",
  "ordered-float",
  "oxc_allocator",

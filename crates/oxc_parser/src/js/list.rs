@@ -65,7 +65,7 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
                 let rest_element = p.parse_rest_element()?;
 
                 if !matches!(rest_element.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
-                    p.error(Diagnostic::InvalidRestArgument(rest_element.node.range()));
+                    p.error(Diagnostic::InvalidRestArgument(rest_element.node));
                 }
 
                 ObjectPatternProperty::RestElement(rest_element)
@@ -291,7 +291,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
         };
 
         if let Some(old_node) = self.keys.get(&key.as_atom()) {
-            p.error(Diagnostic::Redeclaration(key.as_atom(), old_node.range(), key.node().range()));
+            p.error(Diagnostic::Redeclaration(key.as_atom(), *old_node, key.node()));
         } else {
             self.keys.insert(key.as_atom(), key.node());
         }
@@ -396,8 +396,8 @@ impl<'a> ClassElements<'a> {
             {
                 p.error(Diagnostic::Redeclaration(
                     private_ident.name.clone(),
-                    existed.node.range(),
-                    private_ident.node.range(),
+                    existed.node,
+                    private_ident.node,
                 ));
             }
         }

@@ -1,9 +1,7 @@
 //! Token
 
-use std::ops::Range;
-
 use num_bigint::BigUint;
-use oxc_ast::Atom;
+use oxc_ast::{Atom, Node};
 
 use super::kind::Kind;
 
@@ -13,10 +11,10 @@ pub struct Token {
     pub kind: Kind,
 
     /// Start offset in source
-    pub start: usize,
+    pub start: u32,
 
     /// End offset in source
-    pub end: usize,
+    pub end: u32,
 
     /// Indicates the token is on a newline
     pub is_on_new_line: bool,
@@ -29,8 +27,8 @@ pub struct Token {
 
 impl Token {
     #[must_use]
-    pub const fn range(&self) -> Range<usize> {
-        self.start..self.end
+    pub const fn node(&self) -> Node {
+        Node::new(self.start, self.end)
     }
 }
 
