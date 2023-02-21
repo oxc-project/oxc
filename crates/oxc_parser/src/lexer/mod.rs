@@ -21,7 +21,7 @@ use constants::{
 pub use kind::Kind;
 use number::{parse_big_int, parse_float, parse_int};
 use oxc_allocator::{Allocator, String};
-use oxc_ast::{Atom, Node, SourceType};
+use oxc_ast::{ast::RegExpFlags, Atom, Node, SourceType};
 use oxc_diagnostics::{Diagnostic, Diagnostics};
 use simd::{SkipMultilineComment, SkipWhitespace};
 use string_builder::AutoCow;
@@ -1010,35 +1010,39 @@ impl<'a> Lexer<'a> {
 
         pattern.push_str(&start[..start.len() - self.current.chars.as_str().len() - 1]);
 
-        let mut flags = String::new_in(self.allocator);
-        while let c @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9') = self.peek() {
-            self.current.chars.next();
-            flags.push(c);
-        }
+        let mut flags = RegExpFlags::empty();
 
-        // v flag from https://github.com/tc39/proposal-regexp-set-notation
-        let gimsuy_mask: u32 =
-            ['g', 'i', 'm', 's', 'u', 'y', 'd', 'v'].iter().map(|x| 1 << ((*x as u8) - b'a')).sum();
-        let mut flag_text_set: u32 = 0;
-        for ch in flags.chars() {
+        while let ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9') = self.peek() {
+            self.current.chars.next();
+            // dbg!(ch);
             if !ch.is_ascii_lowercase() {
                 self.error(Diagnostic::RegExpFlag(ch, self.current_offset()));
                 continue;
             }
-            let ch_mask = 1 << ((ch as u8) - b'a');
-            if ch_mask & gimsuy_mask == 0 {
-                self.error(Diagnostic::RegExpFlag(ch, self.current_offset()));
-            }
-            if flag_text_set & ch_mask != 0 {
+            let flag = match ch {
+                'g' => RegExpFlags::G,
+                'i' => RegExpFlags::I,
+                'm' => RegExpFlags::M,
+                's' => RegExpFlags::S,
+                'u' => RegExpFlags::U,
+                'y' => RegExpFlags::Y,
+                'd' => RegExpFlags::D,
+                'v' => RegExpFlags::V,
+                _ => {
+                    self.error(Diagnostic::RegExpFlag(ch, self.current_offset()));
+                    continue;
+                }
+            };
+            if flags.contains(flag) {
                 self.error(Diagnostic::RegExpFlagTwice(ch, self.current_offset()));
+                continue;
             }
-            flag_text_set |= ch_mask;
+            flags |= flag;
         }
 
-        self.current.token.value = TokenValue::RegExp(RegExp {
-            pattern: Atom::from(pattern.as_str()),
-            flags: Atom::from(flags.as_str()),
-        });
+        self.current.token.value =
+            TokenValue::RegExp(RegExp { pattern: Atom::from(pattern.as_str()), flags });
+
         Kind::RegExp
     }
 

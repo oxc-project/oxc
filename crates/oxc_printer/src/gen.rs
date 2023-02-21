@@ -841,7 +841,7 @@ impl Gen for RegExpLiteral {
         p.print(b'/');
         p.print_str(self.regex.pattern.as_bytes());
         p.print(b'/');
-        p.print_str(self.regex.flags.as_bytes());
+        p.print_str(self.regex.flags.to_string().as_bytes());
     }
 }
 
