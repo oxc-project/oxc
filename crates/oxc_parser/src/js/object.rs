@@ -216,7 +216,7 @@ impl<'a> Parser<'a> {
         let method = self.parse_method(false, false)?;
 
         if !method.params.is_empty() {
-            self.error(Diagnostic::GetterParameters(method.params.node.range()));
+            self.error(Diagnostic::GetterParameters(method.params.node));
         }
 
         let value = PropertyValue::Expression(self.ast.function_expression(method));
@@ -240,12 +240,12 @@ impl<'a> Parser<'a> {
         let method = self.parse_method(false, false)?;
 
         if method.params.items.len() != 1 {
-            self.error(Diagnostic::SetterParameters(method.params.node.range()));
+            self.error(Diagnostic::SetterParameters(method.params.node));
         }
 
         if method.params.items.len() == 1 {
             if let BindingPatternKind::RestElement(elem) = &method.params.items[0].pattern.kind {
-                self.error(Diagnostic::SetterParametersRestPattern(elem.node.range()));
+                self.error(Diagnostic::SetterParametersRestPattern(elem.node));
             }
         }
 

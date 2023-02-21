@@ -155,13 +155,15 @@ impl<'a> Parser<'a> {
         let decl = self.parse_function_impl(func_kind)?;
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
-                self.error(Diagnostic::AsyncFunctionDeclaration(
-                    decl.node.start..decl.params.node.end,
-                ));
+                self.error(Diagnostic::AsyncFunctionDeclaration(Node::new(
+                    decl.node.start,
+                    decl.params.node.end,
+                )));
             } else if decl.generator {
-                self.error(Diagnostic::GeneratorFunctionDeclaration(
-                    decl.node.start..decl.params.node.end,
-                ));
+                self.error(Diagnostic::GeneratorFunctionDeclaration(Node::new(
+                    decl.node.start,
+                    decl.params.node.end,
+                )));
             }
         }
 
@@ -318,7 +320,7 @@ impl<'a> Parser<'a> {
         self.ctx = ctx;
 
         if kind.is_id_required() && id.is_none() {
-            self.error(Diagnostic::ExpectFunctionName(self.cur_token().range()));
+            self.error(Diagnostic::ExpectFunctionName(self.cur_token().node()));
         }
 
         id
@@ -431,7 +433,7 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.and_await(has_await);
 
         if self.cur_token().is_on_new_line {
-            self.error(Diagnostic::LineterminatorBeforeArrow(self.cur_token().range()));
+            self.error(Diagnostic::LineterminatorBeforeArrow(self.cur_token().node()));
         }
 
         self.expect(Kind::Arrow)?;

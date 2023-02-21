@@ -877,7 +877,7 @@ impl<'a> Parser<'a> {
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
         if !params.is_empty() {
-            self.error(Diagnostic::GetterParameters(params.node.range()));
+            self.error(Diagnostic::GetterParameters(params.node));
         }
         Ok(self.ast.ts_method_signature(
             self.end_node(node),
@@ -900,12 +900,10 @@ impl<'a> Parser<'a> {
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
         if params.items.len() != 1 {
-            self.error(Diagnostic::SetterParameters(params.node.range()));
+            self.error(Diagnostic::SetterParameters(params.node));
         }
         if let Some(return_type) = return_type.as_ref() {
-            self.error(Diagnostic::ASetAccessorCannotHaveAReturnTypeAnnotation(
-                return_type.node.range(),
-            ));
+            self.error(Diagnostic::ASetAccessorCannotHaveAReturnTypeAnnotation(return_type.node));
         }
         Ok(self.ast.ts_method_signature(
             self.end_node(node),

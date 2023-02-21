@@ -3,29 +3,40 @@ use std::{
     ops::Range,
 };
 
+use miette::{SourceOffset, SourceSpan};
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-pub type Span = Range<usize>;
+pub type Span = Range<u32>;
 
 #[derive(Debug, Default, Clone, Copy, Serialize, PartialEq, Eq)]
 pub struct Node {
-    pub start: usize,
-    pub end: usize,
+    pub start: u32,
+    pub end: u32,
 }
 
 impl Node {
     #[must_use]
     #[inline]
-    pub const fn new(start: usize, end: usize) -> Self {
+    pub const fn new(start: u32, end: u32) -> Self {
         Self { start, end }
     }
 
     #[must_use]
     pub const fn range(&self) -> Span {
-        self.start..self.end
+        (self.start)..(self.end)
+    }
+
+    #[must_use]
+    pub const fn len(&self) -> u32 {
+        self.end - self.start
+    }
+
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
@@ -33,6 +44,12 @@ impl Node {
 impl Hash for Node {
     fn hash<H: Hasher>(&self, _state: &mut H) {
         // hash to nothing so all ast nodes can be comparible with hash
+    }
+}
+
+impl From<Node> for SourceSpan {
+    fn from(val: Node) -> Self {
+        Self::new(SourceOffset::from(val.start as usize), SourceOffset::from(val.len() as usize))
     }
 }
 

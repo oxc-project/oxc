@@ -57,9 +57,9 @@ impl<'a> Parser<'a> {
 
         if self.at(Kind::Comma) {
             let error = if self.peek_at(Kind::RBrack) {
-                Diagnostic::RestElementTraillingComma(self.cur_token().range())
+                Diagnostic::RestElementTraillingComma(self.cur_token().node())
             } else {
-                Diagnostic::RestElement(node.range())
+                Diagnostic::RestElement(node)
             };
             self.error(error);
         }

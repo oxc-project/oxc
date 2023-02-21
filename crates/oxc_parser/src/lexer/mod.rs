@@ -21,7 +21,7 @@ use constants::{
 pub use kind::Kind;
 use number::{parse_big_int, parse_float, parse_int};
 use oxc_allocator::{Allocator, String};
-use oxc_ast::{Atom, SourceType, Span};
+use oxc_ast::{Atom, Node, SourceType};
 use oxc_diagnostics::{Diagnostic, Diagnostics};
 use simd::{SkipMultilineComment, SkipWhitespace};
 use string_builder::AutoCow;
@@ -205,7 +205,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Expand the current token for `JSXIdentifier`
-    pub fn next_jsx_identifier(&mut self, prev_len: usize) -> Token {
+    pub fn next_jsx_identifier(&mut self, prev_len: u32) -> Token {
         let kind = self.read_jsx_identifier(prev_len);
         self.lookahead.clear();
         self.finish_next(kind)
@@ -219,7 +219,7 @@ impl<'a> Lexer<'a> {
             _ => unreachable!(),
         };
         self.current.token.start = self.offset() - offset;
-        self.current.chars = self.source[self.current.token.start + 1..].chars();
+        self.current.chars = self.source[self.current.token.start as usize + 1..].chars();
         let kind = Kind::LAngle;
         self.lookahead.clear();
         self.finish_next(kind)
@@ -234,7 +234,7 @@ impl<'a> Lexer<'a> {
             _ => unreachable!(),
         };
         self.current.token.start = self.offset() - offset;
-        self.current.chars = self.source[self.current.token.start + 1..].chars();
+        self.current.chars = self.source[self.current.token.start as usize + 1..].chars();
         let kind = Kind::RAngle;
         self.lookahead.clear();
         self.finish_next(kind)
@@ -247,13 +247,14 @@ impl<'a> Lexer<'a> {
 
     /// Get the length offset from the source, in UTF-8 bytes
     #[inline]
-    fn offset(&self) -> usize {
-        self.source.len() - self.current.chars.as_str().len()
+    #[allow(clippy::cast_possible_truncation)]
+    fn offset(&self) -> u32 {
+        (self.source.len() - self.current.chars.as_str().len()) as u32
     }
 
     /// Get the current unterminated token range
-    fn unterminated_range(&self) -> Span {
-        self.current.token.start..self.offset()
+    fn unterminated_range(&self) -> Node {
+        Node::new(self.current.token.start, self.offset())
     }
 
     /// Peek the next char without advancing the position
@@ -279,9 +280,9 @@ impl<'a> Lexer<'a> {
         matched
     }
 
-    fn current_offset(&self) -> std::ops::Range<usize> {
+    fn current_offset(&self) -> Node {
         let offset = self.offset();
-        offset..offset
+        Node::new(offset, offset)
     }
 
     /// Return `IllegalCharacter` Error or `UnexpectedEnd` if EOF
@@ -316,7 +317,10 @@ impl<'a> Lexer<'a> {
         match value {
             Ok(value) => self.current.token.value = value,
             Err(err) => {
-                self.error(Diagnostic::InvalidNumber(err, self.current.token.start..self.offset()));
+                self.error(Diagnostic::InvalidNumber(
+                    err,
+                    Node::new(self.current.token.start, self.offset()),
+                ));
                 self.current.token.value = TokenValue::Number(std::f64::NAN);
             }
         };
@@ -710,11 +714,11 @@ impl<'a> Lexer<'a> {
                 self.identifier_unicode_escape_sequence(&mut builder, true);
             }
             Some(c) => {
-                self.error(Diagnostic::InvalidCharacter(c, start..self.offset() - 1));
+                self.error(Diagnostic::InvalidCharacter(c, Node::new(start, self.offset() - 1)));
                 return Kind::Undetermined;
             }
             None => {
-                self.error(Diagnostic::UnexpectedEnd(start..self.offset() - 1));
+                self.error(Diagnostic::UnexpectedEnd(Node::new(start, self.offset() - 1)));
                 return Kind::Undetermined;
             }
         }
@@ -931,7 +935,7 @@ impl<'a> Lexer<'a> {
                 break;
             }
         }
-        self.error(Diagnostic::InvalidNumberEnd(offset..self.offset()));
+        self.error(Diagnostic::InvalidNumberEnd(Node::new(offset, self.offset())));
         Kind::Undetermined
     }
 
@@ -958,7 +962,7 @@ impl<'a> Lexer<'a> {
                     let mut is_valid_escape_sequence = true;
                     self.read_string_escape_sequence(text, false, &mut is_valid_escape_sequence);
                     if !is_valid_escape_sequence {
-                        let range = start..self.offset();
+                        let range = Node::new(start, self.offset());
                         self.error(Diagnostic::InvalidEscapeSequence(range));
                     }
                 }
@@ -1080,8 +1084,8 @@ impl<'a> Lexer<'a> {
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    fn read_jsx_identifier(&mut self, prev_len: usize) -> Kind {
-        let prev_str = &self.source[prev_len..self.offset()];
+    fn read_jsx_identifier(&mut self, prev_len: u32) -> Kind {
+        let prev_str = &self.source[prev_len as usize..self.offset() as usize];
 
         let mut builder = AutoCow::new(self);
         loop {
@@ -1185,7 +1189,7 @@ impl<'a> Lexer<'a> {
     ) {
         let start = self.offset();
         if self.current.chars.next() != Some('u') {
-            let range = start..self.offset();
+            let range = Node::new(start, self.offset());
             self.error(Diagnostic::UnicodeEscapeSequence(range));
             return;
         }
@@ -1196,7 +1200,7 @@ impl<'a> Lexer<'a> {
         };
 
         let Some(value) = value else {
-            let range = start..self.offset();
+            let range = Node::new(start,self.offset());
             self.error(Diagnostic::UnicodeEscapeSequence(range));
             return;
         };
@@ -1204,7 +1208,7 @@ impl<'a> Lexer<'a> {
         // For Identifiers, surrogate pair is an invalid grammar, e.g. `var \uD800\uDEA7`.
         let ch = match value {
             SurrogatePair::Astral(..) | SurrogatePair::HighLow(..) => {
-                let range = start..self.offset();
+                let range = Node::new(start, self.offset());
                 self.error(Diagnostic::UnicodeEscapeSequence(range));
                 return;
             }
@@ -1212,7 +1216,7 @@ impl<'a> Lexer<'a> {
                 if let Ok(ch) = char::try_from(code_point) {
                     ch
                 } else {
-                    let range = start..self.offset();
+                    let range = Node::new(start, self.offset());
                     self.error(Diagnostic::UnicodeEscapeSequence(range));
                     return;
                 }

@@ -9,7 +9,7 @@ use crate::Parser;
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
-    prev_node_end: usize,
+    prev_node_end: u32,
     errors_pos: usize,
 }
 
@@ -42,7 +42,8 @@ impl<'a> Parser<'a> {
     /// Get current source text
     #[must_use]
     pub fn cur_src(&self) -> &'a str {
-        unsafe { self.source.get_unchecked(self.cur_token().range()) }
+        let range = self.cur_token().node().range();
+        unsafe { self.source.get_unchecked(range.start as usize..range.end as usize) }
     }
 
     /// Get current atom
@@ -100,8 +101,8 @@ impl<'a> Parser<'a> {
         // in IdentifierName hence such escapes cannot be used to write an Identifier
         // whose code point sequence is the same as a ReservedWord.
         if self.cur_token().escaped && kind.is_all_keyword() {
-            let range = self.cur_token().range();
-            self.error(Diagnostic::EscapedKeyword(range));
+            let node = self.cur_token().node();
+            self.error(Diagnostic::EscapedKeyword(node));
         }
         self.prev_token_end = self.token.end;
         self.token = self.lexer.next_token();
@@ -139,8 +140,8 @@ impl<'a> Parser<'a> {
     /// # Errors
     pub fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
-            let range = self.prev_token_end..self.cur_token().start;
-            return Err(Diagnostic::AutoSemicolonInsertion(range));
+            let node = Node::new(self.prev_token_end, self.cur_token().start);
+            return Err(Diagnostic::AutoSemicolonInsertion(node));
         }
         if self.at(Kind::Semicolon) {
             self.advance(Kind::Semicolon);
@@ -169,17 +170,17 @@ impl<'a> Parser<'a> {
     }
 
     #[must_use]
-    pub const fn current_range(&self) -> std::ops::Range<usize> {
+    pub const fn current_range(&self) -> Node {
         let cur_token = self.cur_token();
         match self.cur_kind() {
             Kind::Eof => {
                 if self.prev_token_end < cur_token.end {
-                    self.prev_token_end..self.prev_token_end
+                    Node::new(self.prev_token_end, self.prev_token_end)
                 } else {
-                    self.prev_token_end - 1..self.prev_token_end
+                    Node::new(self.prev_token_end - 1, self.prev_token_end)
                 }
             }
-            _ => cur_token.range(),
+            _ => cur_token.node(),
         }
     }
 

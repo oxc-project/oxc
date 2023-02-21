@@ -18,7 +18,10 @@ impl<'a> Parser<'a> {
         let decl = self.parse_class_declaration(/* declare */ false)?;
 
         if stmt_ctx.is_single_statement() {
-            self.error(Diagnostic::ClassDeclaration(decl.node.start..decl.body.node.start));
+            self.error(Diagnostic::ClassDeclaration(Node::new(
+                decl.node.start,
+                decl.body.node.start,
+            )));
         }
 
         Ok(self.ast.class_declaration(decl))
@@ -238,7 +241,7 @@ impl<'a> Parser<'a> {
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             if private_ident.name == "constructor" {
-                self.error(Diagnostic::PrivateNameConstructor(private_ident.node.range()));
+                self.error(Diagnostic::PrivateNameConstructor(private_ident.node));
             }
         }
 
@@ -264,17 +267,17 @@ impl<'a> Parser<'a> {
             )?;
             if let Some((name, node)) = definition.prop_name() {
                 if r#static && name == "prototype" {
-                    self.error(Diagnostic::StaticPrototype(node.range()));
+                    self.error(Diagnostic::StaticPrototype(node));
                 }
                 if !r#static && name == "constructor" {
                     if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
-                        self.error(Diagnostic::ConstructorGetterSetter(node.range()));
+                        self.error(Diagnostic::ConstructorGetterSetter(node));
                     }
                     if r#async {
-                        self.error(Diagnostic::ConstructorAsync(node.range()));
+                        self.error(Diagnostic::ConstructorAsync(node));
                     }
                     if generator {
-                        self.error(Diagnostic::ConstructorGenerator(node.range()));
+                        self.error(Diagnostic::ConstructorGenerator(node));
                     }
                 }
             }
@@ -295,10 +298,10 @@ impl<'a> Parser<'a> {
             )?;
             if let Some((name, node)) = definition.prop_name() {
                 if name == "constructor" {
-                    self.error(Diagnostic::FieldConstructor(node.range()));
+                    self.error(Diagnostic::FieldConstructor(node));
                 }
                 if r#static && name == "prototype" {
-                    self.error(Diagnostic::StaticPrototype(node.range()));
+                    self.error(Diagnostic::StaticPrototype(node));
                 }
             }
             Ok(definition)
@@ -344,17 +347,17 @@ impl<'a> Parser<'a> {
         let value = self.parse_method(r#async, generator)?;
 
         if kind == MethodDefinitionKind::Get && !value.params.is_empty() {
-            self.error(Diagnostic::GetterParameters(value.params.node.range()));
+            self.error(Diagnostic::GetterParameters(value.params.node));
         }
 
         if kind == MethodDefinitionKind::Set {
             if value.params.items.len() != 1 {
-                self.error(Diagnostic::SetterParameters(value.params.node.range()));
+                self.error(Diagnostic::SetterParameters(value.params.node));
             }
 
             if value.params.items.len() == 1 {
                 if let BindingPatternKind::RestElement(elem) = &value.params.items[0].pattern.kind {
-                    self.error(Diagnostic::SetterParametersRestPattern(elem.node.range()));
+                    self.error(Diagnostic::SetterParametersRestPattern(elem.node));
                 }
             }
         }

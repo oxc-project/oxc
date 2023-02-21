@@ -191,7 +191,7 @@ impl<'a> Parser<'a> {
             expressions.remove(0)
         } else {
             if expressions.is_empty() {
-                self.error(Diagnostic::EmptyParenthesizedExpression(list.node.range()));
+                self.error(Diagnostic::EmptyParenthesizedExpression(list.node));
             }
             self.ast.sequence_expression(list.node, expressions)
         };
@@ -376,7 +376,7 @@ impl<'a> Parser<'a> {
         // It is a Syntax Error if any source text is matched by this production.
         // https://tc39.es/ecma262/#sec-left-hand-side-expressions-static-semantics-early-errors
         if in_optional_chain {
-            self.error(Diagnostic::OptionalChainTaggedTemplate(quasi.node.range()));
+            self.error(Diagnostic::OptionalChainTaggedTemplate(quasi.node));
         }
         Ok(self.ast.tagged_template_expression(node, lhs, quasi, type_parameters))
     }
@@ -384,7 +384,7 @@ impl<'a> Parser<'a> {
     pub fn parse_template_element(&mut self, tagged: bool) -> TemplateElement {
         let node = self.start_node();
         let cur_kind = self.cur_kind();
-        let end_offset = match cur_kind {
+        let end_offset: u32 = match cur_kind {
             Kind::TemplateHead | Kind::TemplateMiddle => 2,
             Kind::NoSubstitutionTemplate | Kind::TemplateTail => 1,
             _ => unreachable!(),
@@ -393,7 +393,7 @@ impl<'a> Parser<'a> {
         // cooked = None when template literal has invalid escape sequence
         let cooked = self.cur_atom().map(Clone::clone);
 
-        let raw = &self.cur_src()[1..self.cur_src().len() - end_offset];
+        let raw = &self.cur_src()[1..self.cur_src().len() - end_offset as usize];
         let raw = Atom::from(if cooked.is_some() && raw.contains('\r') {
             self.ast.new_str(raw.replace("\r\n", "\n").replace('\r', "\n").as_str())
         } else {
@@ -407,7 +407,7 @@ impl<'a> Parser<'a> {
         node.end -= end_offset;
 
         if !tagged && cooked.is_none() {
-            self.error(Diagnostic::TemplateLiteral(node.range()));
+            self.error(Diagnostic::TemplateLiteral(node));
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
@@ -475,7 +475,7 @@ impl<'a> Parser<'a> {
         // SuperCall:
         //     super ( Arguments )
         if !matches!(self.cur_kind(), Kind::Dot | Kind::LBrack | Kind::LParen) {
-            self.error(Diagnostic::UnexpectedSuper(node.range()));
+            self.error(Diagnostic::UnexpectedSuper(node));
         }
 
         self.ast.super_(node)
@@ -605,13 +605,13 @@ impl<'a> Parser<'a> {
         };
 
         if matches!(callee, Expression::ImportExpression(_)) {
-            self.error(Diagnostic::NewDynamicImport(self.end_node(rhs_node).range()));
+            self.error(Diagnostic::NewDynamicImport(self.end_node(rhs_node)));
         }
 
         let node = self.end_node(node);
 
         if optional {
-            self.error(Diagnostic::NewOptionalChain(node.range()));
+            self.error(Diagnostic::NewOptionalChain(node));
         }
 
         Ok(self.ast.new_expression(node, callee, arguments, type_parameter))

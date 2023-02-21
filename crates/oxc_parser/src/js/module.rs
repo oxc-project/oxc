@@ -255,7 +255,7 @@ impl<'a> Parser<'a> {
                     self.error(Diagnostic::ExportNamedString(
                         literal.value.clone(),
                         specifier.local.name().clone(),
-                        literal.node.range(),
+                        literal.node,
                     ));
                 }
             }
@@ -384,7 +384,7 @@ impl<'a> Parser<'a> {
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 if !literal.is_string_well_formed_unicode() {
-                    self.error(Diagnostic::ExportLoneSurrogate(literal.node.range()));
+                    self.error(Diagnostic::ExportLoneSurrogate(literal.node));
                 };
                 Ok(ModuleExportName::StringLiteral(literal))
             }

@@ -5,7 +5,7 @@ use oxc_ast::ast::Decorator;
 
 #[derive(Default)]
 pub struct ParserState<'a> {
-    pub not_parenthesized_arrow: HashSet<usize>,
+    pub not_parenthesized_arrow: HashSet<u32>,
 
     pub decorators: Option<Vec<'a, Decorator<'a>>>,
 }

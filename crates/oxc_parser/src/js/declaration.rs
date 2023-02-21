@@ -92,10 +92,10 @@ impl<'a> Parser<'a> {
             //   BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
             // the grammar forbids `let []`, `let {}`
             if !matches!(id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                self.error(Diagnostic::InvalidDestrucuringDeclaration(id.node().range()));
+                self.error(Diagnostic::InvalidDestrucuringDeclaration(id.node()));
             } else if kind == VariableDeclarationKind::Const && !self.ctx.has_ambient() {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(Diagnostic::MissinginitializerInConst(id.node().range()));
+                self.error(Diagnostic::MissinginitializerInConst(id.node()));
             }
         }
 

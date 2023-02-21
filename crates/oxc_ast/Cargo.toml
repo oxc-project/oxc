@@ -17,6 +17,7 @@ compact_str = { workspace = true, features = ["serde"] }
 thiserror = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true, optional = true }
+miette = { workspace = true }
 
 num-bigint = "0.4.3"
 ryu-js = "0.2.2"
