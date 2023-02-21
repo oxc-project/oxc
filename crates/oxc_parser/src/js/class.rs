@@ -309,7 +309,7 @@ impl<'a> Parser<'a> {
         match self.cur_kind() {
             Kind::PrivateIdentifier => {
                 let private_ident = self.parse_private_identifier();
-                Ok((PropertyKey::PrivateIdentifier(private_ident), false))
+                Ok((PropertyKey::PrivateIdentifier(self.ast.alloc(private_ident)), false))
             }
             _ => self.parse_property_name(),
         }

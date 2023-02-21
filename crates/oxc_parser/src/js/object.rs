@@ -120,10 +120,9 @@ impl<'a> Parser<'a> {
         Ok(self.ast.property(
             self.end_node(node),
             PropertyKind::Init,
-            PropertyKey::Identifier(IdentifierName {
-                node: identifier.node,
-                name: identifier.name,
-            }),
+            PropertyKey::Identifier(
+                self.ast.alloc(IdentifierName { node: identifier.node, name: identifier.name }),
+            ),
             PropertyValue::Expression(value),
             /* method */ false,
             /* shorthand */ true,
@@ -167,7 +166,10 @@ impl<'a> Parser<'a> {
                 computed = true;
                 self.parse_computed_property_name().map(PropertyKey::Expression)?
             }
-            _ => PropertyKey::Identifier(self.parse_identifier_name()?),
+            _ => {
+                let ident = self.parse_identifier_name()?;
+                PropertyKey::Identifier(self.ast.alloc(ident))
+            }
         };
         Ok((key, computed))
     }

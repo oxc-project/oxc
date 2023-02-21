@@ -258,8 +258,8 @@ pub struct Property<'a> {
 #[derive(Debug, Serialize, PartialEq, Hash)]
 #[serde(untagged)]
 pub enum PropertyKey<'a> {
-    Identifier(IdentifierName),
-    PrivateIdentifier(PrivateIdentifier),
+    Identifier(Box<'a, IdentifierName>),
+    PrivateIdentifier(Box<'a, PrivateIdentifier>),
     Expression(Expression<'a>),
 }
 
