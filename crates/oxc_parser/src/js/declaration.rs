@@ -1,9 +1,8 @@
 use oxc_allocator::Box;
 use oxc_ast::{ast::*, context::StatementContext, GetSpan};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
-use crate::lexer::Kind;
-use crate::Parser;
+use crate::{diagnostics, lexer::Kind, Parser};
 
 #[derive(Clone, Debug, Copy, Eq, PartialEq)]
 pub enum VariableDeclarationParent {
@@ -92,10 +91,10 @@ impl<'a> Parser<'a> {
             //   BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
             // the grammar forbids `let []`, `let {}`
             if !matches!(id.kind, BindingPatternKind::BindingIdentifier(_)) {
-                self.error(Diagnostic::InvalidDestrucuringDeclaration(id.span()));
+                self.error(diagnostics::InvalidDestrucuringDeclaration(id.span()));
             } else if kind == VariableDeclarationKind::Const && !self.ctx.has_ambient() {
                 // It is a Syntax Error if Initializer is not present and IsConstantDeclaration of the LexicalDeclaration containing this LexicalBinding is true.
-                self.error(Diagnostic::MissinginitializerInConst(id.span()));
+                self.error(diagnostics::MissinginitializerInConst(id.span()));
             }
         }
 

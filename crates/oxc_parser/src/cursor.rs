@@ -1,10 +1,10 @@
 //! Code related to navigating `Token`s from the lexer
 
 use oxc_ast::{context::Context, Atom, Span};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
 use crate::lexer::{Kind, LexerCheckpoint, LexerContext, Token};
-use crate::Parser;
+use crate::{diagnostics, Parser};
 
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
@@ -102,7 +102,7 @@ impl<'a> Parser<'a> {
         // whose code point sequence is the same as a ReservedWord.
         if self.cur_token().escaped && kind.is_all_keyword() {
             let span = self.cur_token().span();
-            self.error(Diagnostic::EscapedKeyword(span));
+            self.error(diagnostics::EscapedKeyword(span));
         }
         self.prev_token_end = self.token.end;
         self.token = self.lexer.next_token();
@@ -141,7 +141,7 @@ impl<'a> Parser<'a> {
     pub fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
             let span = Span::new(self.prev_token_end, self.cur_token().start);
-            return Err(Diagnostic::AutoSemicolonInsertion(span).into());
+            return Err(diagnostics::AutoSemicolonInsertion(span).into());
         }
         if self.at(Kind::Semicolon) {
             self.advance(Kind::Semicolon);
@@ -164,7 +164,7 @@ impl<'a> Parser<'a> {
         if !self.at(kind) {
             let range = self.current_range();
             return Err(
-                Diagnostic::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into()
+                diagnostics::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into()
             );
         }
         self.advance(kind);

@@ -1,11 +1,9 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, context::StatementContext, syntax_directed_operations::PropName, Span};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
 use super::list::ClassElements;
-use crate::lexer::Kind;
-use crate::list::NormalList;
-use crate::Parser;
+use crate::{diagnostics, lexer::Kind, list::NormalList, Parser};
 
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
@@ -18,7 +16,7 @@ impl<'a> Parser<'a> {
         let decl = self.parse_class_declaration(/* declare */ false)?;
 
         if stmt_ctx.is_single_statement() {
-            self.error(Diagnostic::ClassDeclaration(Span::new(
+            self.error(diagnostics::ClassDeclaration(Span::new(
                 decl.span.start,
                 decl.body.span.start,
             )));
@@ -241,7 +239,7 @@ impl<'a> Parser<'a> {
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
             if private_ident.name == "constructor" {
-                self.error(Diagnostic::PrivateNameConstructor(private_ident.span));
+                self.error(diagnostics::PrivateNameConstructor(private_ident.span));
             }
         }
 
@@ -267,17 +265,17 @@ impl<'a> Parser<'a> {
             )?;
             if let Some((name, span)) = definition.prop_name() {
                 if r#static && name == "prototype" {
-                    self.error(Diagnostic::StaticPrototype(span));
+                    self.error(diagnostics::StaticPrototype(span));
                 }
                 if !r#static && name == "constructor" {
                     if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
-                        self.error(Diagnostic::ConstructorGetterSetter(span));
+                        self.error(diagnostics::ConstructorGetterSetter(span));
                     }
                     if r#async {
-                        self.error(Diagnostic::ConstructorAsync(span));
+                        self.error(diagnostics::ConstructorAsync(span));
                     }
                     if generator {
-                        self.error(Diagnostic::ConstructorGenerator(span));
+                        self.error(diagnostics::ConstructorGenerator(span));
                     }
                 }
             }
@@ -298,10 +296,10 @@ impl<'a> Parser<'a> {
             )?;
             if let Some((name, span)) = definition.prop_name() {
                 if name == "constructor" {
-                    self.error(Diagnostic::FieldConstructor(span));
+                    self.error(diagnostics::FieldConstructor(span));
                 }
                 if r#static && name == "prototype" {
-                    self.error(Diagnostic::StaticPrototype(span));
+                    self.error(diagnostics::StaticPrototype(span));
                 }
             }
             Ok(definition)
@@ -347,17 +345,17 @@ impl<'a> Parser<'a> {
         let value = self.parse_method(r#async, generator)?;
 
         if kind == MethodDefinitionKind::Get && !value.params.is_empty() {
-            self.error(Diagnostic::GetterParameters(value.params.span));
+            self.error(diagnostics::GetterParameters(value.params.span));
         }
 
         if kind == MethodDefinitionKind::Set {
             if value.params.items.len() != 1 {
-                self.error(Diagnostic::SetterParameters(value.params.span));
+                self.error(diagnostics::SetterParameters(value.params.span));
             }
 
             if value.params.items.len() == 1 {
                 if let BindingPatternKind::RestElement(elem) = &value.params.items[0].pattern.kind {
-                    self.error(Diagnostic::SetterParametersRestPattern(elem.span));
+                    self.error(diagnostics::SetterParametersRestPattern(elem.span));
                 }
             }
         }

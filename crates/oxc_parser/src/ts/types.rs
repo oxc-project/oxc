@@ -1,15 +1,18 @@
 use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, context::Context};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
 use super::list::{
     TSInterfaceOrObjectBodyList, TSTupleElementList, TSTypeArgumentList, TSTypeParameterList,
 };
-use crate::js::list::{ArrayPatternList, ObjectPatternProperties};
-use crate::lexer::Kind;
-use crate::list::{NormalList, SeparatedList};
-use crate::Parser;
+use crate::{
+    diagnostics,
+    js::list::{ArrayPatternList, ObjectPatternProperties},
+    lexer::Kind,
+    list::{NormalList, SeparatedList},
+    Parser,
+};
 
 bitflags! {
   /// Bitflag of class member modifiers.
@@ -877,7 +880,7 @@ impl<'a> Parser<'a> {
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
         if !params.is_empty() {
-            self.error(Diagnostic::GetterParameters(params.span));
+            self.error(diagnostics::GetterParameters(params.span));
         }
         Ok(self.ast.ts_method_signature(
             self.end_span(span),
@@ -900,10 +903,10 @@ impl<'a> Parser<'a> {
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
         if params.items.len() != 1 {
-            self.error(Diagnostic::SetterParameters(params.span));
+            self.error(diagnostics::SetterParameters(params.span));
         }
         if let Some(return_type) = return_type.as_ref() {
-            self.error(Diagnostic::ASetAccessorCannotHaveAReturnTypeAnnotation(return_type.span));
+            self.error(diagnostics::ASetAccessorCannotHaveAReturnTypeAnnotation(return_type.span));
         }
         Ok(self.ast.ts_method_signature(
             self.end_span(span),

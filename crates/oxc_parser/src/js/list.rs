@@ -1,8 +1,9 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, syntax_directed_operations::PrivateBoundIdentifiers, Atom, GetSpan, Span};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 use rustc_hash::FxHashMap;
 
+use crate::diagnostics;
 use crate::lexer::Kind;
 use crate::list::{NormalList, SeparatedList};
 use crate::Parser;
@@ -65,7 +66,7 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
                 let rest_element = p.parse_rest_element()?;
 
                 if !matches!(rest_element.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
-                    p.error(Diagnostic::InvalidRestArgument(rest_element.span));
+                    p.error(diagnostics::InvalidRestArgument(rest_element.span));
                 }
 
                 ObjectPatternProperty::RestElement(rest_element)
@@ -291,7 +292,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
         };
 
         if let Some(old_span) = self.keys.get(&key.as_atom()) {
-            p.error(Diagnostic::Redeclaration(key.as_atom(), *old_span, key.span()));
+            p.error(diagnostics::Redeclaration(key.as_atom(), *old_span, key.span()));
         } else {
             self.keys.insert(key.as_atom(), key.span());
         }
@@ -394,7 +395,7 @@ impl<'a> ClassElements<'a> {
                     _ => false,
                 })
             {
-                p.error(Diagnostic::Redeclaration(
+                p.error(diagnostics::Redeclaration(
                     private_ident.name.clone(),
                     existed.span,
                     private_ident.span,

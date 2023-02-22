@@ -1,9 +1,9 @@
 //! Cover Grammar for Destructuring Assignment
 
 use oxc_ast::{ast::*, GetSpan};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
-use crate::Parser;
+use crate::{diagnostics, Parser};
 
 pub trait CoverGrammar<'a, T>: Sized {
     fn cover(value: T, p: &mut Parser<'a>) -> Result<Self>;
@@ -45,7 +45,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 let span = expr.span;
                 match expr.unbox().expression {
                     Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
-                        Err(Diagnostic::InvalidAssignment(span).into())
+                        Err(diagnostics::InvalidAssignment(span).into())
                     }
                     expr => SimpleAssignmentTarget::cover(expr, p),
                 }
@@ -55,7 +55,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(expr))
             }
             Expression::TSTypeAssertion(expr) => Ok(SimpleAssignmentTarget::TSTypeAssertion(expr)),
-            expr => Err(Diagnostic::InvalidAssignment(expr.span()).into()),
+            expr => Err(diagnostics::InvalidAssignment(expr.span()).into()),
         }
     }
 }
@@ -77,10 +77,10 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                         if i == len - 1 {
                             rest = Some(AssignmentTarget::cover(elem.unbox().argument, p)?);
                             if let Some(span) = expr.trailing_comma {
-                                p.error(Diagnostic::RestElementTraillingComma(span));
+                                p.error(diagnostics::RestElementTraillingComma(span));
                             }
                         } else {
-                            return Err(Diagnostic::SpreadLastElement(elem.span).into());
+                            return Err(diagnostics::SpreadLastElement(elem.span).into());
                         }
                     }
                 }
@@ -135,7 +135,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                     if i == len - 1 {
                         rest = Some(AssignmentTarget::cover(spread.unbox().argument, p)?);
                     } else {
-                        return Err(Diagnostic::SpreadLastElement(spread.span).into());
+                        return Err(diagnostics::SpreadLastElement(spread.span).into());
                     }
                 }
             }
@@ -166,7 +166,7 @@ impl<'a> CoverGrammar<'a, Property<'a>> for AssignmentTargetProperty<'a> {
             let binding = match property.value {
                 PropertyValue::Expression(expr) => AssignmentTargetMaybeDefault::cover(expr, p)?,
                 PropertyValue::Pattern(_) => {
-                    return Err(Diagnostic::InvalidAssignment(property.value.span()).into());
+                    return Err(diagnostics::InvalidAssignment(property.value.span()).into());
                 }
             };
             let target = AssignmentTargetPropertyProperty {
