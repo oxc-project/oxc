@@ -19,3 +19,6 @@ rustc-hash = { workspace = true }
 
 unicode-id-start = "1.0.3"
 num-bigint = "0.4.3"
+
+[dev-dependencies]
+miette = { workspace = true, features = ["fancy"] }
