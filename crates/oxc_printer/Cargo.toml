@@ -15,3 +15,4 @@ oxc_ast = { path = "../oxc_ast" }
 
 [dev_dependencies]
 oxc_parser = { path = "../oxc_parser" }
+miette = { workspace = true, features = ["fancy"] }
