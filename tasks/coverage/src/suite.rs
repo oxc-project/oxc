@@ -11,6 +11,7 @@ use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
@@ -257,10 +258,22 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     /// Execute the parser once and get the test result
     fn execute(&mut self, source_type: SourceType) -> TestResult {
         let allocator = Allocator::default();
-        let source = self.code();
-        let ret = Parser::new(&allocator, source, source_type).parse();
-        let passed = ret.errors.is_empty();
-        let result = if passed { Ok(String::new()) } else { Err(String::new()) };
+        let source_text = self.code();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let result = if ret.errors.is_empty() {
+            Ok(String::new())
+        } else {
+            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
+            let mut output = String::new();
+            for error in ret.errors {
+                let error = error.with_source_code(NamedSource::new(
+                    self.path().to_string_lossy(),
+                    source_text.to_string(),
+                ));
+                handler.render_report(&mut output, error.as_ref()).unwrap();
+            }
+            Err(output)
+        };
         self.parser_return_to_test_result(result)
     }
 
