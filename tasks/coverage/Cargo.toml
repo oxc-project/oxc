@@ -15,10 +15,12 @@ oxc_allocator = { path = "../../crates/oxc_allocator" }
 oxc_parser = { path = "../../crates/oxc_parser" }
 oxc_ast = { path = "../../crates/oxc_ast" }
 oxc_printer = { path = "../../crates/oxc_printer" }
+oxc_diagnostics = { path = "../../crates/oxc_diagnostics" }
 
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 rayon = { workspace = true }
+miette = { workspace = true, features = ["fancy"] }
 
 console = "0.15.5"
 encoding_rs = "0.8.32"
