@@ -16,7 +16,7 @@ mod lexer;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span};
-use oxc_diagnostics::{Diagnostic, Diagnostics, Result};
+use oxc_diagnostics::{Diagnostic, Diagnostics, PError, Result};
 
 use crate::{
     lexer::{Kind, Lexer, Token},
@@ -26,7 +26,7 @@ use crate::{
 #[derive(Debug)]
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
-    pub errors: Vec<Diagnostic>,
+    pub errors: Vec<PError>,
 }
 
 pub struct Parser<'a> {
@@ -99,7 +99,8 @@ impl<'a> Parser<'a> {
                 program
             }
         };
-        ParserReturn { program, errors: self.errors.borrow().clone() }
+        let errors = self.errors.borrow_mut().drain(..).collect();
+        ParserReturn { program, errors }
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -116,11 +117,11 @@ impl<'a> Parser<'a> {
 
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-    fn flow_error(&self) -> Option<Diagnostic> {
+    fn flow_error(&self) -> Option<PError> {
         if self.source_type.is_javascript()
             && (self.source.starts_with("// @flow") || self.source.starts_with("/* @flow */"))
         {
-            return Some(Diagnostic::Flow(Span::new(0, 8)));
+            return Some(Diagnostic::Flow(Span::new(0, 8)).into());
         }
         None
     }
@@ -134,12 +135,12 @@ impl<'a> Parser<'a> {
         if self.cur_kind() == Kind::Undetermined {
             return Err(self.errors.borrow_mut().pop().unwrap());
         }
-        Err(Diagnostic::UnexpectedToken(self.current_range()))
+        Err(Diagnostic::UnexpectedToken(self.current_range()).into())
     }
 
     /// Push a Syntax Error
-    fn error(&mut self, error: Diagnostic) {
-        self.errors.borrow_mut().push(error);
+    fn error<T: Into<PError>>(&mut self, error: T) {
+        self.errors.borrow_mut().push(error.into());
     }
 
     #[must_use]

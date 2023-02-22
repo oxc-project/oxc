@@ -242,7 +242,7 @@ impl<'a> Lexer<'a> {
 
     // ---------- Private Methods ---------- //
     fn error(&mut self, error: Diagnostic) {
-        self.errors.borrow_mut().push(error);
+        self.errors.borrow_mut().push(error.into());
     }
 
     /// Get the length offset from the source, in UTF-8 bytes

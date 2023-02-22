@@ -45,7 +45,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 let span = expr.span;
                 match expr.unbox().expression {
                     Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
-                        Err(Diagnostic::InvalidAssignment(span))
+                        Err(Diagnostic::InvalidAssignment(span).into())
                     }
                     expr => SimpleAssignmentTarget::cover(expr, p),
                 }
@@ -55,7 +55,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(expr))
             }
             Expression::TSTypeAssertion(expr) => Ok(SimpleAssignmentTarget::TSTypeAssertion(expr)),
-            expr => Err(Diagnostic::InvalidAssignment(expr.span())),
+            expr => Err(Diagnostic::InvalidAssignment(expr.span()).into()),
         }
     }
 }
@@ -80,7 +80,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                                 p.error(Diagnostic::RestElementTraillingComma(span));
                             }
                         } else {
-                            return Err(Diagnostic::SpreadLastElement(elem.span));
+                            return Err(Diagnostic::SpreadLastElement(elem.span).into());
                         }
                     }
                 }
@@ -135,7 +135,7 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
                     if i == len - 1 {
                         rest = Some(AssignmentTarget::cover(spread.unbox().argument, p)?);
                     } else {
-                        return Err(Diagnostic::SpreadLastElement(spread.span));
+                        return Err(Diagnostic::SpreadLastElement(spread.span).into());
                     }
                 }
             }
@@ -166,7 +166,7 @@ impl<'a> CoverGrammar<'a, Property<'a>> for AssignmentTargetProperty<'a> {
             let binding = match property.value {
                 PropertyValue::Expression(expr) => AssignmentTargetMaybeDefault::cover(expr, p)?,
                 PropertyValue::Pattern(_) => {
-                    return Err(Diagnostic::InvalidAssignment(property.value.span()));
+                    return Err(Diagnostic::InvalidAssignment(property.value.span()).into());
                 }
             };
             let target = AssignmentTargetPropertyProperty {
