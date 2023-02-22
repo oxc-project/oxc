@@ -5,13 +5,15 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 use oxc_ast::{Atom, Span};
 use thiserror::Error;
 
-pub type Result<T> = std::result::Result<T, Diagnostic>;
+pub type PError = miette::Error;
+
+pub type Result<T> = std::result::Result<T, PError>;
 
 #[derive(Debug, Default, Clone)]
-pub struct Diagnostics(Rc<RefCell<Vec<Diagnostic>>>);
+pub struct Diagnostics(Rc<RefCell<Vec<PError>>>);
 
 impl Deref for Diagnostics {
-    type Target = Rc<RefCell<Vec<Diagnostic>>>;
+    type Target = Rc<RefCell<Vec<PError>>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -21,7 +23,7 @@ impl Deref for Diagnostics {
 impl Diagnostics {
     /// # Panics
     #[must_use]
-    pub fn into_inner(self) -> Vec<Diagnostic> {
+    pub fn into_inner(self) -> Vec<PError> {
         Rc::try_unwrap(self.0).unwrap().into_inner()
     }
 }

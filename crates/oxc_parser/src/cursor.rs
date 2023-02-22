@@ -141,7 +141,7 @@ impl<'a> Parser<'a> {
     pub fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
             let span = Span::new(self.prev_token_end, self.cur_token().start);
-            return Err(Diagnostic::AutoSemicolonInsertion(span));
+            return Err(Diagnostic::AutoSemicolonInsertion(span).into());
         }
         if self.at(Kind::Semicolon) {
             self.advance(Kind::Semicolon);
@@ -163,7 +163,9 @@ impl<'a> Parser<'a> {
     pub fn expect(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.current_range();
-            return Err(Diagnostic::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range));
+            return Err(
+                Diagnostic::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into()
+            );
         }
         self.advance(kind);
         Ok(())
