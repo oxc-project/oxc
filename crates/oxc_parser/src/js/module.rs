@@ -1,12 +1,10 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, context::Context, Span};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
 use super::function::FunctionKind;
 use super::list::{AssertEntries, ExportNamedSpecifiers};
-use crate::lexer::Kind;
-use crate::list::SeparatedList;
-use crate::Parser;
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
 
 impl<'a> Parser<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
@@ -252,7 +250,7 @@ impl<'a> Parser<'a> {
         if source.is_none() {
             for specifier in &specifiers {
                 if let ModuleExportName::StringLiteral(literal) = &specifier.local {
-                    self.error(Diagnostic::ExportNamedString(
+                    self.error(diagnostics::ExportNamedString(
                         literal.value.clone(),
                         specifier.local.name().clone(),
                         literal.span,
@@ -384,7 +382,7 @@ impl<'a> Parser<'a> {
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 if !literal.is_string_well_formed_unicode() {
-                    self.error(Diagnostic::ExportLoneSurrogate(literal.span));
+                    self.error(diagnostics::ExportLoneSurrogate(literal.span));
                 };
                 Ok(ModuleExportName::StringLiteral(literal))
             }

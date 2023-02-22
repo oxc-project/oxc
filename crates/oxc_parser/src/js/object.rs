@@ -1,11 +1,9 @@
 use oxc_allocator::Box;
 use oxc_ast::{ast::*, Span};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
 use super::list::ObjectExpressionProperties;
-use crate::lexer::Kind;
-use crate::list::SeparatedList;
-use crate::Parser;
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
 
 impl<'a> Parser<'a> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
@@ -216,7 +214,7 @@ impl<'a> Parser<'a> {
         let method = self.parse_method(false, false)?;
 
         if !method.params.is_empty() {
-            self.error(Diagnostic::GetterParameters(method.params.span));
+            self.error(diagnostics::GetterParameters(method.params.span));
         }
 
         let value = PropertyValue::Expression(self.ast.function_expression(method));
@@ -240,12 +238,12 @@ impl<'a> Parser<'a> {
         let method = self.parse_method(false, false)?;
 
         if method.params.items.len() != 1 {
-            self.error(Diagnostic::SetterParameters(method.params.span));
+            self.error(diagnostics::SetterParameters(method.params.span));
         }
 
         if method.params.items.len() == 1 {
             if let BindingPatternKind::RestElement(elem) = &method.params.items[0].pattern.kind {
-                self.error(Diagnostic::SetterParametersRestPattern(elem.span));
+                self.error(diagnostics::SetterParametersRestPattern(elem.span));
             }
         }
 

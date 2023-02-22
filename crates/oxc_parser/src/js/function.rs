@@ -4,12 +4,10 @@ use oxc_ast::{
     context::{Context, StatementContext},
     GetSpan, Span,
 };
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
 use super::list::FormalParameterList;
-use crate::lexer::Kind;
-use crate::list::SeparatedList;
-use crate::Parser;
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
 
 type ArrowFunctionHead<'a> = (
     Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -155,12 +153,12 @@ impl<'a> Parser<'a> {
         let decl = self.parse_function_impl(func_kind)?;
         if stmt_ctx.is_single_statement() {
             if decl.r#async {
-                self.error(Diagnostic::AsyncFunctionDeclaration(Span::new(
+                self.error(diagnostics::AsyncFunctionDeclaration(Span::new(
                     decl.span.start,
                     decl.params.span.end,
                 )));
             } else if decl.generator {
-                self.error(Diagnostic::GeneratorFunctionDeclaration(Span::new(
+                self.error(diagnostics::GeneratorFunctionDeclaration(Span::new(
                     decl.span.start,
                     decl.params.span.end,
                 )));
@@ -320,7 +318,7 @@ impl<'a> Parser<'a> {
         self.ctx = ctx;
 
         if kind.is_id_required() && id.is_none() {
-            self.error(Diagnostic::ExpectFunctionName(self.cur_token().span()));
+            self.error(diagnostics::ExpectFunctionName(self.cur_token().span()));
         }
 
         id
@@ -433,7 +431,7 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.and_await(has_await);
 
         if self.cur_token().is_on_new_line {
-            self.error(Diagnostic::LineterminatorBeforeArrow(self.cur_token().span()));
+            self.error(diagnostics::LineterminatorBeforeArrow(self.cur_token().span()));
         }
 
         self.expect(Kind::Arrow)?;

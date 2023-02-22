@@ -1,6 +1,6 @@
 use oxc_allocator::Box;
 use oxc_ast::{ast::*, Atom, Span};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
 use super::function::IsParenthesizedArrowFunction;
 use super::grammar::CoverGrammar;
@@ -9,9 +9,12 @@ use super::operator::{
     map_assignment_operator, map_binary_operator, map_logical_operator, map_unary_operator,
     map_update_operator, BindingPower,
 };
-use crate::lexer::{Kind, TokenValue};
-use crate::list::SeparatedList;
-use crate::Parser;
+use crate::{
+    diagnostics,
+    lexer::{Kind, TokenValue},
+    list::SeparatedList,
+    Parser,
+};
 
 impl<'a> Parser<'a> {
     pub fn parse_paren_expression(&mut self) -> Result<Expression<'a>> {
@@ -191,7 +194,7 @@ impl<'a> Parser<'a> {
             expressions.remove(0)
         } else {
             if expressions.is_empty() {
-                self.error(Diagnostic::EmptyParenthesizedExpression(list.span));
+                self.error(diagnostics::EmptyParenthesizedExpression(list.span));
             }
             self.ast.sequence_expression(list.span, expressions)
         };
@@ -376,7 +379,7 @@ impl<'a> Parser<'a> {
         // It is a Syntax Error if any source text is matched by this production.
         // https://tc39.es/ecma262/#sec-left-hand-side-expressions-static-semantics-early-errors
         if in_optional_chain {
-            self.error(Diagnostic::OptionalChainTaggedTemplate(quasi.span));
+            self.error(diagnostics::OptionalChainTaggedTemplate(quasi.span));
         }
         Ok(self.ast.tagged_template_expression(span, lhs, quasi, type_parameters))
     }
@@ -407,7 +410,7 @@ impl<'a> Parser<'a> {
         span.end -= end_offset;
 
         if !tagged && cooked.is_none() {
-            self.error(Diagnostic::TemplateLiteral(span));
+            self.error(diagnostics::TemplateLiteral(span));
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
@@ -475,7 +478,7 @@ impl<'a> Parser<'a> {
         // SuperCall:
         //     super ( Arguments )
         if !matches!(self.cur_kind(), Kind::Dot | Kind::LBrack | Kind::LParen) {
-            self.error(Diagnostic::UnexpectedSuper(span));
+            self.error(diagnostics::UnexpectedSuper(span));
         }
 
         self.ast.super_(span)
@@ -605,13 +608,13 @@ impl<'a> Parser<'a> {
         };
 
         if matches!(callee, Expression::ImportExpression(_)) {
-            self.error(Diagnostic::NewDynamicImport(self.end_span(rhs_span)));
+            self.error(diagnostics::NewDynamicImport(self.end_span(rhs_span)));
         }
 
         let span = self.end_span(span);
 
         if optional {
-            self.error(Diagnostic::NewOptionalChain(span));
+            self.error(diagnostics::NewOptionalChain(span));
         }
 
         Ok(self.ast.new_expression(span, callee, arguments, type_parameter))

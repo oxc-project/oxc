@@ -12,11 +12,12 @@ mod js;
 mod jsx;
 mod ts;
 
+mod diagnostics;
 mod lexer;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span};
-use oxc_diagnostics::{Diagnostic, Diagnostics, PError, Result};
+use oxc_diagnostics::{Diagnostics, PError, Result};
 
 use crate::{
     lexer::{Kind, Lexer, Token},
@@ -121,7 +122,7 @@ impl<'a> Parser<'a> {
         if self.source_type.is_javascript()
             && (self.source.starts_with("// @flow") || self.source.starts_with("/* @flow */"))
         {
-            return Some(Diagnostic::Flow(Span::new(0, 8)).into());
+            return Some(diagnostics::Flow(Span::new(0, 8)).into());
         }
         None
     }
@@ -135,7 +136,7 @@ impl<'a> Parser<'a> {
         if self.cur_kind() == Kind::Undetermined {
             return Err(self.errors.borrow_mut().pop().unwrap());
         }
-        Err(Diagnostic::UnexpectedToken(self.current_range()).into())
+        Err(diagnostics::UnexpectedToken(self.current_range()).into())
     }
 
     /// Push a Syntax Error

@@ -10,7 +10,5 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-oxc_ast = { path = "../oxc_ast" }
-
 thiserror = { workspace = true }
 miette = { workspace = true }

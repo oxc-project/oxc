@@ -1,11 +1,9 @@
 use oxc_allocator::Box;
 use oxc_ast::{ast::*, Span};
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
 use super::list::{ArrayPatternList, ObjectPatternProperties};
-use crate::lexer::Kind;
-use crate::list::SeparatedList;
-use crate::Parser;
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
 
 impl<'a> Parser<'a> {
     /// Destructuring Binding Patterns
@@ -56,12 +54,11 @@ impl<'a> Parser<'a> {
         let span = self.end_span(span);
 
         if self.at(Kind::Comma) {
-            let error = if self.peek_at(Kind::RBrack) {
-                Diagnostic::RestElementTraillingComma(self.cur_token().span())
+            if self.peek_at(Kind::RBrack) {
+                self.error(diagnostics::RestElementTraillingComma(self.cur_token().span()));
             } else {
-                Diagnostic::RestElement(span)
-            };
-            self.error(error);
+                self.error(diagnostics::RestElement(span));
+            }
         }
 
         Ok(self.ast.rest_element(span, argument))

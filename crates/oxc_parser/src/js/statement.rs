@@ -4,14 +4,14 @@ use oxc_ast::{
     context::{Context, StatementContext},
     Span,
 };
-use oxc_diagnostics::{Diagnostic, Result};
+use oxc_diagnostics::Result;
 
-use super::declaration::{VariableDeclarationContext, VariableDeclarationParent};
-use super::grammar::CoverGrammar;
-use super::list::SwitchCases;
-use crate::lexer::Kind;
-use crate::list::NormalList;
-use crate::Parser;
+use super::{
+    declaration::{VariableDeclarationContext, VariableDeclarationParent},
+    grammar::CoverGrammar,
+    list::SwitchCases,
+};
+use crate::{diagnostics, lexer::Kind, list::NormalList, Parser};
 
 impl<'a> Parser<'a> {
     /// `https://tc39.es/ecma262/#prod-StatementList`
@@ -193,7 +193,7 @@ impl<'a> Parser<'a> {
         ))?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
-            self.error(Diagnostic::LexicalDeclarationSingleStatement(decl.span));
+            self.error(diagnostics::LexicalDeclarationSingleStatement(decl.span));
         }
 
         Ok(Statement::Declaration(Declaration::VariableDeclaration(decl)))
@@ -298,15 +298,15 @@ impl<'a> Parser<'a> {
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
             let target = AssignmentTarget::cover(init_expression, self)
-                .map_err(|_| Diagnostic::UnexpectedToken(self.end_span(expression_span)))?;
+                .map_err(|_| diagnostics::UnexpectedToken(self.end_span(expression_span)))?;
             let for_stmt_left = ForStatementLeft::AssignmentTarget(target);
 
             if !r#await && is_async_of {
-                self.error(Diagnostic::ForLoopAsyncOf(self.end_span(expression_span)));
+                self.error(diagnostics::ForLoopAsyncOf(self.end_span(expression_span)));
             }
 
             if is_let_of {
-                self.error(Diagnostic::UnexpectedKeyword("let", self.end_span(expression_span)));
+                self.error(diagnostics::UnexpectedKeyword("let", self.end_span(expression_span)));
             }
 
             return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
@@ -328,7 +328,7 @@ impl<'a> Parser<'a> {
         self.expect(Kind::RParen)?;
 
         if r#await {
-            self.error(Diagnostic::ForAwait(self.end_span(span)));
+            self.error(diagnostics::ForAwait(self.end_span(span)));
         }
 
         let body = self.parse_statement_list_item(StatementContext::For)?;
@@ -352,7 +352,7 @@ impl<'a> Parser<'a> {
         self.expect(Kind::RParen)?;
 
         if r#await && is_for_in {
-            self.error(Diagnostic::ForAwait(self.end_span(span)));
+            self.error(diagnostics::ForAwait(self.end_span(span)));
         }
 
         let body = self.parse_statement_list_item(StatementContext::For)?;
@@ -450,7 +450,7 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `throw`
         if self.cur_token().is_on_new_line {
-            self.error(Diagnostic::IllegalNewline(
+            self.error(diagnostics::IllegalNewline(
                 "throw",
                 self.end_span(span),
                 self.cur_token().span(),
@@ -474,7 +474,7 @@ impl<'a> Parser<'a> {
 
         let range = Span::new(self.prev_token_end, self.prev_token_end + 1);
         if handler.is_none() && finalizer.is_none() {
-            self.error(Diagnostic::ExpectCatchFinally(range));
+            self.error(diagnostics::ExpectCatchFinally(range));
         }
 
         Ok(self.ast.try_statement(self.end_span(span), block, handler, finalizer))
