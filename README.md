@@ -19,7 +19,7 @@ We now have a fully working parser as a baseline, it is not polished yet,
 so it would be much appreciated if I can invite you and review any of the code and point out for improvements.
 I welcome all nitpickings and bikesheddings.
 
-I have crated some [discussions](https://github.com/Boshen/oxc/discussions).
+I have also created some [discussions](https://github.com/Boshen/oxc/discussions) for documenting my thought processes.
 
 ## Milestone
 
@@ -30,19 +30,21 @@ The current objective is to improve the parser for real usage. Areas include:
 * Performance
 * Pass more conformance tests
 
+You may start with https://github.com/Boshen/oxc/issues/36
+
 ## Conformance
 
-The `cargo coverage` currently reports the following summary
+The `cargo coverage` command currently reports the following summary
 
 ```
 Test262 Summary:
 AST Parsed     : 43934/43934 (100.00%)
 
 Babel Summary:
-AST Parsed     : 2044/2057 (99.37%)
+AST Parsed     : 2045/2057 (99.42%)
 
 TypeScript Summary:
-AST Parsed     : 4290/4861 (88.25%)
+AST Parsed     : 4291/4861 (88.27%)
 ```
 
 (The parser is failing some of the TypeScript recoverable parser tests.)
