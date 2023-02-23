@@ -72,6 +72,8 @@ jobs:
           echo "::set-output name=comment::$comment"
 
       - name: Find Comment
+        # Check if the event is not triggered by a fork
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: peter-evans/find-comment@v2
         id: fc
         with:
@@ -80,6 +82,8 @@ jobs:
           body-includes: Parser Benchmark Results
 
       - name: Write a new comment
+        # Check if the event is not triggered by a fork
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: peter-evans/create-or-update-comment@v2
         with:
           issue-number: ${{ github.event.pull_request.number }}
