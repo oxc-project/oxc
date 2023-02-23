@@ -265,6 +265,10 @@ impl<'a> Parser<'a> {
 
     // export Declaration
     fn parse_export_named_declaration(&mut self) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
+        // For tc39/proposal-decorators
+        // For more information, please refer to https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport
+        self.eat_decorators()?;
+
         let declaration = self.parse_declaration_clause()?;
         Ok(self.ast.export_named_declaration(Some(declaration), self.ast.new_vec(), None, None))
     }
@@ -276,6 +280,9 @@ impl<'a> Parser<'a> {
         &mut self,
     ) -> Result<Box<'a, ExportDefaultDeclaration<'a>>> {
         let exported = self.parse_keyword_identifier(Kind::Default);
+        // For tc39/proposal-decorators
+        // For more information, please refer to https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport
+        self.eat_decorators()?;
         let declaration = match self.cur_kind() {
             Kind::Class => self
                 .parse_class_declaration(/* declare */ false)

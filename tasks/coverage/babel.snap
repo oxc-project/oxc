@@ -1,13 +1,5 @@
 Babel Summary:
-AST Parsed     : 2044/2057 (99.37%)
-Expect to Parse: "comments/decorators/decorators-after-export/input.js"
-
-  × Unexpected token
-   ╭─[comments/decorators/decorators-after-export/input.js:1:1]
- 1 │ /* 1 */ export /* 2 */ @dec1 /* 3 */ @dec2
-   ·                        ─
- 2 │ /* 4 */ class /* 5 */ C /* 6 */ { /* 7 */ } /* 8 */
-   ╰────
+AST Parsed     : 2045/2057 (99.42%)
 Expect to Parse: "es2015/for-of/valid-script-await-as-lhs/input.js"
 
   × Unexpected token
