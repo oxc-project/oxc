@@ -3,12 +3,11 @@ use std::{env, path::Path};
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_parser::Parser;
-use oxc_printer::{Printer, PrinterOptions};
 
 // Instruction:
 // create a `test.js`,
-// run `cargo run -p oxc_printer --example simple`
-// or `cargo watch -x "run -p oxc_printer --example simple"`
+// run `cargo run -p oxc_parser --example parser`
+// or `cargo watch -x "run -p oxc_parser --example parser"`
 
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
@@ -18,15 +17,12 @@ fn main() {
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
-    if !ret.errors.is_empty() {
+    if ret.errors.is_empty() {
+        println!("Parsed Successfully.");
+    } else {
         for error in ret.errors {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
         }
-        return;
     }
-
-    let printer_options = PrinterOptions::default();
-    let printed = Printer::new(source_text.len(), printer_options).build(&ret.program);
-    println!("{printed}");
 }
