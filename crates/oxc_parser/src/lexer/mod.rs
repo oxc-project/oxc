@@ -247,6 +247,11 @@ impl<'a> Lexer<'a> {
         self.errors.borrow_mut().push(error.into());
     }
 
+    #[must_use]
+    const fn ts_enabled(&self) -> bool {
+        self.source_type.is_typescript()
+    }
+
     /// Get the length offset from the source, in UTF-8 bytes
     #[inline]
     #[allow(clippy::cast_possible_truncation)]
@@ -545,7 +550,7 @@ impl<'a> Lexer<'a> {
 
     fn identifier_name_or_keyword(&mut self, builder: AutoCow<'a>) -> Kind {
         let (has_escape, text) = self.identifier_name(builder);
-        let (kind, atom) = Kind::match_keyword(text);
+        let (kind, atom) = Kind::match_keyword(text, self.ts_enabled());
         self.current.token.escaped = has_escape;
         self.current.token.value = TokenValue::String(atom);
         kind
@@ -1453,4 +1458,22 @@ enum SurrogatePair {
     CodePoint(u32),
     // invalid \u Hex4Digits \u Hex4Digits
     HighLow(u32, u32),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_token_abstract() {
+        let source = "abstract";
+        let js = SourceType::default();
+        let alloc = Allocator::default();
+        let mut lexer = Lexer::new(&alloc, source, Diagnostics::default(), js);
+        assert_eq!(Kind::Ident, lexer.next_token().kind);
+
+        let ts = SourceType::builder().typescript().build();
+        let mut lexer = Lexer::new(&alloc, source, Diagnostics::default(), ts);
+        assert_eq!(Kind::Abstract, lexer.next_token().kind);
+    }
 }

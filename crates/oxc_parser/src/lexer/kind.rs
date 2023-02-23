@@ -382,7 +382,7 @@ impl Kind {
     }
 
     #[must_use]
-    pub fn match_keyword(s: &str) -> (Self, Atom) {
+    pub fn match_keyword(s: &str, ts_enabled: bool) -> (Self, Atom) {
         let len = s.len();
         if len == 1 || len >= 12 {
             return (Ident, Atom::new(s));
@@ -463,7 +463,7 @@ impl Kind {
             "require" => (Require, Atom::new_inline("require")),
             "unknown" => (Unknown, Atom::new_inline("unknown")),
 
-            "abstract" => (Abstract, Atom::new_inline("abstract")),
+            "abstract" if ts_enabled => (Abstract, Atom::new_inline("abstract")),
             "accessor" => (Accessor, Atom::new_inline("accessor")),
             "continue" => (Continue, Atom::new_inline("continue")),
             "debugger" => (Debugger, Atom::new_inline("debugger")),
