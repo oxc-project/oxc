@@ -22,7 +22,10 @@ env:
 jobs:
   benchmark:
     name: Run benchmark
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -63,7 +66,7 @@ jobs:
         id: bench_comparison
         shell: bash
         run: |
-          echo "### Parser Benchmark Results" > output
+          echo "### Parser Benchmark Results - ${{ matrix.os }}" > output
           echo "\`\`\`"  >> output
           critcmp main pr >> output
           echo "\`\`\`" >> output
@@ -82,7 +85,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: 'github-actions[bot]'
-          body-includes: Parser Benchmark Results
+          body-includes: Parser Benchmark Results - ${{ matrix.os }}
 
       - name: Write a new comment
         # Check if the event is not triggered by a fork
