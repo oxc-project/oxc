@@ -7,7 +7,7 @@ Note: tests against regexp are disabled for now.
 Clone the test files beforehand
 
 ```bash
-git submodule update --init --recursive --remote
+git submodule update --recursive
 ```
 
 ## Development

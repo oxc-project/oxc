@@ -13,6 +13,10 @@ We will learn a lot from each other!
 You can watch this project and also [follow me on twitter](https://twitter.com/boshen_c) if you don't have the time to
 Rust but would like to learn things.
 
+## Contributing
+
+Contributions are welcome and highly appreciated. To get started, check out [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## Call for action
 
 We now have a fully working parser as a baseline, it is not polished yet,
@@ -31,6 +35,7 @@ The current objective is to improve the parser for real usage. Areas include:
 * Pass more conformance tests
 
 You may start with https://github.com/Boshen/oxc/issues/36
+
 
 ## Conformance
 
