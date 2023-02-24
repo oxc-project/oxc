@@ -3,16 +3,13 @@
 	url = git@github.com:tc39/test262.git
 	shallow = true
 	branch = main
-	ignore = dirty
 [submodule "tasks/coverage/babel"]
 	path = tasks/coverage/babel
 	url = git@github.com:babel/babel.git
 	shallow = true
 	branch = main
-	ignore = dirty
 [submodule "tasks/coverage/typescript"]
 	path = tasks/coverage/typescript
 	url = git@github.com:microsoft/TypeScript.git
 	shallow = true
 	branch = main
-	ignore = dirty
