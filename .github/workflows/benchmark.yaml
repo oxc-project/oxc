@@ -7,6 +7,8 @@ on:
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
+    paths-ignore:
+      - '**/*.md'
 
 permissions:
   pull-requests: write # For comment
