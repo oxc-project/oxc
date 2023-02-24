@@ -1,5 +1,5 @@
 TypeScript Summary:
-AST Parsed     : 4294/4865 (88.26%)
+AST Parsed     : 4291/4861 (88.27%)
 Expect to Parse: "async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts"
 
   × Automatic Semicolon Insertion
@@ -1410,17 +1410,6 @@ Expect to Parse: "classes/propertyMemberDeclarations/autoAccessor1.ts"
    ·               ─
  6 │     accessor b = 1;
    ╰────
-Expect to Parse: "classes/propertyMemberDeclarations/autoAccessor11.ts"
-
-  × Automatic Semicolon Insertion
-    ╭─[classes/propertyMemberDeclarations/autoAccessor11.ts:13:1]
- 13 │ 
- 14 │     accessor accessor
-    ·             ┬
-    ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
- 15 │     d;
-    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "classes/propertyMemberDeclarations/autoAccessor2.ts"
 
   × Automatic Semicolon Insertion
