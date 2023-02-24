@@ -3,7 +3,9 @@ name: Benchmark
 on:
   pull_request:
     paths:
-      - 'crates/**'
+      - 'crates/oxc_parser/**'
+      - 'crates/oxc_ast/**'
+      - 'tasks/coverage/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
