@@ -1,13 +1,5 @@
 Babel Summary:
-AST Parsed     : 2045/2057 (99.42%)
-Expect to Parse: "es2015/for-of/valid-script-await-as-lhs/input.js"
-
-  × Unexpected token
-   ╭─[es2015/for-of/valid-script-await-as-lhs/input.js:1:1]
- 1 │ for (await of []);
-   ·                ─
- 2 │ for (await of [0]);
-   ╰────
+AST Parsed     : 2046/2057 (99.47%)
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
   × Expect token
@@ -2616,6 +2608,20 @@ Expect to Parse: "typescript/type-arguments-bit-shift-left-like/decorator-call-e
  1 │ \u0061sync function() { await x }
    · ─────┬────
    ·      ╰── keyword cannot contain escape characters
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[es2017/async-functions/invalid-for-await-expression-init/input.js:1:1]
+ 1 │ for (await o\u0066 [0];;);
+   ·            ───┬───
+   ·               ╰── keyword cannot contain escape characters
+   ╰────
+
+  × Expect token
+   ╭─[es2017/async-functions/invalid-for-await-expression-init/input.js:1:1]
+ 1 │ for (await o\u0066 [0];;);
+   ·                       ┬
+   ·                       ╰── Expect `)` here, but found `;`
    ╰────
 
   × Async functions can only be declared at the top level or inside a block

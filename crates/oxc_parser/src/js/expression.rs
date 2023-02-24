@@ -994,7 +994,17 @@ impl<'a> Parser<'a> {
             if self.ctx.has_await() {
                 return true;
             }
+
             let peek_token = self.peek_token();
+            // The following expressions are ambiguous
+            // await + 0, await - 0, await ( 0 ), await [ 0 ], await / 0 /u, await ``, await of []
+            if matches!(
+                peek_token.kind,
+                Kind::Of | Kind::LParen | Kind::LBrack | Kind::Slash | Kind::RegExp
+            ) {
+                return false;
+            }
+
             return peek_token.kind.is_after_await_or_yield() && !peek_token.is_on_new_line;
         }
         false
