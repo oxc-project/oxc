@@ -60,6 +60,7 @@ This project is inspired by the following great mentors and projects:
 
 * [Rome Tools](https://github.com/rome/tools) - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
 * [Ruff](https://github.com/charliermarsh/ruff) - [@charliermarsh](https://github.com/charliermarsh)
+* [quick-lint-js](https://github.com/quick-lint/quick-lint-js) - [@strager](https://github.com/strager)
 
 ## License
 
