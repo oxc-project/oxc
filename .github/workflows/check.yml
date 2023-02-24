@@ -12,8 +12,7 @@ on:
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
       - 'rustfmt.toml'
-    paths-ignore:
-      - '**/*.md'
+      - '!**/*.md'
 
 permissions:
   contents: write # For documentation deployment
