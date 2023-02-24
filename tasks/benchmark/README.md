@@ -17,11 +17,13 @@ cargo benchmark --save-baseline pr
 # on main branch
 cargo benchmark --save-baseline main
 
-critcmp
+critcmp main pr
 ```
 
 ## bench file sizes
-| -------------  | --   |
+
+| File           | Size |
+| -------------- | ---- |
 | pdf.js         | 412K |
 | lodash.js      | 526K |
 | d3.js          | 559K |
