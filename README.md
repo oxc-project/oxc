@@ -58,9 +58,9 @@ AST Parsed     : 4291/4861 (88.27%)
 
 This project is inspired by the following great mentors and projects:
 
-* [Rome Tools](https://github.com/rome/tools) - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
-* [Ruff](https://github.com/charliermarsh/ruff) - [@charliermarsh](https://github.com/charliermarsh)
-* [quick-lint-js](https://github.com/quick-lint/quick-lint-js) - [@strager](https://github.com/strager)
+* [Rome Tools](https://rome.tools) - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
+* [Ruff](https://beta.ruff.rs) - [@charliermarsh](https://github.com/charliermarsh)
+* [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 
 ## License
 
