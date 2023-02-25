@@ -5,7 +5,7 @@ use oxc_ast::AstKind;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum RuleEnum {
     NoDebugger(NoDebugger),
 }

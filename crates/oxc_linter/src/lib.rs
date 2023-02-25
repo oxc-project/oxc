@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tester;
+
 mod context;
 mod rule;
 mod rules;
@@ -19,6 +22,11 @@ impl Linter {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let rules = vec![RuleEnum::NoDebugger(rules::NoDebugger::default())];
+        Self { rules }
+    }
+
+    #[must_use]
+    pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
         Self { rules }
     }
 

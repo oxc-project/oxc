@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule};
 #[diagnostic()]
 struct NoDebuggerDiagnostic(#[label] pub Span);
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct NoDebugger;
 
 impl Rule for NoDebugger {
@@ -20,4 +20,15 @@ impl Rule for NoDebugger {
             ctx.diagnostic(NoDebuggerDiagnostic(stmt.span));
         }
     }
+}
+
+#[test]
+fn test() {
+    use crate::rules::RuleEnum;
+    use crate::tester::Tester;
+    let pass = vec!["var test = { debugger: 1 }; test.debugger;"];
+
+    let fail = vec!["if (foo) debugger"];
+
+    Tester::new("no-debugger", RuleEnum::NoDebugger(NoDebugger), pass, fail).test_and_snapshot();
 }
