@@ -805,7 +805,9 @@ dependencies = [
  "mimalloc",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_linter",
  "oxc_parser",
+ "oxc_semantic",
  "rayon",
 ]
 
@@ -839,6 +841,15 @@ version = "0.0.0"
 dependencies = [
  "miette",
  "thiserror",
+]
+
+[[package]]
+name = "oxc_linter"
+version = "0.0.0"
+dependencies = [
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_semantic",
 ]
 
 [[package]]

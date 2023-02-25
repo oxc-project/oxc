@@ -2,7 +2,7 @@ mod builder;
 mod node;
 
 pub use builder::SemanticBuilder;
-use node::AstNodes;
+pub use node::{AstNode, AstNodes};
 
 pub struct Semantic<'a> {
     nodes: AstNodes<'a>,

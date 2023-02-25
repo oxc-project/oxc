@@ -1,5 +1,5 @@
 [package]
-name = "oxc_printer"
+name = "oxc_linter"
 authors.workspace = true
 description.workspace = true
 edition.workspace = true
@@ -8,3 +8,8 @@ keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 version.workspace = true
+
+[dependencies]
+oxc_ast = { path = "../oxc_ast" }
+oxc_diagnostics = { path = "../oxc_diagnostics" }
+oxc_semantic = { path = "../oxc_semantic" }
