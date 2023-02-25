@@ -10,6 +10,12 @@ license.workspace = true
 repository.workspace = true
 version.workspace = true
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+jemallocator = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+mimalloc = { workspace = true }
+
 [dependencies]
 oxc_ast = { path = "../../crates/oxc_ast" }
 oxc_allocator = { path = "../../crates/oxc_allocator" }
@@ -19,6 +25,3 @@ pico-args = "0.5.0"
 criterion = { version = "0.4.0", default-features = false }
 ureq = "2.6.2"
 url = "2.3.1"
-
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-jemallocator = { workspace = true }

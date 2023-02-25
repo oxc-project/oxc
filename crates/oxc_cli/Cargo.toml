@@ -12,6 +12,9 @@ version.workspace = true
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 jemallocator = { workspace = true }
 
+[target.'cfg(target_os = "windows")'.dependencies]
+mimalloc = { workspace = true }
+
 [dependencies]
 oxc_allocator = { path = "../oxc_allocator" }
 oxc_ast = { path  = "../oxc_ast" }
