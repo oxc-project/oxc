@@ -18,8 +18,12 @@ pub use crate::{command::Command, result::CliRunResult};
 pub struct Cli;
 
 impl Cli {
-    pub fn lint<P: AsRef<Path>>(path: P) -> CliRunResult {
-        let paths = Walk::new(path).iter().collect::<Vec<_>>();
+    #[must_use]
+    pub fn lint<P: AsRef<Path>>(paths: &[P]) -> CliRunResult {
+        let paths = paths
+            .iter()
+            .flat_map(|path| Walk::new(path).iter().collect::<Vec<_>>())
+            .collect::<Vec<_>>();
 
         let number_of_diagnostics = paths
             .par_iter()
