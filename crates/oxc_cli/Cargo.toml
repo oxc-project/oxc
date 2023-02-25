@@ -16,6 +16,7 @@ jemallocator = { workspace = true }
 mimalloc = { workspace = true }
 
 [dependencies]
+oxc_diagnostics = { path = "../oxc_diagnostics" }
 oxc_allocator = { path = "../oxc_allocator" }
 oxc_ast = { path  = "../oxc_ast" }
 oxc_parser = { path  = "../oxc_parser" }
