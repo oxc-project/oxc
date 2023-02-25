@@ -1,45 +1,41 @@
 mod command;
+mod result;
 mod walk;
 
-use std::{fs, path::Path, path::PathBuf, rc::Rc};
+use std::{fs, path::Path, rc::Rc};
 
-pub use command::Command;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
-use oxc_diagnostics::miette::Report;
+use oxc_diagnostics::Error;
 use oxc_linter::Linter;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use walk::Walk;
 
+pub use crate::{command::Command, result::CliRunResult};
+
 pub struct Cli;
 
-#[derive(Debug)]
-pub struct LintResult {
-    pub path: PathBuf,
-    pub diagnostics: Vec<Report>,
-}
-
 impl Cli {
-    pub fn lint<P: AsRef<Path>>(path: P) -> Option<Vec<LintResult>> {
+    pub fn lint<P: AsRef<Path>>(path: P) -> CliRunResult {
         let paths = Walk::new(path).iter().collect::<Vec<_>>();
 
-        if paths.is_empty() {
-            return None;
-        }
-
-        let result: Vec<LintResult> = paths
+        let number_of_diagnostics = paths
             .par_iter()
             .map(|path| {
                 let diagnostics = Self::lint_path(path);
-                LintResult { path: path.to_path_buf(), diagnostics }
+                for diagnostic in &diagnostics {
+                    println!("{diagnostic:?}");
+                }
+                diagnostics.len()
             })
-            .collect();
-        Some(result)
+            .sum();
+
+        CliRunResult::LintResult { number_of_files: paths.len(), number_of_diagnostics }
     }
 
-    fn lint_path(path: &Path) -> Vec<Report> {
+    fn lint_path(path: &Path) -> Vec<Error> {
         let source_text = fs::read_to_string(path).expect("{name} not found");
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
