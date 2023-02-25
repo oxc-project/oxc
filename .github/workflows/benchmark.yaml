@@ -71,7 +71,7 @@ jobs:
         id: bench_comparison
         shell: bash
         run: |
-          echo "### Parser Benchmark Results - ${{ matrix.os }}\n" > output.md
+          echo "### Parser Benchmark Results - ${{ matrix.os }}" > output.md
           echo "\`\`\`"  >> output.md
           critcmp main pr >> output.md
           echo "\`\`\`" >> output.md
