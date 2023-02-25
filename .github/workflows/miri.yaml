@@ -24,4 +24,4 @@ jobs:
           cargo miri setup
 
       - name: Test with Miri
-        run: cargo miri test
+        run: MIRIFLAGS="-Zmiri-disable-isolation" cargo miri test

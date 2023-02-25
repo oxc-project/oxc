@@ -50,7 +50,6 @@ impl Tester {
         }
     }
 
-    #[cfg_attr(miri, ignore)] // miri reported an error in insta
     fn snapshot(&self) {
         insta::with_settings!({ prepend_module_to_snapshot => false, }, {
             insta::assert_snapshot!(self.rule_name.clone(), self.snapshot, &self.rule_name);
