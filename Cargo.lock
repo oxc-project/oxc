@@ -494,6 +494,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "indextree"
+version = "4.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "497f036ac2fae75c34224648a77802e5dd4e9cfb56f4713ab6b12b7160a0523b"
+
+[[package]]
 name = "io-lifetimes"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -836,6 +842,14 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
+]
+
+[[package]]
+name = "oxc_semantic"
+version = "0.0.0"
+dependencies = [
+ "indextree",
+ "oxc_ast",
 ]
 
 [[package]]

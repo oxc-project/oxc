@@ -27,6 +27,7 @@ serde_json = "1.0.93"
 thiserror = "1.0.38"
 jemallocator = "0.5.0"
 clap = "4.1.4"
+indextree = "4.5.0"
 
 [profile.release]
 lto = "fat"
