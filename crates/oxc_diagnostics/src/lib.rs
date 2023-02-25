@@ -6,15 +6,15 @@ use std::{cell::RefCell, ops::Deref, rc::Rc};
 pub use miette;
 pub use thiserror;
 
-pub type PError = miette::Error;
+pub type Error = miette::Error;
 
-pub type Result<T> = std::result::Result<T, PError>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Default, Clone)]
-pub struct Diagnostics(Rc<RefCell<Vec<PError>>>);
+pub struct Diagnostics(Rc<RefCell<Vec<Error>>>);
 
 impl Deref for Diagnostics {
-    type Target = Rc<RefCell<Vec<PError>>>;
+    type Target = Rc<RefCell<Vec<Error>>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -24,7 +24,7 @@ impl Deref for Diagnostics {
 impl Diagnostics {
     /// # Panics
     #[must_use]
-    pub fn into_inner(self) -> Vec<PError> {
+    pub fn into_inner(self) -> Vec<Error> {
         Rc::try_unwrap(self.0).unwrap().into_inner()
     }
 }

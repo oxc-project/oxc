@@ -22,7 +22,7 @@ pub use kind::Kind;
 use number::{parse_big_int, parse_float, parse_int};
 use oxc_allocator::{Allocator, String};
 use oxc_ast::{ast::RegExpFlags, Atom, SourceType, Span};
-use oxc_diagnostics::{Diagnostics, PError};
+use oxc_diagnostics::{Diagnostics, Error};
 use simd::{SkipMultilineComment, SkipWhitespace};
 use string_builder::AutoCow;
 pub use token::{RegExp, Token, TokenValue};
@@ -243,7 +243,7 @@ impl<'a> Lexer<'a> {
     }
 
     // ---------- Private Methods ---------- //
-    fn error<T: Into<PError>>(&mut self, error: T) {
+    fn error<T: Into<Error>>(&mut self, error: T) {
         self.errors.borrow_mut().push(error.into());
     }
 

@@ -17,7 +17,7 @@ mod lexer;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span};
-use oxc_diagnostics::{Diagnostics, PError, Result};
+use oxc_diagnostics::{Diagnostics, Error, Result};
 
 use crate::{
     lexer::{Kind, Lexer, Token},
@@ -27,7 +27,7 @@ use crate::{
 #[derive(Debug)]
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
-    pub errors: Vec<PError>,
+    pub errors: Vec<Error>,
 }
 
 pub struct Parser<'a> {
@@ -118,7 +118,7 @@ impl<'a> Parser<'a> {
 
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-    fn flow_error(&self) -> Option<PError> {
+    fn flow_error(&self) -> Option<Error> {
         if self.source_type.is_javascript()
             && (self.source.starts_with("// @flow") || self.source.starts_with("/* @flow */"))
         {
@@ -140,7 +140,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Push a Syntax Error
-    fn error<T: Into<PError>>(&mut self, error: T) {
+    fn error<T: Into<Error>>(&mut self, error: T) {
         self.errors.borrow_mut().push(error.into());
     }
 
