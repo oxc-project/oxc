@@ -31,10 +31,11 @@ clap = "4.1.6"
 indextree = "4.5.0"
 
 [profile.release]
+# Configurations explicitly listed here for clarity.
+# Using the best options for performance.
+opt-level = 3
 lto = "fat"
 codegen-units = 1
-strip = true
-
-# DO NOT SET PANIC TO ABORT
-# we are using catch_unwind for panic recovery
-panic = "unwind"
+strip = "debuginfo"
+debug = false
+panic = "abort" # Let it crash and force ourselves to write safe Rust.
