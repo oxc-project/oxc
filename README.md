@@ -6,6 +6,7 @@ The goal of this project is to:
 
 * Create a blazingly fast JavaScript Compiler written in Rust.
 * Provide good documentation on learning Rust and compiler techniques.
+* Create a linter.
 
 And mostly importantly, an invitation for you to come and learn Rust with me.
 We will learn a lot from each other!
@@ -19,25 +20,29 @@ Contributions are welcome and highly appreciated. To get started, check out [CON
 
 ## Call for action
 
-We now have a fully working parser as a baseline, it is not polished yet,
-so it would be much appreciated if I can invite you and review any of the code and point out for improvements.
-I welcome all nitpickings and bikesheddings.
+
+You can take a look at some of the [good first issues](
+https://github.com/Boshen/oxc/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) if you want to practice some Rust.
+
+I welcome all nitpickings and bikesheddings if you think any of the code can be improved, just make an issue.
 
 I have also created some [discussions](https://github.com/Boshen/oxc/discussions) for documenting my thought processes.
 
 ## Milestone
 
-The current objective is to improve the parser for real usage. Areas include:
+Oxc has a fully working parser and a prototype for the linter right now.
 
-* API
-* Diagnostics reporting
-* Performance
-* Pass more conformance tests
+The current objectives are:
 
-You may start with https://github.com/Boshen/oxc/issues/36
-
-
-## Conformance
+* A MVP (Most Viable Product) for the linter.
+* Improve the parser for real usage. Areas include:
+  * API
+  * Diagnostics reporting
+  * Performance
+  * Pass more conformance tests
+  * You may start with https://github.com/Boshen/oxc/issues/36
+ 
+## Parser Conformance
 
 The `cargo coverage` command currently reports the following summary
 
@@ -53,6 +58,33 @@ AST Parsed     : 4291/4861 (88.27%)
 ```
 
 (The parser is failing some of the TypeScript recoverable parser tests.)
+
+## Linter Performance
+
+See [benchmark](./benchmark/) for details. Hyperfine results are:
+
+```
+Benchmark 1: oxc
+  Time (mean ± σ):      30.9 ms ±   1.4 ms    [User: 138.2 ms, System: 54.7 ms]
+  Range (min … max):    28.6 ms …  35.7 ms    83 runs
+
+Benchmark 2: rome
+  Time (mean ± σ):     145.0 ms ±   2.8 ms    [User: 674.9 ms, System: 69.9 ms]
+  Range (min … max):   141.5 ms … 151.8 ms    19 runs
+
+  Warning: Ignoring non-zero exit code.
+
+Benchmark 3: eslint
+  Time (mean ± σ):      2.661 s ±  0.057 s    [User: 4.076 s, System: 0.223 s]
+  Range (min … max):    2.593 s …  2.790 s    10 runs
+
+  Warning: Ignoring non-zero exit code.
+
+Summary
+  'oxc' ran
+    4.70 ± 0.23 times faster than 'rome'
+   86.20 ± 4.35 times faster than 'eslint'
+```
 
 ## Learning Resources
 
