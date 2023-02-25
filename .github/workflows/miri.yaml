@@ -1,0 +1,27 @@
+name: Miri
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'crates/**'
+      - '!**/*.md'
+
+jobs:
+  miri:
+    name: Miri
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: false
+
+      - name: Install Miri
+        run: |
+          rustup component add miri
+          cargo miri setup
+
+      - name: Test with Miri
+        run: cargo miri test
