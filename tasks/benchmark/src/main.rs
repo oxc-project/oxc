@@ -1,3 +1,5 @@
+#![cfg(not(miri))] // Miri does not support custom allocators
+
 use std::hint::black_box; // See: `https://rust-lang.github.io/rfcs/2360-bench-black-box.html`
 use std::time::Duration;
 
@@ -8,12 +10,10 @@ use oxc_benchmark::get_code;
 use oxc_parser::Parser;
 use pico_args::Arguments;
 
-#[cfg_attr(miri, ignore)]
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-#[cfg_attr(miri, ignore)]
 #[cfg(target_os = "windows")]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
