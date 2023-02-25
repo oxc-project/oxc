@@ -1,12 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
-use oxc_diagnostics::PError;
+use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
 pub struct LintContext<'a> {
     semantic: Rc<Semantic<'a>>,
 
-    diagnostics: RefCell<Vec<PError>>,
+    diagnostics: RefCell<Vec<Error>>,
 }
 
 impl<'a> LintContext<'a> {
@@ -14,7 +14,7 @@ impl<'a> LintContext<'a> {
         Self { semantic, diagnostics: RefCell::new(vec![]) }
     }
 
-    pub fn into_diagnostics(self) -> Vec<PError> {
+    pub fn into_diagnostics(self) -> Vec<Error> {
         self.diagnostics.into_inner()
     }
 
@@ -23,7 +23,7 @@ impl<'a> LintContext<'a> {
         &self.semantic
     }
 
-    pub fn diagnostic<T: Into<PError>>(&self, diagnostic: T) {
+    pub fn diagnostic<T: Into<Error>>(&self, diagnostic: T) {
         self.diagnostics.borrow_mut().push(diagnostic.into());
     }
 }

@@ -7,7 +7,7 @@ mod rules;
 
 use std::rc::Rc;
 
-use oxc_diagnostics::PError;
+use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
 use crate::{context::LintContext, rules::RuleEnum};
@@ -31,7 +31,7 @@ impl Linter {
     }
 
     #[must_use]
-    pub fn run(&self, semantic: &Rc<Semantic>) -> Vec<PError> {
+    pub fn run(&self, semantic: &Rc<Semantic>) -> Vec<Error> {
         let ctx = LintContext::new(semantic.clone());
 
         for node in semantic.nodes().iter() {
