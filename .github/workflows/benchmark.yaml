@@ -14,6 +14,11 @@ on:
 permissions:
   pull-requests: write # For comment
 
+# cancel previous job runs for the same workflow + pr
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   RUST_LOG: info
   RUST_BACKTRACE: 1
