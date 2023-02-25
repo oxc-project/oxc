@@ -15,6 +15,7 @@ pub mod span;
 pub mod syntax_directed_operations;
 pub mod visit;
 
+pub use ast_kind::AstKind;
 pub use num_bigint::BigUint;
 
 pub use crate::ast_builder::*;
