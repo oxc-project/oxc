@@ -10,7 +10,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use std::path::PathBuf;
 
-use oxc_cli::{Cli, CliRunResult, Command};
+use oxc_cli::{Cli, CliOptions, CliRunResult, Command};
 
 fn main() -> CliRunResult {
     match Command::new().build().get_matches().subcommand() {
@@ -21,7 +21,8 @@ fn main() -> CliRunResult {
                 return CliRunResult::PathNotFound { path: path.clone() };
             }
 
-            Cli::lint(path)
+            let quiet = matches.get_one::<String>("quiet").is_some();
+            Cli::lint(path, CliOptions { quiet })
         }
         _ => CliRunResult::None,
     }

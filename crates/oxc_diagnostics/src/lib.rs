@@ -7,6 +7,7 @@ pub use miette;
 pub use thiserror;
 
 pub type Error = miette::Error;
+pub type Severity = miette::Severity;
 
 pub type Result<T> = std::result::Result<T, Error>;
 

@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-debugger): `debugger` statement is not allowed")]
-#[diagnostic()]
+#[diagnostic(severity(warning))]
 struct NoDebuggerDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]

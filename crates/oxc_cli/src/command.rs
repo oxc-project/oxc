@@ -37,6 +37,11 @@ impl Command {
                     .help("File or Directory paths to scan. Directories are scanned recursively.")
                     .value_parser(ValueParser::path_buf()),
             )
+            .arg(
+              Arg::new("quiet")
+                .required(false)
+                .help("This option allows you to disable reporting on warnings. If you enable this option, only errors are reported by oxc_lint.")
+            )
     }
 
     #[must_use]
