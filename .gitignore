@@ -6,3 +6,8 @@
 **/*.rs.bk
 
 node_modules/
+
+*.js
+*.jsx
+*.ts
+*.tsx
