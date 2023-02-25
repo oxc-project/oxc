@@ -66,7 +66,7 @@ jobs:
         id: bench_comparison
         shell: bash
         run: |
-          echo "### Parser Benchmark Results - ${{ matrix.os }}" > output
+          echo "### Parser Benchmark Results - ${{ matrix.os }}\n" > output
           echo "\`\`\`"  >> output
           critcmp main pr >> output
           echo "\`\`\`" >> output
@@ -99,4 +99,6 @@ jobs:
             ${{ steps.bench_comparison.outputs.comment }}
 
       - name: Remove Criterion Artifact
-        run: rm -rf ./target/criterion
+        uses: JesseTG/rm@v1.0.3
+        with:
+          path: ./target/criterion
