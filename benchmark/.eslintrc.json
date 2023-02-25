@@ -1,0 +1,10 @@
+{
+    "root": true,
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "rules": {
+        "no-debugger": "error"
+    }
+}

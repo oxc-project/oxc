@@ -20,6 +20,7 @@ impl Cli {
         paths.par_iter().for_each(|path| {
             Self::lint_path(path);
         });
+        println!("Checked {} files", paths.len());
     }
 
     fn lint_path(path: &Path) {

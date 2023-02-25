@@ -1,0 +1,12 @@
+{
+    "linter": {
+        "enabled": true,
+        "rules": {
+            "recommended": false,
+            "suspicious": {
+                "recommended": false,
+                "noDebugger": "error"
+            }
+        }
+    }
+}
