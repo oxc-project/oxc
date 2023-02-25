@@ -19,6 +19,8 @@ mimalloc = { workspace = true }
 oxc_allocator = { path = "../oxc_allocator" }
 oxc_ast = { path  = "../oxc_ast" }
 oxc_parser = { path  = "../oxc_parser" }
+oxc_semantic = { path  = "../oxc_semantic" }
+oxc_linter = { path  = "../oxc_linter" }
 
 clap = { workspace = true }
 rayon = { workspace = true }
