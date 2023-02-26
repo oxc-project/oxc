@@ -63,7 +63,7 @@ impl Tester {
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new().build(program);
+        let semantic = SemanticBuilder::new().build(program, ret.trivias);
         let semantic = std::rc::Rc::new(semantic);
         let diagnostics = Linter::from_rules(vec![self.rule.clone()]).run(&semantic);
         if diagnostics.is_empty() {
