@@ -21,6 +21,14 @@ expression: no_empty
 
   ⚠ eslint(no-empty): Disallow empty block statements
    ╭─[no_empty.tsx:1:1]
+ 1 │ try { foo() } catch (ex) {}
+   ·                          ─┬
+   ·                           ╰── Empty block statement
+   ╰────
+  help: Add comment inside empty block statement
+
+  ⚠ eslint(no-empty): Disallow empty block statements
+   ╭─[no_empty.tsx:1:1]
  1 │ if (foo) {}
    ·          ─┬
    ·           ╰── Empty block statement
@@ -88,6 +96,14 @@ expression: no_empty
  1 │ try {} catch (ex) {} finally {}
    ·                              ─┬
    ·                               ╰── Empty block statement
+   ╰────
+  help: Add comment inside empty block statement
+
+  ⚠ eslint(no-empty): Disallow empty block statements
+   ╭─[no_empty.tsx:1:1]
+ 1 │ try { foo(); } catch (ex) {} finally {}
+   ·                           ─┬
+   ·                            ╰── Empty block statement
    ╰────
   help: Add comment inside empty block statement
 
