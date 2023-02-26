@@ -76,48 +76,6 @@ impl<'a> Parser<'a> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Result<Statement<'a>> {
-        let span = self.start_span();
-        if self.ts_enabled() {
-            if self.at(Kind::Type)
-                && self.peek_kind().is_identifier_name()
-                && !self.peek_token().is_on_new_line
-            {
-                return self
-                    .parse_ts_type_alias_declaration(false, span)
-                    .map(Statement::Declaration);
-            }
-            if self.at(Kind::Abstract) && !self.peek_token().is_on_new_line {
-                return self.parse_class_statement(stmt_ctx);
-            }
-            if self.is_at_ts_declaration_clause() {
-                let peek_kind = self.peek_kind();
-                // ignore "declare `${expr}" and "declare `template`"
-                if peek_kind != Kind::TemplateHead && peek_kind != Kind::NoSubstitutionTemplate {
-                    return self.parse_ts_declare_statement();
-                }
-            }
-
-            if self.is_nth_at_ts_namespace_declaration(0) {
-                if self.at(Kind::Namespace) || self.at(Kind::Module) {
-                    return self.parse_ts_namespace_or_module_statement(/* declare */ false);
-                }
-                if self.at(Kind::Global) {
-                    return self.parse_ts_global_statement();
-                }
-            }
-            match self.cur_kind() {
-                Kind::Const | Kind::Enum if self.is_at_enum_declaration() => {
-                    return self.parse_ts_enum_declaration(false, span).map(Statement::Declaration);
-                }
-                Kind::Interface if self.is_at_interface_declaration() => {
-                    return self
-                        .parse_ts_interface_declaration(false, span)
-                        .map(Statement::Declaration);
-                }
-                _ => (),
-            }
-        }
-
         match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => Ok(self.parse_empty_statement()),
@@ -139,13 +97,19 @@ impl<'a> Parser<'a> {
             // [+Return] ReturnStatement[?Yield, ?Await]
             // Error is checked in linter
             Kind::Return => self.parse_return_statement(),
-            Kind::Var | Kind::Const => self.parse_variable_statement(stmt_ctx),
+            Kind::Var => self.parse_variable_statement(stmt_ctx),
+            Kind::Const if !(self.ts_enabled() && self.is_at_enum_declaration()) => {
+                self.parse_variable_statement(stmt_ctx)
+            }
             Kind::Let if !self.cur_token().escaped => self.parse_let(stmt_ctx),
             Kind::At => {
                 self.eat_decorators()?;
                 self.parse_statement_list_item(stmt_ctx)
             }
             _ if self.at_function_with_async() => self.parse_function_declaration(stmt_ctx),
+            _ if self.ts_enabled() && self.at_start_of_ts_declaration() => {
+                self.parse_ts_declaration_statement()
+            }
             _ => self.parse_expression_or_labeled_statment(),
         }
     }

@@ -97,15 +97,13 @@ Expect to Parse: "async/es5/asyncArrowFunction/asyncArrowFunction8_es5.ts"
    ╰────
 Expect to Parse: "async/es5/asyncClass_es5.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[async/es5/asyncClass_es5.ts:3:1]
  3 │ // @noEmitHelpers: true
  4 │ async class C {
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "async/es5/asyncConstructor_es5.ts"
 
   × Constructor can't be an async method
@@ -118,15 +116,13 @@ Expect to Parse: "async/es5/asyncConstructor_es5.ts"
    ╰────
 Expect to Parse: "async/es5/asyncEnum_es5.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[async/es5/asyncEnum_es5.ts:3:1]
  3 │ // @noEmitHelpers: true
  4 │ async enum E {
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────
  5 │   Value
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "async/es5/asyncGetter_es5.ts"
 
   × Expect token
@@ -139,26 +135,22 @@ Expect to Parse: "async/es5/asyncGetter_es5.ts"
    ╰────
 Expect to Parse: "async/es5/asyncInterface_es5.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[async/es5/asyncInterface_es5.ts:3:1]
  3 │ // @noEmitHelpers: true
  4 │ async interface I {
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "async/es5/asyncModule_es5.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[async/es5/asyncModule_es5.ts:3:1]
  3 │ // @noEmitHelpers: true
  4 │ async module M {
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "async/es5/asyncSetter_es5.ts"
 
   × Expect token
@@ -227,15 +219,13 @@ Expect to Parse: "async/es6/asyncArrowFunction/asyncArrowFunction8_es6.ts"
    ╰────
 Expect to Parse: "async/es6/asyncClass_es6.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[async/es6/asyncClass_es6.ts:2:1]
  2 │ // @noEmitHelpers: true
  3 │ async class C {  
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "async/es6/asyncConstructor_es6.ts"
 
   × Constructor can't be an async method
@@ -248,15 +238,13 @@ Expect to Parse: "async/es6/asyncConstructor_es6.ts"
    ╰────
 Expect to Parse: "async/es6/asyncEnum_es6.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[async/es6/asyncEnum_es6.ts:2:1]
  2 │ // @noEmitHelpers: true
  3 │ async enum E {  
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────
  4 │   Value
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "async/es6/asyncGetter_es6.ts"
 
   × Expect token
@@ -269,26 +257,22 @@ Expect to Parse: "async/es6/asyncGetter_es6.ts"
    ╰────
 Expect to Parse: "async/es6/asyncInterface_es6.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[async/es6/asyncInterface_es6.ts:2:1]
  2 │ // @noEmitHelpers: true
  3 │ async interface I {  
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "async/es6/asyncModule_es6.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[async/es6/asyncModule_es6.ts:2:1]
  2 │ // @noEmitHelpers: true
  3 │ async module M {   
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────
  4 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "async/es6/asyncSetter_es6.ts"
 
   × Expect token
@@ -3754,26 +3738,22 @@ Expect to Parse: "internalModules/exportDeclarations/NonInitializedExportInInter
    ╰────
 Expect to Parse: "internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:3:1]
  3 │ module Y {
  4 │     public class A { s: string }
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·     ──────
  5 │ 
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "internalModules/moduleBody/invalidModuleWithVarStatements.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[internalModules/moduleBody/invalidModuleWithVarStatements.ts:3:1]
  3 │ module Y {
  4 │     public var x: number = 0;
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·     ──────
  5 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "jsdoc/declarations/jsDeclarationsNonIdentifierInferredNames.ts"
 
   × Unexpected token
@@ -4971,24 +4951,20 @@ Expect to Parse: "parser/ecmascript5/IndexSignatures/parserIndexSignature9.ts"
    ╰────
 Expect to Parse: "parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts:1:1]
  1 │ public interface I {
-   ·       ┬
-   ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ──────
  2 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts:1:1]
  1 │ static interface I {
-   ·       ┬
-   ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ──────
  2 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts"
 
   × Unexpected token
@@ -5135,24 +5111,20 @@ Expect to Parse: "parser/ecmascript5/ParameterLists/parserParameterList6.ts"
    ╰────
 Expect to Parse: "parser/ecmascript5/Protected/Protected1.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[parser/ecmascript5/Protected/Protected1.ts:1:1]
  1 │ protected class C {
-   ·          ┬
-   ·          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────────
  2 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "parser/ecmascript5/Protected/Protected2.ts"
 
-  × Automatic Semicolon Insertion
+  × Unexpected token
    ╭─[parser/ecmascript5/Protected/Protected2.ts:1:1]
  1 │ protected module M {
-   ·          ┬
-   ·          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   · ─────────
  2 │ }
    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "parser/ecmascript5/RealWorld/parserharness.ts"
 
   × Automatic Semicolon Insertion
@@ -6090,14 +6062,6 @@ Expect to Parse: "scanner/ecmascript5/scannerStringLiterals.ts"
     ·                  ╰── Unterminated string
  11 │ "Should error because of end of file.
     ╰────
-
-  × Unterminated string
-    ╭─[scanner/ecmascript5/scannerStringLiterals.ts:10:1]
- 10 │ "Should error because of newline.
- 11 │ "Should error because of end of file.
-    · ──────────────────┬──────────────────
-    ·                   ╰── Unterminated string
-    ╰────
 Expect to Parse: "scanner/ecmascript5/scannerUnexpectedNullCharacter1.ts"
 
   × Invalid Character `'\0'`
@@ -6636,13 +6600,15 @@ Expect to Parse: "types/tuple/restTupleElements1.ts"
     ╰────
 Expect to Parse: "types/typeAliases/reservedNamesInAliases.ts"
 
-  × Unexpected token
+  × Automatic Semicolon Insertion
    ╭─[types/typeAliases/reservedNamesInAliases.ts:5:1]
  5 │ type string = I;
  6 │ type void = I;
-   ·      ────
+   ·     ┬
+   ·     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  7 │ type object = I;
    ╰────
+  help: Try insert a semicolon here
 Expect to Parse: "types/typeParameters/typeArgumentLists/instantiationExpressionErrors.ts"
 
   × Unexpected token
