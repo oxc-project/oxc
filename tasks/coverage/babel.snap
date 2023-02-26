@@ -6714,6 +6714,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Automatic Semicolon Insertion
+   ╭─[typescript/interface/invalid-abstract-interface/input.ts:1:1]
+ 1 │ abstract interface
+   ·         ┬
+   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+ 2 │ Foo {}
+   ╰────
+  help: Try insert a semicolon here
+
+  × Automatic Semicolon Insertion
    ╭─[typescript/interface/new-line-error/input.ts:1:1]
  1 │ interface
  2 │ F {}
