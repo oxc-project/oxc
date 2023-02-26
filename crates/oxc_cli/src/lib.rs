@@ -16,11 +16,17 @@ use walk::Walk;
 
 pub use crate::{command::Command, options::CliOptions, result::CliRunResult};
 
-pub struct Cli;
+pub struct Cli {
+    pub cli_options: CliOptions,
+}
 
 impl Cli {
-    pub fn lint<P: AsRef<Path>>(path: P, cli_options: CliOptions) -> CliRunResult {
-        let paths = Walk::new(path).iter().collect::<Vec<_>>();
+    pub fn new(cli_options: CliOptions) -> Self {
+        Self { cli_options }
+    }
+
+    pub fn lint(&self) -> CliRunResult {
+        let paths = Walk::new(&self.cli_options.path).iter().collect::<Vec<_>>();
 
         let number_of_diagnostics = paths
             .par_iter()
@@ -30,7 +36,8 @@ impl Cli {
                 diagnostics
                     .iter()
                     .filter(|diagnostic| {
-                        diagnostic.severity().unwrap() != Severity::Warning || !cli_options.quiet
+                        diagnostic.severity().unwrap() != Severity::Warning
+                            || !self.cli_options.quiet
                     })
                     .for_each(|diagnostic| {
                         println!("{diagnostic:?}");
