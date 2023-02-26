@@ -6,11 +6,10 @@ use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSourc
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 
-use crate::{rules::RuleEnum, Linter};
+use crate::{rules::RULES, Linter};
 
 pub struct Tester {
-    rule_name: String,
-    rule: RuleEnum,
+    rule_name: &'static str,
     expect_pass: Vec<String>,
     expect_fail: Vec<String>,
     snapshot: String,
@@ -19,15 +18,13 @@ pub struct Tester {
 impl Tester {
     #[allow(clippy::needless_pass_by_value)]
     pub fn new<S: Into<String>>(
-        rule_name: &str,
-        rule: RuleEnum,
+        rule_name: &'static str,
         expect_pass: Vec<S>,
         expect_fail: Vec<S>,
     ) -> Self {
-        let rule_name = rule_name.replace('-', "_");
         let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(Into::into).collect::<Vec<_>>();
-        Self { rule_name, rule, expect_pass, expect_fail, snapshot: String::new() }
+        Self { rule_name, expect_pass, expect_fail, snapshot: String::new() }
     }
 
     pub fn test_and_snapshot(&mut self) {
@@ -51,21 +48,24 @@ impl Tester {
     }
 
     fn snapshot(&self) {
+        let name = self.rule_name.replace('-', "_");
         insta::with_settings!({ prepend_module_to_snapshot => false, }, {
-            insta::assert_snapshot!(self.rule_name.clone(), self.snapshot, &self.rule_name);
+            insta::assert_snapshot!(name.clone(), self.snapshot, &name);
         });
     }
 
     fn run(&mut self, source_text: &str) -> bool {
+        let name = self.rule_name.replace('-', "_");
         let allocator = Allocator::default();
-        let path = PathBuf::from(self.rule_name.clone()).with_extension("tsx");
+        let path = PathBuf::from(name).with_extension("tsx");
         let source_type = SourceType::from_path(&path).expect("incorrect {path:?}");
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new().build(program, ret.trivias);
         let semantic = std::rc::Rc::new(semantic);
-        let diagnostics = Linter::from_rules(vec![self.rule.clone()]).run(&semantic);
+        let rule = RULES.iter().find(|rule| rule.name() == self.rule_name).unwrap();
+        let diagnostics = Linter::from_rules(vec![rule.clone()]).run(&semantic);
         if diagnostics.is_empty() {
             return true;
         }

@@ -30,6 +30,7 @@ thiserror = "1.0.38"
 clap = "4.1.6"
 indextree = "4.5.0"
 glob = "0.3.1"
+lazy_static = "1.4.0"
 
 [profile.release]
 # Configurations explicitly listed here for clarity.

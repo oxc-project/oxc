@@ -13,7 +13,10 @@ use oxc_diagnostics::Error;
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 
-use crate::{context::LintContext, rules::RuleEnum};
+use crate::{
+    context::LintContext,
+    rules::{RuleEnum, RULES},
+};
 
 #[derive(Debug)]
 pub struct Linter {
@@ -24,8 +27,7 @@ impl Linter {
     #[must_use]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let rules = vec![RuleEnum::NoDebugger(rules::NoDebugger::default())];
-        Self { rules }
+        Self { rules: RULES.to_vec() }
     }
 
     #[must_use]
