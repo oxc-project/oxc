@@ -1,6 +1,7 @@
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 use indextree::{Arena, NodeId};
+use oxc_ast::AstKind;
 
 use super::{AstNode, AstNodeId, SemanticNode};
 
@@ -52,5 +53,17 @@ impl<'a> Deref for AstNodes<'a> {
 impl<'a> DerefMut for AstNodes<'a> {
     fn deref_mut(&mut self) -> &mut Arena<SemanticNode<'a>> {
         &mut self.nodes
+    }
+}
+
+impl<'a> AstNodes<'a> {
+    #[must_use]
+    pub fn kind<T: Into<NodeId>>(&self, id: T) -> AstKind<'a> {
+        self.nodes[id.into()].get().kind
+    }
+
+    #[must_use]
+    pub fn parent_kind(&self, node: &AstNode<'a>) -> AstKind<'a> {
+        node.parent().map_or(AstKind::Root, |node_id| self.kind(node_id))
     }
 }

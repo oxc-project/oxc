@@ -1,7 +1,10 @@
 use std::{cell::RefCell, rc::Rc};
 
+use oxc_ast::AstKind;
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
+
+use crate::AstNode;
 
 pub struct LintContext<'a> {
     semantic: Rc<Semantic<'a>>,
@@ -18,12 +21,15 @@ impl<'a> LintContext<'a> {
         self.diagnostics.into_inner()
     }
 
-    #[allow(unused)]
     pub fn semantic(&self) -> &Semantic<'a> {
         &self.semantic
     }
 
     pub fn diagnostic<T: Into<Error>>(&self, diagnostic: T) {
         self.diagnostics.borrow_mut().push(diagnostic.into());
+    }
+
+    pub fn parent_kind(&self, node: &AstNode<'a>) -> AstKind<'a> {
+        self.semantic().nodes().parent_kind(node)
     }
 }

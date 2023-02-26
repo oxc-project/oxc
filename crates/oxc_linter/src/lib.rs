@@ -8,6 +8,7 @@ mod rules;
 use std::rc::Rc;
 
 use oxc_diagnostics::Error;
+pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 
 use crate::{context::LintContext, rules::RuleEnum};
@@ -36,7 +37,7 @@ impl Linter {
 
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
-                rule.run(node.get().kind(), &ctx);
+                rule.run(node, &ctx);
             }
         }
 
