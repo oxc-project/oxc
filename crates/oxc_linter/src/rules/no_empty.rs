@@ -12,12 +12,24 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 struct NoEmptyDiagnostic(&'static str, #[label("Empty {0} statement")] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoEmpty;
+pub struct NoEmpty {
+    allow_empty_catch: bool,
+}
 
 const RULE_NAME: &str = "no-empty";
 
 impl Rule for NoEmpty {
     const NAME: &'static str = RULE_NAME;
+
+    fn from_json(value: serde_json::Value) -> Self {
+        let obj = value.get(0);
+        Self {
+            allow_empty_catch: obj
+                .and_then(|v| v.get("allowEmptyCatch"))
+                .and_then(|v| v.as_bool())
+                .unwrap_or_default(),
+        }
+    }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.get().kind() {
@@ -29,12 +41,14 @@ impl Rule for NoEmpty {
             }
             // The visitor does not visit the `BlockStatement` inside the `CatchClause`.
             // See `Visit::visit_catch_clause`.
-            // AstKind::CatchClause(catch_clause) if catch_clause.body.body.is_empty() => {
-            // if ctx.semantic().trivias().has_comments_between(catch_clause.body.span) {
-            // return;
-            // }
-            // ctx.diagnostic(NoEmptyDiagnostic("block", catch_clause.body.span));
-            // }
+            AstKind::CatchClause(catch_clause)
+                if !self.allow_empty_catch && catch_clause.body.body.is_empty() =>
+            {
+                if ctx.semantic().trivias().has_comments_between(catch_clause.body.span) {
+                    return;
+                }
+                ctx.diagnostic(NoEmptyDiagnostic("block", catch_clause.body.span));
+            }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
                 ctx.diagnostic(NoEmptyDiagnostic("switch", switch.span));
             }
@@ -45,6 +59,8 @@ impl Rule for NoEmpty {
 
 #[test]
 fn test() {
+    use serde_json::json;
+
     use crate::tester::Tester;
 
     let pass = vec![
@@ -68,22 +84,25 @@ fn test() {
         ("if (foo) { bar() } else { // nothing in me \n}", None),
         ("if (foo) { bar() } else { /**/ \n}", None),
         ("if (foo) { bar() } else { // \n}", None),
-        ("try { foo(); } catch (ex) {}", None),
-        ("try { foo(); } catch (ex) {} finally { bar(); }", None),
+        ("try { foo(); } catch (ex) {}", Some(json!([ { "allowEmptyCatch": true }]))),
+        (
+            "try { foo(); } catch (ex) {} finally { bar(); }",
+            Some(json!([ { "allowEmptyCatch": true }])),
+        ),
     ];
 
     let fail = vec![
         ("try {} catch (ex) {throw ex}", None),
         ("try { foo() } catch (ex) {throw ex} finally {}", None),
-        // "try { foo() } catch (ex) {}", // TODO: options
+        ("try { foo() } catch (ex) {}", None),
         ("if (foo) {}", None),
         ("while (foo) {}", None),
         ("for (;foo;) {}", None),
         ("switch(foo) {}", None),
         ("switch (foo) { /* empty */ }", None),
-        ("try {} catch (ex) {}", None),
-        ("try { foo(); } catch (ex) {} finally {}", None),
-        ("try {} catch (ex) {} finally {}", None),
+        ("try {} catch (ex) {}", Some(json!([ { "allowEmptyCatch": true }]))),
+        ("try { foo(); } catch (ex) {} finally {}", Some(json!([ { "allowEmptyCatch": true }]))),
+        ("try {} catch (ex) {} finally {}", Some(json!([ { "allowEmptyCatch": true }]))),
         ("try { foo(); } catch (ex) {} finally {}", None),
     ];
 
