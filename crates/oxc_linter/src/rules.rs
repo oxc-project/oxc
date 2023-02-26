@@ -27,6 +27,17 @@ impl RuleEnum {
         }
     }
 
+    pub fn from_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
+        match self {
+            Self::NoDebugger(_) => {
+                RuleEnum::NoDebugger(maybe_value.map(NoDebugger::from_json).unwrap_or_default())
+            }
+            Self::NoEmpty(_) => {
+                RuleEnum::NoEmpty(maybe_value.map(NoEmpty::from_json).unwrap_or_default())
+            }
+        }
+    }
+
     pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match self {
             Self::NoDebugger(rule) => rule.run(node, ctx),

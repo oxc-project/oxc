@@ -884,6 +884,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_parser",
  "oxc_semantic",
+ "serde_json",
 ]
 
 [[package]]

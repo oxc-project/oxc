@@ -15,6 +15,7 @@ oxc_diagnostics = { path = "../oxc_diagnostics" }
 oxc_semantic = { path = "../oxc_semantic" }
 
 lazy_static = { workspace = true }
+serde_json = { workspace = true }
 
 [dev_dependencies]
 oxc_allocator = { path = "../oxc_allocator" }
