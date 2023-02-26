@@ -30,9 +30,9 @@ impl Rule for NoDebugger {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["var test = { debugger: 1 }; test.debugger;"];
+    let pass = vec![("var test = { debugger: 1 }; test.debugger;", None)];
 
-    let fail = vec!["if (foo) debugger"];
+    let fail = vec![("if (foo) debugger", None)];
 
     Tester::new(RULE_NAME, pass, fail).test_and_snapshot();
 }
