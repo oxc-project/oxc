@@ -11,22 +11,26 @@ mod number;
 mod simd;
 mod string_builder;
 mod token;
+mod trivia_builder;
 
 use std::{collections::VecDeque, str::Chars};
 
-use constants::{
-    is_identifier_part, is_identifier_start, is_irregular_line_terminator, is_irregular_whitespace,
-    is_line_terminator, EOF, SINGLE_CHAR_TOKENS,
-};
-pub use kind::Kind;
-use number::{parse_big_int, parse_float, parse_int};
 use oxc_allocator::{Allocator, String};
 use oxc_ast::{ast::RegExpFlags, Atom, SourceType, Span};
 use oxc_diagnostics::{Diagnostics, Error};
 use simd::{SkipMultilineComment, SkipWhitespace};
-use string_builder::AutoCow;
 pub use token::{RegExp, Token, TokenValue};
 
+pub use self::kind::Kind;
+use self::{
+    constants::{
+        is_identifier_part, is_identifier_start, is_irregular_line_terminator,
+        is_irregular_whitespace, is_line_terminator, EOF, SINGLE_CHAR_TOKENS,
+    },
+    number::{parse_big_int, parse_float, parse_int},
+    string_builder::AutoCow,
+    trivia_builder::TriviaBuilder,
+};
 use crate::diagnostics;
 
 #[derive(Debug, Clone)]
@@ -62,6 +66,8 @@ pub struct Lexer<'a> {
     lookahead: VecDeque<LexerCheckpoint<'a>>,
 
     context: LexerContext,
+
+    pub(crate) trivia_builder: TriviaBuilder,
 }
 
 #[allow(clippy::unused_self)]
@@ -88,6 +94,7 @@ impl<'a> Lexer<'a> {
             errors,
             lookahead: VecDeque::with_capacity(4),
             context: LexerContext::Regular,
+            trivia_builder: TriviaBuilder::default(),
         }
     }
 
@@ -496,6 +503,7 @@ impl<'a> Lexer<'a> {
             }
         }
         self.current.token.is_on_new_line = true;
+        self.trivia_builder.add_single_line_comment(self.current.token.start, self.offset());
         Kind::Comment
     }
 
@@ -519,6 +527,7 @@ impl<'a> Lexer<'a> {
             return Kind::Eof;
         }
 
+        self.trivia_builder.add_single_line_comment(self.current.token.start, self.offset());
         Kind::MultiLineComment
     }
 

@@ -46,7 +46,7 @@ impl Cli {
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
         let diagnostics = if ret.errors.is_empty() {
             let program = allocator.alloc(ret.program);
-            let semantic = SemanticBuilder::new().build(program);
+            let semantic = SemanticBuilder::new().build(program, ret.trivias);
             Linter::new().run(&Rc::new(semantic))
         } else {
             ret.errors

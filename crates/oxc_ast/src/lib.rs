@@ -13,6 +13,7 @@ pub mod context;
 pub mod source_type;
 pub mod span;
 pub mod syntax_directed_operations;
+pub mod trivia;
 pub mod visit;
 
 pub use ast_kind::AstKind;
@@ -21,6 +22,7 @@ pub use num_bigint::BigUint;
 pub use crate::ast_builder::*;
 pub use crate::source_type::*;
 pub use crate::span::*;
+pub use crate::trivia::*;
 
 pub type Atom = compact_str::CompactString;
 

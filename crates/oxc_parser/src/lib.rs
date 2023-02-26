@@ -16,7 +16,7 @@ mod diagnostics;
 mod lexer;
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span};
+use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span, Trivias};
 use oxc_diagnostics::{Diagnostics, Error, Result};
 
 use crate::{
@@ -28,6 +28,7 @@ use crate::{
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<Error>,
+    pub trivias: Trivias,
 }
 
 pub struct Parser<'a> {
@@ -101,7 +102,8 @@ impl<'a> Parser<'a> {
             }
         };
         let errors = self.errors.borrow_mut().drain(..).collect();
-        ParserReturn { program, errors }
+        let trivias = self.lexer.trivia_builder.build();
+        ParserReturn { program, errors, trivias }
     }
 
     #[allow(clippy::cast_possible_truncation)]

@@ -2,7 +2,7 @@
 //! This builds:
 //!   * The untyped and flattened ast nodes into an indextree
 
-use oxc_ast::{ast::Program, visit::Visit, AstKind};
+use oxc_ast::{ast::Program, visit::Visit, AstKind, Trivias};
 
 use crate::{
     node::{AstNodeId, AstNodes, SemanticNode},
@@ -12,6 +12,7 @@ use crate::{
 #[derive(Debug)]
 pub struct SemanticBuilder<'a> {
     nodes: AstNodes<'a>,
+
     current_node_id: AstNodeId,
 }
 
@@ -26,10 +27,10 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[must_use]
-    pub fn build(mut self, program: &'a Program<'a>) -> Semantic<'a> {
+    pub fn build(mut self, program: &'a Program<'a>, trivias: Trivias) -> Semantic<'a> {
         // AST pass
         self.visit_program(program);
-        Semantic { nodes: self.nodes }
+        Semantic { nodes: self.nodes, trivias }
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {

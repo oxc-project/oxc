@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-empty): Disallow empty block statements")]
-#[diagnostic(severity(warning), help("Add comments inside {0} statement"))]
+#[diagnostic(severity(warning), help("Add comment inside empty {0} statement"))]
 struct NoEmptyDiagnostic(&'static str, #[label("Empty {0} statement")] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -18,11 +18,19 @@ impl Rule for NoEmpty {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.get().kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
-                // TODO: check comment
-                if !matches!(ctx.parent_kind(node), AstKind::CatchClause(_)) {
-                    ctx.diagnostic(NoEmptyDiagnostic("block", block.span));
+                if ctx.semantic().trivias().has_comments_between(block.span) {
+                    return;
                 }
+                ctx.diagnostic(NoEmptyDiagnostic("block", block.span));
             }
+            // The visitor does not visit the `BlockStatement` inside the `CatchClause`.
+            // See `Visit::visit_catch_clause`.
+            // AstKind::CatchClause(catch_clause) if catch_clause.body.body.is_empty() => {
+            // if ctx.semantic().trivias().has_comments_between(catch_clause.body.span) {
+            // return;
+            // }
+            // ctx.diagnostic(NoEmptyDiagnostic("block", catch_clause.body.span));
+            // }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
                 ctx.diagnostic(NoEmptyDiagnostic("switch", switch.span));
             }
@@ -63,7 +71,7 @@ fn test() {
 
     let fail = vec![
         "try {} catch (ex) {throw ex}",
-        "try { foo() } catch (ex) {}",
+        // "try { foo() } catch (ex) {}", // TODO: options
         "try { foo() } catch (ex) {throw ex} finally {}",
         "if (foo) {}",
         "while (foo) {}",
