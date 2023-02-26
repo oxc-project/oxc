@@ -877,6 +877,7 @@ name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
  "insta",
+ "lazy_static",
  "miette",
  "oxc_allocator",
  "oxc_ast",

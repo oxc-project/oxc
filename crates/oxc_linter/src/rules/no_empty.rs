@@ -14,7 +14,11 @@ struct NoEmptyDiagnostic(&'static str, #[label("Empty {0} statement")] pub Span)
 #[derive(Debug, Default, Clone)]
 pub struct NoEmpty;
 
+const RULE_NAME: &str = "no-empty";
+
 impl Rule for NoEmpty {
+    const NAME: &'static str = RULE_NAME;
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.get().kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
@@ -41,7 +45,6 @@ impl Rule for NoEmpty {
 
 #[test]
 fn test() {
-    use crate::rules::RuleEnum;
     use crate::tester::Tester;
 
     let pass = vec![
@@ -84,5 +87,5 @@ fn test() {
         "try { foo(); } catch (ex) {} finally {}",
     ];
 
-    Tester::new("no-empty", RuleEnum::NoEmpty(NoEmpty), pass, fail).test_and_snapshot();
+    Tester::new(RULE_NAME, pass, fail).test_and_snapshot();
 }
