@@ -26,6 +26,7 @@ impl Rule for NoDebugger {
 fn test() {
     use crate::rules::RuleEnum;
     use crate::tester::Tester;
+
     let pass = vec!["var test = { debugger: 1 }; test.debugger;"];
 
     let fail = vec!["if (foo) debugger"];
