@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-debugger): `debugger` statement is not allowed")]
@@ -15,8 +15,8 @@ struct NoDebuggerDiagnostic(#[label] pub Span);
 pub struct NoDebugger;
 
 impl Rule for NoDebugger {
-    fn run<'a>(&self, kind: AstKind<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::DebuggerStatement(stmt) = kind {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::DebuggerStatement(stmt) = node.get().kind() {
             ctx.diagnostic(NoDebuggerDiagnostic(stmt.span));
         }
     }

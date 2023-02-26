@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-empty): Disallow empty block statements")]
@@ -15,11 +15,13 @@ struct NoEmptyDiagnostic(&'static str, #[label("Empty {0} statement")] pub Span)
 pub struct NoEmpty;
 
 impl Rule for NoEmpty {
-    fn run<'a>(&self, kind: AstKind<'a>, ctx: &LintContext<'a>) {
-        match kind {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match node.get().kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
                 // TODO: check comment
-                ctx.diagnostic(NoEmptyDiagnostic("block", block.span));
+                if !matches!(ctx.parent_kind(node), AstKind::CatchClause(_)) {
+                    ctx.diagnostic(NoEmptyDiagnostic("block", block.span));
+                }
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
                 ctx.diagnostic(NoEmptyDiagnostic("switch", switch.span));

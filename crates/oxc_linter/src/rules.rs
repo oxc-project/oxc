@@ -3,9 +3,8 @@ mod no_empty;
 
 pub use no_debugger::NoDebugger;
 pub use no_empty::NoEmpty;
-use oxc_ast::AstKind;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Clone)]
 pub enum RuleEnum {
@@ -14,10 +13,10 @@ pub enum RuleEnum {
 }
 
 impl RuleEnum {
-    pub fn run<'a>(&self, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match self {
-            Self::NoDebugger(rule) => rule.run(kind, ctx),
-            Self::NoEmpty(rule) => rule.run(kind, ctx),
+            Self::NoDebugger(rule) => rule.run(node, ctx),
+            Self::NoEmpty(rule) => rule.run(node, ctx),
         }
     }
 }

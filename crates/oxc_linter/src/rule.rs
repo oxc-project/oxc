@@ -1,9 +1,7 @@
 use std::fmt::Debug;
 
-use oxc_ast::AstKind;
-
-use crate::context::LintContext;
+use crate::{context::LintContext, AstNode};
 
 pub trait Rule: Sized + Default + Debug {
-    fn run<'a>(&self, kind: AstKind<'a>, _ctx: &LintContext<'a>);
+    fn run<'a>(&self, node: &AstNode<'a>, _ctx: &LintContext<'a>);
 }
