@@ -65,7 +65,7 @@ impl Tester {
         let semantic = SemanticBuilder::new().build(program, ret.trivias);
         let semantic = std::rc::Rc::new(semantic);
         let rule = RULES.iter().find(|rule| rule.name() == self.rule_name).unwrap();
-        let rule = rule.from_json(config);
+        let rule = rule.read_json(config);
         let diagnostics = Linter::from_rules(vec![rule]).run(&semantic);
         if diagnostics.is_empty() {
             return true;
