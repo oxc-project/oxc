@@ -1,5 +1,5 @@
 Babel Summary:
-AST Parsed     : 2055/2069 (99.32%)
+AST Parsed     : 2056/2069 (99.37%)
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
   × Expect token
@@ -19,15 +19,6 @@ Expect to Parse: "typescript/cast/satisfies/input.ts"
  2 │ x < y satisfies boolean; // (x < y) satisfies boolean;
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: "typescript/class/accessor/input.ts"
-
-  × Unexpected token
-   ╭─[typescript/class/accessor/input.ts:1:1]
- 1 │ abstract class Foo {
- 2 │   accessor prop: number = 1;
-   ·                ─
- 3 │   static accessor prop2: number = 1;
-   ╰────
 Expect to Parse: "typescript/declare/function-rest-trailing-comma/input.ts"
 
   × Rest element must be last element
@@ -6541,14 +6532,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
-
-  × Unexpected token
-   ╭─[typescript/class/accessor-invalid/input.ts:1:1]
- 1 │ abstract class Foo {
- 2 │   declare accessor prop7: number;
-   ·                         ─
- 3 │   private accessor #p: any;
-   ╰────
 
   × Automatic Semicolon Insertion
    ╭─[typescript/class/declare-new-line-abstract/input.ts:1:1]
