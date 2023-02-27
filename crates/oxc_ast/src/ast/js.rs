@@ -168,7 +168,6 @@ impl<'a> Expression<'a> {
 /// Section 12.6 `IdentifierName`
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
-#[cfg_attr(feature = "acorn", serde(rename = "Identifier"))]
 pub struct IdentifierName {
     #[serde(flatten)]
     pub span: Span,
@@ -178,7 +177,6 @@ pub struct IdentifierName {
 /// Section 13.1 `IdentifierReference`
 #[derive(Debug, Clone, Serialize, PartialEq, Hash, Eq)]
 #[serde(tag = "type")]
-#[cfg_attr(feature = "acorn", serde(rename = "Identifier"))]
 pub struct IdentifierReference {
     #[serde(flatten)]
     pub span: Span,
@@ -188,7 +186,6 @@ pub struct IdentifierReference {
 /// Section 13.1 `BindingIdentifier`
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
-#[cfg_attr(feature = "acorn", serde(rename = "Identifier"))]
 pub struct BindingIdentifier {
     #[serde(flatten)]
     pub span: Span,
@@ -198,7 +195,6 @@ pub struct BindingIdentifier {
 /// Section 13.1 `LabelIdentifier`
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type")]
-#[cfg_attr(feature = "acorn", serde(rename = "Identifier"))]
 pub struct LabelIdentifier {
     #[serde(flatten)]
     pub span: Span,
@@ -220,7 +216,6 @@ pub struct ArrayExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub elements: Vec<'a, Option<Argument<'a>>>,
-    #[cfg_attr(feature = "acorn", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
@@ -231,7 +226,6 @@ pub struct ObjectExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub properties: Vec<'a, ObjectProperty<'a>>,
-    #[cfg_attr(feature = "acorn", serde(skip))]
     pub trailing_comma: Option<Span>,
 }
 
@@ -560,7 +554,6 @@ pub struct BinaryExpression<'a> {
 ///     [+In] `PrivateIdentifier` in `ShiftExpression`[?Yield, ?Await]
 #[derive(Debug, Serialize, PartialEq, Hash)]
 #[serde(tag = "type")]
-#[cfg_attr(feature = "acorn", serde(rename = "BinaryExpression"))]
 pub struct PrivateInExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
@@ -1554,7 +1547,6 @@ pub struct ImportExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub source: Expression<'a>,
-    #[cfg_attr(feature = "acorn", serde(skip_serializing_if = "Vec::is_empty"))]
     pub arguments: Vec<'a, Expression<'a>>,
 }
 
@@ -1563,10 +1555,8 @@ pub struct ImportExpression<'a> {
 pub struct ImportDeclaration<'a> {
     pub specifiers: Vec<'a, ImportDeclarationSpecifier>,
     pub source: StringLiteral,
-    #[cfg_attr(feature = "acorn", serde(skip_serializing_if = "Option::is_none"))]
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
-    #[cfg_attr(feature = "acorn", serde(skip_serializing_if = "Option::is_none"))]
-    pub import_kind: Option<ImportOrExportKind>, // `import type { foo } from 'bar'`
+    pub import_kind: Option<ImportOrExportKind>,      // `import type { foo } from 'bar'`
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
@@ -1640,7 +1630,6 @@ pub struct ExportNamedDeclaration<'a> {
     pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier>,
     pub source: Option<StringLiteral>,
-    #[cfg_attr(feature = "acorn", serde(skip_serializing_if = "Option::is_none"))]
     pub export_kind: Option<ImportOrExportKind>, // `export type { foo }`
 }
 
@@ -1656,7 +1645,6 @@ impl<'a> ExportNamedDeclaration<'a> {
 #[serde(tag = "type")]
 pub struct ExportDefaultDeclaration<'a> {
     pub declaration: ExportDefaultDeclarationKind<'a>,
-    #[cfg_attr(feature = "acorn", serde(skip))]
     pub exported: ModuleExportName, // `default`
 }
 
@@ -1665,9 +1653,8 @@ pub struct ExportDefaultDeclaration<'a> {
 pub struct ExportAllDeclaration<'a> {
     pub exported: Option<ModuleExportName>,
     pub source: StringLiteral,
-    #[cfg_attr(feature = "acorn", serde(skip_serializing_if = "Option::is_none"))]
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
-    pub export_kind: Option<ImportOrExportKind>, // `export type *`
+    pub export_kind: Option<ImportOrExportKind>,      // `export type *`
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
