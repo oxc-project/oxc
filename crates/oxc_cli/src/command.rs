@@ -31,6 +31,13 @@ impl Command {
             .about("Lint this repository.")
             .arg_required_else_help(true)
             .arg(
+              Arg::new("quiet")
+                .long("quiet")
+                .required(false)
+                .action(clap::ArgAction::SetTrue)
+                .help("This option allows you to disable reporting on warnings. If you enable this option, only errors are reported by oxc_lint.")
+            )
+            .arg(
                 Arg::new("path")
                     .value_name("PATH")
                     .num_args(1..)
@@ -89,5 +96,21 @@ mod test {
             matches.unwrap().get_one::<PathBuf>("path"),
             Some(&PathBuf::from("/path/to/dir"))
         );
+    }
+
+    #[test]
+    fn test_quiet_true() {
+        let arg = "oxc lint foo.js --quiet";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint");
+        assert!(matches.unwrap().get_flag("quiet"));
+    }
+
+    #[test]
+    fn test_quiet_false() {
+        let arg = "oxc lint foo.js";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint");
+        assert!(!matches.unwrap().get_flag("quiet"));
     }
 }

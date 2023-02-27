@@ -6,7 +6,7 @@ use std::{
 #[derive(Debug)]
 pub enum CliRunResult {
     None,
-    PathNotFound { path: PathBuf },
+    PathNotFound { paths: Vec<PathBuf> },
     LintResult { number_of_files: usize, number_of_diagnostics: usize },
 }
 
@@ -14,8 +14,8 @@ impl Termination for CliRunResult {
     fn report(self) -> ExitCode {
         match self {
             Self::None => ExitCode::from(0),
-            Self::PathNotFound { path } => {
-                println!("Path {} does not exist.", path.to_string_lossy());
+            Self::PathNotFound { paths } => {
+                println!("Path {paths:?} does not exist.");
                 ExitCode::from(1)
             }
             Self::LintResult { number_of_files, number_of_diagnostics } => {
