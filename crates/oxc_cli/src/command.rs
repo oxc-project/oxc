@@ -97,4 +97,20 @@ mod test {
             Some(&PathBuf::from("/path/to/dir"))
         );
     }
+
+    #[test]
+    fn test_quiet_true() {
+        let arg = "oxc lint foo.js --quiet";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint");
+        assert!(matches.unwrap().get_flag("quiet"));
+    }
+
+    #[test]
+    fn test_quiet_false() {
+        let arg = "oxc lint foo.js";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint");
+        assert!(!matches.unwrap().get_flag("quiet"));
+    }
 }
