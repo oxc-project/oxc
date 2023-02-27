@@ -957,8 +957,9 @@ impl<'a> AstBuilder<'a> {
         exported: Option<ModuleExportName>,
         source: StringLiteral,
         assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
+        export_kind: Option<ImportOrExportKind>,
     ) -> Box<'a, ExportAllDeclaration<'a>> {
-        self.alloc(ExportAllDeclaration { exported, source, assertions })
+        self.alloc(ExportAllDeclaration { exported, source, assertions, export_kind })
     }
 
     #[must_use]
