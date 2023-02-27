@@ -1,0 +1,54 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_array_constructor
+---
+
+  ⚠ eslint(no-array-constructor): Disallow `Array` constructors
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new Array()
+   · ───────────
+   ╰────
+  help: Use array literal instead
+
+  ⚠ eslint(no-array-constructor): Disallow `Array` constructors
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new Array
+   · ─────────
+   ╰────
+  help: Use array literal instead
+
+  ⚠ eslint(no-array-constructor): Disallow `Array` constructors
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array();
+   · ───────
+   ╰────
+  help: Use array literal instead
+
+  ⚠ eslint(no-array-constructor): Disallow `Array` constructors
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new Array(x, y)
+   · ───────────────
+   ╰────
+  help: Use array literal instead
+
+  ⚠ eslint(no-array-constructor): Disallow `Array` constructors
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ new Array(0, 1, 2)
+   · ──────────────────
+   ╰────
+  help: Use array literal instead
+
+  ⚠ eslint(no-array-constructor): Disallow `Array` constructors
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(x, y)
+   · ───────────
+   ╰────
+  help: Use array literal instead
+
+  ⚠ eslint(no-array-constructor): Disallow `Array` constructors
+   ╭─[no_array_constructor.tsx:1:1]
+ 1 │ Array(0, 1, 2)
+   · ──────────────
+   ╰────
+  help: Use array literal instead
+
