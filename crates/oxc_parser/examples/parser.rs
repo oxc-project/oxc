@@ -18,6 +18,7 @@ fn main() {
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     if ret.errors.is_empty() {
+        println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
         println!("Parsed Successfully.");
     } else {
         for error in ret.errors {

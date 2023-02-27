@@ -898,6 +898,7 @@ dependencies = [
  "oxc_ast",
  "oxc_diagnostics",
  "rustc-hash",
+ "serde_json",
  "unicode-id-start",
 ]
 
