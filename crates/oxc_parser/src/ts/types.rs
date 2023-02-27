@@ -15,10 +15,10 @@ use crate::{
 };
 
 bitflags! {
-  /// Bitflag of class member modifiers.
+  /// Bitflag of modifiers and contextual modifiers.
   /// Useful to cheaply track all already seen modifiers of a member (instead of using a HashSet<ModifierKind>).
   #[derive(Default)]
-  pub struct ModifierFlags: u8 {
+  pub struct ModifierFlags: u16 {
       const DECLARE       = 1 << 0;
       const PRIVATE       = 1 << 1;
       const PROTECTED     = 1 << 2;
@@ -27,8 +27,41 @@ bitflags! {
       const READONLY      = 1 << 5;
       const ABSTRACT      = 1 << 6;
       const OVERRIDE      = 1 << 7;
+      const ASYNC         = 1 << 8;
+      const CONST         = 1 << 9;
+      const IN            = 1 << 10;
+      const OUT           = 1 << 11;
+      const EXPORT        = 1 << 12;
+      const DEFAULT       = 1 << 13;
+      const ACCESSOR      = 1 << 14;
       const ACCESSIBILITY = Self::PRIVATE.bits | Self::PROTECTED.bits | Self::PUBLIC.bits;
   }
+}
+
+/// It is the caller's savety to always check by `Kind::is_modifier_kind`
+/// before converting [`Kind`] to [`ModifierFlags`] so that we can assume here that
+/// the convertion always succeeds.
+impl From<Kind> for ModifierFlags {
+    fn from(value: Kind) -> Self {
+        match value {
+            Kind::Abstract => Self::ABSTRACT,
+            Kind::Declare => Self::DECLARE,
+            Kind::Private => Self::PRIVATE,
+            Kind::Protected => Self::PROTECTED,
+            Kind::Public => Self::PUBLIC,
+            Kind::Static => Self::STATIC,
+            Kind::Readonly => Self::READONLY,
+            Kind::Override => Self::OVERRIDE,
+            Kind::Async => Self::ASYNC,
+            Kind::Const => Self::CONST,
+            Kind::In => Self::IN,
+            Kind::Out => Self::OUT,
+            Kind::Export => Self::EXPORT,
+            Kind::Default => Self::DEFAULT,
+            Kind::Accessor => Self::ACCESSOR,
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl ModifierFlags {
@@ -52,6 +85,10 @@ impl ModifierFlags {
 
     pub const fn declare(self) -> bool {
         self.contains(Self::DECLARE)
+    }
+
+    pub const fn r#async(self) -> bool {
+        self.contains(Self::ASYNC)
     }
 
     pub const fn r#override(self) -> bool {
@@ -1034,19 +1071,11 @@ impl<'a> Parser<'a> {
                 break;
             }
 
-            let modifier_flag = match self.cur_kind() {
-                Kind::Private => ModifierFlags::PRIVATE,
-                Kind::Protected => ModifierFlags::PROTECTED,
-                Kind::Public => ModifierFlags::PUBLIC,
-                Kind::Static => ModifierFlags::STATIC,
-                Kind::Abstract => ModifierFlags::ABSTRACT,
-                Kind::Readonly => ModifierFlags::READONLY,
-                Kind::Declare => ModifierFlags::DECLARE,
-                Kind::Override => ModifierFlags::OVERRIDE,
-                _ => break,
-            };
-
-            flags.set(modifier_flag, true);
+            if let Ok(modifier_flag) = self.cur_kind().try_into() {
+                flags.set(modifier_flag, true);
+            } else {
+                break;
+            }
 
             self.bump_any();
         }

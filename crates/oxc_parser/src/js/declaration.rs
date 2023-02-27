@@ -1,5 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, context::StatementContext, GetSpan};
+use oxc_ast::{ast::*, context::StatementContext, GetSpan, Span};
 use oxc_diagnostics::Result;
 
 use crate::{diagnostics, lexer::Kind, Parser};
@@ -43,9 +43,10 @@ impl<'a> Parser<'a> {
 
     pub fn parse_variable_declaration(
         &mut self,
+        start_span: Span,
         decl_ctx: VariableDeclarationContext,
+        modifiers: Modifiers<'a>,
     ) -> Result<Box<'a, VariableDeclaration<'a>>> {
-        let span = self.start_span();
         let kind = match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,
             Kind::Const => VariableDeclarationKind::Const,
@@ -70,7 +71,7 @@ impl<'a> Parser<'a> {
             self.asi()?;
         }
 
-        Ok(self.ast.variable_declaration(self.end_span(span), kind, declarations))
+        Ok(self.ast.variable_declaration(self.end_span(start_span), kind, declarations, modifiers))
     }
 
     fn parse_variable_declarator(

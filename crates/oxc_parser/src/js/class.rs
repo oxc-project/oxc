@@ -13,7 +13,8 @@ type Implements<'a> = Vec<'a, Box<'a, TSClassImplements<'a>>>;
 /// Section 15.7 Class Definitions
 impl<'a> Parser<'a> {
     pub fn parse_class_statement(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
-        let decl = self.parse_class_declaration(/* declare */ false)?;
+        let start_span = self.start_span();
+        let decl = self.parse_class_declaration(start_span, Modifiers::empty())?;
 
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::ClassDeclaration(Span::new(
@@ -26,23 +27,29 @@ impl<'a> Parser<'a> {
     }
 
     /// Section 15.7 Class Definitions
-    pub fn parse_class_declaration(&mut self, declare: bool) -> Result<Box<'a, Class<'a>>> {
-        self.parse_class(declare, ClassType::ClassDeclaration)
+    pub fn parse_class_declaration(
+        &mut self,
+        start_span: Span,
+        modifiers: Modifiers<'a>,
+    ) -> Result<Box<'a, Class<'a>>> {
+        self.parse_class(start_span, ClassType::ClassDeclaration, modifiers)
     }
 
     /// Section Class Definitions `https://tc39.es/ecma262/#prod-ClassExpression`
     /// `ClassExpression`[Yield, Await] :
     ///     class `BindingIdentifier`[?Yield, ?Await]opt `ClassTail`[?Yield, ?Await]
     pub fn parse_class_expression(&mut self) -> Result<Expression<'a>> {
-        let class = self.parse_class(/* declare */ false, ClassType::ClassExpression)?;
+        let class =
+            self.parse_class(self.start_span(), ClassType::ClassExpression, Modifiers::empty())?;
         Ok(self.ast.class_expression(class))
     }
 
-    fn parse_class(&mut self, declare: bool, r#type: ClassType) -> Result<Box<'a, Class<'a>>> {
-        let span = self.start_span();
-
-        let r#abstract = self.eat(Kind::Abstract);
-
+    fn parse_class(
+        &mut self,
+        start_span: Span,
+        r#type: ClassType,
+        modifiers: Modifiers<'a>,
+    ) -> Result<Box<'a, Class<'a>>> {
         self.bump_any(); // advance `class`
 
         let decorators = self.state.consume_decorators();
@@ -69,16 +76,15 @@ impl<'a> Parser<'a> {
 
         Ok(self.ast.class(
             r#type,
-            self.end_span(span),
+            self.end_span(start_span),
             id,
             super_class,
             body,
             type_parameters,
             super_type_parameters,
             implements,
-            r#abstract,
             decorators,
-            declare,
+            modifiers,
         ))
     }
 

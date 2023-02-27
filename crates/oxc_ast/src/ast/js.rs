@@ -840,7 +840,7 @@ impl<'a> Declaration<'a> {
         match self {
             Self::VariableDeclaration(_) => false,
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
-            Self::ClassDeclaration(class) => class.declare,
+            Self::ClassDeclaration(class) => class.is_declare(),
             _ => true,
         }
     }
@@ -848,12 +848,15 @@ impl<'a> Declaration<'a> {
 
 /// Section 14.3.2 Variable Declaration
 #[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[serde(tag = "type", rename_all = "camelCase")]
 pub struct VariableDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
+    /// Valid Modifiers: `export`, `declare`
+    #[serde(skip_serializing_if = "Modifiers::is_none")]
+    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Hash)]
@@ -1187,17 +1190,19 @@ pub struct Function<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<Box<'a, FunctionBody<'a>>>,
-    pub declare: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub return_type: Option<TSTypeAnnotation<'a>>,
+    /// Valid modifiers: `export`, `default`, `async`
+    #[serde(skip_serializing_if = "Modifiers::is_none")]
+    pub modifiers: Modifiers<'a>,
 }
 
 impl<'a> Function<'a> {
     #[must_use]
-    pub const fn is_typescript_syntax(&self) -> bool {
-        self.declare || self.body.is_none()
+    pub fn is_typescript_syntax(&self) -> bool {
+        self.modifiers.contains(ModifierKind::Declare) || self.body.is_none()
     }
 
     #[must_use]
@@ -1321,10 +1326,11 @@ pub struct Class<'a> {
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
-    pub r#abstract: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub decorators: Option<Vec<'a, Decorator<'a>>>,
-    pub declare: bool,
+    /// Valid Modifiers: `export`, `abstract`
+    #[serde(skip_serializing_if = "Modifiers::is_none")]
+    pub modifiers: Modifiers<'a>,
 }
 
 impl<'a> Class<'a> {
@@ -1336,6 +1342,11 @@ impl<'a> Class<'a> {
     #[must_use]
     pub fn is_declaration(&self) -> bool {
         self.r#type == ClassType::ClassDeclaration
+    }
+
+    #[must_use]
+    pub fn is_declare(&self) -> bool {
+        self.modifiers.contains(ModifierKind::Declare)
     }
 }
 
