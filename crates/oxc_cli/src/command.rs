@@ -31,8 +31,6 @@ impl Command {
             .about("Lint this repository.")
             .arg_required_else_help(true)
             .arg(
-              // This flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
-              // Note that it does not disable ALL diagnostics, only Warning diagnostics
               Arg::new("quiet")
                 .long("quiet")
                 .required(false)

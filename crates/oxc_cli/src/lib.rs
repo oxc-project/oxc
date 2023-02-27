@@ -48,9 +48,11 @@ impl Cli {
 
                 diagnostics
                     .iter()
-                    .filter(|diagnostic| {
-                        diagnostic.severity().unwrap() != Severity::Warning
-                            || !self.cli_options.quiet
+                    .filter(|d| match d.severity() {
+                        // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
+                        // Note that it does not disable ALL diagnostics, only Warning diagnostics
+                        Some(Severity::Warning) => !self.cli_options.quiet,
+                        _ => true,
                     })
                     .for_each(|diagnostic| {
                         println!("{diagnostic:?}");

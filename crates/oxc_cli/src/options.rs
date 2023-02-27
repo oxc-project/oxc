@@ -25,6 +25,6 @@ impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
             paths.extend(globbed);
         }
 
-        Ok(Self { quiet: matches.get_one::<bool>("quiet").is_some(), paths })
+        Ok(Self { quiet: matches.get_flag("quiet"), paths })
     }
 }
