@@ -21,7 +21,7 @@ const RULE_NAME: &str = "no-empty";
 impl Rule for NoEmpty {
     const NAME: &'static str = RULE_NAME;
 
-    fn from_json(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
         Self {
             allow_empty_catch: obj

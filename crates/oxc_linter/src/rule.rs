@@ -5,7 +5,8 @@ use crate::{context::LintContext, AstNode};
 pub trait Rule: Sized + Default + Debug {
     const NAME: &'static str;
 
-    fn from_json(_value: serde_json::Value) -> Self {
+    /// Initialize from eslint json configuration
+    fn from_configuration(_value: serde_json::Value) -> Self {
         Self::default()
     }
 
