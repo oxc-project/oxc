@@ -8,8 +8,6 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use std::path::PathBuf;
-
 use oxc_cli::{Cli, CliOptions, CliRunResult, Command};
 
 fn main() -> CliRunResult {
@@ -20,29 +18,12 @@ fn main() -> CliRunResult {
         if let Ok(cli_options) = cli_options {
             let cli = Cli::new(cli_options);
 
-            if subcommand == "lint" {}
-        } else {
-            return CliRunResult::PathNotFound { path: cli_options.unwrap().path };
+            if subcommand == "lint" {
+                return cli.lint();
+            }
+            return CliRunResult::None;
         }
-
-        // let cli = Cli::new(cli_options);
-
-        // if cli.cli_options.path.canonicalize().is_err() {
-        //     CliRunResult::PathNotFound { path: cli.cli_options.path };
-        // }
+        return CliRunResult::PathNotFound { paths: cli_options.unwrap().paths };
     }
-
-    // match Command::new().build().get_matches().subcommand() {
-    //     Some(("lint", matches)) => {
-    //         let path = matches.get_one::<PathBuf>("path").unwrap();
-
-    //         if path.canonicalize().is_err() {
-    //             return CliRunResult::PathNotFound { path: path.clone() };
-    //         }
-
-    //         let quiet = matches.get_one::<String>("quiet").is_some();
-    //         Cli::lint(path, CliOptions { quiet })
-    //     }
-    //     _ => CliRunResult::None,
-    // }
+    CliRunResult::None
 }

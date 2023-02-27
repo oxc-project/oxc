@@ -284,6 +284,13 @@ impl<'a> Parser<'a> {
         result
     }
 
+    pub fn lookahead<U>(&mut self, predicate: impl Fn(&mut Parser<'a>) -> U) -> U {
+        let checkpoint = self.checkpoint();
+        let answer = predicate(self);
+        self.rewind(checkpoint);
+        answer
+    }
+
     pub fn without_context<F, T>(&mut self, flags: Context, cb: F) -> T
     where
         F: FnOnce(&mut Self) -> T,

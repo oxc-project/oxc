@@ -4,19 +4,23 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-debugger): `debugger` statement is not allowed")]
-#[diagnostic(severity(warning))]
+#[diagnostic()]
 struct NoDebuggerDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDebugger;
 
+const RULE_NAME: &str = "no-debugger";
+
 impl Rule for NoDebugger {
-    fn run<'a>(&self, kind: AstKind<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::DebuggerStatement(stmt) = kind {
+    const NAME: &'static str = RULE_NAME;
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if let AstKind::DebuggerStatement(stmt) = node.get().kind() {
             ctx.diagnostic(NoDebuggerDiagnostic(stmt.span));
         }
     }
@@ -24,11 +28,11 @@ impl Rule for NoDebugger {
 
 #[test]
 fn test() {
-    use crate::rules::RuleEnum;
     use crate::tester::Tester;
-    let pass = vec!["var test = { debugger: 1 }; test.debugger;"];
 
-    let fail = vec!["if (foo) debugger"];
+    let pass = vec![("var test = { debugger: 1 }; test.debugger;", None)];
 
-    Tester::new("no-debugger", RuleEnum::NoDebugger(NoDebugger), pass, fail).test_and_snapshot();
+    let fail = vec![("if (foo) debugger", None)];
+
+    Tester::new(RULE_NAME, pass, fail).test_and_snapshot();
 }

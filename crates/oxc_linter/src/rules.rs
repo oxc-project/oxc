@@ -1,19 +1,47 @@
 mod no_debugger;
+mod no_empty;
 
 pub use no_debugger::NoDebugger;
-use oxc_ast::AstKind;
+pub use no_empty::NoEmpty;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, AstNode};
+
+lazy_static::lazy_static! {
+    pub static ref RULES: Vec<RuleEnum> = vec![
+        RuleEnum::NoDebugger(NoDebugger::default()),
+        RuleEnum::NoEmpty(NoEmpty::default())
+    ];
+}
 
 #[derive(Debug, Clone)]
 pub enum RuleEnum {
     NoDebugger(NoDebugger),
+    NoEmpty(NoEmpty),
 }
 
 impl RuleEnum {
-    pub fn run<'a>(&self, kind: AstKind<'a>, ctx: &LintContext<'a>) {
+    pub const fn name(&self) -> &'static str {
         match self {
-            Self::NoDebugger(rule) => rule.run(kind, ctx),
+            Self::NoDebugger(_) => NoDebugger::NAME,
+            Self::NoEmpty(_) => NoEmpty::NAME,
+        }
+    }
+
+    pub fn read_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
+        match self {
+            Self::NoDebugger(_) => Self::NoDebugger(
+                maybe_value.map(NoDebugger::from_configuration).unwrap_or_default(),
+            ),
+            Self::NoEmpty(_) => {
+                Self::NoEmpty(maybe_value.map(NoEmpty::from_configuration).unwrap_or_default())
+            }
+        }
+    }
+
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        match self {
+            Self::NoDebugger(rule) => rule.run(node, ctx),
+            Self::NoEmpty(rule) => rule.run(node, ctx),
         }
     }
 }

@@ -1667,6 +1667,7 @@ pub struct ExportAllDeclaration<'a> {
     pub source: StringLiteral,
     #[cfg_attr(feature = "acorn", serde(skip_serializing_if = "Option::is_none"))]
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
+    pub export_kind: Option<ImportOrExportKind>, // `export type *`
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]

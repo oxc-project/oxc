@@ -5,29 +5,26 @@ use oxc_ast::SourceType;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use serde_json::Value;
 
-use crate::{rules::RuleEnum, Linter};
+use crate::{rules::RULES, Linter};
 
 pub struct Tester {
-    rule_name: String,
-    rule: RuleEnum,
-    expect_pass: Vec<String>,
-    expect_fail: Vec<String>,
+    rule_name: &'static str,
+    expect_pass: Vec<(String, Option<Value>)>,
+    expect_fail: Vec<(String, Option<Value>)>,
     snapshot: String,
 }
 
 impl Tester {
-    #[allow(clippy::needless_pass_by_value)]
     pub fn new<S: Into<String>>(
-        rule_name: &str,
-        rule: RuleEnum,
-        expect_pass: Vec<S>,
-        expect_fail: Vec<S>,
+        rule_name: &'static str,
+        expect_pass: Vec<(S, Option<Value>)>,
+        expect_fail: Vec<(S, Option<Value>)>,
     ) -> Self {
-        let rule_name = rule_name.replace('-', "_");
-        let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
-        let expect_fail = expect_fail.into_iter().map(Into::into).collect::<Vec<_>>();
-        Self { rule_name, rule, expect_pass, expect_fail, snapshot: String::new() }
+        let expect_pass = expect_pass.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
+        let expect_fail = expect_fail.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
+        Self { rule_name, expect_pass, expect_fail, snapshot: String::new() }
     }
 
     pub fn test_and_snapshot(&mut self) {
@@ -37,35 +34,39 @@ impl Tester {
     }
 
     fn test_pass(&mut self) {
-        for test in self.expect_pass.clone() {
-            let passed = self.run(&test);
+        for (test, config) in self.expect_pass.clone() {
+            let passed = self.run(&test, config);
             assert!(passed, "expect test to pass: {test} {}", self.snapshot);
         }
     }
 
     fn test_fail(&mut self) {
-        for test in self.expect_fail.clone() {
-            let passed = self.run(&test);
+        for (test, config) in self.expect_fail.clone() {
+            let passed = self.run(&test, config);
             assert!(!passed, "expect test to fail: {test}");
         }
     }
 
     fn snapshot(&self) {
+        let name = self.rule_name.replace('-', "_");
         insta::with_settings!({ prepend_module_to_snapshot => false, }, {
-            insta::assert_snapshot!(self.rule_name.clone(), self.snapshot, &self.rule_name);
+            insta::assert_snapshot!(name.clone(), self.snapshot, &name);
         });
     }
 
-    fn run(&mut self, source_text: &str) -> bool {
+    fn run(&mut self, source_text: &str, config: Option<Value>) -> bool {
+        let name = self.rule_name.replace('-', "_");
         let allocator = Allocator::default();
-        let path = PathBuf::from(self.rule_name.clone()).with_extension("tsx");
+        let path = PathBuf::from(name).with_extension("tsx");
         let source_type = SourceType::from_path(&path).expect("incorrect {path:?}");
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new().build(program);
+        let semantic = SemanticBuilder::new().build(program, ret.trivias);
         let semantic = std::rc::Rc::new(semantic);
-        let diagnostics = Linter::from_rules(vec![self.rule.clone()]).run(&semantic);
+        let rule = RULES.iter().find(|rule| rule.name() == self.rule_name).unwrap();
+        let rule = rule.read_json(config);
+        let diagnostics = Linter::from_rules(vec![rule]).run(&semantic);
         if diagnostics.is_empty() {
             return true;
         }

@@ -315,9 +315,9 @@ impl<'a> Parser<'a> {
         false
     }
 
-    /** ----------------------- declaration --------------------- */
+    /** ----------------------- declare --------------------- */
 
-    pub fn is_at_ts_declaration_clause(&mut self) -> bool {
+    pub fn is_at_ts_declare_clause(&mut self) -> bool {
         if !self.at(Kind::Declare) || self.peek_token().is_on_new_line {
             return false;
         }
@@ -356,13 +356,14 @@ impl<'a> Parser<'a> {
         false
     }
 
-    pub fn parse_ts_declare_statement(&mut self) -> Result<Statement<'a>> {
+    pub fn parse_ts_declaration_statement(&mut self) -> Result<Statement<'a>> {
         let declaration = self.parse_declaration_clause()?;
         Ok(Statement::Declaration(declaration))
     }
 
     pub fn parse_declaration_clause(&mut self) -> Result<Declaration<'a>> {
         let has_ambient = self.ctx.has_ambient();
+
         let declare = self.eat(Kind::Declare);
         if declare {
             self.ctx = self.ctx.and_ambient(true);

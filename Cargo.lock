@@ -405,6 +405,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ad0a93d233ebf96623465aad4046a8d3aa4da22d4f4beba5388838c8a434bbb4"
 
 [[package]]
+name = "glob"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
+
+[[package]]
 name = "globset"
 version = "0.4.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -820,6 +826,7 @@ name = "oxc_cli"
 version = "0.0.0"
 dependencies = [
  "clap 4.1.6",
+ "glob",
  "ignore",
  "jemallocator",
  "miette",
@@ -870,12 +877,14 @@ name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
  "insta",
+ "lazy_static",
  "miette",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
  "oxc_parser",
  "oxc_semantic",
+ "serde_json",
 ]
 
 [[package]]

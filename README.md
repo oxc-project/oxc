@@ -1,5 +1,8 @@
 # The JavaScript Oxidation Compiler (oxc)
 
+[![MIT licensed][mit-badge]][mit-url]
+[![Discord chat][discord-badge]][discord-url]
+
 ## Why this project?
 
 The goal of this project is to:
@@ -17,6 +20,8 @@ Rust but would like to learn things.
 ## Contributing
 
 Contributions are welcome and highly appreciated. To get started, check out [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+You can also join us on [Discord](https://discord.gg/9uXCAwqQZW).
 
 ## Call for action
 
@@ -41,7 +46,7 @@ The current objectives are:
   * Performance
   * Pass more conformance tests
   * You may start with https://github.com/Boshen/oxc/issues/36
- 
+
 ## Parser Conformance
 
 The `cargo coverage` command currently reports the following summary
@@ -93,12 +98,33 @@ Summary
 
 ## Credits
 
-This project is inspired by the following great mentors and projects:
+This project is incubated from the help of these great people and their projects:
 
 * [Rome Tools](https://rome.tools) - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
 * [Ruff](https://beta.ruff.rs) - [@charliermarsh](https://github.com/charliermarsh)
 * [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
+* [@domonji](https://github.com/domonji) for contribution to the TypeScript parser
 
 ## License
 
 [MIT](./LICENSE)
+
+## Third Party Licenses
+
+Licenses are list in [LICENSE-THIRD-PARTY](./LICENSE-THIRD-PARTY)
+
+This project partially copies code from the following projects:
+
+| Project       | License       |
+| ------------- | ------------- |
+| [eslint/eslint](https://github.com/eslint/eslint) | [MIT](https://github.com/eslint/eslint/blob/main/LICENSE)  |
+| [typescript-eslint/typescript-eslint](https://github.com/typescript-eslint/typescript-eslint) | [MIT](https://github.com/typescript-eslint/typescript-eslint/blob/main/LICENSE)  |
+| [microsoft/TypeScript](https://github.com/microsoft/TypeScript) | [Apache 2.0](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt)  |
+| [rome/tools](https://github.com/rome/tools) | [MIT](https://github.com/rome/tools/blob/main/LICENSE)  |
+| [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus) | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0)  |
+
+
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
+[mit-url]: LICENSE
+[discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
+[discord-url]: https://discord.gg/9uXCAwqQZW
