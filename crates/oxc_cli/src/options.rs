@@ -14,14 +14,16 @@ impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
         let mut paths = vec![];
 
         for path in matches.get_many::<PathBuf>("path").unwrap() {
-            let globbed = glob::glob(&path.to_string_lossy())
-                .expect("Failed to read glob pattern")
-                .map(|path| path.expect("Failed to read glob pattern"))
-                .collect::<Vec<_>>();
+            let glob_result =
+                glob::glob(&path.to_string_lossy()).map_err(|_| "Failed to read glob pattern")?;
+            let globbed = glob_result
+                .map(|path_result| path_result.map_err(|_| "Failed to read path"))
+                .collect::<Result<Vec<PathBuf>, &str>>()?;
 
             if globbed.is_empty() && path.canonicalize().is_err() {
                 return Err("Unable to find globbed files");
             }
+
             paths.extend(globbed);
         }
 
