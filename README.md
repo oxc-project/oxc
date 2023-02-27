@@ -1,5 +1,8 @@
 # The JavaScript Oxidation Compiler (oxc)
 
+[![MIT licensed][mit-badge]][mit-url]
+[![Discord chat][discord-badge]][discord-url]
+
 ## Why this project?
 
 The goal of this project is to:
@@ -17,6 +20,8 @@ Rust but would like to learn things.
 ## Contributing
 
 Contributions are welcome and highly appreciated. To get started, check out [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+You can also join us on [Discord](https://discord.gg/9uXCAwqQZW).
 
 ## Call for action
 
@@ -117,3 +122,8 @@ This project partially copies code from the following projects:
 | [rome/tools](https://github.com/rome/tools) | [MIT](https://github.com/rome/tools/blob/main/LICENSE)  |
 | [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus) | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0)  |
 
+
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
+[mit-url]: LICENSE
+[discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
+[discord-url]: https://discord.gg/9uXCAwqQZW
