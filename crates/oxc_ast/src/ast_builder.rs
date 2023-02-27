@@ -712,7 +712,7 @@ impl<'a> AstBuilder<'a> {
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<TSTypeAnnotation<'a>>,
-        declare: bool,
+        modifiers: Modifiers<'a>,
     ) -> Box<'a, Function<'a>> {
         self.alloc(Function {
             r#type,
@@ -723,9 +723,9 @@ impl<'a> AstBuilder<'a> {
             r#async,
             params,
             body,
-            declare,
             type_parameters,
             return_type,
+            modifiers,
         })
     }
 
@@ -754,9 +754,8 @@ impl<'a> AstBuilder<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
         implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
-        r#abstract: bool,
         decorators: Option<Vec<'a, Decorator<'a>>>,
-        declare: bool,
+        modifiers: Modifiers<'a>,
     ) -> Box<'a, Class<'a>> {
         self.alloc(Class {
             r#type,
@@ -767,9 +766,8 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             super_type_parameters,
             implements,
-            r#abstract,
             decorators,
-            declare,
+            modifiers,
         })
     }
 
@@ -813,8 +811,9 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         kind: VariableDeclarationKind,
         declarations: Vec<'a, VariableDeclarator<'a>>,
+        modifiers: Modifiers<'a>,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.alloc(VariableDeclaration { span, kind, declarations })
+        self.alloc(VariableDeclaration { span, kind, declarations, modifiers })
     }
 
     #[must_use]
@@ -1129,9 +1128,9 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: TSModuleDeclarationName,
         body: TSModuleDeclarationBody<'a>,
-        declare: bool,
+        modifiers: Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        self.alloc(TSModuleDeclaration { span, id, body, declare })
+        self.alloc(TSModuleDeclaration { span, id, body, modifiers })
     }
 
     #[must_use]
@@ -1448,7 +1447,7 @@ impl<'a> AstBuilder<'a> {
         body: Box<'a, TSInterfaceBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
-        declare: bool,
+        modifiers: Modifiers<'a>,
     ) -> Declaration<'a> {
         Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration {
             span,
@@ -1456,7 +1455,7 @@ impl<'a> AstBuilder<'a> {
             body,
             type_parameters,
             extends,
-            declare,
+            modifiers,
         }))
     }
 
@@ -1468,14 +1467,14 @@ impl<'a> AstBuilder<'a> {
         id: BindingIdentifier,
         type_annotation: TSType<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        declare: bool,
+        modifiers: Modifiers<'a>,
     ) -> Declaration<'a> {
         Declaration::TSTypeAliasDeclaration(self.alloc(TSTypeAliasDeclaration {
             span,
             id,
             type_annotation,
             type_parameters,
-            declare,
+            modifiers,
         }))
     }
 
@@ -1486,15 +1485,13 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier,
         members: Vec<'a, TSEnumMember<'a>>,
-        declare: bool,
-        r#const: bool,
+        modifiers: Modifiers<'a>,
     ) -> Declaration<'a> {
         Declaration::TSEnumDeclaration(self.alloc(TSEnumDeclaration {
             span,
             id,
             members,
-            declare,
-            r#const,
+            modifiers,
         }))
     }
 

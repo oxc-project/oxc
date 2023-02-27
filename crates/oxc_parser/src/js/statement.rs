@@ -152,9 +152,12 @@ impl<'a> Parser<'a> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Result<Statement<'a>> {
-        let decl = self.parse_variable_declaration(VariableDeclarationContext::new(
-            VariableDeclarationParent::Statement,
-        ))?;
+        let start_span = self.start_span();
+        let decl = self.parse_variable_declaration(
+            start_span,
+            VariableDeclarationContext::new(VariableDeclarationParent::Statement),
+            Modifiers::empty(),
+        )?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
             self.error(diagnostics::LexicalDeclarationSingleStatement(decl.span));
@@ -234,10 +237,13 @@ impl<'a> Parser<'a> {
             || self.at(Kind::Var)
             || (self.at(Kind::Let) && self.peek_kind().is_after_let())
         {
+            let start_span = self.start_span();
             let init_declaration = self.without_context(Context::In, |p| {
-                p.parse_variable_declaration(VariableDeclarationContext::new(
-                    VariableDeclarationParent::For,
-                ))
+                p.parse_variable_declaration(
+                    start_span,
+                    VariableDeclarationContext::new(VariableDeclarationParent::For),
+                    Modifiers::empty(),
+                )
             })?;
 
             let kind = self.cur_kind();

@@ -271,8 +271,14 @@ impl<'a> Parser<'a> {
         // For tc39/proposal-decorators
         // For more information, please refer to https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport
         self.eat_decorators()?;
+        let start_span = self.start_span();
+        let modifiers = if self.ts_enabled() {
+            self.eat_modifiers_before_declaration().1
+        } else {
+            Modifiers::empty()
+        };
 
-        let declaration = self.parse_declaration_clause()?;
+        let declaration = self.parse_declaration(start_span, modifiers)?;
         Ok(self.ast.export_named_declaration(Some(declaration), self.ast.new_vec(), None, None))
     }
 
@@ -283,36 +289,31 @@ impl<'a> Parser<'a> {
         &mut self,
     ) -> Result<Box<'a, ExportDefaultDeclaration<'a>>> {
         let exported = self.parse_keyword_identifier(Kind::Default);
+        let start_span = self.start_span();
         // For tc39/proposal-decorators
         // For more information, please refer to https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport
         self.eat_decorators()?;
         let declaration = match self.cur_kind() {
             Kind::Class => self
-                .parse_class_declaration(/* declare */ false)
+                .parse_class_declaration(start_span, /* modifiers */ Modifiers::empty())
                 .map(ExportDefaultDeclarationKind::ClassDeclaration)?,
             _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.ts_enabled() => {
-                self.parse_class_declaration(/* declare */ false)
+                // eat the abstract modifier
+                let (_, modifiers) = self.eat_modifiers_before_declaration();
+                self.parse_class_declaration(start_span, modifiers)
                     .map(ExportDefaultDeclarationKind::ClassDeclaration)?
             }
             _ if self.at(Kind::Interface)
                 && !self.peek_token().is_on_new_line
                 && self.ts_enabled() =>
             {
-                self.parse_ts_interface_declaration(false, self.start_span()).map(
-                    |decl| match decl {
+                self.parse_ts_interface_declaration(start_span, Modifiers::empty()).map(|decl| {
+                    match decl {
                         Declaration::TSInterfaceDeclaration(decl) => {
                             ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
                         }
                         _ => unreachable!(),
-                    },
-                )?
-            }
-            _ if self.at(Kind::Enum) && self.ts_enabled() => {
-                self.parse_ts_enum_declaration(false, self.start_span()).map(|decl| match decl {
-                    Declaration::TSEnumDeclaration(decl) => {
-                        ExportDefaultDeclarationKind::TSEnumDeclaration(decl)
                     }
-                    _ => unreachable!(),
                 })?
             }
             _ if self.at_function_with_async() => self

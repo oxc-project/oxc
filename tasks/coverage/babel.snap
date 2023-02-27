@@ -1,5 +1,5 @@
 Babel Summary:
-AST Parsed     : 2057/2069 (99.42%)
+AST Parsed     : 2056/2069 (99.37%)
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
   × Expect token
@@ -52,6 +52,16 @@ Expect to Parse: "typescript/interface/get-set-properties/input.ts"
    ·          ┬
    ·          ╰── Expect `(` here, but found `:`
  3 │   set bar: string;
+   ╰────
+Expect to Parse: "typescript/module-namespace/body-nested-declare/input.ts"
+
+  × Missing initializer in const declaration
+   ╭─[typescript/module-namespace/body-nested-declare/input.ts:2:1]
+ 2 │     namespace B {
+ 3 │         const x: number;
+   ·               ┬
+   ·               ╰── const declaration need an initializer
+ 4 │     }
    ╰────
 Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
 
@@ -6600,12 +6610,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[typescript/export/declare-invalid/input.ts:1:1]
  1 │ export declare foo;
    ·                ───
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/export/double-declare/input.ts:1:1]
- 1 │ export declare declare var name;
-   ·                ───────
    ╰────
 
   × Automatic Semicolon Insertion

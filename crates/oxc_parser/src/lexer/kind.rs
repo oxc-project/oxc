@@ -382,6 +382,13 @@ impl Kind {
     }
 
     #[must_use]
+    #[rustfmt::skip]
+    pub const fn is_modifier_kind(self) -> bool {
+        matches!(self, Abstract | Accessor | Async | Const | Declare | Default
+          | Export | In | Out | Public | Private | Protected | Readonly | Static | Override)
+    }
+
+    #[must_use]
     pub fn match_keyword(s: &str) -> (Self, Atom) {
         let len = s.len();
         if len == 1 || len >= 12 {

@@ -53,7 +53,7 @@ impl<'a> Parser<'a> {
                     // export [declaration]
                     if matches!(
                         kind,
-                        Kind::Eq | Kind::Star | Kind::Default | Kind::LCurly | Kind::At
+                        Kind::Eq | Kind::Star | Kind::Default | Kind::LCurly | Kind::At | Kind::As
                     ) {
                         return true;
                     }
