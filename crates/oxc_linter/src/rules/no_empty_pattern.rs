@@ -72,11 +72,7 @@ declare_oxc_lint!(
     NoEmptyPattern
 );
 
-const RULE_NAME: &str = "no-empty-pattern";
-
 impl Rule for NoEmptyPattern {
-    const NAME: &'static str = RULE_NAME;
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (pattern_type, span) = match node.get().kind() {
             AstKind::ArrayPattern(array) if array.elements.is_empty() => ("array", array.span),
@@ -115,5 +111,5 @@ fn test() {
         ("function foo({a: []}) {}", None),
     ];
 
-    Tester::new(RULE_NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEmptyPattern::NAME, pass, fail).test_and_snapshot();
 }
