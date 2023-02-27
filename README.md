@@ -41,7 +41,7 @@ The current objectives are:
   * Performance
   * Pass more conformance tests
   * You may start with https://github.com/Boshen/oxc/issues/36
- 
+
 ## Parser Conformance
 
 The `cargo coverage` command currently reports the following summary
@@ -102,3 +102,18 @@ This project is inspired by the following great mentors and projects:
 ## License
 
 [MIT](./LICENSE)
+
+## Third Party Licenses
+
+Licenses are list in [LICENSE-THIRD-PARTY](./LICENSE-THIRD-PARTY)
+
+This project partially copies code from the following projects:
+
+| Project       | License       |
+| ------------- | ------------- |
+| [eslint/eslint](https://github.com/eslint/eslint) | [MIT](https://github.com/eslint/eslint/blob/main/LICENSE)  |
+| [typescript-eslint/typescript-eslint](https://github.com/typescript-eslint/typescript-eslint) | [MIT](https://github.com/typescript-eslint/typescript-eslint/blob/main/LICENSE)  |
+| [microsoft/TypeScript](https://github.com/microsoft/TypeScript) | [Apache 2.0](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt)  |
+| [rome/tools](https://github.com/rome/tools) | [MIT](https://github.com/rome/tools/blob/main/LICENSE)  |
+| [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus) | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0)  |
+
