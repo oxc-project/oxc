@@ -1,5 +1,5 @@
 Babel Summary:
-AST Parsed     : 2056/2069 (99.37%)
+AST Parsed     : 2057/2069 (99.42%)
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
   × Expect token
@@ -42,14 +42,6 @@ Expect to Parse: "typescript/dts/valid-trailing-comma-for-rest/input.ts"
  1 │ function foo(...args: any[], );
    ·              ───────┬──────
    ·                     ╰── Rest element must be last element
-   ╰────
-Expect to Parse: "typescript/export/export-type-star-from/input.ts"
-
-  × Unexpected token
-   ╭─[typescript/export/export-type-star-from/input.ts:1:1]
- 1 │ export type * from './mod';
-   ·             ─
- 2 │ export type * as ns from './mod';
    ╰────
 Expect to Parse: "typescript/interface/get-set-properties/input.ts"
 

@@ -212,6 +212,9 @@ impl<'a> Parser<'a> {
             Kind::Type if self.peek_at(Kind::LCurly) && self.ts_enabled() => self
                 .parse_export_named_specifiers()
                 .map(ModuleDeclarationKind::ExportNamedDeclaration),
+            Kind::Type if self.peek_at(Kind::Star) => {
+                self.parse_export_all_declaration().map(ModuleDeclarationKind::ExportAllDeclaration)
+            }
             _ => self
                 .parse_export_named_declaration()
                 .map(ModuleDeclarationKind::ExportNamedDeclaration),
@@ -333,13 +336,14 @@ impl<'a> Parser<'a> {
     //   * as ModuleExportName
     //   NamedExports
     fn parse_export_all_declaration(&mut self) -> Result<Box<'a, ExportAllDeclaration<'a>>> {
+        let export_kind = self.parse_import_or_export_kind();
         self.bump_any(); // bump `star`
         let exported = self.eat(Kind::As).then(|| self.parse_module_export_name()).transpose()?;
         self.expect(Kind::From)?;
         let source = self.parse_literal_string()?;
         let assertions = self.parse_import_attributes()?;
         self.asi()?;
-        Ok(self.ast.export_all_declaration(exported, source, assertions))
+        Ok(self.ast.export_all_declaration(exported, source, assertions, export_kind))
     }
 
     // ImportSpecifier :
