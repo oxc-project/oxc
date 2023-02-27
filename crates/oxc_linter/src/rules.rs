@@ -29,11 +29,11 @@ impl RuleEnum {
 
     pub fn read_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
         match self {
-            Self::NoDebugger(_) => {
-                Self::NoDebugger(maybe_value.map(NoDebugger::from_json).unwrap_or_default())
-            }
+            Self::NoDebugger(_) => Self::NoDebugger(
+                maybe_value.map(NoDebugger::from_configuration).unwrap_or_default(),
+            ),
             Self::NoEmpty(_) => {
-                Self::NoEmpty(maybe_value.map(NoEmpty::from_json).unwrap_or_default())
+                Self::NoEmpty(maybe_value.map(NoEmpty::from_configuration).unwrap_or_default())
             }
         }
     }
