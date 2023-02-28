@@ -38,7 +38,21 @@ impl Cli {
             .cli_options
             .paths
             .iter()
-            .flat_map(|path| Walk::new(path).iter().collect::<Vec<_>>())
+            .flat_map(|path| {
+                Walk::new(path)
+                    .iter()
+                    .filter(|path| {
+                        let ignore_pattern = &self.cli_options.ignore_pattern;
+                        for pattern in ignore_pattern {
+                            if pattern.matches_path(path) {
+                                return false;
+                            }
+                        }
+
+                        true
+                    })
+                    .collect::<Vec<_>>()
+            })
             .collect::<Vec<_>>();
 
         let number_of_diagnostics = paths
