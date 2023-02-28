@@ -79,6 +79,17 @@ impl Cli {
             })
             .sum();
 
+        // https://eslint.org/docs/latest/use/command-line-interface#--max-warnings
+        if self.cli_options.max_warnings > -1 {
+            let max_warnings = self.cli_options.max_warnings as usize;
+            if number_of_diagnostics > max_warnings {
+                return CliRunResult::MaxWarningsExceeded {
+                    number_of_warnings: number_of_diagnostics,
+                    max_warnings,
+                };
+            }
+        }
+
         CliRunResult::LintResult { number_of_files: paths.len(), number_of_diagnostics }
     }
 
