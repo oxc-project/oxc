@@ -12,6 +12,7 @@ version.workspace = true
 [dependencies]
 oxc_ast = { path = "../oxc_ast" }
 oxc_diagnostics = { path = "../oxc_diagnostics" }
+oxc_macros = { path = "../oxc_macros" }
 oxc_semantic = { path = "../oxc_semantic" }
 
 lazy_static = { workspace = true }

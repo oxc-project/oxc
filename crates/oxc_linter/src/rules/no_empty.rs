@@ -3,6 +3,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
+use oxc_macros::declare_oxc_lint;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -15,6 +16,24 @@ struct NoEmptyDiagnostic(&'static str, #[label("Empty {0} statement")] pub Span)
 pub struct NoEmpty {
     allow_empty_catch: bool,
 }
+
+declare_oxc_lint!(
+    /// ### What it does
+    /// Disallows empty block statements
+    ///
+    /// ### Why is this bad?
+    /// Empty block statements, while not technically errors, usually occur due to refactoring that wasn’t completed.
+    /// They can cause confusion when reading code.
+    ///
+    ///
+    /// ### Example
+    /// ```javascript
+    /// if (condition) {
+    ///
+    /// }
+    /// ```
+    NoEmpty
+);
 
 const RULE_NAME: &str = "no-empty";
 

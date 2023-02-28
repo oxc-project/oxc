@@ -4,7 +4,7 @@
 mod tester;
 
 mod context;
-mod rule;
+pub mod rule;
 mod rules;
 
 use std::{fs, rc::Rc};
