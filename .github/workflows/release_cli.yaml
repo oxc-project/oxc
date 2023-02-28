@@ -124,6 +124,11 @@ jobs:
         with:
           name: cli
 
+      # The upload step dropped the permissions
+      # https://github.com/actions/upload-artifact/issues/38
+      - name: Fix Permissions
+        run:  chmod +x oxc-*
+
       - name: Create GitHub release and tag
         uses: softprops/action-gh-release@v1
         with:
