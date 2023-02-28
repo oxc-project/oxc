@@ -882,9 +882,20 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_macros",
  "oxc_parser",
  "oxc_semantic",
  "serde_json",
+]
+
+[[package]]
+name = "oxc_macros"
+version = "0.0.0"
+dependencies = [
+ "itertools",
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

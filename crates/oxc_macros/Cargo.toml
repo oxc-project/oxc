@@ -1,0 +1,20 @@
+[package]
+name = "oxc_macros"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[lib]
+proc-macro = true
+doctest = false
+
+[dependencies]
+syn = "1.0.109"
+quote = "1.0.23"
+proc-macro2 = "1.0.51"
+itertools = "0.10.5"

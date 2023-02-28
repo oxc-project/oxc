@@ -3,6 +3,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
+use oxc_macros::declare_oxc_lint;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -13,6 +14,24 @@ struct NoDebuggerDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDebugger;
+
+declare_oxc_lint!(
+    /// ### What it does
+    /// Checks for usage of the `debugger` statement
+    ///
+    /// ### Why is this bad?
+    /// `debugger` statements do not affect functionality when a debugger isn't attached.
+    /// They're most commonly an accidental debugging leftover.
+    ///
+    ///
+    /// ### Example
+    /// ```javascript
+    /// const data = await getData();
+    /// const result = complexCalculation(data);
+    /// debugger;
+    /// ```
+    NoDebugger
+);
 
 const RULE_NAME: &str = "no-debugger";
 
