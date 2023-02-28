@@ -12,6 +12,9 @@ on:
     paths:
       - npm/oxc/package.json
 
+permissions:
+  contents: write # for softprops/action-gh-release
+
 jobs:
   check:
     name: Check version
