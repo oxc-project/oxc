@@ -1,10 +1,12 @@
 use std::path::PathBuf;
 
 use clap::ArgMatches;
+use glob::Pattern;
 
 pub struct CliOptions {
     pub quiet: bool,
     pub paths: Vec<PathBuf>,
+    pub ignore_pattern: Vec<Pattern>,
 }
 
 impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
@@ -27,6 +29,20 @@ impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
             paths.extend(globbed);
         }
 
-        Ok(Self { quiet: matches.get_flag("quiet"), paths })
+        let ignore_pattern = get_ignore_pattern(matches);
+
+        Ok(Self { quiet: matches.get_flag("quiet"), paths, ignore_pattern })
     }
+}
+
+fn get_ignore_pattern(matches: &ArgMatches) -> Vec<Pattern> {
+    let mut result = vec![];
+    let Some(ignore_pattern) = matches.get_many::<String>("ignore-pattern") else {return result};
+    for pattern in ignore_pattern {
+        if let Ok(pattern) = Pattern::new(pattern) {
+            result.push(pattern);
+        }
+    }
+
+    result
 }

@@ -1,4 +1,4 @@
-use clap::{builder::ValueParser, Arg, Command as ClapCommand};
+use clap::{builder::ValueParser, Arg, ArgAction, Command as ClapCommand};
 
 #[derive(Debug)]
 pub struct Command {
@@ -36,6 +36,13 @@ impl Command {
                 .required(false)
                 .action(clap::ArgAction::SetTrue)
                 .help("This option allows you to disable reporting on warnings. If you enable this option, only errors are reported by oxc_lint.")
+            )
+            .arg(
+                Arg::new("ignore-pattern")
+                .long("ignore-pattern")
+                .required(false)
+                .action(ArgAction::Append)
+                .help("This option allows you to specify patterns of files to ignore (in addition to those in .eslintignore).")
             )
             .arg(
                 Arg::new("path")
@@ -112,5 +119,27 @@ mod test {
         let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
         let matches = matches.subcommand_matches("lint");
         assert!(!matches.unwrap().get_flag("quiet"));
+    }
+
+    #[test]
+    fn test_single_ignore_pattern() {
+        let arg = "oxc lint --ignore-pattern \"./test\" foo.js";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint").unwrap();
+        assert_eq!(matches.get_one::<String>("ignore-pattern"), Some(&"\"./test\"".to_string()));
+    }
+
+    #[test]
+    fn test_multiple_ignore_pattern() {
+        let arg = "oxc lint --ignore-pattern \"./test\" --ignore-pattern \"bar.js\" foo.js";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint").unwrap();
+        let ignore_pattern = matches.get_many::<String>("ignore-pattern").unwrap();
+        let mut compare = vec![];
+        for pattern in ignore_pattern {
+            compare.push(pattern);
+        }
+
+        assert_eq!(compare, vec!["\"./test\"", "\"bar.js\""]);
     }
 }
