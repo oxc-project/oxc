@@ -1,0 +1,9 @@
+{
+  "name": "oxc",
+  "version": "0.0.0",
+  "description": "The JavaScript Oxidation Compiler",
+  "main": "index.js",
+  "keywords": [],
+  "author": "Boshen and oxc contributors",
+  "license": "MIT"
+}
