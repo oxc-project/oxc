@@ -91,7 +91,6 @@ jobs:
         run: cargo build --release -p oxc_cli --target ${{ matrix.target }}
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
-          RUSTFLAGS: "-C strip=symbols"
 
       - name: Copy Binary
         if: matrix.os == 'windows-2022'
