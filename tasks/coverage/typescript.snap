@@ -1,5 +1,5 @@
 TypeScript Summary:
-AST Parsed     : 4310/4865 (88.59%)
+AST Parsed     : 4309/4865 (88.57%)
 Expect to Parse: "async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts"
 
   × Automatic Semicolon Insertion
@@ -3817,6 +3817,15 @@ Expect to Parse: "jsx/jsxEsprimaFbTestSuite.tsx"
  41 │ <LeftRight left=<a /> right=<b>monkeys /> gorillas</b> />;
     ·                 ─
  42 │ 
+    ╰────
+Expect to Parse: "jsx/jsxParsingError1.tsx"
+
+  × TS18007: JSX expressions may not use the comma operator. Did you mean to write an array?
+    ╭─[jsx/jsxParsingError1.tsx:13:1]
+ 13 │ const class2 = "bar";
+ 14 │ const elem = <div className={class1, class2}/>;
+    ·                              ───────┬──────
+    ·                                     ╰── JSX expressions may not use the comma operator. Did you mean to write an array?
     ╰────
 Expect to Parse: "jsx/jsxUnclosedParserRecovery.ts"
 
