@@ -3,6 +3,7 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
+use oxc_macros::declare_oxc_lint;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -14,11 +15,23 @@ struct NoArrayConstructorDiagnostic(#[label] pub Span);
 #[derive(Debug, Default, Clone)]
 pub struct NoArrayConstructor;
 
-const RULE_NAME: &str = "no-array-constructor";
+declare_oxc_lint!(
+    /// ### What it does
+    /// Disallow array constructor
+    ///
+    /// ### Why is this bad?
+    /// Use of the Array constructor to construct a new array is generally discouraged in favor of array literal notation because of the single-argument pitfall and because the Array global may be redefined.
+    /// The exception is when the Array constructor is used to intentionally create sparse arrays of a specified size by giving the constructor a single numeric argument.
+    ///
+    ///
+    /// ### Example
+    /// ```javascript
+    /// let arr = new Array();
+    /// ```
+    NoArrayConstructor
+);
 
 impl Rule for NoArrayConstructor {
-    const NAME: &'static str = RULE_NAME;
-
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (span, callee, arguments, type_parameters, optional) = match node.get().kind() {
             AstKind::CallExpression(call_expr) => (
@@ -90,5 +103,5 @@ fn test() {
         ("Array(0, 1, 2)", None),
     ];
 
-    Tester::new(RULE_NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoArrayConstructor::NAME, pass, fail).test_and_snapshot();
 }

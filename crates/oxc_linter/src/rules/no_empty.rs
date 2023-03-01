@@ -35,11 +35,7 @@ declare_oxc_lint!(
     NoEmpty
 );
 
-const RULE_NAME: &str = "no-empty";
-
 impl Rule for NoEmpty {
-    const NAME: &'static str = RULE_NAME;
-
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
         Self {
@@ -125,5 +121,5 @@ fn test() {
         ("try { foo(); } catch (ex) {} finally {}", None),
     ];
 
-    Tester::new(RULE_NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoEmpty::NAME, pass, fail).test_and_snapshot();
 }

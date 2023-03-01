@@ -6,7 +6,7 @@ pub use no_array_constructor::NoArrayConstructor;
 pub use no_debugger::NoDebugger;
 pub use no_empty::NoEmpty;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, rule::RuleMeta, AstNode};
 
 lazy_static::lazy_static! {
     pub static ref RULES: Vec<RuleEnum> = vec![
