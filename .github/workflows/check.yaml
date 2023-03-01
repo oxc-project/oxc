@@ -13,9 +13,6 @@ on:
       - 'rust-toolchain.toml'
       - '!**/*.md'
 
-permissions:
-  contents: write # For documentation deployment
-
 # cancel previous job runs for the same workflow + pr
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
