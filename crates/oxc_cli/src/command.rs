@@ -38,6 +38,12 @@ impl Command {
                 .help("This option allows you to disable reporting on warnings. If you enable this option, only errors are reported by oxc_lint.")
             )
             .arg(
+                Arg::new("ignore-path")
+                .long("ignore-path")
+                .required(false)
+                .help("This option allows you to specify the file to use as your .eslintignore.")
+            )
+            .arg(
                 Arg::new("ignore-pattern")
                 .long("ignore-pattern")
                 .required(false)
@@ -65,7 +71,16 @@ impl Command {
 mod test {
     use std::path::PathBuf;
 
+    use clap::ArgMatches;
+
     use super::Command;
+
+    fn get_lint_matches(arg: &str) -> ArgMatches {
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint");
+        assert!(matches.is_some());
+        matches.unwrap().clone()
+    }
 
     #[test]
     fn verify_command() {
@@ -74,66 +89,54 @@ mod test {
 
     #[test]
     fn test_lint_path() {
-        let arg = "oxc lint .";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint");
-        assert!(matches.is_some());
-        assert_eq!(matches.unwrap().get_one::<PathBuf>("path"), Some(&PathBuf::from(".")));
+        let matches = get_lint_matches("oxc lint .");
+        assert_eq!(matches.get_one::<PathBuf>("path"), Some(&PathBuf::from(".")));
     }
 
     #[test]
     fn test_lint_multiple_paths() {
-        let arg = "oxc lint foo bar baz";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint");
-        assert!(matches.is_some());
+        let matches = get_lint_matches("oxc lint foo bar baz");
         assert_eq!(
-            matches.unwrap().get_many::<PathBuf>("path").unwrap().collect::<Vec<_>>(),
+            matches.get_many::<PathBuf>("path").unwrap().collect::<Vec<_>>(),
             [&PathBuf::from("foo"), &PathBuf::from("bar"), &PathBuf::from("baz")]
         );
     }
 
     #[test]
     fn test_check_path() {
-        let arg = "oxc check /path/to/dir";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint");
-        assert!(matches.is_some());
-        assert_eq!(
-            matches.unwrap().get_one::<PathBuf>("path"),
-            Some(&PathBuf::from("/path/to/dir"))
-        );
+        let matches = get_lint_matches("oxc check /path/to/dir");
+        assert_eq!(matches.get_one::<PathBuf>("path"), Some(&PathBuf::from("/path/to/dir")));
     }
 
     #[test]
     fn test_quiet_true() {
-        let arg = "oxc lint foo.js --quiet";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint");
-        assert!(matches.unwrap().get_flag("quiet"));
+        let matches = get_lint_matches("oxc lint foo.js --quiet");
+        assert!(matches.get_flag("quiet"));
     }
 
     #[test]
     fn test_quiet_false() {
-        let arg = "oxc lint foo.js";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint");
-        assert!(!matches.unwrap().get_flag("quiet"));
+        let matches = get_lint_matches("oxc lint foo.js");
+        assert!(!matches.get_flag("quiet"));
+    }
+
+    #[test]
+    fn test_ignore_path() {
+        let matches = get_lint_matches("oxc lint --ignore-path .gitignore foo.js");
+        assert_eq!(matches.get_one::<String>("ignore-path"), Some(&".gitignore".to_string()));
     }
 
     #[test]
     fn test_single_ignore_pattern() {
-        let arg = "oxc lint --ignore-pattern \"./test\" foo.js";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint").unwrap();
+        let matches = get_lint_matches("oxc lint --ignore-pattern \"./test\" foo.js");
         assert_eq!(matches.get_one::<String>("ignore-pattern"), Some(&"\"./test\"".to_string()));
     }
 
     #[test]
     fn test_multiple_ignore_pattern() {
-        let arg = "oxc lint --ignore-pattern \"./test\" --ignore-pattern \"bar.js\" foo.js";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint").unwrap();
+        let matches = get_lint_matches(
+            "oxc lint --ignore-pattern \"./test\" --ignore-pattern \"bar.js\" foo.js",
+        );
         let ignore_pattern = matches.get_many::<String>("ignore-pattern").unwrap();
         let mut compare = vec![];
         for pattern in ignore_pattern {

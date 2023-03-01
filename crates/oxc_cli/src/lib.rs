@@ -39,7 +39,7 @@ impl Cli {
             .paths
             .iter()
             .flat_map(|path| {
-                Walk::new(path)
+                Walk::new(path, &self.cli_options)
                     .iter()
                     .filter(|path| {
                         let ignore_pattern = &self.cli_options.ignore_pattern;

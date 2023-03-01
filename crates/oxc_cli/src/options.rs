@@ -6,6 +6,7 @@ use glob::Pattern;
 pub struct CliOptions {
     pub quiet: bool,
     pub paths: Vec<PathBuf>,
+    pub ignore_path: String,
     pub ignore_pattern: Vec<Pattern>,
 }
 
@@ -29,10 +30,15 @@ impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
             paths.extend(globbed);
         }
 
+        let ignore_path = get_ignore_path(matches);
         let ignore_pattern = get_ignore_pattern(matches);
 
-        Ok(Self { quiet: matches.get_flag("quiet"), paths, ignore_pattern })
+        Ok(Self { quiet: matches.get_flag("quiet"), paths, ignore_path, ignore_pattern })
     }
+}
+
+fn get_ignore_path(matches: &ArgMatches) -> String {
+    matches.get_one::<String>("ignore-path").map_or(".eslintignore".to_string(), ToOwned::to_owned)
 }
 
 fn get_ignore_pattern(matches: &ArgMatches) -> Vec<Pattern> {
