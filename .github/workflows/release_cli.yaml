@@ -15,6 +15,10 @@ on:
 permissions:
   contents: write # for softprops/action-gh-release
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     name: Check version
@@ -92,23 +96,31 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
-      - name: Copy Binary
+      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binary
         if: matrix.os == 'windows-2022'
+        shell: bash
         run: |
-          mkdir dist
-          cp target/${{ matrix.target }}/release/oxc_cli.exe ./dist/oxc-${{ matrix.code-target }}.exe
-      - name: Copy Binary
+          BIN_NAME=oxc-${{ matrix.code-target }}.exe
+          mv target/${{ matrix.target }}/release/oxc_cli.exe $BIN_NAME
+          7z a oxc-${{ matrix.target }}.zip $BIN_NAME
+
+      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binary
         if: matrix.os != 'windows-2022'
         run: |
-          mkdir dist
-          cp target/${{ matrix.target }}/release/oxc_cli ./dist/oxc-${{ matrix.code-target }}
+          BIN_NAME=oxc-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxc_cli $BIN_NAME
+          tar czf oxc-${{ matrix.target }}.tar.gz -C $BIN_NAME
 
-      - name: Upload Artifact
+      - name: Upload Binary
         uses: actions/upload-artifact@v3
         with:
-          name: cli
-          path: ./dist/oxc-*
           if-no-files-found: error
+          name: binaries
+          path: |
+            *.zip
+            *.tar.gz
 
   publish:
     name: Publish
@@ -121,20 +133,14 @@ jobs:
       - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: cli
+          name: binaries
+          path: binaries
 
-      # The upload step dropped the permissions
-      # https://github.com/actions/upload-artifact/issues/38
-      - name: Fix Permissions
-        run:  chmod +x oxc-*
-
-      - name: Create GitHub release and tag
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           name: CLI v${{ needs.build.outputs.version }}
-          # tag_name: cli/v${{ needs.build.outputs.version }}
           draft: true
-          files: |
-            oxc-*
+          files: binaries/*
           fail_on_unmatched_files: true
           generate_release_notes: true
