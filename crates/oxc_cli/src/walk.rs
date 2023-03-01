@@ -3,14 +3,16 @@ use std::path::Path;
 use ignore::{DirEntry, WalkBuilder};
 use oxc_ast::VALID_EXTENSIONS;
 
+use crate::CliOptions;
+
 pub struct Walk {
     inner: ignore::Walk,
 }
 
 impl Walk {
-    pub fn new<P: AsRef<Path>>(path: P) -> Self {
+    pub fn new<P: AsRef<Path>>(path: P, options: &CliOptions) -> Self {
         let inner = WalkBuilder::new(path)
-            .add_custom_ignore_filename(".eslintignore")
+            .add_custom_ignore_filename(&options.ignore_path)
             .ignore(false)
             .git_global(false)
             .build();
