@@ -101,9 +101,9 @@ jobs:
         if: matrix.os == 'windows-2022'
         shell: bash
         run: |
-          BIN_NAME=oxc-${{ matrix.code-target }}.exe
-          mv target/${{ matrix.target }}/release/oxc_cli.exe $BIN_NAME
-          7z a oxc-${{ matrix.code-target }}.zip $BIN_NAME
+          BIN_NAME=oxc-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxc_cli.exe $BIN_NAME.exe
+          7z a $BIN_NAME.zip $BIN_NAME.exe
 
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
@@ -111,7 +111,7 @@ jobs:
         run: |
           BIN_NAME=oxc-${{ matrix.code-target }}
           mv target/${{ matrix.target }}/release/oxc_cli $BIN_NAME
-          tar czf oxc-${{ matrix.code-target }}.tar.gz -C $BIN_NAME
+          tar czf $BIN_NAME.tar.gz $BIN_NAME
 
       - name: Upload Binary
         uses: actions/upload-artifact@v3
