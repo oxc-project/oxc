@@ -1,3 +1,4 @@
+use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
@@ -51,6 +52,7 @@ impl Parse for LintRuleMeta {
 
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let LintRuleMeta { name, documentation, used_in_test } = metadata;
+    let canonical_name = name.to_string().to_case(Case::Kebab);
 
     let import_statement =
         if used_in_test { None } else { Some(quote! { use crate::rule::RuleMeta; }) };
@@ -59,6 +61,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         #import_statement
 
         impl RuleMeta for #name {
+            const NAME: &'static str = #canonical_name;
+
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)
             }

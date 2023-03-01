@@ -28,4 +28,7 @@ fn test_declare_oxc_lint() {
 
     // Ensure structs with fields can be passed to the macro
     assert_eq!(TestRule2::documentation().unwrap(), "Dummy description2\n");
+
+    // Auto-generated kebab-case name
+    assert_eq!(TestRule::NAME, "test-rule");
 }
