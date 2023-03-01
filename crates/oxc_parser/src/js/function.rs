@@ -1,8 +1,8 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::Box;
 use oxc_ast::{
     ast::*,
     context::{Context, StatementContext},
-    GetSpan, Span,
+    AstBuilder, GetSpan, Span,
 };
 use oxc_diagnostics::Result;
 
@@ -240,7 +240,7 @@ impl<'a> Parser<'a> {
             pattern,
             None,
             false,
-            Vec::new_in(self.ast.allocator),
+            AstBuilder::new_vec(&self.ast),
         );
         let params = self.ast.formal_parameters(
             params_span,

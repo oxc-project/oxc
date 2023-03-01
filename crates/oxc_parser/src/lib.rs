@@ -71,7 +71,7 @@ impl<'a> Parser<'a> {
             errors,
             token: Token::default(),
             prev_token_end: 0,
-            state: ParserState::default(),
+            state: ParserState::new(oxc_allocator::Vec::new_in(allocator)),
             ctx: source_type.default_context(),
             ast: AstBuilder::new(allocator),
         }

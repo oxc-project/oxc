@@ -255,8 +255,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
             _ => p.parse_binding_element()?,
         };
 
-        let decorators =
-            p.state.consume_decorators().unwrap_or_else(|| Vec::new_in(p.ast.allocator));
+        let decorators = p.state.consume_decorators();
         let formal_parameter =
             p.ast.formal_parameter(p.end_span(span), pattern, accessibility, readonly, decorators);
         self.elements.push(formal_parameter);

@@ -358,10 +358,8 @@ pub trait Visit<'a>: Sized {
     fn visit_class(&mut self, class: &'a Class<'a>) {
         let kind = AstKind::Class(class);
         self.enter_node(kind);
-        if let Some(decorators) = &class.decorators {
-            for decorator in decorators {
-                self.visit_decorator(decorator);
-            }
+        for decorator in &class.decorators {
+            self.visit_decorator(decorator);
         }
         if let Some(id) = &class.id {
             self.visit_binding_identifier(id);
@@ -419,10 +417,8 @@ pub trait Visit<'a>: Sized {
     fn visit_method_definition(&mut self, def: &'a MethodDefinition<'a>) {
         let kind = AstKind::MethodDefinition(def);
         self.enter_node(kind);
-        if let Some(decorators) = &def.decorators {
-            for decorator in decorators {
-                self.visit_decorator(decorator);
-            }
+        for decorator in &def.decorators {
+            self.visit_decorator(decorator);
         }
         self.visit_property_key(&def.key);
         self.visit_function(&def.value);
@@ -432,10 +428,8 @@ pub trait Visit<'a>: Sized {
     fn visit_property_definition(&mut self, def: &'a PropertyDefinition<'a>) {
         let kind = AstKind::PropertyDefinition(def);
         self.enter_node(kind);
-        if let Some(decorators) = &def.decorators {
-            for decorator in decorators {
-                self.visit_decorator(decorator);
-            }
+        for decorator in &def.decorators {
+            self.visit_decorator(decorator);
         }
         self.visit_property_key(&def.key);
         if let Some(value) = &def.value {

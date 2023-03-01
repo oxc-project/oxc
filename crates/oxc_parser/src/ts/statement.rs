@@ -492,7 +492,7 @@ impl<'a> Parser<'a> {
 
         self.ctx = self.ctx.and_decorator(in_decorator);
 
-        self.state.decorators = Some(decorators);
+        self.state.decorators = decorators;
         Ok(())
     }
 
