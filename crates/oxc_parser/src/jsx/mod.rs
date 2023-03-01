@@ -247,8 +247,6 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_jsx_assignment_expression(&mut self) -> Result<Expression<'a>> {
-        // TODO: check for SequenceExpression and warn
-        // "JSX expressions may not use the comma operator. Did you meant to write an array?"
         let ctx = self.ctx;
         self.ctx = Context::default();
         let expr = self.parse_expression();
