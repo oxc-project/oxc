@@ -5,7 +5,7 @@ use glob::Pattern;
 
 pub struct CliOptions {
     pub quiet: bool,
-    pub max_warnings: isize,
+    pub max_warnings: Option<usize>,
     pub paths: Vec<PathBuf>,
     pub ignore_path: String,
     pub no_ignore: bool,
@@ -38,7 +38,7 @@ impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
 
         Ok(Self {
             quiet: matches.get_flag("quiet"),
-            max_warnings: matches.get_one::<isize>("max-warnings").copied().unwrap_or(-1),
+            max_warnings: matches.get_one("max-warnings").copied(),
             paths,
             ignore_path,
             no_ignore,

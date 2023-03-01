@@ -58,6 +58,12 @@ impl Command {
                 .help("This option allows you to specify patterns of files to ignore (in addition to those in .eslintignore).")
             )
             .arg(
+                Arg::new("max-warnings")
+                  .long("max-warnings")
+                  .required(false)
+                  .help("This option allows you to specify a warning threshold, which can be used to force oxc_lint to exit with an error status if there are too many warning-level rule violations in your project.")
+              )
+            .arg(
                 Arg::new("path")
                     .value_name("PATH")
                     .num_args(1..)
