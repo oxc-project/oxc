@@ -760,7 +760,7 @@ pub struct AnEnumMemberCannotHaveANumericName(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("JSX expressions may not use the comma operator. Did you mean to write an array?")]
+#[error("TS18007: JSX expressions may not use the comma operator. Did you mean to write an array?")]
 #[diagnostic()]
 pub struct JSXExpressionsMayNotUseTheCommaOperator(
     #[label("JSX expressions may not use the comma operator. Did you mean to write an array?")]
