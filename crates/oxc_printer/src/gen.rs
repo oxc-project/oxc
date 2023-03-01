@@ -777,8 +777,8 @@ impl<'a> Gen for Expression<'a> {
             Self::NewExpression(expr) => expr.gen(p),
             Self::MetaProperty(expr) => expr.gen(p),
             Self::ClassExpression(expr) => expr.gen(p),
-            Self::JSXElement(_) => todo!("JSXElement"),
-            Self::JSXFragment(_) => todo!("JSXFragment"),
+            Self::JSXElement(el) => el.gen(p),
+            Self::JSXFragment(fragment) => fragment.gen(p),
             Self::TSAsExpression(expr) => expr.expression.gen(p),
             Self::TSTypeAssertion(expr) => expr.expression.gen(p),
             Self::TSNonNullExpression(expr) => expr.expression.gen(p),
@@ -1467,6 +1467,196 @@ impl<'a> Gen for ClassElement<'a> {
             | Self::TSAbstractPropertyDefinition(_)
             | Self::TSIndexSignature(_) => {}
         }
+    }
+}
+
+impl Gen for JSXIdentifier {
+    fn gen(&self, p: &mut Printer) {
+        p.print_str(self.name.as_bytes());
+    }
+}
+
+impl<'a> Gen for JSXMemberExpressionObject<'a> {
+    fn gen(&self, p: &mut Printer) {
+        match self {
+            Self::Identifier(ident) => ident.gen(p),
+            Self::MemberExpression(member_expr) => member_expr.gen(p),
+        }
+    }
+}
+
+impl<'a> Gen for JSXMemberExpression<'a> {
+    fn gen(&self, p: &mut Printer) {
+        self.object.gen(p);
+        p.print(b'.');
+        self.property.gen(p);
+    }
+}
+
+impl<'a> Gen for JSXElementName<'a> {
+    fn gen(&self, p: &mut Printer) {
+        match self {
+            Self::Identifier(identifier) => identifier.gen(p),
+            Self::NamespacedName(namespaced_name) => namespaced_name.gen(p),
+            Self::MemberExpression(member_expr) => member_expr.gen(p),
+        }
+    }
+}
+
+impl Gen for JSXNamespacedName {
+    fn gen(&self, p: &mut Printer) {
+        self.namespace.gen(p);
+        p.print(b'.');
+        self.property.gen(p);
+    }
+}
+
+impl<'a> Gen for JSXAttributeName<'a> {
+    fn gen(&self, p: &mut Printer) {
+        match self {
+            Self::Identifier(ident) => ident.gen(p),
+            Self::NamespacedName(namespaced_name) => namespaced_name.gen(p),
+        }
+    }
+}
+
+impl<'a> Gen for JSXAttribute<'a> {
+    fn gen(&self, p: &mut Printer) {
+        self.name.gen(p);
+        p.print(b'=');
+        if let Some(value) = &self.value {
+            value.gen(p);
+        }
+    }
+}
+
+impl Gen for JSXEmptyExpression {
+    fn gen(&self, _: &mut Printer) {}
+}
+
+impl<'a> Gen for JSXExpression<'a> {
+    fn gen(&self, p: &mut Printer) {
+        match self {
+            Self::Expression(expr) => expr.gen(p),
+            Self::EmptyExpression(expr) => expr.gen(p),
+        }
+    }
+}
+
+impl<'a> Gen for JSXExpressionContainer<'a> {
+    fn gen(&self, p: &mut Printer) {
+        p.print(b'{');
+        self.expression.gen(p);
+        p.print(b'}');
+    }
+}
+
+impl<'a> Gen for JSXAttributeValue<'a> {
+    fn gen(&self, p: &mut Printer) {
+        match self {
+            Self::Fragment(fragment) => fragment.gen(p),
+            Self::Element(el) => el.gen(p),
+            Self::StringLiteral(lit) => lit.gen(p),
+            Self::ExpressionContainer(expr_container) => expr_container.gen(p),
+        }
+    }
+}
+
+impl<'a> Gen for JSXSpreadAttribute<'a> {
+    fn gen(&self, p: &mut Printer) {
+        self.argument.gen(p);
+    }
+}
+
+impl<'a> Gen for JSXAttributeItem<'a> {
+    fn gen(&self, p: &mut Printer) {
+        match self {
+            Self::Attribute(attr) => attr.gen(p),
+            Self::SpreadAttribute(spread_attr) => spread_attr.gen(p),
+        }
+    }
+}
+
+impl<'a> Gen for JSXOpeningElement<'a> {
+    fn gen(&self, p: &mut Printer) {
+        p.print_str(b"<");
+        self.name.gen(p);
+        for attr in &self.attributes {
+            attr.gen(p);
+        }
+        if self.self_closing {
+            p.print_space();
+            p.print_str(b"/>");
+        } else {
+            p.print(b'>');
+        }
+    }
+}
+
+impl<'a> Gen for JSXClosingElement<'a> {
+    fn gen(&self, p: &mut Printer) {
+        p.print_str(b"</");
+        self.name.gen(p);
+        p.print(b'>');
+    }
+}
+
+impl<'a> Gen for JSXElement<'a> {
+    fn gen(&self, p: &mut Printer) {
+        self.opening_element.gen(p);
+        for child in &self.children {
+            child.gen(p);
+        }
+        if let Some(closing_element) = &self.closing_element {
+            closing_element.gen(p);
+        }
+    }
+}
+
+impl Gen for JSXOpeningFragment {
+    fn gen(&self, p: &mut Printer) {
+        p.print_str(b"<>");
+    }
+}
+
+impl Gen for JSXClosingFragment {
+    fn gen(&self, p: &mut Printer) {
+        p.print_str(b"</>");
+    }
+}
+
+impl Gen for JSXText {
+    fn gen(&self, p: &mut Printer) {
+        p.print_str(self.value.as_bytes());
+    }
+}
+
+impl<'a> Gen for JSXSpreadChild<'a> {
+    fn gen(&self, p: &mut Printer) {
+        p.print_str(b"...");
+        self.expression.gen(p);
+    }
+}
+
+impl<'a> Gen for JSXChild<'a> {
+    fn gen(&self, p: &mut Printer) {
+        match self {
+            Self::Fragment(fragment) => fragment.gen(p),
+            Self::Element(el) => el.gen(p),
+            Self::Spread(spread) => spread.expression.gen(p),
+            Self::ExpressionContainer(expr_container) => expr_container.gen(p),
+            Self::Text(text) => text.gen(p),
+        }
+    }
+}
+
+impl<'a> Gen for JSXFragment<'a> {
+    fn gen(&self, p: &mut Printer) {
+        self.opening_fragment.gen(p);
+        for child in &self.children {
+            child.gen(p);
+        }
+        self.closing_fragment.gen(p);
     }
 }
 
