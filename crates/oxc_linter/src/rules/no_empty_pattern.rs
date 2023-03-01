@@ -49,7 +49,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples of incorrect code for this rule:
     ///
-    /// ```javascript
+    /// ```JavaScript
     /// var {} = foo;
     /// var [] = foo;
     /// var {a: {}} = foo;
@@ -62,7 +62,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples of correct code for this rule:
     ///
-    /// ```javascript
+    /// ```JavaScript
     /// var {a = {}} = foo;
     /// var {a = []} = foo;
     /// function foo({a = {}}) {}
