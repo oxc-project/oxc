@@ -6,6 +6,7 @@
 **/*.rs.bk
 
 node_modules/
+npm/cli-*
 
 *.js
 *.jsx
