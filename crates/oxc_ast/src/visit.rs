@@ -339,10 +339,8 @@ pub trait Visit<'a>: Sized {
     fn visit_formal_parameter(&mut self, param: &'a FormalParameter<'a>) {
         let kind = AstKind::FormalParameter(param);
         self.enter_node(kind);
-        if let Some(decorators) = &param.decorators {
-            for decorator in decorators {
-                self.visit_decorator(decorator);
-            }
+        for decorator in &param.decorators {
+            self.visit_decorator(decorator);
         }
         self.visit_pattern(&param.pattern);
         self.leave_node(kind);

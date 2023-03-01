@@ -692,7 +692,7 @@ impl<'a> AstBuilder<'a> {
         pattern: BindingPattern<'a>,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
-        decorators: Option<Vec<'a, Decorator<'a>>>,
+        decorators: Vec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
         FormalParameter { span, pattern, accessibility, readonly, decorators }
     }

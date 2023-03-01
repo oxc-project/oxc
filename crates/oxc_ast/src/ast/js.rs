@@ -1249,8 +1249,8 @@ pub struct FormalParameter<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub decorators: Option<Vec<'a, Decorator<'a>>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
