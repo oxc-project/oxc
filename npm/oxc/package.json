@@ -1,9 +1,22 @@
 {
-  "name": "oxc",
-  "version": "0.0.0-alpha.4",
+  "name": "oxidation-compiler",
+  "version": "0.0.0-alpha.5",
   "description": "The JavaScript Oxidation Compiler",
-  "main": "index.js",
   "keywords": [],
   "author": "Boshen and oxc contributors",
-  "license": "MIT"
+  "license": "MIT",
+  "homepage": "https://github.com/Boshen/oxc",
+  "bugs": "https://github.com/Boshen/oxc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Boshen/oxc",
+    "directory": "npm/oxc"
+  },
+  "bin": "bin/oxc",
+  "engines": {
+    "node": ">=14.*"
+  },
+  "files": [
+    "bin/oxc"
+  ]
 }

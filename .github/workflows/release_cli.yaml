@@ -127,17 +127,42 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
           name: binaries
-          path: binaries
+
+      - name: Unzip
+        uses: montudor/action-zip@v1
+        with:
+          args: unzip -qq *.zip -d .
+
+      - name: Untar
+        run: ls *.gz | xargs -i tar xf {}
+
+      - name: Generate npm packages
+        run: |
+          node npm/oxc/scripts/generate-packages.mjs
+          cat npm/oxc/package.json
+          for package in npm/*; do cat $package/package.json ; echo ; done
+
+      - name: Publish npm packages as latest
+        # NOTE: The trailing slash on $package/ changes it to publishing the directory
+        run: for package in npm/*; do npm publish $package/ --tag latest --access public; done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           name: CLI v${{ needs.build.outputs.version }}
           draft: true
-          files: binaries/*
+          files: oxc-*
           fail_on_unmatched_files: true
           generate_release_notes: true
