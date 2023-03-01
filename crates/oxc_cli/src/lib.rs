@@ -59,33 +59,6 @@ impl Cli {
             })
             .collect::<Vec<_>>();
 
-        let mut number_of_warnings = 0;
-        let mut max_warnings_exceeded = false;
-        for path in paths {
-            let diagnostics = Self::lint_path(path);
-            let diagnostics_to_print = diagnostics
-                .iter()
-                .filter(|d| match d.severity() {
-                    // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
-                    // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                    Some(Severity::Warning) => !self.cli_options.quiet,
-                    _ => true,
-                })
-                .collect::<Vec<_>>();
-
-            for diagnostic in diagnostics_to_print {
-                // https://eslint.org/docs/latest/use/command-line-interface#--max-warnings
-                if let Some(max_warnings) = self.cli_options.max_warnings {
-                    if number_of_warnings > max_warnings {
-                        max_warnings_exceeded = true;
-                        break;
-                    }
-                }
-                println!("{diagnostic:?}");
-                number_of_warnings += 1;
-            }
-        }
-
         let number_of_warnings = paths
             .par_iter()
             .map(|path| {
@@ -109,7 +82,10 @@ impl Cli {
         CliRunResult::LintResult {
             number_of_files: paths.len(),
             number_of_warnings,
-            max_warnings_exceeded,
+            max_warnings_exceeded: self
+                .cli_options
+                .max_warnings
+                .map_or(false, |max_warnings| number_of_warnings > max_warnings),
         }
     }
 
