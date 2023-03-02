@@ -7,7 +7,7 @@ use std::{
 pub enum CliRunResult {
     None,
     PathNotFound { paths: Vec<PathBuf> },
-    LintResult { number_of_files: usize, number_of_diagnostics: usize },
+    LintResult { number_of_files: usize, number_of_warnings: usize, max_warnings_exceeded: bool },
 }
 
 impl Termination for CliRunResult {
@@ -18,11 +18,16 @@ impl Termination for CliRunResult {
                 println!("Path {paths:?} does not exist.");
                 ExitCode::from(1)
             }
-            Self::LintResult { number_of_files, number_of_diagnostics } => {
+            Self::LintResult { number_of_files, number_of_warnings, max_warnings_exceeded } => {
                 println!("Checked {number_of_files} files.");
 
+                if max_warnings_exceeded {
+                    println!("Exceeded maximum number of warnings. Found {number_of_warnings}.");
+                    return ExitCode::from(1);
+                }
+
                 if number_of_files > 0 {
-                    println!("Found {number_of_diagnostics} diagnostics.");
+                    println!("Found {number_of_warnings} diagnostics.");
                     return ExitCode::from(1);
                 }
 

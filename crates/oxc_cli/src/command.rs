@@ -58,6 +58,13 @@ impl Command {
                 .help("This option allows you to specify patterns of files to ignore (in addition to those in .eslintignore).")
             )
             .arg(
+                Arg::new("max-warnings")
+                  .long("max-warnings")
+                  .value_parser(clap::value_parser!(usize))
+                  .required(false)
+                  .help("This option allows you to specify a warning threshold, which can be used to force oxc_lint to exit with an error status if there are too many warning-level rule violations in your project.")
+              )
+            .arg(
                 Arg::new("path")
                     .value_name("PATH")
                     .num_args(1..)
@@ -137,6 +144,22 @@ mod test {
     fn test_no_ignore() {
         let matches = get_lint_matches("oxc lint --no-ignore foo.js");
         assert!(matches.get_flag("no-ignore"));
+    }
+
+    #[test]
+    fn test_max_warnings_none() {
+        let arg = "oxc lint foo.js";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint");
+        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), None);
+    }
+
+    #[test]
+    fn test_max_warnings_some() {
+        let arg = "oxc lint --max-warnings 10 foo.js";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint");
+        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), Some(&10));
     }
 
     #[test]

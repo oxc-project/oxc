@@ -59,7 +59,7 @@ impl Cli {
             })
             .collect::<Vec<_>>();
 
-        let number_of_diagnostics = paths
+        let number_of_warnings = paths
             .par_iter()
             .map(|path| {
                 let diagnostics = Self::lint_path(path);
@@ -79,7 +79,14 @@ impl Cli {
             })
             .sum();
 
-        CliRunResult::LintResult { number_of_files: paths.len(), number_of_diagnostics }
+        CliRunResult::LintResult {
+            number_of_files: paths.len(),
+            number_of_warnings,
+            max_warnings_exceeded: self
+                .cli_options
+                .max_warnings
+                .map_or(false, |max_warnings| number_of_warnings > max_warnings),
+        }
     }
 
     fn lint_path(path: &Path) -> Vec<Error> {
