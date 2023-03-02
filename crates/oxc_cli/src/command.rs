@@ -135,6 +135,22 @@ mod test {
     }
 
     #[test]
+    fn test_max_warnings_none() {
+        let arg = "oxc lint foo.js";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint");
+        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), None)
+    }
+
+    #[test]
+    fn test_max_warnings_some() {
+        let arg = "oxc lint --max-warnings 10 foo.js";
+        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = matches.subcommand_matches("lint");
+        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), Some(&10))
+    }
+
+    #[test]
     fn test_ignore_path() {
         let matches = get_lint_matches("oxc lint --ignore-path .gitignore foo.js");
         assert_eq!(matches.get_one::<String>("ignore-path"), Some(&".gitignore".to_string()));
@@ -144,22 +160,6 @@ mod test {
     fn test_no_ignore() {
         let matches = get_lint_matches("oxc lint --no-ignore foo.js");
         assert!(matches.get_flag("no-ignore"));
-    }
-
-    #[test]
-    fn test_max_warnings_none() {
-        let arg = "oxc lint foo.js";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint");
-        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), None);
-    }
-
-    #[test]
-    fn test_max_warnings_some() {
-        let arg = "oxc lint --max-warnings 10 foo.js";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint");
-        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), Some(&10));
     }
 
     #[test]

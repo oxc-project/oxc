@@ -3,6 +3,7 @@ mod options;
 mod result;
 mod walk;
 
+use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::{fs, path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
@@ -34,6 +35,8 @@ impl Cli {
     /// This function may panic if the `fs::read_to_string` function in `lint_path` fails to read a file.
     #[must_use]
     pub fn lint(&self) -> CliRunResult {
+        let (sender, receiver): (SyncSender<Error>, Receiver<Error>) = sync_channel(32);
+
         let paths = &self
             .cli_options
             .paths
@@ -59,33 +62,53 @@ impl Cli {
             })
             .collect::<Vec<_>>();
 
-        let number_of_warnings = paths
-            .par_iter()
-            .map(|path| {
-                let diagnostics = Self::lint_path(path);
-                diagnostics
-                    .iter()
-                    .filter(|d| match d.severity() {
+        let (_, (warnings, diagnostics)): (_, (usize, usize)) = rayon::join(
+            move || {
+                paths.par_iter().for_each(|path| {
+                    let diagnostics = Self::lint_path(path);
+
+                    for d in diagnostics {
+                        sender.send(d).unwrap();
+                    }
+                });
+            },
+            move || {
+                let mut number_of_warnings = 0;
+                let mut number_of_diagnostics = 0;
+
+                while let Ok(diagnostic) = receiver.recv() {
+                    number_of_diagnostics += 1;
+
+                    if diagnostic.severity() == Some(Severity::Warning) {
+                        number_of_warnings += 1;
                         // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
                         // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                        Some(Severity::Warning) => !self.cli_options.quiet,
-                        _ => true,
-                    })
-                    .for_each(|diagnostic| {
-                        println!("{diagnostic:?}");
-                    });
+                        if self.cli_options.quiet {
+                            continue;
+                        }
 
-                diagnostics.len()
-            })
-            .sum();
+                        if let Some(max_warnings) = self.cli_options.max_warnings {
+                            if number_of_warnings > max_warnings {
+                                continue;
+                            }
+                        }
+                    }
+
+                    println!("{diagnostic:?}");
+                }
+
+                (number_of_warnings, number_of_diagnostics)
+            },
+        );
 
         CliRunResult::LintResult {
             number_of_files: paths.len(),
-            number_of_warnings,
+            number_of_diagnostics: diagnostics,
+            number_of_warnings: warnings,
             max_warnings_exceeded: self
                 .cli_options
                 .max_warnings
-                .map_or(false, |max_warnings| number_of_warnings > max_warnings),
+                .map_or(false, |max_warnings| warnings > max_warnings),
         }
     }
 
