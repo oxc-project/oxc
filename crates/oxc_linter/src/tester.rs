@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_common::PaddedStringView;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -11,13 +12,13 @@ use crate::{rules::RULES, Linter};
 
 pub struct Tester {
     rule_name: &'static str,
-    expect_pass: Vec<(String, Option<Value>)>,
-    expect_fail: Vec<(String, Option<Value>)>,
+    expect_pass: Vec<(PaddedStringView, Option<Value>)>,
+    expect_fail: Vec<(PaddedStringView, Option<Value>)>,
     snapshot: String,
 }
 
 impl Tester {
-    pub fn new<S: Into<String>>(
+    pub fn new<S: Into<PaddedStringView>>(
         rule_name: &'static str,
         expect_pass: Vec<(S, Option<Value>)>,
         expect_fail: Vec<(S, Option<Value>)>,
@@ -54,12 +55,12 @@ impl Tester {
         });
     }
 
-    fn run(&mut self, source_text: &str, config: Option<Value>) -> bool {
+    fn run(&mut self, source_text: &PaddedStringView, config: Option<Value>) -> bool {
         let name = self.rule_name.replace('-', "_");
         let allocator = Allocator::default();
         let path = PathBuf::from(name).with_extension("tsx");
         let source_type = SourceType::from_path(&path).expect("incorrect {path:?}");
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Parser::new(&allocator, &source_text, source_type).parse();
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new().build(program, ret.trivias);
@@ -71,11 +72,12 @@ impl Tester {
             return true;
         }
         let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
+        let unpadded_source_text = source_text.unpadded_str();
         for diagnostic in diagnostics {
-            let diagnostic = diagnostic.with_source_code(source_text.to_string());
+            let diagnostic = diagnostic.with_source_code(unpadded_source_text.to_string());
             let diagnostic = diagnostic.with_source_code(NamedSource::new(
                 path.to_string_lossy(),
-                source_text.to_string(),
+                unpadded_source_text.to_string(),
             ));
             handler.render_report(&mut self.snapshot, diagnostic.as_ref()).unwrap();
         }

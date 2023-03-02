@@ -8,6 +8,7 @@ use std::{fs, path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_common::PaddedStringView;
 use oxc_diagnostics::{Error, Severity};
 use oxc_linter::Linter;
 use oxc_parser::Parser;
@@ -113,7 +114,7 @@ impl Cli {
     }
 
     fn lint_path(path: &Path) -> Vec<Error> {
-        let source_text = fs::read_to_string(path).expect("{name} not found");
+        let source_text = PaddedStringView::read_from_file(path).expect("{name} not found");
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
@@ -127,7 +128,7 @@ impl Cli {
 
         diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(source_text.clone()))
+            .map(|diagnostic| diagnostic.with_source_code((*source_text).clone()))
             .collect()
     }
 }

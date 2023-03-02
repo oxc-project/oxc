@@ -4,6 +4,7 @@ use std::{
 };
 
 use oxc_ast::SourceType;
+use oxc_common::PaddedStringView;
 use serde::Deserialize;
 
 use crate::project_root;
@@ -108,7 +109,7 @@ impl<T: Case> Suite<T> for Test262Suite<T> {
 
 pub struct Test262Case {
     path: PathBuf,
-    code: String,
+    code: PaddedStringView,
     meta: MetaData,
     should_fail: bool,
     result: TestResult,
@@ -138,13 +139,13 @@ impl Test262Case {
 }
 
 impl Case for Test262Case {
-    fn new(path: PathBuf, code: String) -> Self {
+    fn new(path: PathBuf, code: PaddedStringView) -> Self {
         let meta = Self::read_metadata(&code).expect("read test262 yaml meta");
         let should_fail = Self::should_fail(&meta);
         Self { path, code, meta, should_fail, result: TestResult::ToBeRun }
     }
 
-    fn code(&self) -> &str {
+    fn code(&self) -> &PaddedStringView {
         &self.code
     }
 

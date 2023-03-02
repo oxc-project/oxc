@@ -17,6 +17,7 @@ use std::{collections::VecDeque, str::Chars};
 
 use oxc_allocator::{Allocator, String};
 use oxc_ast::{ast::RegExpFlags, Atom, SourceType, Span};
+use oxc_common::PaddedStringView;
 use oxc_diagnostics::{Diagnostics, Error};
 use simd::{SkipMultilineComment, SkipWhitespace};
 pub use token::{RegExp, Token, TokenValue};
@@ -55,7 +56,7 @@ pub enum LexerContext {
 pub struct Lexer<'a> {
     allocator: &'a Allocator,
 
-    source: &'a str,
+    source: &'a PaddedStringView,
 
     source_type: SourceType,
 
@@ -75,7 +76,7 @@ impl<'a> Lexer<'a> {
     #[must_use]
     pub fn new(
         allocator: &'a Allocator,
-        source: &'a str,
+        source: &'a PaddedStringView,
         errors: Diagnostics,
         source_type: SourceType,
     ) -> Self {

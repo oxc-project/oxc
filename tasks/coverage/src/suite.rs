@@ -11,6 +11,7 @@ use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_common::PaddedStringView;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use rayon::prelude::*;
@@ -79,7 +80,7 @@ pub trait Suite<T: Case> {
         let cases = paths
             .into_par_iter()
             .map(|path| {
-                let code = fs::read_to_string(&path).unwrap_or_else(|_| {
+                let code = PaddedStringView::read_from_file(&path).unwrap_or_else(|_| {
                     // TypeScript tests may contain utf_16 encoding files
                     let file = fs::File::open(&path).unwrap();
                     let mut content = String::new();
@@ -88,13 +89,13 @@ pub trait Suite<T: Case> {
                         .build(file)
                         .read_to_string(&mut content)
                         .unwrap();
-                    content
+                    (&content).into()
                 });
 
                 let path = path.strip_prefix(test_root).unwrap().to_owned();
                 // remove the Byte Order Mark in some of the TypeScript files
-                let code = code.trim_start_matches(|c| c == '\u{feff}').to_string();
-                T::new(path, code)
+                let code = code.trim_start_matches(|c| c == '\u{feff}');
+                T::new(path, code.into())
             })
             .filter(|case| !case.skip_test_case())
             .filter_map(|mut case| {
@@ -226,9 +227,9 @@ pub trait Suite<T: Case> {
 
 /// A Test Case is responsible for interpreting the contents of a file
 pub trait Case: Sized + Sync + Send + UnwindSafe {
-    fn new(path: PathBuf, code: String) -> Self;
+    fn new(path: PathBuf, code: PaddedStringView) -> Self;
 
-    fn code(&self) -> &str;
+    fn code(&self) -> &PaddedStringView;
     fn path(&self) -> &Path;
     fn test_result(&self) -> &TestResult;
 

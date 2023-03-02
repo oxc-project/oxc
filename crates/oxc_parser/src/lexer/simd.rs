@@ -39,7 +39,7 @@ impl SkipWhitespace {
     }
 
     pub fn simd(mut self, bytes: &[u8]) -> Self {
-        let (chunks, remainder) = bytes.as_chunks::<ELEMENTS>();
+        let (chunks, _remainder) = bytes.as_chunks::<ELEMENTS>();
 
         for chunk in chunks {
             self.check_chunk(chunk);
@@ -48,13 +48,8 @@ impl SkipWhitespace {
             }
         }
 
-        if !remainder.is_empty() {
-            // Align the last chunk for avoiding the use of a scalar version
-            let mut chunk = [0; ELEMENTS];
-            let len = remainder.len();
-            chunk[..len].copy_from_slice(remainder);
-            self.check_chunk(&chunk);
-        }
+        // We can safely ignore remainder since it is guaranteed to contain 16 empty bytes
+        // See `PaddedStringView` passed to lexer
 
         self
     }
@@ -120,7 +115,7 @@ impl<'a> SkipMultilineComment<'a> {
     }
 
     pub fn simd(mut self) -> Self {
-        let (chunks, remainder) = self.remaining.as_chunks::<ELEMENTS>();
+        let (chunks, _remainder) = self.remaining.as_chunks::<ELEMENTS>();
 
         for chunk in chunks {
             self.check(chunk, chunk.len());
@@ -129,13 +124,8 @@ impl<'a> SkipMultilineComment<'a> {
             }
         }
 
-        if !remainder.is_empty() {
-            // Align the last chunk for avoiding the use of a scalar version
-            let mut chunk = [0; ELEMENTS];
-            let len = remainder.len();
-            chunk[..len].copy_from_slice(remainder);
-            self.check(&chunk, len);
-        }
+        // We can safely ignore remainder since it is guaranteed to contain 16 empty bytes
+        // See `PaddedStringView` passed to lexer
 
         self
     }

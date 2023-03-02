@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_common::PaddedStringView;
 use oxc_parser::Parser;
 use oxc_printer::{Printer, PrinterOptions};
 
@@ -13,11 +14,11 @@ pub struct PrinterTest262Case {
 }
 
 impl Case for PrinterTest262Case {
-    fn new(path: PathBuf, code: String) -> Self {
+    fn new(path: PathBuf, code: PaddedStringView) -> Self {
         Self { base: Test262Case::new(path, code) }
     }
 
-    fn code(&self) -> &str {
+    fn code(&self) -> &PaddedStringView {
         self.base.code()
     }
 
@@ -54,7 +55,7 @@ impl Case for PrinterTest262Case {
 impl PrinterTest262Case {
     fn get_result(&self, options: PrinterOptions) -> TestResult {
         let allocator = Allocator::default();
-        let source_text = self.base.code().to_string();
+        let source_text = self.base.code();
         let source_type = {
             let mut builder = SourceType::builder();
             if self.base.meta().flags.contains(&TestFlag::Module) {
@@ -63,13 +64,14 @@ impl PrinterTest262Case {
             builder.build()
         };
         let program1 = Parser::new(&allocator, &source_text, source_type).parse().program;
-        let source_text1 = Printer::new(source_text.len(), options).build(&program1);
+        let printed_text1 = Printer::new(source_text.len(), options).build(&program1);
+        let source_text1 = (&printed_text1).into();
         let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;
-        let source_text2 = Printer::new(source_text1.len(), options).build(&program2);
-        if source_text1 == source_text2 {
+        let source_text2 = Printer::new(printed_text1.len(), options).build(&program2);
+        if printed_text1 == source_text2 {
             TestResult::Passed
         } else {
-            TestResult::Mismatch(source_text1.to_string(), source_text2)
+            TestResult::Mismatch(printed_text1.to_string(), source_text2)
         }
     }
 }

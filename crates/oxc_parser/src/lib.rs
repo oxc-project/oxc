@@ -17,6 +17,7 @@ mod lexer;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span, Trivias};
+use oxc_common::PaddedStringView;
 use oxc_diagnostics::{Diagnostics, Error, Result};
 
 use crate::{
@@ -62,7 +63,11 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     #[must_use]
-    pub fn new(allocator: &'a Allocator, source: &'a str, source_type: SourceType) -> Self {
+    pub fn new(
+        allocator: &'a Allocator,
+        source: &'a PaddedStringView,
+        source_type: SourceType,
+    ) -> Self {
         let errors = Diagnostics::default();
         Self {
             lexer: Lexer::new(allocator, source, errors.clone(), source_type),
@@ -161,8 +166,8 @@ mod test {
     fn smoke_test() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let source = "";
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let source = PaddedStringView::from("");
+        let ret = Parser::new(&allocator, &source, source_type).parse();
         assert!(ret.program.is_empty());
         assert!(ret.errors.is_empty());
     }
@@ -171,13 +176,13 @@ mod test {
     fn flow_error() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let source = "// @flow\nasdf adsf";
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let source = PaddedStringView::from("// @flow\nasdf adsf");
+        let ret = Parser::new(&allocator, &source, source_type).parse();
         assert!(ret.program.is_empty());
         assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
 
-        let source = "/* @flow */\n asdf asdf";
-        let ret = Parser::new(&allocator, source, source_type).parse();
+        let source = PaddedStringView::from("/* @flow */\n asdf asdf");
+        let ret = Parser::new(&allocator, &source, source_type).parse();
         assert!(ret.program.is_empty());
         assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
     }

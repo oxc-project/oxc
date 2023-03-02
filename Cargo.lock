@@ -824,6 +824,7 @@ dependencies = [
  "mimalloc",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_common",
  "oxc_parser",
  "pico-args",
  "ureq",
@@ -842,12 +843,17 @@ dependencies = [
  "mimalloc",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_common",
  "oxc_diagnostics",
  "oxc_linter",
  "oxc_parser",
  "oxc_semantic",
  "rayon",
 ]
+
+[[package]]
+name = "oxc_common"
+version = "0.0.0"
 
 [[package]]
 name = "oxc_coverage"
@@ -860,6 +866,7 @@ dependencies = [
  "miette",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_common",
  "oxc_diagnostics",
  "oxc_parser",
  "oxc_printer",
@@ -890,6 +897,7 @@ dependencies = [
  "miette",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_common",
  "oxc_diagnostics",
  "oxc_macros",
  "oxc_parser",
@@ -917,6 +925,7 @@ dependencies = [
  "num-bigint",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_common",
  "oxc_diagnostics",
  "rustc-hash",
  "serde_json",
@@ -930,6 +939,7 @@ dependencies = [
  "miette",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_common",
  "oxc_parser",
 ]
 

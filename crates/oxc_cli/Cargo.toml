@@ -19,6 +19,7 @@ mimalloc = { workspace = true }
 oxc_diagnostics = { path = "../oxc_diagnostics" }
 oxc_allocator = { path = "../oxc_allocator" }
 oxc_ast = { path  = "../oxc_ast" }
+oxc_common = { path = "../oxc_common" }
 oxc_parser = { path  = "../oxc_parser" }
 oxc_semantic = { path  = "../oxc_semantic" }
 oxc_linter = { path  = "../oxc_linter" }

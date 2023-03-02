@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use oxc_ast::SourceType;
+use oxc_common::PaddedStringView;
 use serde::{de::DeserializeOwned, Deserialize};
 
 use crate::project_root;
@@ -82,7 +83,7 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
 
 pub struct BabelCase {
     path: PathBuf,
-    code: String,
+    code: PaddedStringView,
     options: Option<BabelOptions>,
     should_fail: bool,
     result: TestResult,
@@ -174,13 +175,13 @@ impl BabelCase {
 }
 
 impl Case for BabelCase {
-    fn new(path: PathBuf, code: String) -> Self {
+    fn new(path: PathBuf, code: PaddedStringView) -> Self {
         let options = Self::read_options_json(&path);
         let should_fail = Self::determine_should_fail(&path, &options);
         Self { path, code, options, should_fail, result: TestResult::ToBeRun }
     }
 
-    fn code(&self) -> &str {
+    fn code(&self) -> &PaddedStringView {
         &self.code
     }
 

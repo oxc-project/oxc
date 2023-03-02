@@ -12,6 +12,7 @@ version.workspace = true
 [dependencies]
 oxc_allocator = { path = "../oxc_allocator" }
 oxc_ast = { path = "../oxc_ast" }
+oxc_common = { path = "../oxc_common" }
 oxc_diagnostics = { path = "../oxc_diagnostics" }
 
 bitflags = { workspace = true }

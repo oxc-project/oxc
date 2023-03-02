@@ -79,7 +79,7 @@ pub fn is_identifier_part(c: char) -> bool {
 }
 
 pub const SINGLE_CHAR_TOKENS: &[Kind; 128] = &[
-    /*   0 */ Kind::Undetermined,
+    /*   0 */ Kind::Eof,
     /*   1 */ Kind::Undetermined,
     /*   2 */ Kind::Undetermined,
     /*   3 */ Kind::Undetermined,

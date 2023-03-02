@@ -12,6 +12,7 @@ version.workspace = true
 [dependencies]
 oxc_allocator = { path = "../oxc_allocator" }
 oxc_ast = { path = "../oxc_ast" }
+oxc_common = { path = "../oxc_common" }
 
 [dev_dependencies]
 oxc_parser = { path = "../oxc_parser" }

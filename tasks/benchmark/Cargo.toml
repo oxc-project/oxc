@@ -19,6 +19,7 @@ mimalloc = { workspace = true }
 [dependencies]
 oxc_ast = { path = "../../crates/oxc_ast" }
 oxc_allocator = { path = "../../crates/oxc_allocator" }
+oxc_common = { path = "../../crates/oxc_common" }
 oxc_parser = { path = "../../crates/oxc_parser" }
 
 pico-args = "0.5.0"

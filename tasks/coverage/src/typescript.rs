@@ -5,6 +5,7 @@ use std::{
 };
 
 use oxc_ast::SourceType;
+use oxc_common::PaddedStringView;
 use regex::Regex;
 
 use crate::{
@@ -65,18 +66,18 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
 
 pub struct TypeScriptCase {
     path: PathBuf,
-    code: String,
+    code: PaddedStringView,
     result: TestResult,
     meta: TypeScriptTestMeta,
 }
 
 impl Case for TypeScriptCase {
-    fn new(path: PathBuf, code: String) -> Self {
+    fn new(path: PathBuf, code: PaddedStringView) -> Self {
         let meta = TypeScriptTestMeta::from_source(&path, &code);
         Self { path, code, result: TestResult::ToBeRun, meta }
     }
 
-    fn code(&self) -> &str {
+    fn code(&self) -> &PaddedStringView {
         &self.code
     }
 
