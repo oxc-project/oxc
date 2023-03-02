@@ -22,6 +22,7 @@ env:
   RUST_LOG: info
   RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -D warnings # https://rust-unofficial.github.io/patterns/anti_patterns/deny-warnings.html#alternatives
 
 jobs:
   format:
@@ -60,7 +61,7 @@ jobs:
         run: cargo check --workspace --all-targets --all-features --release --locked
 
       - name: Run clippy
-        run: cargo lint -- --deny warnings
+        run: cargo lint
 
   check-dependencies:
     name: Check Dependencies
