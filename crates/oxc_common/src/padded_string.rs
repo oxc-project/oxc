@@ -16,7 +16,7 @@ trait TestTrait: Sized {}
 
 impl TestTrait for PaddedStringView {}
 
-const PADDING_BYTES: &'static str = match str::from_utf8(&[0; PaddedStringView::PADDING_SIZE]) {
+const PADDING_BYTES: &str = match str::from_utf8(&[0; PaddedStringView::PADDING_SIZE]) {
     Ok(res) => res,
     Err(_) => unreachable!(),
 };
@@ -24,16 +24,26 @@ const PADDING_BYTES: &'static str = match str::from_utf8(&[0; PaddedStringView::
 impl PaddedStringView {
     pub const PADDING_SIZE: usize = 16;
 
+    /// # Errors
+    ///
+    /// This function will return an error if `path` does not already exist.
+    /// Other errors may also be returned according to [`OpenOptions::open`].
+    ///
+    /// It will also return an error if it encounters while reading an error
+    /// of a kind other than [`io::ErrorKind::Interrupted`],
+    /// or if the contents of the file are not valid UTF-8.
     pub fn read_from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let mut file = File::open(path)?;
         let size = file.metadata().map(|m| m.len()).unwrap_or(0);
-        let mut string = String::with_capacity(size as usize + PaddedStringView::PADDING_SIZE);
+        let size = usize::try_from(size).map_or(usize::MAX, |x| x);
+        let mut string = String::with_capacity(size + Self::PADDING_SIZE);
         file.read_to_string(&mut string)?;
         string.push_str(PADDING_BYTES);
 
         Ok(Self { wrapped: string })
     }
 
+    #[must_use]
     pub fn unpadded_str(&self) -> &str {
         &(self.wrapped[0..self.wrapped.len() - 16])
     }
@@ -49,8 +59,8 @@ impl FromStr for PaddedStringView {
 
 impl From<&str> for PaddedStringView {
     #[inline]
-    fn from(s: &str) -> PaddedStringView {
-        let mut string = String::with_capacity(s.len() + PaddedStringView::PADDING_SIZE);
+    fn from(s: &str) -> Self {
+        let mut string = String::with_capacity(s.len() + Self::PADDING_SIZE);
         string.push_str(s);
         string.push_str(PADDING_BYTES);
 
@@ -60,7 +70,7 @@ impl From<&str> for PaddedStringView {
 
 impl From<&String> for PaddedStringView {
     #[inline]
-    fn from(s: &String) -> PaddedStringView {
+    fn from(s: &String) -> Self {
         Self::from(s.as_str())
     }
 }

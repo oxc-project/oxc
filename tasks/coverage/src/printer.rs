@@ -63,7 +63,7 @@ impl PrinterTest262Case {
             }
             builder.build()
         };
-        let program1 = Parser::new(&allocator, &source_text, source_type).parse().program;
+        let program1 = Parser::new(&allocator, source_text, source_type).parse().program;
         let printed_text1 = Printer::new(source_text.len(), options).build(&program1);
         let source_text1 = (&printed_text1).into();
         let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;
@@ -71,7 +71,7 @@ impl PrinterTest262Case {
         if printed_text1 == source_text2 {
             TestResult::Passed
         } else {
-            TestResult::Mismatch(printed_text1.to_string(), source_text2)
+            TestResult::Mismatch(printed_text1, source_text2)
         }
     }
 }
