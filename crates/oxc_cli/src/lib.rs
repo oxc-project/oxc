@@ -3,6 +3,7 @@ mod options;
 mod result;
 mod walk;
 
+use std::io::{BufWriter, Write};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::{fs, path::Path, rc::Rc};
 
@@ -73,6 +74,7 @@ impl Cli {
                 });
             },
             move || {
+                let mut buf_writer = BufWriter::new(std::io::stdout());
                 let mut number_of_warnings = 0;
                 let mut number_of_diagnostics = 0;
 
@@ -94,8 +96,12 @@ impl Cli {
                         }
                     }
 
-                    println!("{diagnostic:?}");
+                    buf_writer
+                        .write_all(format!("{diagnostic:?}").as_bytes())
+                        .expect("Failed to write diagnostic.");
                 }
+
+                buf_writer.flush().expect("Failed to flush.");
 
                 (number_of_warnings, number_of_diagnostics)
             },
