@@ -21,10 +21,9 @@ pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier,
     pub members: Vec<'a, TSEnumMember<'a>>,
-    #[serde(skip_serializing_if = "is_false")]
-    pub declare: bool,
-    #[serde(skip_serializing_if = "is_false")]
-    pub r#const: bool,
+    /// Valid Modifiers: `const`, `export`, `declare`
+    #[serde(skip_serializing_if = "Modifiers::is_none")]
+    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
@@ -450,8 +449,9 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub type_annotation: TSType<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    #[serde(skip_serializing_if = "is_false")]
-    pub declare: bool,
+    /// Valid Modifiers: `declare`, `export`
+    #[serde(skip_serializing_if = "Modifiers::is_none")]
+    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
@@ -499,8 +499,9 @@ pub struct TSInterfaceDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
-    #[serde(skip_serializing_if = "is_false")]
-    pub declare: bool,
+    /// Valid Modifiers: `export`, `default`, `declare`
+    #[serde(skip_serializing_if = "Modifiers::is_none")]
+    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
@@ -637,7 +638,9 @@ pub struct TSModuleDeclaration<'a> {
     pub span: Span,
     pub id: TSModuleDeclarationName,
     pub body: TSModuleDeclarationBody<'a>,
-    pub declare: bool,
+    /// Valid Modifiers: `declare`, `export`
+    #[serde(skip_serializing_if = "Modifiers::is_none")]
+    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
@@ -824,6 +827,57 @@ pub struct Decorator<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub expression: Expression<'a>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Hash)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum ModifierKind {
+    Abstract,
+    Accessor,
+    Async,
+    Const,
+    Declare,
+    Default,
+    Export,
+    In,
+    Public,
+    Private,
+    Protected,
+    Readonly,
+    Static,
+    Out,
+    Override,
+}
+
+#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub struct Modifier {
+    #[serde(flatten)]
+    pub span: Span,
+    pub kind: ModifierKind,
+}
+
+#[derive(Debug, Serialize, PartialEq, Eq, Hash, Default)]
+#[serde(transparent)]
+pub struct Modifiers<'a>(pub Option<Vec<'a, Modifier>>);
+
+impl<'a> Modifiers<'a> {
+    #[must_use]
+    pub const fn empty() -> Self {
+        Self(None)
+    }
+
+    #[must_use]
+    pub const fn is_none(&self) -> bool {
+        self.0.is_none()
+    }
+
+    #[must_use]
+    pub fn contains(&self, target: ModifierKind) -> bool {
+        self.0
+            .as_ref()
+            .map_or(false, |modifiers| modifiers.iter().any(|modifier| modifier.kind == target))
+    }
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]

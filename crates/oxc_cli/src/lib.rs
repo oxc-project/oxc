@@ -8,7 +8,7 @@ use std::{fs, path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
-use oxc_diagnostics::{Error, Report, Severity};
+use oxc_diagnostics::{Error, Severity};
 use oxc_linter::Linter;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -35,7 +35,7 @@ impl Cli {
     /// This function may panic if the `fs::read_to_string` function in `lint_path` fails to read a file.
     #[must_use]
     pub fn lint(&self) -> CliRunResult {
-        let (sender, receiver): (SyncSender<Report>, Receiver<Report>) = sync_channel(1024);
+        let (sender, receiver): (SyncSender<Error>, Receiver<Error>) = sync_channel(32);
 
         let paths = &self
             .cli_options
@@ -45,6 +45,10 @@ impl Cli {
                 Walk::new(path, &self.cli_options)
                     .iter()
                     .filter(|path| {
+                        if self.cli_options.no_ignore {
+                            return true;
+                        }
+
                         let ignore_pattern = &self.cli_options.ignore_pattern;
                         for pattern in ignore_pattern {
                             if pattern.matches_path(path) {
@@ -73,12 +77,26 @@ impl Cli {
                 let mut number_of_diagnostics = 0;
 
                 while let Ok(diagnostic) = receiver.recv() {
-                    if diagnostic.severity() == Some(Severity::Warning) && !self.cli_options.quiet {
-                        number_of_warnings += 1;
-                    }
                     number_of_diagnostics += 1;
+
+                    if diagnostic.severity() == Some(Severity::Warning) {
+                        number_of_warnings += 1;
+                        // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
+                        // Note that it does not disable ALL diagnostics, only Warning diagnostics
+                        if self.cli_options.quiet {
+                            continue;
+                        }
+
+                        if let Some(max_warnings) = self.cli_options.max_warnings {
+                            if number_of_warnings > max_warnings {
+                                continue;
+                            }
+                        }
+                    }
+
                     println!("{diagnostic:?}");
                 }
+
                 (number_of_warnings, number_of_diagnostics)
             },
         );

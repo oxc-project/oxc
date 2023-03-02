@@ -12,9 +12,6 @@ on:
     paths:
       - npm/oxc/package.json
 
-permissions:
-  contents: write # for softprops/action-gh-release
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

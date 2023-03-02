@@ -13,9 +13,6 @@ on:
       - 'rust-toolchain.toml'
       - '!**/*.md'
 
-permissions:
-  contents: write # For documentation deployment
-
 # cancel previous job runs for the same workflow + pr
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -25,6 +22,7 @@ env:
   RUST_LOG: info
   RUST_BACKTRACE: 1
   CARGO_INCREMENTAL: 0
+  RUSTFLAGS: -D warnings # https://rust-unofficial.github.io/patterns/anti_patterns/deny-warnings.html#alternatives
 
 jobs:
   format:
@@ -63,7 +61,7 @@ jobs:
         run: cargo check --workspace --all-targets --all-features --release --locked
 
       - name: Run clippy
-        run: cargo lint -- --deny warnings
+        run: cargo lint
 
   check-dependencies:
     name: Check Dependencies

@@ -1,5 +1,5 @@
 TypeScript Summary:
-AST Parsed     : 4310/4865 (88.59%)
+AST Parsed     : 4325/4865 (88.90%)
 Expect to Parse: "async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts"
 
   × Automatic Semicolon Insertion
@@ -95,15 +95,6 @@ Expect to Parse: "async/es5/asyncArrowFunction/asyncArrowFunction8_es5.ts"
    ·                   ─
  7 │ }
    ╰────
-Expect to Parse: "async/es5/asyncClass_es5.ts"
-
-  × Unexpected token
-   ╭─[async/es5/asyncClass_es5.ts:3:1]
- 3 │ // @noEmitHelpers: true
- 4 │ async class C {
-   · ─────
- 5 │ }
-   ╰────
 Expect to Parse: "async/es5/asyncConstructor_es5.ts"
 
   × Constructor can't be an async method
@@ -114,15 +105,6 @@ Expect to Parse: "async/es5/asyncConstructor_es5.ts"
    ·              ╰── Constructor can't be an async method
  6 │   }
    ╰────
-Expect to Parse: "async/es5/asyncEnum_es5.ts"
-
-  × Unexpected token
-   ╭─[async/es5/asyncEnum_es5.ts:3:1]
- 3 │ // @noEmitHelpers: true
- 4 │ async enum E {
-   · ─────
- 5 │   Value
-   ╰────
 Expect to Parse: "async/es5/asyncGetter_es5.ts"
 
   × Expect token
@@ -132,24 +114,6 @@ Expect to Parse: "async/es5/asyncGetter_es5.ts"
    ·             ─┬─
    ·              ╰── Expect `(` here, but found `Identifier`
  6 │   }
-   ╰────
-Expect to Parse: "async/es5/asyncInterface_es5.ts"
-
-  × Unexpected token
-   ╭─[async/es5/asyncInterface_es5.ts:3:1]
- 3 │ // @noEmitHelpers: true
- 4 │ async interface I {
-   · ─────
- 5 │ }
-   ╰────
-Expect to Parse: "async/es5/asyncModule_es5.ts"
-
-  × Unexpected token
-   ╭─[async/es5/asyncModule_es5.ts:3:1]
- 3 │ // @noEmitHelpers: true
- 4 │ async module M {
-   · ─────
- 5 │ }
    ╰────
 Expect to Parse: "async/es5/asyncSetter_es5.ts"
 
@@ -217,15 +181,6 @@ Expect to Parse: "async/es6/asyncArrowFunction/asyncArrowFunction8_es6.ts"
    ·                   ─
  6 │ }
    ╰────
-Expect to Parse: "async/es6/asyncClass_es6.ts"
-
-  × Unexpected token
-   ╭─[async/es6/asyncClass_es6.ts:2:1]
- 2 │ // @noEmitHelpers: true
- 3 │ async class C {  
-   · ─────
- 4 │ }
-   ╰────
 Expect to Parse: "async/es6/asyncConstructor_es6.ts"
 
   × Constructor can't be an async method
@@ -236,15 +191,6 @@ Expect to Parse: "async/es6/asyncConstructor_es6.ts"
    ·              ╰── Constructor can't be an async method
  5 │   }
    ╰────
-Expect to Parse: "async/es6/asyncEnum_es6.ts"
-
-  × Unexpected token
-   ╭─[async/es6/asyncEnum_es6.ts:2:1]
- 2 │ // @noEmitHelpers: true
- 3 │ async enum E {  
-   · ─────
- 4 │   Value
-   ╰────
 Expect to Parse: "async/es6/asyncGetter_es6.ts"
 
   × Expect token
@@ -254,24 +200,6 @@ Expect to Parse: "async/es6/asyncGetter_es6.ts"
    ·             ─┬─
    ·              ╰── Expect `(` here, but found `Identifier`
  5 │   }
-   ╰────
-Expect to Parse: "async/es6/asyncInterface_es6.ts"
-
-  × Unexpected token
-   ╭─[async/es6/asyncInterface_es6.ts:2:1]
- 2 │ // @noEmitHelpers: true
- 3 │ async interface I {  
-   · ─────
- 4 │ }
-   ╰────
-Expect to Parse: "async/es6/asyncModule_es6.ts"
-
-  × Unexpected token
-   ╭─[async/es6/asyncModule_es6.ts:2:1]
- 2 │ // @noEmitHelpers: true
- 3 │ async module M {   
-   · ─────
- 4 │ }
    ╰────
 Expect to Parse: "async/es6/asyncSetter_es6.ts"
 
@@ -3736,24 +3664,6 @@ Expect to Parse: "internalModules/exportDeclarations/NonInitializedExportInInter
    ·        ─
  4 │     let;
    ╰────
-Expect to Parse: "internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts"
-
-  × Unexpected token
-   ╭─[internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:3:1]
- 3 │ module Y {
- 4 │     public class A { s: string }
-   ·     ──────
- 5 │ 
-   ╰────
-Expect to Parse: "internalModules/moduleBody/invalidModuleWithVarStatements.ts"
-
-  × Unexpected token
-   ╭─[internalModules/moduleBody/invalidModuleWithVarStatements.ts:3:1]
- 3 │ module Y {
- 4 │     public var x: number = 0;
-   ·     ──────
- 5 │ }
-   ╰────
 Expect to Parse: "jsdoc/declarations/jsDeclarationsNonIdentifierInferredNames.ts"
 
   × Unexpected token
@@ -3817,6 +3727,15 @@ Expect to Parse: "jsx/jsxEsprimaFbTestSuite.tsx"
  41 │ <LeftRight left=<a /> right=<b>monkeys /> gorillas</b> />;
     ·                 ─
  42 │ 
+    ╰────
+Expect to Parse: "jsx/jsxParsingError1.tsx"
+
+  × TS18007: JSX expressions may not use the comma operator. Did you mean to write an array?
+    ╭─[jsx/jsxParsingError1.tsx:13:1]
+ 13 │ const class2 = "bar";
+ 14 │ const elem = <div className={class1, class2}/>;
+    ·                              ───────┬──────
+    ·                                     ╰── JSX expressions may not use the comma operator. Did you mean to write an array?
     ╰────
 Expect to Parse: "jsx/jsxUnclosedParserRecovery.ts"
 
@@ -4949,30 +4868,6 @@ Expect to Parse: "parser/ecmascript5/IndexSignatures/parserIndexSignature9.ts"
    ·     ─
  3 │ }
    ╰────
-Expect to Parse: "parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts"
-
-  × Unexpected token
-   ╭─[parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts:1:1]
- 1 │ public interface I {
-   · ──────
- 2 │ }
-   ╰────
-Expect to Parse: "parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts"
-
-  × Unexpected token
-   ╭─[parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts:1:1]
- 1 │ static interface I {
-   · ──────
- 2 │ }
-   ╰────
-Expect to Parse: "parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts"
-
-  × Unexpected token
-   ╭─[parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:1]
- 1 │ export export interface I {
-   ·        ──────
- 2 │ }
-   ╰────
 Expect to Parse: "parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts"
 
   × Automatic Semicolon Insertion
@@ -5109,22 +5004,6 @@ Expect to Parse: "parser/ecmascript5/ParameterLists/parserParameterList6.ts"
    ·                          ╰── Expect `)` here, but found `Identifier`
  3 │   }
    ╰────
-Expect to Parse: "parser/ecmascript5/Protected/Protected1.ts"
-
-  × Unexpected token
-   ╭─[parser/ecmascript5/Protected/Protected1.ts:1:1]
- 1 │ protected class C {
-   · ─────────
- 2 │ }
-   ╰────
-Expect to Parse: "parser/ecmascript5/Protected/Protected2.ts"
-
-  × Unexpected token
-   ╭─[parser/ecmascript5/Protected/Protected2.ts:1:1]
- 1 │ protected module M {
-   · ─────────
- 2 │ }
-   ╰────
 Expect to Parse: "parser/ecmascript5/RealWorld/parserharness.ts"
 
   × Automatic Semicolon Insertion
@@ -5227,14 +5106,6 @@ Expect to Parse: "parser/ecmascript5/RegressionTests/parser585151.ts"
  3 │ }
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: "parser/ecmascript5/RegressionTests/parser618973.ts"
-
-  × Unexpected token
-   ╭─[parser/ecmascript5/RegressionTests/parser618973.ts:1:1]
- 1 │ export export class Foo {
-   ·        ──────
- 2 │   public Bar() {
-   ╰────
 Expect to Parse: "parser/ecmascript5/RegressionTests/parser645086_1.ts"
 
   × Automatic Semicolon Insertion

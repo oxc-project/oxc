@@ -6,6 +6,7 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, Span};
 use oxc_diagnostics::Result;
 
+use crate::diagnostics;
 use crate::lexer::Kind;
 use crate::Context;
 use crate::Parser;
@@ -246,11 +247,12 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_jsx_assignment_expression(&mut self) -> Result<Expression<'a>> {
-        // TODO: check for SequenceExpression and warn
-        // "JSX expressions may not use the comma operator. Did you meant to write an array?"
         let ctx = self.ctx;
         self.ctx = Context::default();
         let expr = self.parse_expression();
+        if let Ok(Expression::SequenceExpression(seq)) = &expr {
+            return Err(diagnostics::JSXExpressionsMayNotUseTheCommaOperator(seq.span).into());
+        }
         self.ctx = ctx;
         expr
     }

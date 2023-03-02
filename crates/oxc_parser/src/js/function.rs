@@ -2,7 +2,7 @@ use oxc_allocator::Box;
 use oxc_ast::{
     ast::*,
     context::{Context, StatementContext},
-    GetSpan, Span,
+    AstBuilder, GetSpan, Span,
 };
 use oxc_diagnostics::Result;
 
@@ -93,6 +93,7 @@ impl<'a> Parser<'a> {
         r#async: bool,
         generator: bool,
         func_kind: FunctionKind,
+        modifiers: Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
@@ -139,7 +140,7 @@ impl<'a> Parser<'a> {
             body,
             type_parameters,
             return_type,
-            false,
+            modifiers,
         ))
     }
 
@@ -168,6 +169,8 @@ impl<'a> Parser<'a> {
         Ok(self.ast.function_declaration(decl))
     }
 
+    /// Parse function implementation in Javascript, cursor
+    /// at `function` or `async function`
     pub fn parse_function_impl(
         &mut self,
         func_kind: FunctionKind,
@@ -177,7 +180,22 @@ impl<'a> Parser<'a> {
         self.expect(Kind::Function)?;
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator);
-        self.parse_function(span, id, r#async, generator, func_kind)
+        self.parse_function(span, id, r#async, generator, func_kind, Modifiers::empty())
+    }
+
+    /// Parse function implementation in Typescript, cursor
+    /// at `function`
+    pub fn parse_ts_function_impl(
+        &mut self,
+        start_span: Span,
+        func_kind: FunctionKind,
+        modifiers: Modifiers<'a>,
+    ) -> Result<Box<'a, Function<'a>>> {
+        let r#async = modifiers.contains(ModifierKind::Async);
+        self.expect(Kind::Function)?;
+        let generator = self.eat(Kind::Star);
+        let id = self.parse_function_id(func_kind, r#async, generator);
+        self.parse_function(start_span, id, r#async, generator, func_kind, modifiers)
     }
 
     /// [Function Expression](https://tc39.es/ecma262/#prod-FunctionExpression)
@@ -194,7 +212,8 @@ impl<'a> Parser<'a> {
 
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator);
-        let function = self.parse_function(span, id, r#async, generator, func_kind)?;
+        let function =
+            self.parse_function(span, id, r#async, generator, func_kind, Modifiers::empty())?;
 
         self.ctx = self.ctx.and_decorator(save_decorator_context);
 
@@ -216,7 +235,13 @@ impl<'a> Parser<'a> {
         let ident = self.ast.binding_identifier(param);
         let pattern = self.ast.binding_pattern(ident, None, false);
         let params_span = self.end_span(params_span);
-        let formal_parameter = self.ast.formal_parameter(params_span, pattern, None, false, None);
+        let formal_parameter = self.ast.formal_parameter(
+            params_span,
+            pattern,
+            None,
+            false,
+            AstBuilder::new_vec(&self.ast),
+        );
         let params = self.ast.formal_parameters(
             params_span,
             FormalParameterKind::ArrowFormalParameters,
@@ -263,7 +288,14 @@ impl<'a> Parser<'a> {
         generator: bool,
     ) -> Result<Box<'a, Function<'a>>> {
         let span = self.start_span();
-        self.parse_function(span, None, r#async, generator, FunctionKind::Expression)
+        self.parse_function(
+            span,
+            None,
+            r#async,
+            generator,
+            FunctionKind::Expression,
+            Modifiers::empty(),
+        )
     }
 
     /// Section 15.5 Yield Expression
