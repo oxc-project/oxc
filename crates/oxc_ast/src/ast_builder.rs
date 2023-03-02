@@ -692,7 +692,7 @@ impl<'a> AstBuilder<'a> {
         pattern: BindingPattern<'a>,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
-        decorators: Option<Vec<'a, Decorator<'a>>>,
+        decorators: Vec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
         FormalParameter { span, pattern, accessibility, readonly, decorators }
     }
@@ -754,7 +754,7 @@ impl<'a> AstBuilder<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
         implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
-        decorators: Option<Vec<'a, Decorator<'a>>>,
+        decorators: Vec<'a, Decorator<'a>>,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, Class<'a>> {
         self.alloc(Class {

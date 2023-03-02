@@ -2,7 +2,7 @@ use oxc_allocator::Box;
 use oxc_ast::{
     ast::*,
     context::{Context, StatementContext},
-    GetSpan, Span,
+    AstBuilder, GetSpan, Span,
 };
 use oxc_diagnostics::Result;
 
@@ -235,7 +235,13 @@ impl<'a> Parser<'a> {
         let ident = self.ast.binding_identifier(param);
         let pattern = self.ast.binding_pattern(ident, None, false);
         let params_span = self.end_span(params_span);
-        let formal_parameter = self.ast.formal_parameter(params_span, pattern, None, false, None);
+        let formal_parameter = self.ast.formal_parameter(
+            params_span,
+            pattern,
+            None,
+            false,
+            AstBuilder::new_vec(&self.ast),
+        );
         let params = self.ast.formal_parameters(
             params_span,
             FormalParameterKind::ArrowFormalParameters,

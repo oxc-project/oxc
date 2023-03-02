@@ -1249,8 +1249,8 @@ pub struct FormalParameter<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub decorators: Option<Vec<'a, Decorator<'a>>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -1326,8 +1326,8 @@ pub struct Class<'a> {
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub decorators: Option<Vec<'a, Decorator<'a>>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub decorators: Vec<'a, Decorator<'a>>,
     /// Valid Modifiers: `export`, `abstract`
     #[serde(skip_serializing_if = "Modifiers::is_none")]
     pub modifiers: Modifiers<'a>,
@@ -1454,8 +1454,8 @@ pub struct MethodDefinition<'a> {
     pub optional: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub decorators: Option<Vec<'a, Decorator<'a>>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
@@ -1477,8 +1477,8 @@ pub struct PropertyDefinition<'a> {
     pub type_annotation: Option<TSTypeAnnotation<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub decorators: Option<Vec<'a, Decorator<'a>>>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Eq, PartialEq, Hash)]
