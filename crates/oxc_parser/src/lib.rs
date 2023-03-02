@@ -15,6 +15,7 @@ mod ts;
 mod diagnostics;
 mod lexer;
 
+pub use lexer::simd::SkipWhitespace;
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span, Trivias};
 use oxc_common::PaddedStringView;

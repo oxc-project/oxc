@@ -8,7 +8,7 @@
 mod constants;
 mod kind;
 mod number;
-mod simd;
+pub mod simd;
 mod string_builder;
 mod token;
 mod trivia_builder;
@@ -19,7 +19,7 @@ use oxc_allocator::{Allocator, String};
 use oxc_ast::{ast::RegExpFlags, Atom, SourceType, Span};
 use oxc_common::PaddedStringView;
 use oxc_diagnostics::{Diagnostics, Error};
-use simd::{SkipMultilineComment, SkipWhitespace};
+pub use simd::{SkipMultilineComment, SkipWhitespace};
 pub use token::{RegExp, Token, TokenValue};
 
 pub use self::kind::Kind;
@@ -337,7 +337,7 @@ impl<'a> Lexer<'a> {
 
     /// Read each char and set the current token
     /// Whitespace and line terminators are skipped
-    fn read_next_token(&mut self) -> Kind {
+    pub fn read_next_token(&mut self) -> Kind {
         self.current.token.start = self.offset();
 
         if self.context == LexerContext::JsxChild {
@@ -351,13 +351,12 @@ impl<'a> Lexer<'a> {
             self.current.token.start = offset;
             let builder = AutoCow::new(self);
 
-            if let Some(c) = self.current.chars.next() {
-                let kind = self.match_char(c, builder);
-                if !kind.is_trivia() {
-                    return kind;
-                }
-            } else {
-                return Kind::Eof;
+            // We are guaranteed to have a next character thanks to PaddedStringView's null-terminator padding.
+            // If it's a null terminator, match_char will return Eof.
+            let c = unsafe { self.current.chars.next().unwrap_unchecked() };
+            let kind = self.match_char(c, builder);
+            if !kind.is_trivia() {
+                return kind;
             }
         }
     }
@@ -469,7 +468,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn skip_whitespace(&mut self) {
+    pub fn skip_whitespace(&mut self) {
         let c = self.peek();
         let any_newline = c == '\r' || c == '\n';
         let any_white = c == ' ' || c == '\t' || any_newline;
@@ -484,7 +483,8 @@ impl<'a> Lexer<'a> {
         }
 
         let remaining = self.remaining().as_bytes();
-        let state = SkipWhitespace::new(self.current.token.is_on_new_line).simd(remaining);
+        let mut state = SkipWhitespace::new(self.current.token.is_on_new_line);
+        state.simd(remaining);
 
         // SAFETY: offset is computed to the boundary
         self.current.chars =
@@ -513,7 +513,8 @@ impl<'a> Lexer<'a> {
     fn skip_multi_line_comment(&mut self) -> Kind {
         let remaining = self.remaining().as_bytes();
         let newline = self.current.token.is_on_new_line;
-        let state = SkipMultilineComment::new(newline, remaining).simd();
+        let mut state = SkipMultilineComment::new(newline, remaining);
+        state.simd();
 
         // SAFETY: offset is computed to the boundary
         self.current.chars =
@@ -716,20 +717,21 @@ impl<'a> Lexer<'a> {
 
     fn private_identifier(&mut self, mut builder: AutoCow<'a>) -> Kind {
         let start = self.offset();
-        match self.current.chars.next() {
-            Some(c) if is_identifier_start(c) => {
+        let c = unsafe { self.current.chars.next().unwrap_unchecked() };
+        match c {
+            c if is_identifier_start(c) => {
                 builder.push_matching(c);
             }
-            Some('\\') => {
+            '\\' => {
                 builder.force_allocation_without_current_ascii_char(self);
                 self.identifier_unicode_escape_sequence(&mut builder, true);
             }
-            Some(c) => {
-                self.error(diagnostics::InvalidCharacter(c, Span::new(start, self.offset() - 1)));
-                return Kind::Undetermined;
-            }
-            None => {
+            '\0' => {
                 self.error(diagnostics::UnexpectedEnd(Span::new(start, self.offset() - 1)));
+                return Kind::Eof;
+            }
+            _ => {
+                self.error(diagnostics::InvalidCharacter(c, Span::new(start, self.offset() - 1)));
                 return Kind::Undetermined;
             }
         }
@@ -1134,28 +1136,26 @@ impl<'a> Lexer<'a> {
     /// `JSXFragment`
     /// { `JSXChildExpressionopt` }
     fn read_jsx_child(&mut self) -> Kind {
-        match self.current.chars.next() {
-            Some('<') => Kind::LAngle,
-            Some('{') => Kind::LCurly,
-            Some(c) => {
+        let c = unsafe { self.current.chars.next().unwrap_unchecked() };
+        match c {
+            '<' => Kind::LAngle,
+            '{' => Kind::LCurly,
+            '\0' => Kind::Eof,
+            _ => {
                 let mut builder = AutoCow::new(self);
                 builder.push_matching(c);
                 loop {
                     // `>` and `}` are errors in TypeScript but not Babel
                     // let's make this less strict so we can parse more code
-                    if matches!(self.peek(), '{' | '<') {
+                    if matches!(self.peek(), '{' | '<' | '\0') {
                         break;
                     }
-                    if let Some(c) = self.current.chars.next() {
-                        builder.push_matching(c);
-                    } else {
-                        break;
-                    }
+                    let c = unsafe { self.current.chars.next().unwrap_unchecked() };
+                    builder.push_matching(c);
                 }
                 self.current.token.value = self.string_to_token_value(builder.finish(self));
                 Kind::JSXText
             }
-            None => Kind::Eof,
         }
     }
 

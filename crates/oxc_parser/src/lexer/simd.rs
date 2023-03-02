@@ -28,6 +28,7 @@ pub struct SkipWhitespace {
 }
 
 impl SkipWhitespace {
+    #[must_use]
     pub fn new(newline: bool) -> Self {
         Self {
             offset: 0,
@@ -40,7 +41,7 @@ impl SkipWhitespace {
         }
     }
 
-    pub fn simd(mut self, bytes: &[u8]) -> Self {
+    pub fn simd(&mut self, bytes: &[u8]) -> &Self {
         let (chunks, _remainder) = bytes.as_chunks::<ELEMENTS>();
 
         for chunk in chunks {
@@ -116,7 +117,7 @@ impl<'a> SkipMultilineComment<'a> {
         }
     }
 
-    pub fn simd(mut self) -> Self {
+    pub fn simd(&mut self) -> &Self {
         let (chunks, _remainder) = self.remaining.as_chunks::<ELEMENTS>();
 
         for chunk in chunks {
