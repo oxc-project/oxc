@@ -16,19 +16,12 @@ trait TestTrait: Sized {}
 
 impl TestTrait for PaddedStringView {}
 
-// 16 empty bytes - TODO better way to define this?
-const PADDING_BYTES: &'static str = match str::from_utf8(&[0; PaddedStringView::PADDING_SIZE])
-// const PADDING_BYTES: &'static str = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
-// const PADDING_BYTES: [char; 16] = ['\0'; 16];
-
-{
+const PADDING_BYTES: &'static str = match str::from_utf8(&[0; PaddedStringView::PADDING_SIZE]) {
     Ok(res) => res,
     Err(_) => unreachable!(),
 };
 
 impl PaddedStringView {
-    // Review note: this needs to be kept in sync with ELEMENTS in SIMD.
-    // Should ELEMENTS take from here?
     pub const PADDING_SIZE: usize = 16;
 
     pub fn read_from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
@@ -37,7 +30,6 @@ impl PaddedStringView {
         let mut string = String::with_capacity(size as usize + PaddedStringView::PADDING_SIZE);
         file.read_to_string(&mut string)?;
         string.push_str(PADDING_BYTES);
-        // string.extend(PADDING_BYTES);
 
         Ok(Self { wrapped: string })
     }

@@ -6,7 +6,9 @@
 
 use std::simd::{Simd, SimdPartialEq, ToBitMask};
 
-const ELEMENTS: usize = 16;
+use oxc_common::PaddedStringView;
+
+const ELEMENTS: usize = PaddedStringView::PADDING_SIZE;
 type SimdVec = Simd<u8, ELEMENTS>;
 
 pub struct SkipWhitespace {
