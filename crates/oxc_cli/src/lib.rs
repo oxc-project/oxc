@@ -42,6 +42,10 @@ impl Cli {
                 Walk::new(path, &self.cli_options)
                     .iter()
                     .filter(|path| {
+                        if self.cli_options.no_ignore {
+                            return true;
+                        }
+
                         let ignore_pattern = &self.cli_options.ignore_pattern;
                         for pattern in ignore_pattern {
                             if pattern.matches_path(path) {

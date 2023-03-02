@@ -34,7 +34,7 @@ impl Command {
               Arg::new("quiet")
                 .long("quiet")
                 .required(false)
-                .action(clap::ArgAction::SetTrue)
+                .action(ArgAction::SetTrue)
                 .help("This option allows you to disable reporting on warnings. If you enable this option, only errors are reported by oxc_lint.")
             )
             .arg(
@@ -42,6 +42,13 @@ impl Command {
                 .long("ignore-path")
                 .required(false)
                 .help("This option allows you to specify the file to use as your .eslintignore.")
+            )
+            .arg(
+                Arg::new("no-ignore")
+                .long("no-ignore")
+                .required(false)
+                .action(ArgAction::SetTrue)
+                .help("Disables excluding of files from .eslintignore files, --ignore-path flags, --ignore-pattern flags.")
             )
             .arg(
                 Arg::new("ignore-pattern")
@@ -124,6 +131,12 @@ mod test {
     fn test_ignore_path() {
         let matches = get_lint_matches("oxc lint --ignore-path .gitignore foo.js");
         assert_eq!(matches.get_one::<String>("ignore-path"), Some(&".gitignore".to_string()));
+    }
+
+    #[test]
+    fn test_no_ignore() {
+        let matches = get_lint_matches("oxc lint --no-ignore foo.js");
+        assert!(matches.get_flag("no-ignore"));
     }
 
     #[test]

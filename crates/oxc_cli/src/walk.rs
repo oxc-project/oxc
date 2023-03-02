@@ -11,11 +11,11 @@ pub struct Walk {
 
 impl Walk {
     pub fn new<P: AsRef<Path>>(path: P, options: &CliOptions) -> Self {
-        let inner = WalkBuilder::new(path)
-            .add_custom_ignore_filename(&options.ignore_path)
-            .ignore(false)
-            .git_global(false)
-            .build();
+        let mut inner = WalkBuilder::new(path);
+        if !options.no_ignore {
+            inner.add_custom_ignore_filename(&options.ignore_path);
+        }
+        let inner = inner.ignore(false).git_global(false).build();
         Self { inner }
     }
 

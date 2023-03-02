@@ -7,6 +7,7 @@ pub struct CliOptions {
     pub quiet: bool,
     pub paths: Vec<PathBuf>,
     pub ignore_path: String,
+    pub no_ignore: bool,
     pub ignore_pattern: Vec<Pattern>,
 }
 
@@ -31,9 +32,10 @@ impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
         }
 
         let ignore_path = get_ignore_path(matches);
+        let no_ignore = matches.get_flag("no-ignore");
         let ignore_pattern = get_ignore_pattern(matches);
 
-        Ok(Self { quiet: matches.get_flag("quiet"), paths, ignore_path, ignore_pattern })
+        Ok(Self { quiet: matches.get_flag("quiet"), paths, ignore_path, no_ignore, ignore_pattern })
     }
 }
 
