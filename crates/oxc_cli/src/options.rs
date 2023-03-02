@@ -8,6 +8,7 @@ pub struct CliOptions {
     pub paths: Vec<PathBuf>,
     pub ignore_path: String,
     pub ignore_pattern: Vec<Pattern>,
+    pub max_warnings: Option<usize>,
 }
 
 impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
@@ -33,7 +34,13 @@ impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
         let ignore_path = get_ignore_path(matches);
         let ignore_pattern = get_ignore_pattern(matches);
 
-        Ok(Self { quiet: matches.get_flag("quiet"), paths, ignore_path, ignore_pattern })
+        Ok(Self {
+            quiet: matches.get_flag("quiet"),
+            max_warnings: matches.get_one("max-warnings").copied(),
+            paths,
+            ignore_pattern,
+            ignore_path,
+        })
     }
 }
 

@@ -3,11 +3,12 @@ mod options;
 mod result;
 mod walk;
 
+use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::{fs, path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
-use oxc_diagnostics::{Error, Severity};
+use oxc_diagnostics::{Error, Report, Severity};
 use oxc_linter::Linter;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -34,6 +35,8 @@ impl Cli {
     /// This function may panic if the `fs::read_to_string` function in `lint_path` fails to read a file.
     #[must_use]
     pub fn lint(&self) -> CliRunResult {
+        let (sender, receiver): (SyncSender<Report>, Receiver<Report>) = sync_channel(1024);
+
         let paths = &self
             .cli_options
             .paths
@@ -55,27 +58,40 @@ impl Cli {
             })
             .collect::<Vec<_>>();
 
-        let number_of_diagnostics = paths
-            .par_iter()
-            .map(|path| {
-                let diagnostics = Self::lint_path(path);
-                diagnostics
-                    .iter()
-                    .filter(|d| match d.severity() {
-                        // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
-                        // Note that it does not disable ALL diagnostics, only Warning diagnostics
-                        Some(Severity::Warning) => !self.cli_options.quiet,
-                        _ => true,
-                    })
-                    .for_each(|diagnostic| {
-                        println!("{diagnostic:?}");
-                    });
+        let (_, (warnings, diagnostics)): (_, (usize, usize)) = rayon::join(
+            move || {
+                paths.par_iter().for_each(|path| {
+                    let diagnostics = Self::lint_path(path);
 
-                diagnostics.len()
-            })
-            .sum();
+                    for d in diagnostics {
+                        sender.send(d).unwrap();
+                    }
+                });
+            },
+            move || {
+                let mut number_of_warnings = 0;
+                let mut number_of_diagnostics = 0;
 
-        CliRunResult::LintResult { number_of_files: paths.len(), number_of_diagnostics }
+                while let Ok(diagnostic) = receiver.recv() {
+                    if diagnostic.severity() == Some(Severity::Warning) && !self.cli_options.quiet {
+                        number_of_warnings += 1;
+                    }
+                    number_of_diagnostics += 1;
+                    println!("{diagnostic:?}");
+                }
+                (number_of_warnings, number_of_diagnostics)
+            },
+        );
+
+        CliRunResult::LintResult {
+            number_of_files: paths.len(),
+            number_of_diagnostics: diagnostics,
+            number_of_warnings: warnings,
+            max_warnings_exceeded: self
+                .cli_options
+                .max_warnings
+                .map_or(false, |max_warnings| warnings > max_warnings),
+        }
     }
 
     fn lint_path(path: &Path) -> Vec<Error> {
