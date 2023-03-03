@@ -132,9 +132,6 @@ impl Cli {
             LintRunResult { fixed_source: source_text.clone().into(), diagnostics: ret.errors }
         };
 
-        fs::write(path, result.fixed_source.as_bytes())
-            .unwrap_or_else(|_| panic!("{path:?} not found"));
-
         result
             .diagnostics
             .into_iter()
