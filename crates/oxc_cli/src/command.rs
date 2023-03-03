@@ -139,7 +139,7 @@ mod test {
         let arg = "oxc lint foo.js";
         let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
         let matches = matches.subcommand_matches("lint");
-        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), None)
+        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), None);
     }
 
     #[test]
@@ -147,7 +147,7 @@ mod test {
         let arg = "oxc lint --max-warnings 10 foo.js";
         let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
         let matches = matches.subcommand_matches("lint");
-        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), Some(&10))
+        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), Some(&10));
     }
 
     #[test]
