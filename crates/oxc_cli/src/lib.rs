@@ -3,13 +3,15 @@ mod options;
 mod result;
 mod walk;
 
+use std::io::{BufWriter, Write};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
-use std::{fs, path::Path, rc::Rc};
+use std::{fs, path::Path, rc::Rc, sync::Arc};
 
+use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::{Error, Severity};
-use oxc_linter::Linter;
+use oxc_linter::{LintRunResult, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -73,6 +75,7 @@ impl Cli {
                 });
             },
             move || {
+                let mut buf_writer = BufWriter::new(std::io::stdout());
                 let mut number_of_warnings = 0;
                 let mut number_of_diagnostics = 0;
 
@@ -94,8 +97,12 @@ impl Cli {
                         }
                     }
 
-                    println!("{diagnostic:?}");
+                    buf_writer
+                        .write_all(format!("{diagnostic:?}").as_bytes())
+                        .expect("Failed to write diagnostic.");
                 }
+
+                buf_writer.flush().expect("Failed to flush.");
 
                 (number_of_warnings, number_of_diagnostics)
             },
@@ -117,18 +124,26 @@ impl Cli {
         let source_text = fs::read_to_string(path).expect("{name} not found");
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
-        let ret = Parser::new(&allocator, &source_text, source_type).parse();
-        let diagnostics = if ret.errors.is_empty() {
+        let parser_source_text = source_text.clone();
+        let ret = Parser::new(&allocator, &parser_source_text, source_type).parse();
+        let result = if ret.errors.is_empty() {
             let program = allocator.alloc(ret.program);
             let semantic = SemanticBuilder::new().build(program, ret.trivias);
-            Linter::new().run(&Rc::new(semantic))
+            Linter::new().run(&Rc::new(semantic), &source_text)
         } else {
-            ret.errors
+            LintRunResult { fixed_source: source_text.clone().into(), diagnostics: ret.errors }
         };
 
-        diagnostics
+        if result.diagnostics.is_empty() {
+            return vec![];
+        }
+
+        let path = path.to_string_lossy();
+        let source = Arc::new(NamedSource::new(path, source_text.clone()));
+        result
+            .diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(source_text.clone()))
+            .map(|diagnostic| diagnostic.with_source_code(source.clone()))
             .collect()
     }
 }

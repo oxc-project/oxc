@@ -190,7 +190,7 @@ impl<'a> Parser<'a> {
     /// Exports
     /// `https://tc39.es/ecma262/#sec-exports`
     pub fn parse_export_declaration(&mut self) -> Result<Statement<'a>> {
-        let span = self.start_span();
+        let start_span = self.start_span();
         self.bump_any(); // advance `export`
 
         let kind = match self.cur_kind() {
@@ -219,7 +219,7 @@ impl<'a> Parser<'a> {
                 .parse_export_named_declaration()
                 .map(ModuleDeclarationKind::ExportNamedDeclaration),
         }?;
-        Ok(self.ast.module_declaration(self.end_span(span), kind))
+        Ok(self.ast.module_declaration(self.end_span(start_span), kind))
     }
 
     // export NamedExports ;
@@ -268,10 +268,10 @@ impl<'a> Parser<'a> {
 
     // export Declaration
     fn parse_export_named_declaration(&mut self) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
+        let start_span = self.start_span();
         // For tc39/proposal-decorators
         // For more information, please refer to https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport
         self.eat_decorators()?;
-        let start_span = self.start_span();
         let modifiers = if self.ts_enabled() {
             self.eat_modifiers_before_declaration().1
         } else {
