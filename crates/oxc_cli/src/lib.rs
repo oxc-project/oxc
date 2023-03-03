@@ -5,8 +5,9 @@ mod walk;
 
 use std::io::{BufWriter, Write};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
-use std::{fs, path::Path, rc::Rc};
+use std::{fs, path::Path, rc::Rc, sync::Arc};
 
+use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::{Error, Severity};
@@ -132,10 +133,16 @@ impl Cli {
             LintRunResult { fixed_source: source_text.clone().into(), diagnostics: ret.errors }
         };
 
+        if result.diagnostics.is_empty() {
+            return vec![];
+        }
+
+        let path = path.to_string_lossy();
+        let source = Arc::new(NamedSource::new(path, source_text.clone()));
         result
             .diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(source_text.clone()))
+            .map(|diagnostic| diagnostic.with_source_code(source.clone()))
             .collect()
     }
 }
