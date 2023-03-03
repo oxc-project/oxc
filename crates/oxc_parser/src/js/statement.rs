@@ -76,6 +76,12 @@ impl<'a> Parser<'a> {
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Result<Statement<'a>> {
+        let start_span = self.start_span();
+
+        if self.at(Kind::At) {
+            self.eat_decorators()?;
+        }
+
         match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => Ok(self.parse_empty_statement()),
@@ -89,7 +95,7 @@ impl<'a> Parser<'a> {
             Kind::Throw => self.parse_throw_statement(),
             Kind::Try => self.parse_try_statement(),
             Kind::Debugger => self.parse_debugger_statement(),
-            Kind::Class => self.parse_class_statement(stmt_ctx),
+            Kind::Class => self.parse_class_statement(stmt_ctx, start_span),
             Kind::Import if !matches!(self.peek_kind(), Kind::Dot | Kind::LParen) => {
                 self.parse_import_declaration()
             }
@@ -102,13 +108,9 @@ impl<'a> Parser<'a> {
                 self.parse_variable_statement(stmt_ctx)
             }
             Kind::Let if !self.cur_token().escaped => self.parse_let(stmt_ctx),
-            Kind::At => {
-                self.eat_decorators()?;
-                self.parse_statement_list_item(stmt_ctx)
-            }
             _ if self.at_function_with_async() => self.parse_function_declaration(stmt_ctx),
             _ if self.ts_enabled() && self.at_start_of_ts_declaration() => {
-                self.parse_ts_declaration_statement()
+                self.parse_ts_declaration_statement(start_span)
             }
             _ => self.parse_expression_or_labeled_statment(),
         }
