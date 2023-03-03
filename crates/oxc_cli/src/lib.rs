@@ -10,7 +10,7 @@ use std::{fs, path::Path, rc::Rc};
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::{Error, Severity};
-use oxc_linter::Linter;
+use oxc_linter::{LintRunResult, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -122,16 +122,21 @@ impl Cli {
         let source_text = fs::read_to_string(path).expect("{name} not found");
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
-        let ret = Parser::new(&allocator, &source_text, source_type).parse();
-        let diagnostics = if ret.errors.is_empty() {
+        let parser_source_text = source_text.clone();
+        let ret = Parser::new(&allocator, &parser_source_text, source_type).parse();
+        let result = if ret.errors.is_empty() {
             let program = allocator.alloc(ret.program);
             let semantic = SemanticBuilder::new().build(program, ret.trivias);
-            Linter::new().run(&Rc::new(semantic))
+            Linter::new().run(&Rc::new(semantic), &source_text)
         } else {
-            ret.errors
+            LintRunResult { fixed_source: source_text.clone().into(), diagnostics: ret.errors }
         };
 
-        diagnostics
+        fs::write(path, result.fixed_source.as_bytes())
+            .unwrap_or_else(|_| panic!("{path:?} not found"));
+
+        result
+            .diagnostics
             .into_iter()
             .map(|diagnostic| diagnostic.with_source_code(source_text.clone()))
             .collect()
