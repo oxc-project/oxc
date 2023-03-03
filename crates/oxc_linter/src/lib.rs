@@ -3,20 +3,36 @@
 #[cfg(test)]
 mod tester;
 
+mod autofix;
 mod context;
 pub mod rule;
 mod rules;
 
-use std::{fs, rc::Rc};
+use std::{borrow::Cow, fs, rc::Rc};
 
 use oxc_diagnostics::Error;
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 
 use crate::{
+    autofix::Fixer,
     context::LintContext,
     rules::{RuleEnum, RULES},
 };
+
+#[derive(Debug)]
+pub struct LintRunResult<'a> {
+    pub fixed_source: Cow<'a, str>,
+    pub diagnostics: Vec<Error>,
+}
+
+impl<'a> From<LintContext<'a>> for LintRunResult<'a> {
+    fn from(ctx: LintContext<'a>) -> Self {
+        let source_text = ctx.source_text();
+        let (fixes, diagnostics) = ctx.into_diagnostics();
+        Self { fixed_source: Fixer::new(source_text, fixes).fix(), diagnostics }
+    }
+}
 
 #[derive(Debug)]
 pub struct Linter {
@@ -49,8 +65,8 @@ impl Linter {
     }
 
     #[must_use]
-    pub fn run(&self, semantic: &Rc<Semantic>) -> Vec<Error> {
-        let ctx = LintContext::new(semantic.clone());
+    pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, source_text: &'a str) -> LintRunResult<'a> {
+        let ctx = LintContext::new(source_text, semantic.clone());
 
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
@@ -58,7 +74,7 @@ impl Linter {
             }
         }
 
-        ctx.into_diagnostics()
+        ctx.into()
     }
 
     fn read_rules_configuration() -> Option<serde_json::Map<String, serde_json::Value>> {
