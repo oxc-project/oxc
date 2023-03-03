@@ -339,9 +339,9 @@ impl<'a> Parser<'a> {
         false
     }
 
-    pub fn parse_ts_declaration_statement(&mut self) -> Result<Statement<'a>> {
+    pub fn parse_ts_declaration_statement(&mut self, start_span: Span) -> Result<Statement<'a>> {
         let reserved_ctx = self.ctx;
-        let start_span = self.start_span();
+
         let (flags, modifiers) = self.eat_modifiers_before_declaration();
         let declare = flags.declare();
         let r#async = flags.r#async();
@@ -497,8 +497,8 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_decorator(&mut self) -> Result<Decorator<'a>> {
-        self.bump_any(); // bump @
         let span = self.start_span();
+        self.bump_any(); // bump @
         let expr = self.with_context(Context::Decorator, Self::parse_lhs_expression)?;
         Ok(self.ast.decorator(self.end_span(span), expr))
     }

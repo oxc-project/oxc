@@ -12,8 +12,12 @@ type Implements<'a> = Vec<'a, Box<'a, TSClassImplements<'a>>>;
 
 /// Section 15.7 Class Definitions
 impl<'a> Parser<'a> {
-    pub fn parse_class_statement(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
-        let start_span = self.start_span();
+    // `start_span` points at the start of all decoractors and `class` keyword.
+    pub fn parse_class_statement(
+        &mut self,
+        stmt_ctx: StatementContext,
+        start_span: Span,
+    ) -> Result<Statement<'a>> {
         let decl = self.parse_class_declaration(start_span, Modifiers::empty())?;
 
         if stmt_ctx.is_single_statement() {
@@ -53,6 +57,7 @@ impl<'a> Parser<'a> {
         self.bump_any(); // advance `class`
 
         let decorators = self.state.consume_decorators();
+        let start_span = decorators.iter().next().map_or(start_span, |d| d.span);
 
         let id = if self.cur_kind().is_binding_identifier() && !self.at(Kind::Implements) {
             Some(self.parse_binding_identifier()?)
