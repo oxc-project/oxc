@@ -483,7 +483,8 @@ impl<'a> Lexer<'a> {
         }
 
         let remaining = self.remaining().as_bytes();
-        let state = SkipWhitespace::new(self.current.token.is_on_new_line).simd(remaining);
+        let mut state = SkipWhitespace::new(self.current.token.is_on_new_line);
+        state.simd(remaining);
 
         // SAFETY: offset is computed to the boundary
         self.current.chars =
@@ -512,7 +513,8 @@ impl<'a> Lexer<'a> {
     fn skip_multi_line_comment(&mut self) -> Kind {
         let remaining = self.remaining().as_bytes();
         let newline = self.current.token.is_on_new_line;
-        let state = SkipMultilineComment::new(newline, remaining).simd();
+        let mut state = SkipMultilineComment::new(newline, remaining);
+        state.simd();
 
         // SAFETY: offset is computed to the boundary
         self.current.chars =
