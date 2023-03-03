@@ -1,10 +1,12 @@
 mod no_array_constructor;
 mod no_debugger;
 mod no_empty;
+mod no_empty_pattern;
 
 pub use no_array_constructor::NoArrayConstructor;
 pub use no_debugger::NoDebugger;
 pub use no_empty::NoEmpty;
+pub use no_empty_pattern::NoEmptyPattern;
 
 use crate::{context::LintContext, rule::Rule, rule::RuleMeta, AstNode};
 
@@ -13,6 +15,7 @@ lazy_static::lazy_static! {
         RuleEnum::NoDebugger(NoDebugger::default()),
         RuleEnum::NoEmpty(NoEmpty::default()),
         RuleEnum::NoArrayConstructor(NoArrayConstructor::default()),
+        RuleEnum::NoEmptyPattern(NoEmptyPattern::default()),
     ];
 }
 
@@ -22,6 +25,7 @@ pub enum RuleEnum {
     NoDebugger(NoDebugger),
     NoEmpty(NoEmpty),
     NoArrayConstructor(NoArrayConstructor),
+    NoEmptyPattern(NoEmptyPattern),
 }
 
 impl RuleEnum {
@@ -30,6 +34,7 @@ impl RuleEnum {
             Self::NoDebugger(_) => NoDebugger::NAME,
             Self::NoEmpty(_) => NoEmpty::NAME,
             Self::NoArrayConstructor(_) => NoArrayConstructor::NAME,
+            Self::NoEmptyPattern(_) => NoEmptyPattern::NAME,
         }
     }
 
@@ -44,6 +49,9 @@ impl RuleEnum {
             Self::NoArrayConstructor(_) => Self::NoArrayConstructor(
                 maybe_value.map(NoArrayConstructor::from_configuration).unwrap_or_default(),
             ),
+            Self::NoEmptyPattern(_) => Self::NoEmptyPattern(
+                maybe_value.map(NoEmptyPattern::from_configuration).unwrap_or_default(),
+            ),
         }
     }
 
@@ -52,6 +60,7 @@ impl RuleEnum {
             Self::NoDebugger(rule) => rule.run(node, ctx),
             Self::NoEmpty(rule) => rule.run(node, ctx),
             Self::NoArrayConstructor(rule) => rule.run(node, ctx),
+            Self::NoEmptyPattern(rule) => rule.run(node, ctx),
         }
     }
 }
