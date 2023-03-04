@@ -1,4 +1,5 @@
 mod command;
+mod git;
 mod options;
 mod result;
 mod walk;
@@ -7,6 +8,7 @@ use std::io::{BufWriter, Write};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::{fs, path::Path, rc::Rc, sync::Arc};
 
+use git::{Git, GitResult};
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
@@ -15,7 +17,6 @@ use oxc_linter::{LintRunResult, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use walk::Walk;
 
 pub use crate::{command::Command, options::CliOptions, result::CliRunResult};
 
@@ -39,30 +40,24 @@ impl Cli {
     pub fn lint(&self) -> CliRunResult {
         let (sender, receiver): (SyncSender<Error>, Receiver<Error>) = sync_channel(32);
         let now = std::time::Instant::now();
-        let paths = &self
-            .cli_options
-            .paths
-            .iter()
-            .flat_map(|path| {
-                Walk::new(path, &self.cli_options)
-                    .iter()
-                    .filter(|path| {
-                        if self.cli_options.no_ignore {
-                            return true;
-                        }
 
-                        let ignore_pattern = &self.cli_options.ignore_pattern;
-                        for pattern in ignore_pattern {
-                            if pattern.matches_path(path) {
-                                return false;
-                            }
-                        }
-
-                        true
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
+        let paths = &self.cli_options.paths();
+        let git = Git::new(paths);
+        match git.verify() {
+            Err(GitResult::MultipleRepos) => {
+                println!("Found multiple Git repositories.");
+                return CliRunResult::None;
+            }
+            Err(GitResult::NoRepo) => {
+                println!("No valid Git repository found.");
+                return CliRunResult::None;
+            }
+            Err(GitResult::UncommittedChanges) => {
+                println!("Please commit changes before linting.");
+                return CliRunResult::None;
+            }
+            _ => {}
+        }
 
         let fix = self.cli_options.fix;
 

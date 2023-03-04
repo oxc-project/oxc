@@ -1,7 +1,9 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::ArgMatches;
 use glob::Pattern;
+
+use crate::walk::Walk;
 
 pub struct CliOptions {
     pub quiet: bool,
@@ -11,6 +13,34 @@ pub struct CliOptions {
     pub ignore_path: String,
     pub no_ignore: bool,
     pub ignore_pattern: Vec<Pattern>,
+}
+
+impl CliOptions {
+    #[must_use]
+    pub fn paths(&self) -> Vec<Box<Path>> {
+        self.paths
+            .iter()
+            .flat_map(|path| {
+                Walk::new(path, self)
+                    .iter()
+                    .filter(|path| {
+                        if self.no_ignore {
+                            return true;
+                        }
+
+                        let ignore_pattern = &self.ignore_pattern;
+                        for pattern in ignore_pattern {
+                            if pattern.matches_path(path) {
+                                return false;
+                            }
+                        }
+
+                        true
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
+    }
 }
 
 impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
