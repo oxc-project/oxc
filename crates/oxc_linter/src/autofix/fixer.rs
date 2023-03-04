@@ -46,6 +46,7 @@ impl<'a> Fixer<'a> {
             };
         }
 
+        self.messages.sort_by_key(|m| m.fix.as_ref().unwrap_or(&Fix::default()).span);
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
         let mut last_pos: i64 = -1;
@@ -96,311 +97,429 @@ mod test {
     const INSERT_AT_END: Fix =
         Fix { span: Span { start: 19, end: 19 }, content: Cow::Borrowed("// end") };
 
-    // const INSERT_AT_START: Fix =
-    //     Fix { span: Span { start: 0, end: 0 }, content: Cow::Borrowed("// start") };
-    // const INSERT_AT_MIDDLE: Fix =
-    //     Fix { span: Span { start: 13, end: 13 }, content: Cow::Borrowed("5 *") };
-    // const REPLACE_ID: Fix = Fix { span: Span { start: 4, end: 10 }, content: Cow::Borrowed("foo") };
-    // const REPLACE_VAR: Fix = Fix { span: Span { start: 0, end: 3 }, content: Cow::Borrowed("let") };
-    // const REPLACE_NUM: Fix = Fix { span: Span { start: 13, end: 14 }, content: Cow::Borrowed("5") };
-    // const REMOVE_START: Fix = Fix::delete(Span { start: 0, end: 4 });
-    // const REMOVE_MIDDLE: Fix = Fix::delete(Span { start: 5, end: 10 });
-    // const REMOVE_END: Fix = Fix::delete(Span { start: 14, end: 18 });
-    // const REVERSE_RANGE: Fix = Fix { span: Span { start: 3, end: 0 }, content: Cow::Borrowed(" ") };
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Start")]
+    struct InsertAtStart();
+    const INSERT_AT_START: Fix =
+        Fix { span: Span { start: 0, end: 0 }, content: Cow::Borrowed("// start") };
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Multiply")]
+    struct InsertAtMiddle();
+    const INSERT_AT_MIDDLE: Fix =
+        Fix { span: Span { start: 13, end: 13 }, content: Cow::Borrowed("5 *") };
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("foo")]
+    struct ReplaceId();
+    const REPLACE_ID: Fix = Fix { span: Span { start: 4, end: 10 }, content: Cow::Borrowed("foo") };
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("let")]
+    struct ReplaceVar();
+    const REPLACE_VAR: Fix = Fix { span: Span { start: 0, end: 3 }, content: Cow::Borrowed("let") };
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("5")]
+    struct ReplaceNum();
+    const REPLACE_NUM: Fix = Fix { span: Span { start: 13, end: 14 }, content: Cow::Borrowed("5") };
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("removestart")]
+    struct RemoveStart();
+    const REMOVE_START: Fix = Fix::delete(Span { start: 0, end: 4 });
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("removemiddle")]
+    struct RemoveMiddle();
+    const REMOVE_MIDDLE: Fix = Fix::delete(Span { start: 5, end: 10 });
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("removeend")]
+    struct RemoveEnd();
+    const REMOVE_END: Fix = Fix::delete(Span { start: 14, end: 18 });
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("reversed range")]
+    struct ReverseRange();
+    const REVERSE_RANGE: Fix = Fix { span: Span { start: 3, end: 0 }, content: Cow::Borrowed(" ") };
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("nofix")]
+    struct NoFix();
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("nofix1")]
+    struct NoFix1();
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("nofix2")]
+    struct NoFix2();
 
     fn get_fix_result(messages: Vec<Message>) -> FixResult {
         Fixer::new(TEST_CODE, messages).fix()
     }
 
+    fn create_message<T: Into<Error>>(error: T, fix: Option<Fix>) -> Message {
+        Message::new(error.into(), fix)
+    }
+
     #[test]
     fn insert_at_the_end() {
-        let foo: Error = InsertAtEnd().into();
-        let msg = Message { error: foo, fixed: false, fix: Some(INSERT_AT_END) };
-        let result = get_fix_result(vec![msg]);
+        let result = get_fix_result(vec![create_message(InsertAtEnd(), Some(INSERT_AT_END))]);
         assert_eq!(result.fixed_code, TEST_CODE.to_string() + INSERT_AT_END.content.as_ref());
         assert_eq!(result.messages.len(), 0);
     }
 
-    //     #[test]
-    //     fn insert_at_the_start() {
-    //         let fixer = get_fix_result(vec![INSERT_AT_START]);
-    //         assert_eq!(fixer.fix(), INSERT_AT_START.content.to_string() + TEST_CODE);
-    //     }
+    #[test]
+    fn insert_at_the_start() {
+        let result = get_fix_result(vec![create_message(InsertAtStart(), Some(INSERT_AT_START))]);
+        assert_eq!(result.fixed_code, INSERT_AT_START.content.to_string() + TEST_CODE);
+        assert_eq!(result.messages.len(), 0);
+    }
 
-    //     #[test]
-    //     fn insert_at_the_middle() {
-    //         let fixer = get_fix_result(vec![INSERT_AT_MIDDLE]);
-    //         assert_eq!(
-    //             fixer.fix(),
-    //             TEST_CODE.replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *"))
-    //         );
-    //     }
+    #[test]
+    fn insert_at_the_middle() {
+        let result = get_fix_result(vec![create_message(InsertAtMiddle(), Some(INSERT_AT_MIDDLE))]);
+        assert_eq!(
+            result.fixed_code,
+            TEST_CODE.replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *"))
+        );
+        assert_eq!(result.messages.len(), 0);
+    }
 
-    //     #[test]
-    //     fn insert_at_the_start_middle_end() {
-    //         let fixer = get_fix_result(vec![INSERT_AT_MIDDLE, INSERT_AT_START, INSERT_AT_END]);
-    //         assert_eq!(
-    //             fixer.fix(),
-    //             format!(
-    //                 "{}{}{}",
-    //                 INSERT_AT_START.content,
-    //                 TEST_CODE.replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *")),
-    //                 INSERT_AT_END.content
-    //             )
-    //         );
-    //     }
+    #[test]
+    fn insert_at_the_start_middle_end() {
+        let messages = vec![
+            create_message(InsertAtMiddle(), Some(INSERT_AT_MIDDLE)),
+            create_message(InsertAtStart(), Some(INSERT_AT_START)),
+            create_message(InsertAtEnd(), Some(INSERT_AT_END)),
+        ];
+        let result = get_fix_result(messages);
+        assert_eq!(
+            result.fixed_code,
+            format!(
+                "{}{}{}",
+                INSERT_AT_START.content,
+                TEST_CODE.replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *")),
+                INSERT_AT_END.content
+            )
+        );
+        assert_eq!(result.messages.len(), 0);
+    }
 
-    //     #[test]
-    //     fn ignore_reverse_range() {
-    //         let fixer = get_fix_result(vec![REVERSE_RANGE]);
-    //         assert_eq!(fixer.fix(), TEST_CODE);
-    //     }
+    #[test]
+    fn ignore_reverse_range() {
+        let result = get_fix_result(vec![create_message(ReverseRange(), Some(REVERSE_RANGE))]);
+        assert_eq!(result.fixed_code, TEST_CODE);
+    }
 
-    //     #[test]
-    //     fn replace_at_the_start() {
-    //         let fixer = get_fix_result(vec![REPLACE_VAR]);
-    //         assert_eq!(fixer.fix(), TEST_CODE.replace("var", "let"));
-    //     }
+    #[test]
+    fn replace_at_the_start() {
+        let result = get_fix_result(vec![create_message(ReplaceVar(), Some(REPLACE_VAR))]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace("var", "let"));
+        assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn replace_at_the_middle() {
-    //         let fixer = get_fix_result(vec![REPLACE_ID]);
-    //         assert_eq!(fixer.fix(), TEST_CODE.replace("answer", "foo"));
-    //     }
+    #[test]
+    fn replace_at_the_middle() {
+        let result = get_fix_result(vec![create_message(ReplaceId(), Some(REPLACE_ID))]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
+        assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn replace_at_the_end() {
-    //         let fixer = get_fix_result(vec![REPLACE_NUM]);
-    //         assert_eq!(fixer.fix(), TEST_CODE.replace('6', "5"));
-    //     }
+    #[test]
+    fn replace_at_the_end() {
+        let result = get_fix_result(vec![create_message(ReplaceNum(), Some(REPLACE_NUM))]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace('6', "5"));
+        assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn replace_at_the_start_middle_end() {
-    //         let fixer = get_fix_result(vec![REPLACE_ID, REPLACE_VAR, REPLACE_NUM]);
-    //         assert_eq!(fixer.fix(), "let foo = 5 * 7;");
-    //     }
+    #[test]
+    fn replace_at_the_start_middle_end() {
+        let messages = vec![
+            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(ReplaceVar(), Some(REPLACE_VAR)),
+            create_message(ReplaceNum(), Some(REPLACE_NUM)),
+        ];
+        let result = get_fix_result(messages);
+        assert_eq!(result.fixed_code, "let foo = 5 * 7;");
+        assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn remove_at_the_start() {
-    //         let fixer = get_fix_result(vec![REMOVE_START]);
-    //         assert_eq!(fixer.fix(), TEST_CODE.replace("var ", ""));
-    //     }
+    #[test]
+    fn remove_at_the_start() {
+        let result = get_fix_result(vec![create_message(RemoveStart(), Some(REMOVE_START))]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace("var ", ""));
+        assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn remove_at_the_middle() {
-    //         let fixer = get_fix_result(vec![REMOVE_MIDDLE]);
-    //         assert_eq!(fixer.fix(), TEST_CODE.replace("answer", "a"));
-    //     }
+    #[test]
+    fn remove_at_the_middle() {
+        let result = get_fix_result(vec![create_message(RemoveMiddle(), Some(REMOVE_MIDDLE))]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "a"));
+        assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn remove_at_the_end() {
-    //         let fixer = get_fix_result(vec![REMOVE_END]);
-    //         assert_eq!(fixer.fix(), TEST_CODE.replace(" * 7", ""));
-    //     }
+    #[test]
+    fn remove_at_the_end() {
+        let result = get_fix_result(vec![create_message(RemoveEnd(), Some(REMOVE_END))]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace(" * 7", ""));
+        assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn replace_at_start_remove_at_middle_insert_at_end() {
-    //         let fixer = get_fix_result(vec![INSERT_AT_END, REMOVE_END, REPLACE_VAR]);
-    //         assert_eq!(fixer.fix(), "let answer = 6;// end");
-    //     }
+    #[test]
+    fn replace_at_start_remove_at_middle_insert_at_end() {
+        let result = get_fix_result(vec![
+            create_message(InsertAtEnd(), Some(INSERT_AT_END)),
+            create_message(RemoveEnd(), Some(REMOVE_END)),
+            create_message(ReplaceVar(), Some(REPLACE_VAR)),
+        ]);
+        assert_eq!(result.fixed_code, "let answer = 6;// end");
+        assert_eq!(result.messages.len(), 0);
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn apply_one_fix_when_spans_overlap() {
-    //         let fixer = get_fix_result(vec![REMOVE_MIDDLE, REPLACE_ID]);
-    //         assert_eq!(fixer.fix(), TEST_CODE.replace("answer", "foo"));
-    //     }
+    #[test]
+    fn apply_one_fix_when_spans_overlap() {
+        let result = get_fix_result(vec![
+            create_message(RemoveMiddle(), Some(REMOVE_MIDDLE)),
+            create_message(ReplaceId(), Some(REPLACE_ID)),
+        ]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
+        assert_eq!(result.messages.len(), 1);
+        assert_eq!(result.messages[0].error.to_string(), "removemiddle");
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn apply_one_fix_when_the_start_the_same_as_the_previous_end() {
-    //         let fixer = get_fix_result(vec![REMOVE_START, REPLACE_ID]);
-    //         assert_eq!(fixer.fix(), TEST_CODE.replace("var ", ""));
-    //     }
+    #[test]
+    fn apply_one_fix_when_the_start_the_same_as_the_previous_end() {
+        let result = get_fix_result(vec![
+            create_message(RemoveStart(), Some(REMOVE_START)),
+            create_message(ReplaceId(), Some(REPLACE_ID)),
+        ]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace("var ", ""));
+        assert_eq!(result.messages.len(), 1);
+        assert_eq!(result.messages[0].error.to_string(), "foo");
+        assert!(result.fixed);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[test]
+    fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix() {
+        let result = get_fix_result(vec![
+            create_message(RemoveMiddle(), Some(REMOVE_MIDDLE)),
+            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(NoFix(), None),
+        ]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
+        assert_eq!(result.messages.len(), 2);
+        assert_eq!(result.messages[0].error.to_string(), "nofix");
+        assert_eq!(result.messages[1].error.to_string(), "removemiddle");
+        assert!(result.fixed);
+    }
 
-    //     #[test]
-    //     fn apply_same_fix_when_span_overlap_regardless_of_order() {
-    //         let fixer1 = get_fix_result(vec![REMOVE_MIDDLE, REPLACE_ID]);
-    //         let fixer2 = get_fix_result(vec![REPLACE_ID, REMOVE_MIDDLE]);
-    //         assert_eq!(fixer1.fix(), fixer2.fix());
-    //     }
+    #[test]
+    fn apply_same_fix_when_span_overlap_regardless_of_order() {
+        let result1 = get_fix_result(vec![
+            create_message(RemoveMiddle(), Some(REMOVE_MIDDLE)),
+            create_message(ReplaceId(), Some(REPLACE_ID)),
+        ]);
+        let result2 = get_fix_result(vec![
+            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(RemoveMiddle(), Some(REMOVE_MIDDLE)),
+        ]);
+        assert_eq!(result1.fixed_code, result2.fixed_code);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn should_not_apply_fix_with_one_no_fix() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[test]
+    fn should_not_apply_fix_with_one_no_fix() {
+        let result = get_fix_result(vec![create_message(NoFix(), None)]);
+        assert_eq!(result.fixed_code, TEST_CODE);
+        assert_eq!(result.messages.len(), 1);
+        assert_eq!(result.messages[0].error.to_string(), "nofix");
+        assert!(!result.fixed);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn sort_no_fix_messages_correctly() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn sort_no_fix_messages_correctly() {
+        let result = get_fix_result(vec![
+            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(NoFix2(), None),
+            create_message(NoFix1(), None),
+        ]);
+        assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
+        assert_eq!(result.messages.len(), 2);
+        assert_eq!(result.messages[0].error.to_string(), "nofix1");
+        assert_eq!(result.messages[0].error.to_string(), "nofix2");
+        assert!(result.fixed);
+    }
+    #[ignore]
+    #[test]
+    fn insert_bom_at_0() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn insert_bom_at_0() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn insert_bom_with_text_at_0() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn insert_bom_with_text_at_0() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn remove_bom_with_negative_range() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn remove_bom_with_negative_range() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn replace_bom_with_negative_range_and_foobar() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn replace_bom_with_negative_range_and_foobar() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    // With BOM
+    #[ignore]
+    #[test]
+    fn insert_at_the_end_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     // With BOM
-    //     #[ignore]
-    //     #[test]
-    //     fn insert_at_the_end_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn insert_at_the_start_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn insert_at_the_start_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn insert_at_the_middle_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn insert_at_the_middle_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn insert_at_the_start_middle_end_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn insert_at_the_start_middle_end_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn ignore_reverse_range_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn ignore_reverse_range_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn replace_at_the_end_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn replace_at_the_end_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn replace_at_the_start_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn replace_at_the_start_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn replace_at_the_middle_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn replace_at_the_middle_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn replace_at_the_start_middle_end_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn replace_at_the_start_middle_end_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn remove_at_the_end_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn remove_at_the_end_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn remove_at_the_start_with_bom() {
+        let _fixer = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn remove_at_the_start_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn remove_at_the_middle_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn remove_at_the_middle_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn remove_at_the_start_middle_end_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn remove_at_the_start_middle_end_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn replace_at_start_remove_at_middle_insert_at_end_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn replace_at_start_remove_at_middle_insert_at_end_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn apply_one_fix_when_spans_overlap_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn apply_one_fix_when_spans_overlap_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn apply_one_fix_when_the_start_the_same_as_the_previous_end_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn apply_one_fix_when_the_start_the_same_as_the_previous_end_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn apply_same_fix_when_span_overlap_regardless_of_order_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn apply_same_fix_when_span_overlap_regardless_of_order_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn should_not_apply_fix_with_one_no_fix_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn should_not_apply_fix_with_one_no_fix_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn insert_bom_at_0_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn insert_bom_at_0_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn insert_bom_with_text_at_0_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn insert_bom_with_text_at_0_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn remove_bom_with_negative_range_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 
-    //     #[ignore]
-    //     #[test]
-    //     fn remove_bom_with_negative_range_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
-
-    //     #[ignore]
-    //     #[test]
-    //     fn replace_bom_with_negative_range_and_foobar_with_bom() {
-    //         let _fixer = get_fix_result(vec![]);
-    //     }
+    #[ignore]
+    #[test]
+    fn replace_bom_with_negative_range_and_foobar_with_bom() {
+        let _result = get_fix_result(vec![]);
+    }
 }
