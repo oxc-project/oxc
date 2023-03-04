@@ -1,6 +1,4 @@
-use std::{borrow::Cow, cmp::Ordering};
-
-use oxc_ast::Span;
+use std::borrow::Cow;
 
 use super::Fix;
 
@@ -11,24 +9,7 @@ pub struct Fixer<'a> {
 
 impl<'a> Fixer<'a> {
     pub fn new(source_text: &'a str, mut fixes: Vec<Fix<'a>>) -> Self {
-        fixes.sort_by(
-            |Fix { span: Span { start: a_start, end: a_end }, .. },
-             Fix { span: Span { start: b_start, end: b_end }, .. }| {
-                if a_start < b_start {
-                    Ordering::Less
-                } else if a_start > b_start {
-                    Ordering::Greater
-                } else {
-                    if a_end < b_end {
-                        Ordering::Less
-                    } else if a_end > b_end {
-                        Ordering::Greater
-                    } else {
-                        Ordering::Equal
-                    }
-                }
-            },
-        );
+        fixes.sort_by_key(|f| f.span);
         Self { source_text, fixes }
     }
 
