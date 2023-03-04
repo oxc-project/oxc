@@ -20,7 +20,7 @@ impl<'a> Fixer<'a> {
             let source_text = self.source_text;
             let mut output = String::with_capacity(source_text.len());
             // To record the position of the last fix.
-            let mut last_pos = 0;
+            let mut last_pos: i64 = -1;
             self.fixes.iter().for_each(|Fix { content, span }| {
                 let start = span.start;
                 let end = span.end;
@@ -28,17 +28,18 @@ impl<'a> Fixer<'a> {
                     return;
                 }
                 // Current fix may conflict with the last fix, so let's skip it.
-                if start < last_pos {
+                if i64::from(start) <= last_pos {
                     return;
                 }
 
-                let offset = last_pos.max(0) as usize;
+                // This is safe to unwrap because the minimal number is 0.
+                let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
                 output.push_str(&source_text[offset..start as usize]);
                 output.push_str(content);
-                last_pos = span.end;
+                last_pos = i64::from(end);
             });
 
-            let offset = last_pos.max(0) as usize;
+            let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
             output.push_str(&source_text[offset..]);
 
             return Cow::Owned(output);
@@ -70,7 +71,7 @@ mod test {
     const REMOVE_END: Fix = Fix::delete(Span { start: 14, end: 18 });
     const REVERSE_RANGE: Fix = Fix { span: Span { start: 3, end: 0 }, content: Cow::Borrowed(" ") };
 
-    fn create_fixer<'a>(fixes: Vec<Fix<'a>>) -> Fixer {
+    fn create_fixer(fixes: Vec<Fix>) -> Fixer {
         Fixer::new(TEST_CODE, fixes)
     }
 
@@ -130,7 +131,7 @@ mod test {
     #[test]
     fn replace_at_the_end() {
         let fixer = create_fixer(vec![REPLACE_NUM]);
-        assert_eq!(fixer.fix(), TEST_CODE.replace("6", "5"));
+        assert_eq!(fixer.fix(), TEST_CODE.replace('6', "5"));
     }
 
     #[test]
@@ -155,5 +156,30 @@ mod test {
     fn remove_at_the_end() {
         let fixer = create_fixer(vec![REMOVE_END]);
         assert_eq!(fixer.fix(), TEST_CODE.replace(" * 7", ""));
+    }
+
+    #[test]
+    fn replace_at_start_remove_at_middle_insert_at_end() {
+        let fixer = create_fixer(vec![INSERT_AT_END, REMOVE_END, REPLACE_VAR]);
+        assert_eq!(fixer.fix(), "let answer = 6;// end");
+    }
+
+    #[test]
+    fn apply_one_fix_when_spans_overlap() {
+        let fixer = create_fixer(vec![REMOVE_MIDDLE, REPLACE_ID]);
+        assert_eq!(fixer.fix(), TEST_CODE.replace("answer", "foo"));
+    }
+
+    #[test]
+    fn apply_one_fix_when_the_start_the_same_as_the_previous_end() {
+        let fixer = create_fixer(vec![REMOVE_START, REPLACE_ID]);
+        assert_eq!(fixer.fix(), TEST_CODE.replace("var ", ""));
+    }
+
+    #[test]
+    fn apply_same_fix_when_span_overlap_regardless_of_order() {
+        let fixer1 = create_fixer(vec![REMOVE_MIDDLE, REPLACE_ID]);
+        let fixer2 = create_fixer(vec![REPLACE_ID, REMOVE_MIDDLE]);
+        assert_eq!(fixer1.fix(), fixer2.fix());
     }
 }
