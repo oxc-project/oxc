@@ -30,3 +30,4 @@ miette = { workspace = true, features = ["fancy"] }
 
 ignore = "0.4.20"
 git2 = "0.16.1"
+git2 = { version = "0.16.1", default_features = false }
