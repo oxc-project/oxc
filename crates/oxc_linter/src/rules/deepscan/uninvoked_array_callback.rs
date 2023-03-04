@@ -27,7 +27,7 @@ pub struct UninvokedArrayCallback;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// This rule applies when the Array functions having callback argument are used for an array with empty slots.
+    /// This rule applies when an Array function has a callback argument used for an array with empty slots.
     ///
     /// ### Why is this bad?
     /// When the Array constructor is called with a single number argument, an array with the specified number of empty slots (not actual undefined values) is constructed.
