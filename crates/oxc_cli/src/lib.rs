@@ -38,7 +38,7 @@ impl Cli {
     #[must_use]
     pub fn lint(&self) -> CliRunResult {
         let (sender, receiver): (SyncSender<Error>, Receiver<Error>) = sync_channel(32);
-
+        let now = std::time::Instant::now();
         let paths = &self
             .cli_options
             .paths
@@ -109,6 +109,7 @@ impl Cli {
         );
 
         CliRunResult::LintResult {
+            duration: now.elapsed(),
             number_of_files: paths.len(),
             number_of_diagnostics: diagnostics,
             number_of_warnings: warnings,

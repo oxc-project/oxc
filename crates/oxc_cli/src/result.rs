@@ -14,6 +14,7 @@ pub enum CliRunResult {
         number_of_warnings: usize,
         number_of_diagnostics: usize,
         max_warnings_exceeded: bool,
+        duration: std::time::Duration,
     },
 }
 
@@ -30,8 +31,10 @@ impl Termination for CliRunResult {
                 number_of_warnings,
                 number_of_diagnostics,
                 max_warnings_exceeded,
+                duration,
             } => {
-                println!("Checked {number_of_files} files.");
+                let ms = duration.as_millis();
+                println!("Checked {number_of_files} files in {ms}ms.");
 
                 if max_warnings_exceeded {
                     println!("Exceeded maximum number of warnings. Found {number_of_warnings}.");
