@@ -15,6 +15,10 @@ fn main() -> CliRunResult {
         let (subcommand, matches) = command;
         let cli_options = CliOptions::try_from(matches);
         if let Ok(cli_options) = cli_options {
+            // if cli_options.fix {
+            //   Git::new().verify()?;
+            // }
+
             let cli = Cli::new(cli_options);
 
             if subcommand == "lint" {
