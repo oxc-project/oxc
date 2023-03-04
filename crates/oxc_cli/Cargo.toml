@@ -29,3 +29,4 @@ rayon = { workspace = true }
 miette = { workspace = true, features = ["fancy"] }
 
 ignore = "0.4.20"
+git2 = "0.16.1"
