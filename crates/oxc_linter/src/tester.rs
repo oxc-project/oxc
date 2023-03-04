@@ -66,7 +66,7 @@ impl Tester {
         let semantic = std::rc::Rc::new(semantic);
         let rule = RULES.iter().find(|rule| rule.name() == self.rule_name).unwrap();
         let rule = rule.read_json(config);
-        let result = Linter::from_rules(vec![rule]).run(&semantic, source_text);
+        let result = Linter::from_rules(vec![rule]).run(&semantic, source_text, false);
         if result.diagnostics.is_empty() {
             return true;
         }
