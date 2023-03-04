@@ -67,12 +67,12 @@ impl Tester {
         let rule = RULES.iter().find(|rule| rule.name() == self.rule_name).unwrap();
         let rule = rule.read_json(config);
         let result = Linter::from_rules(vec![rule]).run(&semantic, source_text, false);
-        if result.diagnostics.is_empty() {
+        if result.is_empty() {
             return true;
         }
         let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
-        for diagnostic in result.diagnostics {
-            let diagnostic = diagnostic.with_source_code(source_text.to_string());
+        for diagnostic in result {
+            let diagnostic = diagnostic.error.with_source_code(source_text.to_string());
             let diagnostic = diagnostic.with_source_code(NamedSource::new(
                 path.to_string_lossy(),
                 source_text.to_string(),

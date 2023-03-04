@@ -4,14 +4,17 @@ use oxc_ast::AstKind;
 use oxc_diagnostics::Error;
 use oxc_semantic::Semantic;
 
-use crate::{autofix::Fix, AstNode};
+use crate::{
+    autofix::{Fix, Message},
+    AstNode,
+};
 
 pub struct LintContext<'a> {
     source_text: &'a str,
 
     semantic: Rc<Semantic<'a>>,
 
-    diagnostics: RefCell<Vec<Error>>,
+    diagnostics: RefCell<Vec<Message<'a>>>,
 
     /// Whether or not to apply code fixes during linting.
     fix: bool,
@@ -35,8 +38,8 @@ impl<'a> LintContext<'a> {
         self.source_text
     }
 
-    pub fn into_diagnostics(self) -> (Vec<Fix<'a>>, Vec<Error>) {
-        (self.fixes.into_inner(), self.diagnostics.into_inner())
+    pub fn into_message(self) -> Vec<Message<'a>> {
+        self.diagnostics.into_inner()
     }
 
     pub fn semantic(&self) -> &Semantic<'a> {
@@ -44,7 +47,11 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn diagnostic<T: Into<Error>>(&self, diagnostic: T) {
-        self.diagnostics.borrow_mut().push(diagnostic.into());
+        self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), None));
+    }
+
+    pub fn diagnostic_with_fix<T: Into<Error>>(&self, diagnostic: T, fix: Fix<'a>) {
+        self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), Some(fix)));
     }
 
     pub fn fix(&self, fix: Fix<'a>) {

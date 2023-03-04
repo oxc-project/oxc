@@ -4,7 +4,7 @@ use oxc_ast::Span;
 
 mod fixer;
 
-pub use fixer::Fixer;
+pub use fixer::{Fixer, Message};
 
 #[derive(Debug)]
 pub struct Fix<'a> {
