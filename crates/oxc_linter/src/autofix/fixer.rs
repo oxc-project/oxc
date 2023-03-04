@@ -74,30 +74,37 @@ mod test {
     use super::Fixer;
     use crate::autofix::Fix;
 
-    const TEST_CODE: &str = "var answer = 6 * 7";
+    const TEST_CODE: &str = "var answer = 6 * 7;";
     const INSERT_AT_END: Fix =
-        Fix { span: Span { start: 18, end: 18 }, content: Cow::Borrowed("// end") };
+        Fix { span: Span { start: 19, end: 19 }, content: Cow::Borrowed("// end") };
     const INSERT_AT_START: Fix =
         Fix { span: Span { start: 0, end: 0 }, content: Cow::Borrowed("// start") };
     const INSERT_AT_MIDDLE: Fix =
         Fix { span: Span { start: 13, end: 13 }, content: Cow::Borrowed("5 *") };
+    const REPLACE_ID: Fix = Fix { span: Span { start: 4, end: 10 }, content: Cow::Borrowed("foo") };
+    const REPLACE_VAR: Fix = Fix { span: Span { start: 0, end: 3 }, content: Cow::Borrowed("let") };
+    const REPLACE_NUM: Fix = Fix { span: Span { start: 13, end: 14 }, content: Cow::Borrowed("5") };
     const REVERSE_RANGE: Fix = Fix { span: Span { start: 3, end: 0 }, content: Cow::Borrowed(" ") };
+
+    fn create_fixer<'a>(fixes: Vec<Fix<'a>>) -> Fixer {
+        Fixer::new(TEST_CODE, fixes)
+    }
 
     #[test]
     fn insert_at_the_end() {
-        let fixer = Fixer::new(TEST_CODE, vec![INSERT_AT_END]);
+        let fixer = create_fixer(vec![INSERT_AT_END]);
         assert_eq!(fixer.fix(), TEST_CODE.to_string() + INSERT_AT_END.content.as_ref());
     }
 
     #[test]
     fn insert_at_the_beginning() {
-        let fixer = Fixer::new(TEST_CODE, vec![INSERT_AT_START]);
+        let fixer = create_fixer(vec![INSERT_AT_START]);
         assert_eq!(fixer.fix(), INSERT_AT_START.content.to_string() + TEST_CODE);
     }
 
     #[test]
     fn insert_at_the_middle() {
-        let fixer = Fixer::new(TEST_CODE, vec![INSERT_AT_MIDDLE]);
+        let fixer = create_fixer(vec![INSERT_AT_MIDDLE]);
         assert_eq!(
             fixer.fix(),
             TEST_CODE.replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *"))
@@ -106,7 +113,7 @@ mod test {
 
     #[test]
     fn insert_at_the_beginning_middle_end() {
-        let fixer = Fixer::new(TEST_CODE, vec![INSERT_AT_MIDDLE, INSERT_AT_START, INSERT_AT_END]);
+        let fixer = create_fixer(vec![INSERT_AT_MIDDLE, INSERT_AT_START, INSERT_AT_END]);
         assert_eq!(
             fixer.fix(),
             format!(
@@ -120,7 +127,31 @@ mod test {
 
     #[test]
     fn ignore_reverse_range() {
-        let fixer = Fixer::new(TEST_CODE, vec![REVERSE_RANGE]);
-        assert_eq!(fixer.fix(), TEST_CODE)
+        let fixer = create_fixer(vec![REVERSE_RANGE]);
+        assert_eq!(fixer.fix(), TEST_CODE);
+    }
+
+    #[test]
+    fn replace_at_the_beginning() {
+        let fixer = create_fixer(vec![REPLACE_VAR]);
+        assert_eq!(fixer.fix(), TEST_CODE.replace("var", "let"));
+    }
+
+    #[test]
+    fn replace_at_the_middle() {
+        let fixer = create_fixer(vec![REPLACE_ID]);
+        assert_eq!(fixer.fix(), TEST_CODE.replace("answer", "foo"));
+    }
+
+    #[test]
+    fn replace_at_the_end() {
+        let fixer = create_fixer(vec![REPLACE_NUM]);
+        assert_eq!(fixer.fix(), TEST_CODE.replace("6", "5"));
+    }
+
+    #[test]
+    fn replace_at_the_beginning_middle_end() {
+        let fixer = create_fixer(vec![REPLACE_ID, REPLACE_VAR, REPLACE_NUM]);
+        assert_eq!(fixer.fix(), "let foo = 5 * 7;");
     }
 }
