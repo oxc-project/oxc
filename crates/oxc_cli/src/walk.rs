@@ -15,7 +15,10 @@ impl Walk {
         if !options.no_ignore {
             inner.add_custom_ignore_filename(&options.ignore_path);
         }
-        let inner = inner.ignore(false).git_global(false).build();
+        // Turning off `follow_links` because:
+        // * following symlinks is a really slow syscall
+        // * it is super rare to have symlinked source code
+        let inner = inner.ignore(false).git_global(false).follow_links(false).build();
         Self { inner }
     }
 
