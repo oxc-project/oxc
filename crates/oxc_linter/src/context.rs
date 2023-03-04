@@ -13,15 +13,20 @@ pub struct LintContext<'a> {
 
     diagnostics: RefCell<Vec<Error>>,
 
-    fixes: RefCell<Vec<Fix>>,
+    /// Whether or not to apply code fixes during linting.
+    fix: bool,
+
+    /// Collection of applicable fixes based on reported issues.
+    fixes: RefCell<Vec<Fix<'a>>>,
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(source_text: &'a str, semantic: Rc<Semantic<'a>>) -> Self {
+    pub fn new(source_text: &'a str, semantic: Rc<Semantic<'a>>, fix: bool) -> Self {
         Self {
             source_text,
             semantic,
             diagnostics: RefCell::new(vec![]),
+            fix,
             fixes: RefCell::new(vec![]),
         }
     }
@@ -30,7 +35,7 @@ impl<'a> LintContext<'a> {
         self.source_text
     }
 
-    pub fn into_diagnostics(self) -> (Vec<Fix>, Vec<Error>) {
+    pub fn into_diagnostics(self) -> (Vec<Fix<'a>>, Vec<Error>) {
         (self.fixes.into_inner(), self.diagnostics.into_inner())
     }
 
@@ -42,12 +47,11 @@ impl<'a> LintContext<'a> {
         self.diagnostics.borrow_mut().push(diagnostic.into());
     }
 
-    pub fn fix(&self, fix: Fix) {
+    pub fn fix(&self, fix: Fix<'a>) {
+        if !self.fix {
+            return;
+        }
         self.fixes.borrow_mut().push(fix);
-    }
-
-    pub fn into_fixes(self) -> Vec<Fix> {
-        self.fixes.into_inner()
     }
 
     pub fn parent_kind(&self, node: &AstNode<'a>) -> AstKind<'a> {

@@ -6,7 +6,7 @@ use serde::Serialize;
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, PartialOrd, Ord)]
 pub struct Span {
     pub start: u32,
     pub end: u32,
