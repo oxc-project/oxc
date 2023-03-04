@@ -38,7 +38,7 @@ impl SkipWhitespace {
         }
     }
 
-    pub fn simd(mut self, bytes: &[u8]) -> Self {
+    pub fn simd(&mut self, bytes: &[u8]) -> &Self {
         let (chunks, remainder) = bytes.as_chunks::<ELEMENTS>();
 
         for chunk in chunks {
@@ -119,7 +119,7 @@ impl<'a> SkipMultilineComment<'a> {
         }
     }
 
-    pub fn simd(mut self) -> Self {
+    pub fn simd(&mut self) -> &Self {
         let (chunks, remainder) = self.remaining.as_chunks::<ELEMENTS>();
 
         for chunk in chunks {
