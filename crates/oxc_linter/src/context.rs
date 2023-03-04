@@ -54,10 +54,6 @@ impl<'a> LintContext<'a> {
         self.fixes.borrow_mut().push(fix);
     }
 
-    pub fn into_fixes(self) -> Vec<Fix<'a>> {
-        self.fixes.into_inner()
-    }
-
     pub fn parent_kind(&self, node: &AstNode<'a>) -> AstKind<'a> {
         self.semantic().nodes().parent_kind(node)
     }
