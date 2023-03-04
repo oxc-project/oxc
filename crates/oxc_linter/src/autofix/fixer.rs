@@ -84,6 +84,9 @@ mod test {
     const REPLACE_ID: Fix = Fix { span: Span { start: 4, end: 10 }, content: Cow::Borrowed("foo") };
     const REPLACE_VAR: Fix = Fix { span: Span { start: 0, end: 3 }, content: Cow::Borrowed("let") };
     const REPLACE_NUM: Fix = Fix { span: Span { start: 13, end: 14 }, content: Cow::Borrowed("5") };
+    const REMOVE_START: Fix = Fix::delete(Span { start: 0, end: 4 });
+    const REMOVE_MIDDLE: Fix = Fix::delete(Span { start: 5, end: 10 });
+    const REMOVE_END: Fix = Fix::delete(Span { start: 14, end: 18 });
     const REVERSE_RANGE: Fix = Fix { span: Span { start: 3, end: 0 }, content: Cow::Borrowed(" ") };
 
     fn create_fixer<'a>(fixes: Vec<Fix<'a>>) -> Fixer {
@@ -97,7 +100,7 @@ mod test {
     }
 
     #[test]
-    fn insert_at_the_beginning() {
+    fn insert_at_the_start() {
         let fixer = create_fixer(vec![INSERT_AT_START]);
         assert_eq!(fixer.fix(), INSERT_AT_START.content.to_string() + TEST_CODE);
     }
@@ -112,7 +115,7 @@ mod test {
     }
 
     #[test]
-    fn insert_at_the_beginning_middle_end() {
+    fn insert_at_the_start_middle_end() {
         let fixer = create_fixer(vec![INSERT_AT_MIDDLE, INSERT_AT_START, INSERT_AT_END]);
         assert_eq!(
             fixer.fix(),
@@ -132,7 +135,7 @@ mod test {
     }
 
     #[test]
-    fn replace_at_the_beginning() {
+    fn replace_at_the_start() {
         let fixer = create_fixer(vec![REPLACE_VAR]);
         assert_eq!(fixer.fix(), TEST_CODE.replace("var", "let"));
     }
@@ -150,8 +153,26 @@ mod test {
     }
 
     #[test]
-    fn replace_at_the_beginning_middle_end() {
+    fn replace_at_the_start_middle_end() {
         let fixer = create_fixer(vec![REPLACE_ID, REPLACE_VAR, REPLACE_NUM]);
         assert_eq!(fixer.fix(), "let foo = 5 * 7;");
+    }
+
+    #[test]
+    fn remove_at_the_start() {
+        let fixer = create_fixer(vec![REMOVE_START]);
+        assert_eq!(fixer.fix(), TEST_CODE.replace("var ", ""));
+    }
+
+    #[test]
+    fn remove_at_the_middle() {
+        let fixer = create_fixer(vec![REMOVE_MIDDLE]);
+        assert_eq!(fixer.fix(), TEST_CODE.replace("answer", "a"));
+    }
+
+    #[test]
+    fn remove_at_the_end() {
+        let fixer = create_fixer(vec![REMOVE_END]);
+        assert_eq!(fixer.fix(), TEST_CODE.replace(" * 7", ""));
     }
 }
