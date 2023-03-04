@@ -65,8 +65,13 @@ impl Linter {
     }
 
     #[must_use]
-    pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, source_text: &'a str) -> LintRunResult<'a> {
-        let ctx = LintContext::new(source_text, semantic.clone());
+    pub fn run<'a>(
+        &self,
+        semantic: &Rc<Semantic<'a>>,
+        source_text: &'a str,
+        fix: bool,
+    ) -> LintRunResult<'a> {
+        let ctx = LintContext::new(source_text, semantic.clone(), fix);
 
         for node in semantic.nodes().iter() {
             for rule in &self.rules {

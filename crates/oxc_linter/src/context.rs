@@ -13,15 +13,20 @@ pub struct LintContext<'a> {
 
     diagnostics: RefCell<Vec<Error>>,
 
+    /// Whether or not to apply code fixes during linting.
+    fix: bool,
+
+    /// Collection of applicable fixes based on reported issues.
     fixes: RefCell<Vec<Fix<'a>>>,
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(source_text: &'a str, semantic: Rc<Semantic<'a>>) -> Self {
+    pub fn new(source_text: &'a str, semantic: Rc<Semantic<'a>>, fix: bool) -> Self {
         Self {
             source_text,
             semantic,
             diagnostics: RefCell::new(vec![]),
+            fix,
             fixes: RefCell::new(vec![]),
         }
     }
@@ -43,6 +48,9 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn fix(&self, fix: Fix<'a>) {
+        if !self.fix {
+            return;
+        }
         self.fixes.borrow_mut().push(fix);
     }
 

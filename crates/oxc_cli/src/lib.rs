@@ -63,10 +63,12 @@ impl Cli {
             })
             .collect::<Vec<_>>();
 
+        let fix = self.cli_options.fix;
+
         let (_, (warnings, diagnostics)): (_, (usize, usize)) = rayon::join(
             move || {
                 paths.par_iter().for_each(|path| {
-                    let diagnostics = Self::lint_path(path);
+                    let diagnostics = Self::lint_path(path, fix);
 
                     for d in diagnostics {
                         sender.send(d).unwrap();
@@ -118,7 +120,7 @@ impl Cli {
         }
     }
 
-    fn lint_path(path: &Path) -> Vec<Error> {
+    fn lint_path(path: &Path, fix: bool) -> Vec<Error> {
         let source_text = fs::read_to_string(path).expect("{name} not found");
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
@@ -127,7 +129,7 @@ impl Cli {
         let result = if ret.errors.is_empty() {
             let program = allocator.alloc(ret.program);
             let semantic = SemanticBuilder::new().build(program, ret.trivias);
-            Linter::new().run(&Rc::new(semantic), &source_text)
+            Linter::new().run(&Rc::new(semantic), &source_text, fix)
         } else {
             LintRunResult { fixed_source: source_text.clone().into(), diagnostics: ret.errors }
         };

@@ -31,6 +31,13 @@ impl Command {
             .about("Lint this repository.")
             .arg_required_else_help(true)
             .arg(
+                Arg::new("fix")
+                .long("fix")
+                .required(false)
+                .action(ArgAction::SetTrue)
+                .help("This option allows you to enable oxc to fix as many issues as possible. If enabled, only unfixed issues are reported in the output")
+            )
+            .arg(
               Arg::new("quiet")
                 .long("quiet")
                 .required(false)
@@ -132,6 +139,18 @@ mod test {
     fn test_quiet_false() {
         let matches = get_lint_matches("oxc lint foo.js");
         assert!(!matches.get_flag("quiet"));
+    }
+
+    #[test]
+    fn test_fix_true() {
+        let matches = get_lint_matches("oxc lint foo.js --fix");
+        assert!(matches.get_flag("fix"));
+    }
+
+    #[test]
+    fn test_fix_false() {
+        let matches = get_lint_matches("oxc lint foo.js");
+        assert!(!matches.get_flag("fix"));
     }
 
     #[test]
