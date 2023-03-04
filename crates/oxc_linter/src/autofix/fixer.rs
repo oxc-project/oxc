@@ -178,7 +178,9 @@ mod test {
 
     #[ignore]
     #[test]
-    fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix() {}
+    fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[test]
     fn apply_same_fix_when_span_overlap_regardless_of_order() {
@@ -189,118 +191,176 @@ mod test {
 
     #[ignore]
     #[test]
-    fn should_not_apply_fix_with_one_no_fix() {}
+    fn should_not_apply_fix_with_one_no_fix() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn sort_no_fix_messages_correctly() {}
+    fn sort_no_fix_messages_correctly() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn insert_bom_at_0() {}
+    fn insert_bom_at_0() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn insert_bom_with_text_at_0() {}
+    fn insert_bom_with_text_at_0() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn remove_bom_with_negative_range() {}
+    fn remove_bom_with_negative_range() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn replace_bom_with_negative_range_and_foobar() {}
+    fn replace_bom_with_negative_range_and_foobar() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     // With BOM
     #[ignore]
     #[test]
-    fn insert_at_the_end_with_bom() {}
+    fn insert_at_the_end_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn insert_at_the_start_with_bom() {}
+    fn insert_at_the_start_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn insert_at_the_middle_with_bom() {}
+    fn insert_at_the_middle_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn insert_at_the_start_middle_end_with_bom() {}
+    fn insert_at_the_start_middle_end_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn ignore_reverse_range_with_bom() {}
+    fn ignore_reverse_range_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn replace_at_the_end_with_bom() {}
+    fn replace_at_the_end_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn replace_at_the_start_with_bom() {}
+    fn replace_at_the_start_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn replace_at_the_middle_with_bom() {}
+    fn replace_at_the_middle_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn replace_at_the_start_middle_end_with_bom() {}
+    fn replace_at_the_start_middle_end_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn remove_at_the_end_with_bom() {}
+    fn remove_at_the_end_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn remove_at_the_start_with_bom() {}
+    fn remove_at_the_start_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn remove_at_the_middle_with_bom() {}
+    fn remove_at_the_middle_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn remove_at_the_start_middle_end_with_bom() {}
+    fn remove_at_the_start_middle_end_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn replace_at_start_remove_at_middle_insert_at_end_with_bom() {}
+    fn replace_at_start_remove_at_middle_insert_at_end_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn apply_one_fix_when_spans_overlap_with_bom() {}
+    fn apply_one_fix_when_spans_overlap_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn apply_one_fix_when_the_start_the_same_as_the_previous_end_with_bom() {}
+    fn apply_one_fix_when_the_start_the_same_as_the_previous_end_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix_with_bom() {}
+    fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn apply_same_fix_when_span_overlap_regardless_of_order_with_bom() {}
+    fn apply_same_fix_when_span_overlap_regardless_of_order_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn should_not_apply_fix_with_one_no_fix_with_bom() {}
+    fn should_not_apply_fix_with_one_no_fix_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn insert_bom_at_0_with_bom() {}
+    fn insert_bom_at_0_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn insert_bom_with_text_at_0_with_bom() {}
+    fn insert_bom_with_text_at_0_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn remove_bom_with_negative_range_with_bom() {}
+    fn remove_bom_with_negative_range_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 
     #[ignore]
     #[test]
-    fn replace_bom_with_negative_range_and_foobar_with_bom() {}
+    fn replace_bom_with_negative_range_and_foobar_with_bom() {
+        let _fixer = create_fixer(vec![]);
+    }
 }
