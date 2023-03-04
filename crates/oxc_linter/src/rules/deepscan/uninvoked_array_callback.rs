@@ -17,7 +17,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
     help("consider filling the array with `undefined` values using `Array.prototype.fill()`")
 )]
 struct UninvokedArrayCallbackDiagnostic(
-    #[label("this callback function will not be invoked")] Span,
+    #[label("this callback will not be invoked")] Span,
     #[label("because this is an array with only empty slots")] Span,
 );
 

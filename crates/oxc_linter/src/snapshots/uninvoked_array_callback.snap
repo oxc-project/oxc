@@ -7,7 +7,7 @@ expression: uninvoked_array_callback
    ╭─[uninvoked_array_callback.tsx:1:1]
  1 │ const list = new Array(5).map(_ => {})
    ·              ──────┬───── ─┬─
-   ·                    │       ╰── this callback function will not be invoked
+   ·                    │       ╰── this callback will not be invoked
    ·                    ╰── because this is an array with only empty slots
    ╰────
   help: consider filling the array with `undefined` values using `Array.prototype.fill()`
@@ -16,7 +16,7 @@ expression: uninvoked_array_callback
    ╭─[uninvoked_array_callback.tsx:1:1]
  1 │ const list = new Array(5).filter(function(_) {})
    ·              ──────┬───── ───┬──
-   ·                    │         ╰── this callback function will not be invoked
+   ·                    │         ╰── this callback will not be invoked
    ·                    ╰── because this is an array with only empty slots
    ╰────
   help: consider filling the array with `undefined` values using `Array.prototype.fill()`
@@ -25,7 +25,7 @@ expression: uninvoked_array_callback
    ╭─[uninvoked_array_callback.tsx:1:1]
  1 │ const list = new Array(5)['every'](function(_) {})
    ·              ──────┬───── ───┬───
-   ·                    │         ╰── this callback function will not be invoked
+   ·                    │         ╰── this callback will not be invoked
    ·                    ╰── because this is an array with only empty slots
    ╰────
   help: consider filling the array with `undefined` values using `Array.prototype.fill()`

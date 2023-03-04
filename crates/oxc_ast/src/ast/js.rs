@@ -165,7 +165,7 @@ impl<'a> Expression<'a> {
     }
 
     #[must_use]
-    pub fn is_function(&self) -> bool {
+    pub const fn is_function(&self) -> bool {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
     }
 }
