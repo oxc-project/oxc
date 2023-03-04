@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::Error;
-use oxc_semantic::Semantic;
+use oxc_semantic::{AstNodes, Semantic};
 
 use crate::{autofix::Fix, AstNode};
 
@@ -39,10 +39,6 @@ impl<'a> LintContext<'a> {
         (self.fixes.into_inner(), self.diagnostics.into_inner())
     }
 
-    pub fn semantic(&self) -> &Semantic<'a> {
-        &self.semantic
-    }
-
     pub fn diagnostic<T: Into<Error>>(&self, diagnostic: T) {
         self.diagnostics.borrow_mut().push(diagnostic.into());
     }
@@ -54,7 +50,23 @@ impl<'a> LintContext<'a> {
         self.fixes.borrow_mut().push(fix);
     }
 
+    #[inline]
+    pub fn semantic(&self) -> &Semantic<'a> {
+        &self.semantic
+    }
+
+    #[inline]
+    pub fn nodes(&self) -> &AstNodes<'a> {
+        self.semantic().nodes()
+    }
+
+    #[inline]
     pub fn parent_kind(&self, node: &AstNode<'a>) -> AstKind<'a> {
-        self.semantic().nodes().parent_kind(node)
+        self.nodes().parent_kind(node)
+    }
+
+    #[inline]
+    pub fn parent_node(&self, node: &AstNode<'a>) -> Option<&AstNode<'a>> {
+        node.parent().and_then(|node_id| self.nodes().get(node_id))
     }
 }
