@@ -176,10 +176,131 @@ mod test {
         assert_eq!(fixer.fix(), TEST_CODE.replace("var ", ""));
     }
 
+    #[ignore]
+    #[test]
+    fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix() {}
+
     #[test]
     fn apply_same_fix_when_span_overlap_regardless_of_order() {
         let fixer1 = create_fixer(vec![REMOVE_MIDDLE, REPLACE_ID]);
         let fixer2 = create_fixer(vec![REPLACE_ID, REMOVE_MIDDLE]);
         assert_eq!(fixer1.fix(), fixer2.fix());
     }
+
+    #[ignore]
+    #[test]
+    fn should_not_apply_fix_with_one_no_fix() {}
+
+    #[ignore]
+    #[test]
+    fn sort_no_fix_messages_correctly() {}
+
+    #[ignore]
+    #[test]
+    fn insert_bom_at_0() {}
+
+    #[ignore]
+    #[test]
+    fn insert_bom_with_text_at_0() {}
+
+    #[ignore]
+    #[test]
+    fn remove_bom_with_negative_range() {}
+
+    #[ignore]
+    #[test]
+    fn replace_bom_with_negative_range_and_foobar() {}
+
+    // With BOM
+    #[ignore]
+    #[test]
+    fn insert_at_the_end_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn insert_at_the_start_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn insert_at_the_middle_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn insert_at_the_start_middle_end_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn ignore_reverse_range_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn replace_at_the_end_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn replace_at_the_start_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn replace_at_the_middle_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn replace_at_the_start_middle_end_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn remove_at_the_end_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn remove_at_the_start_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn remove_at_the_middle_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn remove_at_the_start_middle_end_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn replace_at_start_remove_at_middle_insert_at_end_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn apply_one_fix_when_spans_overlap_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn apply_one_fix_when_the_start_the_same_as_the_previous_end_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn apply_same_fix_when_span_overlap_regardless_of_order_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn should_not_apply_fix_with_one_no_fix_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn insert_bom_at_0_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn insert_bom_with_text_at_0_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn remove_bom_with_negative_range_with_bom() {}
+
+    #[ignore]
+    #[test]
+    fn replace_bom_with_negative_range_and_foobar_with_bom() {}
 }
