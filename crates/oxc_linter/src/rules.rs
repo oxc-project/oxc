@@ -1,9 +1,9 @@
-mod no_array_constructor;
-mod no_debugger;
-mod no_empty;
-mod no_empty_pattern;
-mod deepscan {
-    pub mod uninvoked_array_callback;
+oxc_macros::declare_all_lint_rules! {
+    no_debugger,
+    no_array_constructor,
+    no_empty,
+    no_empty_pattern,
+    deepscan::uninvoked_array_callback,
 }
 
 pub use deepscan::uninvoked_array_callback::UninvokedArrayCallback;
