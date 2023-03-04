@@ -50,8 +50,16 @@ impl<'a> LintContext<'a> {
         self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), None));
     }
 
-    pub fn diagnostic_with_fix<T: Into<Error>>(&self, diagnostic: T, fix: Fix<'a>) {
-        self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), Some(fix)));
+    pub fn diagnostic_with_fix<T, F>(&self, diagnostic: T, fix: F)
+    where
+        T: Into<Error>,
+        F: FnOnce() -> Fix<'a>,
+    {
+        if self.fix {
+            self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), Some(fix())));
+        } else {
+            self.diagnostic(diagnostic);
+        }
     }
 
     pub fn fix(&self, fix: Fix<'a>) {
