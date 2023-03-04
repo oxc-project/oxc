@@ -28,6 +28,5 @@ glob = { workspace = true }
 rayon = { workspace = true }
 miette = { workspace = true, features = ["fancy"] }
 
-ignore = "0.4.20"
-git2 = "0.16.1"
+ignore = { version = "0.4.20", features = ["simd-accel"] }
 git2 = { version = "0.16.1", default_features = false }
