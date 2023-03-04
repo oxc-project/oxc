@@ -163,6 +163,11 @@ impl<'a> Expression<'a> {
             _ => None,
         }
     }
+
+    #[must_use]
+    pub fn is_function(&self) -> bool {
+        matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
+    }
 }
 
 /// Section 12.6 `IdentifierName`

@@ -2,7 +2,11 @@ mod no_array_constructor;
 mod no_debugger;
 mod no_empty;
 mod no_empty_pattern;
+mod deepscan {
+    pub mod uninvoked_array_callback;
+}
 
+pub use deepscan::uninvoked_array_callback::UninvokedArrayCallback;
 pub use no_array_constructor::NoArrayConstructor;
 pub use no_debugger::NoDebugger;
 pub use no_empty::NoEmpty;
@@ -16,6 +20,7 @@ lazy_static::lazy_static! {
         RuleEnum::NoEmpty(NoEmpty::default()),
         RuleEnum::NoArrayConstructor(NoArrayConstructor::default()),
         RuleEnum::NoEmptyPattern(NoEmptyPattern::default()),
+        RuleEnum::UninvokedArrayCallback(UninvokedArrayCallback::default()),
     ];
 }
 
@@ -26,6 +31,7 @@ pub enum RuleEnum {
     NoEmpty(NoEmpty),
     NoArrayConstructor(NoArrayConstructor),
     NoEmptyPattern(NoEmptyPattern),
+    UninvokedArrayCallback(UninvokedArrayCallback),
 }
 
 impl RuleEnum {
@@ -35,6 +41,7 @@ impl RuleEnum {
             Self::NoEmpty(_) => NoEmpty::NAME,
             Self::NoArrayConstructor(_) => NoArrayConstructor::NAME,
             Self::NoEmptyPattern(_) => NoEmptyPattern::NAME,
+            Self::UninvokedArrayCallback(_) => UninvokedArrayCallback::NAME,
         }
     }
 
@@ -52,6 +59,9 @@ impl RuleEnum {
             Self::NoEmptyPattern(_) => Self::NoEmptyPattern(
                 maybe_value.map(NoEmptyPattern::from_configuration).unwrap_or_default(),
             ),
+            Self::UninvokedArrayCallback(_) => Self::UninvokedArrayCallback(
+                maybe_value.map(UninvokedArrayCallback::from_configuration).unwrap_or_default(),
+            ),
         }
     }
 
@@ -61,6 +71,7 @@ impl RuleEnum {
             Self::NoEmpty(rule) => rule.run(node, ctx),
             Self::NoArrayConstructor(rule) => rule.run(node, ctx),
             Self::NoEmptyPattern(rule) => rule.run(node, ctx),
+            Self::UninvokedArrayCallback(rule) => rule.run(node, ctx),
         }
     }
 }
