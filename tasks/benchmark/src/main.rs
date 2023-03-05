@@ -91,12 +91,13 @@ fn bench_semantic(criterion: &mut Criterion, codes: &[Code]) {
             &code.source_text,
             |b, source_text| {
                 let allocator = Allocator::default();
-                let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
+                let source_type = SourceType::from_path(&code.file_name).unwrap();
+                let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(ret.program);
                 let trivias = Rc::new(ret.trivias);
                 b.iter(|| {
-                    let _semantic =
-                        SemanticBuilder::new().build(black_box(program), trivias.clone());
+                    let _semantic = SemanticBuilder::new(source_type)
+                        .build(black_box(program), trivias.clone());
                 });
             },
         );

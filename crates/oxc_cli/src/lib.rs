@@ -135,7 +135,7 @@ impl Cli {
 
         let program = allocator.alloc(ret.program);
         let trivias = Rc::new(ret.trivias);
-        let semantic = SemanticBuilder::new().build(program, trivias);
+        let semantic = SemanticBuilder::new(source_type).build(program, trivias);
         let result = Linter::new().run(&Rc::new(semantic), &source_text, fix);
 
         if result.is_empty() {
