@@ -70,7 +70,7 @@ impl Rule for ConstructorSuper {
                         None
                     }
                 });
-                                  
+
                 super_call_expr.map_or_else(|| {
                     ctx.diagnostic(ConstructorSuperDiagnostic(ctor.span));
                 }, |span| {
@@ -83,7 +83,6 @@ impl Rule for ConstructorSuper {
     }
 }
 
-
 trait NonConstructor {
     fn span(&self) -> Option<Span>;
 }
@@ -94,10 +93,9 @@ impl<'a> NonConstructor for Expression<'a> {
             Self::NullLiteral(lit) => Some(lit.span),
             Self::NumberLiteral(lit) => Some(lit.span),
             Self::StringLiteral(lit) => Some(lit.span),
-            _ => None
+            _ => None,
         }
     }
-    
 }
 
 #[test]
@@ -127,7 +125,7 @@ fn test() {
         ("class A extends null { constructor() { super(); } }", None),
         ("class A extends null { constructor() { } }", None),
         ("class A extends 100 { constructor() { super(); } }", None),
-        ("class A extends 'test' { constructor() { super(); } }", None)
+        ("class A extends 'test' { constructor() { super(); } }", None),
     ];
 
     Tester::new(ConstructorSuper::NAME, pass, fail).test_and_snapshot();
