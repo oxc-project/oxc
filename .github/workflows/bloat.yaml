@@ -20,14 +20,13 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Install cargo-bloat
-        run: |
-          cargo install cargo-bloat --no-default-features
+        run: cargo install cargo-bloat --no-default-features
 
       - name: Get largest functions
-        run: cargo bloat --release -n 10
+        run: cargo --profile release-debug bloat --release -n 10
 
       - name: Get largest crates
-        run: cargo bloat --release --crates
+        run: cargo --profile release-debug bloat --release --crates
 
       - name: Get longest compile time
-        run: cargo bloat --time -j 1
+        run: cargo --profile release-debug bloat --time -j 1
