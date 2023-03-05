@@ -66,6 +66,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
 
         impl RuleMeta for #name {
             const NAME: &'static str = #canonical_name;
+
             const CATEGORY: &'static str = #category;
 
             fn documentation() -> Option<&'static str> {
