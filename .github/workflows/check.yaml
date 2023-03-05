@@ -31,8 +31,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Install toolchain
         run: rustup show
@@ -46,8 +44,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Install toolchain
         run: rustup show
@@ -69,8 +65,6 @@ jobs:
     steps:
       - name: Checkout PR Branch
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Cache
         uses: Swatinem/rust-cache@v2
@@ -99,8 +93,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Install toolchain
         run: rustup show
@@ -121,8 +113,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Install toolchain
         run: rustup show
