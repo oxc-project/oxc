@@ -1,0 +1,21 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: constructor_super
+---
+
+  ⚠ eslint(constructor-super): Expected to call 'super()'.
+   ╭─[constructor_super.tsx:1:1]
+ 1 │ class A extends B { constructor() {} }
+   ·                     ────────────────
+   ╰────
+  help: Ensure 'super()' is called from constructor
+
+  ⚠ eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor.
+   ╭─[constructor_super.tsx:1:1]
+ 1 │ class A extends null { constructor() { super(); } }
+   ·                 ──┬─                   ───┬───
+   ·                   │                       ╰── unexpected 'super()'
+   ·                   ╰── because this is not a constructor
+   ╰────
+  help: Do not call 'super()' from constructor.
+
