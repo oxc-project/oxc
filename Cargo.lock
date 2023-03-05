@@ -825,6 +825,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
+ "oxc_semantic",
  "pico-args",
  "ureq",
  "url",

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
@@ -62,8 +62,9 @@ impl Tester {
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new().build(program, ret.trivias);
-        let semantic = std::rc::Rc::new(semantic);
+        let trivias = Rc::new(ret.trivias);
+        let semantic = SemanticBuilder::new().build(program, trivias);
+        let semantic = Rc::new(semantic);
         let rule = RULES
             .iter()
             .find(|rule| rule.name() == self.rule_name)
