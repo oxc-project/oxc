@@ -294,7 +294,13 @@ impl<'a> Parser<'a> {
         r#await: bool,
     ) -> Result<Statement<'a>> {
         self.expect(Kind::Semicolon)?;
-        let test = (!self.at(Kind::Semicolon)).then(|| self.parse_expression()).transpose()?;
+        let test = (!self.at(Kind::Semicolon))
+            .then(|| self.parse_expression())
+            .transpose()
+            .map_err(|_| {
+                let range = self.current_range();
+                diagnostics::ExpectToken(Kind::Semicolon.to_str(), self.cur_kind().to_str(), range)
+            })?;
         self.expect(Kind::Semicolon)?;
         let update = (!self.at(Kind::RParen)).then(|| self.parse_expression()).transpose()?;
         self.expect(Kind::RParen)?;
