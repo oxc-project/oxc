@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{BinaryOperator, Expression},
+    ast::{BinaryOperator, Expression, UnaryOperator},
     AstKind, Span,
 };
 use oxc_diagnostics::{
@@ -11,9 +11,9 @@ use oxc_macros::declare_oxc_lint;
 use crate::{autofix::Fix, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(eqeqeq): Require the use of === and !==")]
-#[diagnostic(severity(warning), help("Prefer strict (in)equality operator"))]
-struct EqEqEqDiagnostic(#[label] pub Span);
+#[error("eslint(eqeqeq): Expected {1:?} and instead saw {0:?}")]
+#[diagnostic(severity(warning), help("Prefer strict {1} operator"))]
+struct EqEqEqDiagnostic(&'static str, &'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct EqEqEq;
@@ -52,7 +52,7 @@ impl Rule for EqEqEq {
         let is_valid_comparison = match (&binary_expr.left, &binary_expr.right) {
             (Expression::UnaryExpression(unary_expr), _)
             | (_, Expression::UnaryExpression(unary_expr)) => {
-                unary_expr.operator.is_keyword() && unary_expr.operator.as_str() == "typeof"
+                matches!(unary_expr.operator, UnaryOperator::Typeof)
             }
             (lhs, rhs) => {
                 (lhs.is_null() || rhs.is_null())
@@ -61,8 +61,10 @@ impl Rule for EqEqEq {
         };
 
         if !is_valid_comparison {
-            ctx.diagnostic(EqEqEqDiagnostic(binary_expr.span));
-            ctx.fix(Fix::new(to_strict_operator(binary_expr.operator).as_str(), binary_expr.span));
+            let operator = binary_expr.operator.as_str();
+            let prefered_operator = to_strict_operator(binary_expr.operator).as_str();
+            ctx.diagnostic(EqEqEqDiagnostic(operator, prefered_operator, binary_expr.span));
+            ctx.fix(Fix::new(prefered_operator, binary_expr.span));
         }
     }
 }
