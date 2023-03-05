@@ -12,7 +12,6 @@ use std::{
     sync::{mpsc, Arc},
 };
 
-// use git::{Git, GitResult};
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
@@ -27,18 +26,15 @@ pub struct Cli {
     pub cli_options: CliOptions,
 }
 
-#[allow(clippy::missing_const_for_fn)]
 impl Cli {
     #[must_use]
-    pub fn new(cli_options: CliOptions) -> Self {
+    pub const fn new(cli_options: CliOptions) -> Self {
         Self { cli_options }
     }
 
-    /// Runs the linter on the specified paths and returns a `CliRunResult`.
-    ///
     /// # Panics
     ///
-    /// This function may panic if the `fs::read_to_string` function in `lint_path` fails to read a file.
+    /// * When `mpsc::channel` fails to send.
     #[must_use]
     pub fn lint(&self) -> CliRunResult {
         let now = std::time::Instant::now();
