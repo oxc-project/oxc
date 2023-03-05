@@ -81,7 +81,7 @@ impl Cli {
                             tx_error.send(d).unwrap();
                         }
                         drop(tx_error);
-                    })
+                    });
                 }
             },
         );
