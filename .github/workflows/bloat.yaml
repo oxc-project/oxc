@@ -23,10 +23,10 @@ jobs:
         run: cargo install cargo-bloat --no-default-features
 
       - name: Get largest functions
-        run: cargo --profile release-debug bloat --release -n 10
+        run: cargo bloat --release --profile release-debug -n 10
 
       - name: Get largest crates
-        run: cargo --profile release-debug bloat --release --crates
+        run: cargo bloat --release --profile release-debug --crates
 
       - name: Get longest compile time
-        run: cargo --profile release-debug bloat --time -j 1
+        run: cargo bloat --release --profile release-debug --time -j 1
