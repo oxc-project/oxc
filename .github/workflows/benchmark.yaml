@@ -69,6 +69,7 @@ jobs:
           critcmp main pr >> output.md
           echo "\`\`\`" >> output.md
           cat output.md
+          cat output.md > $GITHUB_STEP_SUMMARY
 
       - name: Find Comment
         # Check if the event is not triggered by a fork
