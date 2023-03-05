@@ -3,31 +3,31 @@ source: crates/oxc_linter/src/tester.rs
 expression: eq_eq_eq
 ---
 
-  ⚠ eslint(eqeqeq): Require the use of === and !==
+  ⚠ eslint(eqeqeq): Expected "===" and instead saw "=="
    ╭─[eq_eq_eq.tsx:1:1]
  1 │ a == b
    · ──────
    ╰────
-  help: Prefer strict (in)equality operator
+  help: Prefer strict === operator
 
-  ⚠ eslint(eqeqeq): Require the use of === and !==
+  ⚠ eslint(eqeqeq): Expected "===" and instead saw "=="
    ╭─[eq_eq_eq.tsx:1:1]
  1 │ foo == true
    · ───────────
    ╰────
-  help: Prefer strict (in)equality operator
+  help: Prefer strict === operator
 
-  ⚠ eslint(eqeqeq): Require the use of === and !==
+  ⚠ eslint(eqeqeq): Expected "!==" and instead saw "!="
    ╭─[eq_eq_eq.tsx:1:1]
  1 │ bananas != 1
    · ────────────
    ╰────
-  help: Prefer strict (in)equality operator
+  help: Prefer strict !== operator
 
-  ⚠ eslint(eqeqeq): Require the use of === and !==
+  ⚠ eslint(eqeqeq): Expected "===" and instead saw "=="
    ╭─[eq_eq_eq.tsx:1:1]
  1 │ value == undefined
    · ──────────────────
    ╰────
-  help: Prefer strict (in)equality operator
+  help: Prefer strict === operator
 
