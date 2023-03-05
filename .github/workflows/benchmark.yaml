@@ -5,9 +5,8 @@ on:
     paths:
       - 'crates/oxc_parser/**'
       - 'crates/oxc_ast/**'
-      - 'tasks/coverage/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
+      - 'crates/oxc_semantic/**'
+      - 'tasks/benchmark/**'
       - 'rust-toolchain.toml'
       - '!**/*.md'
 

@@ -1,6 +1,8 @@
 mod builder;
 mod node;
 
+use std::rc::Rc;
+
 pub use builder::SemanticBuilder;
 pub use node::{AstNode, AstNodes};
 use oxc_ast::Trivias;
@@ -8,7 +10,7 @@ use oxc_ast::Trivias;
 pub struct Semantic<'a> {
     nodes: AstNodes<'a>,
 
-    trivias: Trivias,
+    trivias: Rc<Trivias>,
 }
 
 impl<'a> Semantic<'a> {
@@ -18,7 +20,7 @@ impl<'a> Semantic<'a> {
     }
 
     #[must_use]
-    pub const fn trivias(&self) -> &Trivias {
+    pub fn trivias(&self) -> &Trivias {
         &self.trivias
     }
 }

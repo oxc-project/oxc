@@ -1,13 +1,17 @@
 #![cfg(not(miri))] // Miri does not support custom allocators
 
-use std::hint::black_box; // See: `https://rust-lang.github.io/rfcs/2360-bench-black-box.html`
-use std::time::Duration;
+use std::{
+    hint::black_box, // See: `https://rust-lang.github.io/rfcs/2360-bench-black-box.html`
+    rc::Rc,
+    time::Duration,
+};
 
 use criterion::{BenchmarkId, Criterion, Throughput};
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_benchmark::get_code;
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use pico_args::Arguments;
 
 #[cfg(not(target_env = "msvc"))]
@@ -45,9 +49,15 @@ pub fn main() -> Result<(), &'static str> {
         }
     }
 
-    // Bench Parser
+    bench_parser(&mut criterion, &codes);
+    bench_semantic(&mut criterion, &codes);
+
+    Ok(())
+}
+
+fn bench_parser(criterion: &mut Criterion, codes: &[(String, String)]) {
     let mut group = criterion.benchmark_group("parser");
-    for (id, code) in &codes {
+    for (id, code) in codes {
         group.throughput(Throughput::Bytes(code.len() as u64));
         group.bench_with_input(BenchmarkId::from_parameter(id), &code, |b, code| {
             let allocator = Allocator::default();
@@ -56,8 +66,22 @@ pub fn main() -> Result<(), &'static str> {
             });
         });
     }
-
     group.finish();
+}
 
-    Ok(())
+fn bench_semantic(criterion: &mut Criterion, codes: &[(String, String)]) {
+    let mut group = criterion.benchmark_group("semantic");
+    for (id, code) in codes {
+        group.throughput(Throughput::Bytes(code.len() as u64));
+        group.bench_with_input(BenchmarkId::from_parameter(id), &code, |b, code| {
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, black_box(code), SourceType::default()).parse();
+            let program = allocator.alloc(ret.program);
+            let trivias = Rc::new(ret.trivias);
+            b.iter(|| {
+                let _semantic = SemanticBuilder::new().build(black_box(program), trivias.clone());
+            });
+        });
+    }
+    group.finish();
 }
