@@ -5,6 +5,9 @@ name: Bloat
 on:
   workflow_dispatch:
 
+env:
+  CARGO_TERM_QUIET: true
+
 jobs:
   bloat:
     name: Bloat

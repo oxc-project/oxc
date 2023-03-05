@@ -3,6 +3,9 @@ name: Miri
 on:
   workflow_dispatch:
 
+env:
+  CARGO_TERM_QUIET: true
+
 jobs:
   miri:
     name: Miri

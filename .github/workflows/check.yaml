@@ -19,9 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUST_LOG: info
-  RUST_BACKTRACE: 1
-  CARGO_INCREMENTAL: 0
+  CARGO_TERM_QUIET: true
   RUSTFLAGS: -D warnings # https://rust-unofficial.github.io/patterns/anti_patterns/deny-warnings.html#alternatives
 
 jobs:
