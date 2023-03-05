@@ -1,0 +1,30 @@
+# Run `cargo bloat` for finding out what takes most of the space in your executable.
+
+name: Bloat
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bloat:
+    name: Bloat
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-bloat
+        run: |
+          cargo install cargo-bloat --no-default-features
+
+      - name: Get largest functions
+        run: cargo bloat --release -n 10
+
+      - name: Get largest crates
+        run: cargo bloat --release --crates
+
+      - name: Get longest compile time
+        run: cargo bloat --time -j 1
