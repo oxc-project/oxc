@@ -6,12 +6,6 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::uninvoked_array_callback,
 }
 
-pub use deepscan::uninvoked_array_callback::UninvokedArrayCallback;
-pub use no_array_constructor::NoArrayConstructor;
-pub use no_debugger::NoDebugger;
-pub use no_empty::NoEmpty;
-pub use no_empty_pattern::NoEmptyPattern;
-
 use crate::{context::LintContext, rule::Rule, rule::RuleMeta, AstNode};
 
 lazy_static::lazy_static! {
