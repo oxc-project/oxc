@@ -94,7 +94,8 @@ Summary
 ## Learning Resources
 
 * My [small tutorial on how to write a JavaScript Parser in Rust](https://boshen.github.io/javascript-parser-in-rust/)
-* [Insert your inspirational learning resources here]
+* [Crafting Interpreters](https://craftinginterpreters.com)
+* [Create an issue and nsert your inspirational learning resources here]
 
 ## Credits
 
