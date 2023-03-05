@@ -23,7 +23,7 @@ declare_oxc_lint!(
     /// Requires the use of the === and !== operators
     ///
     /// ### Why is this bad?
-    /// Using non-strict equality operators leads tricky bugs due to type coercion.
+    /// Using non-strict equality operators leads to hard to track bugs due to type coercion.
     ///
     /// ### Example
     /// ```javascript
