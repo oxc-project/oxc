@@ -1,5 +1,0 @@
-https://cdn.jsdelivr.net/npm/pdfjs-dist@2.12.313/build/pdf.js
-https://cdn.jsdelivr.net/npm/lodash@4.17.0/lodash.js
-https://cdn.jsdelivr.net/npm/d3@7.1.1/dist/d3.js
-https://cdn.jsdelivr.net/npm/typescript@4.6.2/lib/typescript.js
-https://cdn.jsdelivr.net/npm/babylonjs@4.2.1/babylon.max.js
