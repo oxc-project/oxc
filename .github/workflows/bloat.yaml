@@ -22,11 +22,20 @@ jobs:
       - name: Install cargo-bloat
         run: cargo install cargo-bloat --no-default-features
 
-      - name: Get largest functions
-        run: cargo bloat --profile release-debug -n 10
+      - name: Run
+        id: size
+        run: |
+          # Get largest functions
+          export BLOAT_FUNC=$(cargo bloat --profile release-debug --bin oxc_cli -n 10)
+          echo "$BLOAT_FUNC"
 
-      - name: Get largest crates
-        run: cargo bloat --profile release-debug --crates
+          # Get largest crates
+          export BLOAT_CRATE=$(cargo bloat --profile release-debug --bin oxc_cli --crates -n 10)
+          echo "$BLOAT_CRATE"
 
-      - name: Get longest compile time
-        run: cargo bloat --profile release-debug --time -j 1
+          # Get longest compile time
+          export BLOAT_TIME=$(cargo bloat --profile release-debug --bin oxc_cli --time -j 1)
+          echo "$BLOAT_TIME"
+
+          # Render summary
+          envsubst < .github/workflows/bloat.tmpl > $GITHUB_STEP_SUMMARY
