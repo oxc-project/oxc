@@ -69,7 +69,8 @@ declare_oxc_lint!(
     /// function foo({a = []}) {}
     /// ```
     ///
-    NoEmptyPattern
+    NoEmptyPattern,
+    correctness
 );
 
 impl Rule for NoEmptyPattern {

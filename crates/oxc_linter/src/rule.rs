@@ -15,6 +15,8 @@ pub trait Rule: Sized + Default + Debug {
 pub trait RuleMeta {
     const NAME: &'static str;
 
+    const CATEGORY: &'static str;
+
     #[must_use]
     fn documentation() -> Option<&'static str> {
         None

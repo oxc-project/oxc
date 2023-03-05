@@ -30,7 +30,8 @@ declare_oxc_lint!(
     /// const result = complexCalculation(data);
     /// debugger;
     /// ```
-    NoDebugger
+    NoDebugger,
+    correctness
 );
 
 impl Rule for NoDebugger {

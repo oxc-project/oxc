@@ -38,7 +38,8 @@ declare_oxc_lint!(
     /// ```javascript
     ///   const list = new Array(5).map(_ => createElement());
     /// ```
-    UninvokedArrayCallback
+    UninvokedArrayCallback,
+    correctness
 );
 
 impl Rule for UninvokedArrayCallback {

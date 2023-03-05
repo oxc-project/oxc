@@ -7,7 +7,7 @@ declare_oxc_lint_test!(
     /// Dummy description
     /// # which is multiline
     TestRule,
-    "test"
+    test
 );
 
 struct TestRule2 {
@@ -18,7 +18,7 @@ struct TestRule2 {
 declare_oxc_lint_test!(
     /// Dummy description2
     TestRule2,
-    "test"
+    test
 );
 
 #[test]

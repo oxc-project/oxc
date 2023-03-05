@@ -32,7 +32,8 @@ declare_oxc_lint!(
     ///
     /// }
     /// ```
-    NoEmpty
+    NoEmpty,
+    correctness
 );
 
 impl Rule for NoEmpty {
