@@ -1,5 +1,5 @@
 [alias]
-lint = "clippy --workspace --all-targets"
+lint = "clippy --workspace --all-targets --all-features"
 coverage = "run -p oxc_coverage --release --"
 benchmark = "run -p oxc_benchmark --release --"
 
