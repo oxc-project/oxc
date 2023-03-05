@@ -114,43 +114,48 @@ AST Parsed     : 43960/43960 (100.00%)
     · ╰──── Cannot assign to this expression
     ╰────
 
-  × Unexpected token
+  × Expect token
     ╭─[language/asi/S7.9_A6.2_T1.js:19:1]
  19 │ for(;
  20 │ ) {
-    · ─
+    · ┬
+    · ╰── Expect `;` here, but found `)`
  21 │   break;
     ╰────
 
-  × Unexpected token
+  × Expect token
     ╭─[language/asi/S7.9_A6.2_T10.js:20:1]
  20 │     false
  21 │ ;) {
-    ·  ─
+    ·  ┬
+    ·  ╰── Expect `;` here, but found `)`
  22 │   break;
     ╰────
 
-  × Unexpected token
+  × Expect token
     ╭─[language/asi/S7.9_A6.2_T2.js:20:1]
  20 │     ;
  21 │ ) {
-    · ─
+    · ┬
+    · ╰── Expect `;` here, but found `)`
  22 │   break;
     ╰────
 
-  × Unexpected token
+  × Expect token
     ╭─[language/asi/S7.9_A6.2_T3.js:19:1]
  19 │ for(
  20 │ ;) {
-    ·  ─
+    ·  ┬
+    ·  ╰── Expect `;` here, but found `)`
  21 │   break;
     ╰────
 
-  × Unexpected token
+  × Expect token
     ╭─[language/asi/S7.9_A6.2_T4.js:20:1]
  20 │ 
  21 │ ;) {
-    ·  ─
+    ·  ┬
+    ·  ╰── Expect `;` here, but found `)`
  22 │   break;
     ╰────
 
@@ -172,11 +177,12 @@ AST Parsed     : 43960/43960 (100.00%)
  22 │   break;
     ╰────
 
-  × Unexpected token
+  × Expect token
     ╭─[language/asi/S7.9_A6.2_T7.js:20:1]
  20 │     ;
  21 │ ) {
-    · ─
+    · ┬
+    · ╰── Expect `;` here, but found `)`
  22 │   break;
     ╰────
 
@@ -15874,7 +15880,7 @@ AST Parsed     : 43960/43960 (100.00%)
  20 │ //CHECK#1
  21 │ for(var index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
     ·                        ─┬
-    ·                         ╰── Expect `,` here, but found `++`
+    ·                         ╰── Expect `;` here, but found `++`
  22 │ //
     ╰────
 
@@ -15900,7 +15906,7 @@ AST Parsed     : 43960/43960 (100.00%)
  20 │ //CHECK#1
  21 │ for(index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
     ·                    ─┬
-    ·                     ╰── Expect `,` here, but found `++`
+    ·                     ╰── Expect `;` here, but found `++`
  22 │ //
     ╰────
 
