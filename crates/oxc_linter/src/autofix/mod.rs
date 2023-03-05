@@ -4,9 +4,9 @@ use oxc_ast::Span;
 
 mod fixer;
 
-pub use fixer::Fixer;
+pub use fixer::{Fixer, Message};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Fix<'a> {
     pub content: Cow<'a, str>,
     pub span: Span,
