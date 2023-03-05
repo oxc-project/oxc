@@ -13,3 +13,4 @@ version.workspace = true
 oxc_ast = { path = "../oxc_ast" }
 
 indextree = { workspace = true }
+bitflags = { workspace = true }

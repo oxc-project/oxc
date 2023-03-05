@@ -900,6 +900,7 @@ dependencies = [
 name = "oxc_semantic"
 version = "0.0.0"
 dependencies = [
+ "bitflags",
  "indextree",
  "oxc_ast",
 ]
