@@ -1,3 +1,4 @@
+use oxc_linter::rule::RuleCategory;
 use oxc_linter::rule::RuleMeta;
 use oxc_macros::declare_oxc_lint_test;
 
@@ -7,7 +8,7 @@ declare_oxc_lint_test!(
     /// Dummy description
     /// # which is multiline
     TestRule,
-    test
+    correctness
 );
 
 struct TestRule2 {
@@ -18,7 +19,7 @@ struct TestRule2 {
 declare_oxc_lint_test!(
     /// Dummy description2
     TestRule2,
-    test
+    correctness
 );
 
 #[test]

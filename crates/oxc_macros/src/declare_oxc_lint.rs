@@ -56,10 +56,17 @@ impl Parse for LintRuleMeta {
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let LintRuleMeta { name, category, documentation, used_in_test } = metadata;
     let canonical_name = name.to_string().to_case(Case::Kebab);
-    let category = category.to_string().to_case(Case::Lower);
+    let category = match category.to_string().as_str() {
+        "correctness" => quote! { RuleCategory::Correctness },
+        "nursery" => quote! { RuleCategory::Nursery },
+        _ => panic!("invalid rule category"),
+    };
 
-    let import_statement =
-        if used_in_test { None } else { Some(quote! { use crate::rule::RuleMeta; }) };
+    let import_statement = if used_in_test {
+        None
+    } else {
+        Some(quote! { use crate::rule::{RuleCategory, RuleMeta}; })
+    };
 
     let output = quote! {
         #import_statement
@@ -67,7 +74,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         impl RuleMeta for #name {
             const NAME: &'static str = #canonical_name;
 
-            const CATEGORY: &'static str = #category;
+            const CATEGORY: RuleCategory = #category;
 
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)
