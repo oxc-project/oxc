@@ -1,6 +1,6 @@
 # Run `cargo bloat` for finding out what takes most of the space in your executable.
 
-name: Bloat
+name: Cargo Bloat
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ env:
 
 jobs:
   bloat:
-    name: Bloat
+    name: Cargo Bloat
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,7 +23,6 @@ jobs:
         run: cargo install cargo-bloat --no-default-features
 
       - name: Run
-        id: size
         run: |
           export CMD="cargo bloat -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-unknown-linux-gnu --profile release-debug --bin oxc_cli"
 
