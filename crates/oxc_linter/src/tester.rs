@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
@@ -62,20 +62,21 @@ impl Tester {
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
-        let semantic = SemanticBuilder::new().build(program, ret.trivias);
-        let semantic = std::rc::Rc::new(semantic);
+        let trivias = Rc::new(ret.trivias);
+        let semantic = SemanticBuilder::new(source_type).build(program, trivias);
+        let semantic = Rc::new(semantic);
         let rule = RULES
             .iter()
             .find(|rule| rule.name() == self.rule_name)
             .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name));
         let rule = rule.read_json(config);
         let result = Linter::from_rules(vec![rule]).run(&semantic, source_text, false);
-        if result.diagnostics.is_empty() {
+        if result.is_empty() {
             return true;
         }
         let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
-        for diagnostic in result.diagnostics {
-            let diagnostic = diagnostic.with_source_code(source_text.to_string());
+        for diagnostic in result {
+            let diagnostic = diagnostic.error.with_source_code(source_text.to_string());
             let diagnostic = diagnostic.with_source_code(NamedSource::new(
                 path.to_string_lossy(),
                 source_text.to_string(),

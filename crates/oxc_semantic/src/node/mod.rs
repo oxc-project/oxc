@@ -1,9 +1,13 @@
+#![allow(non_upper_case_globals)] // for bitflags
+
 mod id;
 mod tree;
 
-pub use id::AstNodeId;
+use bitflags::bitflags;
 use oxc_ast::AstKind;
-pub use tree::AstNodes;
+
+pub use self::{id::AstNodeId, tree::AstNodes};
+use crate::scope::{Scope, ScopeId};
 
 /// Indextree node containing a semantic node
 pub type AstNode<'a> = indextree::Node<SemanticNode<'a>>;
@@ -13,15 +17,42 @@ pub type AstNode<'a> = indextree::Node<SemanticNode<'a>>;
 pub struct SemanticNode<'a> {
     /// A pointer to the ast node, which resides in the `bumpalo` memory arena.
     kind: AstKind<'a>,
+
+    /// Associated Scope (initialized by binding)
+    scope_id: ScopeId,
+
+    flags: NodeFlags,
+}
+
+bitflags! {
+    #[derive(Default)]
+    pub struct NodeFlags: u8 {
+        const Class = 1 << 0; // If Node is inside a class
+    }
 }
 
 impl<'a> SemanticNode<'a> {
     #[must_use]
-    pub const fn new(kind: AstKind<'a>) -> Self {
-        Self { kind }
+    pub const fn new(kind: AstKind<'a>, scope_id: ScopeId, flags: NodeFlags) -> Self {
+        Self { kind, scope_id, flags }
     }
 
     pub const fn kind(&self) -> AstKind<'a> {
         self.kind
+    }
+
+    pub const fn scope_id(&self) -> ScopeId {
+        self.scope_id
+    }
+
+    #[must_use]
+    pub const fn strict_mode(&self, scope: &Scope) -> bool {
+        // All parts of a ClassDeclaration or a ClassExpression are strict mode code.
+        scope.strict_mode() || self.in_class()
+    }
+
+    #[must_use]
+    pub const fn in_class(self) -> bool {
+        self.flags.contains(NodeFlags::Class)
     }
 }

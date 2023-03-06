@@ -1114,7 +1114,7 @@ pub struct BindingPattern<'a> {
     #[serde(flatten)]
     pub kind: BindingPatternKind<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub type_annotation: Option<TSTypeAnnotation<'a>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub optional: bool,
 }
 
@@ -1198,7 +1198,7 @@ pub struct Function<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub return_type: Option<TSTypeAnnotation<'a>>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Valid modifiers: `export`, `default`, `async`
     #[serde(skip_serializing_if = "Modifiers::is_none")]
     pub modifiers: Modifiers<'a>,
@@ -1302,7 +1302,7 @@ pub struct ArrowExpression<'a> {
     pub body: Box<'a, FunctionBody<'a>>,
 
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub return_type: Option<TSTypeAnnotation<'a>>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
 /// Section 15.5 Generator Function Definitions
@@ -1324,7 +1324,7 @@ pub struct Class<'a> {
     pub span: Span,
     pub id: Option<BindingIdentifier>,
     pub super_class: Option<Expression<'a>>,
-    pub body: ClassBody<'a>,
+    pub body: Box<'a, ClassBody<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1479,7 +1479,7 @@ pub struct PropertyDefinition<'a> {
     pub definite: bool,
     pub readonly: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub type_annotation: Option<TSTypeAnnotation<'a>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
     #[serde(skip_serializing_if = "Vec::is_empty")]

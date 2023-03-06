@@ -2,6 +2,11 @@ use std::fmt::Debug;
 
 use crate::{context::LintContext, AstNode};
 
+pub enum RuleCategory {
+    Correctness,
+    Nursery,
+}
+
 pub trait Rule: Sized + Default + Debug {
     /// Initialize from eslint json configuration
     #[must_use]
@@ -14,6 +19,8 @@ pub trait Rule: Sized + Default + Debug {
 
 pub trait RuleMeta {
     const NAME: &'static str;
+
+    const CATEGORY: RuleCategory;
 
     #[must_use]
     fn documentation() -> Option<&'static str> {

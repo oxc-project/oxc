@@ -1,0 +1,39 @@
+[package]
+name = "oxc_wasm"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies]
+oxc_allocator = {path = "../oxc_allocator"}
+oxc_ast = {path = "../oxc_ast"}
+oxc_diagnostics = {path = "../oxc_diagnostics"}
+oxc_linter = {path = "../oxc_linter"}
+oxc_parser = {path = "../oxc_parser"}
+oxc_semantic = {path = "../oxc_semantic"}
+
+miette = {workspace = true, features = ["fancy-no-backtrace"]}
+serde = {workspace = true, features = ["derive"]}
+serde_json = {workspace = true}
+
+wasm-bindgen = {version = "0.2", features = ["serde-serialize"]}
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = {version = "0.1.6", optional = true}
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.13"

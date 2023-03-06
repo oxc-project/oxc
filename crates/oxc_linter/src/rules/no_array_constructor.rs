@@ -28,7 +28,8 @@ declare_oxc_lint!(
     /// ```javascript
     /// let arr = new Array();
     /// ```
-    NoArrayConstructor
+    NoArrayConstructor,
+    correctness
 );
 
 impl Rule for NoArrayConstructor {

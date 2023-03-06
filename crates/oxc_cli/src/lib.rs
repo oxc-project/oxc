@@ -12,12 +12,11 @@ use std::{
     sync::{mpsc, Arc},
 };
 
-// use git::{Git, GitResult};
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::{Error, Severity};
-use oxc_linter::{LintRunResult, Linter};
+use oxc_linter::{Fixer, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 
@@ -27,18 +26,15 @@ pub struct Cli {
     pub cli_options: CliOptions,
 }
 
-#[allow(clippy::missing_const_for_fn)]
 impl Cli {
     #[must_use]
-    pub fn new(cli_options: CliOptions) -> Self {
+    pub const fn new(cli_options: CliOptions) -> Self {
         Self { cli_options }
     }
 
-    /// Runs the linter on the specified paths and returns a `CliRunResult`.
-    ///
     /// # Panics
     ///
-    /// This function may panic if the `fs::read_to_string` function in `lint_path` fails to read a file.
+    /// * When `mpsc::channel` fails to send.
     #[must_use]
     pub fn lint(&self) -> CliRunResult {
         let now = std::time::Instant::now();
@@ -81,7 +77,7 @@ impl Cli {
                             tx_error.send(d).unwrap();
                         }
                         drop(tx_error);
-                    })
+                    });
                 }
             },
         );
@@ -133,24 +129,36 @@ impl Cli {
         let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
         let parser_source_text = source_text.clone();
         let ret = Parser::new(&allocator, &parser_source_text, source_type).parse();
-        let result = if ret.errors.is_empty() {
-            let program = allocator.alloc(ret.program);
-            let semantic = SemanticBuilder::new().build(program, ret.trivias);
-            Linter::new().run(&Rc::new(semantic), &source_text, fix)
-        } else {
-            LintRunResult { fixed_source: source_text.clone().into(), diagnostics: ret.errors }
+        if !ret.errors.is_empty() {
+            return ret.errors;
         };
 
-        if result.diagnostics.is_empty() {
+        let program = allocator.alloc(ret.program);
+        let trivias = Rc::new(ret.trivias);
+        let semantic = SemanticBuilder::new(source_type).build(program, trivias);
+        let result = Linter::new().run(&Rc::new(semantic), &source_text, fix);
+
+        if result.is_empty() {
             return vec![];
         }
 
-        let path = path.to_string_lossy();
-        let source = Arc::new(NamedSource::new(path, source_text.clone()));
+        let path_cow = path.to_string_lossy();
+        let source = Arc::new(NamedSource::new(path_cow, source_text.clone()));
+
+        if fix {
+            let fix_result = Fixer::new(&source_text, result).fix();
+            fs::write(path, fix_result.fixed_code.as_bytes())
+                .unwrap_or_else(|_| panic!("{path:?} not found"));
+            return fix_result
+                .messages
+                .into_iter()
+                .map(|m| m.error.with_source_code(source.clone()))
+                .collect();
+        }
+
         result
-            .diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(source.clone()))
+            .map(|diagnostic| diagnostic.error.with_source_code(source.clone()))
             .collect()
     }
 }

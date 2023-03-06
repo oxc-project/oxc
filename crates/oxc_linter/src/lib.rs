@@ -8,31 +8,17 @@ mod context;
 pub mod rule;
 mod rules;
 
-use std::{borrow::Cow, fs, rc::Rc};
+use std::{fs, rc::Rc};
 
-use oxc_diagnostics::Error;
+use autofix::Message;
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 
+pub use crate::autofix::Fixer;
 use crate::{
-    autofix::Fixer,
     context::LintContext,
     rules::{RuleEnum, RULES},
 };
-
-#[derive(Debug)]
-pub struct LintRunResult<'a> {
-    pub fixed_source: Cow<'a, str>,
-    pub diagnostics: Vec<Error>,
-}
-
-impl<'a> From<LintContext<'a>> for LintRunResult<'a> {
-    fn from(ctx: LintContext<'a>) -> Self {
-        let source_text = ctx.source_text();
-        let (fixes, diagnostics) = ctx.into_diagnostics();
-        Self { fixed_source: Fixer::new(source_text, fixes).fix(), diagnostics }
-    }
-}
 
 #[derive(Debug)]
 pub struct Linter {
@@ -60,6 +46,28 @@ impl Linter {
     }
 
     #[must_use]
+    pub fn from_json_str(s: &str) -> Self {
+        let rules = serde_json::from_str(s)
+            .ok()
+            .and_then(|v: serde_json::Value| v.get("rules").cloned())
+            .and_then(|v| v.as_object().cloned())
+            .map_or_else(
+                || RULES.to_vec(),
+                |rules_config| {
+                    RULES
+                        .iter()
+                        .map(|rule| {
+                            let value = rules_config.get(rule.name());
+                            rule.read_json(value.cloned())
+                        })
+                        .collect()
+                },
+            );
+
+        Self { rules }
+    }
+
+    #[must_use]
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
         Self { rules }
     }
@@ -70,7 +78,7 @@ impl Linter {
         semantic: &Rc<Semantic<'a>>,
         source_text: &'a str,
         fix: bool,
-    ) -> LintRunResult<'a> {
+    ) -> Vec<Message<'a>> {
         let ctx = LintContext::new(source_text, semantic.clone(), fix);
 
         for node in semantic.nodes().iter() {
@@ -79,7 +87,7 @@ impl Linter {
             }
         }
 
-        ctx.into()
+        ctx.into_message()
     }
 
     fn read_rules_configuration() -> Option<serde_json::Map<String, serde_json::Value>> {

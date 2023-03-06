@@ -5,9 +5,8 @@ on:
     paths:
       - 'crates/oxc_parser/**'
       - 'crates/oxc_ast/**'
-      - 'tasks/coverage/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
+      - 'crates/oxc_semantic/**'
+      - 'tasks/benchmark/**'
       - 'rust-toolchain.toml'
       - '!**/*.md'
 
@@ -17,9 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUST_LOG: info
-  RUST_BACKTRACE: 1
-  CARGO_INCREMENTAL: 0
+  CARGO_TERM_QUIET: true
 
 jobs:
   benchmark:
@@ -33,7 +30,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          submodules: false
 
       - name: Install toolchain
         run: rustup show
@@ -73,6 +69,7 @@ jobs:
           critcmp main pr >> output.md
           echo "\`\`\`" >> output.md
           cat output.md
+          cat output.md > $GITHUB_STEP_SUMMARY
 
       - name: Find Comment
         # Check if the event is not triggered by a fork

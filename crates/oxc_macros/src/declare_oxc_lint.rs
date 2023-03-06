@@ -2,7 +2,7 @@ use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
-use syn::{Attribute, Error, Ident, Lit, LitStr, Meta, Result};
+use syn::{Attribute, Error, Ident, Lit, LitStr, Meta, Result, Token};
 
 fn parse_attr<const LEN: usize>(path: [&'static str; LEN], attr: &Attribute) -> Option<LitStr> {
     if let Meta::NameValue(name_value) = attr.parse_meta().ok()? {
@@ -20,6 +20,7 @@ fn parse_attr<const LEN: usize>(path: [&'static str; LEN], attr: &Attribute) -> 
 
 pub struct LintRuleMeta {
     name: Ident,
+    category: Ident,
     documentation: String,
     pub used_in_test: bool,
 }
@@ -42,26 +43,38 @@ impl Parse for LintRuleMeta {
         }
 
         let struct_name = input.parse()?;
+        input.parse::<Token!(,)>()?;
+        let category = input.parse()?;
 
         // Ignore the rest
         input.parse::<TokenStream>()?;
 
-        Ok(Self { name: struct_name, documentation, used_in_test: false })
+        Ok(Self { name: struct_name, category, documentation, used_in_test: false })
     }
 }
 
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
-    let LintRuleMeta { name, documentation, used_in_test } = metadata;
+    let LintRuleMeta { name, category, documentation, used_in_test } = metadata;
     let canonical_name = name.to_string().to_case(Case::Kebab);
+    let category = match category.to_string().as_str() {
+        "correctness" => quote! { RuleCategory::Correctness },
+        "nursery" => quote! { RuleCategory::Nursery },
+        _ => panic!("invalid rule category"),
+    };
 
-    let import_statement =
-        if used_in_test { None } else { Some(quote! { use crate::rule::RuleMeta; }) };
+    let import_statement = if used_in_test {
+        None
+    } else {
+        Some(quote! { use crate::rule::{RuleCategory, RuleMeta}; })
+    };
 
     let output = quote! {
         #import_statement
 
         impl RuleMeta for #name {
             const NAME: &'static str = #canonical_name;
+
+            const CATEGORY: RuleCategory = #category;
 
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)

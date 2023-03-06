@@ -20,17 +20,18 @@ jemallocator = "0.5.0"
 mimalloc = "0.1.34"
 bitflags = "1.3.2"
 bumpalo = "3.12.0"
-compact_str = "0.6.1"
+compact_str = "0.7.0"
 miette = "5.5.0"
-rayon = "1.6.1"
+rayon = "1.7.0"
 rustc-hash = "1.1.0"
 serde = "1.0.152"
 serde_json = "1.0.93"
 thiserror = "1.0.38"
-clap = "4.1.6"
+clap = "4.1.8"
 indextree = "4.5.0"
 glob = "0.3.1"
 lazy_static = "1.4.0"
+
 
 [profile.release]
 # Configurations explicitly listed here for clarity.
@@ -41,3 +42,10 @@ codegen-units = 1
 strip = "symbols"
 debug = false
 panic = "abort" # Let it crash and force ourselves to write safe Rust.
+
+# Use the `--profile release-debug` flag to show symbols in release mode.
+# e.g. `cargo build --profile release-debug`
+[profile.release-debug]
+inherits = "release"
+strip = false
+debug = true

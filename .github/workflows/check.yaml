@@ -19,9 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  RUST_LOG: info
-  RUST_BACKTRACE: 1
-  CARGO_INCREMENTAL: 0
+  CARGO_TERM_QUIET: true
   RUSTFLAGS: -D warnings # https://rust-unofficial.github.io/patterns/anti_patterns/deny-warnings.html#alternatives
 
 jobs:
@@ -31,8 +29,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Install toolchain
         run: rustup show
@@ -46,8 +42,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Install toolchain
         run: rustup show
@@ -69,8 +63,6 @@ jobs:
     steps:
       - name: Checkout PR Branch
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Cache
         uses: Swatinem/rust-cache@v2
@@ -99,8 +91,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Install toolchain
         run: rustup show
@@ -121,8 +111,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          submodules: false
 
       - name: Install toolchain
         run: rustup show
