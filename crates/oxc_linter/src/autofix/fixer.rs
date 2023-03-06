@@ -23,6 +23,8 @@ impl<'a> Message<'a> {
     }
 }
 
+/// The fixer of the code.
+/// Note that our parser has handled the BOM, so we don't need to port the BOM test cases from ESLint.
 pub struct Fixer<'a> {
     source_text: &'a str,
     messages: Vec<Message<'a>>,
@@ -356,170 +358,9 @@ mod test {
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);
+        // We should sort the error to pass the following assertion.
         assert_eq!(result.messages[0].error.to_string(), "nofix1");
         assert_eq!(result.messages[0].error.to_string(), "nofix2");
         assert!(result.fixed);
-    }
-    #[ignore]
-    #[test]
-    fn insert_bom_at_0() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn insert_bom_with_text_at_0() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn remove_bom_with_negative_range() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn replace_bom_with_negative_range_and_foobar() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    // With BOM
-    #[ignore]
-    #[test]
-    fn insert_at_the_end_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn insert_at_the_start_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn insert_at_the_middle_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn insert_at_the_start_middle_end_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn ignore_reverse_range_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn replace_at_the_end_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn replace_at_the_start_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn replace_at_the_middle_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn replace_at_the_start_middle_end_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn remove_at_the_end_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn remove_at_the_start_with_bom() {
-        let _fixer = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn remove_at_the_middle_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn remove_at_the_start_middle_end_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn replace_at_start_remove_at_middle_insert_at_end_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn apply_one_fix_when_spans_overlap_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn apply_one_fix_when_the_start_the_same_as_the_previous_end_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn apply_same_fix_when_span_overlap_regardless_of_order_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn should_not_apply_fix_with_one_no_fix_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn insert_bom_at_0_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn insert_bom_with_text_at_0_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn remove_bom_with_negative_range_with_bom() {
-        let _result = get_fix_result(vec![]);
-    }
-
-    #[ignore]
-    #[test]
-    fn replace_bom_with_negative_range_and_foobar_with_bom() {
-        let _result = get_fix_result(vec![]);
     }
 }
