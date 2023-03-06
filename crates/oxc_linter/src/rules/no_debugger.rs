@@ -23,7 +23,6 @@ declare_oxc_lint!(
     /// `debugger` statements do not affect functionality when a debugger isn't attached.
     /// They're most commonly an accidental debugging leftover.
     ///
-    ///
     /// ### Example
     /// ```javascript
     /// const data = await getData();
