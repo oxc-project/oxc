@@ -1,3 +1,4 @@
+mod eq_eq_eq;
 mod for_direction;
 mod no_array_constructor;
 mod no_debugger;
@@ -8,6 +9,7 @@ mod deepscan {
 }
 
 pub use deepscan::uninvoked_array_callback::UninvokedArrayCallback;
+pub use eq_eq_eq::EqEqEq;
 pub use for_direction::ForDirection;
 pub use no_array_constructor::NoArrayConstructor;
 pub use no_debugger::NoDebugger;
@@ -18,6 +20,7 @@ use crate::{context::LintContext, rule::Rule, rule::RuleMeta, AstNode};
 
 lazy_static::lazy_static! {
     pub static ref RULES: Vec<RuleEnum> = vec![
+        RuleEnum::EqEqEq(EqEqEq::default()),
         RuleEnum::NoDebugger(NoDebugger::default()),
         RuleEnum::NoEmpty(NoEmpty::default()),
         RuleEnum::NoArrayConstructor(NoArrayConstructor::default()),
@@ -30,6 +33,7 @@ lazy_static::lazy_static! {
 #[derive(Debug, Clone)]
 #[allow(clippy::enum_variant_names)]
 pub enum RuleEnum {
+    EqEqEq(EqEqEq),
     NoDebugger(NoDebugger),
     NoEmpty(NoEmpty),
     NoArrayConstructor(NoArrayConstructor),
@@ -41,6 +45,7 @@ pub enum RuleEnum {
 impl RuleEnum {
     pub const fn name(&self) -> &'static str {
         match self {
+            Self::EqEqEq(_) => EqEqEq::NAME,
             Self::NoDebugger(_) => NoDebugger::NAME,
             Self::NoEmpty(_) => NoEmpty::NAME,
             Self::NoArrayConstructor(_) => NoArrayConstructor::NAME,
@@ -52,6 +57,9 @@ impl RuleEnum {
 
     pub fn read_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
         match self {
+            Self::EqEqEq(_) => {
+                Self::EqEqEq(maybe_value.map(EqEqEq::from_configuration).unwrap_or_default())
+            }
             Self::NoDebugger(_) => Self::NoDebugger(
                 maybe_value.map(NoDebugger::from_configuration).unwrap_or_default(),
             ),
@@ -75,6 +83,7 @@ impl RuleEnum {
 
     pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match self {
+            Self::EqEqEq(rule) => rule.run(node, ctx),
             Self::NoDebugger(rule) => rule.run(node, ctx),
             Self::NoEmpty(rule) => rule.run(node, ctx),
             Self::NoArrayConstructor(rule) => rule.run(node, ctx),
