@@ -3,6 +3,7 @@
 use std::fmt;
 
 use oxc_ast::Atom;
+use phf::phf_map;
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[non_exhaustive]
@@ -191,6 +192,103 @@ pub enum Kind {
 
 #[allow(clippy::enum_glob_use)]
 use self::Kind::*;
+
+static KEYWORDS: phf::Map<&'static str, (Kind, Atom)> = phf_map! {
+    "as" => (As, Atom::new_inline("as")),
+    "do" => (Do, Atom::new_inline("do")),
+    "if" => (If, Atom::new_inline("if")),
+    "in" => (In, Atom::new_inline("in")),
+    "is" => (Is, Atom::new_inline("is")),
+    "of" => (Of, Atom::new_inline("of")),
+
+    "any" => (Any, Atom::new_inline("any")),
+    "for" => (For, Atom::new_inline("for")),
+    "get" => (Get, Atom::new_inline("get")),
+    "let" => (Let, Atom::new_inline("let")),
+    "new" => (New, Atom::new_inline("new")),
+    "out" => (Out, Atom::new_inline("out")),
+    "set" => (Set, Atom::new_inline("set")),
+    "try" => (Try, Atom::new_inline("try")),
+    "var" => (Var, Atom::new_inline("var")),
+
+    "case" => (Case, Atom::new_inline("case")),
+    "else" => (Else, Atom::new_inline("else")),
+    "enum" => (Enum, Atom::new_inline("enum")),
+    "from" => (From, Atom::new_inline("from")),
+    "meta" => (Meta, Atom::new_inline("meta")),
+    "null" => (Null, Atom::new_inline("null")),
+    "this" => (This, Atom::new_inline("this")),
+    "true" => (True, Atom::new_inline("true")),
+    "type" => (Type, Atom::new_inline("type")),
+    "void" => (Void, Atom::new_inline("void")),
+    "with" => (With, Atom::new_inline("with")),
+
+    "async" => (Async, Atom::new_inline("async")),
+    "await" => (Await, Atom::new_inline("await")),
+    "break" => (Break, Atom::new_inline("break")),
+    "catch" => (Catch, Atom::new_inline("catch")),
+    "class" => (Class, Atom::new_inline("class")),
+    "const" => (Const, Atom::new_inline("const")),
+    "false" => (False, Atom::new_inline("false")),
+    "infer" => (Infer, Atom::new_inline("infer")),
+    "keyof" => (KeyOf, Atom::new_inline("keyof")),
+    "never" => (Never, Atom::new_inline("never")),
+    "super" => (Super, Atom::new_inline("super")),
+    "throw" => (Throw, Atom::new_inline("throw")),
+    "while" => (While, Atom::new_inline("while")),
+    "yield" => (Yield, Atom::new_inline("yield")),
+
+    "assert" => (Assert, Atom::new_inline("assert")),
+    "bigint" => (BigInt, Atom::new_inline("bigint")),
+    "delete" => (Delete, Atom::new_inline("delete")),
+    "export" => (Export, Atom::new_inline("export")),
+    "global" => (Global, Atom::new_inline("global")),
+    "import" => (Import, Atom::new_inline("import")),
+    "module" => (Module, Atom::new_inline("module")),
+    "number" => (Number, Atom::new_inline("number")),
+    "object" => (Object, Atom::new_inline("object")),
+    "public" => (Public, Atom::new_inline("public")),
+    "return" => (Return, Atom::new_inline("return")),
+    "static" => (Static, Atom::new_inline("static")),
+    "string" => (String, Atom::new_inline("string")),
+    "switch" => (Switch, Atom::new_inline("switch")),
+    "symbol" => (Symbol, Atom::new_inline("symbol")),
+    "target" => (Target, Atom::new_inline("target")),
+    "typeof" => (Typeof, Atom::new_inline("typeof")),
+    "unique" => (Unique, Atom::new_inline("unique")),
+
+    "asserts" => (Asserts, Atom::new_inline("asserts")),
+    "boolean" => (Boolean, Atom::new_inline("boolean")),
+    "declare" => (Declare, Atom::new_inline("declare")),
+    "default" => (Default, Atom::new_inline("default")),
+    "extends" => (Extends, Atom::new_inline("extends")),
+    "finally" => (Finally, Atom::new_inline("finally")),
+    "package" => (Package, Atom::new_inline("package")),
+    "private" => (Private, Atom::new_inline("private")),
+    "require" => (Require, Atom::new_inline("require")),
+    "unknown" => (Unknown, Atom::new_inline("unknown")),
+
+    "abstract" => (Abstract, Atom::new_inline("abstract")),
+    "accessor" => (Accessor, Atom::new_inline("accessor")),
+    "continue" => (Continue, Atom::new_inline("continue")),
+    "debugger" => (Debugger, Atom::new_inline("debugger")),
+    "function" => (Function, Atom::new_inline("function")),
+    "override" => (Override, Atom::new_inline("override")),
+    "readonly" => (Readonly, Atom::new_inline("readonly")),
+
+    "interface" => (Interface, Atom::new_inline("interface")),
+    "intrinsic" => (Intrinsic, Atom::new_inline("intrinsic")),
+    "namespace" => (Namespace, Atom::new_inline("namespace")),
+    "protected" => (Protected, Atom::new_inline("protected")),
+    "satisfies" => (Satisfies, Atom::new_inline("satisfies")),
+    "undefined" => (Undefined, Atom::new_inline("undefined")),
+
+    "implements" => (Implements, Atom::new_inline("implements")),
+    "instanceof" => (Instanceof, Atom::new_inline("instanceof")),
+
+    "constructor" => (Constructor, Atom::new_inline("constructor")),
+};
+
 impl Kind {
     #[must_use]
     pub const fn is_eof(self) -> bool {
@@ -394,103 +492,7 @@ impl Kind {
         if len == 1 || len >= 12 {
             return (Ident, Atom::new(s));
         }
-        // perf: Atom::new_inline is a `const` fn
-        match s {
-            "as" => (As, Atom::new_inline("as")),
-            "do" => (Do, Atom::new_inline("do")),
-            "if" => (If, Atom::new_inline("if")),
-            "in" => (In, Atom::new_inline("in")),
-            "is" => (Is, Atom::new_inline("is")),
-            "of" => (Of, Atom::new_inline("of")),
-
-            "any" => (Any, Atom::new_inline("any")),
-            "for" => (For, Atom::new_inline("for")),
-            "get" => (Get, Atom::new_inline("get")),
-            "let" => (Let, Atom::new_inline("let")),
-            "new" => (New, Atom::new_inline("new")),
-            "out" => (Out, Atom::new_inline("out")),
-            "set" => (Set, Atom::new_inline("set")),
-            "try" => (Try, Atom::new_inline("try")),
-            "var" => (Var, Atom::new_inline("var")),
-
-            "case" => (Case, Atom::new_inline("case")),
-            "else" => (Else, Atom::new_inline("else")),
-            "enum" => (Enum, Atom::new_inline("enum")),
-            "from" => (From, Atom::new_inline("from")),
-            "meta" => (Meta, Atom::new_inline("meta")),
-            "null" => (Null, Atom::new_inline("null")),
-            "this" => (This, Atom::new_inline("this")),
-            "true" => (True, Atom::new_inline("true")),
-            "type" => (Type, Atom::new_inline("type")),
-            "void" => (Void, Atom::new_inline("void")),
-            "with" => (With, Atom::new_inline("with")),
-
-            "async" => (Async, Atom::new_inline("async")),
-            "await" => (Await, Atom::new_inline("await")),
-            "break" => (Break, Atom::new_inline("break")),
-            "catch" => (Catch, Atom::new_inline("catch")),
-            "class" => (Class, Atom::new_inline("class")),
-            "const" => (Const, Atom::new_inline("const")),
-            "false" => (False, Atom::new_inline("false")),
-            "infer" => (Infer, Atom::new_inline("infer")),
-            "keyof" => (KeyOf, Atom::new_inline("keyof")),
-            "never" => (Never, Atom::new_inline("never")),
-            "super" => (Super, Atom::new_inline("super")),
-            "throw" => (Throw, Atom::new_inline("throw")),
-            "while" => (While, Atom::new_inline("while")),
-            "yield" => (Yield, Atom::new_inline("yield")),
-
-            "assert" => (Assert, Atom::new_inline("assert")),
-            "bigint" => (BigInt, Atom::new_inline("bigint")),
-            "delete" => (Delete, Atom::new_inline("delete")),
-            "export" => (Export, Atom::new_inline("export")),
-            "global" => (Global, Atom::new_inline("global")),
-            "import" => (Import, Atom::new_inline("import")),
-            "module" => (Module, Atom::new_inline("module")),
-            "number" => (Number, Atom::new_inline("number")),
-            "object" => (Object, Atom::new_inline("object")),
-            "public" => (Public, Atom::new_inline("public")),
-            "return" => (Return, Atom::new_inline("return")),
-            "static" => (Static, Atom::new_inline("static")),
-            "string" => (String, Atom::new_inline("string")),
-            "switch" => (Switch, Atom::new_inline("switch")),
-            "symbol" => (Symbol, Atom::new_inline("symbol")),
-            "target" => (Target, Atom::new_inline("target")),
-            "typeof" => (Typeof, Atom::new_inline("typeof")),
-            "unique" => (Unique, Atom::new_inline("unique")),
-
-            "asserts" => (Asserts, Atom::new_inline("asserts")),
-            "boolean" => (Boolean, Atom::new_inline("boolean")),
-            "declare" => (Declare, Atom::new_inline("declare")),
-            "default" => (Default, Atom::new_inline("default")),
-            "extends" => (Extends, Atom::new_inline("extends")),
-            "finally" => (Finally, Atom::new_inline("finally")),
-            "package" => (Package, Atom::new_inline("package")),
-            "private" => (Private, Atom::new_inline("private")),
-            "require" => (Require, Atom::new_inline("require")),
-            "unknown" => (Unknown, Atom::new_inline("unknown")),
-
-            "abstract" => (Abstract, Atom::new_inline("abstract")),
-            "accessor" => (Accessor, Atom::new_inline("accessor")),
-            "continue" => (Continue, Atom::new_inline("continue")),
-            "debugger" => (Debugger, Atom::new_inline("debugger")),
-            "function" => (Function, Atom::new_inline("function")),
-            "override" => (Override, Atom::new_inline("override")),
-            "readonly" => (Readonly, Atom::new_inline("readonly")),
-
-            "interface" => (Interface, Atom::new_inline("interface")),
-            "intrinsic" => (Intrinsic, Atom::new_inline("intrinsic")),
-            "namespace" => (Namespace, Atom::new_inline("namespace")),
-            "protected" => (Protected, Atom::new_inline("protected")),
-            "satisfies" => (Satisfies, Atom::new_inline("satisfies")),
-            "undefined" => (Undefined, Atom::new_inline("undefined")),
-
-            "implements" => (Implements, Atom::new_inline("implements")),
-            "instanceof" => (Instanceof, Atom::new_inline("instanceof")),
-
-            "constructor" => (Constructor, Atom::new_inline("constructor")),
-            _ => (Ident, Atom::new(s)),
-        }
+        KEYWORDS.get(s).cloned().unwrap_or_else(|| (Ident, Atom::new(s)))
     }
 
     #[allow(clippy::too_many_lines)]
