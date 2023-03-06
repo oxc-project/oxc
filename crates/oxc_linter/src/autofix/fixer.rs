@@ -447,7 +447,7 @@ mod test {
             get_fix_result_with_bom(vec![create_message(InsertAtMiddle(), Some(INSERT_AT_MIDDLE))]);
         let insert_in_middle =
             TEST_CODE.replace("6 *", &format!("{}6 *", INSERT_AT_MIDDLE.content));
-        assert_eq!(result.fixed_code, format!("{}{}", BOM, insert_in_middle));
+        assert_eq!(result.fixed_code, format!("{BOM}{insert_in_middle}"));
         assert_eq!(result.messages.len(), 0);
     }
 
@@ -546,7 +546,7 @@ mod test {
             create_message(RemoveStart(), Some(REMOVE_START)),
             create_message(RemoveMiddle(), Some(REMOVE_MIDDLE)),
         ]);
-        assert_eq!(result.fixed_code, format!("{}a = 6;", BOM));
+        assert_eq!(result.fixed_code, format!("{BOM}a = 6;"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
@@ -558,7 +558,7 @@ mod test {
             create_message(RemoveEnd(), Some(REMOVE_END)),
             create_message(ReplaceVar(), Some(REPLACE_VAR)),
         ]);
-        assert_eq!(result.fixed_code, format!("{}let answer = 6;// end", BOM));
+        assert_eq!(result.fixed_code, format!("{BOM}let answer = 6;// end"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
