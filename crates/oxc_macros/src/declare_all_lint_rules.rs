@@ -22,9 +22,7 @@ impl LintRuleMeta {
             let ident = &segment.ident;
 
             stmts = quote! {
-                mod #ident {
-                    #stmts
-                }
+                mod #ident { #stmts }
             };
 
             if segments.peek().is_some() {
@@ -39,7 +37,7 @@ impl LintRuleMeta {
 
     pub fn use_stmt(&self) -> TokenStream {
         let mut path = self.path.clone();
-        path.segments.push(syn::parse_str(&self.name.to_string().to_case(Case::Pascal)).unwrap());
+        path.segments.push(self.name.clone().into());
 
         quote! {
             pub use #path;
@@ -50,7 +48,10 @@ impl LintRuleMeta {
 impl Parse for LintRuleMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let path = input.parse::<syn::Path>()?;
-        let name = path.segments.iter().last().unwrap().ident.clone();
+        let name = syn::parse_str(
+            &path.segments.iter().last().unwrap().ident.to_string().to_case(Case::Pascal),
+        )
+        .unwrap();
         Ok(Self { path, name })
     }
 }
@@ -75,9 +76,50 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
     let mod_stmts = rules.iter().map(|rule| rule.mod_stmt());
     let use_stmts = rules.iter().map(|rule| rule.use_stmt());
+    let names = rules.iter().map(|rule| &rule.name);
+    let names2 = names.clone();
+    let names3 = names.clone();
+    let names4 = names.clone();
+    let names5 = names.clone();
 
     quote! {
         #(#mod_stmts)*
         #(#use_stmts)*
+
+        use crate::{context::LintContext, rule::Rule, rule::RuleMeta, AstNode};
+
+        #[derive(Debug, Clone)]
+        #[allow(clippy::enum_variant_names)]
+        pub enum RuleEnum {
+            #(#names(#names)),*
+        }
+
+        impl RuleEnum {
+            pub const fn name(&self) -> &'static str {
+                match self {
+                    #(Self::#names2(_) => #names2::NAME),*
+                }
+            }
+
+            pub fn read_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
+                match self {
+                    #(Self::#names3(_) => Self::#names3(
+                        maybe_value.map(#names3::from_configuration).unwrap_or_default(),
+                    )),*
+                }
+            }
+
+            pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+                match self {
+                    #(Self::#names4(rule) => rule.run(node, ctx)),*
+                }
+            }
+        }
+
+        lazy_static::lazy_static! {
+            pub static ref RULES: Vec<RuleEnum> = vec![
+                #(RuleEnum::#names5(#names5::default())),*
+            ];
+        }
     }
 }
