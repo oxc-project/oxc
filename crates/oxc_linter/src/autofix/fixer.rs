@@ -24,7 +24,7 @@ impl<'a> Message<'a> {
 }
 
 /// The fixer of the code.
-/// Note that our parser has handled the BOM, so we don't need to port the BOM test cases from ESLint.
+/// Note that our parser has handled the BOM, so we don't need to port the BOM test cases from `ESLint`.
 pub struct Fixer<'a> {
     source_text: &'a str,
     messages: Vec<Message<'a>>,
