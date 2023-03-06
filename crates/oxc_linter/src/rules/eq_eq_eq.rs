@@ -31,7 +31,8 @@ declare_oxc_lint!(
     /// let b = false
     /// a == b
     /// ```
-    EqEqEq
+    EqEqEq,
+    nursery
 );
 
 fn to_strict_operator(operator: BinaryOperator) -> BinaryOperator {
