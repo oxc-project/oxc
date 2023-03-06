@@ -1,0 +1,17 @@
+[package]
+name = "rule_generator"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+convert_case = "0.6.0"
+handlebars = "4.3.6"
+oxc_allocator = { path = "../../crates/oxc_allocator" }
+oxc_ast = { path = "../../crates/oxc_ast" }
+oxc_parser = { path = "../../crates/oxc_parser" }
+oxc_semantic = { path = "../../crates/oxc_semantic" }
+reqwest = "0.11.14"
+serde = { workspace = true, features = ["derive"] }
+tokio = { version = "1.26.0", features = ["full"] }
