@@ -61,7 +61,7 @@ impl<'a> Parser<'a> {
 
     /** ------------------- Annotation ----------------- */
 
-    pub fn parse_ts_type_annotation(&mut self) -> Result<Option<TSTypeAnnotation<'a>>> {
+    pub fn parse_ts_type_annotation(&mut self) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
         if self.at(Kind::Colon) {
             let span = self.start_span();
             self.bump_any(); // bump ':'
@@ -72,7 +72,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_ts_variable_annotation(&mut self) -> Result<(Option<TSTypeAnnotation<'a>>, bool)> {
+    pub fn parse_ts_variable_annotation(
+        &mut self,
+    ) -> Result<(Option<Box<'a, TSTypeAnnotation<'a>>>, bool)> {
         if !self.at(Kind::Bang) {
             return Ok((self.parse_ts_type_annotation()?, false));
         }
@@ -515,7 +517,7 @@ impl<'a> Parser<'a> {
             modifiers.push(Self::modifier(kind, self.end_span(span)));
         }
 
-        (flags, Modifiers(Some(modifiers)))
+        (flags, Modifiers::new(modifiers))
     }
 
     fn at_modifier(&mut self) -> bool {

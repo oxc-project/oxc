@@ -352,7 +352,7 @@ impl<'a> AstBuilder<'a> {
         params: Box<'a, FormalParameters<'a>>,
         body: Box<'a, FunctionBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        return_type: Option<TSTypeAnnotation<'a>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Expression<'a> {
         Expression::ArrowFunctionExpression(self.alloc(ArrowExpression {
             span,
@@ -711,7 +711,7 @@ impl<'a> AstBuilder<'a> {
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        return_type: Option<TSTypeAnnotation<'a>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         modifiers: Modifiers<'a>,
     ) -> Box<'a, Function<'a>> {
         self.alloc(Function {
@@ -750,7 +750,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: Option<BindingIdentifier>,
         super_class: Option<Expression<'a>>,
-        body: ClassBody<'a>,
+        body: Box<'a, ClassBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
         implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
@@ -769,6 +769,16 @@ impl<'a> AstBuilder<'a> {
             decorators,
             modifiers,
         })
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn class_body(
+        &self,
+        span: Span,
+        body: Vec<'a, ClassElement<'a>>,
+    ) -> Box<'a, ClassBody<'a>> {
+        self.alloc(ClassBody { span, body })
     }
 
     #[must_use]
@@ -836,7 +846,7 @@ impl<'a> AstBuilder<'a> {
     pub fn binding_pattern(
         &self,
         kind: BindingPatternKind<'a>,
-        type_annotation: Option<TSTypeAnnotation<'a>>,
+        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
         optional: bool,
     ) -> BindingPattern<'a> {
         BindingPattern { kind, type_annotation, optional }
@@ -1139,8 +1149,8 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         type_annotation: TSType<'a>,
-    ) -> TSTypeAnnotation<'a> {
-        TSTypeAnnotation { span, type_annotation }
+    ) -> Box<'a, TSTypeAnnotation<'a>> {
+        self.alloc(TSTypeAnnotation { span, type_annotation })
     }
 
     #[must_use]
@@ -1289,7 +1299,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
-        type_annotation: TSTypeAnnotation<'a>,
+        type_annotation: Box<'a, TSTypeAnnotation<'a>>,
     ) -> TSSignature<'a> {
         TSSignature::TSIndexSignature(self.alloc(TSIndexSignature {
             span,
@@ -1307,7 +1317,7 @@ impl<'a> AstBuilder<'a> {
         optional: bool,
         readonly: bool,
         key: PropertyKey<'a>,
-        type_annotation: Option<TSTypeAnnotation<'a>>,
+        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> TSSignature<'a> {
         TSSignature::TSPropertySignature(self.alloc(TSPropertySignature {
             span,
@@ -1325,7 +1335,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         params: Box<'a, FormalParameters<'a>>,
-        return_type: Option<TSTypeAnnotation<'a>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSSignature<'a> {
         TSSignature::TSCallSignatureDeclaration(self.alloc(TSCallSignatureDeclaration {
@@ -1342,7 +1352,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         params: Box<'a, FormalParameters<'a>>,
-        return_type: Option<TSTypeAnnotation<'a>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSSignature<'a> {
         TSSignature::TSConstructSignatureDeclaration(self.alloc(TSConstructSignatureDeclaration {
@@ -1363,7 +1373,7 @@ impl<'a> AstBuilder<'a> {
         optional: bool,
         kind: TSMethodSignatureKind,
         params: Box<'a, FormalParameters<'a>>,
-        return_type: Option<TSTypeAnnotation<'a>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSSignature<'a> {
         TSSignature::TSMethodSignature(self.alloc(TSMethodSignature {
@@ -1667,7 +1677,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         r#abstract: bool,
         params: Box<'a, FormalParameters<'a>>,
-        return_type: TSTypeAnnotation<'a>,
+        return_type: Box<'a, TSTypeAnnotation<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSType<'a> {
         TSType::TSConstructorType(self.alloc(TSConstructorType {
@@ -1685,7 +1695,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         params: Box<'a, FormalParameters<'a>>,
-        return_type: TSTypeAnnotation<'a>,
+        return_type: Box<'a, TSTypeAnnotation<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSType<'a> {
         TSType::TSFunctionType(self.alloc(TSFunctionType {
@@ -1713,7 +1723,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         parameter_name: TSTypePredicateName,
         asserts: bool,
-        type_annotation: Option<TSTypeAnnotation<'a>>,
+        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> TSType<'a> {
         TSType::TSTypePredicate(self.alloc(TSTypePredicate {
             span,

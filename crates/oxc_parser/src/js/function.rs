@@ -12,7 +12,7 @@ use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
 type ArrowFunctionHead<'a> = (
     Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     Box<'a, FormalParameters<'a>>,
-    Option<TSTypeAnnotation<'a>>,
+    Option<Box<'a, TSTypeAnnotation<'a>>>,
     bool,
     Span,
 );
@@ -481,7 +481,7 @@ impl<'a> Parser<'a> {
         span: Span,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         params: Box<'a, FormalParameters<'a>>,
-        return_type: Option<TSTypeAnnotation<'a>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         r#async: bool,
     ) -> Result<Expression<'a>> {
         let has_await = self.ctx.has_await();

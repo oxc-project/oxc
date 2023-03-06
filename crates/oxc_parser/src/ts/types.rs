@@ -828,7 +828,9 @@ impl<'a> Parser<'a> {
         self.unexpected()
     }
 
-    pub fn parse_ts_return_type_annotation(&mut self) -> Result<Option<TSTypeAnnotation<'a>>> {
+    pub fn parse_ts_return_type_annotation(
+        &mut self,
+    ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
         if !self.ts_enabled() {
             return Ok(None);
         }

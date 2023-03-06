@@ -150,14 +150,12 @@ impl<'a> Parser<'a> {
         Ok(extends)
     }
 
-    fn parse_class_body(&mut self) -> Result<ClassBody<'a>> {
+    fn parse_class_body(&mut self) -> Result<Box<'a, ClassBody<'a>>> {
         let span = self.start_span();
-
         let mut class_elements = ClassElements::new(self);
         class_elements.parse(self)?;
         let body = class_elements.elements;
-
-        Ok(ClassBody { span: self.end_span(span), body })
+        Ok(self.ast.class_body(self.end_span(span), body))
     }
 
     #[allow(clippy::too_many_lines)]
