@@ -25,11 +25,11 @@ use pico_args::Arguments;
 /// # Panics
 pub fn main() -> Result<(), String> {
     let codes = vec![
-        Code::new(5, "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.12.313/build/pdf.js")?,
-        Code::new(5, "https://cdn.jsdelivr.net/npm/lodash@4.17.0/lodash.js")?,
-        Code::new(5, "https://cdn.jsdelivr.net/npm/d3@7.1.1/dist/d3.js")?,
-        Code::new(10, "https://cdn.jsdelivr.net/npm/typescript@4.6.2/lib/typescript.js")?,
-        Code::new(10, "https://cdn.jsdelivr.net/npm/babylonjs@4.2.1/babylon.max.js")?,
+        Code::new(10, "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.12.313/build/pdf.js")?,
+        Code::new(10, "https://cdn.jsdelivr.net/npm/lodash@4.17.0/lodash.js")?,
+        Code::new(10, "https://cdn.jsdelivr.net/npm/d3@7.1.1/dist/d3.js")?,
+        Code::new(20, "https://cdn.jsdelivr.net/npm/typescript@4.6.2/lib/typescript.js")?,
+        Code::new(20, "https://cdn.jsdelivr.net/npm/babylonjs@4.2.1/babylon.max.js")?,
     ];
 
     let mut args = Arguments::from_env();
