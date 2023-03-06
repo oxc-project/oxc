@@ -524,7 +524,7 @@ pub struct TSPropertySignature<'a> {
     pub readonly: bool,
     pub key: PropertyKey<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub type_annotation: Option<TSTypeAnnotation<'a>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
@@ -543,7 +543,7 @@ pub struct TSIndexSignature<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub parameters: Vec<'a, Box<'a, TSIndexSignatureName<'a>>>,
-    pub type_annotation: TSTypeAnnotation<'a>,
+    pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
@@ -553,7 +553,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub span: Span,
     pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub return_type: Option<TSTypeAnnotation<'a>>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
@@ -578,7 +578,7 @@ pub struct TSMethodSignature<'a> {
     pub kind: TSMethodSignatureKind,
     pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub return_type: Option<TSTypeAnnotation<'a>>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
@@ -590,7 +590,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
     pub span: Span,
     pub params: Box<'a, FormalParameters<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub return_type: Option<TSTypeAnnotation<'a>>,
+    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
@@ -601,7 +601,7 @@ pub struct TSIndexSignatureName<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub name: Atom,
-    pub type_annotation: TSTypeAnnotation<'a>,
+    pub type_annotation: Box<'a, TSTypeAnnotation<'a>>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]
@@ -621,7 +621,7 @@ pub struct TSTypePredicate<'a> {
     pub span: Span,
     pub parameter_name: TSTypePredicateName,
     pub asserts: bool,
-    pub type_annotation: Option<TSTypeAnnotation<'a>>,
+    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash)]
@@ -718,7 +718,7 @@ pub struct TSFunctionType<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub params: Box<'a, FormalParameters<'a>>,
-    pub return_type: TSTypeAnnotation<'a>,
+    pub return_type: Box<'a, TSTypeAnnotation<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
@@ -730,7 +730,7 @@ pub struct TSConstructorType<'a> {
     pub span: Span,
     pub r#abstract: bool,
     pub params: Box<'a, FormalParameters<'a>>,
-    pub return_type: TSTypeAnnotation<'a>,
+    pub return_type: Box<'a, TSTypeAnnotation<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
@@ -859,9 +859,14 @@ pub struct Modifier {
 
 #[derive(Debug, Serialize, PartialEq, Eq, Hash, Default)]
 #[serde(transparent)]
-pub struct Modifiers<'a>(pub Option<Vec<'a, Modifier>>);
+pub struct Modifiers<'a>(Option<Vec<'a, Modifier>>);
 
 impl<'a> Modifiers<'a> {
+    #[must_use]
+    pub const fn new(modifiers: Vec<'a, Modifier>) -> Self {
+        Self(Some(modifiers))
+    }
+
     #[must_use]
     pub const fn empty() -> Self {
         Self(None)
