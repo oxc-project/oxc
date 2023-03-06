@@ -46,6 +46,28 @@ impl Linter {
     }
 
     #[must_use]
+    pub fn from_json_str(s: &str) -> Self {
+        let rules = serde_json::from_str(s)
+            .ok()
+            .and_then(|v: serde_json::Value| v.get("rules").cloned())
+            .and_then(|v| v.as_object().cloned())
+            .map_or_else(
+                || RULES.to_vec(),
+                |rules_config| {
+                    RULES
+                        .iter()
+                        .map(|rule| {
+                            let value = rules_config.get(rule.name());
+                            rule.read_json(value.cloned())
+                        })
+                        .collect()
+                },
+            );
+
+        Self { rules }
+    }
+
+    #[must_use]
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
         Self { rules }
     }
