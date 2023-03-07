@@ -1,10 +1,4 @@
-use oxc_ast::{
-    ast::{
-        AssignmentExpression, AssignmentOperator, AssignmentTarget, BinaryOperator, Expression,
-        IdentifierReference, SimpleAssignmentTarget, UnaryOperator, UpdateOperator,
-    },
-    AstKind, Span,
-};
+use oxc_ast::Span;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,

@@ -75,24 +75,24 @@ fn parse_test_code<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), reqwest::Error> {
+fn main() {
     let mut args = std::env::args();
     let _ = args.next();
     let rule_name = args.next().expect("expected rule name");
     let rule_test_path = format!("{ESLINT_TEST_PATH}/{rule_name}.js");
 
-    let body = reqwest::get(rule_test_path.clone()).await?.text().await?;
+    match ureq::get(&rule_test_path).call() {
+        Ok(response) => {
+            let body = response.into_string().expect("failed to read response as string");
+            let allocator = Allocator::default();
+            let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
+            let ret = Parser::new(&allocator, &body, source_type).parse();
 
-    let allocator = Allocator::default();
-    let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
-    let ret = Parser::new(&allocator, &body, source_type).parse();
+            let program = allocator.alloc(ret.program);
+            let trivias = Rc::new(ret.trivias);
+            let semantic = SemanticBuilder::new(source_type).build(program, trivias);
 
-    let program = allocator.alloc(ret.program);
-    let trivias = Rc::new(ret.trivias);
-    let semantic = SemanticBuilder::new(source_type).build(program, trivias);
-
-    let tests_object = semantic.nodes().iter().find_map(|node| match node.get().kind() {
+            let tests_object = semantic.nodes().iter().find_map(|node| match node.get().kind() {
         AstKind::ExpressionStatement(stmt) => match &stmt.expression {
             Expression::CallExpression(call_expr) => {
                 for arg in &call_expr.arguments {
@@ -133,46 +133,57 @@ async fn main() -> Result<(), reqwest::Error> {
         _ => None,
     });
 
-    let mut pass_cases = vec![];
-    let mut fail_cases = vec![];
-    if let Some((Some(valid), Some(invalid))) = tests_object {
-        for arg in (&valid.elements).into_iter().flatten() {
-            if let Argument::Expression(expr) = arg {
-                let Some(code) = parse_test_code(expr) else { continue };
-                pass_cases.push(TestCase::Valid(code));
-            }
-        }
+            let mut pass_cases = vec![];
+            let mut fail_cases = vec![];
+            if let Some((Some(valid), Some(invalid))) = tests_object {
+                for arg in (&valid.elements).into_iter().flatten() {
+                    if let Argument::Expression(expr) = arg {
+                        let Some(code) = parse_test_code(expr) else { continue };
+                        pass_cases.push(TestCase::Valid(code));
+                    }
+                }
 
-        for arg in (&invalid.elements).into_iter().flatten() {
-            if let Argument::Expression(expr) = arg {
-                let Some(code) = parse_test_code(expr) else { continue };
-                fail_cases.push(TestCase::Invalid(code));
+                for arg in (&invalid.elements).into_iter().flatten() {
+                    if let Argument::Expression(expr) = arg {
+                        let Some(code) = parse_test_code(expr) else { continue };
+                        fail_cases.push(TestCase::Invalid(code));
+                    }
+                }
             }
+
+            let mut eng = handlebars::Handlebars::new();
+            eng.register_escape_fn(handlebars::no_escape);
+
+            let rule = rule_name.to_case(Case::UpperCamel);
+            let context = Context {
+                rule: &rule,
+                pass_cases: &pass_cases
+                    .iter()
+                    .map(TestCase::to_code)
+                    .collect::<Vec<_>>()
+                    .join(",\n"),
+                fail_cases: &fail_cases
+                    .iter()
+                    .map(TestCase::to_code)
+                    .collect::<Vec<_>>()
+                    .join(",\n"),
+            };
+            let rendered =
+                eng.render_template(RULE_TEMPLATE, &handlebars::to_json(context)).unwrap();
+
+            let out_path = Path::new("crates/oxc_linter/src/rules")
+                .join(format!("{}.rs", rule_name.to_case(Case::Snake)));
+            let mut out_file =
+                File::create(out_path.clone()).expect("failed to create output file");
+            out_file.write_all(rendered.as_bytes()).expect("failed to write output");
+
+            Command::new("cargo")
+                .arg("fmt")
+                .arg("--")
+                .arg(out_path)
+                .spawn()
+                .expect("failed to format output");
         }
+        Err(_) => panic!("failed to fetch source"),
     }
-
-    let mut eng = handlebars::Handlebars::new();
-    eng.register_escape_fn(handlebars::no_escape);
-
-    let rule = rule_name.to_case(Case::UpperCamel);
-    let context = Context {
-        rule: &rule,
-        pass_cases: &pass_cases.iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n"),
-        fail_cases: &fail_cases.iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n"),
-    };
-    let rendered = eng.render_template(RULE_TEMPLATE, &handlebars::to_json(context)).unwrap();
-
-    let out_path = Path::new("../../crates/oxc_linter/src/rules")
-        .join(format!("{}.rs", rule_name.to_case(Case::Snake)));
-    let mut out_file = File::create(out_path.clone()).expect("failed to create output file");
-    out_file.write_all(rendered.as_bytes()).expect("failed to write output");
-
-    Command::new("cargo")
-        .arg("fmt")
-        .arg("--")
-        .arg(out_path)
-        .spawn()
-        .expect("failed to format output");
-
-    Ok(())
 }
