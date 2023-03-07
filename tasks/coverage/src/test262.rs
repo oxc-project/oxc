@@ -161,12 +161,8 @@ impl Case for Test262Case {
     }
 
     fn skip_test_case(&self) -> bool {
-        [
-            "decorators".to_string().into_boxed_str(),
-            "regexp-unicode-property-escapes".to_string().into_boxed_str(),
-        ]
-        .iter()
-        .any(|feature| self.meta.features.contains(feature))
+        std::iter::once("regexp-unicode-property-escapes".to_string().into_boxed_str())
+            .any(|feature| self.meta.features.contains(&feature))
     }
 
     // Unless configured otherwise (via the noStrict, onlyStrict, module, or raw flags),

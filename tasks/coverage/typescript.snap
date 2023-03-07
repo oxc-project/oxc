@@ -1,5 +1,6 @@
 TypeScript Summary:
-AST Parsed     : 4325/4865 (88.90%)
+AST Parsed     : 4327/4867 (88.90%)
+Positive Passed: 4327/4867 (88.90%)
 Expect to Parse: "async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts"
 
   × Automatic Semicolon Insertion

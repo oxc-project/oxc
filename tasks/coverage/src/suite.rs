@@ -161,27 +161,29 @@ pub trait Suite<T: Case> {
     ) -> std::io::Result<()> {
         let CoverageReport {
             parsed_positives,
-
-            // passed_positives,
-            // passed_negatives,
+            passed_positives,
+            passed_negatives,
             all_positives,
-            // all_negatives,
+            all_negatives,
             ..
         } = report;
 
         let parsed_diff = (*parsed_positives as f64 / *all_positives as f64) * 100.0;
-        // let positive_diff = (*passed_positives as f64 / *all_positives as f64) * 100.0;
-        // let negative_diff = (*passed_negatives as f64 / *all_negatives as f64) * 100.0;
+        let positive_diff = (*passed_positives as f64 / *all_positives as f64) * 100.0;
+        let negative_diff = (*passed_negatives as f64 / *all_negatives as f64) * 100.0;
         writer.write_all(format!("{name} Summary:\n").as_bytes())?;
         let msg =
             format!("AST Parsed     : {parsed_positives}/{all_positives} ({parsed_diff:.2}%)\n");
         writer.write_all(msg.as_bytes())?;
-        // let msg =
-        // format!("Positive Passed: {passed_positives}/{all_positives} ({positive_diff:.2}%)\n");
-        // writer.write_all(msg.as_bytes())?;
-        // let msg =
-        // format!("Negative Passed: {passed_negatives}/{all_negatives} ({negative_diff:.2}%)\n");
-        // writer.write_all(msg.as_bytes())?;
+        let msg =
+            format!("Positive Passed: {passed_positives}/{all_positives} ({positive_diff:.2}%)\n");
+        writer.write_all(msg.as_bytes())?;
+        if *all_negatives > 0 {
+            let msg = format!(
+                "Negative Passed: {passed_negatives}/{all_negatives} ({negative_diff:.2}%)\n"
+            );
+            writer.write_all(msg.as_bytes())?;
+        }
 
         if args.should_print_detail() {
             for case in &report.failed_negatives {
@@ -300,9 +302,9 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                     println!("Mismatch: {:?}", self.path());
                 }
             }
-            // TestResult::IncorrectlyPassed => {
-            // writer.write_all(format!("Expect Syntax Error: {:?}\n", self.path()).as_bytes())?;
-            // }
+            TestResult::IncorrectlyPassed => {
+                writer.write_all(format!("Expect Syntax Error: {:?}\n", self.path()).as_bytes())?;
+            }
             _ => {}
         }
         Ok(())
