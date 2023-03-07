@@ -1,8 +1,23 @@
 use std::borrow::Cow;
 
+use oxc_ast::Span;
 use oxc_diagnostics::Error;
 
-use super::Fix;
+#[derive(Debug, Default)]
+pub struct Fix<'a> {
+    pub content: Cow<'a, str>,
+    pub span: Span,
+}
+
+impl<'a> Fix<'a> {
+    pub const fn delete(span: Span) -> Self {
+        Self { content: Cow::Borrowed(""), span }
+    }
+
+    pub fn new<T: Into<Cow<'a, str>>>(content: T, span: Span) -> Self {
+        Self { content: content.into(), span }
+    }
+}
 
 pub struct FixResult<'a> {
     pub fixed: bool,
@@ -15,11 +30,13 @@ pub struct Message<'a> {
     pub error: Error,
     fix: Option<Fix<'a>>,
     fixed: bool,
+    span: Span,
 }
 
 impl<'a> Message<'a> {
-    pub fn new(error: Error, fix: Option<Fix<'a>>) -> Self {
-        Self { error, fix, fixed: false }
+    #[must_use]
+    pub fn new(error: Error, fix: Option<Fix<'a>>, span: Span) -> Self {
+        Self { error, fix, fixed: false, span }
     }
 }
 
@@ -74,7 +91,8 @@ impl<'a> Fixer<'a> {
         let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
         output.push_str(&source_text[offset..]);
 
-        let messages = self.messages.into_iter().filter(|m| !m.fixed).collect::<Vec<_>>();
+        let mut messages = self.messages.into_iter().filter(|m| !m.fixed).collect::<Vec<_>>();
+        messages.sort_by_key(|m| m.span);
 
         return FixResult { fixed, fixed_code: Cow::Owned(output), messages };
     }
@@ -88,8 +106,7 @@ mod test {
     use oxc_ast::Span;
     use oxc_diagnostics::{thiserror::Error, Error};
 
-    use super::{FixResult, Fixer, Message};
-    use crate::autofix::Fix;
+    use super::{Fix, FixResult, Fixer, Message};
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
 
@@ -162,7 +179,7 @@ mod test {
     }
 
     fn create_message<T: Into<Error>>(error: T, fix: Option<Fix>) -> Message {
-        Message::new(error.into(), fix)
+        Message::new(error.into(), fix, Span::default())
     }
 
     #[test]
@@ -348,19 +365,17 @@ mod test {
         assert!(!result.fixed);
     }
 
-    #[ignore]
     #[test]
     fn sort_no_fix_messages_correctly() {
         let result = get_fix_result(vec![
             create_message(ReplaceId(), Some(REPLACE_ID)),
-            create_message(NoFix2(), None),
-            create_message(NoFix1(), None),
+            Message::new(NoFix2().into(), None, Span { start: 1, end: 7 }),
+            Message::new(NoFix1().into(), None, Span { start: 1, end: 3 }),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);
-        // We should sort the error to pass the following assertion.
         assert_eq!(result.messages[0].error.to_string(), "nofix1");
-        assert_eq!(result.messages[0].error.to_string(), "nofix2");
+        assert_eq!(result.messages[1].error.to_string(), "nofix2");
         assert!(result.fixed);
     }
 }

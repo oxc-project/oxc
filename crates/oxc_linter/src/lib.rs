@@ -3,18 +3,17 @@
 #[cfg(test)]
 mod tester;
 
-mod autofix;
 mod context;
+mod fixer;
 pub mod rule;
 mod rules;
 
 use std::{fs, rc::Rc};
 
-use autofix::Message;
+pub use fixer::{Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 
-pub use crate::autofix::Fixer;
 use crate::{
     context::LintContext,
     rules::{RuleEnum, RULES},

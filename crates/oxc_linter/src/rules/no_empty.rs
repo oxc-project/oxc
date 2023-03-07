@@ -52,7 +52,7 @@ impl Rule for NoEmpty {
                 if ctx.semantic().trivias().has_comments_between(block.span) {
                     return;
                 }
-                ctx.diagnostic(NoEmptyDiagnostic("block", block.span));
+                ctx.diagnostic(NoEmptyDiagnostic("block", block.span), block.span);
             }
             // The visitor does not visit the `BlockStatement` inside the `CatchClause`.
             // See `Visit::visit_catch_clause`.
@@ -62,10 +62,13 @@ impl Rule for NoEmpty {
                 if ctx.semantic().trivias().has_comments_between(catch_clause.body.span) {
                     return;
                 }
-                ctx.diagnostic(NoEmptyDiagnostic("block", catch_clause.body.span));
+                ctx.diagnostic(
+                    NoEmptyDiagnostic("block", catch_clause.body.span),
+                    catch_clause.body.span,
+                );
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
-                ctx.diagnostic(NoEmptyDiagnostic("switch", switch.span));
+                ctx.diagnostic(NoEmptyDiagnostic("switch", switch.span), switch.span);
             }
             _ => {}
         }

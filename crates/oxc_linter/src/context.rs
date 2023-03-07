@@ -1,11 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, Span};
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNodes, Semantic};
 
 use crate::{
-    autofix::{Fix, Message},
+    fixer::{Fix, Message},
     AstNode,
 };
 
@@ -18,20 +18,11 @@ pub struct LintContext<'a> {
 
     /// Whether or not to apply code fixes during linting.
     fix: bool,
-
-    /// Collection of applicable fixes based on reported issues.
-    fixes: RefCell<Vec<Fix<'a>>>,
 }
 
 impl<'a> LintContext<'a> {
     pub fn new(source_text: &'a str, semantic: Rc<Semantic<'a>>, fix: bool) -> Self {
-        Self {
-            source_text,
-            semantic,
-            diagnostics: RefCell::new(vec![]),
-            fix,
-            fixes: RefCell::new(vec![]),
-        }
+        Self { source_text, semantic, diagnostics: RefCell::new(vec![]), fix }
     }
 
     pub const fn source_text(&self) -> &'a str {
@@ -42,27 +33,20 @@ impl<'a> LintContext<'a> {
         self.diagnostics.into_inner()
     }
 
-    pub fn diagnostic<T: Into<Error>>(&self, diagnostic: T) {
-        self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), None));
+    pub fn diagnostic<T: Into<Error>>(&self, diagnostic: T, span: Span) {
+        self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), None, span));
     }
 
-    pub fn diagnostic_with_fix<T, F>(&self, diagnostic: T, fix: F)
+    pub fn diagnostic_with_fix<T, F>(&self, diagnostic: T, span: Span, fix: F)
     where
         T: Into<Error>,
         F: FnOnce() -> Fix<'a>,
     {
         if self.fix {
-            self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), Some(fix())));
+            self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), Some(fix()), span));
         } else {
-            self.diagnostic(diagnostic);
+            self.diagnostic(diagnostic, span);
         }
-    }
-
-    pub fn fix(&self, fix: Fix<'a>) {
-        if !self.fix {
-            return;
-        }
-        self.fixes.borrow_mut().push(fix);
     }
 
     #[inline]
