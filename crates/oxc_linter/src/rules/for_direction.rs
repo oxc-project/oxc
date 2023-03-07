@@ -33,7 +33,6 @@ declare_oxc_lint!(
     /// ### Why is this bad?
     /// A for loop that is known to run infinitely or never run is considered a bug.
     ///
-    ///
     /// ### Example
     /// ```javascript
     /// for (var i = 0; i < 10; i--) {}

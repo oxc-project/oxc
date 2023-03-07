@@ -1,0 +1,51 @@
+use oxc_ast::Span;
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+};
+use oxc_macros::declare_oxc_lint;
+
+use crate::{context::LintContext, rule::Rule, AstNode};
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("")]
+#[diagnostic(severity(warning), help(""))]
+struct {{rule}}Diagnostic(#[label] pub Span);
+
+#[derive(Debug, Default, Clone)]
+pub struct {{rule}};
+
+declare_oxc_lint!(
+    /// ### What it does
+    /// 
+    ///
+    /// ### Why is this bad?
+    /// 
+    ///
+    /// ### Example
+    /// ```javascript
+    /// ```
+    {{rule}},
+    correctness
+);
+
+impl Rule for {{rule}} {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        
+    }
+}
+
+#[test]
+fn test() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        {{pass_cases}}
+    ];
+
+    let fail = vec![
+        {{fail_cases}}
+    ];
+
+    Tester::new({{rule}}::NAME, pass, fail).test_and_snapshot();
+}
