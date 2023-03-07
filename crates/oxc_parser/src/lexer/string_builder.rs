@@ -52,7 +52,7 @@ impl<'a> AutoCow<'a> {
     }
 
     // Check if the string contains a different character, such as an escape sequence
-    pub const fn has_escape(&self) -> bool {
+    pub fn has_escape(&self) -> bool {
         self.value.is_some()
     }
 

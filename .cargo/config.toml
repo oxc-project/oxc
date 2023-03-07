@@ -2,6 +2,7 @@
 lint = "clippy --workspace --all-targets --all-features"
 coverage = "run -p oxc_coverage --release --"
 benchmark = "run -p oxc_benchmark --release --"
+rule = "run -p rule_generator"
 
 [build]
 rustflags = ["-C", "target-cpu=native"]
@@ -15,11 +16,20 @@ rustflags = [
     "-Wclippy::all",
 
     # I want to write the best Rust code so both pedantic and nursery is enabled.
-    # We should only disable rules globally if they are: false positives, chaotic, or does not make sense.
+    # We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
     "-Wclippy::pedantic",
     "-Wclippy::nursery",
 
     "-Wclippy::dbg_macro",
 
-    "-Aclippy::module_name_repetitions"
+    # pedantic
+
+    # This rule is too pedantic, I don't want to force this because naming things are hard.
+    "-Aclippy::module_name_repetitions",
+
+    # nursery rules
+
+    # `const` functions do not make sense for our project because this is not a `const` library.
+    # This rule also confuses new comers and forces them to add `const` blindlessly without any reason.
+    "-Aclippy::missing_const_for_fn"
 ]

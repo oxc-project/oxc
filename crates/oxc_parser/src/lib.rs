@@ -147,7 +147,7 @@ impl<'a> Parser<'a> {
     }
 
     #[must_use]
-    const fn ts_enabled(&self) -> bool {
+    fn ts_enabled(&self) -> bool {
         self.source_type.is_typescript()
     }
 }

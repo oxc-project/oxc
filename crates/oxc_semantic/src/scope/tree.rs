@@ -22,7 +22,7 @@ impl ScopeTree {
     }
 
     #[must_use]
-    pub const fn root_scope_id(&self) -> ScopeId {
+    pub fn root_scope_id(&self) -> ScopeId {
         self.root_scope_id
     }
 

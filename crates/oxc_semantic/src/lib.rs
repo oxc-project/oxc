@@ -17,7 +17,7 @@ pub struct Semantic<'a> {
 
 impl<'a> Semantic<'a> {
     #[must_use]
-    pub const fn nodes(&self) -> &AstNodes<'a> {
+    pub fn nodes(&self) -> &AstNodes<'a> {
         &self.nodes
     }
 

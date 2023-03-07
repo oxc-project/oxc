@@ -26,7 +26,7 @@ pub enum CommentKind {
 
 impl Comment {
     #[must_use]
-    pub const fn new(end: u32, kind: CommentKind) -> Self {
+    pub fn new(end: u32, kind: CommentKind) -> Self {
         Self { kind, end }
     }
 }

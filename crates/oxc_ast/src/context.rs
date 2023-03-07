@@ -60,61 +60,61 @@ impl Default for Context {
 impl Context {
     #[must_use]
     #[inline]
-    pub const fn has_in(self) -> bool {
+    pub fn has_in(self) -> bool {
         self.contains(Self::In)
     }
 
     #[must_use]
     #[inline]
-    pub const fn has_yield(self) -> bool {
+    pub fn has_yield(self) -> bool {
         self.contains(Self::Yield)
     }
 
     #[must_use]
     #[inline]
-    pub const fn has_await(self) -> bool {
+    pub fn has_await(self) -> bool {
         self.contains(Self::Await)
     }
 
     #[must_use]
     #[inline]
-    pub const fn has_return(self) -> bool {
+    pub fn has_return(self) -> bool {
         self.contains(Self::Return)
     }
 
     #[must_use]
     #[inline]
-    pub const fn has_disallow_conditional_types(self) -> bool {
+    pub fn has_disallow_conditional_types(self) -> bool {
         self.contains(Self::DisallowConditionalTypes)
     }
 
     #[must_use]
     #[inline]
-    pub const fn has_ambient(self) -> bool {
+    pub fn has_ambient(self) -> bool {
         self.contains(Self::Ambient)
     }
 
     #[must_use]
     #[inline]
-    pub const fn has_decorator(self) -> bool {
+    pub fn has_decorator(self) -> bool {
         self.contains(Self::Decorator)
     }
 
     #[must_use]
     #[inline]
-    pub const fn union_await_if(self, include: bool) -> Self {
+    pub fn union_await_if(self, include: bool) -> Self {
         self.union_if(Self::Await, include)
     }
 
     #[must_use]
     #[inline]
-    pub const fn union_yield_if(self, include: bool) -> Self {
+    pub fn union_yield_if(self, include: bool) -> Self {
         self.union_if(Self::Yield, include)
     }
 
     #[must_use]
     #[inline]
-    const fn union_if(self, other: Self, include: bool) -> Self {
+    fn union_if(self, other: Self, include: bool) -> Self {
         if include { self.union(other) } else { self }
     }
 
@@ -190,7 +190,7 @@ impl StatementContext {
     }
 
     #[must_use]
-    pub const fn is_iteration(self) -> bool {
+    pub fn is_iteration(self) -> bool {
         matches!(self, Self::For | Self::While | Self::Do)
     }
 }

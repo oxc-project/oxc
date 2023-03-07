@@ -31,7 +31,7 @@ pub const FF: char = '\u{c}';
 /// U+00A0 NON-BREAKING SPACE, abbreviated <NBSP>.
 pub const NBSP: char = '\u{a0}';
 
-pub const fn is_irregular_whitespace(c: char) -> bool {
+pub fn is_irregular_whitespace(c: char) -> bool {
     matches!(
         c,
         VT | FF | NBSP | ZWNBSP | '\u{85}' | '\u{1680}' | '\u{2000}'
@@ -53,15 +53,15 @@ pub const LS: char = '\u{2028}';
 /// U+2029 PARAGRAPH SEPARATOR, abbreviated <PS>.
 pub const PS: char = '\u{2029}';
 
-pub const fn is_regular_line_terminator(c: char) -> bool {
+pub fn is_regular_line_terminator(c: char) -> bool {
     matches!(c, LF | CR)
 }
 
-pub const fn is_irregular_line_terminator(c: char) -> bool {
+pub fn is_irregular_line_terminator(c: char) -> bool {
     matches!(c, LS | PS)
 }
 
-pub const fn is_line_terminator(c: char) -> bool {
+pub fn is_line_terminator(c: char) -> bool {
     is_regular_line_terminator(c) || is_irregular_line_terminator(c)
 }
 

@@ -279,17 +279,17 @@ static KW_CONSTRUCTOR: Atom = Atom::new_inline("constructor");
 
 impl Kind {
     #[must_use]
-    pub const fn is_eof(self) -> bool {
+    pub fn is_eof(self) -> bool {
         matches!(self, Eof)
     }
 
     #[must_use]
-    pub const fn is_trivia(self) -> bool {
+    pub fn is_trivia(self) -> bool {
         matches!(self, WhiteSpace | NewLine | Comment | MultiLineComment)
     }
 
     #[must_use]
-    pub const fn is_number(self) -> bool {
+    pub fn is_number(self) -> bool {
         matches!(self, Float | Decimal | Binary | Octal | Hex)
     }
 
@@ -313,7 +313,7 @@ impl Kind {
 
     /// `BindingIdentifier`
     #[must_use]
-    pub const fn is_binding_identifier(self) -> bool {
+    pub fn is_binding_identifier(self) -> bool {
         self.is_identifier() || matches!(self, Yield | Await)
     }
 
@@ -326,13 +326,13 @@ impl Kind {
     /// Identifier
     /// `IdentifierName` but not `ReservedWord`
     #[must_use]
-    pub const fn is_identifier(self) -> bool {
+    pub fn is_identifier(self) -> bool {
         self.is_identifier_name() && !self.is_reserved_keyword()
     }
 
     /// `IdentifierName`
     #[must_use]
-    pub const fn is_identifier_name(self) -> bool {
+    pub fn is_identifier_name(self) -> bool {
         matches!(self, Ident) || self.is_all_keyword()
     }
 
@@ -350,12 +350,12 @@ impl Kind {
     ///     `NumericLiteral`
     ///     `StringLiteral`
     #[must_use]
-    pub const fn is_literal(self) -> bool {
+    pub fn is_literal(self) -> bool {
         matches!(self, Null | True | False | Str | RegExp) || self.is_number()
     }
 
     #[must_use]
-    pub const fn is_after_await_or_yield(self) -> bool {
+    pub fn is_after_await_or_yield(self) -> bool {
         !self.is_binary_operator() && (self.is_literal() || self.is_identifier_name())
     }
 
@@ -370,7 +370,7 @@ impl Kind {
     }
 
     #[must_use]
-    pub const fn is_variable_declaration(self) -> bool {
+    pub fn is_variable_declaration(self) -> bool {
         matches!(self, Var | Let | Const)
     }
 
@@ -388,7 +388,7 @@ impl Kind {
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_assignment_operator(self) -> bool {
+    pub fn is_assignment_operator(self) -> bool {
         matches!(self, Eq | PlusEq | MinusEq | StarEq | SlashEq | PercentEq | ShiftLeftEq | ShiftRightEq
             | ShiftRight3Eq | Pipe2Eq | Amp2Eq | PipeEq | CaretEq | AmpEq | Question2Eq
             | Star2Eq)
@@ -396,30 +396,30 @@ impl Kind {
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_binary_operator(self) -> bool {
+    pub fn is_binary_operator(self) -> bool {
         matches!(self, Eq2 | Neq | Eq3 | Neq2 | LAngle | LtEq | RAngle | GtEq | ShiftLeft | ShiftRight
             | ShiftRight3 | Plus | Minus | Star | Slash | Percent | Pipe | Caret | Amp | In
             | Instanceof | Star2)
     }
 
     #[must_use]
-    pub const fn is_logical_operator(self) -> bool {
+    pub fn is_logical_operator(self) -> bool {
         matches!(self, Pipe2 | Amp2 | Question2)
     }
 
     #[must_use]
-    pub const fn is_unary_operator(self) -> bool {
+    pub fn is_unary_operator(self) -> bool {
         matches!(self, Minus | Plus | Bang | Tilde | Typeof | Void | Delete)
     }
 
     #[must_use]
-    pub const fn is_update_operator(self) -> bool {
+    pub fn is_update_operator(self) -> bool {
         matches!(self, Plus2 | Minus2)
     }
 
     /// [Keywords and Reserved Words](https://tc39.es/ecma262/#sec-keywords-and-reserved-words)
     #[must_use]
-    pub const fn is_all_keyword(self) -> bool {
+    pub fn is_all_keyword(self) -> bool {
         self.is_reserved_keyword()
             || self.is_contextual_keyword()
             || self.is_strict_mode_contextual_keyword()
@@ -428,7 +428,7 @@ impl Kind {
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_reserved_keyword(self) -> bool {
+    pub fn is_reserved_keyword(self) -> bool {
         matches!(self, Await | Break | Case | Catch | Class | Const | Continue | Debugger | Default
             | Delete | Do | Else | Enum | Export | Extends | False | Finally | For | Function | If
             | Import | In | Instanceof | New | Null | Return | Super | Switch | This | Throw
@@ -437,13 +437,13 @@ impl Kind {
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_strict_mode_contextual_keyword(self) -> bool {
+    pub fn is_strict_mode_contextual_keyword(self) -> bool {
         matches!(self, Let | Static | Implements | Interface | Package | Private | Protected | Public)
     }
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_contextual_keyword(self) -> bool {
+    pub fn is_contextual_keyword(self) -> bool {
         matches!(self, Async | From | Get | Meta | Of | Set | Target | Accessor | Abstract | As | Asserts
             | Assert | Any | Boolean | Constructor | Declare | Infer | Intrinsic | Is | KeyOf | Module
             | Namespace | Never | Out | Readonly | Require | Number | Object | Satisfies | String
@@ -452,13 +452,13 @@ impl Kind {
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_future_reserved_keyword(self) -> bool {
+    pub fn is_future_reserved_keyword(self) -> bool {
         matches!(self, Implements | Interface | Package | Private | Protected | Public | Static)
     }
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_at_expression(self) -> bool {
+    pub fn is_at_expression(self) -> bool {
         self.is_unary_operator()
             || self.is_update_operator()
             || self.is_reserved_keyword()
@@ -469,7 +469,7 @@ impl Kind {
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_modifier_kind(self) -> bool {
+    pub fn is_modifier_kind(self) -> bool {
         matches!(self, Abstract | Accessor | Async | Const | Declare | Default
           | Export | In | Out | Public | Private | Protected | Readonly | Static | Override)
     }
@@ -584,7 +584,7 @@ impl Kind {
 
     #[allow(clippy::too_many_lines)]
     #[must_use]
-    pub const fn to_str(self) -> &'static str {
+    pub fn to_str(self) -> &'static str {
         match self {
             Undetermined => "Unknown",
             Eof => "EOF",
@@ -752,7 +752,7 @@ impl Kind {
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn can_follow_type_arguments_in_expr(self) -> bool {
+    pub fn can_follow_type_arguments_in_expr(self) -> bool {
         matches!(self, Self::LParen | Self::NoSubstitutionTemplate | Self::TemplateHead
             | Self::Comma | Self::Dot | Self::QuestionDot | Self::RParen | Self::RBrack
             | Self::Colon | Self::Semicolon | Self::Question | Self::Eq3 | Self::Eq2

@@ -4,10 +4,16 @@ The parser is tested against [test262], [babel] and TypeScript for conformance.
 
 Note: tests against regexp are disabled for now.
 
-Clone the test files beforehand
+Clone the test files beforehand:
 
 ```bash
-git submodule update --recursive
+git submodule update
+```
+
+For maintainers, update to the latest remote, run:
+
+```bash
+git submodule update --remote
 ```
 
 ## Development
