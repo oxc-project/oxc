@@ -10,6 +10,7 @@ use oxc_ast::{ast::*, visit::Visit, AstKind, SourceType, Trivias};
 use crate::{
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
     scope::ScopeBuilder,
+    symbol::SymbolTable,
     Semantic,
 };
 
@@ -23,6 +24,8 @@ pub struct SemanticBuilder<'a> {
     // builders
     nodes: AstNodes<'a>,
     scope: ScopeBuilder,
+    #[allow(unused)]
+    symbols: SymbolTable,
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -33,7 +36,14 @@ impl<'a> SemanticBuilder<'a> {
         let semantic_node =
             SemanticNode::new(AstKind::Root, scope.current_scope_id, NodeFlags::empty());
         let current_node_id = nodes.new_node(semantic_node).into();
-        Self { source_type, current_node_id, nodes, scope, current_node_flags: NodeFlags::empty() }
+        Self {
+            source_type,
+            current_node_id,
+            current_node_flags: NodeFlags::empty(),
+            nodes,
+            scope,
+            symbols: SymbolTable::default(),
+        }
     }
 
     #[must_use]

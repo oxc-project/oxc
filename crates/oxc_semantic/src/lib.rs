@@ -1,6 +1,7 @@
 mod builder;
 mod node;
 mod scope;
+mod symbol;
 
 use std::rc::Rc;
 
