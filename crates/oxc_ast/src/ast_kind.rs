@@ -147,7 +147,7 @@ unsafe impl<'a> Sync for AstKind<'a> {}
 impl<'a> AstKind<'a> {
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_statement(self) -> bool {
+    pub fn is_statement(self) -> bool {
         self.is_iteration_statement()
             || matches!(self, Self::BlockStatement(_) | Self::BreakStatement(_) | Self::ContinueStatement(_)
                     | Self::DebuggerStatement(_) | Self::EmptyStatement(_) | Self::ExpressionStatement(_)
@@ -158,7 +158,7 @@ impl<'a> AstKind<'a> {
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_declaration(self) -> bool {
+    pub fn is_declaration(self) -> bool {
         matches!(
             self,
             Self::ModuleDeclaration(_) | Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_)
@@ -169,21 +169,21 @@ impl<'a> AstKind<'a> {
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_iteration_statement(self) -> bool {
+    pub fn is_iteration_statement(self) -> bool {
         matches!(self, Self::DoWhileStatement(_) | Self::WhileStatement(_) | Self::ForInStatement(_)
                 | Self::ForOfStatement(_) | Self::ForStatement(_))
     }
 
     #[must_use]
     #[rustfmt::skip]
-    pub const fn is_identifier(self) -> bool {
+    pub fn is_identifier(self) -> bool {
         matches!(self, Self::BindingIdentifier(_)
                 | Self::IdentifierReference(_)
                 | Self::LabelIdentifier(_))
     }
 
     #[must_use]
-    pub const fn is_type(self) -> bool {
+    pub fn is_type(self) -> bool {
         matches!(
             self,
             Self::TSIntersectionType(_)
@@ -194,7 +194,7 @@ impl<'a> AstKind<'a> {
     }
 
     #[must_use]
-    pub const fn is_literal(self) -> bool {
+    pub fn is_literal(self) -> bool {
         matches!(
             self,
             Self::NumberLiteral(_)
@@ -208,7 +208,7 @@ impl<'a> AstKind<'a> {
     }
 
     #[must_use]
-    pub const fn is_function_like(self) -> bool {
+    pub fn is_function_like(self) -> bool {
         matches!(self, Self::Function(_) | Self::ArrowExpression(_))
     }
 
@@ -224,7 +224,7 @@ impl<'a> AstKind<'a> {
     }
 
     #[must_use]
-    pub const fn is_jsx(self) -> bool {
+    pub fn is_jsx(self) -> bool {
         matches!(self, Self::JSXOpeningElement(_) | Self::JSXElementName(_))
     }
 }

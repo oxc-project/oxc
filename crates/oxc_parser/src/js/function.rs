@@ -33,7 +33,7 @@ pub enum FunctionKind {
 }
 
 impl FunctionKind {
-    pub const fn is_id_required(self) -> bool {
+    pub fn is_id_required(self) -> bool {
         matches!(self, Self::Declaration { single_statement: true })
     }
 

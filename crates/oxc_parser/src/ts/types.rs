@@ -65,7 +65,7 @@ impl From<Kind> for ModifierFlags {
 }
 
 impl ModifierFlags {
-    pub const fn accessibility(self) -> Option<TSAccessibility> {
+    pub fn accessibility(self) -> Option<TSAccessibility> {
         if self.contains(Self::PUBLIC) {
             return Some(TSAccessibility::Public);
         }
@@ -79,27 +79,27 @@ impl ModifierFlags {
         None
     }
 
-    pub const fn readonly(self) -> bool {
+    pub fn readonly(self) -> bool {
         self.contains(Self::READONLY)
     }
 
-    pub const fn declare(self) -> bool {
+    pub fn declare(self) -> bool {
         self.contains(Self::DECLARE)
     }
 
-    pub const fn r#async(self) -> bool {
+    pub fn r#async(self) -> bool {
         self.contains(Self::ASYNC)
     }
 
-    pub const fn r#override(self) -> bool {
+    pub fn r#override(self) -> bool {
         self.contains(Self::OVERRIDE)
     }
 
-    pub const fn r#abstract(self) -> bool {
+    pub fn r#abstract(self) -> bool {
         self.contains(Self::ABSTRACT)
     }
 
-    pub const fn r#static(self) -> bool {
+    pub fn r#static(self) -> bool {
         self.contains(Self::STATIC)
     }
 }

@@ -34,7 +34,7 @@ impl<'a> LintContext<'a> {
         }
     }
 
-    pub const fn source_text(&self) -> &'a str {
+    pub fn source_text(&self) -> &'a str {
         self.source_text
     }
 

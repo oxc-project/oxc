@@ -389,12 +389,12 @@ impl<'a> TSTypeName<'a> {
     }
 
     #[must_use]
-    pub const fn is_identifier(&self) -> bool {
+    pub fn is_identifier(&self) -> bool {
         matches!(self, Self::IdentifierName(_))
     }
 
     #[must_use]
-    pub const fn is_qualified_name(&self) -> bool {
+    pub fn is_qualified_name(&self) -> bool {
         matches!(self, Self::QualifiedName(_))
     }
 }
@@ -652,7 +652,7 @@ pub enum TSModuleDeclarationName {
 
 impl TSModuleDeclarationName {
     #[must_use]
-    pub const fn name(&self) -> &Atom {
+    pub fn name(&self) -> &Atom {
         match self {
             Self::Identifier(ident) => &ident.name,
             Self::StringLiteral(lit) => &lit.value,
@@ -863,17 +863,17 @@ pub struct Modifiers<'a>(Option<Vec<'a, Modifier>>);
 
 impl<'a> Modifiers<'a> {
     #[must_use]
-    pub const fn new(modifiers: Vec<'a, Modifier>) -> Self {
+    pub fn new(modifiers: Vec<'a, Modifier>) -> Self {
         Self(Some(modifiers))
     }
 
     #[must_use]
-    pub const fn empty() -> Self {
+    pub fn empty() -> Self {
         Self(None)
     }
 
     #[must_use]
-    pub const fn is_none(&self) -> bool {
+    pub fn is_none(&self) -> bool {
         self.0.is_none()
     }
 
@@ -919,12 +919,12 @@ pub enum ImportOrExportKind {
 
 impl ImportOrExportKind {
     #[must_use]
-    pub const fn is_value(&self) -> bool {
+    pub fn is_value(&self) -> bool {
         matches!(self, Self::Value)
     }
 
     #[must_use]
-    pub const fn is_type(&self) -> bool {
+    pub fn is_type(&self) -> bool {
         matches!(self, Self::Type)
     }
 }

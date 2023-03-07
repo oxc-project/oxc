@@ -69,7 +69,7 @@ impl Printer {
     }
 
     #[must_use]
-    pub const fn code(&self) -> &Vec<u8> {
+    pub fn code(&self) -> &Vec<u8> {
         &self.code
     }
 

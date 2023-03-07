@@ -25,7 +25,7 @@ pub struct BooleanLiteral {
 
 impl BooleanLiteral {
     #[must_use]
-    pub const fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         if self.value { "true" } else { "false" }
     }
 }
@@ -75,7 +75,7 @@ pub struct NumberLiteral<'a> {
 
 impl<'a> NumberLiteral<'a> {
     #[must_use]
-    pub const fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
+    pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
         let value = unsafe { NotNan::new_unchecked(value) };
         Self { span, value, raw, base }
     }

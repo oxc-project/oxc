@@ -40,47 +40,47 @@ bitflags! {
 
 impl Scope {
     #[must_use]
-    pub const fn new(flags: ScopeFlags, strict_mode: bool) -> Self {
+    pub fn new(flags: ScopeFlags, strict_mode: bool) -> Self {
         Self { strict_mode, flags }
     }
 
     #[must_use]
-    pub const fn strict_mode(&self) -> bool {
+    pub fn strict_mode(&self) -> bool {
         self.strict_mode
     }
 
     #[must_use]
-    pub const fn is_top(&self) -> bool {
+    pub fn is_top(&self) -> bool {
         self.flags.intersects(ScopeFlags::Top)
     }
 
     #[must_use]
-    pub const fn is_ts_module(&self) -> bool {
+    pub fn is_ts_module(&self) -> bool {
         self.flags.intersects(ScopeFlags::TsModuleBlock)
     }
 
     #[must_use]
-    pub const fn is_function(&self) -> bool {
+    pub fn is_function(&self) -> bool {
         self.flags.intersects(ScopeFlags::Function)
     }
 
     #[must_use]
-    pub const fn is_static_block(&self) -> bool {
+    pub fn is_static_block(&self) -> bool {
         self.flags.intersects(ScopeFlags::ClassStaticBlock)
     }
 
     #[must_use]
-    pub const fn is_constructor(&self) -> bool {
+    pub fn is_constructor(&self) -> bool {
         self.flags.intersects(ScopeFlags::Constructor)
     }
 
     #[must_use]
-    pub const fn is_get_accessor(&self) -> bool {
+    pub fn is_get_accessor(&self) -> bool {
         self.flags.intersects(ScopeFlags::GetAccessor)
     }
 
     #[must_use]
-    pub const fn is_set_accessor(&self) -> bool {
+    pub fn is_set_accessor(&self) -> bool {
         self.flags.intersects(ScopeFlags::SetAccessor)
     }
 }

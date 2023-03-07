@@ -33,26 +33,26 @@ bitflags! {
 
 impl<'a> SemanticNode<'a> {
     #[must_use]
-    pub const fn new(kind: AstKind<'a>, scope_id: ScopeId, flags: NodeFlags) -> Self {
+    pub fn new(kind: AstKind<'a>, scope_id: ScopeId, flags: NodeFlags) -> Self {
         Self { kind, scope_id, flags }
     }
 
-    pub const fn kind(&self) -> AstKind<'a> {
+    pub fn kind(&self) -> AstKind<'a> {
         self.kind
     }
 
-    pub const fn scope_id(&self) -> ScopeId {
+    pub fn scope_id(&self) -> ScopeId {
         self.scope_id
     }
 
     #[must_use]
-    pub const fn strict_mode(&self, scope: &Scope) -> bool {
+    pub fn strict_mode(&self, scope: &Scope) -> bool {
         // All parts of a ClassDeclaration or a ClassExpression are strict mode code.
         scope.strict_mode() || self.in_class()
     }
 
     #[must_use]
-    pub const fn in_class(self) -> bool {
+    pub fn in_class(self) -> bool {
         self.flags.contains(NodeFlags::Class)
     }
 }

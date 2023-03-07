@@ -99,22 +99,22 @@ impl SourceType {
     }
 
     #[must_use]
-    pub const fn module_kind(self) -> ModuleKind {
+    pub fn module_kind(self) -> ModuleKind {
         self.module_kind
     }
 
     #[must_use]
-    pub const fn is_javascript(self) -> bool {
+    pub fn is_javascript(self) -> bool {
         matches!(self.language, Language::JavaScript)
     }
 
     #[must_use]
-    pub const fn is_typescript(self) -> bool {
+    pub fn is_typescript(self) -> bool {
         matches!(self.language, Language::TypeScript { .. })
     }
 
     #[must_use]
-    pub const fn is_typescript_definition(self) -> bool {
+    pub fn is_typescript_definition(self) -> bool {
         matches!(self.language, Language::TypeScript { is_definition_file: true })
     }
 
@@ -172,41 +172,41 @@ pub struct SourceTypeBuilder {
 
 impl SourceTypeBuilder {
     #[must_use]
-    pub const fn build(self) -> SourceType {
+    pub fn build(self) -> SourceType {
         self.source_type
     }
 
     /// turn on `ModuleKind::Module`
     #[must_use]
-    pub const fn module(mut self) -> Self {
+    pub fn module(mut self) -> Self {
         self.source_type.module_kind = ModuleKind::Module;
         self
     }
 
     /// turn on `ModuleKind::Script`
     #[must_use]
-    pub const fn script(mut self) -> Self {
+    pub fn script(mut self) -> Self {
         self.source_type.module_kind = ModuleKind::Script;
         self
     }
 
     /// turn on `LanguageVariant::JSX`
     #[must_use]
-    pub const fn jsx(mut self) -> Self {
+    pub fn jsx(mut self) -> Self {
         self.source_type.variant = LanguageVariant::Jsx;
         self
     }
 
     /// turn on `Language::TypeScript { is_definition_file: false }`
     #[must_use]
-    pub const fn typescript(mut self) -> Self {
+    pub fn typescript(mut self) -> Self {
         self.source_type.language = Language::TypeScript { is_definition_file: false };
         self
     }
 
     #[must_use]
     /// turn on `Language::TypeScript { is_definition_file: true }`
-    pub const fn typescript_definition(mut self) -> Self {
+    pub fn typescript_definition(mut self) -> Self {
         self.source_type.language = Language::TypeScript { is_definition_file: true };
         self
     }
