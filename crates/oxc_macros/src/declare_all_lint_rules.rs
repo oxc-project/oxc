@@ -76,11 +76,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
     let mod_stmts = rules.iter().map(|rule| rule.mod_stmt());
     let use_stmts = rules.iter().map(|rule| rule.use_stmt());
-    let names = rules.iter().map(|rule| &rule.name);
-    let names2 = names.clone();
-    let names3 = names.clone();
-    let names4 = names.clone();
-    let names5 = names.clone();
+    let names = rules.iter().map(|rule| &rule.name).collect::<Vec<_>>();
 
     quote! {
         #(#mod_stmts)*
@@ -97,28 +93,28 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         impl RuleEnum {
             pub const fn name(&self) -> &'static str {
                 match self {
-                    #(Self::#names2(_) => #names2::NAME),*
+                    #(Self::#names(_) => #names::NAME),*
                 }
             }
 
             pub fn read_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
                 match self {
-                    #(Self::#names3(_) => Self::#names3(
-                        maybe_value.map(#names3::from_configuration).unwrap_or_default(),
+                    #(Self::#names(_) => Self::#names(
+                        maybe_value.map(#names::from_configuration).unwrap_or_default(),
                     )),*
                 }
             }
 
             pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 match self {
-                    #(Self::#names4(rule) => rule.run(node, ctx)),*
+                    #(Self::#names(rule) => rule.run(node, ctx)),*
                 }
             }
         }
 
         lazy_static::lazy_static! {
             pub static ref RULES: Vec<RuleEnum> = vec![
-                #(RuleEnum::#names5(#names5::default())),*
+                #(RuleEnum::#names(#names::default())),*
             ];
         }
     }
