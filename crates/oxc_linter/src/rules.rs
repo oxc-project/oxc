@@ -47,7 +47,7 @@ pub enum RuleEnum {
 }
 
 impl RuleEnum {
-    pub const fn name(&self) -> &'static str {
+    pub fn name(&self) -> &'static str {
         match self {
             Self::EqEqEq(_) => EqEqEq::NAME,
             Self::ConstructorSuper(_) => ConstructorSuper::NAME,

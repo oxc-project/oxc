@@ -17,7 +17,7 @@ pub struct VariableDeclarationContext {
 }
 
 impl VariableDeclarationContext {
-    pub const fn new(parent: VariableDeclarationParent) -> Self {
+    pub fn new(parent: VariableDeclarationParent) -> Self {
         Self { parent }
     }
 }

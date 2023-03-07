@@ -37,7 +37,7 @@ pub struct AppArgs {
 }
 
 impl AppArgs {
-    const fn should_print_detail(&self) -> bool {
+    fn should_print_detail(&self) -> bool {
         self.filter.is_some() || self.detail
     }
 }

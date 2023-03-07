@@ -31,7 +31,7 @@ pub enum BindingPower {
 }
 
 impl BindingPower {
-    pub const fn lowest() -> Self {
+    pub fn lowest() -> Self {
         Self::Comma
     }
 
@@ -39,7 +39,7 @@ impl BindingPower {
         binding_power == Self::Exponential
     }
 
-    pub const fn value(kind: Kind) -> Option<Self> {
+    pub fn value(kind: Kind) -> Option<Self> {
         match kind {
             Kind::Question2 => Some(Self::Coalesce),
             Kind::Pipe2 => Some(Self::LogicalOr),

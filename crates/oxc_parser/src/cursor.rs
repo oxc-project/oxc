@@ -15,13 +15,13 @@ pub struct ParserCheckpoint<'a> {
 
 impl<'a> Parser<'a> {
     #[must_use]
-    pub const fn start_span(&self) -> Span {
+    pub fn start_span(&self) -> Span {
         let token = self.cur_token();
         Span::new(token.start, 0)
     }
 
     #[must_use]
-    pub const fn end_span(&self, span: Span) -> Span {
+    pub fn end_span(&self, span: Span) -> Span {
         let mut span = span;
         span.end = self.prev_token_end;
         span
@@ -29,13 +29,13 @@ impl<'a> Parser<'a> {
 
     /// Get current token
     #[must_use]
-    pub const fn cur_token(&self) -> &Token {
+    pub fn cur_token(&self) -> &Token {
         &self.token
     }
 
     /// Get current Kind
     #[must_use]
-    pub const fn cur_kind(&self) -> Kind {
+    pub fn cur_kind(&self) -> Kind {
         self.token.kind
     }
 
@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
 
     /// Get current atom
     #[must_use]
-    pub const fn cur_atom(&self) -> Option<&Atom> {
+    pub fn cur_atom(&self) -> Option<&Atom> {
         self.cur_token().value.get_atom()
     }
 
@@ -172,7 +172,7 @@ impl<'a> Parser<'a> {
     }
 
     #[must_use]
-    pub const fn current_range(&self) -> Span {
+    pub fn current_range(&self) -> Span {
         let cur_token = self.cur_token();
         match self.cur_kind() {
             Kind::Eof => {

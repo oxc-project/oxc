@@ -81,7 +81,7 @@ impl<'a> Expression<'a> {
     /// `PrimaryExpression`
     /// [tc39/ecma262#prod-PrimaryExpression](https://tc39.es/ecma262/#prod-PrimaryExpression)
     #[must_use]
-    pub const fn is_primary_expression(&self) -> bool {
+    pub fn is_primary_expression(&self) -> bool {
         self.is_literal_expression()
             || matches!(
                 self,
@@ -96,7 +96,7 @@ impl<'a> Expression<'a> {
     }
 
     #[must_use]
-    pub const fn is_literal_expression(&self) -> bool {
+    pub fn is_literal_expression(&self) -> bool {
         matches!(
             self,
             Self::BooleanLiteral(_)
@@ -109,13 +109,13 @@ impl<'a> Expression<'a> {
     }
 
     #[must_use]
-    pub const fn is_string_literal(&self) -> bool {
+    pub fn is_string_literal(&self) -> bool {
         matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
     }
 
     /// Determines whether the given expr is a `null` literal
     #[must_use]
-    pub const fn is_null(&self) -> bool {
+    pub fn is_null(&self) -> bool {
         matches!(self, Expression::NullLiteral(_))
     }
 
@@ -165,7 +165,7 @@ impl<'a> Expression<'a> {
     }
 
     #[must_use]
-    pub const fn is_function(&self) -> bool {
+    pub fn is_function(&self) -> bool {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
     }
 }
@@ -283,7 +283,7 @@ impl<'a> PropertyKey<'a> {
     }
 
     #[must_use]
-    pub const fn is_private_identifier(&self) -> bool {
+    pub fn is_private_identifier(&self) -> bool {
         matches!(self, Self::PrivateIdentifier(_))
     }
 }
@@ -363,7 +363,7 @@ pub enum MemberExpression<'a> {
 
 impl<'a> MemberExpression<'a> {
     #[must_use]
-    pub const fn optional(&self) -> bool {
+    pub fn optional(&self) -> bool {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => expr.optional,
             MemberExpression::StaticMemberExpression(expr) => expr.optional,
@@ -372,7 +372,7 @@ impl<'a> MemberExpression<'a> {
     }
 
     #[must_use]
-    pub const fn object(&self) -> &Expression<'a> {
+    pub fn object(&self) -> &Expression<'a> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => &expr.object,
             MemberExpression::StaticMemberExpression(expr) => &expr.object,
@@ -610,7 +610,7 @@ pub enum AssignmentTarget<'a> {
 
 impl<'a> AssignmentTarget<'a> {
     #[must_use]
-    pub const fn is_destructuring_pattern(&self) -> bool {
+    pub fn is_destructuring_pattern(&self) -> bool {
         matches!(self, Self::AssignmentTargetPattern(_))
     }
 }
@@ -874,12 +874,12 @@ pub enum VariableDeclarationKind {
 
 impl VariableDeclarationKind {
     #[must_use]
-    pub const fn is_const(&self) -> bool {
+    pub fn is_const(&self) -> bool {
         matches!(self, Self::Const)
     }
 
     #[must_use]
-    pub const fn is_lexical(&self) -> bool {
+    pub fn is_lexical(&self) -> bool {
         matches!(self, Self::Const | Self::Let)
     }
 }
@@ -1130,12 +1130,12 @@ pub enum BindingPatternKind<'a> {
 
 impl<'a> BindingPatternKind<'a> {
     #[must_use]
-    pub const fn is_destructuring_pattern(&self) -> bool {
+    pub fn is_destructuring_pattern(&self) -> bool {
         matches!(self, Self::ObjectPattern(_) | Self::ArrayPattern(_))
     }
 
     #[must_use]
-    pub const fn is_rest_element(&self) -> bool {
+    pub fn is_rest_element(&self) -> bool {
         matches!(self, Self::RestElement(_))
     }
 }
@@ -1216,17 +1216,17 @@ impl<'a> Function<'a> {
     }
 
     #[must_use]
-    pub const fn is_function_declaration(&self) -> bool {
+    pub fn is_function_declaration(&self) -> bool {
         matches!(self.r#type, FunctionType::FunctionDeclaration)
     }
 
     #[must_use]
-    pub const fn is_ts_declare_function(&self) -> bool {
+    pub fn is_ts_declare_function(&self) -> bool {
         matches!(self.r#type, FunctionType::TSDeclareFunction)
     }
 
     #[must_use]
-    pub const fn is_declaration(&self) -> bool {
+    pub fn is_declaration(&self) -> bool {
         matches!(self.r#type, FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction)
     }
 }
@@ -1534,7 +1534,7 @@ pub enum ModuleDeclarationKind<'a> {
 
 impl<'a> ModuleDeclarationKind<'a> {
     #[must_use]
-    pub const fn is_export(&self) -> bool {
+    pub fn is_export(&self) -> bool {
         matches!(
             self,
             Self::ExportAllDeclaration(_)
@@ -1734,7 +1734,7 @@ impl Display for ModuleExportName {
 
 impl ModuleExportName {
     #[must_use]
-    pub const fn name(&self) -> &Atom {
+    pub fn name(&self) -> &Atom {
         match self {
             Self::Identifier(identifier) => &identifier.name,
             Self::StringLiteral(literal) => &literal.value,

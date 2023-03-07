@@ -28,7 +28,7 @@ pub struct Cli {
 
 impl Cli {
     #[must_use]
-    pub const fn new(cli_options: CliOptions) -> Self {
+    pub fn new(cli_options: CliOptions) -> Self {
         Self { cli_options }
     }
 

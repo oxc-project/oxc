@@ -7,12 +7,12 @@ pub struct ScopeId(NodeId);
 
 impl ScopeId {
     #[must_use]
-    pub const fn new(node_id: NodeId) -> Self {
+    pub fn new(node_id: NodeId) -> Self {
         Self(node_id)
     }
 
     #[must_use]
-    pub const fn indextree_id(&self) -> NodeId {
+    pub fn indextree_id(&self) -> NodeId {
         self.0
     }
 }

@@ -116,7 +116,7 @@ pub struct Test262Case {
 
 impl Test262Case {
     #[must_use]
-    pub const fn meta(&self) -> &MetaData {
+    pub fn meta(&self) -> &MetaData {
         &self.meta
     }
 

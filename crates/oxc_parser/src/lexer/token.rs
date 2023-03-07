@@ -34,7 +34,7 @@ fn no_bloat_token() {
 
 impl Token {
     #[must_use]
-    pub const fn span(&self) -> Span {
+    pub fn span(&self) -> Span {
         Span::new(self.start, self.end)
     }
 }
@@ -62,7 +62,7 @@ impl Default for TokenValue {
 
 impl TokenValue {
     #[must_use]
-    pub const fn as_number(&self) -> f64 {
+    pub fn as_number(&self) -> f64 {
         match self {
             Self::Number(s) => *s,
             _ => panic!("expected number!"),
@@ -86,7 +86,7 @@ impl TokenValue {
     }
 
     #[must_use]
-    pub const fn get_atom(&self) -> Option<&Atom> {
+    pub fn get_atom(&self) -> Option<&Atom> {
         match self {
             Self::String(s) => Some(s),
             _ => None,

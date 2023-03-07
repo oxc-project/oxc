@@ -19,17 +19,17 @@ pub struct Span {
 impl Span {
     #[must_use]
     #[inline]
-    pub const fn new(start: u32, end: u32) -> Self {
+    pub fn new(start: u32, end: u32) -> Self {
         Self { start, end }
     }
 
     #[must_use]
-    pub const fn len(&self) -> u32 {
+    pub fn len(&self) -> u32 {
         self.end - self.start
     }
 
     #[must_use]
-    pub const fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 }
