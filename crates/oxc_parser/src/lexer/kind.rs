@@ -3,7 +3,6 @@
 use std::fmt;
 
 use oxc_ast::Atom;
-use phf::phf_map;
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[non_exhaustive]
@@ -193,101 +192,90 @@ pub enum Kind {
 #[allow(clippy::enum_glob_use)]
 use self::Kind::*;
 
-static KEYWORDS: phf::Map<&'static str, (Kind, Atom)> = phf_map! {
-    "as" => (As, Atom::new_inline("as")),
-    "do" => (Do, Atom::new_inline("do")),
-    "if" => (If, Atom::new_inline("if")),
-    "in" => (In, Atom::new_inline("in")),
-    "is" => (Is, Atom::new_inline("is")),
-    "of" => (Of, Atom::new_inline("of")),
-
-    "any" => (Any, Atom::new_inline("any")),
-    "for" => (For, Atom::new_inline("for")),
-    "get" => (Get, Atom::new_inline("get")),
-    "let" => (Let, Atom::new_inline("let")),
-    "new" => (New, Atom::new_inline("new")),
-    "out" => (Out, Atom::new_inline("out")),
-    "set" => (Set, Atom::new_inline("set")),
-    "try" => (Try, Atom::new_inline("try")),
-    "var" => (Var, Atom::new_inline("var")),
-
-    "case" => (Case, Atom::new_inline("case")),
-    "else" => (Else, Atom::new_inline("else")),
-    "enum" => (Enum, Atom::new_inline("enum")),
-    "from" => (From, Atom::new_inline("from")),
-    "meta" => (Meta, Atom::new_inline("meta")),
-    "null" => (Null, Atom::new_inline("null")),
-    "this" => (This, Atom::new_inline("this")),
-    "true" => (True, Atom::new_inline("true")),
-    "type" => (Type, Atom::new_inline("type")),
-    "void" => (Void, Atom::new_inline("void")),
-    "with" => (With, Atom::new_inline("with")),
-
-    "async" => (Async, Atom::new_inline("async")),
-    "await" => (Await, Atom::new_inline("await")),
-    "break" => (Break, Atom::new_inline("break")),
-    "catch" => (Catch, Atom::new_inline("catch")),
-    "class" => (Class, Atom::new_inline("class")),
-    "const" => (Const, Atom::new_inline("const")),
-    "false" => (False, Atom::new_inline("false")),
-    "infer" => (Infer, Atom::new_inline("infer")),
-    "keyof" => (KeyOf, Atom::new_inline("keyof")),
-    "never" => (Never, Atom::new_inline("never")),
-    "super" => (Super, Atom::new_inline("super")),
-    "throw" => (Throw, Atom::new_inline("throw")),
-    "while" => (While, Atom::new_inline("while")),
-    "yield" => (Yield, Atom::new_inline("yield")),
-
-    "assert" => (Assert, Atom::new_inline("assert")),
-    "bigint" => (BigInt, Atom::new_inline("bigint")),
-    "delete" => (Delete, Atom::new_inline("delete")),
-    "export" => (Export, Atom::new_inline("export")),
-    "global" => (Global, Atom::new_inline("global")),
-    "import" => (Import, Atom::new_inline("import")),
-    "module" => (Module, Atom::new_inline("module")),
-    "number" => (Number, Atom::new_inline("number")),
-    "object" => (Object, Atom::new_inline("object")),
-    "public" => (Public, Atom::new_inline("public")),
-    "return" => (Return, Atom::new_inline("return")),
-    "static" => (Static, Atom::new_inline("static")),
-    "string" => (String, Atom::new_inline("string")),
-    "switch" => (Switch, Atom::new_inline("switch")),
-    "symbol" => (Symbol, Atom::new_inline("symbol")),
-    "target" => (Target, Atom::new_inline("target")),
-    "typeof" => (Typeof, Atom::new_inline("typeof")),
-    "unique" => (Unique, Atom::new_inline("unique")),
-
-    "asserts" => (Asserts, Atom::new_inline("asserts")),
-    "boolean" => (Boolean, Atom::new_inline("boolean")),
-    "declare" => (Declare, Atom::new_inline("declare")),
-    "default" => (Default, Atom::new_inline("default")),
-    "extends" => (Extends, Atom::new_inline("extends")),
-    "finally" => (Finally, Atom::new_inline("finally")),
-    "package" => (Package, Atom::new_inline("package")),
-    "private" => (Private, Atom::new_inline("private")),
-    "require" => (Require, Atom::new_inline("require")),
-    "unknown" => (Unknown, Atom::new_inline("unknown")),
-
-    "abstract" => (Abstract, Atom::new_inline("abstract")),
-    "accessor" => (Accessor, Atom::new_inline("accessor")),
-    "continue" => (Continue, Atom::new_inline("continue")),
-    "debugger" => (Debugger, Atom::new_inline("debugger")),
-    "function" => (Function, Atom::new_inline("function")),
-    "override" => (Override, Atom::new_inline("override")),
-    "readonly" => (Readonly, Atom::new_inline("readonly")),
-
-    "interface" => (Interface, Atom::new_inline("interface")),
-    "intrinsic" => (Intrinsic, Atom::new_inline("intrinsic")),
-    "namespace" => (Namespace, Atom::new_inline("namespace")),
-    "protected" => (Protected, Atom::new_inline("protected")),
-    "satisfies" => (Satisfies, Atom::new_inline("satisfies")),
-    "undefined" => (Undefined, Atom::new_inline("undefined")),
-
-    "implements" => (Implements, Atom::new_inline("implements")),
-    "instanceof" => (Instanceof, Atom::new_inline("instanceof")),
-
-    "constructor" => (Constructor, Atom::new_inline("constructor")),
-};
+static KW_IS: Atom = Atom::new_inline("is");
+static KW_AS: Atom = Atom::new_inline("as");
+static KW_DO: Atom = Atom::new_inline("do");
+static KW_IF: Atom = Atom::new_inline("if");
+static KW_IN: Atom = Atom::new_inline("in");
+static KW_OF: Atom = Atom::new_inline("of");
+static KW_ANY: Atom = Atom::new_inline("any");
+static KW_FOR: Atom = Atom::new_inline("for");
+static KW_GET: Atom = Atom::new_inline("get");
+static KW_LET: Atom = Atom::new_inline("let");
+static KW_NEW: Atom = Atom::new_inline("new");
+static KW_OUT: Atom = Atom::new_inline("out");
+static KW_SET: Atom = Atom::new_inline("set");
+static KW_TRY: Atom = Atom::new_inline("try");
+static KW_VAR: Atom = Atom::new_inline("var");
+static KW_CASE: Atom = Atom::new_inline("case");
+static KW_ELSE: Atom = Atom::new_inline("else");
+static KW_ENUM: Atom = Atom::new_inline("enum");
+static KW_FROM: Atom = Atom::new_inline("from");
+static KW_META: Atom = Atom::new_inline("meta");
+static KW_NULL: Atom = Atom::new_inline("null");
+static KW_THIS: Atom = Atom::new_inline("this");
+static KW_TRUE: Atom = Atom::new_inline("true");
+static KW_TYPE: Atom = Atom::new_inline("type");
+static KW_VOID: Atom = Atom::new_inline("void");
+static KW_WITH: Atom = Atom::new_inline("with");
+static KW_ASYNC: Atom = Atom::new_inline("async");
+static KW_AWAIT: Atom = Atom::new_inline("await");
+static KW_BREAK: Atom = Atom::new_inline("break");
+static KW_CATCH: Atom = Atom::new_inline("catch");
+static KW_CLASS: Atom = Atom::new_inline("class");
+static KW_CONST: Atom = Atom::new_inline("const");
+static KW_FALSE: Atom = Atom::new_inline("false");
+static KW_INFER: Atom = Atom::new_inline("infer");
+static KW_KEYOF: Atom = Atom::new_inline("keyof");
+static KW_NEVER: Atom = Atom::new_inline("never");
+static KW_SUPER: Atom = Atom::new_inline("super");
+static KW_THROW: Atom = Atom::new_inline("throw");
+static KW_WHILE: Atom = Atom::new_inline("while");
+static KW_YIELD: Atom = Atom::new_inline("yield");
+static KW_ASSERT: Atom = Atom::new_inline("assert");
+static KW_BIGINT: Atom = Atom::new_inline("bigint");
+static KW_DELETE: Atom = Atom::new_inline("delete");
+static KW_EXPORT: Atom = Atom::new_inline("export");
+static KW_GLOBAL: Atom = Atom::new_inline("global");
+static KW_IMPORT: Atom = Atom::new_inline("import");
+static KW_MODULE: Atom = Atom::new_inline("module");
+static KW_NUMBER: Atom = Atom::new_inline("number");
+static KW_OBJECT: Atom = Atom::new_inline("object");
+static KW_PUBLIC: Atom = Atom::new_inline("public");
+static KW_RETURN: Atom = Atom::new_inline("return");
+static KW_STATIC: Atom = Atom::new_inline("static");
+static KW_STRING: Atom = Atom::new_inline("string");
+static KW_SWITCH: Atom = Atom::new_inline("switch");
+static KW_SYMBOL: Atom = Atom::new_inline("symbol");
+static KW_TARGET: Atom = Atom::new_inline("target");
+static KW_TYPEOF: Atom = Atom::new_inline("typeof");
+static KW_UNIQUE: Atom = Atom::new_inline("unique");
+static KW_ASSERTS: Atom = Atom::new_inline("asserts");
+static KW_BOOLEAN: Atom = Atom::new_inline("boolean");
+static KW_DECLARE: Atom = Atom::new_inline("declare");
+static KW_DEFAULT: Atom = Atom::new_inline("default");
+static KW_EXTENDS: Atom = Atom::new_inline("extends");
+static KW_FINALLY: Atom = Atom::new_inline("finally");
+static KW_PACKAGE: Atom = Atom::new_inline("package");
+static KW_PRIVATE: Atom = Atom::new_inline("private");
+static KW_REQUIRE: Atom = Atom::new_inline("require");
+static KW_UNKNOWN: Atom = Atom::new_inline("unknown");
+static KW_ABSTRACT: Atom = Atom::new_inline("abstract");
+static KW_ACCESSOR: Atom = Atom::new_inline("accessor");
+static KW_CONTINUE: Atom = Atom::new_inline("continue");
+static KW_DEBUGGER: Atom = Atom::new_inline("debugger");
+static KW_FUNCTION: Atom = Atom::new_inline("function");
+static KW_OVERRIDE: Atom = Atom::new_inline("override");
+static KW_READONLY: Atom = Atom::new_inline("readonly");
+static KW_INTERFACE: Atom = Atom::new_inline("interface");
+static KW_INTRINSIC: Atom = Atom::new_inline("intrinsic");
+static KW_NAMESPACE: Atom = Atom::new_inline("namespace");
+static KW_PROTECTED: Atom = Atom::new_inline("protected");
+static KW_SATISFIES: Atom = Atom::new_inline("satisfies");
+static KW_UNDEFINED: Atom = Atom::new_inline("undefined");
+static KW_IMPLEMENTS: Atom = Atom::new_inline("implements");
+static KW_INSTANCEOF: Atom = Atom::new_inline("instanceof");
+static KW_CONSTRUCTOR: Atom = Atom::new_inline("constructor");
 
 impl Kind {
     #[must_use]
@@ -492,7 +480,106 @@ impl Kind {
         if len == 1 || len >= 12 {
             return (Ident, Atom::new(s));
         }
-        KEYWORDS.get(s).cloned().unwrap_or_else(|| (Ident, Atom::new(s)))
+        Self::match_keyword_impl(s).map_or_else(|| (Ident, Atom::new(s)), |(k, s)| (k, s.clone()))
+    }
+
+    fn match_keyword_impl(s: &str) -> Option<(Self, &'static Atom)> {
+        match s {
+            "as" => Some((As, &KW_AS)),
+            "do" => Some((Do, &KW_DO)),
+            "if" => Some((If, &KW_IF)),
+            "in" => Some((In, &KW_IN)),
+            "is" => Some((Is, &KW_IS)),
+            "of" => Some((Of, &KW_OF)),
+
+            "any" => Some((Any, &KW_ANY)),
+            "for" => Some((For, &KW_FOR)),
+            "get" => Some((Get, &KW_GET)),
+            "let" => Some((Let, &KW_LET)),
+            "new" => Some((New, &KW_NEW)),
+            "out" => Some((Out, &KW_OUT)),
+            "set" => Some((Set, &KW_SET)),
+            "try" => Some((Try, &KW_TRY)),
+            "var" => Some((Var, &KW_VAR)),
+
+            "case" => Some((Case, &KW_CASE)),
+            "else" => Some((Else, &KW_ELSE)),
+            "enum" => Some((Enum, &KW_ENUM)),
+            "from" => Some((From, &KW_FROM)),
+            "meta" => Some((Meta, &KW_META)),
+            "null" => Some((Null, &KW_NULL)),
+            "this" => Some((This, &KW_THIS)),
+            "true" => Some((True, &KW_TRUE)),
+            "type" => Some((Type, &KW_TYPE)),
+            "void" => Some((Void, &KW_VOID)),
+            "with" => Some((With, &KW_WITH)),
+
+            "async" => Some((Async, &KW_ASYNC)),
+            "await" => Some((Await, &KW_AWAIT)),
+            "break" => Some((Break, &KW_BREAK)),
+            "catch" => Some((Catch, &KW_CATCH)),
+            "class" => Some((Class, &KW_CLASS)),
+            "const" => Some((Const, &KW_CONST)),
+            "false" => Some((False, &KW_FALSE)),
+            "infer" => Some((Infer, &KW_INFER)),
+            "keyof" => Some((KeyOf, &KW_KEYOF)),
+            "never" => Some((Never, &KW_NEVER)),
+            "super" => Some((Super, &KW_SUPER)),
+            "throw" => Some((Throw, &KW_THROW)),
+            "while" => Some((While, &KW_WHILE)),
+            "yield" => Some((Yield, &KW_YIELD)),
+
+            "assert" => Some((Assert, &KW_ASSERT)),
+            "bigint" => Some((BigInt, &KW_BIGINT)),
+            "delete" => Some((Delete, &KW_DELETE)),
+            "export" => Some((Export, &KW_EXPORT)),
+            "global" => Some((Global, &KW_GLOBAL)),
+            "import" => Some((Import, &KW_IMPORT)),
+            "module" => Some((Module, &KW_MODULE)),
+            "number" => Some((Number, &KW_NUMBER)),
+            "object" => Some((Object, &KW_OBJECT)),
+            "public" => Some((Public, &KW_PUBLIC)),
+            "return" => Some((Return, &KW_RETURN)),
+            "static" => Some((Static, &KW_STATIC)),
+            "string" => Some((String, &KW_STRING)),
+            "switch" => Some((Switch, &KW_SWITCH)),
+            "symbol" => Some((Symbol, &KW_SYMBOL)),
+            "target" => Some((Target, &KW_TARGET)),
+            "typeof" => Some((Typeof, &KW_TYPEOF)),
+            "unique" => Some((Unique, &KW_UNIQUE)),
+
+            "asserts" => Some((Asserts, &KW_ASSERTS)),
+            "boolean" => Some((Boolean, &KW_BOOLEAN)),
+            "declare" => Some((Declare, &KW_DECLARE)),
+            "default" => Some((Default, &KW_DEFAULT)),
+            "extends" => Some((Extends, &KW_EXTENDS)),
+            "finally" => Some((Finally, &KW_FINALLY)),
+            "package" => Some((Package, &KW_PACKAGE)),
+            "private" => Some((Private, &KW_PRIVATE)),
+            "require" => Some((Require, &KW_REQUIRE)),
+            "unknown" => Some((Unknown, &KW_UNKNOWN)),
+
+            "abstract" => Some((Abstract, &KW_ABSTRACT)),
+            "accessor" => Some((Accessor, &KW_ACCESSOR)),
+            "continue" => Some((Continue, &KW_CONTINUE)),
+            "debugger" => Some((Debugger, &KW_DEBUGGER)),
+            "function" => Some((Function, &KW_FUNCTION)),
+            "override" => Some((Override, &KW_OVERRIDE)),
+            "readonly" => Some((Readonly, &KW_READONLY)),
+
+            "interface" => Some((Interface, &KW_INTERFACE)),
+            "intrinsic" => Some((Intrinsic, &KW_INTRINSIC)),
+            "namespace" => Some((Namespace, &KW_NAMESPACE)),
+            "protected" => Some((Protected, &KW_PROTECTED)),
+            "satisfies" => Some((Satisfies, &KW_SATISFIES)),
+            "undefined" => Some((Undefined, &KW_UNDEFINED)),
+
+            "implements" => Some((Implements, &KW_IMPLEMENTS)),
+            "instanceof" => Some((Instanceof, &KW_INSTANCEOF)),
+
+            "constructor" => Some((Constructor, &KW_CONSTRUCTOR)),
+            _ => None,
+        }
     }
 
     #[allow(clippy::too_many_lines)]
