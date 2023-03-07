@@ -76,7 +76,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
 
     let mod_stmts = rules.iter().map(|rule| rule.mod_stmt());
     let use_stmts = rules.iter().map(|rule| rule.use_stmt());
-    let names = rules.iter().map(|rule| &rule.name).collect::<Vec<_>>();
+    let struct_names = rules.iter().map(|rule| &rule.name).collect::<Vec<_>>();
 
     quote! {
         #(#mod_stmts)*
@@ -87,34 +87,34 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         #[derive(Debug, Clone)]
         #[allow(clippy::enum_variant_names)]
         pub enum RuleEnum {
-            #(#names(#names)),*
+            #(#struct_names(#struct_names)),*
         }
 
         impl RuleEnum {
             pub const fn name(&self) -> &'static str {
                 match self {
-                    #(Self::#names(_) => #names::NAME),*
+                    #(Self::#struct_names(_) => #struct_names::NAME),*
                 }
             }
 
             pub fn read_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
                 match self {
-                    #(Self::#names(_) => Self::#names(
-                        maybe_value.map(#names::from_configuration).unwrap_or_default(),
+                    #(Self::#struct_names(_) => Self::#struct_names(
+                        maybe_value.map(#struct_names::from_configuration).unwrap_or_default(),
                     )),*
                 }
             }
 
             pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 match self {
-                    #(Self::#names(rule) => rule.run(node, ctx)),*
+                    #(Self::#struct_names(rule) => rule.run(node, ctx)),*
                 }
             }
         }
 
         lazy_static::lazy_static! {
             pub static ref RULES: Vec<RuleEnum> = vec![
-                #(RuleEnum::#names(#names::default())),*
+                #(RuleEnum::#struct_names(#struct_names::default())),*
             ];
         }
     }
