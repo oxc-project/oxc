@@ -29,6 +29,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "allocator-api2"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "227dae7e1a81622241e93a00630c97e041775957c8250d50961ac14cda1f8213"
+dependencies = [
+ "serde",
+ "sptr",
+]
+
+[[package]]
 name = "anes"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -62,6 +72,16 @@ name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
+
+[[package]]
+name = "blink-alloc"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e51b80eb0e5ac11d2d7ff6b0609cd0f697dac60680c51a7f2d3d9f1b5ae017e"
+dependencies = [
+ "allocator-api2",
+ "sptr",
+]
 
 [[package]]
 name = "bstr"
@@ -767,7 +787,8 @@ checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 name = "oxc_allocator"
 version = "0.0.0"
 dependencies = [
- "bumpalo",
+ "allocator-api2",
+ "blink-alloc",
  "serde",
 ]
 
@@ -1159,6 +1180,12 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "sptr"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b9b39299b249ad65f3b7e96443bad61c02ca5cd3589f46cb6d610a0fd6c0d6a"
 
 [[package]]
 name = "static_assertions"

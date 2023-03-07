@@ -93,7 +93,7 @@ fn bench_semantic(criterion: &mut Criterion, codes: &[Code]) {
                 let allocator = Allocator::default();
                 let source_type = SourceType::from_path(&code.file_name).unwrap();
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
-                let program = allocator.alloc(ret.program);
+                let program = allocator.put_no_drop(ret.program);
                 let trivias = Rc::new(ret.trivias);
                 b.iter(|| {
                     let _semantic = SemanticBuilder::new(source_type)

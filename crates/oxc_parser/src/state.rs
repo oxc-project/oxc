@@ -16,11 +16,11 @@ impl<'a> ParserState<'a> {
         Self {
             allocator,
             not_parenthesized_arrow: HashSet::new(),
-            decorators: Vec::new_in(allocator),
+            decorators: Vec::new_in(allocator.allocator()),
         }
     }
 
     pub fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
-        std::mem::replace(&mut self.decorators, Vec::new_in(self.allocator))
+        std::mem::replace(&mut self.decorators, Vec::new_in(self.allocator.allocator()))
     }
 }

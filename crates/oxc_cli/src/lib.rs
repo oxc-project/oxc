@@ -131,9 +131,9 @@ impl Cli {
         let ret = Parser::new(&allocator, &parser_source_text, source_type).parse();
         if !ret.errors.is_empty() {
             return ret.errors;
-        };
+        }
 
-        let program = allocator.alloc(ret.program);
+        let program = allocator.put_no_drop(ret.program);
         let trivias = Rc::new(ret.trivias);
         let semantic = SemanticBuilder::new(source_type).build(program, trivias);
         let result = Linter::new().run(&Rc::new(semantic), &source_text, fix);
