@@ -1,3 +1,4 @@
+mod constructor_super;
 mod eq_eq_eq;
 mod for_direction;
 mod no_array_constructor;
@@ -8,6 +9,7 @@ mod deepscan {
     pub mod uninvoked_array_callback;
 }
 
+pub use constructor_super::ConstructorSuper;
 pub use deepscan::uninvoked_array_callback::UninvokedArrayCallback;
 pub use eq_eq_eq::EqEqEq;
 pub use for_direction::ForDirection;
@@ -21,6 +23,7 @@ use crate::{context::LintContext, rule::Rule, rule::RuleMeta, AstNode};
 lazy_static::lazy_static! {
     pub static ref RULES: Vec<RuleEnum> = vec![
         RuleEnum::EqEqEq(EqEqEq::default()),
+        RuleEnum::ConstructorSuper(ConstructorSuper::default()),
         RuleEnum::NoDebugger(NoDebugger::default()),
         RuleEnum::NoEmpty(NoEmpty::default()),
         RuleEnum::NoArrayConstructor(NoArrayConstructor::default()),
@@ -34,6 +37,7 @@ lazy_static::lazy_static! {
 #[allow(clippy::enum_variant_names)]
 pub enum RuleEnum {
     EqEqEq(EqEqEq),
+    ConstructorSuper(ConstructorSuper),
     NoDebugger(NoDebugger),
     NoEmpty(NoEmpty),
     NoArrayConstructor(NoArrayConstructor),
@@ -46,6 +50,7 @@ impl RuleEnum {
     pub const fn name(&self) -> &'static str {
         match self {
             Self::EqEqEq(_) => EqEqEq::NAME,
+            Self::ConstructorSuper(_) => ConstructorSuper::NAME,
             Self::NoDebugger(_) => NoDebugger::NAME,
             Self::NoEmpty(_) => NoEmpty::NAME,
             Self::NoArrayConstructor(_) => NoArrayConstructor::NAME,
@@ -60,6 +65,9 @@ impl RuleEnum {
             Self::EqEqEq(_) => {
                 Self::EqEqEq(maybe_value.map(EqEqEq::from_configuration).unwrap_or_default())
             }
+            Self::ConstructorSuper(_) => Self::ConstructorSuper(
+                maybe_value.map(ConstructorSuper::from_configuration).unwrap_or_default(),
+            ),
             Self::NoDebugger(_) => Self::NoDebugger(
                 maybe_value.map(NoDebugger::from_configuration).unwrap_or_default(),
             ),
@@ -84,6 +92,7 @@ impl RuleEnum {
     pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match self {
             Self::EqEqEq(rule) => rule.run(node, ctx),
+            Self::ConstructorSuper(rule) => rule.run(node, ctx),
             Self::NoDebugger(rule) => rule.run(node, ctx),
             Self::NoEmpty(rule) => rule.run(node, ctx),
             Self::NoArrayConstructor(rule) => rule.run(node, ctx),
