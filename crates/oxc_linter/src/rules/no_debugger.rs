@@ -5,7 +5,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 
-use crate::{autofix::Fix, context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-debugger): `debugger` statement is not allowed")]

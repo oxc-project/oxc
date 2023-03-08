@@ -5,7 +5,7 @@ use oxc_diagnostics::Error;
 use oxc_semantic::{AstNodes, Semantic};
 
 use crate::{
-    autofix::{Fix, Message},
+    fixer::{Fix, Message},
     AstNode,
 };
 
@@ -18,20 +18,11 @@ pub struct LintContext<'a> {
 
     /// Whether or not to apply code fixes during linting.
     fix: bool,
-
-    /// Collection of applicable fixes based on reported issues.
-    fixes: RefCell<Vec<Fix<'a>>>,
 }
 
 impl<'a> LintContext<'a> {
     pub fn new(source_text: &'a str, semantic: Rc<Semantic<'a>>, fix: bool) -> Self {
-        Self {
-            source_text,
-            semantic,
-            diagnostics: RefCell::new(vec![]),
-            fix,
-            fixes: RefCell::new(vec![]),
-        }
+        Self { source_text, semantic, diagnostics: RefCell::new(vec![]), fix }
     }
 
     pub fn source_text(&self) -> &'a str {
@@ -56,13 +47,6 @@ impl<'a> LintContext<'a> {
         } else {
             self.diagnostic(diagnostic);
         }
-    }
-
-    pub fn fix(&self, fix: Fix<'a>) {
-        if !self.fix {
-            return;
-        }
-        self.fixes.borrow_mut().push(fix);
     }
 
     #[inline]

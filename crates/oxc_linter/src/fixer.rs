@@ -1,8 +1,23 @@
 use std::borrow::Cow;
 
-use oxc_diagnostics::Error;
+use oxc_ast::Span;
+use oxc_diagnostics::{miette::LabeledSpan, Error};
 
-use super::Fix;
+#[derive(Debug, Default)]
+pub struct Fix<'a> {
+    pub content: Cow<'a, str>,
+    pub span: Span,
+}
+
+impl<'a> Fix<'a> {
+    pub const fn delete(span: Span) -> Self {
+        Self { content: Cow::Borrowed(""), span }
+    }
+
+    pub fn new<T: Into<Cow<'a, str>>>(content: T, span: Span) -> Self {
+        Self { content: content.into(), span }
+    }
+}
 
 pub struct FixResult<'a> {
     pub fixed: bool,
@@ -18,6 +33,7 @@ pub struct Message<'a> {
 }
 
 impl<'a> Message<'a> {
+    #[must_use]
     pub fn new(error: Error, fix: Option<Fix<'a>>) -> Self {
         Self { error, fix, fixed: false }
     }
@@ -74,7 +90,16 @@ impl<'a> Fixer<'a> {
         let offset = usize::try_from(last_pos.max(0)).ok().unwrap();
         output.push_str(&source_text[offset..]);
 
-        let messages = self.messages.into_iter().filter(|m| !m.fixed).collect::<Vec<_>>();
+        let mut messages = self.messages.into_iter().filter(|m| !m.fixed).collect::<Vec<_>>();
+        messages.sort_by_cached_key(|m| {
+            let span = m
+                .error
+                .labels()
+                .expect("should specify a span for a rule")
+                .min_by_key(LabeledSpan::offset)
+                .expect("should contain at least one span");
+            (span.offset(), span.len())
+        });
 
         return FixResult { fixed, fixed_code: Cow::Owned(output), messages };
     }
@@ -88,8 +113,7 @@ mod test {
     use oxc_ast::Span;
     use oxc_diagnostics::{thiserror::Error, Error};
 
-    use super::{FixResult, Fixer, Message};
-    use crate::autofix::Fix;
+    use super::{Fix, FixResult, Fixer, Message};
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
 
@@ -132,7 +156,7 @@ mod test {
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("removemiddle")]
-    struct RemoveMiddle();
+    struct RemoveMiddle(#[label] pub Span);
     const REMOVE_MIDDLE: Fix = Fix::delete(Span { start: 5, end: 10 });
 
     #[derive(Debug, Error, Diagnostic)]
@@ -147,15 +171,15 @@ mod test {
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("nofix")]
-    struct NoFix();
+    struct NoFix(#[label] pub Span);
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("nofix1")]
-    struct NoFix1();
+    struct NoFix1(#[label] pub Span);
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("nofix2")]
-    struct NoFix2();
+    struct NoFix2(#[label] pub Span);
 
     fn get_fix_result(messages: Vec<Message>) -> FixResult {
         Fixer::new(TEST_CODE, messages).fix()
@@ -262,7 +286,10 @@ mod test {
 
     #[test]
     fn remove_at_the_middle() {
-        let result = get_fix_result(vec![create_message(RemoveMiddle(), Some(REMOVE_MIDDLE))]);
+        let result = get_fix_result(vec![create_message(
+            RemoveMiddle(Span::default()),
+            Some(REMOVE_MIDDLE),
+        )]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "a"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -291,7 +318,7 @@ mod test {
     #[test]
     fn apply_one_fix_when_spans_overlap() {
         let result = get_fix_result(vec![
-            create_message(RemoveMiddle(), Some(REMOVE_MIDDLE)),
+            create_message(RemoveMiddle(Span::default()), Some(REMOVE_MIDDLE)),
             create_message(ReplaceId(), Some(REPLACE_ID)),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
@@ -315,9 +342,9 @@ mod test {
     #[test]
     fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix() {
         let result = get_fix_result(vec![
-            create_message(RemoveMiddle(), Some(REMOVE_MIDDLE)),
+            create_message(RemoveMiddle(Span::default()), Some(REMOVE_MIDDLE)),
             create_message(ReplaceId(), Some(REPLACE_ID)),
-            create_message(NoFix(), None),
+            create_message(NoFix(Span::default()), None),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);
@@ -329,38 +356,36 @@ mod test {
     #[test]
     fn apply_same_fix_when_span_overlap_regardless_of_order() {
         let result1 = get_fix_result(vec![
-            create_message(RemoveMiddle(), Some(REMOVE_MIDDLE)),
+            create_message(RemoveMiddle(Span::default()), Some(REMOVE_MIDDLE)),
             create_message(ReplaceId(), Some(REPLACE_ID)),
         ]);
         let result2 = get_fix_result(vec![
             create_message(ReplaceId(), Some(REPLACE_ID)),
-            create_message(RemoveMiddle(), Some(REMOVE_MIDDLE)),
+            create_message(RemoveMiddle(Span::default()), Some(REMOVE_MIDDLE)),
         ]);
         assert_eq!(result1.fixed_code, result2.fixed_code);
     }
 
     #[test]
     fn should_not_apply_fix_with_one_no_fix() {
-        let result = get_fix_result(vec![create_message(NoFix(), None)]);
+        let result = get_fix_result(vec![create_message(NoFix(Span::default()), None)]);
         assert_eq!(result.fixed_code, TEST_CODE);
         assert_eq!(result.messages.len(), 1);
         assert_eq!(result.messages[0].error.to_string(), "nofix");
         assert!(!result.fixed);
     }
 
-    #[ignore]
     #[test]
     fn sort_no_fix_messages_correctly() {
         let result = get_fix_result(vec![
             create_message(ReplaceId(), Some(REPLACE_ID)),
-            create_message(NoFix2(), None),
-            create_message(NoFix1(), None),
+            Message::new(NoFix2(Span { start: 1, end: 7 }).into(), None),
+            Message::new(NoFix1(Span { start: 1, end: 3 }).into(), None),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
         assert_eq!(result.messages.len(), 2);
-        // We should sort the error to pass the following assertion.
         assert_eq!(result.messages[0].error.to_string(), "nofix1");
-        assert_eq!(result.messages[0].error.to_string(), "nofix2");
+        assert_eq!(result.messages[1].error.to_string(), "nofix2");
         assert!(result.fixed);
     }
 }

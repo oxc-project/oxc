@@ -8,7 +8,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 
-use crate::{autofix::Fix, context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(eqeqeq): Expected {1:?} and instead saw {0:?}")]
@@ -64,8 +64,10 @@ impl Rule for EqEqEq {
         if !is_valid_comparison {
             let operator = binary_expr.operator.as_str();
             let prefered_operator = to_strict_operator(binary_expr.operator).as_str();
-            ctx.diagnostic(EqEqEqDiagnostic(operator, prefered_operator, binary_expr.span));
-            ctx.fix(Fix::new(prefered_operator, binary_expr.span));
+            ctx.diagnostic_with_fix(
+                EqEqEqDiagnostic(operator, prefered_operator, binary_expr.span),
+                || Fix::new(prefered_operator, binary_expr.span),
+            );
         }
     }
 }
