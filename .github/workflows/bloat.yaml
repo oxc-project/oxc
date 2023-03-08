@@ -24,17 +24,17 @@ jobs:
 
       - name: Run
         run: |
+          export CMD="cargo bloat --profile release-debug --bin oxc_cli"
+
           # Get largest functions
-          export BLOAT_FUNC=$(cargo bloat --profile release-debug --bin oxc_cli -n 10)
-          echo "$BLOAT_FUNC"
+          export BLOAT_FUNC_CMD="${CMD} -n 10"
+          export BLOAT_FUNC=`${BLOAT_FUNC_CMD}`
+          echo "${BLOAT_FUNC}"
 
           # Get largest crates
-          export BLOAT_CRATE=$(cargo bloat --profile release-debug --bin oxc_cli --crates -n 10)
-          echo "$BLOAT_CRATE"
-
-          # Get longest compile time
-          export BLOAT_TIME=$(cargo bloat --profile release-debug --bin oxc_cli --time -j 1)
-          echo "$BLOAT_TIME"
+          export BLOAT_CRATE_CMD="${CMD} --crates -n 10"
+          export BLOAT_CRATE=`${BLOAT_CRATE_CMD}`
+          echo "${BLOAT_CRATE}"
 
           # Render summary
           envsubst < .github/workflows/bloat.tmpl > $GITHUB_STEP_SUMMARY
