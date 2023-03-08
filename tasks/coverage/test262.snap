@@ -1,14 +1,13 @@
 Test262 Summary:
 AST Parsed     : 44000/44009 (99.98%)
 Positive Passed: 44000/44009 (99.98%)
-Negative Passed: 1934/3917 (49.37%)
+Negative Passed: 1935/3917 (49.40%)
 Expect Syntax Error: "annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js"
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/var-arraybindingpattern-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/var-objectbindingpattern-initializer.js"
-Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/uv-flags.js"
 Expect Syntax Error: "language/arguments-object/10.5-1gs.js"
 Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-initialization-assignment.js"
 Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings-with-and-without-initializer.js"
@@ -2069,6 +2068,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  14 │ 
  15 │ for (a = 0 in {});
     ·      ─────
+    ╰────
+
+  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+    ╭─[built-ins/RegExp/prototype/unicodeSets/uv-flags.js:16:1]
+ 16 │ 
+ 17 │ /./uv;
+    · ─────
     ╰────
 
   × Automatic Semicolon Insertion
