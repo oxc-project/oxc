@@ -14,4 +14,6 @@ oxc_ast = { path = "../../crates/oxc_ast" }
 oxc_parser = { path = "../../crates/oxc_parser" }
 oxc_semantic = { path = "../../crates/oxc_semantic" }
 serde = { workspace = true, features = ["derive"] }
+regex = "1.7.1"
+lazy_static = "1.4.0"
 ureq = "2.6.2"
