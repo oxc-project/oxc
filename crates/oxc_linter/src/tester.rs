@@ -61,7 +61,7 @@ impl Tester {
         let source_type = SourceType::from_path(&path).expect("incorrect {path:?}");
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
-        let program = allocator.put_no_drop(ret.program);
+        let program = allocator.alloc(ret.program);
         let trivias = Rc::new(ret.trivias);
         let semantic = SemanticBuilder::new(source_type).build(program, trivias);
         let semantic = Rc::new(semantic);

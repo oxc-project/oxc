@@ -133,7 +133,7 @@ impl Cli {
             return ret.errors;
         }
 
-        let program = allocator.put_no_drop(ret.program);
+        let program = allocator.alloc(ret.program);
         let trivias = Rc::new(ret.trivias);
         let semantic = SemanticBuilder::new(source_type).build(program, trivias);
         let result = Linter::new().run(&Rc::new(semantic), &source_text, fix);

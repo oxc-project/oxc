@@ -1,16 +1,40 @@
 use std::{
+    alloc::Layout,
     fmt,
     hash::{Hash, Hasher},
     ops::{self, Deref},
-    ptr,
+    ptr::{self, NonNull},
 };
 
-use blink_alloc::{Blink, BlinkAlloc};
+use allocator_api2::alloc::AllocError;
+use blink_alloc::BlinkAlloc;
+// use bumpalo::Bump;
 use serde::ser::{Serialize, Serializer};
 
 // #[derive(Debug)]
 pub struct Allocator {
-    blink: Blink,
+    blink: BlinkAlloc,
+}
+
+impl Allocator {
+    #[inline(always)]
+    pub fn alloc<T>(&self, value: T) -> &mut T {
+        let ptr = self.blink.allocate(Layout::new::<T>()).unwrap();
+        let ptr = ptr.as_ptr().cast::<T>();
+        unsafe {
+            ptr.write(value);
+        }
+        unsafe { &mut *ptr }
+    }
+
+    #[inline(always)]
+    pub fn alloc_str(&self, value: &str) -> &mut str {
+        let ptr = self.blink.allocate(Layout::for_value(value)).unwrap();
+        let ptr = ptr.as_ptr().cast::<u8>();
+        let slice = unsafe { std::slice::from_raw_parts_mut(ptr, value.len()) };
+        slice.copy_from_slice(value.as_bytes());
+        unsafe { std::str::from_utf8_unchecked_mut(slice) }
+    }
 }
 
 // SAFETY: Make Bump Sync and Send, it's our responsibility to never
@@ -18,17 +42,37 @@ pub struct Allocator {
 unsafe impl Send for Allocator {}
 unsafe impl Sync for Allocator {}
 
+unsafe impl allocator_api2::alloc::Allocator for Allocator {
+    #[inline(always)]
+    fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
+        // self.blink
+        //     .try_alloc_layout(layout)
+        //     .map(|ptr| unsafe {
+        //         NonNull::new_unchecked(core::ptr::slice_from_raw_parts_mut(
+        //             ptr.as_ptr(),
+        //             layout.size(),
+        //         ))
+        //     })
+        //     .map_err(|_| AllocError)
+
+        self.blink.allocate(layout)
+    }
+
+    #[inline(always)]
+    unsafe fn deallocate(&self, _ptr: NonNull<u8>, _layout: Layout) {}
+}
+
 // pub type Box<'a, T> = allocator_api2::boxed::Box<T, &'a Allocator>;
-pub type Vec<'a, T> = allocator_api2::vec::Vec<T, &'a BlinkAlloc>;
+pub type Vec<'a, T> = allocator_api2::vec::Vec<T, &'a Allocator>;
 
 impl Default for Allocator {
     fn default() -> Self {
-        Self { blink: Blink::new() }
+        Self { blink: BlinkAlloc::new() }
     }
 }
 
 impl Deref for Allocator {
-    type Target = Blink;
+    type Target = BlinkAlloc;
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {
@@ -43,7 +87,7 @@ pub struct String<'a> {
 impl<'a> String<'a> {
     #[inline(always)]
     pub fn new_in(alloc: &'a Allocator) -> Self {
-        String { vec: Vec::new_in(alloc.allocator()) }
+        String { vec: Vec::new_in(alloc) }
     }
 
     #[inline(always)]
@@ -66,7 +110,7 @@ impl<'a> String<'a> {
 
     #[inline(always)]
     pub fn from_str_in(s: &str, alloc: &'a Allocator) -> Self {
-        let mut vec = Vec::with_capacity_in(s.len(), alloc.allocator());
+        let mut vec = Vec::with_capacity_in(s.len(), alloc);
         vec.extend_from_slice(s.as_bytes());
         String { vec }
     }
@@ -102,18 +146,21 @@ impl<'alloc, T> Box<'alloc, T> {
 impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
     type Target = T;
 
+    #[inline(always)]
     fn deref(&self) -> &T {
         self.0
     }
 }
 
 impl<'alloc, T: ?Sized> ops::DerefMut for Box<'alloc, T> {
+    #[inline(always)]
     fn deref_mut(&mut self) -> &mut T {
         self.0
     }
 }
 
 impl<'alloc, T: ?Sized + fmt::Debug> fmt::Debug for Box<'alloc, T> {
+    #[inline(always)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
@@ -123,6 +170,7 @@ impl<'alloc, T> PartialEq for Box<'alloc, T>
 where
     T: PartialEq<T> + ?Sized,
 {
+    #[inline(always)]
     fn eq(&self, other: &Box<'alloc, T>) -> bool {
         PartialEq::eq(&**self, &**other)
     }
@@ -132,6 +180,7 @@ impl<'alloc, T> Serialize for Box<'alloc, T>
 where
     T: Serialize,
 {
+    #[inline(always)]
     fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -141,6 +190,7 @@ where
 }
 
 impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
+    #[inline(always)]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.hash(state);
     }

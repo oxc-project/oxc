@@ -90,7 +90,7 @@ fn main() {
     let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
     let ret = Parser::new(&allocator, &body, source_type).parse();
 
-    let program = allocator.put_no_drop(ret.program);
+    let program = allocator.alloc(ret.program);
     let trivias = Rc::new(ret.trivias);
     let semantic = SemanticBuilder::new(source_type).build(program, trivias);
 

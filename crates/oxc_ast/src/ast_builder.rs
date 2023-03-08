@@ -18,18 +18,18 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn alloc<T>(&self, value: T) -> Box<'a, T> {
-        Box(self.allocator.put_no_drop(value))
+        Box(self.allocator.alloc(value))
     }
 
     #[must_use]
     #[inline]
     pub fn new_vec<T>(&self) -> Vec<'a, T> {
-        Vec::new_in(self.allocator.allocator())
+        Vec::new_in(self.allocator)
     }
 
     #[must_use]
     pub fn new_vec_with_capacity<T>(&self, capacity: usize) -> Vec<'a, T> {
-        Vec::with_capacity_in(capacity, self.allocator.allocator())
+        Vec::with_capacity_in(capacity, self.allocator)
     }
 
     #[must_use]
@@ -42,7 +42,7 @@ impl<'a> AstBuilder<'a> {
     #[must_use]
     #[inline]
     pub fn new_str(&self, value: &str) -> &'a str {
-        &*self.allocator.copy_str(value)
+        &*self.allocator.alloc_str(value)
     }
 
     #[must_use]
@@ -1275,7 +1275,7 @@ impl<'a> AstBuilder<'a> {
         &self,
         extends: Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>,
     ) -> Vec<'a, Box<'a, TSInterfaceHeritage<'a>>> {
-        let mut vec = Vec::new_in(self.allocator.allocator());
+        let mut vec = Vec::new_in(self.allocator);
         vec.extend(extends.into_iter().map(|(expression, type_parameters, span)| {
             self.alloc(TSInterfaceHeritage { span, expression, type_parameters })
         }));

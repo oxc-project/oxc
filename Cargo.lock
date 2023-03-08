@@ -75,9 +75,7 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "blink-alloc"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e51b80eb0e5ac11d2d7ff6b0609cd0f697dac60680c51a7f2d3d9f1b5ae017e"
+version = "0.2.5"
 dependencies = [
  "allocator-api2",
  "sptr",
@@ -851,6 +849,7 @@ version = "0.0.0"
 dependencies = [
  "allocator-api2",
  "blink-alloc",
+ "bumpalo",
  "serde",
 ]
 
