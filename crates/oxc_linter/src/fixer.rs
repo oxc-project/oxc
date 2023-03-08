@@ -91,24 +91,14 @@ impl<'a> Fixer<'a> {
         output.push_str(&source_text[offset..]);
 
         let mut messages = self.messages.into_iter().filter(|m| !m.fixed).collect::<Vec<_>>();
-        messages.sort_by(|a, b| {
-            let a = a
+        messages.sort_by_cached_key(|m| {
+            let span = m
                 .error
                 .labels()
                 .expect("should specify a span for a rule")
                 .min_by_key(LabeledSpan::offset)
                 .expect("should contain at least one span");
-            let b = b
-                .error
-                .labels()
-                .expect("should specify a span for a rule")
-                .min_by_key(LabeledSpan::offset)
-                .expect("should contain at least one span");
-            if a.offset() == b.offset() {
-                a.len().cmp(&b.len())
-            } else {
-                a.offset().cmp(&b.offset())
-            }
+            (span.offset(), span.len())
         });
 
         return FixResult { fixed, fixed_code: Cow::Owned(output), messages };
