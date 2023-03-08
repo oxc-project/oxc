@@ -83,7 +83,7 @@ impl Rule for NoEmptyPattern {
             _ => return,
         };
 
-        ctx.diagnostic(NoEmptyPatternDiagnostic(pattern_type, span), span);
+        ctx.diagnostic(NoEmptyPatternDiagnostic(pattern_type, span));
     }
 }
 

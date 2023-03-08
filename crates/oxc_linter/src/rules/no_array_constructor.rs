@@ -57,7 +57,7 @@ impl Rule for NoArrayConstructor {
             && type_parameters.is_none()
             && !optional
         {
-            ctx.diagnostic(NoArrayConstructorDiagnostic(span), span);
+            ctx.diagnostic(NoArrayConstructorDiagnostic(span));
         }
     }
 }

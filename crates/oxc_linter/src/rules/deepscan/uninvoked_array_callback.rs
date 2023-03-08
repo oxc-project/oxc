@@ -68,7 +68,7 @@ impl Rule for UninvokedArrayCallback {
             ctx.diagnostic(UninvokedArrayCallbackDiagnostic(
                 property_span,
                 new_expr.span,
-            ), property_span);
+            ));
         }
     }
 }

@@ -58,10 +58,7 @@ impl Rule for ForDirection {
                         let update_direction = get_update_direction(update, counter);
                         if update_direction == wrong_direction {
                             let update_span = get_update_span(update);
-                            ctx.diagnostic(
-                                ForDirectionDiagnostic(test.span, update_span),
-                                test.span,
-                            );
+                            ctx.diagnostic(ForDirectionDiagnostic(test.span, update_span));
                         }
                     }
                 }

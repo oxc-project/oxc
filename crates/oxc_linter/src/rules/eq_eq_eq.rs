@@ -66,7 +66,6 @@ impl Rule for EqEqEq {
             let prefered_operator = to_strict_operator(binary_expr.operator).as_str();
             ctx.diagnostic_with_fix(
                 EqEqEqDiagnostic(operator, prefered_operator, binary_expr.span),
-                binary_expr.span,
                 || Fix::new(prefered_operator, binary_expr.span),
             );
         }
