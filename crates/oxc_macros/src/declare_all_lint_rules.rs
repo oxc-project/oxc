@@ -52,7 +52,7 @@ impl Parse for LintRuleMeta {
             &path.segments.iter().last().unwrap().ident.to_string().to_case(Case::Pascal),
         )
         .unwrap();
-        Ok(Self { path, name })
+        Ok(Self { name, path })
     }
 }
 
@@ -74,8 +74,8 @@ impl Parse for AllLintRulesMeta {
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let AllLintRulesMeta { rules } = metadata;
 
-    let mod_stmts = rules.iter().map(|rule| rule.mod_stmt());
-    let use_stmts = rules.iter().map(|rule| rule.use_stmt());
+    let mod_stmts = rules.iter().map(LintRuleMeta::mod_stmt);
+    let use_stmts = rules.iter().map(LintRuleMeta::use_stmt);
     let struct_names = rules.iter().map(|rule| &rule.name).collect::<Vec<_>>();
 
     quote! {
