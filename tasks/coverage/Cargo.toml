@@ -16,6 +16,8 @@ oxc_parser = { path = "../../crates/oxc_parser" }
 oxc_ast = { path = "../../crates/oxc_ast" }
 oxc_printer = { path = "../../crates/oxc_printer" }
 oxc_diagnostics = { path = "../../crates/oxc_diagnostics" }
+oxc_semantic = { path  = "../../crates/oxc_semantic" }
+oxc_linter = { path  = "../../crates/oxc_linter" }
 
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

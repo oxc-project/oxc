@@ -13,15 +13,18 @@ use std::{fs, rc::Rc};
 pub use fixer::{Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
+use rule::Rule;
 
 use crate::{
     context::LintContext,
-    rules::{RuleEnum, RULES},
+    rules::{early_error::javascript::EarlyErrorJavaScript, RuleEnum, RULES},
 };
 
 #[derive(Debug)]
 pub struct Linter {
     rules: Vec<RuleEnum>,
+
+    early_error_javascript: EarlyErrorJavaScript,
 }
 
 impl Linter {
@@ -41,7 +44,12 @@ impl Linter {
                     .collect()
             },
         );
-        Self { rules }
+        Self::from_rules(rules)
+    }
+
+    #[must_use]
+    pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
+        Self { rules, early_error_javascript: EarlyErrorJavaScript }
     }
 
     #[must_use]
@@ -63,12 +71,7 @@ impl Linter {
                 },
             );
 
-        Self { rules }
-    }
-
-    #[must_use]
-    pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
-        Self { rules }
+        Self::from_rules(rules)
     }
 
     #[must_use]
@@ -81,11 +84,26 @@ impl Linter {
         let ctx = LintContext::new(source_text, semantic.clone(), fix);
 
         for node in semantic.nodes().iter() {
+            self.early_error_javascript.run(node, &ctx);
             for rule in &self.rules {
                 rule.run(node, &ctx);
             }
         }
 
+        ctx.into_message()
+    }
+
+    #[must_use]
+    pub fn run_early_error<'a>(
+        &self,
+        semantic: &Rc<Semantic<'a>>,
+        source_text: &'a str,
+        fix: bool,
+    ) -> Vec<Message<'a>> {
+        let ctx = LintContext::new(source_text, semantic.clone(), fix);
+        for node in semantic.nodes().iter() {
+            self.early_error_javascript.run(node, &ctx);
+        }
         ctx.into_message()
     }
 

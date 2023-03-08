@@ -3,6 +3,7 @@ use std::{
     io::{stdout, Read, Write},
     panic::{catch_unwind, UnwindSafe},
     path::{Path, PathBuf},
+    rc::Rc,
     result::Result,
 };
 
@@ -12,7 +13,9 @@ use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+use oxc_linter::Linter;
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use rayon::prelude::*;
 use similar::{ChangeTag, TextDiff};
 use walkdir::WalkDir;
@@ -262,12 +265,21 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let allocator = Allocator::default();
         let source_text = self.code();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        let result = if ret.errors.is_empty() {
+        let program = allocator.alloc(ret.program);
+        let trivias = Rc::new(ret.trivias);
+        let semantic = SemanticBuilder::new(source_type).build(program, trivias);
+        let result = Linter::new().run_early_error(&Rc::new(semantic), source_text, false);
+        let errors = result
+            .into_iter()
+            .map(|msg| msg.error)
+            .chain(ret.errors.into_iter())
+            .collect::<Vec<_>>();
+        let result = if errors.is_empty() {
             Ok(String::new())
         } else {
             let handler = GraphicalReportHandler::new_themed(GraphicalTheme::unicode_nocolor());
             let mut output = String::new();
-            for error in ret.errors {
+            for error in errors {
                 let error = error.with_source_code(NamedSource::new(
                     self.path().to_string_lossy(),
                     source_text.to_string(),
