@@ -1471,9 +1471,9 @@ checksum = "d54675592c1dbefd78cbd98db9bacd89886e1ca50692a0692baefffdeb92dd58"
 
 [[package]]
 name = "unicode-id-start"
-version = "1.0.3"
+version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "238a3d5702128479aa8f25de86d12dde3ef71859109b6c1be6ce62dd4e76b160"
+checksum = "e15598ae4ac01f33d64525526e028beb497b216015dd768c44187a62b44cbce8"
 
 [[package]]
 name = "unicode-ident"

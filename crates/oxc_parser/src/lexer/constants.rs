@@ -1,5 +1,3 @@
-use unicode_id_start::{is_id_continue, is_id_start};
-
 use super::Kind;
 
 pub const EOF: char = '\0';
@@ -65,17 +63,50 @@ pub fn is_line_terminator(c: char) -> bool {
     is_regular_line_terminator(c) || is_irregular_line_terminator(c)
 }
 
+const T: bool = true;
+const F: bool = false;
+
+#[repr(C, align(64))]
+pub struct Align64<T>(pub(crate) T);
+
+// This contains `$` (36) and `_` (95)
+pub const ASCII_START: Align64<[bool; 128]> = Align64([
+    F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F,
+    F, F, F, F, T, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F,
+    F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, F, F, T,
+    F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, F, F, F,
+]);
+
+// This contains `$` (36)
+pub const ASCII_CONTINUE: Align64<[bool; 128]> = Align64([
+    F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F, F,
+    F, F, F, F, T, F, F, F, F, F, F, F, F, F, F, F, T, T, T, T, T, T, T, T, T, T, F, F, F, F, F, F,
+    F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, F, F, T,
+    F, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F, F, F, F, F,
+]);
+
+#[inline]
+pub fn is_identifier_start_ascii(c: char) -> bool {
+    ASCII_START.0[c as usize]
+}
+
 /// Section 12.6 Detect `IdentifierStartChar`
 #[inline]
-pub fn is_identifier_start(c: char) -> bool {
-    c == '$' || c == '_' || is_id_start(c)
+pub fn is_identifier_start_all(c: char) -> bool {
+    if c.is_ascii() {
+        return is_identifier_start_ascii(c);
+    }
+    unicode_id_start::is_id_start_unicode(c)
 }
 
 /// Section 12.6 Detect `IdentifierPartChar`
 /// NOTE 2: The nonterminal `IdentifierPart` derives _ via `UnicodeIDContinue`.
 #[inline]
 pub fn is_identifier_part(c: char) -> bool {
-    c == '$' || is_id_continue(c) || c == ZWNJ || c == ZWJ
+    if c.is_ascii() {
+        return ASCII_CONTINUE.0[c as usize];
+    }
+    unicode_id_start::is_id_continue_unicode(c) || c == ZWNJ || c == ZWJ
 }
 
 pub const SINGLE_CHAR_TOKENS: &[Kind; 128] = &[

@@ -24,8 +24,9 @@ pub use token::{RegExp, Token, TokenValue};
 pub use self::kind::Kind;
 use self::{
     constants::{
-        is_identifier_part, is_identifier_start, is_irregular_line_terminator,
-        is_irregular_whitespace, is_line_terminator, EOF, SINGLE_CHAR_TOKENS,
+        is_identifier_part, is_identifier_start_all, is_identifier_start_ascii,
+        is_irregular_line_terminator, is_irregular_whitespace, is_line_terminator, EOF,
+        SINGLE_CHAR_TOKENS,
     },
     number::{parse_big_int, parse_float, parse_int},
     string_builder::AutoCow,
@@ -366,10 +367,15 @@ impl<'a> Lexer<'a> {
         // fast path for single character tokens
         // '{'  '}'  '('  ')'  '['  ']'  ';' ',' ':' '~'
         let size = c as usize;
-        if size <= 127 {
+        if size < 128 {
             let kind = SINGLE_CHAR_TOKENS[size];
             if kind != Kind::Undetermined {
                 return kind;
+            }
+            // fast path for identifiers
+            if is_identifier_start_ascii(c) {
+                builder.push_matching(c);
+                return self.identifier_name_or_keyword(builder);
             }
         }
         // NOTE: matching order is significant here, by real world occurrences
@@ -377,11 +383,6 @@ impl<'a> Lexer<'a> {
         // > the rough order of frequency for different token kinds is as follows:
         // identifiers/keywords, ‘.’, ‘=’, strings, decimal numbers, ‘:’, ‘+’, hex/octal numbers, and then everything else
         match c {
-            // fast path for identifiers
-            c if c.is_ascii_alphabetic() => {
-                builder.push_matching(c);
-                self.identifier_name_or_keyword(builder)
-            }
             '.' => {
                 let kind = self.read_dot(&mut builder);
                 if kind.is_number() {
@@ -452,7 +453,7 @@ impl<'a> Lexer<'a> {
                 self.identifier_unicode_escape_sequence(&mut builder, true);
                 self.identifier_name_or_keyword(builder)
             }
-            c if is_identifier_start(c) => {
+            c if unicode_id_start::is_id_start_unicode(c) => {
                 builder.push_matching(c);
                 self.identifier_name_or_keyword(builder)
             }
@@ -718,7 +719,7 @@ impl<'a> Lexer<'a> {
     fn private_identifier(&mut self, mut builder: AutoCow<'a>) -> Kind {
         let start = self.offset();
         match self.current.chars.next() {
-            Some(c) if is_identifier_start(c) => {
+            Some(c) if is_identifier_start_all(c) => {
                 builder.push_matching(c);
             }
             Some('\\') => {
@@ -935,13 +936,13 @@ impl<'a> Lexer<'a> {
         let offset = self.offset();
         // The SourceCharacter immediately following a NumericLiteral must not be an IdentifierStart or DecimalDigit.
         let ch = self.peek();
-        if !ch.is_ascii_digit() && !is_identifier_start(ch) {
+        if !ch.is_ascii_digit() && !is_identifier_start_all(ch) {
             return kind;
         }
         self.current.chars.next();
         loop {
             let c = self.peek();
-            if c != EOF && is_identifier_start(c) {
+            if c != EOF && is_identifier_start_all(c) {
                 self.current.chars.next();
             } else {
                 break;
@@ -1106,7 +1107,7 @@ impl<'a> Lexer<'a> {
         let mut builder = AutoCow::new(self);
         loop {
             let c = self.peek();
-            if c == '-' || is_identifier_start(c) {
+            if c == '-' || is_identifier_start_all(c) {
                 self.current.chars.next();
                 builder.push_matching(c);
                 loop {
@@ -1239,8 +1240,11 @@ impl<'a> Lexer<'a> {
             }
         };
 
-        let is_valid =
-            if check_identifier_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
+        let is_valid = if check_identifier_start {
+            is_identifier_start_all(ch)
+        } else {
+            is_identifier_part(ch)
+        };
 
         if !is_valid {
             self.error(diagnostics::InvalidCharacter(ch, self.current_offset()));
