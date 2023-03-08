@@ -30,7 +30,7 @@ impl Driver {
             .allow_return_outside_function(true)
             .parse();
 
-        let program = self.allocator.put_no_drop(ret.program);
+        let program = self.allocator.alloc(ret.program);
 
         let diagnostics = Diagnostics::default();
         let semantic = SemanticBuilder::new(source_type).build(program, Rc::new(ret.trivias));
