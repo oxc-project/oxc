@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_ast::Span;
-use oxc_diagnostics::Error;
+use oxc_diagnostics::{miette::LabeledSpan, Error};
 
 #[derive(Debug, Default)]
 pub struct Fix<'a> {
@@ -96,13 +96,13 @@ impl<'a> Fixer<'a> {
                 .error
                 .labels()
                 .expect("should specify a span for a rule")
-                .min_by_key(|span| span.offset())
+                .min_by_key(LabeledSpan::offset)
                 .expect("should contain at least one span");
             let b = b
                 .error
                 .labels()
                 .expect("should specify a span for a rule")
-                .min_by_key(|span| span.offset())
+                .min_by_key(LabeledSpan::offset)
                 .expect("should contain at least one span");
             if a.offset() == b.offset() {
                 a.len().cmp(&b.len())

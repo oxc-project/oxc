@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use oxc_ast::{AstKind, Span};
+use oxc_ast::AstKind;
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNodes, Semantic};
 
