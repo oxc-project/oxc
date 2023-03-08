@@ -1,4 +1,4 @@
-#![feature(let_chains, is_some_and)]
+#![feature(let_chains, is_some_and, const_trait_impl, const_slice_index)]
 
 #[cfg(test)]
 mod tester;
