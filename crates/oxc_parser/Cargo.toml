@@ -17,7 +17,7 @@ oxc_diagnostics = { path = "../oxc_diagnostics" }
 bitflags = { workspace = true }
 rustc-hash = { workspace = true }
 
-unicode-id-start = "1.0.3"
+unicode-id-start = "1.1.0"
 num-bigint = "0.4.3"
 
 [dev-dependencies]

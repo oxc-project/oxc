@@ -1,6 +1,6 @@
 Test262 Summary:
-AST Parsed     : 43994/44003 (99.98%)
-Positive Passed: 43994/44003 (99.98%)
+AST Parsed     : 44000/44009 (99.98%)
+Positive Passed: 44000/44009 (99.98%)
 Negative Passed: 1934/3917 (49.37%)
 Expect Syntax Error: "annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js"
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
