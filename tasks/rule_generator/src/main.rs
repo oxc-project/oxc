@@ -1,10 +1,11 @@
 use std::{borrow::Cow, fs::File, io::Write, path::Path, process::Command, rc::Rc};
 
 use convert_case::{Case, Casing};
+use lazy_static::lazy_static;
 use oxc_allocator::Allocator;
 use oxc_ast::{
     ast::{Argument, Expression, ObjectProperty, PropertyKey, PropertyValue},
-    AstKind, SourceType,
+    AstKind, GetSpan, SourceType,
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -23,7 +24,7 @@ enum TestCase<'a> {
 impl<'a> TestCase<'a> {
     fn to_code(test_case: &TestCase) -> String {
         match test_case {
-            TestCase::Valid(code) | TestCase::Invalid(code) => format!(r#"("{code}", None)"#),
+            TestCase::Valid(code) | TestCase::Invalid(code) => code.clone().into_owned(),
         }
     }
 }
@@ -35,25 +36,39 @@ struct Context<'a> {
     fail_cases: &'a str,
 }
 
-fn parse_test_code<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
-    match expr {
-        Expression::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
-        Expression::TemplateLiteral(lit) => Some(Cow::Borrowed(lit.quasi().unwrap().as_str())),
+fn parse_test_code<'a>(source_text: &'a str, expr: &'a Expression) -> Option<Cow<'a, str>> {
+    let (test_code, option_code) = match expr {
+        Expression::StringLiteral(lit) => (Some(Cow::Borrowed(lit.value.as_str())), None),
+        Expression::TemplateLiteral(lit) => {
+            (Some(Cow::Borrowed(lit.quasi().unwrap().as_str())), None)
+        }
         Expression::ObjectExpression(obj_expr) => {
+            let mut test_code = None;
+            let mut option_code: Option<Cow<'_, str>> = None;
             for obj_prop in &obj_expr.properties {
                 match obj_prop {
                     ObjectProperty::Property(prop) => match &prop.key {
                         PropertyKey::Identifier(ident) if ident.name == "code" => match &prop.value
                         {
-                            PropertyValue::Expression(expr) => return parse_test_code(expr),
+                            PropertyValue::Expression(expr) => {
+                                let Expression::StringLiteral(s) = expr else {
+                                return None;
+                              };
+                                test_code = Some(Cow::Borrowed(s.value.as_str()));
+                            }
                             PropertyValue::Pattern(_) => continue,
                         },
+                        PropertyKey::Identifier(ident) if ident.name == "options" => {
+                            let span = prop.value.span();
+                            let option_text = &source_text[span.start as usize..span.end as usize];
+                            option_code = Some(Cow::Owned(wrap_property_in_quotes(option_text)));
+                        }
                         _ => continue,
                     },
                     ObjectProperty::SpreadProperty(_) => continue,
                 }
             }
-            None
+            (test_code, option_code)
         }
         Expression::CallExpression(call_expr) => match &call_expr.callee {
             Expression::MemberExpression(member_expr) => match &member_expr.object() {
@@ -65,14 +80,52 @@ fn parse_test_code<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
                         code.push_str(lit.value.as_str());
                         code.push('\n');
                     }
-                    Some(Cow::Owned(code))
+                    (Some(Cow::Owned(code)), None)
                 }
-                _ => None,
+                _ => (None, None),
             },
-            _ => None,
+            _ => (None, None),
         },
-        _ => None,
+        _ => (None, None),
+    };
+
+    test_code.map(|test_code| {
+        let option_code = option_code.map_or(Cow::Borrowed("None"), |option_code| {
+            Cow::Owned(format!("Some(serde_json::json!({option_code}))"))
+        });
+        Cow::Owned(format!(r#"("{test_code}", {option_code})"#))
+    })
+}
+
+/// Convert a javascript object literal to JSON by wrapping the property keys in double quote
+fn wrap_property_in_quotes(object: &str) -> String {
+    use regex::{Captures, Regex};
+
+    lazy_static! {
+        static ref IDENT_MATCHER: Regex = Regex::new(r"(?P<ident>[[:alpha:]]\w*)").unwrap();
+        static ref DUP_QUOTE_MATCHER: Regex =
+            Regex::new(r#"(?P<outer>"(?P<inner>"\w+")")"#).unwrap();
     }
+
+    let add_quote = IDENT_MATCHER
+        .replace_all(object, |capture: &Captures| {
+            // don't replace true and false, which are json boolean values
+            let ident = &capture["ident"];
+            if ident == "true" || ident == "false" {
+                Cow::Owned(ident.to_string())
+            } else {
+                Cow::Owned(format!(r#""{ident}""#))
+            }
+        })
+        .into_owned();
+
+    // After the above step, valid json strings will have duplicate quotes now
+    // This step removes duplicate quotes.
+    let remove_dup_quote = DUP_QUOTE_MATCHER
+        .replace_all(&add_quote, |capture: &Captures| Cow::Owned(capture["inner"].to_string()))
+        .into_owned();
+
+    remove_dup_quote
 }
 
 fn main() {
@@ -140,14 +193,14 @@ fn main() {
     if let Some((Some(valid), Some(invalid))) = tests_object {
         for arg in (&valid.elements).into_iter().flatten() {
             if let Argument::Expression(expr) = arg {
-                let Some(code) = parse_test_code(expr) else { continue };
+                let Some(code) = parse_test_code(&body, expr) else { continue };
                 pass_cases.push(TestCase::Valid(code));
             }
         }
 
         for arg in (&invalid.elements).into_iter().flatten() {
             if let Argument::Expression(expr) = arg {
-                let Some(code) = parse_test_code(expr) else { continue };
+                let Some(code) = parse_test_code(&body, expr) else { continue };
                 fail_cases.push(TestCase::Invalid(code));
             }
         }
