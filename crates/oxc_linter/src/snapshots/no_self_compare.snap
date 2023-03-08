@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 53
+expression: no_self_compare
+---
+
+  × eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ x === x
+   · ───────
+   ╰────
+
