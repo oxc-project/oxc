@@ -23,7 +23,7 @@ jobs:
     name: Run benchmark
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest] # `macos-latest` is too unstable to be useful for benchmark, the variance is always huge.
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
