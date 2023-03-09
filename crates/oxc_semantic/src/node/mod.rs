@@ -37,10 +37,12 @@ impl<'a> SemanticNode<'a> {
         Self { kind, scope_id, flags }
     }
 
+    #[must_use]
     pub fn kind(&self) -> AstKind<'a> {
         self.kind
     }
 
+    #[must_use]
     pub fn scope_id(&self) -> ScopeId {
         self.scope_id
     }
