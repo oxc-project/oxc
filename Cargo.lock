@@ -554,9 +554,9 @@ dependencies = [
 
 [[package]]
 name = "indextree"
-version = "4.5.0"
+version = "4.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "497f036ac2fae75c34224648a77802e5dd4e9cfb56f4713ab6b12b7160a0523b"
+checksum = "c40411d0e5c63ef1323c3d09ce5ec6d84d71531e18daed0743fccea279d7deb6"
 
 [[package]]
 name = "insta"

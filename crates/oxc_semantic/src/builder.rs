@@ -43,8 +43,8 @@ impl<'a> SemanticBuilder<'a> {
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let ast_node =
             SemanticNode::new(kind, self.scope.current_scope_id, self.current_node_flags);
-        let node_id = self.nodes.new_node(ast_node);
-        self.current_node_id.append(node_id, &mut self.nodes);
+        let node_id = self.current_node_id.append_value(ast_node, &mut self.nodes);
+
         self.current_node_id = node_id.into();
     }
 
