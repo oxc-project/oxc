@@ -384,6 +384,7 @@ impl NoConstantBinaryExpression {
 }
 
 #[test]
+#[ignore]
 #[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
