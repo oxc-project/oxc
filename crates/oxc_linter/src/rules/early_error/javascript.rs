@@ -15,8 +15,9 @@ impl Rule for EarlyErrorJavaScript {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.get().kind() {
             AstKind::PrivateIdentifier(ident) => check_private_identifier(ident, node, ctx),
-            AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
             AstKind::NumberLiteral(lit) => check_number_literal(lit, node, ctx),
+            AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
+            AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
             _ => {}
         }
     }
@@ -84,6 +85,11 @@ fn check_private_identifier<'a>(
     }
 }
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("'0'-prefixed octal literals and octal escape sequences are deprecated")]
+#[diagnostic(help("for octal literals use the '0o' prefix instead"))]
+struct LegacyOctal(#[label] Span);
+
 fn check_number_literal(lit: &NumberLiteral, node: &AstNode, ctx: &LintContext) {
     // NumericLiteral :: LegacyOctalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
@@ -101,11 +107,6 @@ fn check_number_literal(lit: &NumberLiteral, node: &AstNode, ctx: &LintContext) 
     if ctx.strict_mode(node) {
         match lit.base {
             NumberBase::Octal if leading_zero(lit.raw) => {
-                #[derive(Debug, Error, Diagnostic)]
-                #[error("'0'-prefixed octal literals and octal escape sequences are deprecated")]
-                #[diagnostic(help("for octal literals use the '0o' prefix instead"))]
-                struct LegacyOctal(#[label] Span);
-
                 ctx.diagnostic(LegacyOctal(lit.span));
             }
             NumberBase::Decimal if leading_zero(lit.raw) => {
@@ -117,6 +118,43 @@ fn check_number_literal(lit: &NumberLiteral, node: &AstNode, ctx: &LintContext) 
                 ctx.diagnostic(LeadingZeroDecimal(lit.span));
             }
             _ => {}
+        }
+    }
+}
+
+fn check_string_literal<'a>(lit: &StringLiteral, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    // 12.9.4.1 Static Semantics: Early Errors
+    // EscapeSequence ::
+    //   LegacyOctalEscapeSequence
+    //   NonOctalDecimalEscapeSequence
+    // It is a Syntax Error if the source text matched by this production is strict mode code.
+    let raw = lit.span.source_text(ctx.source_text());
+    if ctx.strict_mode(node) && raw.len() != lit.value.len() {
+        let mut chars = raw.chars().peekable();
+        while let Some(c) = chars.next() {
+            if c == '\\' {
+                match chars.next() {
+                    Some('0') => {
+                        if chars.peek().is_some_and(|c| ('1'..='9').contains(c)) {
+                            ctx.diagnostic(LegacyOctal(lit.span));
+                            return;
+                        }
+                    }
+                    Some('1'..='7') => {
+                        ctx.diagnostic(LegacyOctal(lit.span));
+                        return;
+                    }
+                    Some('8'..='9') => {
+                        #[derive(Debug, Error, Diagnostic)]
+                        #[error("Invalid escape sequence")]
+                        #[diagnostic(help("\\8 and \\9 are not allowed in strict mode"))]
+                        struct NonOctalDecimalEscapeSequence(#[label] Span);
+                        ctx.diagnostic(NonOctalDecimalEscapeSequence(lit.span));
+                        return;
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 }

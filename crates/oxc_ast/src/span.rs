@@ -32,6 +32,11 @@ impl Span {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    #[must_use]
+    pub fn source_text<'a>(&self, source_text: &'a str) -> &'a str {
+        &source_text[self.start as usize..self.end as usize]
+    }
 }
 
 // #[allow(clippy::derive_hash_xor_eq)]

@@ -1,8 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44000/44009 (99.98%)
 Positive Passed: 44000/44009 (99.98%)
-Negative Passed: 2182/3917 (55.71%)
-Expect Syntax Error: "annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js"
+Negative Passed: 2190/3917 (55.91%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -837,8 +836,6 @@ Expect Syntax Error: "language/identifiers/val-yield-strict.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
 Expect Syntax Error: "language/import/json-invalid.js"
 Expect Syntax Error: "language/import/json-named-bindings.js"
-Expect Syntax Error: "language/literals/string/S7.8.4_A4.3_T1.js"
-Expect Syntax Error: "language/literals/string/S7.8.4_A4.3_T2.js"
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-1-strict-explicit-pragma.js"
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-2-strict-explicit-pragma.js"
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-3-strict-explicit-pragma.js"
@@ -847,12 +844,7 @@ Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-6-strict-explicit-pragma.js"
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-7-strict-explicit-pragma.js"
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-8-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-8-strict.js"
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-9-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-9-strict.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-strict.js"
-Expect Syntax Error: "language/literals/string/legacy-octal-escape-sequence-prologue-strict.js"
-Expect Syntax Error: "language/literals/string/legacy-octal-escape-sequence-strict.js"
 Expect Syntax Error: "language/module-code/early-dup-export-as-star-as.js"
 Expect Syntax Error: "language/module-code/early-dup-export-decl.js"
 Expect Syntax Error: "language/module-code/early-dup-export-dflt-id.js"
@@ -1815,6 +1807,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·      ──
  46 │     @#_
     ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:17:1]
+ 17 │ 
+ 18 │ `${'\07'}`;
+    ·    ─────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
 
   × Unexpected token
     ╭─[annexB/language/statements/for-in/bare-initializer.js:14:1]
@@ -13912,6 +13912,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·    ╰── Unterminated string
     ╰────
 
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/S7.8.4_A4.3_T1.js:15:1]
+ 15 │ 
+ 16 │ "\1"
+    · ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/S7.8.4_A4.3_T2.js:15:1]
+ 15 │ 
+ 16 │ "\7"
+    · ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
   × Invalid escape sequence
     ╭─[language/literals/string/S7.8.4_A7.1_T4.js:17:1]
  17 │ //CHECK#
@@ -13967,6 +13983,47 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·  ──┬──
     ·    ╰── Invalid escape sequence
     ╰────
+
+  × Invalid escape sequence
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-8-strict.js:30:1]
+ 30 │ 
+ 31 │ '\8';
+    · ────
+    ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-9-strict.js:30:1]
+ 30 │ 
+ 31 │ '\9';
+    · ────
+    ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-strict.js:26:1]
+ 26 │ 
+ 27 │ '\08';
+    · ─────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-octal-escape-sequence-prologue-strict.js:16:1]
+ 16 │ (function() {
+ 17 │   "asterisk: \052";
+    ·   ────────────────
+ 18 │   "use strict";
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-octal-escape-sequence-strict.js:26:1]
+ 26 │ 
+ 27 │ '\1';
+    · ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
 
   × Invalid escape sequence
     ╭─[language/literals/string/unicode-escape-nls-err-double.js:48:1]
