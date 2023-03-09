@@ -113,7 +113,7 @@ This project is incubated from the help of these great mentors and their project
 
 ## Third Party Licenses
 
-Licenses are list in [LICENSE-THIRD-PARTY](./LICENSE-THIRD-PARTY)
+Licenses are list in [THIRD-PARTY-LICENSE](./LICENSE-THIRD-PARTY-LICENSE)
 
 This project partially copies code from the following projects:
 
@@ -125,7 +125,7 @@ This project partially copies code from the following projects:
 | [rome/tools](https://github.com/rome/tools) | [MIT](https://github.com/rome/tools/blob/main/LICENSE)  |
 | [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus) | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0)  |
 | [acorn](https://github.com/acornjs/acorn) | [MIT](https://github.com/acornjs/acorn/blob/master/acorn/LICENSE) |
-
+| [sindresorhus/globals](https://github.com/sindresorhus/globals) | [MIT](https://github.com/sindresorhus/globals/blob/main/license) |
 
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
 [mit-url]: LICENSE
