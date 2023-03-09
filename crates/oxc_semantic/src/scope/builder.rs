@@ -36,8 +36,7 @@ impl ScopeBuilder {
         };
 
         let scope = Scope::new(flags, strict_mode);
-        let new_scope_id = self.scopes.new_node(scope);
-        self.current_scope_id.append(new_scope_id, &mut self.scopes);
+        let new_scope_id = self.current_scope_id.append_value(scope, &mut self.scopes);
         self.current_scope_id = new_scope_id.into();
     }
 
