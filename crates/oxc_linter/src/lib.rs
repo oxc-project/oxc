@@ -6,6 +6,7 @@ mod tester;
 mod ast_util;
 mod context;
 mod fixer;
+mod globals;
 pub mod rule;
 mod rules;
 

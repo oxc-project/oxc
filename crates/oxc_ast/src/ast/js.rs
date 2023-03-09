@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use num_bigint::BigUint;
 use oxc_allocator::{Box, Vec};
 use serde::Serialize;
 
@@ -125,6 +126,24 @@ impl<'a> Expression<'a> {
         matches!(self, Self::Identifier(ident) if ident.name == "undefined")
     }
 
+    /// Determines whether the given expr is a `void 0`
+    #[must_use]
+    pub fn is_void_0(&self) -> bool {
+        matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void)
+    }
+
+    /// Determines whether the given expr evaluate to `undefined`
+    #[must_use]
+    pub fn evaluate_to_undefined(&self) -> bool {
+        self.is_undefined() || self.is_void_0()
+    }
+
+    /// Determines whether the given expr is a `null` or `undefined` or `void 0`
+    #[must_use]
+    pub fn is_null_or_undefined(&self) -> bool {
+        self.is_null() || self.evaluate_to_undefined()
+    }
+
     /// Remove nested parentheses from this expression.
     #[must_use]
     pub fn without_parenthesized(&self) -> &Self {
@@ -167,6 +186,21 @@ impl<'a> Expression<'a> {
     #[must_use]
     pub fn is_function(&self) -> bool {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
+    }
+
+    /// Returns literal's value converted to the Boolean type
+    /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
+    #[must_use]
+    pub fn get_boolean_value(&self) -> Option<bool> {
+        match self {
+            Self::BooleanLiteral(lit) => Some(lit.value),
+            Self::NullLiteral(_) => Some(false),
+            Self::NumberLiteral(lit) => Some(lit.value != 0.0),
+            Self::BigintLiteral(lit) => Some(lit.value != BigUint::new(vec![])),
+            Self::RegExpLiteral(_) => Some(true),
+            Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
+            _ => None,
+        }
     }
 }
 

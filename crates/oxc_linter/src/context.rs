@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use indextree::{Ancestors, NodeId};
-use oxc_ast::{AstKind, SourceType};
+use oxc_ast::{ast::IdentifierReference, AstKind, SourceType};
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNodes, Scope, ScopeTree, Semantic, SemanticNode};
 
@@ -107,5 +107,12 @@ impl<'a> LintContext<'a> {
     pub fn strict_mode(&self, node: &AstNode) -> bool {
         let scope = self.scope(node);
         node.get().strict_mode(scope)
+    }
+
+    /* Symbols */
+
+    #[allow(clippy::unused_self)]
+    pub fn is_reference_to_global_variable(&self, _ident: &IdentifierReference) -> bool {
+        false
     }
 }
