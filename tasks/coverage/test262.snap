@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44000/44009 (99.98%)
 Positive Passed: 44000/44009 (99.98%)
-Negative Passed: 1945/3917 (49.66%)
+Negative Passed: 2182/3917 (55.71%)
 Expect Syntax Error: "annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js"
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
@@ -502,110 +502,39 @@ Expect Syntax Error: "language/expressions/class/elements/static-string-literal-
 Expect Syntax Error: "language/expressions/class/elements/static-string-literal-name-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/elements/string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-class-body-ctor-duplicate.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-ctor-super-no-heritage.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-function-expression.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-recursive.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-private-field-super-access.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-privatename-in-computed-property-missing.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js"
@@ -626,34 +555,6 @@ Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/gr
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-private-meth-super.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-set-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-call-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-call-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-member-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-member-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-call-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-call-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-member-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-member-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-this.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-this.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/super-private-access-invalid.js"
 Expect Syntax Error: "language/expressions/class/elements/ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/ternary-init-err-contains-super.js"
@@ -744,10 +645,6 @@ Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init
 Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/function/early-body-super-call.js"
 Expect Syntax Error: "language/expressions/function/early-body-super-prop.js"
-Expect Syntax Error: "language/expressions/function/early-errors/invalid-names-call-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/function/early-errors/invalid-names-call-expression-this.js"
-Expect Syntax Error: "language/expressions/function/early-errors/invalid-names-member-expression-bad-reference.js"
-Expect Syntax Error: "language/expressions/function/early-errors/invalid-names-member-expression-this.js"
 Expect Syntax Error: "language/expressions/function/early-params-super-call.js"
 Expect Syntax Error: "language/expressions/function/early-params-super-prop.js"
 Expect Syntax Error: "language/expressions/function/name-arguments-strict-body.js"
@@ -793,8 +690,6 @@ Expect Syntax Error: "language/expressions/generators/yield-as-parameter.js"
 Expect Syntax Error: "language/expressions/generators/yield-identifier-spread-strict.js"
 Expect Syntax Error: "language/expressions/generators/yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/import.meta/syntax/goal-script.js"
-Expect Syntax Error: "language/expressions/in/private-field-invalid-identifier-complex.js"
-Expect Syntax Error: "language/expressions/in/private-field-invalid-identifier-simple.js"
 Expect Syntax Error: "language/expressions/in/private-field-rhs-yield-absent.js"
 Expect Syntax Error: "language/expressions/in/rhs-yield-absent-strict.js"
 Expect Syntax Error: "language/expressions/logical-assignment/lgcl-and-arguments-strict.js"
@@ -930,10 +825,6 @@ Expect Syntax Error: "language/future-reserved-words/yield-strict-escaped.js"
 Expect Syntax Error: "language/future-reserved-words/yield-strict.js"
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
-Expect Syntax Error: "language/global-code/invalid-private-names-call-expression-bad-reference.js"
-Expect Syntax Error: "language/global-code/invalid-private-names-call-expression-this.js"
-Expect Syntax Error: "language/global-code/invalid-private-names-member-expression-bad-reference.js"
-Expect Syntax Error: "language/global-code/invalid-private-names-member-expression-this.js"
 Expect Syntax Error: "language/global-code/new.target-arrow.js"
 Expect Syntax Error: "language/global-code/new.target.js"
 Expect Syntax Error: "language/global-code/return.js"
@@ -989,10 +880,6 @@ Expect Syntax Error: "language/module-code/export-default-asyncfunction-declarat
 Expect Syntax Error: "language/module-code/export-default-asyncgenerator-declaration-binding-exists.js"
 Expect Syntax Error: "language/module-code/export-default-function-declaration-binding-exists.js"
 Expect Syntax Error: "language/module-code/export-default-generator-declaration-binding-exists.js"
-Expect Syntax Error: "language/module-code/invalid-private-names-call-expression-bad-reference.js"
-Expect Syntax Error: "language/module-code/invalid-private-names-call-expression-this.js"
-Expect Syntax Error: "language/module-code/invalid-private-names-member-expression-bad-reference.js"
-Expect Syntax Error: "language/module-code/invalid-private-names-member-expression-this.js"
 Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-arrow-function.js"
 Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-block-stmt-list.js"
 Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-block-stmt.js"
@@ -1083,15 +970,6 @@ Expect Syntax Error: "language/module-code/parse-err-hoist-lex-fun.js"
 Expect Syntax Error: "language/module-code/parse-err-hoist-lex-gen.js"
 Expect Syntax Error: "language/module-code/parse-err-return.js"
 Expect Syntax Error: "language/module-code/parse-err-yield.js"
-Expect Syntax Error: "language/module-code/private-identifiers-not-empty.js"
-Expect Syntax Error: "language/module-code/privatename-not-valid-earlyerr-module-1.js"
-Expect Syntax Error: "language/module-code/privatename-not-valid-earlyerr-module-2.js"
-Expect Syntax Error: "language/module-code/privatename-not-valid-earlyerr-module-3.js"
-Expect Syntax Error: "language/module-code/privatename-not-valid-earlyerr-module-4.js"
-Expect Syntax Error: "language/module-code/privatename-not-valid-earlyerr-module-5.js"
-Expect Syntax Error: "language/module-code/privatename-not-valid-earlyerr-module-6.js"
-Expect Syntax Error: "language/module-code/privatename-not-valid-earlyerr-module-7.js"
-Expect Syntax Error: "language/module-code/privatename-not-valid-earlyerr-module-8.js"
 Expect Syntax Error: "language/module-code/top-level-await/new-await.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-body.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js"
@@ -1136,10 +1014,6 @@ Expect Syntax Error: "language/statements/async-generator/yield-as-identifier-re
 Expect Syntax Error: "language/statements/async-generator/yield-as-identifier-reference.js"
 Expect Syntax Error: "language/statements/async-generator/yield-identifier-spread-strict.js"
 Expect Syntax Error: "language/statements/async-generator/yield-identifier-strict.js"
-Expect Syntax Error: "language/statements/block/early-errors/invalid-names-call-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/block/early-errors/invalid-names-call-expression-this.js"
-Expect Syntax Error: "language/statements/block/early-errors/invalid-names-member-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/block/early-errors/invalid-names-member-expression-this.js"
 Expect Syntax Error: "language/statements/block/labeled-continue.js"
 Expect Syntax Error: "language/statements/break/S12.8_A1_T1.js"
 Expect Syntax Error: "language/statements/break/S12.8_A1_T2.js"
@@ -1359,14 +1233,6 @@ Expect Syntax Error: "language/statements/class/elements/private-ternary-init-er
 Expect Syntax Error: "language/statements/class/elements/private-ternary-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/private-typeof-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/private-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/privatename-not-valid-earlyerr-script-1.js"
-Expect Syntax Error: "language/statements/class/elements/privatename-not-valid-earlyerr-script-2.js"
-Expect Syntax Error: "language/statements/class/elements/privatename-not-valid-earlyerr-script-3.js"
-Expect Syntax Error: "language/statements/class/elements/privatename-not-valid-earlyerr-script-4.js"
-Expect Syntax Error: "language/statements/class/elements/privatename-not-valid-earlyerr-script-5.js"
-Expect Syntax Error: "language/statements/class/elements/privatename-not-valid-earlyerr-script-6.js"
-Expect Syntax Error: "language/statements/class/elements/privatename-not-valid-earlyerr-script-7.js"
-Expect Syntax Error: "language/statements/class/elements/privatename-not-valid-earlyerr-script-8.js"
 Expect Syntax Error: "language/statements/class/elements/static-comp-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/static-comp-name-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/static-literal-init-err-contains-arguments.js"
@@ -1377,110 +1243,39 @@ Expect Syntax Error: "language/statements/class/elements/static-string-literal-n
 Expect Syntax Error: "language/statements/class/elements/static-string-literal-name-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-class-body-ctor-duplicate.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-ctor-super-no-heritage.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-function-expression.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-recursive.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-private-field-super-access.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-privatename-in-computed-property-missing.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js"
@@ -1501,34 +1296,6 @@ Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/gra
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-private-meth-super.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-set-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-call-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-call-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-member-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-member-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-call-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-call-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-member-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-member-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-this.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-this.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/super-private-access-invalid.js"
 Expect Syntax Error: "language/statements/class/elements/ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/ternary-init-err-contains-super.js"
@@ -1771,10 +1538,6 @@ Expect Syntax Error: "language/statements/function/dstr/dflt-ary-ptrn-rest-init-
 Expect Syntax Error: "language/statements/function/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/function/early-body-super-call.js"
 Expect Syntax Error: "language/statements/function/early-body-super-prop.js"
-Expect Syntax Error: "language/statements/function/early-errors/invalid-names-call-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/function/early-errors/invalid-names-call-expression-this.js"
-Expect Syntax Error: "language/statements/function/early-errors/invalid-names-member-expression-bad-reference.js"
-Expect Syntax Error: "language/statements/function/early-errors/invalid-names-member-expression-this.js"
 Expect Syntax Error: "language/statements/function/early-params-super-call.js"
 Expect Syntax Error: "language/statements/function/early-params-super-prop.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-body.js"
@@ -7889,6 +7652,534 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  24 │   
     ╰────
 
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·                    ──
+ 41 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·                    ──
+ 41 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·                    ──
+ 41 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m);
+    ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m;
+    ·                   ──
+ 35 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                     ──
+ 41 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                     ──
+ 41 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                     ──
+ 41 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m));
+    ·                     ──
+ 41 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m);
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:35:1]
+ 35 │     
+ 36 │     delete this.#m;
+    ·                 ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m));
+    ·                   ──
+ 43 │   }
+    ╰────
+
   × Invalid Character `'\0'`
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-field-identifier-invalid-ues-error.js:68:1]
  68 │ var C = class {
@@ -7935,12 +8226,60 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  37 │ {
     ╰────
 
+  × Private field '"foo"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:35:1]
+ 35 │ 
+ 36 │ var C = class extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
+    ·                                                                    ────
+ 37 │ {
+    ╰────
+
+  × Private field '"bar"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:35:1]
+ 35 │ 
+ 36 │ var C = class extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
+    ·                                                                                             ────
+ 37 │ {
+    ╰────
+
+  × Private field '"fuz"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:35:1]
+ 35 │ 
+ 36 │ var C = class extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
+    ·                                                                                                                      ────
+ 37 │ {
+    ╰────
+
+  × Private identifier '#"foo"' is not allowed outside class bodies
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-function-expression.js:35:1]
+ 35 │ 
+ 36 │ var C = class extends function() { x = this.#foo; }
+    ·                                             ────
+ 37 │ {
+    ╰────
+
   × Expect token
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-obj-literal.js:35:1]
  35 │ 
  36 │ var C = class extends (o) => {x: o.#foo}
     ·                           ─┬
     ·                            ╰── Expect `{` here, but found `=>`
+ 37 │ {
+    ╰────
+
+  × Private field '"foo"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-recursive.js:35:1]
+ 35 │ 
+ 36 │ var C = class extends class extends class { x = this.#foo; } {}
+    ·                                                      ────
+ 37 │ {
+    ╰────
+
+  × Private field '"foo"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage.js:35:1]
+ 35 │ 
+ 36 │ var C = class extends class { x = this.#foo; }
+    ·                                        ────
  37 │ {
     ╰────
 
@@ -8151,6 +8490,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·          ▲
     ·          ╰── Invalid Character `‌`
  64 │ 
+    ╰────
+
+  × Private field '"f"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-in-computed-property-missing.js:50:1]
+ 50 │ var C = class {
+ 51 │   [this.#f] = 'Test262'
+    ·         ──
+ 52 │ };
     ╰────
 
   × Invalid Character `' '`
@@ -8566,6 +8913,230 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·              ────┬────
     ·                  ╰── Classes may not have a static property named prototype
  25 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-bad-reference.js:50:1]
+ 50 │ var C = class {
+ 51 │   f = (() => {})().#x
+    ·                    ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-this.js:50:1]
+ 50 │ var C = class {
+ 51 │   f = (() => this)().#x
+    ·                      ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-bad-reference.js:50:1]
+ 50 │ var C = class {
+ 51 │   f = function() { (() => {})().#x }
+    ·                                 ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-this.js:50:1]
+ 50 │ var C = class {
+ 51 │   f = function() { (() => this)().#x }
+    ·                                   ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-bad-reference.js:50:1]
+ 50 │ var C = class {
+ 51 │   f = function() { something.#x }
+    ·                              ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-this.js:50:1]
+ 50 │ var C = class {
+ 51 │   f = function() { this.#x }
+    ·                         ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-call-expression-bad-reference.js:54:1]
+ 54 │ var C = class extends Parent {
+ 55 │   f = (() => {})().#x
+    ·                    ──
+ 56 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-call-expression-this.js:54:1]
+ 54 │ var C = class extends Parent {
+ 55 │   f = (() => this)().#x
+    ·                      ──
+ 56 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-member-expression-bad-reference.js:54:1]
+ 54 │ var C = class extends Parent {
+ 55 │   f = something.#x
+    ·                 ──
+ 56 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-member-expression-this.js:54:1]
+ 54 │ var C = class extends Parent {
+ 55 │   f = this.#x
+    ·            ──
+ 56 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-bad-reference.js:50:1]
+ 50 │ var C = class {
+ 51 │   f = something.#x
+    ·                 ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-this.js:50:1]
+ 50 │ var C = class {
+ 51 │   f = this.#x
+    ·            ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-call-expression-bad-reference.js:50:1]
+ 50 │ var C = class {
+ 51 │   m() { (() => {})().#x }
+    ·                      ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-call-expression-this.js:50:1]
+ 50 │ var C = class {
+ 51 │   m() { (() => this)().#x }
+    ·                        ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-bad-reference.js:51:1]
+ 51 │   m() {
+ 52 │     function fn() { (() => {})().#x }
+    ·                                  ──
+ 53 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-this.js:51:1]
+ 51 │   m() {
+ 52 │     function fn() { (() => this)().#x }
+    ·                                    ──
+ 53 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-bad-reference.js:51:1]
+ 51 │   m() {
+ 52 │     function fn() { something.#x }
+    ·                               ──
+ 53 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-this.js:51:1]
+ 51 │   m() {
+ 52 │     function fn() { this.#x }
+    ·                          ──
+ 53 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-bad-reference.js:55:1]
+ 55 │   m() {
+ 56 │     (() => {})().#x
+    ·                  ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-this.js:55:1]
+ 55 │   m() {
+ 56 │     (() => this)().#x
+    ·                    ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-bad-reference.js:55:1]
+ 55 │   m() {
+ 56 │     something.#x
+    ·               ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-this.js:55:1]
+ 55 │   m() {
+ 56 │     this.#x
+    ·          ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-member-expression-bad-reference.js:50:1]
+ 50 │ var C = class {
+ 51 │   m() { something.#x }
+    ·                   ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-member-expression-this.js:50:1]
+ 50 │ var C = class {
+ 51 │   m() { this.#x }
+    ·              ──
+ 52 │ };
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-bad-reference.js:55:1]
+ 55 │ 
+ 56 │     this.#x;
+    ·          ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-this.js:55:1]
+ 55 │ 
+ 56 │     this.#x;
+    ·          ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-bad-reference.js:55:1]
+ 55 │ 
+ 56 │     this.#x;
+    ·          ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-this.js:55:1]
+ 55 │ 
+ 56 │     this.#x;
+    ·          ──
+ 57 │   }
     ╰────
 
   × Invalid Character `'#'`
@@ -9729,6 +10300,34 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  54 │   
     ╰────
 
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/expressions/function/early-errors/invalid-names-call-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ var fn = function() { (() => {})().#x };
+    ·                                    ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/expressions/function/early-errors/invalid-names-call-expression-this.js:39:1]
+ 39 │ 
+ 40 │ var fn = function() { (() => this)().#x };
+    ·                                      ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/expressions/function/early-errors/invalid-names-member-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ var fn = function() { something.#x };
+    ·                                 ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/expressions/function/early-errors/invalid-names-member-expression-this.js:39:1]
+ 39 │ 
+ 40 │ var fn = function() { this.#x };
+    ·                            ──
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/function/rest-params-trailing-comma-early-error.js:54:1]
  54 │ 
@@ -10001,6 +10600,21 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·     ──────┬─────
     ·           ╰── Cannot assign to this expression
  30 │   }
+    ╰────
+
+  × Private field '"b"' must be declared in an enclosing class
+    ╭─[language/expressions/in/private-field-invalid-identifier-complex.js:28:1]
+ 28 │   constructor() {
+ 29 │     #b in {};
+    ·     ──
+ 30 │   }
+    ╰────
+
+  × Private identifier '#"name"' is not allowed outside class bodies
+    ╭─[language/expressions/in/private-field-invalid-identifier-simple.js:24:1]
+ 24 │ 
+ 25 │ #name in {};
+    · ─────
     ╰────
 
   × Empty parenthesized expression
@@ -11199,6 +11813,34 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  19 │ 
  20 │ var super = 1;
     ·     ─────
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/global-code/invalid-private-names-call-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ (() => {})().#x
+    ·              ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/global-code/invalid-private-names-call-expression-this.js:39:1]
+ 39 │ 
+ 40 │ (() => this)().#x
+    ·                ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/global-code/invalid-private-names-member-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ something.#x
+    ·           ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/global-code/invalid-private-names-member-expression-this.js:39:1]
+ 39 │ 
+ 40 │ this.#x
+    ·      ──
     ╰────
 
   × Unexpected token
@@ -13512,6 +14154,34 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  22 │ 
     ╰────
 
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/module-code/invalid-private-names-call-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ (() => {})().#x
+    ·              ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/module-code/invalid-private-names-call-expression-this.js:39:1]
+ 39 │ 
+ 40 │ (() => this)().#x
+    ·                ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/module-code/invalid-private-names-member-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ something.#x
+    ·           ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/module-code/invalid-private-names-member-expression-this.js:39:1]
+ 39 │ 
+ 40 │ this.#x
+    ·      ──
+    ╰────
+
   × Unexpected token
     ╭─[language/module-code/parse-err-export-dflt-const.js:14:1]
  14 │ 
@@ -13618,6 +14288,74 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  21 │ 1++;
     · ┬
     · ╰── Cannot assign to this expression
+    ╰────
+
+  × Private identifier '#"f"' is not allowed outside class bodies
+    ╭─[language/module-code/private-identifiers-not-empty.js:17:1]
+ 17 │ var x = {};
+ 18 │ x.#f = 'Test262';
+    ·   ──
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/module-code/privatename-not-valid-earlyerr-module-1.js:20:1]
+ 20 │   constructor() {
+ 21 │     this.#x;
+    ·          ──
+ 22 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/module-code/privatename-not-valid-earlyerr-module-2.js:20:1]
+ 20 │   f() {
+ 21 │     this.#x;
+    ·          ──
+ 22 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/module-code/privatename-not-valid-earlyerr-module-3.js:19:1]
+ 19 │ class C {
+ 20 │   y = this.#x;
+    ·            ──
+ 21 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/module-code/privatename-not-valid-earlyerr-module-4.js:21:1]
+ 21 │   f() {
+ 22 │     this.#x;
+    ·          ──
+ 23 │     class D extends C {
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/module-code/privatename-not-valid-earlyerr-module-5.js:22:1]
+ 22 │ 
+ 23 │ new C().#x;
+    ·         ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/module-code/privatename-not-valid-earlyerr-module-6.js:20:1]
+ 20 │ 
+ 21 │ new C().#x;
+    ·         ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/module-code/privatename-not-valid-earlyerr-module-7.js:20:1]
+ 20 │ 
+ 21 │ obj.#x;
+    ·     ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/module-code/privatename-not-valid-earlyerr-module-8.js:19:1]
+ 19 │ function f() {
+ 20 │   this.#x;
+    ·        ──
+ 21 │ }
     ╰────
 
   × Invalid assignment
@@ -14274,6 +15012,34 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·     ┬
     ·     ╰── Expect `,` here, but found `;`
  20 │ //
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/block/early-errors/invalid-names-call-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ { (() => {})().#x }
+    ·                ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/block/early-errors/invalid-names-call-expression-this.js:39:1]
+ 39 │ 
+ 40 │ { (() => this)().#x }
+    ·                  ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/block/early-errors/invalid-names-member-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ { something.#x }
+    ·             ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/block/early-errors/invalid-names-member-expression-this.js:39:1]
+ 39 │ 
+ 40 │ { this.#x }
+    ·        ──
     ╰────
 
   × Keywords cannot contain escape characters
@@ -15721,6 +16487,67 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/privatename-not-valid-earlyerr-script-1.js:21:1]
+ 21 │   constructor() {
+ 22 │     this.#x;
+    ·          ──
+ 23 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/privatename-not-valid-earlyerr-script-2.js:21:1]
+ 21 │   f() {
+ 22 │     this.#x;
+    ·          ──
+ 23 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/privatename-not-valid-earlyerr-script-3.js:20:1]
+ 20 │ class C {
+ 21 │   y = this.#x;
+    ·            ──
+ 22 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/privatename-not-valid-earlyerr-script-4.js:21:1]
+ 21 │   f() {
+ 22 │     this.#x;
+    ·          ──
+ 23 │     class D extends C {
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/class/elements/privatename-not-valid-earlyerr-script-5.js:23:1]
+ 23 │ 
+ 24 │ new C().#x;
+    ·         ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/class/elements/privatename-not-valid-earlyerr-script-6.js:21:1]
+ 21 │ 
+ 22 │ new C().#x;
+    ·         ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/class/elements/privatename-not-valid-earlyerr-script-7.js:21:1]
+ 21 │ 
+ 22 │ obj.#x;
+    ·     ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/class/elements/privatename-not-valid-earlyerr-script-8.js:20:1]
+ 20 │ function f() {
+ 21 │   this.#x;
+    ·        ──
+ 22 │ }
+    ╰────
+
   × Empty parenthesized expression
     ╭─[language/statements/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
  22 │ 
@@ -15746,6 +16573,534 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                          ─┬
     ·                           ╰── Expect `{` here, but found `=>`
  24 │   
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·                    ──
+ 38 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·                    ──
+ 38 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·                    ──
+ 38 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m);
+    ·                    ──
+ 38 │   
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m;
+    ·                   ──
+ 35 │   
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                     ──
+ 38 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                     ──
+ 38 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                     ──
+ 38 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m));
+    ·                     ──
+ 38 │ 
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m);
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·                ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:35:1]
+ 35 │     
+ 36 │     delete this.#m;
+    ·                 ──
+ 37 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private field '"m"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m));
+    ·                   ──
+ 43 │   }
     ╰────
 
   × Invalid Character `'\0'`
@@ -15794,12 +17149,60 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  37 │ {
     ╰────
 
+  × Private field '"foo"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:35:1]
+ 35 │ 
+ 36 │ class C extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
+    ·                                                              ────
+ 37 │ {
+    ╰────
+
+  × Private field '"bar"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:35:1]
+ 35 │ 
+ 36 │ class C extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
+    ·                                                                                       ────
+ 37 │ {
+    ╰────
+
+  × Private field '"fuz"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:35:1]
+ 35 │ 
+ 36 │ class C extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
+    ·                                                                                                                ────
+ 37 │ {
+    ╰────
+
+  × Private identifier '#"foo"' is not allowed outside class bodies
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-function-expression.js:35:1]
+ 35 │ 
+ 36 │ class C extends function() { x = this.#foo; }
+    ·                                       ────
+ 37 │ {
+    ╰────
+
   × Expect token
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-obj-literal.js:35:1]
  35 │ 
  36 │ class C extends (o) => {x: o.#foo}
     ·                     ─┬
     ·                      ╰── Expect `{` here, but found `=>`
+ 37 │ {
+    ╰────
+
+  × Private field '"foo"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-recursive.js:35:1]
+ 35 │ 
+ 36 │ class C extends class extends class { x = this.#foo; } {}
+    ·                                                ────
+ 37 │ {
+    ╰────
+
+  × Private field '"foo"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage.js:35:1]
+ 35 │ 
+ 36 │ class C extends class { x = this.#foo; }
+    ·                                  ────
  37 │ {
     ╰────
 
@@ -16010,6 +17413,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·          ▲
     ·          ╰── Invalid Character `‌`
  64 │ 
+    ╰────
+
+  × Private field '"f"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-in-computed-property-missing.js:50:1]
+ 50 │ class C {
+ 51 │   [this.#f] = 'Test262'
+    ·         ──
+ 52 │ }
     ╰────
 
   × Invalid Character `' '`
@@ -16425,6 +17836,230 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·              ────┬────
     ·                  ╰── Classes may not have a static property named prototype
  25 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-bad-reference.js:40:1]
+ 40 │ class C {
+ 41 │   f = (() => {})().#x
+    ·                    ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-this.js:40:1]
+ 40 │ class C {
+ 41 │   f = (() => this)().#x
+    ·                      ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-bad-reference.js:40:1]
+ 40 │ class C {
+ 41 │   f = function() { (() => {})().#x }
+    ·                                 ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-this.js:40:1]
+ 40 │ class C {
+ 41 │   f = function() { (() => this)().#x }
+    ·                                   ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-bad-reference.js:40:1]
+ 40 │ class C {
+ 41 │   f = function() { something.#x }
+    ·                              ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-this.js:40:1]
+ 40 │ class C {
+ 41 │   f = function() { this.#x }
+    ·                         ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-bad-reference.js:40:1]
+ 40 │ class C {
+ 41 │   f = something.#x
+    ·                 ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-this.js:40:1]
+ 40 │ class C {
+ 41 │   f = this.#x
+    ·            ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-call-expression-bad-reference.js:55:1]
+ 55 │ class C extends Parent {
+ 56 │   f = (() => {})().#x
+    ·                    ──
+ 57 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-call-expression-this.js:55:1]
+ 55 │ class C extends Parent {
+ 56 │   f = (() => this)().#x
+    ·                      ──
+ 57 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-member-expression-bad-reference.js:55:1]
+ 55 │ class C extends Parent {
+ 56 │   f = something.#x
+    ·                 ──
+ 57 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-member-expression-this.js:55:1]
+ 55 │ class C extends Parent {
+ 56 │   f = this.#x
+    ·            ──
+ 57 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-call-expression-bad-reference.js:40:1]
+ 40 │ class C {
+ 41 │   m() { (() => {})().#x }
+    ·                      ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-call-expression-this.js:40:1]
+ 40 │ class C {
+ 41 │   m() { (() => this)().#x }
+    ·                        ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-bad-reference.js:41:1]
+ 41 │   m() {
+ 42 │     function fn() { (() => {})().#x }
+    ·                                  ──
+ 43 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-this.js:41:1]
+ 41 │   m() {
+ 42 │     function fn() { (() => this)().#x }
+    ·                                    ──
+ 43 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-bad-reference.js:41:1]
+ 41 │   m() {
+ 42 │     function fn() { something.#x }
+    ·                               ──
+ 43 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-this.js:41:1]
+ 41 │   m() {
+ 42 │     function fn() { this.#x }
+    ·                          ──
+ 43 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-bad-reference.js:55:1]
+ 55 │   m() {
+ 56 │     (() => {})().#x
+    ·                  ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-this.js:55:1]
+ 55 │   m() {
+ 56 │     (() => this)().#x
+    ·                    ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-bad-reference.js:55:1]
+ 55 │   m() {
+ 56 │     something.#x
+    ·               ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-this.js:55:1]
+ 55 │   m() {
+ 56 │     this.#x
+    ·          ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-member-expression-bad-reference.js:40:1]
+ 40 │ class C {
+ 41 │   m() { something.#x }
+    ·                   ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-member-expression-this.js:40:1]
+ 40 │ class C {
+ 41 │   m() { this.#x }
+    ·              ──
+ 42 │ }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-bad-reference.js:55:1]
+ 55 │ 
+ 56 │     this.#x;
+    ·          ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-this.js:55:1]
+ 55 │ 
+ 56 │     this.#x;
+    ·          ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-bad-reference.js:55:1]
+ 55 │ 
+ 56 │     this.#x;
+    ·          ──
+ 57 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-this.js:55:1]
+ 55 │ 
+ 56 │     this.#x;
+    ·          ──
+ 57 │   }
     ╰────
 
   × Invalid Character `'#'`
@@ -18274,6 +19909,34 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·             ────┬───
     ·                 ╰── Rest element must be last element
  54 │   
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/function/early-errors/invalid-names-call-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ function fn() { (() => {})().#x }
+    ·                              ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/function/early-errors/invalid-names-call-expression-this.js:39:1]
+ 39 │ 
+ 40 │ function fn() { (() => this)().#x }
+    ·                                ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/function/early-errors/invalid-names-member-expression-bad-reference.js:39:1]
+ 39 │ 
+ 40 │ function fn() { something.#x }
+    ·                           ──
+    ╰────
+
+  × Private identifier '#"x"' is not allowed outside class bodies
+    ╭─[language/statements/function/early-errors/invalid-names-member-expression-this.js:39:1]
+ 39 │ 
+ 40 │ function fn() { this.#x }
+    ·                      ──
     ╰────
 
   × Expect token

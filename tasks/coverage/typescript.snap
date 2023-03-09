@@ -1,6 +1,6 @@
 TypeScript Summary:
-AST Parsed     : 4329/4869 (88.91%)
-Positive Passed: 4329/4869 (88.91%)
+AST Parsed     : 4306/4869 (88.44%)
+Positive Passed: 4306/4869 (88.44%)
 Expect to Parse: "async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts"
 
   × Automatic Semicolon Insertion
@@ -343,6 +343,23 @@ Expect to Parse: "classes/classDeclarations/classWithPredefinedTypesAsNames2.ts"
    ·       ──┬─
    ·         ╰── Expect `{` here, but found `void`
    ╰────
+Expect to Parse: "classes/classStaticBlock/classStaticBlock16.ts"
+
+  × Private field '"y"' must be declared in an enclosing class
+    ╭─[classes/classStaticBlock/classStaticBlock16.ts:12:1]
+ 12 │     getX = (obj: C) => obj.#x;
+ 13 │     getY = (obj: D) => obj.#y;
+    ·                            ──
+ 14 │   }
+    ╰────
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[classes/classStaticBlock/classStaticBlock16.ts:22:1]
+ 22 │     // getY has privileged access to y
+ 23 │     getX = (obj: C) => obj.#x;
+    ·                            ──
+ 24 │     getY = (obj: D) => obj.#y;
+    ╰────
 Expect to Parse: "classes/classStaticBlock/classStaticBlock20.ts"
 
   × Expect token
@@ -412,6 +429,74 @@ Expect to Parse: "classes/members/accessibility/privateInstanceMemberAccessibili
  13 │ }
     ╰────
   help: Try insert a semicolon here
+Expect to Parse: "classes/members/privateNames/privateNameAccessorsAccess.ts"
+
+  × Private identifier '#"prop"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameAccessorsAccess.ts:15:1]
+ 15 │ }
+ 16 │ new A2().#prop; // Error
+    ·          ─────
+ 17 │ 
+    ╰────
+
+  × Private identifier '#"prop"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameAccessorsAccess.ts:18:1]
+ 18 │ function  foo (){
+ 19 │     new A2().#prop; // Error
+    ·              ─────
+ 20 │ }
+    ╰────
+
+  × Private field '"prop"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameAccessorsAccess.ts:23:1]
+ 23 │     m() {
+ 24 │         new A2().#prop;
+    ·                  ─────
+ 25 │     }
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameAccessorssDerivedClasses.ts"
+
+  × Private field '"prop"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameAccessorssDerivedClasses.ts:10:1]
+ 10 │     static method(x: Derived) {
+ 11 │         console.log(x.#prop);
+    ·                       ─────
+ 12 │     }
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameAndAny.ts"
+
+  × Private field '"bar"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameAndAny.ts:11:1]
+ 11 │         thing.#baz;
+ 12 │         thing.#bar; // Error
+    ·               ────
+ 13 │         thing.#foo();
+    ╰────
+
+  × Private field '"bar"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameAndAny.ts:18:1]
+ 18 │         thing.#baz;
+ 19 │         thing.#bar;
+    ·               ────
+ 20 │         thing.#foo();
+    ╰────
+
+  × Private field '"bar"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameAndAny.ts:25:1]
+ 25 │         thing.#baz;
+ 26 │         thing.#bar;
+    ·               ────
+ 27 │         thing.#foo();
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameAndIndexSignature.ts"
+
+  × Private field '"f"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameAndIndexSignature.ts:8:1]
+  8 │     constructor(message: string) {
+  9 │         this.#f = 3           // Error (index signatures do not implicitly declare private names)
+    ·              ──
+ 10 │         this["#foo"] = 3;     // Okay (type has index signature and "#foo" does not collide with private identifier #foo)
+    ╰────
 Expect to Parse: "classes/members/privateNames/privateNameAndPropertySignature.ts"
 
   × Unexpected token
@@ -421,6 +506,39 @@ Expect to Parse: "classes/members/privateNames/privateNameAndPropertySignature.t
    ·     ────
  3 │     #bar(): string;
    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameBadAssignment.ts"
+
+  × Private identifier '#"nope"' is not allowed outside class bodies
+   ╭─[classes/members/privateNames/privateNameBadAssignment.ts:2:1]
+ 2 │ 
+ 3 │ exports.#nope = 1;           // Error (outside class body)
+   ·         ─────
+ 4 │ function A() { }
+   ╰────
+
+  × Private identifier '#"no"' is not allowed outside class bodies
+   ╭─[classes/members/privateNames/privateNameBadAssignment.ts:4:1]
+ 4 │ function A() { }
+ 5 │ A.prototype.#no = 2;         // Error (outside class body)
+   ·             ───
+ 6 │ 
+   ╰────
+
+  × Private identifier '#"foo"' is not allowed outside class bodies
+   ╭─[classes/members/privateNames/privateNameBadAssignment.ts:7:1]
+ 7 │ class B {}
+ 8 │ B.#foo = 3;                  // Error (outside class body)
+   ·   ────
+ 9 │ 
+   ╰────
+
+  × Private field '"foo"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameBadAssignment.ts:13:1]
+ 13 │         exports.#bar = 6;    // Error
+ 14 │         this.#foo = 3;       // Error (undeclared)
+    ·              ────
+ 15 │     }
+    ╰────
 Expect to Parse: "classes/members/privateNames/privateNameBadDeclaration.ts"
 
   × Unexpected token
@@ -1170,6 +1288,15 @@ Expect to Parse: "classes/members/privateNames/privateNameEnum.ts"
    ·     ──
  4 │ }
    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameFieldDerivedClasses.ts"
+
+  × Private field '"prop"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameFieldDerivedClasses.ts:10:1]
+ 10 │     static method(x: Derived) {
+ 11 │         console.log(x.#prop);
+    ·                       ─────
+ 12 │     }
+    ╰────
 Expect to Parse: "classes/members/privateNames/privateNameHashCharName.ts"
 
   × Invalid Character `'\r'`
@@ -1180,6 +1307,15 @@ Expect to Parse: "classes/members/privateNames/privateNameHashCharName.ts"
    ·  ╰── Invalid Character ``
  4 │ 
    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameImplicitDeclaration.ts"
+
+  × Private field '"x"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameImplicitDeclaration.ts:8:1]
+  8 │         /** @type {string} */
+  9 │         this.#x;
+    ·              ──
+ 10 │     }
+    ╰────
 Expect to Parse: "classes/members/privateNames/privateNameInInExpression.ts"
 
   × Expect token
@@ -1227,6 +1363,39 @@ Expect to Parse: "classes/members/privateNames/privateNameInObjectLiteral-3.ts"
    ·         ────
  3 │         return ""
    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameJsBadAssignment.ts"
+
+  × Private identifier '#"nope"' is not allowed outside class bodies
+   ╭─[classes/members/privateNames/privateNameJsBadAssignment.ts:6:1]
+ 6 │ 
+ 7 │ exports.#nope = 1;           // Error (outside class body)
+   ·         ─────
+ 8 │ function A() { }
+   ╰────
+
+  × Private identifier '#"no"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameJsBadAssignment.ts:8:1]
+  8 │ function A() { }
+  9 │ A.prototype.#no = 2;         // Error (outside class body)
+    ·             ───
+ 10 │ 
+    ╰────
+
+  × Private identifier '#"foo"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameJsBadAssignment.ts:11:1]
+ 11 │ class B {}
+ 12 │ B.#foo = 3;                  // Error (outside class body)
+    ·   ────
+ 13 │ 
+    ╰────
+
+  × Private field '"foo"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameJsBadAssignment.ts:16:1]
+ 16 │     constructor () {
+ 17 │         this.#foo = 3;       // Error (undeclared)
+    ·              ────
+ 18 │     }
+    ╰────
 Expect to Parse: "classes/members/privateNames/privateNameJsBadDeclaration.ts"
 
   × Unexpected token
@@ -1236,6 +1405,74 @@ Expect to Parse: "classes/members/privateNames/privateNameJsBadDeclaration.ts"
    ·   ──
  9 │   #m() {},       // Error
    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameMethodAccess.ts"
+
+  × Private identifier '#"method"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameMethodAccess.ts:13:1]
+ 13 │ }
+ 14 │ new A2().#method(); // Error
+    ·          ───────
+ 15 │ 
+    ╰────
+
+  × Private identifier '#"method"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameMethodAccess.ts:16:1]
+ 16 │ function  foo (){
+ 17 │     new A2().#method(); // Error
+    ·              ───────
+ 18 │ }
+    ╰────
+
+  × Private field '"method"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameMethodAccess.ts:21:1]
+ 21 │     m() {
+ 22 │         new A2().#method();
+    ·                  ───────
+ 23 │     }
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameMethodClassExpression.ts"
+
+  × Private identifier '#"method"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameMethodClassExpression.ts:10:1]
+ 10 │ console.log(C.getInstance().getField());
+ 11 │ C.getInstance().#method; // Error
+    ·                 ───────
+ 12 │ C.getInstance().#field; // Error
+    ╰────
+
+  × Private identifier '#"field"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameMethodClassExpression.ts:11:1]
+ 11 │ C.getInstance().#method; // Error
+ 12 │ C.getInstance().#field; // Error
+    ·                 ──────
+ 13 │ 
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameMethodsDerivedClasses.ts"
+
+  × Private field '"prop"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameMethodsDerivedClasses.ts:10:1]
+ 10 │     static method(x: Derived) {
+ 11 │         console.log(x.#prop());
+    ·                       ─────
+ 12 │     }
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameNestedMethodAccess.ts"
+
+  × Private field '"unknown"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameNestedMethodAccess.ts:20:1]
+ 20 │                 x.#bar;
+ 21 │                 x.#unknown; // Error
+    ·                   ────────
+ 22 │             }
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameNotAccessibleOutsideDefiningClass.ts"
+
+  × Private identifier '#"foo"' is not allowed outside class bodies
+   ╭─[classes/members/privateNames/privateNameNotAccessibleOutsideDefiningClass.ts:7:1]
+ 7 │ 
+ 8 │ new A().#foo = 4;               // Error
+   ·         ────
+   ╰────
 Expect to Parse: "classes/members/privateNames/privateNameNotAllowedOutsideClass.ts"
 
   × Unexpected token
@@ -1244,6 +1481,57 @@ Expect to Parse: "classes/members/privateNames/privateNameNotAllowedOutsideClass
  4 │ const #foo = 3;
    ·       ────
    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameStaticAccessorsAccess.ts"
+
+  × Private identifier '#"prop"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameStaticAccessorsAccess.ts:16:1]
+ 16 │ 
+ 17 │ A2.#prop; // Error
+    ·    ─────
+ 18 │ 
+    ╰────
+
+  × Private identifier '#"prop"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameStaticAccessorsAccess.ts:19:1]
+ 19 │ function  foo (){
+ 20 │     A2.#prop; // Error
+    ·        ─────
+ 21 │ }
+    ╰────
+
+  × Private field '"prop"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameStaticAccessorsAccess.ts:24:1]
+ 24 │     m() {
+ 25 │         A2.#prop;
+    ·            ─────
+ 26 │     }
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameStaticAccessorssDerivedClasses.ts"
+
+  × Private field '"prop"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameStaticAccessorssDerivedClasses.ts:10:1]
+ 10 │     static method(x: typeof Derived) {
+ 11 │         console.log(x.#prop);
+    ·                       ─────
+ 12 │     }
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameStaticFieldDerivedClasses.ts"
+
+  × Private field '"derivedProp"' must be declared in an enclosing class
+   ╭─[classes/members/privateNames/privateNameStaticFieldDerivedClasses.ts:5:1]
+ 5 │     static method(x: Derived) {
+ 6 │         Derived.#derivedProp // error
+   ·                 ────────────
+ 7 │         Base.#prop  = 10;
+   ╰────
+
+  × Private field '"prop"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameStaticFieldDerivedClasses.ts:13:1]
+ 13 │         Derived.#derivedProp
+ 14 │         Base.#prop  = 10; // error
+    ·              ─────
+ 15 │     }
+    ╰────
 Expect to Parse: "classes/members/privateNames/privateNameStaticMethodAsync.ts"
 
   × Expect token
@@ -1254,6 +1542,41 @@ Expect to Parse: "classes/members/privateNames/privateNameStaticMethodAsync.ts"
     ·                  ╰── Expect `(` here, but found `*`
  14 │ }
     ╰────
+Expect to Parse: "classes/members/privateNames/privateNameStaticMethodClassExpression.ts"
+
+  × Private identifier '#"method"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameStaticMethodClassExpression.ts:10:1]
+ 10 │ console.log(C.getClass().getField());
+ 11 │ C.getClass().#method; // Error
+    ·              ───────
+ 12 │ C.getClass().#field; // Error
+    ╰────
+
+  × Private identifier '#"field"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNameStaticMethodClassExpression.ts:11:1]
+ 11 │ C.getClass().#method; // Error
+ 12 │ C.getClass().#field; // Error
+    ·              ──────
+ 13 │ 
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNameUncheckedJsOptionalChain.ts"
+
+  × Private field '"foo"' must be declared in an enclosing class
+    ╭─[classes/members/privateNames/privateNameUncheckedJsOptionalChain.ts:9:1]
+  9 │     constructor () {
+ 10 │         this?.#foo;
+    ·               ────
+ 11 │         this?.#bar;
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNamesAndGenericClasses-2.ts"
+
+  × Private identifier '#"foo"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNamesAndGenericClasses-2.ts:26:1]
+ 26 │ const x: number = a.baz                   // OK
+ 27 │ a.#foo;                                   // Error
+    ·   ────
+ 28 │ a = b;                                    // Error
+    ╰────
 Expect to Parse: "classes/members/privateNames/privateNamesAndIndexedAccess.ts"
 
   × Unexpected token
@@ -1262,6 +1585,31 @@ Expect to Parse: "classes/members/privateNames/privateNamesAndIndexedAccess.ts"
  11 │         const badForNow: C[#bar] = 3;   // Error
     ·                            ────
  12 │         // will never use this syntax, already taken:
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNamesInGenericClasses.ts"
+
+  × Private identifier '#"foo"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNamesInGenericClasses.ts:25:1]
+ 25 │ declare let b: C<string>;
+ 26 │ a.#foo;                                   // Error
+    ·   ────
+ 27 │ a.#method;                                // Error
+    ╰────
+
+  × Private identifier '#"method"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNamesInGenericClasses.ts:26:1]
+ 26 │ a.#foo;                                   // Error
+ 27 │ a.#method;                                // Error
+    ·   ───────
+ 28 │ a.#prop;                                  // Error
+    ╰────
+
+  × Private identifier '#"prop"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNamesInGenericClasses.ts:27:1]
+ 27 │ a.#method;                                // Error
+ 28 │ a.#prop;                                  // Error
+    ·   ─────
+ 29 │ a = b;                                    // Error
     ╰────
 Expect to Parse: "classes/members/privateNames/privateNamesIncompatibleModifiers.ts"
 
@@ -1272,6 +1620,15 @@ Expect to Parse: "classes/members/privateNames/privateNamesIncompatibleModifiers
     ·               ─────┬────
     ·                    ╰── Expect `(` here, but found `#identifier`
  31 │     async set #asyncProp(value: number) { }      // Error
+    ╰────
+Expect to Parse: "classes/members/privateNames/privateNamesInterfaceExtendingClass.ts"
+
+  × Private identifier '#"prop"' is not allowed outside class bodies
+    ╭─[classes/members/privateNames/privateNamesInterfaceExtendingClass.ts:11:1]
+ 11 │ function func(x: I) {
+ 12 │     x.#prop = 123;
+    ·       ─────
+ 13 │ }
     ╰────
 Expect to Parse: "classes/members/privateNames/privateNamesNotAllowedAsParameters.ts"
 
@@ -5828,6 +6185,14 @@ Expect to Parse: "salsa/plainJSGrammarErrors.ts"
     ·     ╰── Expect `in` here, but found `Identifier`
  10 │         #p
     ╰────
+Expect to Parse: "salsa/privateIdentifierExpando.ts"
+
+  × Private identifier '#"bar"' is not allowed outside class bodies
+   ╭─[salsa/privateIdentifierExpando.ts:7:1]
+ 7 │ const x = {};
+ 8 │ x.#bar.baz = 20;
+   ·   ────
+   ╰────
 Expect to Parse: "scanner/ecmascript3/scannerES3NumericLiteral3.ts"
 
   × Automatic Semicolon Insertion

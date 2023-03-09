@@ -922,6 +922,7 @@ dependencies = [
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
+ "indextree",
  "insta",
  "lazy_static",
  "miette",
