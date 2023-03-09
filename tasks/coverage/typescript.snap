@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2310/2338 (98.80%)
 Positive Passed: 2310/2338 (98.80%)
-Negative Passed: 560/2531 (22.13%)
+Negative Passed: 565/2531 (22.32%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -784,7 +784,6 @@ Expect Syntax Error: "expressions/functionCalls/typeArgumentInferenceConstructSi
 Expect Syntax Error: "expressions/functionCalls/typeArgumentInferenceErrors.ts"
 Expect Syntax Error: "expressions/functionCalls/typeArgumentInferenceWithConstraints.ts"
 Expect Syntax Error: "expressions/functionCalls/typeArgumentInferenceWithObjectLiteral.ts"
-Expect Syntax Error: "expressions/functions/arrowFunctionContexts.ts"
 Expect Syntax Error: "expressions/functions/contextuallyTypedIifeStrict.ts"
 Expect Syntax Error: "expressions/identifiers/scopeResolutionIdentifiers.ts"
 Expect Syntax Error: "expressions/literals/literals.ts"
@@ -1380,15 +1379,12 @@ Expect Syntax Error: "parser/ecmascript5/Statements/parserTryStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserVariableStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserVariableStatement2.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserWhileStatement1.d.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserWithStatement1.d.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserWithStatement2.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/octalLiteralInStrictModeES3.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode1.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode10.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode11.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode12.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode13.ts"
-Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode14.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode15-negative.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode15.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode16.ts"
@@ -1587,7 +1583,6 @@ Expect Syntax Error: "statements/forStatements/forStatementsMultipleInvalidDecl.
 Expect Syntax Error: "statements/returnStatements/invalidReturnStatements.ts"
 Expect Syntax Error: "statements/switchStatements/switchStatements.ts"
 Expect Syntax Error: "statements/tryStatements/catchClauseWithTypeAnnotation.ts"
-Expect Syntax Error: "statements/withStatements/withStatements.ts"
 Expect Syntax Error: "types/any/anyAsConstructor.ts"
 Expect Syntax Error: "types/any/anyAsGenericFunctionCall.ts"
 Expect Syntax Error: "types/any/assignAnyToEveryType.ts"
@@ -5340,6 +5335,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  18 │ (, BOOLEAN);
     ╰────
 
+  × 'with' statements are not allowed
+   ╭─[expressions/functions/arrowFunctionContexts.ts:2:1]
+ 2 │ // Arrow function used in with statement
+ 3 │ with (window) {
+   · ────
+ 4 │     var p = () => this;
+   ╰────
+
+  × 'with' statements are not allowed
+    ╭─[expressions/functions/arrowFunctionContexts.ts:43:1]
+ 43 │     // Arrow function used in with statement
+ 44 │     with (window) {
+    ·     ────
+ 45 │         var p = () => this;
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[expressions/newOperator/newOperatorErrorCases.ts:26:1]
  26 │ // Construct expression with no parentheses for construct signature with > 0 parameters
@@ -5845,6 +5856,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  38 │ /** @typedef {{ m: string }} M */
     ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × 'with' statements are not allowed
+    ╭─[jsdoc/typedefOnStatements.ts:38:1]
+ 38 │ /** @typedef {{ m: string }} M */
+ 39 │ with (name) {
+    · ────
+ 40 │ }
+    ╰────
 
   × Unexpected token
     ╭─[jsx/checkJsxNamespaceNamesQuestionableForms.tsx:12:1]
@@ -7531,6 +7550,28 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ }
    ╰────
 
+  × 'with' statements are not allowed
+   ╭─[parser/ecmascript5/Statements/parserWithStatement1.d.ts:1:1]
+ 1 │ with (foo) {
+   · ────
+ 2 │ }
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[parser/ecmascript5/Statements/parserWithStatement2.ts:1:1]
+ 1 │ with (1)
+   · ────
+ 2 │   return;
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[parser/ecmascript5/StrictMode/parserStrictMode14.ts:1:1]
+ 1 │ "use strict";
+ 2 │ with (a) {
+   · ────
+ 3 │ }
+   ╰────
+
   × 'super' can only be used with function calls or in property accesses
    ╭─[parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:2:1]
  2 │   M() {
@@ -7831,6 +7872,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  31 │         with (redundant) {
     ╰────
   help: for octal literals use the '0o' prefix instead
+
+  × 'with' statements are not allowed
+    ╭─[salsa/plainJSBinderErrors.ts:30:1]
+ 30 │         const redundant = 010
+ 31 │         with (redundant) {
+    ·         ────
+ 32 │             return toFixed()
+    ╰────
 
   × Jump target cannot cross function boundary.
     ╭─[salsa/plainJSBinderErrors.ts:37:1]
@@ -8486,6 +8535,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │     catch(x) { } // error missing try
    ·     ─────
  3 │ 
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[statements/withStatements/withStatements.ts:1:1]
+ 1 │ var x = 12;
+ 2 │ with (x) {
+   · ────
+ 3 │     name = 'twelve'
    ╰────
 
   × Expect token

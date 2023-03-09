@@ -18,6 +18,7 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::NumberLiteral(lit) => check_number_literal(lit, node, ctx),
             AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
+            AstKind::WithStatement(stmt) => check_with_statement(stmt, node, ctx),
             AstKind::BreakStatement(stmt) => check_break_statement(stmt, node, ctx),
             AstKind::ContinueStatement(stmt) => check_continue_statement(stmt, node, ctx),
             AstKind::LabeledStatement(stmt) => check_labeled_statement(stmt, node, ctx),
@@ -175,6 +176,17 @@ fn check_regexp_literal(lit: &RegExpLiteral, ctx: &LintContext) {
     let flags = lit.regex.flags;
     if flags.contains(RegExpFlags::U | RegExpFlags::V) {
         ctx.diagnostic(RegExpFlagUAndV(lit.span));
+    }
+}
+
+fn check_with_statement<'a>(stmt: &WithStatement, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("'with' statements are not allowed")]
+    #[diagnostic()]
+    struct WithStatement(#[label] Span);
+
+    if ctx.strict_mode(node) || ctx.source_type().is_typescript() {
+        ctx.diagnostic(WithStatement(Span::new(stmt.span.start, stmt.span.start + 4)));
     }
 }
 

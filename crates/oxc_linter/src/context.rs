@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use indextree::{Ancestors, NodeId};
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, SourceType};
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNodes, Scope, ScopeTree, Semantic, SemanticNode};
 
@@ -26,8 +26,19 @@ impl<'a> LintContext<'a> {
         Self { source_text, semantic, diagnostics: RefCell::new(vec![]), fix }
     }
 
+    #[must_use]
+    pub fn semantic(&self) -> &Semantic<'a> {
+        &self.semantic
+    }
+
+    #[must_use]
     pub fn source_text(&self) -> &'a str {
         self.source_text
+    }
+
+    #[must_use]
+    pub fn source_type(&self) -> &SourceType {
+        self.semantic().source_type()
     }
 
     /* Diagnostics */
@@ -50,11 +61,6 @@ impl<'a> LintContext<'a> {
         } else {
             self.diagnostic(diagnostic);
         }
-    }
-
-    #[must_use]
-    pub fn semantic(&self) -> &Semantic<'a> {
-        &self.semantic
     }
 
     /* Nodes */
