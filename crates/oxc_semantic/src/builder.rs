@@ -5,17 +5,21 @@
 use std::rc::Rc;
 
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, visit::Visit, AstKind, SourceType, Trivias};
+use oxc_ast::{ast::*, visit::Visit, AstKind, Atom, GetSpan, SourceType, Span, Trivias};
+use oxc_diagnostics::{Error, Redeclaration};
 
 use crate::{
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
-    scope::ScopeBuilder,
-    symbol::SymbolTable,
+    scope::{ScopeBuilder, ScopeId},
+    symbol::{Reference, ReferenceFlag, SymbolFlags, SymbolId, SymbolTable},
     Semantic,
 };
 
 pub struct SemanticBuilder<'a> {
     source_type: SourceType,
+
+    /// Semantic early errors such as redeclaration errors.
+    errors: Vec<Error>,
 
     // states
     current_node_id: AstNodeId,
@@ -24,8 +28,12 @@ pub struct SemanticBuilder<'a> {
     // builders
     nodes: AstNodes<'a>,
     scope: ScopeBuilder,
-    #[allow(unused)]
     symbols: SymbolTable,
+}
+
+pub struct ScopeBuilderReturn<'a> {
+    pub semantic: Semantic<'a>,
+    pub errors: Vec<Error>,
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -38,6 +46,7 @@ impl<'a> SemanticBuilder<'a> {
         let current_node_id = nodes.new_node(semantic_node).into();
         Self {
             source_type,
+            errors: vec![],
             current_node_id,
             current_node_flags: NodeFlags::empty(),
             nodes,
@@ -46,16 +55,36 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    pub fn consume_errors(&mut self) -> Vec<Error> {
+        std::mem::take(&mut self.errors)
+    }
+
     #[must_use]
-    pub fn build(mut self, program: &'a Program<'a>, trivias: Rc<Trivias>) -> Semantic<'a> {
+    pub fn build(mut self, program: &'a Program<'a>, trivias: Rc<Trivias>) -> ScopeBuilderReturn {
         // AST pass
         self.visit_program(program);
-        Semantic {
+        let semantic = Semantic {
             source_type: self.source_type,
             nodes: self.nodes,
             scopes: self.scope.scopes,
             trivias,
-        }
+        };
+        ScopeBuilderReturn { semantic, errors: self.errors }
+    }
+
+    /// Push a Syntax Error
+    fn error<T: Into<Error>>(&mut self, error: T) {
+        self.errors.push(error.into());
+    }
+
+    /// # Panics
+    /// The parent of `AstKind::Program` is `AstKind::Root`,
+    /// it is logic error if this panics.
+    #[must_use]
+    pub fn parent_kind(&self) -> AstKind<'a> {
+        let parent_id = self.nodes[*self.current_node_id].parent().unwrap();
+        let parent_node = self.nodes[parent_id].get();
+        parent_node.kind()
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
@@ -84,6 +113,42 @@ impl<'a> SemanticBuilder<'a> {
             self.scope.leave();
         }
     }
+
+    /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
+    /// Reports errors for conflicting identifier names.
+    pub fn declare_symbol(
+        &mut self,
+        name: &Atom,
+        span: Span,
+        scope_id: ScopeId,
+        // The SymbolFlags that node has in addition to its declaration type (eg: export, ambient, etc.)
+        includes: SymbolFlags,
+        // The flags which node cannot be declared alongside in a symbol table. Used to report forbidden declarations.
+        excludes: SymbolFlags,
+    ) -> SymbolId {
+        if let Some(symbol_id) = self.check_redeclaration(scope_id, name, span, excludes) {
+            return symbol_id;
+        }
+        let symbol_id = self.symbols.create(name.clone(), span, includes);
+        self.scope.scopes[scope_id].variables.insert(name.clone(), symbol_id);
+        symbol_id
+    }
+
+    pub fn check_redeclaration(
+        &mut self,
+        scope_id: ScopeId,
+        name: &Atom,
+        span: Span,
+        excludes: SymbolFlags,
+    ) -> Option<SymbolId> {
+        self.scope.scopes[scope_id].get_variable_symbol_id(name).map(|symbol_id| {
+            let symbol = &self.symbols[symbol_id];
+            if symbol.flags().intersects(excludes) {
+                self.error(Redeclaration(name.clone(), symbol.span(), span));
+            }
+            symbol_id
+        })
+    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
@@ -110,6 +175,15 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         match kind {
+            AstKind::BindingIdentifier(ident) => {
+                self.enter_binding_identifier(ident);
+            }
+            AstKind::IdentifierReference(ident) => {
+                self.enter_identifier_reference(ident);
+            }
+            AstKind::JSXElementName(elem) => {
+                self.enter_jsx_element_name(elem);
+            }
             AstKind::Class(class) => self.enter_class(class),
             _ => {}
         }
@@ -120,6 +194,47 @@ impl<'a> SemanticBuilder<'a> {
         match kind {
             AstKind::Class(class) => self.leave_class(class),
             _ => {}
+        }
+    }
+
+    fn enter_binding_identifier(&mut self, ident: &BindingIdentifier) {
+        self.declare_symbol(
+            &ident.name,
+            ident.span,
+            self.scope.current_scope_id,
+            SymbolFlags::empty(),
+            SymbolFlags::empty(),
+        );
+    }
+
+    fn enter_identifier_reference(&mut self, ident: &IdentifierReference) {
+        let flag = if matches!(
+            self.parent_kind(),
+            AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)
+        ) {
+            ReferenceFlag::Write
+        } else {
+            ReferenceFlag::Read
+        };
+        let reference = Reference::new(self.current_node_id, ident.span, flag);
+        self.scope.reference_identifier(&ident.name, reference);
+    }
+
+    fn enter_jsx_element_name(&mut self, elem: &JSXElementName) {
+        if matches!(self.parent_kind(), AstKind::JSXOpeningElement(_)) {
+            if let Some(ident) = match elem {
+                JSXElementName::Identifier(ident)
+                    if ident.name.chars().next().is_some_and(char::is_uppercase) =>
+                {
+                    Some(ident)
+                }
+                JSXElementName::MemberExpression(expr) => Some(expr.get_object_identifier()),
+                _ => None,
+            } {
+                let reference =
+                    Reference::new(self.current_node_id, elem.span(), ReferenceFlag::Read);
+                self.scope.reference_identifier(&ident.name, reference);
+            }
         }
     }
 

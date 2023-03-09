@@ -11,6 +11,8 @@ version.workspace = true
 
 [dependencies]
 oxc_ast = { path = "../oxc_ast" }
+oxc_diagnostics = { path = "../oxc_diagnostics" }
 
 indextree = { workspace = true }
 bitflags = { workspace = true }
+rustc-hash = { workspace = true }

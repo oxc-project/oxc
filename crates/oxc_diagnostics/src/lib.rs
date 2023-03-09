@@ -4,7 +4,10 @@
 use std::{cell::RefCell, ops::Deref, rc::Rc};
 
 pub use miette;
+use miette::Diagnostic;
+use oxc_ast::{Atom, Span};
 pub use thiserror;
+use thiserror::Error;
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;
@@ -30,3 +33,12 @@ impl Diagnostics {
         Rc::try_unwrap(self.0).unwrap().into_inner()
     }
 }
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Identifier `{0:?}` has already been declared")]
+#[diagnostic()]
+pub struct Redeclaration(
+    pub Atom,
+    #[label("`{0}` has already been declared here")] pub Span,
+    #[label("It can not be redeclared here")] pub Span,
+);

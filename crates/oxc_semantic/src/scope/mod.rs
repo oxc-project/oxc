@@ -8,10 +8,11 @@ mod id;
 mod tree;
 
 use bitflags::bitflags;
-pub use builder::*;
-pub use tree::ScopeTree;
+use oxc_ast::Atom;
+use rustc_hash::FxHashMap;
 
-pub use self::id::ScopeId;
+pub use self::{builder::ScopeBuilder, id::ScopeId, tree::ScopeTree};
+use crate::symbol::{Reference, SymbolId};
 
 #[derive(Debug, Clone)]
 pub struct Scope {
@@ -20,6 +21,12 @@ pub struct Scope {
     pub(crate) strict_mode: bool,
 
     pub flags: ScopeFlags,
+
+    /// Variables declared in this scope
+    pub variables: FxHashMap<Atom, SymbolId>,
+
+    /// Unsolved references in this scope
+    pub unresolved_references: FxHashMap<Atom, Vec<Reference>>,
 }
 
 bitflags! {
@@ -41,7 +48,17 @@ bitflags! {
 impl Scope {
     #[must_use]
     pub fn new(flags: ScopeFlags, strict_mode: bool) -> Self {
-        Self { strict_mode, flags }
+        Self {
+            strict_mode,
+            flags,
+            variables: FxHashMap::default(),
+            unresolved_references: FxHashMap::default(),
+        }
+    }
+
+    #[must_use]
+    pub fn get_variable_symbol_id(&self, name: &Atom) -> Option<SymbolId> {
+        self.variables.get(name).copied()
     }
 
     #[must_use]

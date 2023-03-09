@@ -1,6 +1,7 @@
-use oxc_ast::{AstKind, SourceType};
+use oxc_ast::{AstKind, Atom, SourceType};
 
 use super::{Scope, ScopeFlags, ScopeId, ScopeTree};
+use crate::symbol::Reference;
 
 #[derive(Debug)]
 pub struct ScopeBuilder {
@@ -17,6 +18,16 @@ impl ScopeBuilder {
         let scopes = ScopeTree::new(strict_mode);
         let current_scope_id = scopes.root_scope_id();
         Self { scopes, current_scope_id }
+    }
+
+    #[must_use]
+    pub fn current_scope(&self) -> &Scope {
+        &self.scopes[self.current_scope_id]
+    }
+
+    #[must_use]
+    pub fn current_scope_mut(&mut self) -> &mut Scope {
+        &mut self.scopes[self.current_scope_id]
     }
 
     pub fn enter(&mut self, flags: ScopeFlags) {
@@ -46,9 +57,12 @@ impl ScopeBuilder {
         }
     }
 
-    #[must_use]
-    pub fn current_scope(&self) -> &Scope {
-        &self.scopes[self.current_scope_id]
+    pub fn reference_identifier(&mut self, name: &Atom, reference: Reference) {
+        self.current_scope_mut()
+            .unresolved_references
+            .entry(name.clone())
+            .or_default()
+            .push(reference);
     }
 
     #[must_use]

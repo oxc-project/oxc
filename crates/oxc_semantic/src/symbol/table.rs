@@ -2,7 +2,7 @@ use std::ops::{Deref, Index, IndexMut};
 
 use oxc_ast::{Atom, Span};
 
-use super::{Symbol, SymbolId};
+use super::{Symbol, SymbolFlags, SymbolId};
 
 #[derive(Debug, Default)]
 pub struct SymbolTable {
@@ -45,10 +45,9 @@ impl SymbolTable {
     }
 
     #[must_use]
-    #[allow(unused)]
-    pub fn create(&mut self, name: Atom, span: Span) -> SymbolId {
+    pub fn create(&mut self, name: Atom, span: Span, flags: SymbolFlags) -> SymbolId {
         let symbol_id = SymbolId::new(self.symbols.len() + 1);
-        let symbol = Symbol::new(symbol_id, name, span);
+        let symbol = Symbol::new(symbol_id, name, span, flags);
         self.symbols.push(symbol);
         symbol_id
     }

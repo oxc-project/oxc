@@ -199,15 +199,6 @@ pub struct UnexpectedLhsAssign(#[label("Invalid left-hand side in assignment")] 
 pub struct ReservedKeyword(Atom, #[label("{0} is reserved")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Identifier `{0:?}` has already been declared")]
-#[diagnostic()]
-pub struct Redeclaration(
-    pub Atom,
-    #[label("`{0}` has already been declared here")] pub Span,
-    #[label("It can not be redeclared here")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("{0:?} is disallowed as a lexically bound name")]
 #[diagnostic()]
 pub struct DisallowedLexicalName(
