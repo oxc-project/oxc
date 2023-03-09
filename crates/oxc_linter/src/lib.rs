@@ -3,6 +3,7 @@
 #[cfg(test)]
 mod tester;
 
+mod ast_util;
 mod context;
 mod fixer;
 pub mod rule;

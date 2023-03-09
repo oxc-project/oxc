@@ -18,6 +18,7 @@ oxc_semantic = { path = "../oxc_semantic" }
 lazy_static = { workspace = true }
 serde_json = { workspace = true }
 indextree = { workspace = true }
+phf = { version = "0.11", features = ["macros"] }
 
 [dev_dependencies]
 oxc_allocator = { path = "../oxc_allocator" }

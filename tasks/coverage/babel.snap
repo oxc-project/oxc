@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 912/1502 (60.72%)
+Negative Passed: 922/1502 (61.38%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -116,7 +116,6 @@ Expect Syntax Error: "core/uncategorised/520/input.js"
 Expect Syntax Error: "core/uncategorised/521/input.js"
 Expect Syntax Error: "core/uncategorised/522/input.js"
 Expect Syntax Error: "core/uncategorised/544/input.js"
-Expect Syntax Error: "core/uncategorised/545/input.js"
 Expect Syntax Error: "core/uncategorised/550/input.js"
 Expect Syntax Error: "core/uncategorised/552/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
@@ -216,11 +215,6 @@ Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2015/uncategorised/332/input.js"
 Expect Syntax Error: "es2015/uncategorised/334/input.js"
 Expect Syntax Error: "es2015/uncategorised/349/input.js"
-Expect Syntax Error: "es2015/uncategorised/359/input.js"
-Expect Syntax Error: "es2015/uncategorised/361/input.js"
-Expect Syntax Error: "es2015/uncategorised/363/input.js"
-Expect Syntax Error: "es2015/uncategorised/365/input.js"
-Expect Syntax Error: "es2015/uncategorised/367/input.js"
 Expect Syntax Error: "es2015/yield/function-name-function-declaration-inside-generator/input.js"
 Expect Syntax Error: "es2015/yield/function-name-generator-expression/input.js"
 Expect Syntax Error: "es2015/yield/function-name-strict-body/input.js"
@@ -344,7 +338,6 @@ Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-arrow-paramet
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-arrow-parameters/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-catch/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-declaration/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-export-default/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-name/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-parameter/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-rest/input.js"
@@ -454,7 +447,6 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0249/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0250/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0260/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0274/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0278/input.js"
 Expect Syntax Error: "esprima/statement-if/.migrated_0003/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
@@ -487,7 +479,6 @@ Expect Syntax Error: "typescript/class/generator-method-with-modifiers/input.ts"
 Expect Syntax Error: "typescript/class/index-signature-errors/input.ts"
 Expect Syntax Error: "typescript/class/invalid-modifiers-order/input.ts"
 Expect Syntax Error: "typescript/class/method-readonly/input.ts"
-Expect Syntax Error: "typescript/class/modifier-name-parameters/input.ts"
 Expect Syntax Error: "typescript/class/modifiers-incompatible/input.ts"
 Expect Syntax Error: "typescript/class/modifiers-index-signatures/input.ts"
 Expect Syntax Error: "typescript/class/modifiers-invalid-order/input.ts"
@@ -531,7 +522,6 @@ Expect Syntax Error: "typescript/interface/get-set-invalid-reset-parameter/input
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-property/input.ts"
-Expect Syntax Error: "typescript/interface/new-line/input.ts"
 Expect Syntax Error: "typescript/module-namespace/top-level-await/input.ts"
 Expect Syntax Error: "typescript/regression/keyword-qualified-type-disallowed/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-class-class/input.ts"
@@ -1792,6 +1782,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ╰── const declaration need an initializer
    ╰────
 
+  × The keyword '"public"' is reserved
+   ╭─[core/uncategorised/545/input.js:1:1]
+ 1 │ const { public } = foo();
+   ·         ──────
+   ╰────
+
   × Unexpected token
    ╭─[core/uncategorised/554/input.js:1:1]
  1 │ var a = 0123.;
@@ -2894,6 +2890,36 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/uncategorised/357/input.js:1:1]
  1 │ await = foo();
    ·       ─
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[es2015/uncategorised/359/input.js:1:1]
+ 1 │ const await = foo();
+   ·       ─────
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[es2015/uncategorised/361/input.js:1:1]
+ 1 │ const { await } = foo();
+   ·         ─────
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[es2015/uncategorised/363/input.js:1:1]
+ 1 │ function foo({ await }) {}
+   ·                ─────
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[es2015/uncategorised/365/input.js:1:1]
+ 1 │ function await() {}
+   ·          ─────
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[es2015/uncategorised/367/input.js:1:1]
+ 1 │ class await {}
+   ·       ─────
    ╰────
 
   × Unexpected token
@@ -5598,6 +5624,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·    ╰── Unterminated string
    ╰────
 
+  × The keyword '"yield"' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-generator-export-default/input.js:1:1]
+ 1 │ export default function *yield() {}
+   ·                          ─────
+   ╰────
+
   × Unexpected token
    ╭─[esprima/es2015-yield/invalid-yield-generator-member-expression/input.js:1:1]
  1 │ function *g() { return yield.x; }
@@ -7038,6 +7070,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·            ────
    ╰────
 
+  × The keyword '"static"' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0278/input.js:1:1]
+ 1 │ class A {static [static](){};}
+   ·                  ──────
+   ╰────
+
   × A 'set' accessor function argument must not be a rest parameter
    ╭─[esprima/rest-parameter/invalid-setter-rest/input.js:1:1]
  1 │ x = { set f(...y) {} }
@@ -7347,6 +7385,30 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ }
    ╰────
 
+  × The keyword '"private"' is reserved
+   ╭─[typescript/class/modifier-name-parameters/input.ts:1:1]
+ 1 │ class Foo {
+ 2 │   constructor(private, public, static) {
+   ·               ───────
+ 3 │   }
+   ╰────
+
+  × The keyword '"public"' is reserved
+   ╭─[typescript/class/modifier-name-parameters/input.ts:1:1]
+ 1 │ class Foo {
+ 2 │   constructor(private, public, static) {
+   ·                        ──────
+ 3 │   }
+   ╰────
+
+  × The keyword '"static"' is reserved
+   ╭─[typescript/class/modifier-name-parameters/input.ts:1:1]
+ 1 │ class Foo {
+ 2 │   constructor(private, public, static) {
+   ·                                ──────
+ 3 │   }
+   ╰────
+
   × Automatic Semicolon Insertion
    ╭─[typescript/class/optional-async-error/input.js:2:1]
  2 │ class A extends B {
@@ -7515,6 +7577,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"interface"' is reserved
+   ╭─[typescript/interface/new-line/input.ts:1:1]
+ 1 │ interface
+   · ─────────
+ 2 │ F
+   ╰────
 
   × Automatic Semicolon Insertion
    ╭─[typescript/module-namespace/module-declare-new-line/input.ts:5:1]
