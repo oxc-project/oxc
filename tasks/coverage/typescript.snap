@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2310/2338 (98.80%)
 Positive Passed: 2310/2338 (98.80%)
-Negative Passed: 546/2531 (21.57%)
+Negative Passed: 558/2531 (22.05%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -1336,19 +1336,12 @@ Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parserRegularExpress
 Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity5.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/BreakStatements/parser_breakInIterationOrSwitchStatement4.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueInIterationStatement4.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement1.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement2.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement3.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget1.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget5.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget6.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel1.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel2.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement1.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement2.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserBlockStatement1.d.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserContinueStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserDebuggerStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserDoStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement1.d.ts"
@@ -1561,11 +1554,6 @@ Expect Syntax Error: "statements/VariableStatements/everyTypeWithAnnotationAndIn
 Expect Syntax Error: "statements/VariableStatements/invalidMultipleVariableDeclarations.ts"
 Expect Syntax Error: "statements/breakStatements/invalidSwitchBreakStatement.ts"
 Expect Syntax Error: "statements/breakStatements/switchBreakStatements.ts"
-Expect Syntax Error: "statements/continueStatements/invalidDoWhileContinueStatements.ts"
-Expect Syntax Error: "statements/continueStatements/invalidForContinueStatements.ts"
-Expect Syntax Error: "statements/continueStatements/invalidForInContinueStatements.ts"
-Expect Syntax Error: "statements/continueStatements/invalidSwitchContinueStatement.ts"
-Expect Syntax Error: "statements/continueStatements/invalidWhileContinueStatements.ts"
 Expect Syntax Error: "statements/for-inStatements/for-inStatements.ts"
 Expect Syntax Error: "statements/for-inStatements/for-inStatementsArrayErrors.ts"
 Expect Syntax Error: "statements/for-inStatements/for-inStatementsDestructuring.ts"
@@ -2623,12 +2611,29 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  7 │                 }
    ╰────
 
-  × Illegal continue statement: no surrounding iteration statement
+  × Jump target cannot cross function boundary.
+    ╭─[classes/classStaticBlock/classStaticBlock8.ts:8:1]
+  8 │                 if (v === 2) {
+  9 │                     continue label;
+    ·                              ─────
+ 10 │                 }
+    ╰────
+
+  × Illegal break statement
     ╭─[classes/classStaticBlock/classStaticBlock8.ts:11:1]
  11 │                 if (v === 3) {
  12 │                     break
     ·                     ─────
  13 │                 }
+    ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Illegal continue statement: no surrounding iteration statement
+    ╭─[classes/classStaticBlock/classStaticBlock8.ts:14:1]
+ 14 │                 if (v === 4) {
+ 15 │                     continue
+    ·                     ────────
+ 16 │                 }
     ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
@@ -5834,6 +5839,15 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
+  × Illegal continue statement: no surrounding iteration statement
+    ╭─[jsdoc/typedefOnStatements.ts:36:1]
+ 36 │ /** @typedef {{ l: string }} L */
+ 37 │ continue;
+    · ─────────
+ 38 │ /** @typedef {{ m: string }} M */
+    ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
   × Unexpected token
     ╭─[jsx/checkJsxNamespaceNamesQuestionableForms.tsx:12:1]
  12 │ <a:b></a:b>;
@@ -7353,14 +7367,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
-  × Illegal continue statement: no surrounding iteration statement
+  × Illegal break statement
    ╭─[parser/ecmascript5/Statements/BreakStatements/parser_breakNotInIterationOrSwitchStatement2.ts:2:1]
  2 │   function f() {
  3 │     break;
    ·     ──────
  4 │   }
    ╰────
-  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
   × Jump target cannot cross function boundary.
    ╭─[parser/ecmascript5/Statements/BreakStatements/parser_breakTarget5.ts:4:1]
@@ -7379,12 +7393,71 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ }
    ╰────
 
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement1.ts:1:1]
+ 1 │ continue;
+   · ─────────
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement2.ts:2:1]
+ 2 │   function f() {
+ 3 │     continue;
+   ·     ─────────
+ 4 │   }
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement3.ts:2:1]
+ 2 │   default:
+ 3 │     continue;
+   ·     ─────────
+ 4 │ }
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × A `"continue"` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
+   ╭─[parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget1.ts:1:1]
+ 1 │ target:
+   · ───┬──
+   ·    ╰── This is an non-iteration statement
+ 2 │   continue target;
+   ·            ───┬──
+   ·               ╰── for this label
+   ╰────
+
+  × Jump target cannot cross function boundary.
+   ╭─[parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget5.ts:4:1]
+ 4 │     while (true) {
+ 5 │       continue target;
+   ·                ──────
+ 6 │     }
+   ╰────
+
+  × Use of undefined label
+   ╭─[parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget6.ts:1:1]
+ 1 │ while (true) {
+ 2 │   continue target;
+   ·            ───┬──
+   ·               ╰── This label is used, but not defined
+ 3 │ }
+   ╰────
+
   × Illegal break statement
    ╭─[parser/ecmascript5/Statements/parserBreakStatement1.d.ts:1:1]
  1 │ break;
    · ──────
    ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[parser/ecmascript5/Statements/parserContinueStatement1.d.ts:1:1]
+ 1 │ continue;
+   · ─────────
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
   × Expect token
    ╭─[parser/ecmascript5/Statements/parserES5ForOfStatement2.ts:1:1]
@@ -8065,6 +8138,191 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ·           ──┬─
     ·             ╰── This label is used, but not defined
  38 │ }
+    ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[statements/continueStatements/invalidDoWhileContinueStatements.ts:6:1]
+ 6 │ // naked continue not allowed
+ 7 │ continue;
+   · ─────────
+ 8 │ 
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidDoWhileContinueStatements.ts:10:1]
+ 10 │ ONE:
+ 11 │ do continue TWO; while (true)
+    ·             ─┬─
+    ·              ╰── This label is used, but not defined
+ 12 │ 
+    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[statements/continueStatements/invalidDoWhileContinueStatements.ts:23:1]
+ 23 │     var fn = function () {
+ 24 │         continue THREE;
+    ·                  ─────
+ 25 │     }
+    ╰────
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidDoWhileContinueStatements.ts:29:1]
+ 29 │ do {
+ 30 │     continue FIVE;
+    ·              ──┬─
+    ·                ╰── This label is used, but not defined
+ 31 │     FIVE:
+    ╰────
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidDoWhileContinueStatements.ts:39:1]
+ 39 │ do {
+ 40 │     continue NINE;
+    ·              ──┬─
+    ·                ╰── This label is used, but not defined
+ 41 │ }while (true)
+    ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[statements/continueStatements/invalidForContinueStatements.ts:6:1]
+ 6 │ // naked continue not allowed
+ 7 │ continue;
+   · ─────────
+ 8 │ 
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidForContinueStatements.ts:10:1]
+ 10 │ ONE:
+ 11 │ for(;;) continue TWO;
+    ·                  ─┬─
+    ·                   ╰── This label is used, but not defined
+ 12 │ 
+    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[statements/continueStatements/invalidForContinueStatements.ts:23:1]
+ 23 │     var fn = function () {
+ 24 │         continue THREE;
+    ·                  ─────
+ 25 │     }
+    ╰────
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidForContinueStatements.ts:29:1]
+ 29 │ for(;;) {
+ 30 │     continue FIVE;
+    ·              ──┬─
+    ·                ╰── This label is used, but not defined
+ 31 │     FIVE:
+    ╰────
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidForContinueStatements.ts:38:1]
+ 38 │ for(;;) {
+ 39 │     continue NINE;
+    ·              ──┬─
+    ·                ╰── This label is used, but not defined
+ 40 │ }
+    ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[statements/continueStatements/invalidForInContinueStatements.ts:6:1]
+ 6 │ // naked continue not allowed
+ 7 │ continue;
+   · ─────────
+ 8 │ 
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidForInContinueStatements.ts:10:1]
+ 10 │ ONE:
+ 11 │ for (var x in {}) continue TWO;
+    ·                            ─┬─
+    ·                             ╰── This label is used, but not defined
+ 12 │ 
+    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[statements/continueStatements/invalidForInContinueStatements.ts:23:1]
+ 23 │     var fn = function () {
+ 24 │         continue THREE;
+    ·                  ─────
+ 25 │     }
+    ╰────
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidForInContinueStatements.ts:29:1]
+ 29 │ for (var x in {}) {
+ 30 │     continue FIVE;
+    ·              ──┬─
+    ·                ╰── This label is used, but not defined
+ 31 │     FIVE:
+    ╰────
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidForInContinueStatements.ts:39:1]
+ 39 │ for (var x in {}) {
+ 40 │     continue NINE;
+    ·              ──┬─
+    ·                ╰── This label is used, but not defined
+ 41 │ }
+    ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[statements/continueStatements/invalidSwitchContinueStatement.ts:4:1]
+ 4 │     case 5:
+ 5 │         continue;
+   ·         ─────────
+ 6 │ }
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[statements/continueStatements/invalidWhileContinueStatements.ts:6:1]
+ 6 │ // naked continue not allowed
+ 7 │ continue;
+   · ─────────
+ 8 │ 
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidWhileContinueStatements.ts:10:1]
+ 10 │ ONE:
+ 11 │ while (true) continue TWO;
+    ·                       ─┬─
+    ·                        ╰── This label is used, but not defined
+ 12 │ 
+    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[statements/continueStatements/invalidWhileContinueStatements.ts:23:1]
+ 23 │     var fn = function () {
+ 24 │         continue THREE;
+    ·                  ─────
+ 25 │     }
+    ╰────
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidWhileContinueStatements.ts:29:1]
+ 29 │ while (true) {
+ 30 │     continue FIVE;
+    ·              ──┬─
+    ·                ╰── This label is used, but not defined
+ 31 │     FIVE:
+    ╰────
+
+  × Use of undefined label
+    ╭─[statements/continueStatements/invalidWhileContinueStatements.ts:39:1]
+ 39 │ while (true) {
+ 40 │     continue NINE;
+    ·              ──┬─
+    ·                ╰── This label is used, but not defined
+ 41 │ }
     ╰────
 
   × Unexpected token
