@@ -2,7 +2,7 @@
 lint = "clippy --workspace --all-targets --all-features"
 coverage = "run -p oxc_coverage --release --"
 benchmark = "run -p oxc_benchmark --release --"
-rule = "run -p rule_generator"
+rule = "run -p rulegen"
 
 [build]
 rustflags = ["-C", "target-cpu=native"]
