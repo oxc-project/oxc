@@ -45,8 +45,6 @@ impl<'a> TryFrom<&'a LintCommand> for CliOptions {
             ignore_pattern: matches.ignore_pattern.clone(),
         };
 
-        dbg!(&result);
-
         Ok(result)
     }
 }
