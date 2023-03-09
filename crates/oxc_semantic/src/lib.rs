@@ -12,6 +12,8 @@ pub use scope::{Scope, ScopeTree};
 pub struct Semantic<'a> {
     nodes: AstNodes<'a>,
 
+    scopes: ScopeTree,
+
     trivias: Rc<Trivias>,
 }
 
@@ -19,6 +21,11 @@ impl<'a> Semantic<'a> {
     #[must_use]
     pub fn nodes(&self) -> &AstNodes<'a> {
         &self.nodes
+    }
+
+    #[must_use]
+    pub fn scopes(&self) -> &ScopeTree {
+        &self.scopes
     }
 
     #[must_use]

@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 885/1502 (58.92%)
+Negative Passed: 886/1502 (58.99%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -26,7 +26,6 @@ Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict-function/i
 Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict/input.js"
 Expect Syntax Error: "core/opts/allowNewTargetOutsideFunction-false-2/input.js"
 Expect Syntax Error: "core/opts/allowNewTargetOutsideFunction-false/input.js"
-Expect Syntax Error: "core/regression/non-octal-float-strict-mode/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-2nd-lvl-lex-nested/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-2nd-lvl-lex/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-2nd-lvl-var-nested/input.js"
@@ -933,6 +932,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ a <== b;
    ·     ─
    ╰────
+
+  × Decimals with leading zeros are not allowed in strict mode
+   ╭─[core/regression/non-octal-float-strict-mode/input.js:1:1]
+ 1 │ 09.5
+   · ────
+   ╰────
+  help: remove the leading zero
 
   × Automatic Semicolon Insertion
    ╭─[core/regression/octal-float-fail/input.js:1:1]

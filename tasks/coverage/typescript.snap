@@ -5801,6 +5801,15 @@ Expect to Parse: "salsa/constructorNameInGenerator.ts"
    ╰────
 Expect to Parse: "salsa/plainJSBinderErrors.ts"
 
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[salsa/plainJSBinderErrors.ts:29:1]
+ 29 │     withOctal() {
+ 30 │         const redundant = 010
+    ·                           ───
+ 31 │         with (redundant) {
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
   × Classes can't have an element named '#constructor'
     ╭─[salsa/plainJSBinderErrors.ts:15:1]
  15 │ class C {
