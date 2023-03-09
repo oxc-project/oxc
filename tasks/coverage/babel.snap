@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 908/1502 (60.45%)
+Negative Passed: 911/1502 (60.65%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -61,7 +61,6 @@ Expect Syntax Error: "core/scope/undecl-export/input.js"
 Expect Syntax Error: "core/uncategorised/415/input.js"
 Expect Syntax Error: "core/uncategorised/427/input.js"
 Expect Syntax Error: "core/uncategorised/454/input.js"
-Expect Syntax Error: "core/uncategorised/465/input.js"
 Expect Syntax Error: "core/uncategorised/466/input.js"
 Expect Syntax Error: "core/uncategorised/467/input.js"
 Expect Syntax Error: "core/uncategorised/468/input.js"
@@ -389,7 +388,6 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0123/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0143/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0171/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0182/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0183/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0184/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0185/input.js"
@@ -453,7 +451,6 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0244/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0245/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0246/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0247/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0248/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0249/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0250/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0260/input.js"
@@ -1764,6 +1761,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                                  ─────────
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Identifier `"x"` has already been declared
+   ╭─[core/uncategorised/465/input.js:1:1]
+ 1 │ x: while (true) { x: while (true) { } }
+   · ┬                 ┬
+   · │                 ╰── It can not be redeclared here
+   · ╰── `x` has already been declared here
+   ╰────
 
   × Unexpected token
    ╭─[core/uncategorised/523/input.js:1:1]
@@ -6855,6 +6860,22 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                                  ─────────
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Identifier `"x"` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0182/input.js:1:1]
+ 1 │ x: while (true) { x: while (true) { } }
+   · ┬                 ┬
+   · │                 ╰── It can not be redeclared here
+   · ╰── `x` has already been declared here
+   ╰────
+
+  × Identifier `"__proto__"` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0248/input.js:1:1]
+ 1 │ __proto__: __proto__: 42;
+   · ────┬────  ────┬────
+   ·     │          ╰── It can not be redeclared here
+   ·     ╰── `__proto__` has already been declared here
+   ╰────
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0252/input.js:1:1]

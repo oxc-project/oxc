@@ -18,12 +18,22 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::NumberLiteral(lit) => check_number_literal(lit, node, ctx),
             AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
-            AstKind::BreakStatement(lit) => check_break_statement(lit, node, ctx),
-            AstKind::ContinueStatement(lit) => check_continue_statement(lit, node, ctx),
+            AstKind::BreakStatement(stmt) => check_break_statement(stmt, node, ctx),
+            AstKind::ContinueStatement(stmt) => check_continue_statement(stmt, node, ctx),
+            AstKind::LabeledStatement(stmt) => check_labeled_statement(stmt, node, ctx),
             _ => {}
         }
     }
 }
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Identifier `{0:?}` has already been declared")]
+#[diagnostic()]
+struct Redeclaration(
+    Atom,
+    #[label("`{0}` has already been declared here")] Span,
+    #[label("It can not be redeclared here")] Span,
+);
 
 fn check_private_identifier<'a>(
     ident: &PrivateIdentifier,
@@ -278,6 +288,24 @@ fn check_continue_statement<'a>(
                 }
             }
             kind if kind.is_iteration_statement() && stmt.label.is_none() => break,
+            _ => {}
+        }
+    }
+}
+
+fn check_labeled_statement<'a>(stmt: &LabeledStatement, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    for node_id in ctx.ancestors(node).skip(1) {
+        match ctx.kind(node_id) {
+            // label cannot cross boundary on function or static block
+            AstKind::Function(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => break,
+            // check label name redeclaration
+            AstKind::LabeledStatement(label_stmt) if stmt.label.name == label_stmt.label.name => {
+                return ctx.diagnostic(Redeclaration(
+                    stmt.label.name.clone(),
+                    label_stmt.label.span,
+                    stmt.label.span,
+                ));
+            }
             _ => {}
         }
     }
