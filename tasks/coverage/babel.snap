@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 886/1502 (58.99%)
+Negative Passed: 896/1502 (59.65%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -58,19 +58,14 @@ Expect Syntax Error: "core/scope/undecl-export-builtin-as/input.js"
 Expect Syntax Error: "core/scope/undecl-export-builtin/input.js"
 Expect Syntax Error: "core/scope/undecl-export-if/input.js"
 Expect Syntax Error: "core/scope/undecl-export/input.js"
-Expect Syntax Error: "core/uncategorised/409/input.js"
 Expect Syntax Error: "core/uncategorised/411/input.js"
 Expect Syntax Error: "core/uncategorised/415/input.js"
 Expect Syntax Error: "core/uncategorised/427/input.js"
 Expect Syntax Error: "core/uncategorised/454/input.js"
-Expect Syntax Error: "core/uncategorised/455/input.js"
 Expect Syntax Error: "core/uncategorised/456/input.js"
 Expect Syntax Error: "core/uncategorised/457/input.js"
-Expect Syntax Error: "core/uncategorised/459/input.js"
 Expect Syntax Error: "core/uncategorised/460/input.js"
-Expect Syntax Error: "core/uncategorised/461/input.js"
 Expect Syntax Error: "core/uncategorised/462/input.js"
-Expect Syntax Error: "core/uncategorised/463/input.js"
 Expect Syntax Error: "core/uncategorised/464/input.js"
 Expect Syntax Error: "core/uncategorised/465/input.js"
 Expect Syntax Error: "core/uncategorised/466/input.js"
@@ -397,19 +392,14 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0093/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0094/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0100/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0116/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0118/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0123/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0143/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0171/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0172/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0173/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0174/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0176/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0177/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0178/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0179/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0180/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0181/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0182/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0183/input.js"
@@ -1424,6 +1414,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Illegal break statement
+   ╭─[core/uncategorised/409/input.js:1:1]
+ 1 │ break
+   · ─────
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
   × Unexpected token
    ╭─[core/uncategorised/410/input.js:1:1]
  1 │ break 1;
@@ -1705,12 +1702,39 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ╰── Unterminated string
    ╰────
 
+  × Illegal break statement
+   ╭─[core/uncategorised/455/input.js:1:1]
+ 1 │ break
+   · ─────
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
   × Expect token
    ╭─[core/uncategorised/458/input.js:1:1]
  1 │ do { x } *
    ·          ┬
    ·          ╰── Expect `while` here, but found `*`
    ╰────
+
+  × Use of undefined label
+   ╭─[core/uncategorised/459/input.js:1:1]
+ 1 │ while (true) { break x; }
+   ·                      ┬
+   ·                      ╰── This label is used, but not defined
+   ╰────
+
+  × Jump target cannot cross function boundary.
+   ╭─[core/uncategorised/461/input.js:1:1]
+ 1 │ x: while (true) { (function () { break x; }); }
+   ·                                        ─
+   ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[core/uncategorised/463/input.js:1:1]
+ 1 │ x: while (true) { (function () { break; }); }
+   ·                                  ──────
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
   × Unexpected token
    ╭─[core/uncategorised/523/input.js:1:1]
@@ -6362,6 +6386,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Illegal break statement
+   ╭─[esprima/invalid-syntax/migrated_0116/input.js:1:1]
+ 1 │ break
+   · ─────
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0117/input.js:1:1]
  1 │ break 1;
@@ -6721,12 +6752,39 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·               ─
    ╰────
 
+  × Illegal break statement
+   ╭─[esprima/invalid-syntax/migrated_0172/input.js:1:1]
+ 1 │ break
+   · ─────
+   ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
   × Expect token
    ╭─[esprima/invalid-syntax/migrated_0175/input.js:1:1]
  1 │ do { x } *
    ·          ┬
    ·          ╰── Expect `while` here, but found `*`
    ╰────
+
+  × Use of undefined label
+   ╭─[esprima/invalid-syntax/migrated_0176/input.js:1:1]
+ 1 │ while (true) { break x; }
+   ·                      ┬
+   ·                      ╰── This label is used, but not defined
+   ╰────
+
+  × Jump target cannot cross function boundary.
+   ╭─[esprima/invalid-syntax/migrated_0178/input.js:1:1]
+ 1 │ x: while (true) { (function () { break x; }); }
+   ·                                        ─
+   ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+   ╭─[esprima/invalid-syntax/migrated_0180/input.js:1:1]
+ 1 │ x: while (true) { (function () { break; }); }
+   ·                                  ──────
+   ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0252/input.js:1:1]

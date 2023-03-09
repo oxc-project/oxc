@@ -18,6 +18,7 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::NumberLiteral(lit) => check_number_literal(lit, node, ctx),
             AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
+            AstKind::BreakStatement(lit) => check_break_statement(lit, node, ctx),
             _ => {}
         }
     }
@@ -168,5 +169,64 @@ fn check_regexp_literal(lit: &RegExpLiteral, ctx: &LintContext) {
     let flags = lit.regex.flags;
     if flags.contains(RegExpFlags::U | RegExpFlags::V) {
         ctx.diagnostic(RegExpFlagUAndV(lit.span));
+    }
+}
+
+fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Illegal break statement")]
+    #[diagnostic(help(
+        "A `break` statement can only be used within an enclosing iteration or switch statement."
+    ))]
+    struct InvalidBreak(#[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Illegal continue statement: no surrounding iteration statement")]
+    #[diagnostic(help(
+        "A `continue` statement can only be used within an enclosing `for`, `while` or `do while` "
+    ))]
+    struct InvalidContinue(#[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Use of undefined label")]
+    #[diagnostic()]
+    struct InvalidLabelTarget(#[label("This label is used, but not defined")] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Jump target cannot cross function boundary.")]
+    #[diagnostic()]
+    struct InvalidLabelJumpTarget(#[label] Span);
+
+    // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
+    for node_id in ctx.ancestors(node).skip(1) {
+        match ctx.kind(node_id) {
+            AstKind::Program(_) => {
+                stmt.label.as_ref().map_or_else(
+                    || ctx.diagnostic(InvalidBreak(stmt.span)),
+                    |label| ctx.diagnostic(InvalidLabelTarget(label.span)),
+                );
+                return;
+            }
+            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+                stmt.label.as_ref().map_or_else(
+                    || ctx.diagnostic(InvalidContinue(stmt.span)),
+                    |label| ctx.diagnostic(InvalidLabelJumpTarget(label.span)),
+                );
+                return;
+            }
+            AstKind::LabeledStatement(labeled_statement) => {
+                if let Some(label) = &stmt.label
+                    && label.name == labeled_statement.label.name {
+                    break;
+                }
+            }
+            kind if (kind.is_iteration_statement()
+                || matches!(kind, AstKind::SwitchStatement(_)))
+                && stmt.label.is_none() =>
+            {
+                break;
+            }
+            _ => {}
+        }
     }
 }
