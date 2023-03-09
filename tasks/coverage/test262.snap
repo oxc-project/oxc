@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44000/44009 (99.98%)
 Positive Passed: 44000/44009 (99.98%)
-Negative Passed: 2190/3917 (55.91%)
+Negative Passed: 2205/3917 (56.29%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -866,7 +866,6 @@ Expect Syntax Error: "language/module-code/early-import-eval.js"
 Expect Syntax Error: "language/module-code/early-lex-and-var.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
 Expect Syntax Error: "language/module-code/early-strict-mode.js"
-Expect Syntax Error: "language/module-code/early-undef-break.js"
 Expect Syntax Error: "language/module-code/early-undef-continue.js"
 Expect Syntax Error: "language/module-code/export-default-asyncfunction-declaration-binding-exists.js"
 Expect Syntax Error: "language/module-code/export-default-asyncgenerator-declaration-binding-exists.js"
@@ -1007,17 +1006,6 @@ Expect Syntax Error: "language/statements/async-generator/yield-as-identifier-re
 Expect Syntax Error: "language/statements/async-generator/yield-identifier-spread-strict.js"
 Expect Syntax Error: "language/statements/async-generator/yield-identifier-strict.js"
 Expect Syntax Error: "language/statements/block/labeled-continue.js"
-Expect Syntax Error: "language/statements/break/S12.8_A1_T1.js"
-Expect Syntax Error: "language/statements/break/S12.8_A1_T2.js"
-Expect Syntax Error: "language/statements/break/S12.8_A1_T3.js"
-Expect Syntax Error: "language/statements/break/S12.8_A1_T4.js"
-Expect Syntax Error: "language/statements/break/S12.8_A5_T1.js"
-Expect Syntax Error: "language/statements/break/S12.8_A5_T2.js"
-Expect Syntax Error: "language/statements/break/S12.8_A5_T3.js"
-Expect Syntax Error: "language/statements/break/S12.8_A6.js"
-Expect Syntax Error: "language/statements/break/S12.8_A8_T1.js"
-Expect Syntax Error: "language/statements/break/S12.8_A8_T2.js"
-Expect Syntax Error: "language/statements/break/static-init-without-label.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/await-as-binding-identifier.js"
@@ -1336,7 +1324,6 @@ Expect Syntax Error: "language/statements/class/static-init-invalid-lex-dup.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-lex-var.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-super-call.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-undefined-break-target.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-undefined-continue-target.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-yield.js"
 Expect Syntax Error: "language/statements/class/static-method-param-yield.js"
@@ -1495,8 +1482,6 @@ Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-lhs.js"
 Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-var.js"
 Expect Syntax Error: "language/statements/for/S12.6.3_A11.1_T3.js"
 Expect Syntax Error: "language/statements/for/S12.6.3_A11_T3.js"
-Expect Syntax Error: "language/statements/for/S12.6.3_A12.1_T3.js"
-Expect Syntax Error: "language/statements/for/S12.6.3_A12_T3.js"
 Expect Syntax Error: "language/statements/for/decl-fun.js"
 Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-id.js"
@@ -14161,6 +14146,15 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
 
+  × Use of undefined label
+    ╭─[language/module-code/early-undef-break.js:16:1]
+ 16 │ while (false) {
+ 17 │   break undef;
+    ·         ──┬──
+    ·           ╰── This label is used, but not defined
+ 18 │ }
+    ╰────
+
   × An export name cannot include a unicode lone surrogate
     ╭─[language/module-code/export-expname-from-as-unpaired-surrogate.js:20:1]
  20 │ 
@@ -15098,6 +15092,101 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  40 │ { this.#x }
     ·        ──
     ╰────
+
+  × Illegal break statement
+    ╭─[language/statements/break/S12.8_A1_T1.js:17:1]
+ 17 │ var x=1;
+ 18 │ break;
+    · ──────
+ 19 │ var y=2;
+    ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Use of undefined label
+    ╭─[language/statements/break/S12.8_A1_T2.js:19:1]
+ 19 │ var x=1;
+ 20 │ break LABEL;
+    ·       ──┬──
+    ·         ╰── This label is used, but not defined
+ 21 │ var y=2;
+    ╰────
+
+  × Illegal break statement
+    ╭─[language/statements/break/S12.8_A1_T3.js:20:1]
+ 20 │     var x=1;
+ 21 │     break;
+    ·     ──────
+ 22 │     var y=2;
+    ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Use of undefined label
+    ╭─[language/statements/break/S12.8_A1_T4.js:22:1]
+ 22 │     var x=1;
+ 23 │     break LABEL;
+    ·           ──┬──
+    ·             ╰── This label is used, but not defined
+ 24 │     var y=2;
+    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[language/statements/break/S12.8_A5_T1.js:22:1]
+ 22 │             return;
+ 23 │         break LABEL_ANOTHER_LOOP;
+    ·               ──────────────────
+ 24 │         LABEL_IN_2 : y++;
+    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[language/statements/break/S12.8_A5_T2.js:24:1]
+ 24 │             return;
+ 25 │         break IN_DO_FUNC;
+    ·               ──────────
+ 26 │         LABEL_IN_2 : y++;
+    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[language/statements/break/S12.8_A5_T3.js:24:1]
+ 24 │             return;
+ 25 │         break LABEL_IN;
+    ·               ────────
+ 26 │         LABEL_IN_2 : y++;
+    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[language/statements/break/S12.8_A6.js:22:1]
+ 22 │     x++;
+ 23 │     (function(){break LABEL1;})();
+    ·                       ──────
+ 24 │     y++;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/break/S12.8_A8_T1.js:18:1]
+ 18 │ } catch(e){
+ 19 │     break LABEL2;
+    ·           ───┬──
+    ·              ╰── This label is used, but not defined
+ 20 │     LABEL2 : do {
+    ╰────
+
+  × Illegal break statement
+    ╭─[language/statements/break/S12.8_A8_T2.js:18:1]
+ 18 │ } catch(e){
+ 19 │     break;
+    ·     ──────
+ 20 │     LABEL2 : do {
+    ╰────
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
+
+  × Illegal continue statement: no surrounding iteration statement
+    ╭─[language/statements/break/static-init-without-label.js:23:1]
+ 23 │     static {
+ 24 │       break;
+    ·       ──────
+ 25 │     }
+    ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/async-gen-meth-escaped-async.js:24:1]
@@ -18332,6 +18421,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  18 │ }
     ╰────
 
+  × Jump target cannot cross function boundary.
+    ╭─[language/statements/class/static-init-invalid-undefined-break-target.js:21:1]
+ 21 │     x: while (false) {
+ 22 │       break y;
+    ·             ─
+ 23 │     }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/syntax/escaped-static.js:23:1]
  23 │ class C {
@@ -19634,6 +19731,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     · ╰──── Lexical declaration is not allowed here
     ╰────
   help: Wrap this declaration in a block statement
+
+  × Use of undefined label
+    ╭─[language/statements/for/S12.6.3_A12.1_T3.js:23:1]
+ 23 │     nested:for(var index_n=0;index_n<=index;index_n++){
+ 24 │         if(index*index_n >= 4)break nonexist;
+    ·                                     ────┬───
+    ·                                         ╰── This label is used, but not defined
+ 25 │         __str+=""+index+index_n;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/for/S12.6.3_A12_T3.js:23:1]
+ 23 │     nested:for(index_n=0;index_n<=index;index_n++){
+ 24 │         if(index*index_n >= 4)break nonexist;
+    ·                                     ────┬───
+    ·                                         ╰── This label is used, but not defined
+ 25 │         __str+=""+index+index_n;
+    ╰────
 
   × Expect token
     ╭─[language/statements/for/S12.6.3_A4.1.js:21:1]
