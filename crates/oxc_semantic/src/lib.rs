@@ -5,7 +5,7 @@ mod scope;
 use std::rc::Rc;
 
 pub use builder::SemanticBuilder;
-pub use node::{AstNode, AstNodes};
+pub use node::{AstNode, AstNodes, SemanticNode};
 use oxc_ast::Trivias;
 pub use scope::{Scope, ScopeTree};
 
