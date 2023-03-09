@@ -1,7 +1,7 @@
 Test262 Summary:
-AST Parsed     : 44000/44009 (99.98%)
-Positive Passed: 44000/44009 (99.98%)
-Negative Passed: 2231/3917 (56.96%)
+AST Parsed     : 43997/44009 (99.97%)
+Positive Passed: 43997/44009 (99.97%)
+Negative Passed: 2505/3917 (63.95%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -130,24 +130,13 @@ Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-ini
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/syntax-error-ident-ref-implements-escaped.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/syntax-error-ident-ref-interface-escaped.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/syntax-error-ident-ref-let-escaped.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/syntax-error-ident-ref-package-escaped.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/syntax-error-ident-ref-private-escaped.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/syntax-error-ident-ref-protected-escaped.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/syntax-error-ident-ref-public-escaped.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/syntax-error-ident-ref-static-escaped.js"
 Expect Syntax Error: "language/expressions/arrow-function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/arrow-function/param-dflt-yield-expr.js"
-Expect Syntax Error: "language/expressions/arrow-function/param-dflt-yield-id-strict.js"
 Expect Syntax Error: "language/expressions/arrow-function/params-duplicate.js"
 Expect Syntax Error: "language/expressions/arrow-function/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/arrow-function/static-init-await-binding.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-identifier-strict-futurereservedword.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-arguments.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-eval.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-yield.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-arguments.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-1.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-2.js"
@@ -161,33 +150,11 @@ Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/ar
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-rest.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-eval.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-yield.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/array-elem-init-yield-ident-invalid.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/array-elem-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/array-elem-nested-obj-yield-ident-invalid.js"
 Expect Syntax Error: "language/expressions/assignment/dstr/array-elem-target-simple-strict.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/array-elem-target-yield-invalid.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/array-rest-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/array-rest-nested-obj-yield-ident-invalid.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/array-rest-yield-ident-invalid.js"
 Expect Syntax Error: "language/expressions/assignment/dstr/obj-id-identifier-yield-expr.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/obj-id-identifier-yield-ident-invalid.js"
 Expect Syntax Error: "language/expressions/assignment/dstr/obj-id-init-simple-strict.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/obj-id-init-yield-ident-invalid.js"
 Expect Syntax Error: "language/expressions/assignment/dstr/obj-id-simple-strict.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/obj-prop-elem-init-yield-ident-invalid.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/obj-prop-elem-target-yield-ident-invalid.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/obj-prop-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/obj-prop-nested-obj-yield-ident-invalid.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/syntax-error-ident-ref-implements-escaped.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/syntax-error-ident-ref-interface-escaped.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/syntax-error-ident-ref-let-escaped.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/syntax-error-ident-ref-package-escaped.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/syntax-error-ident-ref-private-escaped.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/syntax-error-ident-ref-protected-escaped.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/syntax-error-ident-ref-public-escaped.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/syntax-error-ident-ref-static-escaped.js"
 Expect Syntax Error: "language/expressions/assignment/id-arguments-strict.js"
 Expect Syntax Error: "language/expressions/assignment/id-eval-strict.js"
 Expect Syntax Error: "language/expressions/assignmenttargettype/direct-identifierreference-arguments-strict.js"
@@ -271,8 +238,6 @@ Expect Syntax Error: "language/expressions/async-generator/early-errors-expressi
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-super-call.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-yield-expr.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-yield.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-yield-as-function-binding-identifier.js"
 Expect Syntax Error: "language/expressions/async-generator/named-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/named-await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/async-generator/named-await-as-binding-identifier.js"
@@ -280,20 +245,8 @@ Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-dup
 Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-generator/named-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/named-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/named-yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/async-generator/named-yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/async-generator/named-yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/async-generator/named-yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/async-generator/named-yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/async-generator/named-yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/async-generator/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/async-generator/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/async-generator/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/async-generator/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/async-generator/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/async-generator/yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/await/await-BindingIdentifier-nested.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/await-as-binding-identifier-escaped.js"
@@ -302,12 +255,6 @@ Expect Syntax Error: "language/expressions/class/async-gen-method-static/dflt-pa
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/await-as-binding-identifier.js"
@@ -315,12 +262,6 @@ Expect Syntax Error: "language/expressions/class/async-gen-method/dflt-params-du
 Expect Syntax Error: "language/expressions/class/async-gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/await-as-binding-identifier.js"
@@ -335,14 +276,6 @@ Expect Syntax Error: "language/expressions/class/async-method/dflt-params-duplic
 Expect Syntax Error: "language/expressions/class/async-method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/class-name-ident-await-escaped-module.js"
-Expect Syntax Error: "language/expressions/class/class-name-ident-await-module.js"
-Expect Syntax Error: "language/expressions/class/class-name-ident-let-escaped.js"
-Expect Syntax Error: "language/expressions/class/class-name-ident-let.js"
-Expect Syntax Error: "language/expressions/class/class-name-ident-static-escaped.js"
-Expect Syntax Error: "language/expressions/class/class-name-ident-static.js"
-Expect Syntax Error: "language/expressions/class/class-name-ident-yield-escaped.js"
-Expect Syntax Error: "language/expressions/class/class-name-ident-yield.js"
 Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -419,20 +352,8 @@ Expect Syntax Error: "language/expressions/class/elements/arrow-fnc-init-err-con
 Expect Syntax Error: "language/expressions/class/elements/arrow-fnc-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/elements/async-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
@@ -441,18 +362,6 @@ Expect Syntax Error: "language/expressions/class/elements/comp-name-init-err-con
 Expect Syntax Error: "language/expressions/class/elements/comp-name-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/elements/equality-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/equality-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method-static/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method-static/yield-identifier-strict.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/class/elements/gen-private-method/yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/class/elements/literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/literal-name-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-arrow-fnc-init-err-contains-arguments.js"
@@ -565,24 +474,11 @@ Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-d
 Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/class/gen-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/gen-method/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/class/gen-method/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/class/gen-method/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/class/gen-method/yield-identifier-strict.js"
-Expect Syntax Error: "language/expressions/class/method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/class/method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/method-static/dflt-params-rest.js"
@@ -595,7 +491,6 @@ Expect Syntax Error: "language/expressions/class/method/object-destructuring-par
 Expect Syntax Error: "language/expressions/class/method/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/static-gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/class/static-init-await-binding.js"
-Expect Syntax Error: "language/expressions/class/static-method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/coalesce/cannot-chain-head-with-logical-and.js"
 Expect Syntax Error: "language/expressions/coalesce/cannot-chain-head-with-logical-or.js"
 Expect Syntax Error: "language/expressions/coalesce/cannot-chain-tail-with-logical-and.js"
@@ -625,7 +520,6 @@ Expect Syntax Error: "language/expressions/compound-assignment/xor-arguments-str
 Expect Syntax Error: "language/expressions/compound-assignment/xor-eval-strict.js"
 Expect Syntax Error: "language/expressions/delete/identifier-strict-recursive.js"
 Expect Syntax Error: "language/expressions/delete/identifier-strict.js"
-Expect Syntax Error: "language/expressions/dynamic-import/2nd-param-yield-ident-invalid.js"
 Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-bitnot-unary-expression-base.js"
 Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-delete-unary-expression-base.js"
 Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-logical-not-unary-expression-base.js"
@@ -651,7 +545,6 @@ Expect Syntax Error: "language/expressions/function/name-arguments-strict.js"
 Expect Syntax Error: "language/expressions/function/name-eval-strict-body.js"
 Expect Syntax Error: "language/expressions/function/name-eval-strict.js"
 Expect Syntax Error: "language/expressions/function/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/function/param-dflt-yield-strict.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-1.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-2.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-3.js"
@@ -670,27 +563,12 @@ Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-ob
 Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/generators/named-yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/generators/named-yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/generators/named-yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/generators/named-yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/generators/named-yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/generators/named-yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/generators/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/generators/param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/generators/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/generators/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/generators/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/generators/yield-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
-Expect Syntax Error: "language/expressions/generators/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/generators/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/generators/yield-as-parameter.js"
-Expect Syntax Error: "language/expressions/generators/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/generators/yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/import.meta/syntax/goal-script.js"
-Expect Syntax Error: "language/expressions/in/private-field-rhs-yield-absent.js"
-Expect Syntax Error: "language/expressions/in/rhs-yield-absent-strict.js"
 Expect Syntax Error: "language/expressions/logical-assignment/lgcl-and-arguments-strict.js"
 Expect Syntax Error: "language/expressions/logical-assignment/lgcl-and-eval-strict.js"
 Expect Syntax Error: "language/expressions/logical-assignment/lgcl-nullish-arguments-strict.js"
@@ -719,7 +597,6 @@ Expect Syntax Error: "language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-i
 Expect Syntax Error: "language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/object/getter-body-strict-inside.js"
-Expect Syntax Error: "language/expressions/object/getter-body-strict-outside.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-implements-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-interface-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-let-invalid-strict-mode.js"
@@ -739,12 +616,6 @@ Expect Syntax Error: "language/expressions/object/method-definition/async-gen-me
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-meth-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-meth-dflt-params-rest.js"
@@ -763,12 +634,6 @@ Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dfl
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-yield-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-yield-as-identifier-reference.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-yield-identifier-strict.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-param-id-yield.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-param-init-yield.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-param-redecl-const.js"
@@ -786,9 +651,7 @@ Expect Syntax Error: "language/expressions/object/method-definition/name-super-c
 Expect Syntax Error: "language/expressions/object/method-definition/name-super-call-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/setter-use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/object/method-definition/yield-as-parameter.js"
 Expect Syntax Error: "language/expressions/object/setter-body-strict-inside.js"
-Expect Syntax Error: "language/expressions/object/setter-body-strict-outside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-outside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-inside.js"
@@ -804,24 +667,6 @@ Expect Syntax Error: "language/expressions/prefix-decrement/arguments.js"
 Expect Syntax Error: "language/expressions/prefix-decrement/eval.js"
 Expect Syntax Error: "language/expressions/prefix-increment/arguments.js"
 Expect Syntax Error: "language/expressions/prefix-increment/eval.js"
-Expect Syntax Error: "language/future-reserved-words/implements-strict-escaped.js"
-Expect Syntax Error: "language/future-reserved-words/implements-strict.js"
-Expect Syntax Error: "language/future-reserved-words/interface-strict-escaped.js"
-Expect Syntax Error: "language/future-reserved-words/interface-strict.js"
-Expect Syntax Error: "language/future-reserved-words/let-strict-escaped.js"
-Expect Syntax Error: "language/future-reserved-words/let-strict.js"
-Expect Syntax Error: "language/future-reserved-words/package-strict-escaped.js"
-Expect Syntax Error: "language/future-reserved-words/package-strict.js"
-Expect Syntax Error: "language/future-reserved-words/private-strict-escaped.js"
-Expect Syntax Error: "language/future-reserved-words/private-strict.js"
-Expect Syntax Error: "language/future-reserved-words/protected-strict-escaped.js"
-Expect Syntax Error: "language/future-reserved-words/protected-strict.js"
-Expect Syntax Error: "language/future-reserved-words/public-strict-escaped.js"
-Expect Syntax Error: "language/future-reserved-words/public-strict.js"
-Expect Syntax Error: "language/future-reserved-words/static-strict-escaped.js"
-Expect Syntax Error: "language/future-reserved-words/static-strict.js"
-Expect Syntax Error: "language/future-reserved-words/yield-strict-escaped.js"
-Expect Syntax Error: "language/future-reserved-words/yield-strict.js"
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
 Expect Syntax Error: "language/global-code/new.target-arrow.js"
@@ -831,8 +676,6 @@ Expect Syntax Error: "language/global-code/super-call-arrow.js"
 Expect Syntax Error: "language/global-code/super-call.js"
 Expect Syntax Error: "language/global-code/super-prop-arrow.js"
 Expect Syntax Error: "language/global-code/super-prop.js"
-Expect Syntax Error: "language/global-code/yield-strict.js"
-Expect Syntax Error: "language/identifiers/val-yield-strict.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
 Expect Syntax Error: "language/import/json-invalid.js"
 Expect Syntax Error: "language/import/json-named-bindings.js"
@@ -864,7 +707,6 @@ Expect Syntax Error: "language/module-code/early-import-as-eval.js"
 Expect Syntax Error: "language/module-code/early-import-eval.js"
 Expect Syntax Error: "language/module-code/early-lex-and-var.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
-Expect Syntax Error: "language/module-code/early-strict-mode.js"
 Expect Syntax Error: "language/module-code/export-default-asyncfunction-declaration-binding-exists.js"
 Expect Syntax Error: "language/module-code/export-default-asyncgenerator-declaration-binding-exists.js"
 Expect Syntax Error: "language/module-code/export-default-function-declaration-binding-exists.js"
@@ -958,13 +800,10 @@ Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-while.js"
 Expect Syntax Error: "language/module-code/parse-err-hoist-lex-fun.js"
 Expect Syntax Error: "language/module-code/parse-err-hoist-lex-gen.js"
 Expect Syntax Error: "language/module-code/parse-err-return.js"
-Expect Syntax Error: "language/module-code/parse-err-yield.js"
-Expect Syntax Error: "language/module-code/top-level-await/new-await.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-body.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-body.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js"
-Expect Syntax Error: "language/reserved-words/await-module.js"
 Expect Syntax Error: "language/statements/async-function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-function/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/async-function/await-as-binding-identifier.js"
@@ -997,12 +836,6 @@ Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-res
 Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/async-generator/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-generator/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/async-generator/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/async-generator/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/async-generator/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/async-generator/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/async-generator/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/async-generator/yield-identifier-strict.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/await-as-binding-identifier.js"
@@ -1010,12 +843,6 @@ Expect Syntax Error: "language/statements/class/async-gen-method-static/dflt-par
 Expect Syntax Error: "language/statements/class/async-gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/yield-identifier-strict.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/await-as-binding-identifier.js"
@@ -1023,12 +850,6 @@ Expect Syntax Error: "language/statements/class/async-gen-method/dflt-params-dup
 Expect Syntax Error: "language/statements/class/async-gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/yield-identifier-strict.js"
 Expect Syntax Error: "language/statements/class/async-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/async-method-static/await-as-binding-identifier.js"
@@ -1043,14 +864,6 @@ Expect Syntax Error: "language/statements/class/async-method/dflt-params-duplica
 Expect Syntax Error: "language/statements/class/async-method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/class-name-ident-await-escaped-module.js"
-Expect Syntax Error: "language/statements/class/class-name-ident-await-module.js"
-Expect Syntax Error: "language/statements/class/class-name-ident-let-escaped.js"
-Expect Syntax Error: "language/statements/class/class-name-ident-let.js"
-Expect Syntax Error: "language/statements/class/class-name-ident-static-escaped.js"
-Expect Syntax Error: "language/statements/class/class-name-ident-static.js"
-Expect Syntax Error: "language/statements/class/class-name-ident-yield-escaped.js"
-Expect Syntax Error: "language/statements/class/class-name-ident-yield.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-async-method-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-NSPL-with-USD.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-arguments-in-formal-parameters.js"
@@ -1059,9 +872,6 @@ Expect Syntax Error: "language/statements/class/definition/early-errors-class-me
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-formals-contains-super-call.js"
-Expect Syntax Error: "language/statements/class/definition/methods-gen-yield-as-function-expression-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/definition/methods-gen-yield-as-identifier-in-nested-function.js"
-Expect Syntax Error: "language/statements/class/definition/methods-gen-yield-as-parameter.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -1138,20 +948,8 @@ Expect Syntax Error: "language/statements/class/elements/arrow-fnc-init-err-cont
 Expect Syntax Error: "language/statements/class/elements/arrow-fnc-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/yield-identifier-strict.js"
 Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/yield-identifier-strict.js"
 Expect Syntax Error: "language/statements/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/elements/async-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
@@ -1160,18 +958,6 @@ Expect Syntax Error: "language/statements/class/elements/comp-name-init-err-cont
 Expect Syntax Error: "language/statements/class/elements/comp-name-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/equality-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/equality-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method-static/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method-static/yield-identifier-strict.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/class/elements/gen-private-method/yield-identifier-strict.js"
 Expect Syntax Error: "language/statements/class/elements/literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/literal-name-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/nested-arrow-fnc-init-err-contains-arguments.js"
@@ -1284,24 +1070,11 @@ Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-du
 Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/yield-identifier-strict.js"
 Expect Syntax Error: "language/statements/class/gen-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/gen-method/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/gen-method/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/gen-method/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/class/gen-method/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/class/gen-method/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/class/gen-method/yield-identifier-strict.js"
-Expect Syntax Error: "language/statements/class/method-param-yield.js"
 Expect Syntax Error: "language/statements/class/method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/method-static/dflt-params-rest.js"
@@ -1320,8 +1093,6 @@ Expect Syntax Error: "language/statements/class/static-init-invalid-lex-dup.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-lex-var.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-super-call.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-yield.js"
-Expect Syntax Error: "language/statements/class/static-method-param-yield.js"
 Expect Syntax Error: "language/statements/class/syntax/early-errors/class-definition-evaluation-block-duplicate-binding.js"
 Expect Syntax Error: "language/statements/class/syntax/early-errors/class-definition-evaluation-scriptbody-duplicate-binding.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
@@ -1329,14 +1100,9 @@ Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/const/redeclaration-error-from-within-strict-mode-function-const.js"
 Expect Syntax Error: "language/statements/const/static-init-await-binding-invalid.js"
-Expect Syntax Error: "language/statements/const/syntax/const-declaring-let-split-across-two-lines.js"
 Expect Syntax Error: "language/statements/do-while/decl-fun.js"
 Expect Syntax Error: "language/statements/do-while/labelled-fn-stmt.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-decl-dstr-array-elem-init-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-obj-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-decl-dstr-array-elem-target-simple-strict.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-decl-dstr-array-elem-target-yield-invalid.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-obj.js"
@@ -1383,23 +1149,10 @@ Expect Syntax Error: "language/statements/for-await-of/head-const-init.js"
 Expect Syntax Error: "language/statements/for-await-of/head-let-init.js"
 Expect Syntax Error: "language/statements/for-await-of/head-var-init.js"
 Expect Syntax Error: "language/statements/for-in/decl-fun.js"
-Expect Syntax Error: "language/statements/for-in/dstr/array-elem-init-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-in/dstr/array-elem-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-in/dstr/array-elem-nested-obj-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-in/dstr/array-elem-target-simple-strict.js"
-Expect Syntax Error: "language/statements/for-in/dstr/array-elem-target-yield-invalid.js"
-Expect Syntax Error: "language/statements/for-in/dstr/array-rest-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-in/dstr/array-rest-nested-obj-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-in/dstr/array-rest-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-in/dstr/obj-id-identifier-yield-expr.js"
-Expect Syntax Error: "language/statements/for-in/dstr/obj-id-identifier-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-in/dstr/obj-id-init-simple-strict.js"
-Expect Syntax Error: "language/statements/for-in/dstr/obj-id-init-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-in/dstr/obj-id-simple-strict.js"
-Expect Syntax Error: "language/statements/for-in/dstr/obj-prop-elem-init-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-in/dstr/obj-prop-elem-target-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-in/dstr/obj-prop-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-in/dstr/obj-prop-nested-obj-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-in/head-const-bound-names-dup.js"
 Expect Syntax Error: "language/statements/for-in/head-const-bound-names-in-stmt.js"
 Expect Syntax Error: "language/statements/for-in/head-const-bound-names-let.js"
@@ -1417,14 +1170,7 @@ Expect Syntax Error: "language/statements/for-in/var-arguments-strict.js"
 Expect Syntax Error: "language/statements/for-in/var-eval-strict-init.js"
 Expect Syntax Error: "language/statements/for-in/var-eval-strict.js"
 Expect Syntax Error: "language/statements/for-of/decl-fun.js"
-Expect Syntax Error: "language/statements/for-of/dstr/array-elem-init-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-of/dstr/array-elem-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-of/dstr/array-elem-nested-obj-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-of/dstr/array-elem-target-simple-strict.js"
-Expect Syntax Error: "language/statements/for-of/dstr/array-elem-target-yield-invalid.js"
-Expect Syntax Error: "language/statements/for-of/dstr/array-rest-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-of/dstr/array-rest-nested-obj-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-of/dstr/array-rest-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js"
@@ -1436,14 +1182,8 @@ Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-id.
 Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/for-of/dstr/let-obj-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/obj-id-identifier-yield-expr.js"
-Expect Syntax Error: "language/statements/for-of/dstr/obj-id-identifier-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-of/dstr/obj-id-init-simple-strict.js"
-Expect Syntax Error: "language/statements/for-of/dstr/obj-id-init-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-of/dstr/obj-id-simple-strict.js"
-Expect Syntax Error: "language/statements/for-of/dstr/obj-prop-elem-init-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-of/dstr/obj-prop-elem-target-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-of/dstr/obj-prop-nested-array-yield-ident-invalid.js"
-Expect Syntax Error: "language/statements/for-of/dstr/obj-prop-nested-obj-yield-ident-invalid.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js"
@@ -1507,7 +1247,6 @@ Expect Syntax Error: "language/statements/function/name-eval-strict.js"
 Expect Syntax Error: "language/statements/function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/function/param-arguments-strict-body.js"
 Expect Syntax Error: "language/statements/function/param-arguments-strict.js"
-Expect Syntax Error: "language/statements/function/param-dflt-yield-strict.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-1.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-2.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-3.js"
@@ -1532,13 +1271,6 @@ Expect Syntax Error: "language/statements/generators/object-destructuring-param-
 Expect Syntax Error: "language/statements/generators/param-dflt-yield.js"
 Expect Syntax Error: "language/statements/generators/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/generators/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/statements/generators/yield-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/generators/yield-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/generators/yield-as-identifier-reference-escaped.js"
-Expect Syntax Error: "language/statements/generators/yield-as-identifier-reference.js"
-Expect Syntax Error: "language/statements/generators/yield-as-parameter.js"
-Expect Syntax Error: "language/statements/generators/yield-identifier-spread-strict.js"
-Expect Syntax Error: "language/statements/generators/yield-identifier-strict.js"
 Expect Syntax Error: "language/statements/if/if-decl-else-decl-strict.js"
 Expect Syntax Error: "language/statements/if/if-decl-else-stmt-strict.js"
 Expect Syntax Error: "language/statements/if/if-decl-no-else-strict.js"
@@ -1551,17 +1283,11 @@ Expect Syntax Error: "language/statements/if/labelled-fn-stmt-first.js"
 Expect Syntax Error: "language/statements/if/labelled-fn-stmt-lone.js"
 Expect Syntax Error: "language/statements/if/labelled-fn-stmt-second.js"
 Expect Syntax Error: "language/statements/labeled/decl-fun-strict.js"
-Expect Syntax Error: "language/statements/labeled/value-yield-strict-escaped.js"
-Expect Syntax Error: "language/statements/labeled/value-yield-strict.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/let/redeclaration-error-from-within-strict-mode-function.js"
 Expect Syntax Error: "language/statements/let/static-init-await-binding-invalid.js"
-Expect Syntax Error: "language/statements/let/syntax/identifier-let-allowed-as-lefthandside-expression-strict.js"
-Expect Syntax Error: "language/statements/let/syntax/identifier-let-disallowed-as-boundname.js"
-Expect Syntax Error: "language/statements/let/syntax/let-let-declaration-split-across-two-lines.js"
-Expect Syntax Error: "language/statements/let/syntax/let-let-declaration-with-initializer-split-across-two-lines.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T1.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T10.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T2.js"
@@ -1765,6 +1491,30 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  45 │     @#$
     ·      ──
  46 │     @#_
+    ╰────
+Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js"
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js:44:1]
+ 44 │ 
+ 45 │ @yield() class C {}
+    ·  ─────
+    ╰────
+Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js"
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js:33:1]
+ 33 │ 
+ 34 │ @yield class C {}
+    ·  ─────
+    ╰────
+Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js"
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js:51:1]
+ 51 │ 
+ 52 │ @(yield) class C {}
+    ·   ─────
     ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -2602,6 +2352,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                    ─
     ╰────
 
+  × The keyword '"implements"' is reserved
+    ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-implements-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = ({ \u0069mplements }) => {};
+    ·            ───────────────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-import-escaped.js:39:1]
  39 │ 
@@ -2623,6 +2380,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                            ─
     ╰────
 
+  × The keyword '"interface"' is reserved
+    ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-interface-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = ({ interf\u0061ce }) => {};
+    ·            ──────────────
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-let-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = ({ l\u0065t }) => {};
+    ·            ────────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-new-escaped.js:39:1]
  39 │ 
@@ -2630,11 +2401,46 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                     ─
     ╰────
 
+  × The keyword '"package"' is reserved
+    ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-package-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = ({ p\u0061ckage }) => {};
+    ·            ────────────
+    ╰────
+
+  × The keyword '"private"' is reserved
+    ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-private-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = ({ privat\u0065 }) => {};
+    ·            ────────────
+    ╰────
+
+  × The keyword '"protected"' is reserved
+    ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-protected-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = ({ prot\u0065cted }) => {};
+    ·            ──────────────
+    ╰────
+
+  × The keyword '"public"' is reserved
+    ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-public-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = ({ pu\u0062lic }) => {};
+    ·            ───────────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-return-escaped.js:39:1]
  39 │ 
  40 │ var x = ({ r\u0065turn }) => {};
     ·                        ─
+    ╰────
+
+  × The keyword '"static"' is reserved
+    ╭─[language/expressions/arrow-function/dstr/syntax-error-ident-ref-static-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = ({ st\u0061tic }) => {};
+    ·            ───────────
     ╰────
 
   × Unexpected token
@@ -2707,6 +2513,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                      ─
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/arrow-function/param-dflt-yield-id-strict.js:20:1]
+ 20 │ 
+ 21 │ (x = yield) => {};
+    ·      ─────
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:53:1]
  53 │ 
@@ -2731,6 +2544,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·          ────
     ╰────
 
+  × The keyword '"package"' is reserved
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-identifier-strict-futurereservedword.js:26:1]
+ 26 │ $DONOTEVALUATE();
+ 27 │ var af = package => 1;
+    ·          ───────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-identifier.js:23:1]
  23 │ $DONOTEVALUATE();
@@ -2738,11 +2558,25 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·          ──────
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-yield.js:19:1]
+ 19 │ $DONOTEVALUATE();
+ 20 │ var af = yield => 1;
+    ·          ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-rest.js:15:1]
  15 │ $DONOTEVALUATE();
  16 │ var af = ...x => x;
     ·          ───
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-yield.js:18:1]
+ 18 │ $DONOTEVALUATE();
+ 19 │ var af = (yield) => 1;
+    ·           ─────
     ╰────
 
   × Unexpected token
@@ -2767,12 +2601,26 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·  ╰── Line terminator not permitted before arrow
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/array-elem-init-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, [ x = yield ] = [];
+    ·          ─────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/assignment/dstr/array-elem-nested-array-invalid.js:22:1]
  22 │ 
  23 │ 0, [[(x, y)]] = [[]];
     ·       ──┬─
     ·         ╰── Cannot assign to this expression
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/array-elem-nested-array-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, [[x[yield]]] = [[]];
+    ·        ─────
     ╰────
 
   × Invalid assignment
@@ -2791,6 +2639,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·              ╰── Cannot assign to this expression
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/array-elem-nested-obj-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, [{ x = yield }] = [{}];
+    ·           ─────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/assignment/dstr/array-elem-put-obj-literal-optchain-prop-ref-init.js:54:1]
  54 │     
@@ -2800,6 +2655,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  58 │ │     }
  59 │ ├─▶ }?.y = 42] = [23];
     · ╰──── Cannot assign to this expression
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/array-elem-target-yield-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, [ x[yield] ] = [];
+    ·        ─────
     ╰────
 
   × Spread must be last element
@@ -2850,12 +2712,54 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·            ╰── Cannot assign to this expression
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/array-rest-nested-array-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, [...[x[yield]]] = [];
+    ·           ─────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/assignment/dstr/array-rest-nested-obj-invalid.js:22:1]
  22 │ 
  23 │ 0, [...{ get x() {} }] = [[]];
     ·               ──┬──
     ·                 ╰── Cannot assign to this expression
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/array-rest-nested-obj-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, [...{ x = yield }] = [{}];
+    ·              ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/array-rest-yield-ident-invalid.js:23:1]
+ 23 │ 
+ 24 │ 0, [...x[yield]] = [];
+    ·          ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/obj-id-identifier-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, { yield } = {};
+    ·      ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/obj-id-init-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, { x = yield } = {};
+    ·          ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/obj-prop-elem-init-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, { x: x = yield } = {};
+    ·             ─────
     ╰────
 
   × Invalid assignment
@@ -2877,6 +2781,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     · ╰──── Cannot assign to this expression
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/obj-prop-elem-target-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, { x: x[yield] } = {};
+    ·           ─────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/assignment/dstr/obj-prop-nested-array-invalid.js:22:1]
  22 │ 
@@ -2885,12 +2796,26 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·             ╰── Cannot assign to this expression
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/obj-prop-nested-array-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, { x: [x = yield] } = { x: [] };
+    ·              ─────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/assignment/dstr/obj-prop-nested-obj-invalid.js:22:1]
  22 │ 
  23 │ 0, { x: { get x() {} } } = { x: {} };
     ·                ──┬──
     ·                  ╰── Cannot assign to this expression
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/assignment/dstr/obj-prop-nested-obj-yield-ident-invalid.js:22:1]
+ 22 │ 
+ 23 │ 0, { x: { x = yield } } = { x: {} };
+    ·               ─────
     ╰────
 
   × Spread must be last element
@@ -3056,6 +2981,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                   ─
     ╰────
 
+  × The keyword '"implements"' is reserved
+    ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-implements-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = { \u0069mplements } = { implements: 42 };
+    ·           ───────────────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-import-escaped.js:39:1]
  39 │ 
@@ -3077,6 +3009,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                           ─
     ╰────
 
+  × The keyword '"interface"' is reserved
+    ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-interface-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = { interf\u0061ce } = { interface: 42 };
+    ·           ──────────────
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-let-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = { l\u0065t } = { let: 42 };
+    ·           ────────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-new-escaped.js:39:1]
  39 │ 
@@ -3084,11 +3030,46 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                    ─
     ╰────
 
+  × The keyword '"package"' is reserved
+    ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-package-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = { p\u0061ckage } = { package: 42 };
+    ·           ────────────
+    ╰────
+
+  × The keyword '"private"' is reserved
+    ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-private-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = { privat\u0065 } = { private: 42 };
+    ·           ────────────
+    ╰────
+
+  × The keyword '"protected"' is reserved
+    ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-protected-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = { prot\u0065cted } = { protected: 42 };
+    ·           ──────────────
+    ╰────
+
+  × The keyword '"public"' is reserved
+    ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-public-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = { pu\u0062lic } = { public: 42 };
+    ·           ───────────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-return-escaped.js:39:1]
  39 │ 
  40 │ var x = { r\u0065turn } = { return: 42 };
     ·                       ─
+    ╰────
+
+  × The keyword '"static"' is reserved
+    ╭─[language/expressions/assignment/dstr/syntax-error-ident-ref-static-escaped.js:39:1]
+ 39 │ 
+ 40 │ var x = { st\u0061tic } = { static: 42 };
+    ·           ───────────
     ╰────
 
   × Unexpected token
@@ -6008,6 +5989,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  34 │   
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-yield.js:17:1]
+ 17 │ 
+ 18 │ (async function*(yield) { });
+    ·                  ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/async-generator/early-errors-expression-label-name-await.js:22:1]
  22 │ (async function*() {
@@ -6032,6 +6020,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  17 │ (async function*() { } = 1);
     ·  ──────────┬──────────
     ·            ╰── Cannot assign to this expression
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/early-errors-expression-yield-as-function-binding-identifier.js:16:1]
+ 16 │ 
+ 17 │ (async function* yield() { });
+    ·                  ─────
     ╰────
 
   × Unexpected token
@@ -6109,6 +6104,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  37 │   
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/named-yield-as-binding-identifier-escaped.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   var yi\u0065ld;
+    ·       ──────────
+ 31 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/named-yield-as-binding-identifier.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   var yield;
+    ·       ─────
+ 31 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/named-yield-as-identifier-reference-escaped.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   void yi\u0065ld;
+    ·        ──────────
+ 31 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/named-yield-as-identifier-reference.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   void yield;
+    ·        ─────
+ 31 │ };
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/async-generator/named-yield-as-label-identifier-escaped.js:29:1]
  29 │ var gen = async function *g() {
@@ -6138,6 +6165,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/named-yield-identifier-spread-strict.js:35:1]
+ 35 │        ...(function() {
+ 36 │           var yield;
+    ·               ─────
+ 37 │           throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/named-yield-identifier-strict.js:27:1]
+ 27 │   (function() {
+ 28 │       var yield;
+    ·           ─────
+ 29 │       throw new Test262Error();
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/async-generator/rest-params-trailing-comma-early-error.js:35:1]
  35 │ 
@@ -6145,6 +6188,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                    ──┬─
     ·                      ╰── Rest element must be last element
  37 │   
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/yield-as-binding-identifier-escaped.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   var yi\u0065ld;
+    ·       ──────────
+ 31 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/yield-as-binding-identifier.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   var yield;
+    ·       ─────
+ 31 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/yield-as-identifier-reference-escaped.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   void yi\u0065ld;
+    ·        ──────────
+ 31 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/yield-as-identifier-reference.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   void yield;
+    ·        ─────
+ 31 │ };
     ╰────
 
   × Keywords cannot contain escape characters
@@ -6175,6 +6250,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  31 │ };
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/yield-identifier-spread-strict.js:35:1]
+ 35 │        ...(function() {
+ 36 │           var yield;
+    ·               ─────
+ 37 │           throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/async-generator/yield-identifier-strict.js:27:1]
+ 27 │   (function() {
+ 28 │       var yield;
+    ·           ─────
+ 29 │       throw new Test262Error();
+    ╰────
 
   × Invalid assignment
     ╭─[language/expressions/await/early-errors-await-not-simple-assignment-target.js:16:1]
@@ -6259,6 +6350,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  61 │     
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
  34 │ var C = class { static async *gen() {
@@ -6287,6 +6410,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }};
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-identifier-spread-strict.js:40:1]
+ 40 │          ...(function() {
+ 41 │             var yield;
+    ·                 ─────
+ 42 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-identifier-strict.js:32:1]
+ 32 │     (function() {
+ 33 │         var yield;
+    ·             ─────
+ 34 │         throw new Test262Error();
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/async-gen-method/await-as-identifier-reference-escaped.js:34:1]
@@ -6347,6 +6486,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  61 │     
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/async-gen-method/yield-as-label-identifier-escaped.js:34:1]
  34 │ var C = class { async *gen() {
@@ -6375,6 +6546,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }};
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method/yield-identifier-spread-strict.js:40:1]
+ 40 │          ...(function() {
+ 41 │             var yield;
+    ·                 ─────
+ 42 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/async-gen-method/yield-identifier-strict.js:32:1]
+ 32 │     (function() {
+ 33 │         var yield;
+    ·             ─────
+ 34 │         throw new Test262Error();
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
@@ -6492,6 +6679,62 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                       ──┬─
     ·                         ╰── Rest element must be last element
  58 │     
+    ╰────
+
+  × The keyword '"await"' is reserved
+    ╭─[language/expressions/class/class-name-ident-await-escaped-module.js:22:1]
+ 22 │ 
+ 23 │ var C = class aw\u0061it {};
+    ·               ──────────
+    ╰────
+
+  × The keyword '"await"' is reserved
+    ╭─[language/expressions/class/class-name-ident-await-module.js:21:1]
+ 21 │ 
+ 22 │ var C = class await {};
+    ·               ─────
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/expressions/class/class-name-ident-let-escaped.js:26:1]
+ 26 │ 
+ 27 │ var C = class l\u0065t {};
+    ·               ────────
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/expressions/class/class-name-ident-let.js:26:1]
+ 26 │ 
+ 27 │ var C = class let {};
+    ·               ───
+    ╰────
+
+  × The keyword '"static"' is reserved
+    ╭─[language/expressions/class/class-name-ident-static-escaped.js:26:1]
+ 26 │ 
+ 27 │ var C = class st\u0061tic {};
+    ·               ───────────
+    ╰────
+
+  × The keyword '"static"' is reserved
+    ╭─[language/expressions/class/class-name-ident-static.js:26:1]
+ 26 │ 
+ 27 │ var C = class static {};
+    ·               ──────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/class-name-ident-yield-escaped.js:26:1]
+ 26 │ 
+ 27 │ var C = class yi\u0065ld {};
+    ·               ──────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/class-name-ident-yield.js:24:1]
+ 24 │ 
+ 25 │ var C = class yield {};
+    ·               ─────
     ╰────
 
   × Rest element must be last element
@@ -7192,6 +7435,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }};
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
  34 │ var C = class { static async *#gen() {
@@ -7220,6 +7495,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }};
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js:41:1]
+ 41 │              ...(function() {
+ 42 │                 var yield;
+    ·                     ─────
+ 43 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-identifier-strict.js:33:1]
+ 33 │         (function() {
+ 34 │             var yield;
+    ·                 ─────
+ 35 │             throw new Test262Error();
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/async-gen-private-method/await-as-identifier-reference-escaped.js:34:1]
@@ -7271,6 +7562,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }};
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-label-identifier-escaped.js:34:1]
  34 │ var C = class { async *#gen() {
@@ -7299,6 +7622,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }};
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-identifier-spread-strict.js:41:1]
+ 41 │              ...(function() {
+ 42 │                 var yield;
+    ·                     ─────
+ 43 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-identifier-strict.js:33:1]
+ 33 │         (function() {
+ 34 │             var yield;
+    ·                 ─────
+ 35 │             throw new Test262Error();
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
@@ -7506,6 +7845,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  30 │ };
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
  33 │ var C = class { static *#gen() {
@@ -7535,6 +7906,54 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-identifier-spread-strict.js:40:1]
+ 40 │              ...(function() {
+ 41 │                 var yield;
+    ·                     ─────
+ 42 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-identifier-strict.js:32:1]
+ 32 │         (function() {
+ 33 │             var yield;
+    ·                 ─────
+ 34 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class {*#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class {*#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class {*#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class {*#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/gen-private-method/yield-as-label-identifier-escaped.js:33:1]
  33 │ var C = class {*#gen() {
@@ -7563,6 +7982,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  35 │ }};
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method/yield-identifier-spread-strict.js:40:1]
+ 40 │              ...(function() {
+ 41 │                 var yield;
+    ·                     ─────
+ 42 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method/yield-identifier-strict.js:32:1]
+ 32 │         (function() {
+ 33 │             var yield;
+    ·                 ─────
+ 34 │             throw new Test262Error();
+    ╰────
 
   × Automatic Semicolon Insertion
     ╭─[language/expressions/class/elements/nested-equality-init-err-contains-arguments.js:31:1]
@@ -9170,6 +9605,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  82 │     
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class { static *gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class { static *gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class { static *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class { static *gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/gen-method-static/yield-as-label-identifier-escaped.js:33:1]
  33 │ var C = class { static *gen() {
@@ -9199,6 +9666,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method-static/yield-identifier-spread-strict.js:39:1]
+ 39 │          ...(function() {
+ 40 │             var yield;
+    ·                 ─────
+ 41 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method-static/yield-identifier-strict.js:31:1]
+ 31 │     (function() {
+ 32 │         var yield;
+    ·             ─────
+ 33 │         throw new Test262Error();
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:80:1]
  80 │ 0, class {
@@ -9206,6 +9689,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·           ──┬─
     ·             ╰── Rest element must be last element
  82 │     
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
     ╰────
 
   × Keywords cannot contain escape characters
@@ -9237,12 +9752,36 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method/yield-identifier-spread-strict.js:39:1]
+ 39 │          ...(function() {
+ 40 │             var yield;
+    ·                 ─────
+ 41 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/gen-method/yield-identifier-strict.js:31:1]
+ 31 │     (function() {
+ 32 │         var yield;
+    ·             ─────
+ 33 │         throw new Test262Error();
+    ╰────
+
   × A 'get' accessor must not have any formal parameters.
     ╭─[language/expressions/class/getter-param-dflt.js:22:1]
  22 │ 
  23 │ 0, class { get a(param = null) {} };
     ·                 ───────┬──────
     ·                        ╰── A 'get' accessor must not have any formal parameters.
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/method-param-dflt-yield.js:20:1]
+ 20 │ 0, class {
+ 21 │   m(x = yield) {}
+    ·         ─────
+ 22 │ };
     ╰────
 
   × Rest element must be last element
@@ -9261,6 +9800,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·          ──┬─
     ·            ╰── Rest element must be last element
  77 │     
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/class/static-method-param-dflt-yield.js:20:1]
+ 20 │ 0, class {
+ 21 │   static m(x = yield) {}
+    ·                ─────
+ 22 │ };
     ╰────
 
   × Invalid assignment
@@ -9363,6 +9910,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  21 │ 
  22 │ for ('' in {} ? 0 : 0; false; ) ;
     ·      ──
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/dynamic-import/2nd-param-yield-ident-invalid.js:18:1]
+ 18 │ 
+ 19 │ import('./empty_FIXTURE.js', yield);
+    ·                              ─────
     ╰────
 
   × Keywords cannot contain escape characters
@@ -10287,6 +10841,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                            ──
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/function/param-dflt-yield-strict.js:21:1]
+ 21 │ function *g() {
+ 22 │   0, function(x = yield) {
+    ·                   ─────
+ 23 │     paramValue = x;
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/function/rest-params-trailing-comma-early-error.js:54:1]
  54 │ 
@@ -10350,6 +10912,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  54 │   
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/named-yield-as-binding-identifier-escaped.js:27:1]
+ 27 │ var gen = function *g() {
+ 28 │   var yi\u0065ld;
+    ·       ──────────
+ 29 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/named-yield-as-binding-identifier.js:27:1]
+ 27 │ var gen = function *g() {
+ 28 │   var yield;
+    ·       ─────
+ 29 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/named-yield-as-identifier-reference-escaped.js:27:1]
+ 27 │ var gen = function *g() {
+ 28 │   void yi\u0065ld;
+    ·        ──────────
+ 29 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/named-yield-as-identifier-reference.js:27:1]
+ 27 │ var gen = function *g() {
+ 28 │   void yield;
+    ·        ─────
+ 29 │ };
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/generators/named-yield-as-label-identifier-escaped.js:27:1]
  27 │ var gen = function *g() {
@@ -10379,6 +10973,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/named-yield-identifier-spread-strict.js:33:1]
+ 33 │        ...(function() {
+ 34 │           var yield;
+    ·               ─────
+ 35 │           throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/named-yield-identifier-strict.js:25:1]
+ 25 │   (function() {
+ 26 │       var yield;
+    ·           ─────
+ 27 │       throw new Test262Error();
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/generators/rest-params-trailing-comma-early-error.js:56:1]
  56 │ 
@@ -10386,6 +10996,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·              ──┬─
     ·                ╰── Rest element must be last element
  58 │   
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/yield-as-binding-identifier-escaped.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   var yi\u0065ld;
+    ·       ──────────
+ 29 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/yield-as-binding-identifier.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   var yield;
+    ·       ─────
+ 29 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/yield-as-identifier-reference-escaped.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   void yi\u0065ld;
+    ·        ──────────
+ 29 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/yield-as-identifier-reference.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   void yield;
+    ·        ─────
+ 29 │ };
     ╰────
 
   × Keywords cannot contain escape characters
@@ -10423,6 +11065,29 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  18 │   yield ? yield : yield;
     ·         ─
  19 │ };
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/yield-as-parameter.js:16:1]
+ 16 │ 
+ 17 │ var g = function*(yield) {};
+    ·                   ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/yield-identifier-spread-strict.js:33:1]
+ 33 │        ...(function() {
+ 34 │           var yield;
+    ·               ─────
+ 35 │           throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/generators/yield-identifier-strict.js:25:1]
+ 25 │   (function() {
+ 26 │       var yield;
+    ·           ─────
+ 27 │       throw new Test262Error();
     ╰────
 
   × Unexpected token
@@ -10594,6 +11259,21 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  25 │   }
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/in/private-field-rhs-yield-absent.js:30:1]
+ 30 │   static method() {
+ 31 │     #field in yield;
+    ·               ─────
+ 32 │   }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/in/rhs-yield-absent-strict.js:19:1]
+ 19 │ 
+ 20 │ '' in (yield);
+    ·        ─────
+    ╰────
 
   × Invalid assignment
     ╭─[language/expressions/logical-assignment/lgcl-and-assignment-operator-non-simple-lhs.js:18:1]
@@ -10823,6 +11503,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  56 │     
     ╰────
 
+  × The keyword '"public"' is reserved
+    ╭─[language/expressions/object/getter-body-strict-outside.js:17:1]
+ 17 │   get x() {
+ 18 │     public = 42;
+    ·     ──────
+ 19 │   }
+    ╰────
+
   × A 'get' accessor must not have any formal parameters.
     ╭─[language/expressions/object/getter-param-dflt.js:22:1]
  22 │ 
@@ -10963,6 +11651,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  42 │     
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier-escaped.js:28:1]
+ 28 │   async *method() {
+ 29 │     var yi\u0065ld;
+    ·         ──────────
+ 30 │   }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier.js:28:1]
+ 28 │   async *method() {
+ 29 │     var yield;
+    ·         ─────
+ 30 │   }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-identifier-reference-escaped.js:28:1]
+ 28 │   async *method() {
+ 29 │     void yi\u0065ld;
+    ·          ──────────
+ 30 │   }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-identifier-reference.js:28:1]
+ 28 │   async *method() {
+ 29 │     void yield;
+    ·          ─────
+ 30 │   }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/object/method-definition/async-gen-yield-as-label-identifier-escaped.js:28:1]
  28 │   async *method() {
@@ -10991,6 +11711,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  30 │   }
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/async-gen-yield-identifier-spread-strict.js:34:1]
+ 34 │          ...(function() {
+ 35 │             var yield;
+    ·                 ─────
+ 36 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/async-gen-yield-identifier-strict.js:26:1]
+ 26 │     (function() {
+ 27 │         var yield;
+    ·             ─────
+ 28 │         throw new Test262Error();
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/expressions/object/method-definition/async-meth-escaped-async.js:24:1]
@@ -11117,6 +11853,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  64 │     
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier-escaped.js:28:1]
+ 28 │   *method() {
+ 29 │     var yi\u0065ld;
+    ·         ──────────
+ 30 │   }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier.js:28:1]
+ 28 │   *method() {
+ 29 │     var yield;
+    ·         ─────
+ 30 │   }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/gen-yield-as-identifier-reference-escaped.js:28:1]
+ 28 │   *method() {
+ 29 │     void yi\u0065ld;
+    ·          ──────────
+ 30 │   }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/gen-yield-as-identifier-reference.js:28:1]
+ 28 │   *method() {
+ 29 │     void yield;
+    ·          ─────
+ 30 │   }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/object/method-definition/gen-yield-as-label-identifier-escaped.js:28:1]
  28 │   *method() {
@@ -11145,6 +11913,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  30 │   }
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/gen-yield-identifier-spread-strict.js:34:1]
+ 34 │          ...(function() {
+ 35 │             var yield;
+    ·                 ─────
+ 36 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/gen-yield-identifier-strict.js:26:1]
+ 26 │     (function() {
+ 27 │         var yield;
+    ·             ─────
+ 28 │         throw new Test262Error();
+    ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:57:1]
@@ -11259,6 +12043,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  19 │   }
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/expressions/object/method-definition/yield-as-parameter.js:17:1]
+ 17 │ var obj = {
+ 18 │   *g(yield) {}
+    ·      ─────
+ 19 │ };
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/object/method-definition/yield-star-after-newline.js:18:1]
  18 │     yield
@@ -11291,6 +12083,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  21 │ ({* foo});
     ·        ┬
     ·        ╰── Expect `(` here, but found `}`
+    ╰────
+
+  × The keyword '"public"' is reserved
+    ╭─[language/expressions/object/setter-body-strict-outside.js:17:1]
+ 17 │   set x(value) {
+ 18 │     public = 42;
+    ·     ──────
+ 19 │   }
     ╰────
 
   × Tagged template expressions are not permitted in an optional chain
@@ -11760,6 +12560,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·     ───────
     ╰────
 
+  × The keyword '"implements"' is reserved
+    ╭─[language/future-reserved-words/implements-strict-escaped.js:23:1]
+ 23 │ 
+ 24 │ var \u0069mplements = 123;
+    ·     ───────────────
+    ╰────
+
+  × The keyword '"implements"' is reserved
+    ╭─[language/future-reserved-words/implements-strict.js:22:1]
+ 22 │ 
+ 23 │ var implements = 1;
+    ·     ──────────
+    ╰────
+
   × Unexpected token
     ╭─[language/future-reserved-words/import.js:19:1]
  19 │ 
@@ -11767,10 +12581,122 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·     ──────
     ╰────
 
+  × The keyword '"interface"' is reserved
+    ╭─[language/future-reserved-words/interface-strict-escaped.js:23:1]
+ 23 │ 
+ 24 │ var inte\u0072face = 123;
+    ·     ──────────────
+    ╰────
+
+  × The keyword '"interface"' is reserved
+    ╭─[language/future-reserved-words/interface-strict.js:22:1]
+ 22 │ 
+ 23 │ var interface = 1;
+    ·     ─────────
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/future-reserved-words/let-strict-escaped.js:23:1]
+ 23 │ 
+ 24 │ var l\u0065t = 123;
+    ·     ────────
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/future-reserved-words/let-strict.js:22:1]
+ 22 │ 
+ 23 │ var let = 1;
+    ·     ───
+    ╰────
+
+  × The keyword '"package"' is reserved
+    ╭─[language/future-reserved-words/package-strict-escaped.js:23:1]
+ 23 │ 
+ 24 │ var packag\u0065 = 123;
+    ·     ────────────
+    ╰────
+
+  × The keyword '"package"' is reserved
+    ╭─[language/future-reserved-words/package-strict.js:22:1]
+ 22 │ 
+ 23 │ var package = 1;
+    ·     ───────
+    ╰────
+
+  × The keyword '"private"' is reserved
+    ╭─[language/future-reserved-words/private-strict-escaped.js:23:1]
+ 23 │ 
+ 24 │ var privat\u0065 = 123;
+    ·     ────────────
+    ╰────
+
+  × The keyword '"private"' is reserved
+    ╭─[language/future-reserved-words/private-strict.js:22:1]
+ 22 │ 
+ 23 │ var private = 1;
+    ·     ───────
+    ╰────
+
+  × The keyword '"protected"' is reserved
+    ╭─[language/future-reserved-words/protected-strict-escaped.js:24:1]
+ 24 │ 
+ 25 │ var \u0070\u0072\u006f\u0074\u0065\u0063\u0074\u0065\u0064 = 123;
+    ·     ──────────────────────────────────────────────────────
+    ╰────
+
+  × The keyword '"protected"' is reserved
+    ╭─[language/future-reserved-words/protected-strict.js:22:1]
+ 22 │ 
+ 23 │ var protected = 1;
+    ·     ─────────
+    ╰────
+
+  × The keyword '"public"' is reserved
+    ╭─[language/future-reserved-words/public-strict-escaped.js:23:1]
+ 23 │ 
+ 24 │ var \u0070\u0075\u0062\u006c\u0069\u0063 = 123;
+    ·     ────────────────────────────────────
+    ╰────
+
+  × The keyword '"public"' is reserved
+    ╭─[language/future-reserved-words/public-strict.js:22:1]
+ 22 │ 
+ 23 │ var public = 1;
+    ·     ──────
+    ╰────
+
+  × The keyword '"static"' is reserved
+    ╭─[language/future-reserved-words/static-strict-escaped.js:23:1]
+ 23 │ 
+ 24 │ var \u0073\u0074\u0061\u0074\u0069\u0063 = 123;
+    ·     ────────────────────────────────────
+    ╰────
+
+  × The keyword '"static"' is reserved
+    ╭─[language/future-reserved-words/static-strict.js:22:1]
+ 22 │ 
+ 23 │ var static = 1;
+    ·     ──────
+    ╰────
+
   × Unexpected token
     ╭─[language/future-reserved-words/super.js:19:1]
  19 │ 
  20 │ var super = 1;
+    ·     ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/future-reserved-words/yield-strict-escaped.js:23:1]
+ 23 │ 
+ 24 │ var \u0079ield = 123;
+    ·     ──────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/future-reserved-words/yield-strict.js:21:1]
+ 21 │ 
+ 22 │ var yield = 1;
     ·     ─────
     ╰────
 
@@ -11800,6 +12726,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  39 │ 
  40 │ this.#x
     ·      ──
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/global-code/yield-strict.js:24:1]
+ 24 │ 
+ 25 │ yield;
+    · ─────
     ╰────
 
   × Unexpected token
@@ -12595,6 +13528,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  14 │ 
  15 │ var with = 123;
     ·     ────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/identifiers/val-yield-strict.js:16:1]
+ 16 │ 
+ 17 │ var yield = 13;
+    ·     ─────
     ╰────
 
   × Invalid Character `'ⸯ'`
@@ -14123,6 +15063,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  24 │ 
     ╰────
 
+  × The keyword '"public"' is reserved
+    ╭─[language/module-code/early-strict-mode.js:14:1]
+ 14 │ 
+ 15 │ var public;
+    ·     ──────
+    ╰────
+
   × 'super' can only be used with function calls or in property accesses
     ╭─[language/module-code/early-super.js:14:1]
  14 │ 
@@ -14336,6 +15283,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     · ╰── Cannot assign to this expression
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/module-code/parse-err-yield.js:31:1]
+ 31 │ 
+ 32 │ yield;
+    · ─────
+    ╰────
+
   × Private identifier '#"f"' is not allowed outside class bodies
     ╭─[language/module-code/private-identifiers-not-empty.js:17:1]
  17 │ var x = {};
@@ -14410,6 +15364,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  17 │ (await 1) = 1;
     ·  ───┬───
     ·     ╰── Cannot assign to this expression
+    ╰────
+
+  × The keyword '"await"' is reserved
+    ╭─[language/module-code/top-level-await/new-await.js:16:1]
+ 16 │ 
+ 17 │ new await;
+    ·     ─────
     ╰────
 
   × Unexpected token
@@ -14575,6 +15536,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"await"' is reserved
+    ╭─[language/reserved-words/await-module.js:14:1]
+ 14 │ 
+ 15 │ var await;
+    ·     ─────
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/reserved-words/ident-reference-false-escaped.js:19:1]
@@ -14936,6 +15904,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  37 │   
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/async-generator/yield-as-binding-identifier-escaped.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   var yi\u0065ld;
+    ·       ──────────
+ 31 │ }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/async-generator/yield-as-binding-identifier.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   var yield;
+    ·       ─────
+ 31 │ }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/async-generator/yield-as-identifier-reference-escaped.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   void yi\u0065ld;
+    ·        ──────────
+ 31 │ }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/async-generator/yield-as-identifier-reference.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   void yield;
+    ·        ─────
+ 31 │ }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/async-generator/yield-as-label-identifier-escaped.js:29:1]
  29 │ async function *gen() {
@@ -14964,6 +15964,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  31 │ }
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/async-generator/yield-identifier-spread-strict.js:35:1]
+ 35 │        ...(function() {
+ 36 │           var yield;
+    ·               ─────
+ 37 │           throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/async-generator/yield-identifier-strict.js:27:1]
+ 27 │   (function() {
+ 28 │       var yield;
+    ·           ─────
+ 29 │       throw new Test262Error();
+    ╰────
 
   × Missing catch or finally clause
     ╭─[language/statements/block/12.1-1.js:13:1]
@@ -15264,6 +16280,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  61 │     
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
  34 │ class C { static async *gen() {
@@ -15292,6 +16340,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }}
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-identifier-spread-strict.js:40:1]
+ 40 │          ...(function() {
+ 41 │             var yield;
+    ·                 ─────
+ 42 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-identifier-strict.js:32:1]
+ 32 │     (function() {
+ 33 │         var yield;
+    ·             ─────
+ 34 │         throw new Test262Error();
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/async-gen-method/await-as-identifier-reference-escaped.js:34:1]
@@ -15352,6 +16416,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  60 │     
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/async-gen-method/yield-as-label-identifier-escaped.js:34:1]
  34 │ class C { async *gen() {
@@ -15380,6 +16476,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }}
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method/yield-identifier-spread-strict.js:40:1]
+ 40 │          ...(function() {
+ 41 │             var yield;
+    ·                 ─────
+ 42 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/async-gen-method/yield-identifier-strict.js:32:1]
+ 32 │     (function() {
+ 33 │         var yield;
+    ·             ─────
+ 34 │         throw new Test262Error();
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/async-meth-escaped-async.js:24:1]
@@ -15508,6 +16620,62 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  58 │     
     ╰────
 
+  × The keyword '"await"' is reserved
+    ╭─[language/statements/class/class-name-ident-await-escaped-module.js:22:1]
+ 22 │ 
+ 23 │ class aw\u0061it {}
+    ·       ──────────
+    ╰────
+
+  × The keyword '"await"' is reserved
+    ╭─[language/statements/class/class-name-ident-await-module.js:21:1]
+ 21 │ 
+ 22 │ class await {}
+    ·       ─────
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/statements/class/class-name-ident-let-escaped.js:26:1]
+ 26 │ 
+ 27 │ class l\u0065t {}
+    ·       ────────
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/statements/class/class-name-ident-let.js:26:1]
+ 26 │ 
+ 27 │ class let {}
+    ·       ───
+    ╰────
+
+  × The keyword '"static"' is reserved
+    ╭─[language/statements/class/class-name-ident-static-escaped.js:26:1]
+ 26 │ 
+ 27 │ class st\u0061tic {}
+    ·       ───────────
+    ╰────
+
+  × The keyword '"static"' is reserved
+    ╭─[language/statements/class/class-name-ident-static.js:26:1]
+ 26 │ 
+ 27 │ class static {}
+    ·       ──────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/class-name-ident-yield-escaped.js:26:1]
+ 26 │ 
+ 27 │ class yi\u0065ld {}
+    ·       ──────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/class-name-ident-yield.js:24:1]
+ 24 │ 
+ 25 │ class yield {}
+    ·       ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/class/definition/early-errors-class-method-await-in-formals-default.js:14:1]
  14 │ class Foo {
@@ -15525,12 +16693,36 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  18 │ }
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/definition/methods-gen-yield-as-function-expression-binding-identifier.js:18:1]
+ 18 │   *g() {
+ 19 │     (function yield() {});
+    ·               ─────
+ 20 │   }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/definition/methods-gen-yield-as-identifier-in-nested-function.js:19:1]
+ 19 │     function h() {
+ 20 │       yield = 1;
+    ·       ─────
+ 21 │     }
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/class/definition/methods-gen-yield-as-logical-or-expression.js:17:1]
  17 │   *g() {
  18 │     yield ? yield : yield;
     ·           ─
  19 │   }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/definition/methods-gen-yield-as-parameter.js:17:1]
+ 17 │ class A {
+ 18 │   *g(yield) {}
+    ·      ─────
+ 19 │ }
     ╰────
 
   × Unexpected token
@@ -16249,6 +17441,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }}
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
  34 │ class C { static async *#gen() {
@@ -16277,6 +17501,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }}
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js:41:1]
+ 41 │              ...(function() {
+ 42 │                 var yield;
+    ·                     ─────
+ 43 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-identifier-strict.js:33:1]
+ 33 │         (function() {
+ 34 │             var yield;
+    ·                 ─────
+ 35 │             throw new Test262Error();
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/async-gen-private-method/await-as-identifier-reference-escaped.js:34:1]
@@ -16328,6 +17568,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }}
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/async-gen-private-method/yield-as-label-identifier-escaped.js:34:1]
  34 │ class C { async *#gen() {
@@ -16356,6 +17628,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  36 │ }}
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-identifier-spread-strict.js:41:1]
+ 41 │              ...(function() {
+ 42 │                 var yield;
+    ·                     ─────
+ 43 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-identifier-strict.js:33:1]
+ 33 │         (function() {
+ 34 │             var yield;
+    ·                 ─────
+ 35 │             throw new Test262Error();
+    ╰────
 
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
@@ -16563,6 +17851,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  30 │ }
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
  33 │ class C {static *#gen() {
@@ -16592,6 +17912,54 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-identifier-spread-strict.js:40:1]
+ 40 │              ...(function() {
+ 41 │                 var yield;
+    ·                     ─────
+ 42 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-identifier-strict.js:32:1]
+ 32 │         (function() {
+ 33 │             var yield;
+    ·                 ─────
+ 34 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C { *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
+ 33 │ class C { *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C { *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
+ 33 │ class C { *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/gen-private-method/yield-as-label-identifier-escaped.js:33:1]
  33 │ class C { *#gen() {
@@ -16620,6 +17988,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  35 │ }}
     ╰────
   help: Try insert a semicolon here
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method/yield-identifier-spread-strict.js:40:1]
+ 40 │              ...(function() {
+ 41 │                 var yield;
+    ·                     ─────
+ 42 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/elements/gen-private-method/yield-identifier-strict.js:32:1]
+ 32 │         (function() {
+ 33 │             var yield;
+    ·                 ─────
+ 34 │             throw new Test262Error();
+    ╰────
 
   × Automatic Semicolon Insertion
     ╭─[language/statements/class/elements/nested-equality-init-err-contains-arguments.js:31:1]
@@ -18288,6 +19672,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  80 │     
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C {static *gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ class C {static *gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C {static *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ class C {static *gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/gen-method-static/yield-as-label-identifier-escaped.js:33:1]
  33 │ class C {static *gen() {
@@ -18317,6 +19733,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method-static/yield-identifier-spread-strict.js:39:1]
+ 39 │          ...(function() {
+ 40 │             var yield;
+    ·                 ─────
+ 41 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method-static/yield-identifier-strict.js:31:1]
+ 31 │     (function() {
+ 32 │         var yield;
+    ·             ─────
+ 33 │         throw new Test262Error();
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:78:1]
  78 │ class C {
@@ -18324,6 +19756,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·           ──┬─
     ·             ╰── Rest element must be last element
  80 │     
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-identifier-reference.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
     ╰────
 
   × Keywords cannot contain escape characters
@@ -18355,12 +19819,36 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method/yield-identifier-spread-strict.js:39:1]
+ 39 │          ...(function() {
+ 40 │             var yield;
+    ·                 ─────
+ 41 │             throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/gen-method/yield-identifier-strict.js:31:1]
+ 31 │     (function() {
+ 32 │         var yield;
+    ·             ─────
+ 33 │         throw new Test262Error();
+    ╰────
+
   × A 'get' accessor must not have any formal parameters.
     ╭─[language/statements/class/getter-param-dflt.js:22:1]
  22 │ 
  23 │ class C { get a(param = null) {} }
     ·                ───────┬──────
     ·                       ╰── A 'get' accessor must not have any formal parameters.
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/method-param-yield.js:20:1]
+ 20 │ class C {
+ 21 │   m(x = yield) {}
+    ·         ─────
+ 22 │ }
     ╰────
 
   × Rest element must be last element
@@ -18455,6 +19943,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  23 │     }
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/static-init-invalid-yield.js:23:1]
+ 23 │     static {
+ 24 │       yield;
+    ·       ─────
+ 25 │     }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/class/static-method-param-yield.js:20:1]
+ 20 │ class C {
+ 21 │   static m(x = yield) {}
+    ·                ─────
+ 22 │ }
+    ╰────
+
   × 'with' statements are not allowed
     ╭─[language/statements/class/strict-mode/with.js:13:1]
  13 │ 
@@ -18524,6 +20028,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·       ┬
     ·       ╰── const declaration need an initializer
  14 │ 
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/statements/const/syntax/const-declaring-let-split-across-two-lines.js:18:1]
+ 18 │ const
+ 19 │ let = "irrelevant initializer";
+    · ───
     ╰────
 
   × Lexical declaration cannot appear in a single-statement context
@@ -18951,6 +20462,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  20 │ //
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-await-of/async-func-decl-dstr-array-elem-init-yield-ident-invalid.js:32:1]
+ 32 │ async function fn() {
+ 33 │   for await ([ x = yield ] of [[]]) {}
+    ·                    ─────
+ 34 │ }
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-array-invalid.js:32:1]
  32 │ async function fn() {
@@ -18959,11 +20478,35 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  34 │ }
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-array-yield-ident-invalid.js:32:1]
+ 32 │ async function fn() {
+ 33 │   for await ([[x[yield]]] of [[[]]]) {}
+    ·                  ─────
+ 34 │ }
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-obj-invalid.js:32:1]
  32 │ async function fn() {
  33 │   for await ([{ get x() {} }] of [[{}]]) {}
     ·              ────────────────
+ 34 │ }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-await-of/async-func-decl-dstr-array-elem-nested-obj-yield-ident-invalid.js:32:1]
+ 32 │ async function fn() {
+ 33 │   for await ([{ x = yield }] of [[{}]]) {}
+    ·                     ─────
+ 34 │ }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-await-of/async-func-decl-dstr-array-elem-target-yield-invalid.js:32:1]
+ 32 │ async function fn() {
+ 33 │   for await ([ x[yield] ] of [[]]) {}
+    ·                  ─────
  34 │ }
     ╰────
 
@@ -19369,11 +20912,25 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/array-elem-init-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([ x = yield ] in [[]]) ;
+    ·            ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-in/dstr/array-elem-nested-array-invalid.js:31:1]
  31 │ 
  32 │ for ([[(x, y)]] in [[[]]]) ;
     ·      ──────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/array-elem-nested-array-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([[x[yield]]] in [[[]]]) ;
+    ·          ─────
     ╰────
 
   × Invalid assignment
@@ -19391,6 +20948,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·      ────────────────
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/array-elem-nested-obj-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([{ x = yield }] in [[{}]]) ;
+    ·             ─────
+    ╰────
+
   × Invalid assignment
     ╭─[language/statements/for-in/dstr/array-elem-put-obj-literal-optchain-prop-ref-init.js:63:1]
  63 │     
@@ -19400,6 +20964,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  67 │ │     }
  68 │ ├─▶ }?.y = 42] in [[23]]) ;
     · ╰──── Cannot assign to this expression
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/array-elem-target-yield-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([ x[yield] ] in [[]]) ;
+    ·          ─────
     ╰────
 
   × Unexpected token
@@ -19446,11 +21017,53 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·      ─────────────
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/array-rest-nested-array-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([...[x[yield]]] in [[]]) ;
+    ·             ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-in/dstr/array-rest-nested-obj-invalid.js:31:1]
  31 │ 
  32 │ for ([...{ get x() {} }] in [[[]]]) ;
     ·      ───────────────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/array-rest-nested-obj-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([...{ x = yield }] in [[{}]]) ;
+    ·                ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/array-rest-yield-ident-invalid.js:32:1]
+ 32 │ 
+ 33 │ for ([...x[yield]] in [[]]) ;
+    ·            ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/obj-id-identifier-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ yield } in [{}]) ;
+    ·        ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/obj-id-init-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x = yield } in [{}]) ;
+    ·            ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/obj-prop-elem-init-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x: x = yield } in [{}]) ;
+    ·               ─────
     ╰────
 
   × Invalid assignment
@@ -19472,6 +21085,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     · ╰──── Cannot assign to this expression
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/obj-prop-elem-target-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x: x[yield] } in [{}]) ;
+    ·             ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-in/dstr/obj-prop-nested-array-invalid.js:31:1]
  31 │ 
@@ -19479,11 +21099,25 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·      ───────────────
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/obj-prop-nested-array-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x: [x = yield] } in [{ x: [] }]) ;
+    ·                ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-in/dstr/obj-prop-nested-obj-invalid.js:31:1]
  31 │ 
  32 │ for ({ x: { get x() {} } } in [{ x: {} }]) ;
     ·      ─────────────────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-in/dstr/obj-prop-nested-obj-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x: { x = yield } } in [{ x: {} }]) ;
+    ·                 ─────
     ╰────
 
   × Unexpected token
@@ -19581,11 +21215,25 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/array-elem-init-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([ x = yield ] of [[]]) ;
+    ·            ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-of/dstr/array-elem-nested-array-invalid.js:31:1]
  31 │ 
  32 │ for ([[(x, y)]] of [[[]]]) ;
     ·      ──────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/array-elem-nested-array-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([[x[yield]]] of [[[]]]) ;
+    ·          ─────
     ╰────
 
   × Invalid assignment
@@ -19603,6 +21251,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·      ────────────────
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/array-elem-nested-obj-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([{ x = yield }] of [[{}]]) ;
+    ·             ─────
+    ╰────
+
   × Invalid assignment
     ╭─[language/statements/for-of/dstr/array-elem-put-obj-literal-optchain-prop-ref-init.js:63:1]
  63 │     
@@ -19612,6 +21267,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  67 │ │     }
  68 │ ├─▶ }?.y = 42] of [[23]]) ;
     · ╰──── Cannot assign to this expression
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/array-elem-target-yield-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([ x[yield] ] of [[]]) ;
+    ·          ─────
     ╰────
 
   × Unexpected token
@@ -19658,11 +21320,32 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·      ─────────────
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/array-rest-nested-array-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([...[x[yield]]] of [[]]) ;
+    ·             ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-of/dstr/array-rest-nested-obj-invalid.js:31:1]
  31 │ 
  32 │ for ([...{ get x() {} }] of [[[]]]) ;
     ·      ───────────────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/array-rest-nested-obj-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ([...{ x = yield }] of [[{}]]) ;
+    ·                ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/array-rest-yield-ident-invalid.js:32:1]
+ 32 │ 
+ 33 │ for ([...x[yield]] of [[]]) ;
+    ·            ─────
     ╰────
 
   × Rest element must be last element
@@ -19719,6 +21402,27 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  52 │   
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/obj-id-identifier-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ yield } of [{}]) ;
+    ·        ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/obj-id-init-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x = yield } of [{}]) ;
+    ·            ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/obj-prop-elem-init-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x: x = yield } of [{}]) ;
+    ·               ─────
+    ╰────
+
   × Invalid assignment
     ╭─[language/statements/for-of/dstr/obj-prop-elem-target-memberexpr-optchain-prop-ref-init.js:64:1]
  64 │ 
@@ -19738,6 +21442,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     · ╰──── Cannot assign to this expression
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/obj-prop-elem-target-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x: x[yield] } of [{}]) ;
+    ·             ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-of/dstr/obj-prop-nested-array-invalid.js:31:1]
  31 │ 
@@ -19745,11 +21456,25 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·      ───────────────
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/obj-prop-nested-array-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x: [x = yield] } of [{ x: [] }]) ;
+    ·                ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-of/dstr/obj-prop-nested-obj-invalid.js:31:1]
  31 │ 
  32 │ for ({ x: { get x() {} } } of [{ x: {} }]) ;
     ·      ─────────────────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/for-of/dstr/obj-prop-nested-obj-yield-ident-invalid.js:31:1]
+ 31 │ 
+ 32 │ for ({ x: { x = yield } } of [{ x: {} }]) ;
+    ·                 ─────
     ╰────
 
   × Unexpected token
@@ -20324,6 +22049,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·             ╰── Expect `(` here, but found `.`
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/function/param-dflt-yield-strict.js:21:1]
+ 21 │ function *g() {
+ 22 │   function f(x = yield) {
+    ·                  ─────
+ 23 │     paramValue = x;
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/function/rest-params-trailing-comma-early-error.js:55:1]
  55 │ 
@@ -20396,6 +22129,38 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  58 │   
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/generators/yield-as-binding-identifier-escaped.js:27:1]
+ 27 │ function *gen() {
+ 28 │   var yi\u0065ld;
+    ·       ──────────
+ 29 │ }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/generators/yield-as-binding-identifier.js:27:1]
+ 27 │ function *gen() {
+ 28 │   var yield;
+    ·       ─────
+ 29 │ }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/generators/yield-as-identifier-reference-escaped.js:27:1]
+ 27 │ function *gen() {
+ 28 │   void yi\u0065ld;
+    ·        ──────────
+ 29 │ }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/generators/yield-as-identifier-reference.js:27:1]
+ 27 │ function *gen() {
+ 28 │   void yield;
+    ·        ─────
+ 29 │ }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/generators/yield-as-label-identifier-escaped.js:27:1]
  27 │ function *gen() {
@@ -20431,6 +22196,29 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  18 │   yield ? yield : yield
     ·         ─
  19 │ }
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/generators/yield-as-parameter.js:16:1]
+ 16 │ 
+ 17 │ function* g(yield) {}
+    ·             ─────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/generators/yield-identifier-spread-strict.js:33:1]
+ 33 │        ...(function() {
+ 34 │           var yield;
+    ·               ─────
+ 35 │           throw new Test262Error();
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/generators/yield-identifier-strict.js:25:1]
+ 25 │   (function() {
+ 26 │       var yield;
+    ·           ─────
+ 27 │       throw new Test262Error();
     ╰────
 
   × Unexpected token
@@ -20836,6 +22624,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·      ─
     ╰────
 
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/labeled/value-yield-strict-escaped.js:21:1]
+ 21 │ 
+ 22 │ yi\u0065ld: 1;
+    · ──────────
+    ╰────
+
+  × The keyword '"yield"' is reserved
+    ╭─[language/statements/labeled/value-yield-strict.js:16:1]
+ 16 │ 
+ 17 │ yield: 1;
+    · ─────
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/let/dstr/ary-ptrn-rest-not-final-ary.js:29:1]
  29 │ 
@@ -20861,6 +22663,36 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·      ────┬───
     ·          ╰── Rest element must be last element
  31 │ 
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/statements/let/syntax/identifier-let-allowed-as-lefthandside-expression-strict.js:15:1]
+ 15 │ var o = { a: 1 };
+ 16 │ for (let in o) { }
+    ·      ───
+ 17 │ 
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/statements/let/syntax/identifier-let-disallowed-as-boundname.js:12:1]
+ 12 │ $DONOTEVALUATE();
+ 13 │ for (let let in {}) { }
+    ·          ───
+ 14 │ 
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/statements/let/syntax/let-let-declaration-split-across-two-lines.js:32:1]
+ 32 │ let  // start of a LexicalDeclaration, *not* an ASI opportunity
+ 33 │ let;
+    · ───
+    ╰────
+
+  × The keyword '"let"' is reserved
+    ╭─[language/statements/let/syntax/let-let-declaration-with-initializer-split-across-two-lines.js:32:1]
+ 32 │ let  // start of a LexicalDeclaration, *not* an ASI opportunity
+ 33 │ let = "irrelevant initializer";
+    · ───
     ╰────
 
   × Automatic Semicolon Insertion

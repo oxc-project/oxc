@@ -1,7 +1,7 @@
 TypeScript Summary:
-AST Parsed     : 2310/2338 (98.80%)
-Positive Passed: 2310/2338 (98.80%)
-Negative Passed: 565/2531 (22.32%)
+AST Parsed     : 2308/2338 (98.72%)
+Positive Passed: 2308/2338 (98.72%)
+Negative Passed: 576/2531 (22.76%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -881,12 +881,6 @@ Expect Syntax Error: "externalModules/multipleExportDefault3.ts"
 Expect Syntax Error: "externalModules/multipleExportDefault4.ts"
 Expect Syntax Error: "externalModules/multipleExportDefault5.ts"
 Expect Syntax Error: "externalModules/multipleExportDefault6.ts"
-Expect Syntax Error: "externalModules/topLevelAwaitErrors.12.ts"
-Expect Syntax Error: "externalModules/topLevelAwaitErrors.2.ts"
-Expect Syntax Error: "externalModules/topLevelAwaitErrors.3.ts"
-Expect Syntax Error: "externalModules/topLevelAwaitErrors.4.ts"
-Expect Syntax Error: "externalModules/topLevelAwaitErrors.5.ts"
-Expect Syntax Error: "externalModules/topLevelAwaitErrors.6.ts"
 Expect Syntax Error: "externalModules/topLevelAwaitNonModule.ts"
 Expect Syntax Error: "externalModules/typeOnly/exportSpecifiers_js.ts"
 Expect Syntax Error: "externalModules/typeOnly/preserveValueImports_module.ts"
@@ -1321,8 +1315,6 @@ Expect Syntax Error: "parser/ecmascript5/RegressionTests/parser509698.ts"
 Expect Syntax Error: "parser/ecmascript5/RegressionTests/parser536727.ts"
 Expect Syntax Error: "parser/ecmascript5/RegressionTests/parser553699.ts"
 Expect Syntax Error: "parser/ecmascript5/RegressionTests/parser618973.ts"
-Expect Syntax Error: "parser/ecmascript5/RegressionTests/parser642331.ts"
-Expect Syntax Error: "parser/ecmascript5/RegressionTests/parser642331_1.ts"
 Expect Syntax Error: "parser/ecmascript5/RegressionTests/parserTernaryAndCommaOperators1.ts"
 Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parseRegularExpressionMixedWithComments.ts"
 Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parserRegularExpression1.ts"
@@ -1470,10 +1462,7 @@ Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPro
 Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName31.ts"
 Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName32.ts"
 Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName34.ts"
-Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName36.ts"
 Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName37.ts"
-Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName38.ts"
-Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName39.ts"
 Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName4.ts"
 Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName40.ts"
 Expect Syntax Error: "parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName41.ts"
@@ -2193,6 +2182,38 @@ Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_propertyValueCon
     ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
     ╰────
   help: Try insert a semicolon here
+Expect to Parse: "externalModules/topLevelAwait.2.ts"
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwait.2.ts:3:1]
+ 3 │ 
+ 4 │ declare namespace foo { const await: any; }
+   ·                               ─────
+ 5 │ 
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwait.2.ts:6:1]
+ 6 │ // await allowed in import=namespace when not a module
+ 7 │ import await = foo.await;
+   ·        ─────
+   ╰────
+Expect to Parse: "externalModules/topLevelAwait.3.ts"
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwait.3.ts:6:1]
+ 6 │ export {};
+ 7 │ declare const await: any;
+   ·               ─────
+ 8 │ declare class C extends await {}
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwait.3.ts:7:1]
+ 7 │ declare const await: any;
+ 8 │ declare class C extends await {}
+   ·                         ─────
+   ╰────
 Expect to Parse: "jsdoc/declarations/jsDeclarationsNonIdentifierInferredNames.ts"
 
   × Unexpected token
@@ -5766,6 +5787,58 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  11 │ 
     ╰────
 
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.12.ts:4:1]
+ 4 │ export {};
+ 5 │ declare namespace foo { const await: any; }
+   ·                               ─────
+ 6 │ 
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.12.ts:7:1]
+ 7 │ // await disallowed in import=namespace when in a module
+ 8 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.2.ts:6:1]
+ 6 │ // reparse variable name as await should fail
+ 7 │ var await = 1;
+   ·     ─────
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.3.ts:6:1]
+ 6 │ // reparse binding pattern as await should fail
+ 7 │ var {await} = {await:1};
+   ·      ─────
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.4.ts:6:1]
+ 6 │ // reparse binding pattern as await should fail
+ 7 │ var [await] = [1];
+   ·      ─────
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.5.ts:4:1]
+ 4 │ // await in exported class name should fail
+ 5 │ export class await {
+   ·              ─────
+ 6 │ }
+   ╰────
+
+  × The keyword '"await"' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.6.ts:4:1]
+ 4 │ // await in exported function name should fail
+ 5 │ export function await() {
+   ·                 ─────
+ 6 │ }
+   ╰────
+
   × Expect token
     ╭─[externalModules/typeOnly/exportDeclaration_missingBraces.ts:13:1]
  13 │ namespace ns {
@@ -7097,6 +7170,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × The keyword '"static"' is reserved
+   ╭─[parser/ecmascript5/RegressionTests/parser642331.ts:1:1]
+ 1 │ class test {
+ 2 │     constructor (static) { }
+   ·                  ──────
+ 3 │ }
+   ╰────
+
+  × The keyword '"static"' is reserved
+   ╭─[parser/ecmascript5/RegressionTests/parser642331_1.ts:3:1]
+ 3 │ class test {
+ 4 │     constructor (static) { }
+   ·                  ──────
+ 5 │ }
+   ╰────
+
   × Automatic Semicolon Insertion
    ╭─[parser/ecmascript5/RegressionTests/parser645086_1.ts:1:1]
  1 │ var v = /[]/]/
@@ -7760,6 +7849,30 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·       ┬
    ·       ╰── Expect `]` here, but found `,`
  4 │ }
+   ╰────
+
+  × The keyword '"public"' is reserved
+   ╭─[parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName36.ts:2:1]
+ 2 │ class C {
+ 3 │     [public ]: string;
+   ·      ──────
+ 4 │ }
+   ╰────
+
+  × The keyword '"public"' is reserved
+   ╭─[parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName38.ts:2:1]
+ 2 │ class C {
+ 3 │     [public]() { }
+   ·      ──────
+ 4 │ }
+   ╰────
+
+  × The keyword '"public"' is reserved
+   ╭─[parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName39.ts:3:1]
+ 3 │ class C {
+ 4 │     [public]() { }
+   ·      ──────
+ 5 │ }
    ╰────
 
   × Expect token

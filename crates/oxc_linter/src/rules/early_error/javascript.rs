@@ -5,7 +5,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::STRICT_MODE_NAMES, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Default, Clone)]
 pub struct EarlyErrorJavaScript;
@@ -14,6 +14,13 @@ impl Rule for EarlyErrorJavaScript {
     #[allow(clippy::single_match)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.get().kind() {
+            AstKind::BindingIdentifier(ident) => {
+                check_identifier(&ident.name, ident.span, node, ctx)
+            }
+            AstKind::IdentifierReference(ident) => {
+                check_identifier(&ident.name, ident.span, node, ctx)
+            }
+            AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
             AstKind::PrivateIdentifier(ident) => check_private_identifier(ident, node, ctx),
             AstKind::NumberLiteral(lit) => check_number_literal(lit, node, ctx),
             AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
@@ -35,6 +42,37 @@ struct Redeclaration(
     #[label("`{0}` has already been declared here")] Span,
     #[label("It can not be redeclared here")] Span,
 );
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("The keyword '{0:?}' is reserved")]
+#[diagnostic()]
+struct ReservedKeyword(Atom, #[label] Span);
+
+fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    // if span.ctx.has_ambient() {
+    // return None;
+    // }
+
+    // It is a Syntax Error if this production has an [Await] parameter.
+    // if *name == "await" && span.ctx.has_await() {
+    // return Some(Diagnostic::IdentifierAsync("await", span.range()));
+    // }
+
+    // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
+    if *name == "await" && ctx.source_type().is_module() {
+        return ctx.diagnostic(ReservedKeyword(name.clone(), span));
+    }
+
+    // It is a Syntax Error if this production has a [Yield] parameter.
+    // if *name == "yield" && span.ctx.has_yield() {
+    // return Some(Diagnostic::IdentifierGenerator("yield", span.range()));
+    // }
+
+    // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
+    if ctx.strict_mode(node) && STRICT_MODE_NAMES.contains(name.as_str()) {
+        return ctx.diagnostic(ReservedKeyword(name.clone(), span));
+    }
+}
 
 fn check_private_identifier<'a>(
     ident: &PrivateIdentifier,
