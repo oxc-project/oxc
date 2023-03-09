@@ -83,9 +83,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn leave_node(&mut self, kind: AstKind<'a>) {
+        self.leave_kind(kind);
         self.pop_ast_node();
         self.try_leave_scope(kind);
-        self.leave_kind(kind);
     }
 }
 

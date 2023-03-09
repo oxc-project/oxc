@@ -13,7 +13,7 @@ impl ScopeBuilder {
     #[must_use]
     pub fn new(source_type: SourceType) -> Self {
         // Module code is always strict mode code.
-        let strict_mode = source_type.is_module();
+        let strict_mode = source_type.is_module() || source_type.always_strict();
         let scopes = ScopeTree::new(strict_mode);
         let current_scope_id = scopes.root_scope_id();
         Self { scopes, current_scope_id }

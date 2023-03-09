@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44000/44009 (99.98%)
 Positive Passed: 44000/44009 (99.98%)
-Negative Passed: 1935/3917 (49.40%)
+Negative Passed: 1945/3917 (49.66%)
 Expect Syntax Error: "annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js"
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
@@ -946,16 +946,6 @@ Expect Syntax Error: "language/identifiers/val-yield-strict.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
 Expect Syntax Error: "language/import/json-invalid.js"
 Expect Syntax Error: "language/import/json-named-bindings.js"
-Expect Syntax Error: "language/literals/numeric/7.8.3-1gs.js"
-Expect Syntax Error: "language/literals/numeric/7.8.3-2gs.js"
-Expect Syntax Error: "language/literals/numeric/legacy-octal-integer-strict.js"
-Expect Syntax Error: "language/literals/numeric/legacy-octal-integery-000-strict.js"
-Expect Syntax Error: "language/literals/numeric/legacy-octal-integery-005-strict.js"
-Expect Syntax Error: "language/literals/numeric/legacy-octal-integery-01-strict.js"
-Expect Syntax Error: "language/literals/numeric/legacy-octal-integery-010-strict.js"
-Expect Syntax Error: "language/literals/numeric/legacy-octal-integery-06-strict.js"
-Expect Syntax Error: "language/literals/numeric/legacy-octal-integery-07-strict.js"
-Expect Syntax Error: "language/literals/numeric/non-octal-decimal-integer-strict.js"
 Expect Syntax Error: "language/literals/string/S7.8.4_A4.3_T1.js"
 Expect Syntax Error: "language/literals/string/S7.8.4_A4.3_T2.js"
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-1-strict-explicit-pragma.js"
@@ -12724,6 +12714,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·   ╰── Invalid Character `9`
     ╰────
 
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/numeric/7.8.3-1gs.js:14:1]
+ 14 │ 
+ 15 │ var y = 010;
+    ·         ───
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/numeric/7.8.3-2gs.js:18:1]
+ 18 │ a = 0x1;
+ 19 │ a = 01;
+    ·     ──
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
   × Invalid Character `'\n'`
     ╭─[language/literals/numeric/S7.8.3_A6.1_T1.js:15:1]
  15 │ //CHECK#1
@@ -12790,6 +12796,70 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
     ╰────
   help: Try insert a semicolon here
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/numeric/legacy-octal-integer-strict.js:32:1]
+ 32 │ 
+ 33 │ 00;
+    · ──
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/numeric/legacy-octal-integery-000-strict.js:14:1]
+ 14 │ 
+ 15 │ 000;
+    · ───
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/numeric/legacy-octal-integery-005-strict.js:14:1]
+ 14 │ 
+ 15 │ 005;
+    · ───
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/numeric/legacy-octal-integery-01-strict.js:14:1]
+ 14 │ 
+ 15 │ 01;
+    · ──
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/numeric/legacy-octal-integery-010-strict.js:14:1]
+ 14 │ 
+ 15 │ 010;
+    · ───
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/numeric/legacy-octal-integery-06-strict.js:14:1]
+ 14 │ 
+ 15 │ 06;
+    · ──
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/numeric/legacy-octal-integery-07-strict.js:14:1]
+ 14 │ 
+ 15 │ 07;
+    · ──
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × Decimals with leading zeros are not allowed in strict mode
+    ╭─[language/literals/numeric/non-octal-decimal-integer-strict.js:38:1]
+ 38 │ 
+ 39 │ 08;
+    · ──
+    ╰────
+  help: remove the leading zero
 
   × Invalid characters after number
     ╭─[language/literals/numeric/numeric-followed-by-ident.js:17:1]

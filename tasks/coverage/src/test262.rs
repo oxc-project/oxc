@@ -170,7 +170,6 @@ impl Case for Test262Case {
     // To run in strict mode, the test contents must be modified prior to execution--
     // a "use strict" directive must be inserted as the initial character sequence of the file
     // https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode
-    #[allow(clippy::if_same_then_else)]
     fn run(&mut self) {
         let flags = &self.meta.flags;
 
@@ -178,7 +177,7 @@ impl Case for Test262Case {
         source_type.set_script();
 
         self.result = if flags.contains(&TestFlag::OnlyStrict) {
-            // always_strict = true;
+            source_type.set_always_strict(true);
             self.execute(source_type)
         } else if flags.contains(&TestFlag::Module) {
             source_type.set_module();
@@ -186,10 +185,10 @@ impl Case for Test262Case {
         } else if flags.contains(&TestFlag::NoStrict) || flags.contains(&TestFlag::Raw) {
             self.execute(source_type)
         } else {
-            // always_strict = true;
+            source_type.set_always_strict(true);
             let res = self.execute(source_type);
             if matches!(res, TestResult::Passed) {
-                // always_strict = false;
+                source_type.set_always_strict(false);
                 self.execute(source_type)
             } else {
                 res

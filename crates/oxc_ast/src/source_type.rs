@@ -14,6 +14,10 @@ pub struct SourceType {
 
     /// support JSX for JavaScript and TypeScript? default without JSX
     variant: LanguageVariant,
+
+    /// Mark strict mode as always strict
+    /// See <https://github.com/tc39/test262/blob/main/INTERPRETING.md#strict-mode>
+    always_strict: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -46,6 +50,7 @@ impl Default for SourceType {
             language: Language::JavaScript,
             module_kind: ModuleKind::Script,
             variant: LanguageVariant::Standard,
+            always_strict: false,
         }
     }
 }
@@ -88,6 +93,10 @@ impl SourceType {
         self.variant = LanguageVariant::Jsx;
     }
 
+    pub fn set_always_strict(&mut self, yes: bool) {
+        self.always_strict = yes;
+    }
+
     #[must_use]
     pub fn is_script(self) -> bool {
         self.module_kind == ModuleKind::Script
@@ -121,6 +130,11 @@ impl SourceType {
     #[must_use]
     pub fn is_jsx(self) -> bool {
         self.variant == LanguageVariant::Jsx
+    }
+
+    #[must_use]
+    pub fn always_strict(self) -> bool {
+        self.always_strict
     }
 
     /// Converts file path to `SourceType`
@@ -161,7 +175,7 @@ impl SourceType {
             _ => LanguageVariant::Standard,
         };
 
-        Ok(Self { language, module_kind: ModuleKind::Module, variant })
+        Ok(Self { language, module_kind: ModuleKind::Module, variant, always_strict: false })
     }
 }
 
@@ -208,6 +222,12 @@ impl SourceTypeBuilder {
     /// turn on `Language::TypeScript { is_definition_file: true }`
     pub fn typescript_definition(mut self) -> Self {
         self.source_type.language = Language::TypeScript { is_definition_file: true };
+        self
+    }
+
+    #[must_use]
+    pub fn always_strict(mut self, yes: bool) -> Self {
+        self.source_type.always_strict = yes;
         self
     }
 }
