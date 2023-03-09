@@ -3,20 +3,20 @@ use std::path::PathBuf;
 use argh::FromArgs;
 use glob::Pattern;
 
-#[derive(Debug, PartialEq, FromArgs)]
+#[derive(Debug, PartialEq, Eq, FromArgs)]
 /// The JavaScript Oxidation Compiler
 pub struct Command {
     #[argh(subcommand)]
     pub inner: Subcommand,
 }
 
-#[derive(Debug, PartialEq, FromArgs)]
+#[derive(Debug, PartialEq, Eq, FromArgs)]
 #[argh(subcommand)]
 pub enum Subcommand {
     Lint(LintCommand),
 }
 
-#[derive(Debug, PartialEq, FromArgs)]
+#[derive(Debug, PartialEq, Eq, FromArgs)]
 #[argh(subcommand, name = "lint")]
 /// Lint this repository.
 pub struct LintCommand {
