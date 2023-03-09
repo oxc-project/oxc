@@ -1185,7 +1185,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "rule_generator"
+name = "rulegen"
 version = "0.1.0"
 dependencies = [
  "convert_case",
@@ -1194,7 +1194,6 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
- "oxc_semantic",
  "regex",
  "serde",
  "ureq",
