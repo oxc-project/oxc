@@ -125,7 +125,7 @@ pub trait Suite<T: Case> {
             tests.iter().partition(|case| case.should_fail());
 
         let all_positives = positives.len();
-        let not_parsed_positives = positives.iter().filter(|case| !case.test_parsed()).count();
+        let parsed_positives = positives.iter().filter(|case| case.test_parsed()).count();
 
         let mut failed_positives =
             positives.into_iter().filter(|case| !case.test_passed()).collect::<Vec<_>>();
@@ -133,7 +133,6 @@ pub trait Suite<T: Case> {
         failed_positives.sort_by_key(|case| case.path().to_string_lossy().to_string());
 
         let passed_positives = all_positives - failed_positives.len();
-        let parsed_positives = all_positives - not_parsed_positives;
 
         let all_negatives = negatives.len();
         let mut failed_negatives =
@@ -254,7 +253,10 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn test_parsed(&self) -> bool {
         let result = self.test_result();
         assert!(!matches!(result, TestResult::ToBeRun), "test should be run");
-        matches!(result, TestResult::Passed | TestResult::Mismatch(_, _))
+        matches!(
+            result,
+            TestResult::Passed | TestResult::CorrectError(_) | TestResult::IncorrectlyPassed
+        )
     }
 
     /// Run a single test case, this is responsible for saving the test result

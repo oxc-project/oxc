@@ -12,7 +12,7 @@ use crate::{
     suite::{Case, Suite, TestResult},
 };
 
-const TESTS_PATH: &str = "tasks/coverage/typescript/tests/cases/conformance";
+const TESTS_ROOT: &str = "tasks/coverage/typescript/tests/";
 
 lazy_static::lazy_static! {
     // Returns a match for a test option. Test options have the form `// @name: value`
@@ -34,7 +34,10 @@ impl<T: Case> Default for TypeScriptSuite<T> {
 impl<T: Case> TypeScriptSuite<T> {
     #[must_use]
     pub fn new() -> Self {
-        Self { test_root: project_root().join(TESTS_PATH), test_cases: vec![] }
+        Self {
+            test_root: project_root().join(TESTS_ROOT).join("cases/conformance"),
+            test_cases: vec![],
+        }
     }
 }
 
@@ -186,7 +189,7 @@ impl TypeScriptTestMeta {
     //   * `filename.errors.txt`
     fn get_error_files(path: &Path, options: &CompilerOptions) -> Vec<String> {
         let file_name = path.file_stem().unwrap().to_string_lossy();
-        let root = project_root().join(TESTS_PATH).join("baselines/reference");
+        let root = project_root().join(TESTS_ROOT).join("baselines/reference");
         let mut suffixes = vec![String::new()];
         let modules = &options.modules;
         let targets = &options.targets;
