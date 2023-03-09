@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::Error;
-use oxc_semantic::{AstNodes, Semantic};
+use oxc_semantic::{AstNodes, Scope, ScopeTree, Semantic};
 
 use crate::{
     fixer::{Fix, Message},
@@ -29,6 +29,8 @@ impl<'a> LintContext<'a> {
         self.source_text
     }
 
+    /* Diagnostics */
+
     pub fn into_message(self) -> Vec<Message<'a>> {
         self.diagnostics.into_inner()
     }
@@ -49,23 +51,43 @@ impl<'a> LintContext<'a> {
         }
     }
 
-    #[inline]
+    #[must_use]
     pub fn semantic(&self) -> &Semantic<'a> {
         &self.semantic
     }
 
-    #[inline]
+    /* Nodes */
+
+    #[must_use]
     pub fn nodes(&self) -> &AstNodes<'a> {
         self.semantic().nodes()
     }
 
-    #[inline]
+    #[must_use]
     pub fn parent_kind(&self, node: &AstNode<'a>) -> AstKind<'a> {
         self.nodes().parent_kind(node)
     }
 
-    #[inline]
+    #[must_use]
     pub fn parent_node(&self, node: &AstNode<'a>) -> Option<&AstNode<'a>> {
         node.parent().and_then(|node_id| self.nodes().get(node_id))
+    }
+
+    /* Scopes */
+
+    #[must_use]
+    pub fn scopes(&self) -> &ScopeTree {
+        self.semantic().scopes()
+    }
+
+    #[must_use]
+    pub fn scope(&self, node: &AstNode) -> &Scope {
+        self.semantic().scopes().node_scope(node)
+    }
+
+    #[must_use]
+    pub fn strict_mode(&self, node: &AstNode) -> bool {
+        let scope = self.scope(node);
+        node.get().strict_mode(scope)
     }
 }

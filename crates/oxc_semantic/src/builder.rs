@@ -4,7 +4,8 @@
 
 use std::rc::Rc;
 
-use oxc_ast::{ast::Program, visit::Visit, AstKind, SourceType, Trivias};
+#[allow(clippy::wildcard_imports)]
+use oxc_ast::{ast::*, visit::Visit, AstKind, SourceType, Trivias};
 
 use crate::{
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
@@ -37,7 +38,7 @@ impl<'a> SemanticBuilder<'a> {
     pub fn build(mut self, program: &'a Program<'a>, trivias: Rc<Trivias>) -> Semantic<'a> {
         // AST pass
         self.visit_program(program);
-        Semantic { nodes: self.nodes, trivias }
+        Semantic { nodes: self.nodes, scopes: self.scope.scopes, trivias }
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
@@ -77,10 +78,39 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         // create new self.current_node_id
         self.create_ast_node(kind);
+
+        self.enter_kind(kind);
     }
 
     fn leave_node(&mut self, kind: AstKind<'a>) {
         self.pop_ast_node();
         self.try_leave_scope(kind);
+        self.leave_kind(kind);
+    }
+}
+
+impl<'a> SemanticBuilder<'a> {
+    #[allow(clippy::single_match)]
+    fn enter_kind(&mut self, kind: AstKind<'a>) {
+        match kind {
+            AstKind::Class(class) => self.enter_class(class),
+            _ => {}
+        }
+    }
+
+    #[allow(clippy::single_match)]
+    fn leave_kind(&mut self, kind: AstKind<'a>) {
+        match kind {
+            AstKind::Class(class) => self.leave_class(class),
+            _ => {}
+        }
+    }
+
+    fn enter_class(&mut self, _: &Class<'a>) {
+        self.current_node_flags |= NodeFlags::Class;
+    }
+
+    fn leave_class(&mut self, _: &Class<'a>) {
+        self.current_node_flags -= NodeFlags::Class;
     }
 }
