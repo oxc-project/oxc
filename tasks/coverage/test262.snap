@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44000/44009 (99.98%)
 Positive Passed: 44000/44009 (99.98%)
-Negative Passed: 2223/3917 (56.75%)
+Negative Passed: 2225/3917 (56.80%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -851,7 +851,6 @@ Expect Syntax Error: "language/module-code/early-dup-export-dflt-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-id-as.js"
 Expect Syntax Error: "language/module-code/early-dup-export-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
-Expect Syntax Error: "language/module-code/early-dup-lables.js"
 Expect Syntax Error: "language/module-code/early-dup-lex.js"
 Expect Syntax Error: "language/module-code/early-dup-top-function-async-generator.js"
 Expect Syntax Error: "language/module-code/early-dup-top-function-async.js"
@@ -1317,7 +1316,6 @@ Expect Syntax Error: "language/statements/class/static-gen-method-param-dflt-yie
 Expect Syntax Error: "language/statements/class/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-arguments.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-label-dup.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-lex-dup.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-lex-var.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
@@ -14092,6 +14090,18 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  17 │ export default var x = null;
     ╰────
 
+  × Identifier `"label"` has already been declared
+    ╭─[language/module-code/early-dup-lables.js:15:1]
+ 15 │ 
+ 16 │ label: {
+    · ──┬──
+    ·   ╰── `label` has already been declared here
+ 17 │   label: 0;
+    ·   ──┬──
+    ·     ╰── It can not be redeclared here
+ 18 │ }
+    ╰────
+
   × An export name cannot include a unicode lone surrogate
     ╭─[language/module-code/early-export-ill-formed-string.js:20:1]
  20 │ // 🌙 is '\uD83C\uDF19'
@@ -18423,6 +18433,16 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·       ─┬
     ·        ╰── It can not be redeclared here
  18 │ }
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/class/static-init-invalid-label-dup.js:20:1]
+ 20 │   static {
+ 21 │     x: x: 0;
+    ·     ┬  ┬
+    ·     │  ╰── It can not be redeclared here
+    ·     ╰── `x` has already been declared here
+ 22 │   }
     ╰────
 
   × Jump target cannot cross function boundary.

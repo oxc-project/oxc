@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2310/2338 (98.80%)
 Positive Passed: 2310/2338 (98.80%)
-Negative Passed: 558/2531 (22.05%)
+Negative Passed: 560/2531 (22.13%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -1337,8 +1337,6 @@ Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parserRegularExpress
 Expect Syntax Error: "parser/ecmascript5/Statements/BreakStatements/parser_breakInIterationOrSwitchStatement4.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueInIterationStatement4.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel1.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel2.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement1.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement2.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserBlockStatement1.d.ts"
@@ -7443,6 +7441,29 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·            ───┬──
    ·               ╰── This label is used, but not defined
  3 │ }
+   ╰────
+
+  × Identifier `"target"` has already been declared
+   ╭─[parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel1.ts:1:1]
+ 1 │ target:
+   · ───┬──
+   ·    ╰── `target` has already been declared here
+ 2 │ target:
+   · ───┬──
+   ·    ╰── It can not be redeclared here
+ 3 │ while (true) {
+   ╰────
+
+  × Identifier `"target"` has already been declared
+   ╭─[parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel2.ts:1:1]
+ 1 │ target:
+   · ───┬──
+   ·    ╰── `target` has already been declared here
+ 2 │ while (true) {
+ 3 │   target:
+   ·   ───┬──
+   ·      ╰── It can not be redeclared here
+ 4 │   while (true) {
    ╰────
 
   × Illegal break statement
