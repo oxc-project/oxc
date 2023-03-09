@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 911/1502 (60.65%)
+Negative Passed: 912/1502 (60.72%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -122,7 +122,6 @@ Expect Syntax Error: "core/uncategorised/552/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-outside-constructor/input.js"
 Expect Syntax Error: "es2015/class-methods/disallow-duplicate-method-params/input.js"
-Expect Syntax Error: "es2015/class/extends-strict/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-arguments-module/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-arguments-strict/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-eval/input.js"
@@ -2042,6 +2041,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  4 │   }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × 'with' statements are not allowed
+   ╭─[es2015/class/extends-strict/input.js:1:1]
+ 1 │ class C extends (function B() {
+ 2 │   with ({});
+   ·   ────
+ 3 │   return B;
+   ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2015/class/invalid-escape-get/input.js:1:1]

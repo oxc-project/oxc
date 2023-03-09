@@ -14,6 +14,8 @@ use crate::{
 };
 
 pub struct SemanticBuilder<'a> {
+    source_type: SourceType,
+
     // states
     current_node_id: AstNodeId,
     current_node_flags: NodeFlags,
@@ -31,14 +33,19 @@ impl<'a> SemanticBuilder<'a> {
         let semantic_node =
             SemanticNode::new(AstKind::Root, scope.current_scope_id, NodeFlags::empty());
         let current_node_id = nodes.new_node(semantic_node).into();
-        Self { current_node_id, nodes, scope, current_node_flags: NodeFlags::empty() }
+        Self { source_type, current_node_id, nodes, scope, current_node_flags: NodeFlags::empty() }
     }
 
     #[must_use]
     pub fn build(mut self, program: &'a Program<'a>, trivias: Rc<Trivias>) -> Semantic<'a> {
         // AST pass
         self.visit_program(program);
-        Semantic { nodes: self.nodes, scopes: self.scope.scopes, trivias }
+        Semantic {
+            source_type: self.source_type,
+            nodes: self.nodes,
+            scopes: self.scope.scopes,
+            trivias,
+        }
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {

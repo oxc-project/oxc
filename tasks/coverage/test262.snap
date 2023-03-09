@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44000/44009 (99.98%)
 Positive Passed: 44000/44009 (99.98%)
-Negative Passed: 2225/3917 (56.80%)
+Negative Passed: 2231/3917 (56.96%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -1322,7 +1322,6 @@ Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-super-call.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-yield.js"
 Expect Syntax Error: "language/statements/class/static-method-param-yield.js"
-Expect Syntax Error: "language/statements/class/strict-mode/with.js"
 Expect Syntax Error: "language/statements/class/syntax/early-errors/class-definition-evaluation-block-duplicate-binding.js"
 Expect Syntax Error: "language/statements/class/syntax/early-errors/class-definition-evaluation-scriptbody-duplicate-binding.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
@@ -1685,15 +1684,10 @@ Expect Syntax Error: "language/statements/variable/id-eval-strict.js"
 Expect Syntax Error: "language/statements/variable/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/while/decl-fun.js"
 Expect Syntax Error: "language/statements/while/labelled-fn-stmt.js"
-Expect Syntax Error: "language/statements/with/12.10.1-11gs.js"
 Expect Syntax Error: "language/statements/with/decl-fun.js"
-Expect Syntax Error: "language/statements/with/labelled-fn-stmt.js"
-Expect Syntax Error: "language/statements/with/stict-script.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-1.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-2.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl.js"
-Expect Syntax Error: "language/statements/with/strict-fn-expr.js"
-Expect Syntax Error: "language/statements/with/strict-fn-method.js"
 Expect to Parse: "language/expressions/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js"
 
   × Unexpected token
@@ -18461,6 +18455,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  23 │     }
     ╰────
 
+  × 'with' statements are not allowed
+    ╭─[language/statements/class/strict-mode/with.js:13:1]
+ 13 │ 
+ 14 │ class C extends (function B() { with ({}); return B; }()) {}
+    ·                                 ────
+ 15 │ 
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/syntax/escaped-static.js:23:1]
  23 │ class C {
@@ -21418,6 +21420,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/12.10.1-11gs.js:14:1]
+ 14 │ 
+ 15 │ with ({}) { }
+    · ────
+    ╰────
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/with/decl-async-fun.js:20:1]
  20 │ 
@@ -21468,6 +21477,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: Try insert a semicolon here
 
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/labelled-fn-stmt.js:25:1]
+ 25 │ 
+ 26 │ with ({}) label1: label2: function test262() {}
+    · ────
+    ╰────
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[language/statements/with/let-array-with-newline.js:21:1]
  21 │     if (false) {
@@ -21477,6 +21493,28 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  24 │     }
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/stict-script.js:16:1]
+ 16 │ 
+ 17 │ with ({}) {}
+    · ────
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/strict-fn-expr.js:17:1]
+ 17 │    var o = {};
+ 18 │    with (o) {};
+    ·    ────
+ 19 │ };
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/strict-fn-method.js:16:1]
+ 16 │ 
+ 17 │ var obj = { get(a) { with(a){} } };
+    ·                      ────
+    ╰────
 
   × Invalid assignment
     ╭─[language/types/boolean/S8.3_A2.1.js:14:1]
