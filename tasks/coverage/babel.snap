@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 922/1502 (61.38%)
+Negative Passed: 935/1502 (62.25%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -135,19 +135,6 @@ Expect Syntax Error: "es2015/for-in/var-arraybindingpattern-initializer/input.js
 Expect Syntax Error: "es2015/for-in/var-objectbindingpattern-initializer/input.js"
 Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
 Expect Syntax Error: "es2015/let/let-as-identifier-strict-fail/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-1/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-10/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-11/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-12/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-2/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-3/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-4/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-5/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-6/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-7/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-8/input.js"
-Expect Syntax Error: "es2015/let/let-at-binding-list-fail-9/input.js"
-Expect Syntax Error: "es2015/let/let-at-catch-block/input.js"
 Expect Syntax Error: "es2015/meta-properties/invalid-arrow-function/input.js"
 Expect Syntax Error: "es2015/meta-properties/new-invalid-prop/input.js"
 Expect Syntax Error: "es2015/meta-properties/new-target-invalid/input.js"
@@ -2202,6 +2189,86 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │     while (false);
    ╰────
   help: Wrap this declaration in a block statement
+
+  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-1/input.js:1:1]
+ 1 │ let { let } = {};
+   ·       ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"const"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-10/input.js:1:1]
+ 1 │ const [let = 10] = [];
+   ·        ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-11/input.js:1:1]
+ 1 │ let [...let] = [];
+   ·         ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"const"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-12/input.js:1:1]
+ 1 │ const [...let] = [];
+   ·           ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"const"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-2/input.js:1:1]
+ 1 │ const { let } = {};
+   ·         ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-3/input.js:1:1]
+ 1 │ let [let] = [];
+   ·      ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"const"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-4/input.js:1:1]
+ 1 │ const [let] = [];
+   ·        ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-5/input.js:1:1]
+ 1 │ let let
+   ·     ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"const"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-6/input.js:1:1]
+ 1 │ const let = ''
+   ·       ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-7/input.js:1:1]
+ 1 │ let { let = 10 } = {};
+   ·       ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"const"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-8/input.js:1:1]
+ 1 │ const { let = 10 } = {};
+   ·         ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+   ╭─[es2015/let/let-at-binding-list-fail-9/input.js:1:1]
+ 1 │ let [let = 10] = [];
+   ·      ───
+   ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+   ╭─[es2015/let/let-at-catch-block/input.js:1:1]
+ 1 │ try {} catch (err) {
+ 2 │   let let;
+   ·       ───
+ 3 │ }
+   ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2015/meta-properties/new-target-invalid-escaped-new/input.js:1:1]

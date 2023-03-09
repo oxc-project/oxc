@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 43997/44009 (99.97%)
 Positive Passed: 43997/44009 (99.97%)
-Negative Passed: 2505/3917 (63.95%)
+Negative Passed: 2509/3917 (64.05%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -1155,10 +1155,8 @@ Expect Syntax Error: "language/statements/for-in/dstr/obj-id-init-simple-strict.
 Expect Syntax Error: "language/statements/for-in/dstr/obj-id-simple-strict.js"
 Expect Syntax Error: "language/statements/for-in/head-const-bound-names-dup.js"
 Expect Syntax Error: "language/statements/for-in/head-const-bound-names-in-stmt.js"
-Expect Syntax Error: "language/statements/for-in/head-const-bound-names-let.js"
 Expect Syntax Error: "language/statements/for-in/head-let-bound-names-dup.js"
 Expect Syntax Error: "language/statements/for-in/head-let-bound-names-in-stmt.js"
-Expect Syntax Error: "language/statements/for-in/head-let-bound-names-let.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-lhs.js"
@@ -1191,11 +1189,9 @@ Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj
 Expect Syntax Error: "language/statements/for-of/dstr/var-obj-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/head-const-bound-names-dup.js"
 Expect Syntax Error: "language/statements/for-of/head-const-bound-names-in-stmt.js"
-Expect Syntax Error: "language/statements/for-of/head-const-bound-names-let.js"
 Expect Syntax Error: "language/statements/for-of/head-const-init.js"
 Expect Syntax Error: "language/statements/for-of/head-let-bound-names-dup.js"
 Expect Syntax Error: "language/statements/for-of/head-let-bound-names-in-stmt.js"
-Expect Syntax Error: "language/statements/for-of/head-let-bound-names-let.js"
 Expect Syntax Error: "language/statements/for-of/head-let-init.js"
 Expect Syntax Error: "language/statements/for-of/head-var-init.js"
 Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-const.js"
@@ -21128,6 +21124,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  34 │ ]) ;
     ╰────
 
+  × `let` cannot be declared as a variable name inside of a `"const"` declaration
+    ╭─[language/statements/for-in/head-const-bound-names-let.js:16:1]
+ 16 │ 
+ 17 │ for (const let in {}) {}
+    ·            ───
+    ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+    ╭─[language/statements/for-in/head-let-bound-names-let.js:16:1]
+ 16 │ 
+ 17 │ for (let let in {}) {}
+    ·          ───
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/for-in/head-lhs-cover-non-asnmt-trgt.js:23:1]
  23 │ 
@@ -21520,6 +21530,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·               ╰── keyword cannot contain escape characters
     ╰────
 
+  × `let` cannot be declared as a variable name inside of a `"const"` declaration
+    ╭─[language/statements/for-of/head-const-bound-names-let.js:16:1]
+ 16 │ 
+ 17 │ for (const let of []) {}
+    ·            ───
+    ╰────
+
   × Expect token
     ╭─[language/statements/for-of/head-decl-no-expr.js:16:1]
  16 │ 
@@ -21534,6 +21551,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  18 │ for (x of [], []) {}
     ·             ┬
     ·             ╰── Expect `)` here, but found `,`
+    ╰────
+
+  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+    ╭─[language/statements/for-of/head-let-bound-names-let.js:16:1]
+ 16 │ 
+ 17 │ for (let let of []) {}
+    ·          ───
     ╰────
 
   × The left-hand side of a `for...of` statement may not be `async`

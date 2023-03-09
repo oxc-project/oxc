@@ -15,10 +15,11 @@ impl Rule for EarlyErrorJavaScript {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.get().kind() {
             AstKind::BindingIdentifier(ident) => {
-                check_identifier(&ident.name, ident.span, node, ctx)
+                check_identifier(&ident.name, ident.span, node, ctx);
+                check_binding_identifier(ident, node, ctx);
             }
             AstKind::IdentifierReference(ident) => {
-                check_identifier(&ident.name, ident.span, node, ctx)
+                check_identifier(&ident.name, ident.span, node, ctx);
             }
             AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
             AstKind::PrivateIdentifier(ident) => check_private_identifier(ident, node, ctx),
@@ -70,7 +71,42 @@ fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &LintC
 
     // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
     if ctx.strict_mode(node) && STRICT_MODE_NAMES.contains(name.as_str()) {
-        return ctx.diagnostic(ReservedKeyword(name.clone(), span));
+        ctx.diagnostic(ReservedKeyword(name.clone(), span));
+    }
+}
+
+fn check_binding_identifier<'a>(
+    ident: &BindingIdentifier,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    let strict_mode = ctx.strict_mode(node);
+    // It is a Diagnostic if the StringValue of a BindingIdentifier is "eval" or "arguments" within strict mode code.
+    // if strict_mode && !span.ctx.has_ambient() && matches!(name.as_str(), "eval" | "arguments") {
+    // return Some(Diagnostic::UnexpectedIdentifierAssign(name.clone(), span.range()));
+    // }
+
+    // LexicalDeclaration : LetOrConst BindingList ;
+    // * It is a Syntax Error if the BoundNames of BindingList contains "let".
+    if !strict_mode && ident.name == "let" {
+        for node_id in ctx.ancestors(node).skip(1) {
+            match ctx.kind(node_id) {
+                AstKind::VariableDeclaration(decl) if decl.kind.is_lexical() => {
+                    #[derive(Debug, Error, Diagnostic)]
+                    #[error(
+                        "`let` cannot be declared as a variable name inside of a `{0:?}` declaration"
+                    )]
+                    #[diagnostic()]
+                    struct InvalidLetDeclaration(String, #[label] Span);
+                    return ctx
+                        .diagnostic(InvalidLetDeclaration(decl.kind.to_string(), ident.span));
+                }
+                AstKind::VariableDeclaration(_) | AstKind::Function(_) | AstKind::Program(_) => {
+                    break;
+                }
+                _ => {}
+            }
+        }
     }
 }
 
