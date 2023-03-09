@@ -93,7 +93,7 @@ fn parse_test_code<'a>(source_text: &'a str, expr: &'a Expression) -> Option<Cow
         let option_code = option_code.map_or(Cow::Borrowed("None"), |option_code| {
             Cow::Owned(format!("Some(serde_json::json!({option_code}))"))
         });
-        Cow::Owned(format!(r#"("{test_code}", {option_code})"#))
+        Cow::Owned(format!(r#"({test_code:?}, {option_code})"#))
     })
 }
 
