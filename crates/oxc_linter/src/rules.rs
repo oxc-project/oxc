@@ -11,5 +11,6 @@ oxc_macros::declare_all_lint_rules! {
     no_empty,
     no_empty_pattern,
     no_mixed_operators,
+    no_constant_binary_expression,
     deepscan::uninvoked_array_callback,
 }
