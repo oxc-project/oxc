@@ -1,8 +1,10 @@
 use std::path::PathBuf;
 
-use clap::ArgMatches;
 use glob::Pattern;
 
+use crate::command::LintCommand;
+
+#[derive(Debug)]
 pub struct CliOptions {
     pub quiet: bool,
     pub fix: bool,
@@ -13,13 +15,13 @@ pub struct CliOptions {
     pub ignore_pattern: Vec<Pattern>,
 }
 
-impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
+impl<'a> TryFrom<&'a LintCommand> for CliOptions {
     type Error = &'a str;
 
-    fn try_from(matches: &ArgMatches) -> Result<Self, Self::Error> {
+    fn try_from(matches: &LintCommand) -> Result<Self, Self::Error> {
         let mut paths = vec![];
 
-        for path in matches.get_many::<PathBuf>("path").unwrap() {
+        for path in &matches.paths {
             let glob_result =
                 glob::glob(&path.to_string_lossy()).map_err(|_| "Failed to read glob pattern")?;
             let globbed = glob_result
@@ -33,34 +35,18 @@ impl<'a> TryFrom<&'a ArgMatches> for CliOptions {
             paths.extend(globbed);
         }
 
-        let ignore_path = get_ignore_path(matches);
-        let no_ignore = matches.get_flag("no-ignore");
-        let ignore_pattern = get_ignore_pattern(matches);
-
-        Ok(Self {
-            quiet: matches.get_flag("quiet"),
-            fix: matches.get_flag("fix"),
-            max_warnings: matches.get_one("max-warnings").copied(),
+        let result = Self {
+            quiet: matches.quiet,
+            fix: matches.fix,
+            max_warnings: matches.max_warnings,
             paths,
-            ignore_path,
-            no_ignore,
-            ignore_pattern,
-        })
+            ignore_path: matches.ignore_path.clone(),
+            no_ignore: matches.no_ignore,
+            ignore_pattern: matches.ignore_pattern.clone(),
+        };
+
+        dbg!(&result);
+
+        Ok(result)
     }
-}
-
-fn get_ignore_path(matches: &ArgMatches) -> String {
-    matches.get_one::<String>("ignore-path").map_or(".eslintignore".to_string(), ToOwned::to_owned)
-}
-
-fn get_ignore_pattern(matches: &ArgMatches) -> Vec<Pattern> {
-    let mut result = vec![];
-    let Some(ignore_pattern) = matches.get_many::<String>("ignore-pattern") else {return result};
-    for pattern in ignore_pattern {
-        if let Ok(pattern) = Pattern::new(pattern) {
-            result.push(pattern);
-        }
-    }
-
-    result
 }

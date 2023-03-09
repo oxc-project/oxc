@@ -8,7 +8,7 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use oxc_cli::{Cli, CliOptions, CliRunResult, Command};
+use oxc_cli::{Cli, CliOptions, CliRunResult, Command, Subcommand};
 use oxc_diagnostics::miette;
 
 fn main() -> CliRunResult {
@@ -17,21 +17,18 @@ fn main() -> CliRunResult {
     miette::set_hook(Box::new(|_| Box::new(miette::MietteHandlerOpts::new().tab_width(4).build())))
         .unwrap();
 
-    if let Some(command) = Command::new().build().get_matches().subcommand() {
-        let (subcommand, matches) = command;
-        let cli_options = CliOptions::try_from(matches);
-        if let Ok(cli_options) = cli_options {
-            // if cli_options.fix {
-            //   Git::new().verify()?;
-            // }
+    let top_level_cmd: Command = argh::from_env();
 
-            let cli = Cli::new(cli_options);
+    let Subcommand::Lint(command) = top_level_cmd.inner;
+    let cli_options = CliOptions::try_from(&command);
+    if let Ok(cli_options) = cli_options {
+        // if cli_options.fix {
+        //   Git::new().verify()?;
+        // }
 
-            if subcommand == "lint" {
-                return cli.lint();
-            }
-            return CliRunResult::None;
-        }
+        let cli = Cli::new(cli_options);
+
+        return cli.lint();
     }
     CliRunResult::None
 }
