@@ -19,6 +19,7 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
             AstKind::BreakStatement(lit) => check_break_statement(lit, node, ctx),
+            AstKind::ContinueStatement(lit) => check_continue_statement(lit, node, ctx),
             _ => {}
         }
     }
@@ -54,8 +55,7 @@ fn check_private_identifier<'a>(
         #[error("Private identifier '#{0:?}' is not allowed outside class bodies")]
         #[diagnostic()]
         struct PrivateNotInClass(Atom, #[label] Span);
-        ctx.diagnostic(PrivateNotInClass(ident.name.clone(), ident.span));
-        return;
+        return ctx.diagnostic(PrivateNotInClass(ident.name.clone(), ident.span));
     };
 
     // Check private identifier declarations in class.
@@ -115,7 +115,6 @@ fn check_number_literal(lit: &NumberLiteral, node: &AstNode, ctx: &LintContext) 
                 #[error("Decimals with leading zeros are not allowed in strict mode")]
                 #[diagnostic(help("remove the leading zero"))]
                 struct LeadingZeroDecimal(#[label] Span);
-
                 ctx.diagnostic(LeadingZeroDecimal(lit.span));
             }
             _ => {}
@@ -137,21 +136,18 @@ fn check_string_literal<'a>(lit: &StringLiteral, node: &AstNode<'a>, ctx: &LintC
                 match chars.next() {
                     Some('0') => {
                         if chars.peek().is_some_and(|c| ('1'..='9').contains(c)) {
-                            ctx.diagnostic(LegacyOctal(lit.span));
-                            return;
+                            return ctx.diagnostic(LegacyOctal(lit.span));
                         }
                     }
                     Some('1'..='7') => {
-                        ctx.diagnostic(LegacyOctal(lit.span));
-                        return;
+                        return ctx.diagnostic(LegacyOctal(lit.span));
                     }
                     Some('8'..='9') => {
                         #[derive(Debug, Error, Diagnostic)]
                         #[error("Invalid escape sequence")]
                         #[diagnostic(help("\\8 and \\9 are not allowed in strict mode"))]
                         struct NonOctalDecimalEscapeSequence(#[label] Span);
-                        ctx.diagnostic(NonOctalDecimalEscapeSequence(lit.span));
-                        return;
+                        return ctx.diagnostic(NonOctalDecimalEscapeSequence(lit.span));
                     }
                     _ => {}
                 }
@@ -172,6 +168,16 @@ fn check_regexp_literal(lit: &RegExpLiteral, ctx: &LintContext) {
     }
 }
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("Jump target cannot cross function boundary.")]
+#[diagnostic()]
+struct InvalidLabelJumpTarget(#[label] Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Use of undefined label")]
+#[diagnostic()]
+struct InvalidLabelTarget(#[label("This label is used, but not defined")] Span);
+
 fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &LintContext<'a>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Illegal break statement")]
@@ -180,39 +186,20 @@ fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &Li
     ))]
     struct InvalidBreak(#[label] Span);
 
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("Illegal continue statement: no surrounding iteration statement")]
-    #[diagnostic(help(
-        "A `continue` statement can only be used within an enclosing `for`, `while` or `do while` "
-    ))]
-    struct InvalidContinue(#[label] Span);
-
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("Use of undefined label")]
-    #[diagnostic()]
-    struct InvalidLabelTarget(#[label("This label is used, but not defined")] Span);
-
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("Jump target cannot cross function boundary.")]
-    #[diagnostic()]
-    struct InvalidLabelJumpTarget(#[label] Span);
-
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
     for node_id in ctx.ancestors(node).skip(1) {
         match ctx.kind(node_id) {
             AstKind::Program(_) => {
-                stmt.label.as_ref().map_or_else(
+                return stmt.label.as_ref().map_or_else(
                     || ctx.diagnostic(InvalidBreak(stmt.span)),
                     |label| ctx.diagnostic(InvalidLabelTarget(label.span)),
                 );
-                return;
             }
             AstKind::Function(_) | AstKind::StaticBlock(_) => {
-                stmt.label.as_ref().map_or_else(
-                    || ctx.diagnostic(InvalidContinue(stmt.span)),
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.diagnostic(InvalidBreak(stmt.span)),
                     |label| ctx.diagnostic(InvalidLabelJumpTarget(label.span)),
                 );
-                return;
             }
             AstKind::LabeledStatement(labeled_statement) => {
                 if let Some(label) = &stmt.label
@@ -226,6 +213,71 @@ fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &Li
             {
                 break;
             }
+            _ => {}
+        }
+    }
+}
+
+fn check_continue_statement<'a>(
+    stmt: &ContinueStatement,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Illegal continue statement: no surrounding iteration statement")]
+    #[diagnostic(help(
+        "A `continue` statement can only be used within an enclosing `for`, `while` or `do while` "
+    ))]
+    struct InvalidContinue(#[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error(
+        "A `{0:?}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."
+    )]
+    #[diagnostic()]
+    struct InvalidLabelNonIteration(
+        &'static str,
+        #[label("This is an non-iteration statement")] Span,
+        #[label("for this label")] Span,
+    );
+
+    // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
+    for node_id in ctx.ancestors(node).skip(1) {
+        match ctx.kind(node_id) {
+            AstKind::Program(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.diagnostic(InvalidContinue(stmt.span)),
+                    |label| ctx.diagnostic(InvalidLabelTarget(label.span)),
+                );
+            }
+            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+                return stmt.label.as_ref().map_or_else(
+                    || ctx.diagnostic(InvalidContinue(stmt.span)),
+                    |label| ctx.diagnostic(InvalidLabelJumpTarget(label.span)),
+                );
+            }
+            AstKind::LabeledStatement(labeled_statement) => {
+                if let Some(label) = &stmt.label
+                    && label.name == labeled_statement.label.name {
+                    if matches!(
+                        labeled_statement.body,
+                        Statement::LabeledStatement(_)
+                        | Statement::DoWhileStatement(_)
+                        | Statement::WhileStatement(_)
+                        | Statement::ForStatement(_)
+                        | Statement::ForInStatement(_)
+                        | Statement::ForOfStatement(_)
+                    ) {
+                        break;
+                    }
+                    return ctx.diagnostic(InvalidLabelNonIteration(
+                            "continue",
+                            labeled_statement.label.span,
+                            label.span,
+                    ));
+                }
+            }
+            kind if kind.is_iteration_statement() && stmt.label.is_none() => break,
             _ => {}
         }
     }

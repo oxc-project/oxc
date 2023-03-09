@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44000/44009 (99.98%)
 Positive Passed: 44000/44009 (99.98%)
-Negative Passed: 2205/3917 (56.29%)
+Negative Passed: 2223/3917 (56.75%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -866,7 +866,6 @@ Expect Syntax Error: "language/module-code/early-import-eval.js"
 Expect Syntax Error: "language/module-code/early-lex-and-var.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
 Expect Syntax Error: "language/module-code/early-strict-mode.js"
-Expect Syntax Error: "language/module-code/early-undef-continue.js"
 Expect Syntax Error: "language/module-code/export-default-asyncfunction-declaration-binding-exists.js"
 Expect Syntax Error: "language/module-code/export-default-asyncgenerator-declaration-binding-exists.js"
 Expect Syntax Error: "language/module-code/export-default-function-declaration-binding-exists.js"
@@ -1005,7 +1004,6 @@ Expect Syntax Error: "language/statements/async-generator/yield-as-identifier-re
 Expect Syntax Error: "language/statements/async-generator/yield-as-identifier-reference.js"
 Expect Syntax Error: "language/statements/async-generator/yield-identifier-spread-strict.js"
 Expect Syntax Error: "language/statements/async-generator/yield-identifier-strict.js"
-Expect Syntax Error: "language/statements/block/labeled-continue.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/await-as-binding-identifier.js"
@@ -1324,7 +1322,6 @@ Expect Syntax Error: "language/statements/class/static-init-invalid-lex-dup.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-lex-var.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-super-call.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-undefined-continue-target.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-yield.js"
 Expect Syntax Error: "language/statements/class/static-method-param-yield.js"
 Expect Syntax Error: "language/statements/class/strict-mode/with.js"
@@ -1336,18 +1333,6 @@ Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/const/redeclaration-error-from-within-strict-mode-function-const.js"
 Expect Syntax Error: "language/statements/const/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/const/syntax/const-declaring-let-split-across-two-lines.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A1_T1.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A1_T2.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A1_T3.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A1_T4.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A5_T1.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A5_T2.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A5_T3.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A6.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A8_T1.js"
-Expect Syntax Error: "language/statements/continue/S12.7_A8_T2.js"
-Expect Syntax Error: "language/statements/continue/static-init-with-label.js"
-Expect Syntax Error: "language/statements/continue/static-init-without-label.js"
 Expect Syntax Error: "language/statements/do-while/decl-fun.js"
 Expect Syntax Error: "language/statements/do-while/labelled-fn-stmt.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-decl-dstr-array-elem-init-yield-ident-invalid.js"
@@ -1480,8 +1465,6 @@ Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-lhs.js"
 Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-var.js"
-Expect Syntax Error: "language/statements/for/S12.6.3_A11.1_T3.js"
-Expect Syntax Error: "language/statements/for/S12.6.3_A11_T3.js"
 Expect Syntax Error: "language/statements/for/decl-fun.js"
 Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-id.js"
@@ -1570,7 +1553,6 @@ Expect Syntax Error: "language/statements/if/if-stmt-else-fun-strict.js"
 Expect Syntax Error: "language/statements/if/labelled-fn-stmt-first.js"
 Expect Syntax Error: "language/statements/if/labelled-fn-stmt-lone.js"
 Expect Syntax Error: "language/statements/if/labelled-fn-stmt-second.js"
-Expect Syntax Error: "language/statements/labeled/continue.js"
 Expect Syntax Error: "language/statements/labeled/decl-fun-strict.js"
 Expect Syntax Error: "language/statements/labeled/value-yield-strict-escaped.js"
 Expect Syntax Error: "language/statements/labeled/value-yield-strict.js"
@@ -14155,6 +14137,15 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  18 │ }
     ╰────
 
+  × Use of undefined label
+    ╭─[language/module-code/early-undef-continue.js:16:1]
+ 16 │ while (false) {
+ 17 │   continue undef;
+    ·            ──┬──
+    ·              ╰── This label is used, but not defined
+ 18 │ }
+    ╰────
+
   × An export name cannot include a unicode lone surrogate
     ╭─[language/module-code/export-expname-from-as-unpaired-surrogate.js:20:1]
  20 │ 
@@ -15093,6 +15084,19 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·        ──
     ╰────
 
+  × A `"continue"` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
+    ╭─[language/statements/block/labeled-continue.js:19:1]
+ 19 │ 
+ 20 │ label: {
+    · ──┬──
+    ·   ╰── This is an non-iteration statement
+ 21 │   for ( ;; ) {
+ 22 │     continue label;
+    ·              ──┬──
+    ·                ╰── for this label
+ 23 │   }
+    ╰────
+
   × Illegal break statement
     ╭─[language/statements/break/S12.8_A1_T1.js:17:1]
  17 │ var x=1;
@@ -15179,14 +15183,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ╰────
   help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
-  × Illegal continue statement: no surrounding iteration statement
+  × Illegal break statement
     ╭─[language/statements/break/static-init-without-label.js:23:1]
  23 │     static {
  24 │       break;
     ·       ──────
  25 │     }
     ╰────
-  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+  help: A `break` statement can only be used within an enclosing iteration or switch statement.
 
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/async-gen-meth-escaped-async.js:24:1]
@@ -18429,6 +18433,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  23 │     }
     ╰────
 
+  × Jump target cannot cross function boundary.
+    ╭─[language/statements/class/static-init-invalid-undefined-continue-target.js:21:1]
+ 21 │     x: while (false) {
+ 22 │       continue y;
+    ·                ─
+ 23 │     }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/syntax/escaped-static.js:23:1]
  23 │ class C {
@@ -18663,6 +18675,112 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     ·                   ╰── Lexical declaration is not allowed here
     ╰────
   help: Wrap this declaration in a block statement
+
+  × Illegal continue statement: no surrounding iteration statement
+    ╭─[language/statements/continue/S12.7_A1_T1.js:19:1]
+ 19 │ var x=1;
+ 20 │ continue;
+    · ─────────
+ 21 │ var y=2;
+    ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Use of undefined label
+    ╭─[language/statements/continue/S12.7_A1_T2.js:21:1]
+ 21 │ var x=1;
+ 22 │ continue LABEL;
+    ·          ──┬──
+    ·            ╰── This label is used, but not defined
+ 23 │ var y=2;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/continue/S12.7_A1_T3.js:22:1]
+ 22 │     var x=1;
+ 23 │     continue LABEL;
+    ·              ──┬──
+    ·                ╰── This label is used, but not defined
+ 24 │     var y=2;
+    ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+    ╭─[language/statements/continue/S12.7_A1_T4.js:20:1]
+ 20 │     var x=1;
+ 21 │     continue;
+    ·     ─────────
+ 22 │     var y=2;
+    ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Use of undefined label
+    ╭─[language/statements/continue/S12.7_A5_T1.js:21:1]
+ 21 │    if(x===10)break;
+ 22 │    continue LABEL_ANOTHER_LOOP;
+    ·             ─────────┬────────
+    ·                      ╰── This label is used, but not defined
+ 23 │    LABEL_IN_2 : y++;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/continue/S12.7_A5_T2.js:21:1]
+ 21 │    if(x===10)break;
+ 22 │    continue IN_DO_FUNC;
+    ·             ─────┬────
+    ·                  ╰── This label is used, but not defined
+ 23 │    LABEL_IN_2 : y++;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/continue/S12.7_A5_T3.js:22:1]
+ 22 │    if(x===10)break;
+ 23 │    continue LABEL_IN;
+    ·             ────┬───
+    ·                 ╰── This label is used, but not defined
+ 24 │    LABEL_IN_2 : y++;
+    ╰────
+
+  × Jump target cannot cross function boundary.
+    ╭─[language/statements/continue/S12.7_A6.js:20:1]
+ 20 │     x++;
+ 21 │     (function(){continue LABEL1;})();
+    ·                          ──────
+ 22 │     y++;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/continue/S12.7_A8_T1.js:18:1]
+ 18 │ } catch(e){
+ 19 │     continue LABEL2;
+    ·              ───┬──
+    ·                 ╰── This label is used, but not defined
+ 20 │     LABEL2 : do {
+    ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+    ╭─[language/statements/continue/S12.7_A8_T2.js:16:1]
+ 16 │ } catch(e){
+ 17 │     continue;
+    ·     ─────────
+ 18 │ };
+    ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Jump target cannot cross function boundary.
+    ╭─[language/statements/continue/static-init-with-label.js:24:1]
+ 24 │     static {
+ 25 │       continue label;
+    ·                ─────
+ 26 │     }
+    ╰────
+
+  × Illegal continue statement: no surrounding iteration statement
+    ╭─[language/statements/continue/static-init-without-label.js:24:1]
+ 24 │     static {
+ 25 │       continue;
+    ·       ─────────
+ 26 │     }
+    ╰────
+  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
   × Unexpected token
     ╭─[language/statements/debugger/expression.js:13:1]
@@ -19733,6 +19851,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
   help: Wrap this declaration in a block statement
 
   × Use of undefined label
+    ╭─[language/statements/for/S12.6.3_A11.1_T3.js:23:1]
+ 23 │     nested:for(var index_n=0;index_n<=index;index_n++){
+ 24 │         if(index*index_n == 6)continue nonexist;
+    ·                                        ────┬───
+    ·                                            ╰── This label is used, but not defined
+ 25 │         __str+=""+index+index_n;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/for/S12.6.3_A11_T3.js:23:1]
+ 23 │     nested:for(index_n=0;index_n<=index;index_n++){
+ 24 │         if(index*index_n == 6)continue nonexist;
+    ·                                        ────┬───
+    ·                                            ╰── This label is used, but not defined
+ 25 │         __str+=""+index+index_n;
+    ╰────
+
+  × Use of undefined label
     ╭─[language/statements/for/S12.6.3_A12.1_T3.js:23:1]
  23 │     nested:for(var index_n=0;index_n<=index;index_n++){
  24 │         if(index*index_n >= 4)break nonexist;
@@ -20575,6 +20711,18 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
     · ╰──── Lexical declaration is not allowed here
     ╰────
   help: Wrap this declaration in a block statement
+
+  × A `"continue"` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
+    ╭─[language/statements/labeled/continue.js:23:1]
+ 23 │ do {
+ 24 │   test262: {
+    ·   ───┬───
+    ·      ╰── This is an non-iteration statement
+ 25 │     continue test262;
+    ·              ───┬───
+    ·                 ╰── for this label
+ 26 │   }
+    ╰────
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/labeled/decl-async-function.js:19:1]
