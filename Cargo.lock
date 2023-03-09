@@ -915,6 +915,7 @@ name = "oxc_diagnostics"
 version = "0.0.0"
 dependencies = [
  "miette",
+ "oxc_ast",
  "thiserror",
 ]
 
@@ -979,6 +980,8 @@ dependencies = [
  "bitflags",
  "indextree",
  "oxc_ast",
+ "oxc_diagnostics",
+ "rustc-hash",
 ]
 
 [[package]]

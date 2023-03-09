@@ -1,17 +1,25 @@
 //! Symbol and Symbol Table for tracking of semantics of variables
+#![allow(non_upper_case_globals)]
 
-pub mod id;
-pub mod table;
+mod id;
+mod reference;
+mod table;
 
+use bitflags::bitflags;
 use oxc_ast::{Atom, Span};
 
-pub use self::{id::SymbolId, table::SymbolTable};
+pub use self::{
+    id::SymbolId,
+    reference::{Reference, ReferenceFlag},
+    table::SymbolTable,
+};
 
 #[derive(Debug)]
 pub struct Symbol {
     id: SymbolId,
     name: Atom,
     span: Span,
+    flags: SymbolFlags,
 }
 
 #[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
@@ -21,10 +29,17 @@ fn symbol_size() {
     assert_eq!(size_of::<Symbol>(), 40);
 }
 
+bitflags! {
+    #[derive(Default)]
+    pub struct SymbolFlags: u32 {
+        const None                    = 0;
+    }
+}
+
 impl Symbol {
     #[must_use]
-    pub fn new(id: SymbolId, name: Atom, span: Span) -> Self {
-        Self { id, name, span }
+    pub fn new(id: SymbolId, name: Atom, span: Span, flags: SymbolFlags) -> Self {
+        Self { id, name, span, flags }
     }
 
     #[must_use]
@@ -41,7 +56,13 @@ impl Symbol {
 
     #[must_use]
     #[allow(unused)]
-    pub fn span(&self) -> &Span {
-        &self.span
+    pub fn span(&self) -> Span {
+        self.span
+    }
+
+    #[must_use]
+    #[allow(unused)]
+    pub fn flags(&self) -> SymbolFlags {
+        self.flags
     }
 }

@@ -1,6 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, syntax_directed_operations::PrivateBoundIdentifiers, Atom, GetSpan, Span};
-use oxc_diagnostics::Result;
+use oxc_diagnostics::{Redeclaration, Result};
 use rustc_hash::FxHashMap;
 
 use crate::diagnostics;
@@ -292,7 +292,7 @@ impl<'a> SeparatedList<'a> for AssertEntries<'a> {
         };
 
         if let Some(old_span) = self.keys.get(&key.as_atom()) {
-            p.error(diagnostics::Redeclaration(key.as_atom(), *old_span, key.span()));
+            p.error(Redeclaration(key.as_atom(), *old_span, key.span()));
         } else {
             self.keys.insert(key.as_atom(), key.span());
         }
@@ -395,7 +395,7 @@ impl<'a> ClassElements<'a> {
                     _ => false,
                 })
             {
-                p.error(diagnostics::Redeclaration(
+                p.error(Redeclaration(
                     private_ident.name.clone(),
                     existed.span,
                     private_ident.span,

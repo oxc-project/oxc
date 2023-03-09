@@ -1,3 +1,5 @@
+#![feature(is_some_and)]
+
 mod builder;
 mod node;
 mod scope;

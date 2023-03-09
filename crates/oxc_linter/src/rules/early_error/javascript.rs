@@ -3,6 +3,7 @@ use oxc_ast::{ast::*, AstKind, Atom, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
+    Redeclaration,
 };
 
 use crate::{ast_util::STRICT_MODE_NAMES, context::LintContext, rule::Rule, AstNode};
@@ -35,15 +36,6 @@ impl Rule for EarlyErrorJavaScript {
         }
     }
 }
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Identifier `{0:?}` has already been declared")]
-#[diagnostic()]
-struct Redeclaration(
-    Atom,
-    #[label("`{0}` has already been declared here")] Span,
-    #[label("It can not be redeclared here")] Span,
-);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("The keyword '{0:?}' is reserved")]

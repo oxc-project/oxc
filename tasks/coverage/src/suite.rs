@@ -266,15 +266,17 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn execute(&mut self, source_type: SourceType) -> TestResult {
         let allocator = Allocator::default();
         let source_text = self.code();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        let program = allocator.alloc(ret.program);
-        let trivias = Rc::new(ret.trivias);
-        let semantic = SemanticBuilder::new(source_type).build(program, trivias);
-        let result = Linter::new().run_early_error(&Rc::new(semantic), source_text, false);
+        let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+        let program = allocator.alloc(parser_ret.program);
+        let trivias = Rc::new(parser_ret.trivias);
+        let semantic_ret = SemanticBuilder::new(source_type).build(program, trivias);
+        let result =
+            Linter::new().run_early_error(&Rc::new(semantic_ret.semantic), source_text, false);
         let errors = result
             .into_iter()
             .map(|msg| msg.error)
-            .chain(ret.errors.into_iter())
+            .chain(parser_ret.errors.into_iter())
+            .chain(semantic_ret.errors.into_iter())
             .collect::<Vec<_>>();
         let result = if errors.is_empty() {
             Ok(String::new())
