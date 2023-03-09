@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 935/1502 (62.25%)
+Negative Passed: 936/1502 (62.32%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -200,7 +200,6 @@ Expect Syntax Error: "es2015/uncategorised/291/input.js"
 Expect Syntax Error: "es2015/uncategorised/296/input.js"
 Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2015/uncategorised/332/input.js"
-Expect Syntax Error: "es2015/uncategorised/334/input.js"
 Expect Syntax Error: "es2015/uncategorised/349/input.js"
 Expect Syntax Error: "es2015/yield/function-name-function-declaration-inside-generator/input.js"
 Expect Syntax Error: "es2015/yield/function-name-generator-expression/input.js"
@@ -2911,6 +2910,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ if (1) ; else class Cls {}
    ·               ─────┬────
    ·                    ╰── Classes can only be declared at top level or inside a block
+   ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+   ╭─[es2015/uncategorised/334/input.js:1:1]
+ 1 │ [...eval] = arr
+   ·     ────
    ╰────
 
   × Bad escape sequence in untagged template literal

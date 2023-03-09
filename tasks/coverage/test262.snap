@@ -1,13 +1,12 @@
 Test262 Summary:
 AST Parsed     : 43997/44009 (99.97%)
 Positive Passed: 43997/44009 (99.97%)
-Negative Passed: 2509/3917 (64.05%)
+Negative Passed: 2626/3917 (67.04%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/var-arraybindingpattern-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/var-objectbindingpattern-initializer.js"
-Expect Syntax Error: "language/arguments-object/10.5-1gs.js"
 Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-initialization-assignment.js"
 Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings-with-and-without-initializer.js"
 Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings-with-initializer.js"
@@ -151,17 +150,8 @@ Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/ar
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-eval.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/array-elem-target-simple-strict.js"
 Expect Syntax Error: "language/expressions/assignment/dstr/obj-id-identifier-yield-expr.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/obj-id-init-simple-strict.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/obj-id-simple-strict.js"
-Expect Syntax Error: "language/expressions/assignment/id-arguments-strict.js"
-Expect Syntax Error: "language/expressions/assignment/id-eval-strict.js"
-Expect Syntax Error: "language/expressions/assignmenttargettype/direct-identifierreference-arguments-strict.js"
-Expect Syntax Error: "language/expressions/assignmenttargettype/direct-identifierreference-eval-strict.js"
 Expect Syntax Error: "language/expressions/assignmenttargettype/direct-yieldexpression-0.js"
-Expect Syntax Error: "language/expressions/assignmenttargettype/parenthesized-identifierreference-arguments-strict.js"
-Expect Syntax Error: "language/expressions/assignmenttargettype/parenthesized-identifierreference-eval-strict.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/await-as-binding-identifier.js"
@@ -348,7 +338,6 @@ Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-ary-pt
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/elements/arrow-fnc-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/arrow-fnc-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier.js"
@@ -358,57 +347,31 @@ Expect Syntax Error: "language/expressions/class/elements/async-private-method-s
 Expect Syntax Error: "language/expressions/class/elements/async-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/elements/async-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/comp-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/equality-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/equality-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-arrow-fnc-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-comp-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-private-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-private-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-private-ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-private-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-private-typeof-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-private-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-static-comp-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-static-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-static-literal-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-static-literal-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-static-private-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-static-private-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-static-string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-static-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-typeof-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/nested-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/private-arrow-fnc-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/private-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/private-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/private-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/private-ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/private-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/private-typeof-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/private-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/static-comp-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/static-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/static-literal-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/static-literal-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/static-private-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/static-private-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/static-string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/static-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/string-literal-name-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js"
@@ -464,9 +427,7 @@ Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/gr
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-private-meth-super.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-set-meth-super.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/super-private-access-invalid.js"
-Expect Syntax Error: "language/expressions/class/elements/ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/typeof-init-err-contains-arguments.js"
 Expect Syntax Error: "language/expressions/class/elements/typeof-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/array-destructuring-param-strict-body.js"
@@ -495,29 +456,6 @@ Expect Syntax Error: "language/expressions/coalesce/cannot-chain-head-with-logic
 Expect Syntax Error: "language/expressions/coalesce/cannot-chain-head-with-logical-or.js"
 Expect Syntax Error: "language/expressions/coalesce/cannot-chain-tail-with-logical-and.js"
 Expect Syntax Error: "language/expressions/coalesce/cannot-chain-tail-with-logical-or.js"
-Expect Syntax Error: "language/expressions/compound-assignment/11.13.2-6-1gs.js"
-Expect Syntax Error: "language/expressions/compound-assignment/add-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/add-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/and-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/and-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/div-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/div-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/lshift-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/lshift-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/mod-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/mod-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/mult-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/mult-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/or-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/or-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/srshift-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/srshift-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/sub-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/sub-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/urshift-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/urshift-eval-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/xor-arguments-strict.js"
-Expect Syntax Error: "language/expressions/compound-assignment/xor-eval-strict.js"
 Expect Syntax Error: "language/expressions/delete/identifier-strict-recursive.js"
 Expect Syntax Error: "language/expressions/delete/identifier-strict.js"
 Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-bitnot-unary-expression-base.js"
@@ -569,12 +507,6 @@ Expect Syntax Error: "language/expressions/generators/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/generators/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
 Expect Syntax Error: "language/expressions/import.meta/syntax/goal-script.js"
-Expect Syntax Error: "language/expressions/logical-assignment/lgcl-and-arguments-strict.js"
-Expect Syntax Error: "language/expressions/logical-assignment/lgcl-and-eval-strict.js"
-Expect Syntax Error: "language/expressions/logical-assignment/lgcl-nullish-arguments-strict.js"
-Expect Syntax Error: "language/expressions/logical-assignment/lgcl-nullish-eval-strict.js"
-Expect Syntax Error: "language/expressions/logical-assignment/lgcl-or-arguments-strict.js"
-Expect Syntax Error: "language/expressions/logical-assignment/lgcl-or-eval-strict.js"
 Expect Syntax Error: "language/expressions/object/11.1.5-1gs.js"
 Expect Syntax Error: "language/expressions/object/__proto__-duplicate.js"
 Expect Syntax Error: "language/expressions/object/cover-initialized-name.js"
@@ -657,16 +589,6 @@ Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-
 Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-outside.js"
 Expect Syntax Error: "language/expressions/optional-chaining/call-expression-super-no-base.js"
-Expect Syntax Error: "language/expressions/postfix-decrement/arguments.js"
-Expect Syntax Error: "language/expressions/postfix-decrement/eval.js"
-Expect Syntax Error: "language/expressions/postfix-increment/11.3.1-2-1gs.js"
-Expect Syntax Error: "language/expressions/postfix-increment/arguments.js"
-Expect Syntax Error: "language/expressions/postfix-increment/eval.js"
-Expect Syntax Error: "language/expressions/prefix-decrement/11.4.5-2-2gs.js"
-Expect Syntax Error: "language/expressions/prefix-decrement/arguments.js"
-Expect Syntax Error: "language/expressions/prefix-decrement/eval.js"
-Expect Syntax Error: "language/expressions/prefix-increment/arguments.js"
-Expect Syntax Error: "language/expressions/prefix-increment/eval.js"
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
 Expect Syntax Error: "language/global-code/new.target-arrow.js"
@@ -944,7 +866,6 @@ Expect Syntax Error: "language/statements/class/dstr/private-meth-static-ary-ptr
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/elements/arrow-fnc-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/arrow-fnc-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier.js"
@@ -954,57 +875,31 @@ Expect Syntax Error: "language/statements/class/elements/async-private-method-st
 Expect Syntax Error: "language/statements/class/elements/async-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/elements/async-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/comp-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/equality-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/equality-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-arrow-fnc-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-comp-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-private-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-private-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-private-ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-private-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-private-typeof-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-private-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-static-comp-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-static-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-static-literal-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-static-literal-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-static-private-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-static-private-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-static-string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-static-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-typeof-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/nested-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/private-arrow-fnc-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/private-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/private-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/private-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/private-ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/private-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/private-typeof-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/private-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/static-comp-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/static-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/static-literal-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/static-literal-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/static-private-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/static-private-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/static-string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/static-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/string-literal-name-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/string-literal-name-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js"
@@ -1060,9 +955,7 @@ Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/gra
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-private-meth-super.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-set-meth-super.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/super-private-access-invalid.js"
-Expect Syntax Error: "language/statements/class/elements/ternary-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/typeof-init-err-contains-arguments.js"
 Expect Syntax Error: "language/statements/class/elements/typeof-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/array-destructuring-param-strict-body.js"
@@ -1087,7 +980,6 @@ Expect Syntax Error: "language/statements/class/method/object-destructuring-para
 Expect Syntax Error: "language/statements/class/method/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/static-gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/statements/class/static-init-await-binding-invalid.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-arguments.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-lex-dup.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-lex-var.js"
@@ -1102,7 +994,6 @@ Expect Syntax Error: "language/statements/const/redeclaration-error-from-within-
 Expect Syntax Error: "language/statements/const/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/do-while/decl-fun.js"
 Expect Syntax Error: "language/statements/do-while/labelled-fn-stmt.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-decl-dstr-array-elem-target-simple-strict.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-obj.js"
@@ -1149,10 +1040,7 @@ Expect Syntax Error: "language/statements/for-await-of/head-const-init.js"
 Expect Syntax Error: "language/statements/for-await-of/head-let-init.js"
 Expect Syntax Error: "language/statements/for-await-of/head-var-init.js"
 Expect Syntax Error: "language/statements/for-in/decl-fun.js"
-Expect Syntax Error: "language/statements/for-in/dstr/array-elem-target-simple-strict.js"
 Expect Syntax Error: "language/statements/for-in/dstr/obj-id-identifier-yield-expr.js"
-Expect Syntax Error: "language/statements/for-in/dstr/obj-id-init-simple-strict.js"
-Expect Syntax Error: "language/statements/for-in/dstr/obj-id-simple-strict.js"
 Expect Syntax Error: "language/statements/for-in/head-const-bound-names-dup.js"
 Expect Syntax Error: "language/statements/for-in/head-const-bound-names-in-stmt.js"
 Expect Syntax Error: "language/statements/for-in/head-let-bound-names-dup.js"
@@ -1168,7 +1056,6 @@ Expect Syntax Error: "language/statements/for-in/var-arguments-strict.js"
 Expect Syntax Error: "language/statements/for-in/var-eval-strict-init.js"
 Expect Syntax Error: "language/statements/for-in/var-eval-strict.js"
 Expect Syntax Error: "language/statements/for-of/decl-fun.js"
-Expect Syntax Error: "language/statements/for-of/dstr/array-elem-target-simple-strict.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js"
@@ -1180,8 +1067,6 @@ Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-id.
 Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/for-of/dstr/let-obj-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/obj-id-identifier-yield-expr.js"
-Expect Syntax Error: "language/statements/for-of/dstr/obj-id-init-simple-strict.js"
-Expect Syntax Error: "language/statements/for-of/dstr/obj-id-simple-strict.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js"
@@ -1214,7 +1099,6 @@ Expect Syntax Error: "language/statements/for/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-expr.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-var.js"
-Expect Syntax Error: "language/statements/function/13.0_4-5gs.js"
 Expect Syntax Error: "language/statements/function/13.1-13gs.js"
 Expect Syntax Error: "language/statements/function/13.1-1gs.js"
 Expect Syntax Error: "language/statements/function/13.1-4gs.js"
@@ -1235,7 +1119,6 @@ Expect Syntax Error: "language/statements/function/early-params-super-call.js"
 Expect Syntax Error: "language/statements/function/early-params-super-prop.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-body.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-outer-body.js"
-Expect Syntax Error: "language/statements/function/enable-strict-via-outer-script.js"
 Expect Syntax Error: "language/statements/function/name-arguments-strict-body.js"
 Expect Syntax Error: "language/statements/function/name-arguments-strict.js"
 Expect Syntax Error: "language/statements/function/name-eval-strict-body.js"
@@ -1533,6 +1416,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  16 │ 
  17 │ /./uv;
     · ─────
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/arguments-object/10.5-1gs.js:16:1]
+ 16 │ function f_10_5_1_gs(){
+ 17 │     arguments = 7;
+    ·     ─────────
+ 18 │ }
     ╰────
 
   × Automatic Semicolon Insertion
@@ -2653,6 +2544,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     · ╰──── Cannot assign to this expression
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/assignment/dstr/array-elem-target-simple-strict.js:22:1]
+ 22 │ 
+ 23 │ 0, [arguments] = [];
+    ·     ─────────
+    ╰────
+
   × The keyword '"yield"' is reserved
     ╭─[language/expressions/assignment/dstr/array-elem-target-yield-invalid.js:22:1]
  22 │ 
@@ -2744,11 +2642,25 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·      ─────
     ╰────
 
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/assignment/dstr/obj-id-init-simple-strict.js:22:1]
+ 22 │ 
+ 23 │ 0, { eval = 0 } = {};
+    ·      ────
+    ╰────
+
   × The keyword '"yield"' is reserved
     ╭─[language/expressions/assignment/dstr/obj-id-init-yield-ident-invalid.js:22:1]
  22 │ 
  23 │ 0, { x = yield } = {};
     ·          ─────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/assignment/dstr/obj-id-simple-strict.js:22:1]
+ 22 │ 
+ 23 │ 0, { eval } = {};
+    ·      ────
     ╰────
 
   × The keyword '"yield"' is reserved
@@ -3136,6 +3048,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  39 │ 
  40 │ var x = { w\u0069th } = { with: 42 };
     ·                     ─
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/assignment/id-arguments-strict.js:15:1]
+ 15 │ 
+ 16 │ (arguments) = 20;
+    ·  ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/assignment/id-eval-strict.js:15:1]
+ 15 │ 
+ 16 │ (eval) = 20;
+    ·  ────
     ╰────
 
   × Invalid assignment
@@ -3614,6 +3540,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  20 │ (x, y = true) = 1;
     ·  ─────┬─────
     ·       ╰── Cannot assign to this expression
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/assignmenttargettype/direct-identifierreference-arguments-strict.js:15:1]
+ 15 │ 
+ 16 │ arguments = 1;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/assignmenttargettype/direct-identifierreference-eval-strict.js:15:1]
+ 15 │ 
+ 16 │ eval = 1;
+    · ────
     ╰────
 
   × Invalid assignment
@@ -4799,6 +4739,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  23 │ ((x, y = true)) = 1;
     ·   ─────┬─────
     ·        ╰── Cannot assign to this expression
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/assignmenttargettype/parenthesized-identifierreference-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ (arguments) = 1;
+    ·  ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/assignmenttargettype/parenthesized-identifierreference-eval-strict.js:18:1]
+ 18 │ 
+ 19 │ (eval) = 1;
+    ·  ────
     ╰────
 
   × Invalid assignment
@@ -7381,6 +7335,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  74 │     
     ╰────
 
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/arrow-fnc-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   x = () => arguments;
+    ·             ─────────
+ 34 │ }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
  34 │ var C = class { static async *#gen() {
@@ -7735,6 +7697,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  37 │   }
     ╰────
 
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/comp-name-init-err-contains-arguments.js:33:1]
+ 33 │ var C = class {
+ 34 │   [x] = arguments;
+    ·         ─────────
+ 35 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/equality-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   x = {} == arguments;
+    ·             ─────────
+ 34 │ }
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[language/expressions/class/elements/fields-asi-3.js:16:1]
  16 │   x = "string"
@@ -7995,6 +7973,30 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  34 │             throw new Test262Error();
     ╰────
 
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/literal-name-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   x = arguments;
+    ·       ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-arrow-fnc-init-err-contains-arguments.js:33:1]
+ 33 │   x = () => {
+ 34 │     var t = () => arguments;
+    ·                   ─────────
+ 35 │   }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-comp-name-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   [x] = () => arguments;
+    ·               ─────────
+ 34 │ }
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[language/expressions/class/elements/nested-equality-init-err-contains-arguments.js:31:1]
  31 │ var C = class {
@@ -8014,6 +8016,174 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  26 │ }
     ╰────
   help: Try insert a semicolon here
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-literal-name-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   x = () => arguments;
+    ·             ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-arguments.js:33:1]
+ 33 │   #x = () => {
+ 34 │     var t = () => arguments;
+    ·                   ─────────
+ 35 │   }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-private-literal-name-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   #x = () => arguments;
+    ·              ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-private-ternary-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   #x = () => true ? {} : arguments;
+    ·                          ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-private-typeof-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   #x = () => typeof arguments;
+    ·                     ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-static-comp-name-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   static [x] = () => arguments;
+    ·                      ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-static-literal-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   static x = () => arguments;
+    ·                    ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-static-private-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   static #x = () => arguments;
+    ·                     ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-static-string-literal-name-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   static 'x' = () => arguments;
+    ·                      ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-string-literal-name-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   'x' = () => arguments;
+    ·               ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-ternary-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   x = () => true ? {} : arguments;
+    ·                         ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/nested-typeof-init-err-contains-arguments.js:31:1]
+ 31 │ var C = class {
+ 32 │   x = () => typeof arguments;
+    ·                    ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/private-arrow-fnc-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   #x = () => arguments;
+    ·              ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/private-literal-name-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   #x = arguments;
+    ·        ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/private-ternary-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   #x = true ? {} : arguments;
+    ·                    ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/private-typeof-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   #x = typeof arguments;
+    ·               ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/static-comp-name-init-err-contains-arguments.js:33:1]
+ 33 │ var C = class {
+ 34 │   static [x] = arguments;
+    ·                ─────────
+ 35 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/static-literal-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   static x = arguments;
+    ·              ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/static-private-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   static #x = arguments;
+    ·               ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/static-string-literal-name-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   static 'x' = arguments;
+    ·                ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/string-literal-name-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   'x' = arguments;
+    ·         ─────────
+ 34 │ }
+    ╰────
 
   × Empty parenthesized expression
     ╭─[language/expressions/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
@@ -9592,6 +9762,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  25 │ };
     ╰────
 
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/ternary-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   x = true ? {} : arguments;
+    ·                   ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/expressions/class/elements/typeof-init-err-contains-arguments.js:32:1]
+ 32 │ var C = class {
+ 33 │   x = typeof arguments;
+    ·              ─────────
+ 34 │ }
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:1]
  80 │ 0, class {
@@ -9806,12 +9992,47 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  22 │ };
     ╰────
 
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/11.13.2-6-1gs.js:16:1]
+ 16 │ 
+ 17 │ eval *= 20;
+    · ────
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/add-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments += 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/add-eval-strict.js:17:1]
+ 17 │ 
+ 18 │ eval += 20;
+    · ────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/compound-assignment/add-non-simple.js:16:1]
  16 │ 
  17 │ 1 += 1;
     · ┬
     · ╰── Cannot assign to this expression
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/and-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments &= 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/and-eval-strict.js:17:1]
+ 17 │ 
+ 18 │ eval &= 20;
+    · ────
     ╰────
 
   × Invalid assignment
@@ -9838,6 +10059,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     · ╰── Cannot assign to this expression
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/div-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments /= 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/div-eval-strict.js:17:1]
+ 17 │ 
+ 18 │ eval /= 20;
+    · ────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/compound-assignment/div-non-simple.js:16:1]
  16 │ 
@@ -9854,12 +10089,54 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     · ╰── Cannot assign to this expression
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/lshift-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments <<= 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/lshift-eval-strict.js:18:1]
+ 18 │ 
+ 19 │ eval <<= 20;
+    · ────
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/mod-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments %= 20;
+    · ─────────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/compound-assignment/mod-div-non-simple.js:16:1]
  16 │ 
  17 │ 1 %= 1;
     · ┬
     · ╰── Cannot assign to this expression
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/mod-eval-strict.js:17:1]
+ 17 │ 
+ 18 │ eval %= 20;
+    · ────
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/mult-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments *= 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/mult-eval-strict.js:17:1]
+ 17 │ 
+ 18 │ eval *= 20;
+    · ────
     ╰────
 
   × Invalid assignment
@@ -9870,12 +10147,54 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     · ╰── Cannot assign to this expression
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/or-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments |= 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/or-eval-strict.js:17:1]
+ 17 │ 
+ 18 │ eval |= 20;
+    · ────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/compound-assignment/right-shift-non-simple.js:16:1]
  16 │ 
  17 │ 1 >>= 1;
     · ┬
     · ╰── Cannot assign to this expression
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/srshift-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments >>= 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/srshift-eval-strict.js:18:1]
+ 18 │ 
+ 19 │ eval >>= 20;
+    · ────
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/sub-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments -= 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/sub-eval-strict.js:17:1]
+ 17 │ 
+ 18 │ eval -= 20;
+    · ────
     ╰────
 
   × Invalid assignment
@@ -9892,6 +10211,34 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  17 │ 1 >>>= 1;
     · ┬
     · ╰── Cannot assign to this expression
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/urshift-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments >>>= 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/urshift-eval-strict.js:18:1]
+ 18 │ 
+ 19 │ eval >>>= 20;
+    · ────
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/compound-assignment/xor-arguments-strict.js:18:1]
+ 18 │ 
+ 19 │ arguments ^= 20;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/compound-assignment/xor-eval-strict.js:17:1]
+ 17 │ 
+ 18 │ eval ^= 20;
+    · ────
     ╰────
 
   × Unexpected token
@@ -11271,12 +11618,26 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·        ─────
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/logical-assignment/lgcl-and-arguments-strict.js:17:1]
+ 17 │ 
+ 18 │ arguments &&= 20;
+    · ─────────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/logical-assignment/lgcl-and-assignment-operator-non-simple-lhs.js:18:1]
  18 │ function test() {}
  19 │ test() &&= 1;
     · ───┬──
     ·    ╰── Cannot assign to this expression
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/logical-assignment/lgcl-and-eval-strict.js:16:1]
+ 16 │ 
+ 17 │ eval &&= 20;
+    · ────
     ╰────
 
   × Invalid assignment
@@ -11287,12 +11648,26 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     · ╰── Cannot assign to this expression
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/logical-assignment/lgcl-nullish-arguments-strict.js:17:1]
+ 17 │ 
+ 18 │ arguments ??= 20;
+    · ─────────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/logical-assignment/lgcl-nullish-assignment-operator-non-simple-lhs.js:18:1]
  18 │ function test() {}
  19 │ test() ??= 1;
     · ───┬──
     ·    ╰── Cannot assign to this expression
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/logical-assignment/lgcl-nullish-eval-strict.js:16:1]
+ 16 │ 
+ 17 │ eval ??= 20;
+    · ────
     ╰────
 
   × Invalid assignment
@@ -11303,12 +11678,26 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     · ╰── Cannot assign to this expression
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/logical-assignment/lgcl-or-arguments-strict.js:17:1]
+ 17 │ 
+ 18 │ arguments ||= 20;
+    · ─────────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/logical-assignment/lgcl-or-assignment-operator-non-simple-lhs.js:18:1]
  18 │ function test() {}
  19 │ test() ||= 1;
     · ───┬──
     ·    ╰── Cannot assign to this expression
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/logical-assignment/lgcl-or-eval-strict.js:16:1]
+ 16 │ 
+ 17 │ eval ||= 20;
+    · ────
     ╰────
 
   × Invalid assignment
@@ -12177,6 +12566,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·     ╰── Cannot assign to this expression
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/postfix-decrement/arguments.js:25:1]
+ 25 │ 
+ 26 │ arguments--;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/postfix-decrement/eval.js:25:1]
+ 25 │ 
+ 26 │ eval--;
+    · ────
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/postfix-decrement/line-terminator-carriage-return.js:16:1]
  16 │ x
@@ -12233,6 +12636,27 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·   ─────┬────
     ·        ╰── Cannot assign to this expression
  31 │ }
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/postfix-increment/11.3.1-2-1gs.js:16:1]
+ 16 │ 
+ 17 │ arguments++;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/postfix-increment/arguments.js:21:1]
+ 21 │ 
+ 22 │ arguments++;
+    · ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/postfix-increment/eval.js:21:1]
+ 21 │ 
+ 22 │ eval++;
+    · ────
     ╰────
 
   × Unexpected token
@@ -12293,6 +12717,27 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  31 │ }
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/prefix-decrement/11.4.5-2-2gs.js:16:1]
+ 16 │ 
+ 17 │ --arguments;
+    ·   ─────────
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/prefix-decrement/arguments.js:25:1]
+ 25 │ 
+ 26 │ --arguments;
+    ·   ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/prefix-decrement/eval.js:25:1]
+ 25 │ 
+ 26 │ --eval;
+    ·   ────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/prefix-decrement/target-cover-newtarget.js:29:1]
  29 │ function f() {
@@ -12318,6 +12763,20 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·     ─────┬────
     ·          ╰── Cannot assign to this expression
  31 │ }
+    ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/expressions/prefix-increment/arguments.js:25:1]
+ 25 │ 
+ 26 │ ++arguments;
+    ·   ─────────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/expressions/prefix-increment/eval.js:26:1]
+ 26 │ 
+ 27 │ ++eval;
+    ·   ────
     ╰────
 
   × Invalid assignment
@@ -17387,6 +17846,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  73 │     
     ╰────
 
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/arrow-fnc-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   x = () => arguments;
+    ·             ─────────
+ 34 │ }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
  34 │ class C { static async *#gen() {
@@ -17741,6 +18208,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  37 │   }
     ╰────
 
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/comp-name-init-err-contains-arguments.js:33:1]
+ 33 │ class C {
+ 34 │   [x] = arguments;
+    ·         ─────────
+ 35 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/equality-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   x = {} == arguments;
+    ·             ─────────
+ 34 │ }
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[language/statements/class/elements/fields-asi-3.js:16:1]
  16 │   x = "string"
@@ -18001,6 +18484,30 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  34 │             throw new Test262Error();
     ╰────
 
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/literal-name-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   x = arguments;
+    ·       ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-arrow-fnc-init-err-contains-arguments.js:33:1]
+ 33 │   x = () => {
+ 34 │     var t = () => arguments;
+    ·                   ─────────
+ 35 │   }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-comp-name-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   [x] = () => arguments;
+    ·               ─────────
+ 34 │ }
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[language/statements/class/elements/nested-equality-init-err-contains-arguments.js:31:1]
  31 │ class C {
@@ -18020,6 +18527,134 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  26 │ }
     ╰────
   help: Try insert a semicolon here
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-literal-name-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   x = () => arguments;
+    ·             ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-arguments.js:33:1]
+ 33 │   #x = () => {
+ 34 │     var t = () => arguments;
+    ·                   ─────────
+ 35 │     t();
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-private-literal-name-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   #x = () => arguments;
+    ·              ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-private-ternary-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   #x = () => false ? {} : arguments;
+    ·                           ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-private-typeof-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   #x = () => typeof arguments;
+    ·                     ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-static-comp-name-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   static [x] = () => arguments;
+    ·                      ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-static-literal-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   static x = () => arguments;
+    ·                    ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-static-private-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   static #x = () => arguments;
+    ·                     ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-static-string-literal-name-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   static 'x' = () => arguments;
+    ·                      ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-string-literal-name-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   'x' = () => arguments;
+    ·               ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-ternary-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   x = () => false ? {} : arguments;
+    ·                          ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/nested-typeof-init-err-contains-arguments.js:31:1]
+ 31 │ class C {
+ 32 │   x = () => typeof arguments;
+    ·                    ─────────
+ 33 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/private-arrow-fnc-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   #x = () => arguments;
+    ·              ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/private-literal-name-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   #x = arguments;
+    ·        ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/private-ternary-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   #x = false ? {} : arguments;
+    ·                     ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/private-typeof-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   #x = typeof arguments;
+    ·               ─────────
+ 34 │ }
+    ╰────
 
   × Private field '"x"' must be declared in an enclosing class
     ╭─[language/statements/class/elements/privatename-not-valid-earlyerr-script-1.js:21:1]
@@ -18080,6 +18715,46 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  21 │   this.#x;
     ·        ──
  22 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/static-comp-name-init-err-contains-arguments.js:33:1]
+ 33 │ class C {
+ 34 │   static [x] = arguments;
+    ·                ─────────
+ 35 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/static-literal-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   static x = arguments;
+    ·              ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/static-private-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   static #x = arguments;
+    ·               ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/static-string-literal-name-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   static 'x' = arguments;
+    ·                ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/string-literal-name-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   'x' = arguments;
+    ·         ─────────
+ 34 │ }
     ╰────
 
   × Empty parenthesized expression
@@ -19659,6 +20334,22 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  25 │ }
     ╰────
 
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/ternary-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   x = false ? {} : arguments;
+    ·                    ─────────
+ 34 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "class field initializer"
+    ╭─[language/statements/class/elements/typeof-init-err-contains-arguments.js:32:1]
+ 32 │ class C {
+ 33 │   x = typeof arguments;
+    ·              ─────────
+ 34 │ }
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:78:1]
  78 │ class C {
@@ -19911,6 +20602,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·       ─┬
     ·        ╰── It can not be redeclared here
  18 │ }
+    ╰────
+
+  × 'arguments' is not allowed in "static initialization block"
+    ╭─[language/statements/class/static-init-invalid-arguments.js:20:1]
+ 20 │   static {
+ 21 │     (class { [argument\u0073]() {} });
+    ·               ──────────────
+ 22 │   }
     ╰────
 
   × Identifier `"x"` has already been declared
@@ -20498,6 +21197,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  34 │ }
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/statements/for-await-of/async-func-decl-dstr-array-elem-target-simple-strict.js:32:1]
+ 32 │ async function fn() {
+ 33 │   for await ([arguments] of [[]]) {}
+    ·               ─────────
+ 34 │ }
+    ╰────
+
   × The keyword '"yield"' is reserved
     ╭─[language/statements/for-await-of/async-func-decl-dstr-array-elem-target-yield-invalid.js:32:1]
  32 │ async function fn() {
@@ -20962,6 +21669,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     · ╰──── Cannot assign to this expression
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/statements/for-in/dstr/array-elem-target-simple-strict.js:31:1]
+ 31 │ 
+ 32 │ for ([arguments] in [[]]) ;
+    ·       ─────────
+    ╰────
+
   × The keyword '"yield"' is reserved
     ╭─[language/statements/for-in/dstr/array-elem-target-yield-invalid.js:31:1]
  31 │ 
@@ -21048,11 +21762,25 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·        ─────
     ╰────
 
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/statements/for-in/dstr/obj-id-init-simple-strict.js:31:1]
+ 31 │ 
+ 32 │ for ({ eval = 0 } in [{}]) ;
+    ·        ────
+    ╰────
+
   × The keyword '"yield"' is reserved
     ╭─[language/statements/for-in/dstr/obj-id-init-yield-ident-invalid.js:31:1]
  31 │ 
  32 │ for ({ x = yield } in [{}]) ;
     ·            ─────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/statements/for-in/dstr/obj-id-simple-strict.js:31:1]
+ 31 │ 
+ 32 │ for ({ eval } in [{}]) ;
+    ·        ────
     ╰────
 
   × The keyword '"yield"' is reserved
@@ -21279,6 +22007,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     · ╰──── Cannot assign to this expression
     ╰────
 
+  × Cannot assign to '"arguments"' in strict mode
+    ╭─[language/statements/for-of/dstr/array-elem-target-simple-strict.js:31:1]
+ 31 │ 
+ 32 │ for ([arguments] of [[]]) ;
+    ·       ─────────
+    ╰────
+
   × The keyword '"yield"' is reserved
     ╭─[language/statements/for-of/dstr/array-elem-target-yield-invalid.js:31:1]
  31 │ 
@@ -21419,11 +22154,25 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·        ─────
     ╰────
 
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/statements/for-of/dstr/obj-id-init-simple-strict.js:31:1]
+ 31 │ 
+ 32 │ for ({ eval = 0 } of [{}]) ;
+    ·        ────
+    ╰────
+
   × The keyword '"yield"' is reserved
     ╭─[language/statements/for-of/dstr/obj-id-init-yield-ident-invalid.js:31:1]
  31 │ 
  32 │ for ({ x = yield } of [{}]) ;
     ·            ─────
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/statements/for-of/dstr/obj-id-simple-strict.js:31:1]
+ 31 │ 
+ 32 │ for ({ eval } of [{}]) ;
+    ·        ────
     ╰────
 
   × The keyword '"yield"' is reserved
@@ -21912,6 +22661,13 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
   help: Wrap this declaration in a block statement
 
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/statements/function/13.0_4-5gs.js:16:1]
+ 16 │ 
+ 17 │ function _13_0_4_5_fun() { eval = 42; };
+    ·                            ────
+    ╰────
+
   × Invalid Unicode escape sequence
     ╭─[language/statements/function/S13_A7_T3.js:14:1]
  14 │ 
@@ -22016,6 +22772,14 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  39 │ 
  40 │ function fn() { this.#x }
     ·                      ──
+    ╰────
+
+  × Cannot assign to '"eval"' in strict mode
+    ╭─[language/statements/function/enable-strict-via-outer-script.js:22:1]
+ 22 │     function _13_0_9_inner() {
+ 23 │         eval = 42;
+    ·         ────
+ 24 │     }
     ╰────
 
   × Expect token

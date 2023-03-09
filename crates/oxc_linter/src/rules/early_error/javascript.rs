@@ -20,6 +20,7 @@ impl Rule for EarlyErrorJavaScript {
             }
             AstKind::IdentifierReference(ident) => {
                 check_identifier(&ident.name, ident.span, node, ctx);
+                check_identifier_reference(ident, node, ctx);
             }
             AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
             AstKind::PrivateIdentifier(ident) => check_private_identifier(ident, node, ctx),
@@ -103,6 +104,61 @@ fn check_binding_identifier<'a>(
                 }
                 AstKind::VariableDeclaration(_) | AstKind::Function(_) | AstKind::Program(_) => {
                     break;
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+fn check_identifier_reference<'a>(
+    ident: &IdentifierReference,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Cannot assign to '{0:?}' in strict mode")]
+    #[diagnostic()]
+    struct UnexpectedIdentifierAssign(Atom, #[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("'arguments' is not allowed in {0:?}")]
+    #[diagnostic()]
+    struct UnexpectedArguments(&'static str, #[label] Span);
+
+    //  Static Semantics: AssignmentTargetType
+    //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
+    if ctx.strict_mode(node) && matches!(ident.name.as_str(), "arguments" | "eval") {
+        for node_id in ctx.ancestors(node).skip(1) {
+            match ctx.kind(node_id) {
+                AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) => {
+                    return ctx
+                        .diagnostic(UnexpectedIdentifierAssign(ident.name.clone(), ident.span));
+                }
+                AstKind::MemberExpression(_) => break,
+                _ => {}
+            }
+        }
+    }
+
+    // FieldDefinition : ClassElementName Initializeropt
+    //   It is a Syntax Error if Initializer is present and ContainsArguments of Initializer is true.
+    // ClassStaticBlockBody : ClassStaticBlockStatementList
+    //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
+
+    if ident.name == "arguments" {
+        for node_id in ctx.ancestors(node).skip(1) {
+            match ctx.kind(node_id) {
+                AstKind::Function(_) => break,
+                AstKind::PropertyDefinition(_) => {
+                    return ctx
+                        .diagnostic(UnexpectedArguments("class field initializer", ident.span));
+                }
+                AstKind::StaticBlock(_) => {
+                    return ctx.diagnostic(UnexpectedArguments(
+                        "static initialization block",
+                        ident.span,
+                    ));
                 }
                 _ => {}
             }

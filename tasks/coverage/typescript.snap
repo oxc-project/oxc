@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2308/2338 (98.72%)
 Positive Passed: 2308/2338 (98.72%)
-Negative Passed: 577/2531 (22.80%)
+Negative Passed: 578/2531 (22.84%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -408,7 +408,6 @@ Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments16.ts
 Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments17.ts"
 Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments18.ts"
 Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments19.ts"
-Expect Syntax Error: "es6/classDeclaration/parseClassDeclarationInStrictModeByDefaultInES6.ts"
 Expect Syntax Error: "es6/classDeclaration/superCallBeforeThisAccessing3.ts"
 Expect Syntax Error: "es6/classDeclaration/superCallBeforeThisAccessing4.ts"
 Expect Syntax Error: "es6/classDeclaration/superCallBeforeThisAccessing6.ts"
@@ -4337,6 +4336,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                   ┬
    ·                   ╰── Invalid characters after number
  3 │ var oct2 = 0o34318592;
+   ╰────
+
+  × Cannot assign to '"arguments"' in strict mode
+   ╭─[es6/classDeclaration/parseClassDeclarationInStrictModeByDefaultInES6.ts:6:1]
+ 6 │     private bar(eval:any) {
+ 7 │         arguments = "hello";
+   ·         ─────────
+ 8 │     }
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
