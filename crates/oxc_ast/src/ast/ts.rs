@@ -911,7 +911,7 @@ pub struct TSInstantiationExpression<'a> {
 }
 
 #[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq, Hash)]
-#[serde(untagged, rename_all = "camelCase")]
+#[serde(rename_all = "camelCase")]
 pub enum ImportOrExportKind {
     Value,
     Type,
