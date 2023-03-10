@@ -7,6 +7,9 @@ rule = "run -p rulegen"
 [build]
 rustflags = ["-C", "target-cpu=native"]
 
+[registries.crates-io]
+protocol = "sparse"
+
 [target.'cfg(all())']
 rustflags = [
     # CLIPPY LINT SETTINGS
