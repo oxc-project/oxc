@@ -220,7 +220,7 @@ impl<'a> Visit<'a> for State<'a> {
 
 fn main() {
     let mut args = std::env::args();
-    let _ = args.next();
+    args.next();
 
     let rule_name = args.next().expect("expected rule name");
     let upper_rule_name = rule_name.to_case(Case::UpperCamel);

@@ -474,7 +474,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_ts_this_parameter(&mut self) -> Result<()> {
         let _ident = self.parse_identifier_kind(Kind::Ident);
-        let _ = self.parse_ts_type_annotation()?;
+        self.parse_ts_type_annotation()?;
         Ok(())
     }
 

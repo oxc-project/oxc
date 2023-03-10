@@ -56,6 +56,7 @@ pub fn main() -> Result<(), String> {
 
     bench_parser(&mut criterion, &codes);
     bench_semantic(&mut criterion, &codes);
+    drop(criterion);
 
     Ok(())
 }
