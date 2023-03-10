@@ -164,6 +164,20 @@ impl<'a> Expression<'a> {
     }
 
     #[must_use]
+    pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
+        match self.get_inner_expression() {
+            Expression::MemberExpression(expr) => expr.is_specific_member_access(object, property),
+            Expression::ChainExpression(chain) => {
+                let ChainElement::MemberExpression(expr) = &chain.expression else {
+                return false;
+              };
+                expr.is_specific_member_access(object, property)
+            }
+            _ => false,
+        }
+    }
+
+    #[must_use]
     pub fn get_inner_expression(&self) -> &Expression<'a> {
         match self {
             Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression(),
@@ -431,6 +445,13 @@ impl<'a> MemberExpression<'a> {
             MemberExpression::StaticMemberExpression(expr) => Some(&expr.property.name),
             MemberExpression::PrivateFieldExpression(_) => None,
         }
+    }
+
+    /// Whether it is a static member access `object.property`
+    #[must_use]
+    pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
+        self.object().is_specific_id(object)
+            && self.static_property_name().is_some_and(|p| p == property)
     }
 }
 
