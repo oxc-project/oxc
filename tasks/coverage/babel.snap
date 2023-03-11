@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 965/1502 (64.25%)
+Negative Passed: 972/1502 (64.71%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -9,10 +9,8 @@ Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.2.4-duplicate-function-in-block/input.js"
 Expect Syntax Error: "annex-b/disabled/3.2.5-duplicate-function-in-switch/input.js"
 Expect Syntax Error: "annex-b/disabled/3.3-function-in-if-body/input.js"
-Expect Syntax Error: "annex-b/disabled/3.4-var-redeclaration-catch-binding/input.js"
 Expect Syntax Error: "annex-b/disabled/3.5-for-in-initializer/input.js"
 Expect Syntax Error: "annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js"
-Expect Syntax Error: "annex-b/enabled/3.4-var-redeclaration-catch-binding/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-inside-loop/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-if/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-loop/input.js"
@@ -26,12 +24,7 @@ Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict-function/i
 Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict/input.js"
 Expect Syntax Error: "core/opts/allowNewTargetOutsideFunction-false-2/input.js"
 Expect Syntax Error: "core/opts/allowNewTargetOutsideFunction-false/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-catch-arr-destr/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-func/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-catch-let/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-catch-obj-destr/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-catch-var-arr-destr/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-catch-var-obj-destr/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-class-func/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-func-gen/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-func-module-sloppy/input.js"
@@ -649,6 +642,24 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ function b<const T extends U>() {}
    ╰────
 
+  × Identifier `"f"` has already been declared
+   ╭─[annex-b/disabled/3.4-var-redeclaration-catch-binding/input.js:1:1]
+ 1 │ try {} catch (e) { var e; }
+ 2 │ try {} catch ({ f }) { var f; }
+   ·                 ┬          ┬
+   ·                 │          ╰── It can not be redeclared here
+   ·                 ╰── `f` has already been declared here
+   ╰────
+
+  × Identifier `"f"` has already been declared
+   ╭─[annex-b/enabled/3.4-var-redeclaration-catch-binding/input.js:1:1]
+ 1 │ try {} catch (e) { var e; }
+ 2 │ try {} catch ({ f }) { var f; }
+   ·                 ┬          ┬
+   ·                 │          ╰── It can not be redeclared here
+   ·                 ╰── `f` has already been declared here
+   ╰────
+
   × Expect token
    ╭─[core/categorized/for-missing-semicolons/input.js:2:1]
  2 │   var a = 1
@@ -916,11 +927,67 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-catch-arr-destr/input.js:1:1]
+ 1 │ try {
+ 2 │ } catch ([foo, foo]) {
+   ·           ─┬─  ─┬─
+   ·            │    ╰── It can not be redeclared here
+   ·            ╰── `foo` has already been declared here
+ 3 │ }
+   ╰────
+
+  × Identifier `"foo"` has already been declared
    ╭─[core/scope/dupl-bind-catch-dbl-let/input.js:1:1]
  1 │ let foo; try {} catch (foo) {} let foo;
    ·     ─┬─                            ─┬─
    ·      │                              ╰── It can not be redeclared here
    ·      ╰── `foo` has already been declared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-catch-let/input.js:1:1]
+ 1 │ try {
+ 2 │ } catch (foo) {
+   ·          ─┬─
+   ·           ╰── `foo` has already been declared here
+ 3 │   let foo;
+   ·       ─┬─
+   ·        ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-catch-obj-destr/input.js:1:1]
+ 1 │ try {
+ 2 │ } catch ({ a: foo, b: { c: [foo] } }) {
+   ·               ─┬─           ─┬─
+   ·                │             ╰── It can not be redeclared here
+   ·                ╰── `foo` has already been declared here
+ 3 │ }
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-catch-var-arr-destr/input.js:1:1]
+ 1 │ try {
+ 2 │ } catch ([foo]) {
+   ·           ─┬─
+   ·            ╰── `foo` has already been declared here
+ 3 │   var foo;
+   ·       ─┬─
+   ·        ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-catch-var-obj-destr/input.js:1:1]
+ 1 │ try {
+ 2 │ } catch ({ foo }) {
+   ·            ─┬─
+   ·             ╰── `foo` has already been declared here
+ 3 │   var foo;
+   ·       ─┬─
+   ·        ╰── It can not be redeclared here
+ 4 │ }
    ╰────
 
   × Identifier `"foo"` has already been declared

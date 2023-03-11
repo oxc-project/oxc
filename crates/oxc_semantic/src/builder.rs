@@ -181,6 +181,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::FormalParameters(params) => {
                 params.bind(self);
             }
+            AstKind::CatchClause(clause) => {
+                clause.bind(self);
+            }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }

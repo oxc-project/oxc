@@ -38,6 +38,7 @@ bitflags! {
         /// A block-scoped variable (let or const)
         const BlockScopedVariable     = 1 << 1;
         const Class                   = 1 << 5;
+        const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
 
         const Variable = Self::FunctionScopedVariable.bits | Self::BlockScopedVariable.bits;
         const Value = Self::Variable.bits | Self::Class.bits;
