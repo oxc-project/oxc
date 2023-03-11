@@ -29,6 +29,7 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
             AstKind::WithStatement(stmt) => check_with_statement(stmt, node, ctx),
+            AstKind::SwitchStatement(stmt) => check_switch_statement(stmt, ctx),
             AstKind::BreakStatement(stmt) => check_break_statement(stmt, node, ctx),
             AstKind::ContinueStatement(stmt) => check_continue_statement(stmt, node, ctx),
             AstKind::LabeledStatement(stmt) => check_labeled_statement(stmt, node, ctx),
@@ -319,6 +320,19 @@ fn check_with_statement<'a>(stmt: &WithStatement, node: &AstNode<'a>, ctx: &Lint
 
     if ctx.strict_mode(node) || ctx.source_type().is_typescript() {
         ctx.diagnostic(WithStatement(Span::new(stmt.span.start, stmt.span.start + 4)));
+    }
+}
+
+fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &LintContext<'a>) {
+    let mut previous_default: Option<Span> = None;
+    for case in &stmt.cases {
+        if case.test.is_none() {
+            if let Some(previous_span) = previous_default {
+                ctx.diagnostic(Redeclaration("default".into(), previous_span, case.span));
+                break;
+            }
+            previous_default.replace(case.span);
+        }
     }
 }
 

@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3071/3917 (78.40%)
+Negative Passed: 3072/3917 (78.43%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -798,7 +798,6 @@ Expect Syntax Error: "language/statements/return/S12.9_A1_T6.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T7.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T8.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T9.js"
-Expect Syntax Error: "language/statements/switch/S12.11_A2_T1.js"
 Expect Syntax Error: "language/statements/try/catch-parameter-boundnames-restriction-arguments-negative-early.js"
 Expect Syntax Error: "language/statements/try/catch-parameter-boundnames-restriction-eval-negative-early.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-ary.js"
@@ -27743,6 +27742,20 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
     ╰────
   help: Try insert a semicolon here
+
+  × Identifier `default` has already been declared
+    ╭─[language/statements/switch/S12.11_A2_T1.js:20:1]
+ 20 │           result += 2;
+ 21 │ ╭─▶     default:
+ 22 │ │         result += 32;
+ 23 │ ├─▶       break;
+    · ╰──── `default` has already been declared here
+ 24 │ ╭─▶     default:
+ 25 │ │         result += 32;
+ 26 │ ├─▶       break;
+    · ╰──── It can not be redeclared here
+ 27 │       }
+    ╰────
 
   × Unexpected token
     ╭─[language/statements/switch/S12.11_A3_T1.js:17:1]
