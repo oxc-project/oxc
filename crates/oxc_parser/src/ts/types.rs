@@ -38,9 +38,9 @@ bitflags! {
   }
 }
 
-/// It is the caller's savety to always check by `Kind::is_modifier_kind`
+/// It is the caller's safety to always check by `Kind::is_modifier_kind`
 /// before converting [`Kind`] to [`ModifierFlags`] so that we can assume here that
-/// the convertion always succeeds.
+/// the conversion always succeeds.
 impl From<Kind> for ModifierFlags {
     fn from(value: Kind) -> Self {
         match value {

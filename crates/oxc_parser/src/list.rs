@@ -37,8 +37,8 @@ pub trait SeparatedList<'a>: Sized {
     /// Close element, e.g.. `}` `]` `)`
     fn close(&self) -> Kind;
 
-    /// Seperator element, e.g. `,`
-    fn seperator(&self) -> Kind {
+    /// Separator element, e.g. `,`
+    fn separator(&self) -> Kind {
         Kind::Comma
     }
 
@@ -58,7 +58,7 @@ pub trait SeparatedList<'a>: Sized {
             if first {
                 first = false;
             } else {
-                p.expect(self.seperator())?;
+                p.expect(self.separator())?;
                 if p.at(self.close()) {
                     break;
                 }

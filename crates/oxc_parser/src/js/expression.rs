@@ -148,7 +148,7 @@ impl<'a> Parser<'a> {
             Kind::LBrack => self.parse_array_expression(),
             // ObjectLiteral
             Kind::LCurly => self.parse_object_expression(),
-            // FunctionExpession, GeneratorExpression
+            // FunctionExpression, GeneratorExpression
             Kind::Function => self.parse_function_expression(span, false),
             // ClassExpression
             Kind::Class => self.parse_class_expression(),
@@ -803,7 +803,7 @@ impl<'a> Parser<'a> {
             // This is need for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
-            // Omit the In keyword for the grammer in 13.10 Relational Operators
+            // Omit the In keyword for the grammar in 13.10 Relational Operators
             // RelationalExpression[In, Yield, Await] :
             // [+In] RelationalExpression[+In, ?Yield, ?Await] in ShiftExpression[?Yield, ?Await]
             if kind == Kind::In && !self.ctx.has_in()

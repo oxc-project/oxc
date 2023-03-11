@@ -55,7 +55,7 @@ impl<'a> Parser<'a> {
 
         if self.at(Kind::Comma) {
             if self.peek_at(Kind::RBrack) {
-                self.error(diagnostics::RestElementTraillingComma(self.cur_token().span()));
+                self.error(diagnostics::RestElementTrailingComma(self.cur_token().span()));
             } else {
                 self.error(diagnostics::RestElement(span));
             }

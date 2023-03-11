@@ -14,7 +14,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 enum UseIsnanDiagnostic {
     #[error("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")]
     #[diagnostic(severity(warning), help("Use the isNaN function to compare with NaN."))]
-    ComparisinWithNaN(#[label] Span),
+    ComparisonWithNaN(#[label] Span),
     #[error("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")]
     #[diagnostic(
         severity(warning),
@@ -81,10 +81,10 @@ impl Rule for UseIsnan {
         match node.get().kind() {
             AstKind::BinaryExpression(expr) if expr.operator.is_compare() || expr.operator.is_equality() => {
                 if is_nan_identifier(&expr.left) {
-                    ctx.diagnostic(UseIsnanDiagnostic::ComparisinWithNaN(expr.left.span()));
+                    ctx.diagnostic(UseIsnanDiagnostic::ComparisonWithNaN(expr.left.span()));
                 }
                 if is_nan_identifier(&expr.right) {
-                    ctx.diagnostic(UseIsnanDiagnostic::ComparisinWithNaN(expr.right.span()));
+                    ctx.diagnostic(UseIsnanDiagnostic::ComparisonWithNaN(expr.right.span()));
                 }
             }
             AstKind::SwitchCase(case) if self.enforce_for_switch_case => {

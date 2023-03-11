@@ -40,8 +40,8 @@ pub enum LanguageVariant {
 
 #[derive(Debug, Error)]
 pub enum SourceTypeError {
-    #[error("Unkown Extension: {0}")]
-    UnkownExtension(String),
+    #[error("Unknown Extension: {0}")]
+    UnknownExtension(String),
 }
 
 impl Default for SourceType {
@@ -155,14 +155,14 @@ impl SourceType {
     }
 
     /// Converts file path to `SourceType`
-    /// returns `SourceTypeError::UnkownExtension` if:
+    /// returns `SourceTypeError::UnknownExtension` if:
     ///   * there is no file name
     ///   * the file extension is not one of "js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"
     /// # Errors
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, SourceTypeError> {
         let file_name =
             path.as_ref().file_name().and_then(std::ffi::OsStr::to_str).ok_or_else(|| {
-                SourceTypeError::UnkownExtension("Please provide a valid file name.".to_string())
+                SourceTypeError::UnknownExtension("Please provide a valid file name.".to_string())
             })?;
 
         let extension = path
@@ -172,7 +172,7 @@ impl SourceType {
             .filter(|s| VALID_EXTENSIONS.contains(s))
             .ok_or_else(|| {
                 let path = path.as_ref().to_string_lossy();
-                SourceTypeError::UnkownExtension(
+                SourceTypeError::UnknownExtension(
                     format!("Please provide a valid file extension for {path}: .js, .mjs, .jsx or .cjs for JavaScript, or .ts, .mts, .cts or .tsx for TypeScript"),
                 )
             })?;

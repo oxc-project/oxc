@@ -309,7 +309,7 @@ pub struct SpreadLastElement(#[label("Spread must be last element")] pub Span);
 #[derive(Debug, Error, Diagnostic)]
 #[error("Unexpected trailing comma after rest element")]
 #[diagnostic()]
-pub struct RestElementTraillingComma(
+pub struct RestElementTrailingComma(
     #[label("Unexpected trailing comma after rest element")] pub Span,
 );
 

@@ -112,11 +112,11 @@ impl<'a> Parser<'a> {
             _ if self.ts_enabled() && self.at_start_of_ts_declaration() => {
                 self.parse_ts_declaration_statement(start_span)
             }
-            _ => self.parse_expression_or_labeled_statment(),
+            _ => self.parse_expression_or_labeled_statement(),
         }
     }
 
-    fn parse_expression_or_labeled_statment(&mut self) -> Result<Statement<'a>> {
+    fn parse_expression_or_labeled_statement(&mut self) -> Result<Statement<'a>> {
         let span = self.start_span();
         let expr = self.parse_expression()?;
         if let Expression::Identifier(ident) = &expr {

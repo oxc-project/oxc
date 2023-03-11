@@ -91,7 +91,7 @@ mod test_is_declaration {
     }
 
     #[test]
-    fn test_lexical_decleration() {
+    fn test_lexical_declaration() {
         run_check("const a = 1", true);
         run_check("let a = 1", true);
     }

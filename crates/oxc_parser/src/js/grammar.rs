@@ -77,7 +77,7 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
                         if i == len - 1 {
                             rest = Some(AssignmentTarget::cover(elem.unbox().argument, p)?);
                             if let Some(span) = expr.trailing_comma {
-                                p.error(diagnostics::RestElementTraillingComma(span));
+                                p.error(diagnostics::RestElementTrailingComma(span));
                             }
                         } else {
                             return Err(diagnostics::SpreadLastElement(elem.span).into());

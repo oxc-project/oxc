@@ -63,10 +63,10 @@ impl Rule for EqEqEq {
 
         if !is_valid_comparison {
             let operator = binary_expr.operator.as_str();
-            let prefered_operator = to_strict_operator(binary_expr.operator).as_str();
+            let preferred_operator = to_strict_operator(binary_expr.operator).as_str();
             ctx.diagnostic_with_fix(
-                EqEqEqDiagnostic(operator, prefered_operator, binary_expr.span),
-                || Fix::new(prefered_operator, binary_expr.span),
+                EqEqEqDiagnostic(operator, preferred_operator, binary_expr.span),
+                || Fix::new(preferred_operator, binary_expr.span),
             );
         }
     }
