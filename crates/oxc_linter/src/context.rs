@@ -113,6 +113,6 @@ impl<'a> LintContext<'a> {
 
     #[allow(clippy::unused_self)]
     pub fn is_reference_to_global_variable(&self, _ident: &IdentifierReference) -> bool {
-        false
+        true
     }
 }
