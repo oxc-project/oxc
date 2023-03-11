@@ -31,8 +31,13 @@ fn symbol_size() {
 
 bitflags! {
     #[derive(Default)]
-    pub struct SymbolFlags: u32 {
+    pub struct SymbolFlags: u16 {
         const None                    = 0;
+        const Class                   = 1 << 5;
+
+        const Value = Self::Class.bits;
+
+        const ClassExcludes = Self::Value.bits;
     }
 }
 
