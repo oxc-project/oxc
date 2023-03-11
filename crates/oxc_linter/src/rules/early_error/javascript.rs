@@ -1,5 +1,5 @@
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, syntax_directed_operations::PropName, AstKind, Atom, Span};
+use oxc_ast::{ast::*, syntax_directed_operations::PropName, AstKind, Atom, ModuleKind, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -25,9 +25,13 @@ impl Rule for EarlyErrorJavaScript {
             }
             AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
             AstKind::PrivateIdentifier(ident) => check_private_identifier(ident, node, ctx),
+
             AstKind::NumberLiteral(lit) => check_number_literal(lit, node, ctx),
             AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
+
+            AstKind::ModuleDeclaration(decl) => check_module_declaration(decl, node, ctx),
+
             AstKind::WithStatement(stmt) => check_with_statement(stmt, node, ctx),
             AstKind::SwitchStatement(stmt) => check_switch_statement(stmt, ctx),
             AstKind::BreakStatement(stmt) => check_break_statement(stmt, node, ctx),
@@ -35,9 +39,11 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::LabeledStatement(stmt) => check_labeled_statement(stmt, node, ctx),
             AstKind::ForInStatement(stmt) => check_for_statement_left(&stmt.left, true, node, ctx),
             AstKind::ForOfStatement(stmt) => check_for_statement_left(&stmt.left, false, node, ctx),
+
             AstKind::Class(class) => check_class(class, ctx),
             AstKind::Super(sup) => check_super(sup, node, ctx),
             AstKind::Property(prop) => check_property(prop, ctx),
+
             AstKind::ObjectExpression(expr) => check_object_expression(expr, ctx),
             AstKind::BinaryExpression(expr) => check_binary_expression(expr, ctx),
             AstKind::LogicalExpression(expr) => check_logical_expression(expr, ctx),
@@ -296,6 +302,46 @@ fn check_string_literal<'a>(lit: &StringLiteral, node: &AstNode<'a>, ctx: &LintC
                     _ => {}
                 }
             }
+        }
+    }
+}
+
+fn check_module_declaration<'a>(
+    decl: &ModuleDeclaration,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("'{0}' declaration can only be used at the top level of a module")]
+    #[diagnostic()]
+    struct TopLevel(&'static str, #[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Cannot use {0} outside a module")]
+    #[diagnostic()]
+    struct ModuleCode(&'static str, #[label] Span);
+
+    if ctx.source_type().is_typescript_definition()
+        || ctx.scope(node).is_ts_module()
+        || matches!(ctx.parent_kind(node), AstKind::Program(_))
+    {
+        return;
+    }
+    let text = match decl.kind {
+        ModuleDeclarationKind::ImportDeclaration(_) => "import statement",
+        ModuleDeclarationKind::ExportAllDeclaration(_)
+        | ModuleDeclarationKind::ExportDefaultDeclaration(_)
+        | ModuleDeclarationKind::ExportNamedDeclaration(_)
+        | ModuleDeclarationKind::TSExportAssignment(_)
+        | ModuleDeclarationKind::TSNamespaceExportDeclaration(_) => "export statement",
+    };
+    let span = Span::new(decl.span.start, decl.span.start + 6);
+    match ctx.source_type().module_kind() {
+        ModuleKind::Script => {
+            ctx.diagnostic(ModuleCode(text, span));
+        }
+        ModuleKind::Module => {
+            ctx.diagnostic(TopLevel(text, span));
         }
     }
 }

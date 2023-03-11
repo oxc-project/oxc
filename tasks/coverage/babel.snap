@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2053/2069 (99.23%)
 Positive Passed: 2053/2069 (99.23%)
-Negative Passed: 1042/1502 (69.37%)
+Negative Passed: 1043/1502 (69.44%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -132,7 +132,6 @@ Expect Syntax Error: "es2015/uncategorised/249/input.js"
 Expect Syntax Error: "es2015/uncategorised/280/input.js"
 Expect Syntax Error: "es2015/uncategorised/281/input.js"
 Expect Syntax Error: "es2015/uncategorised/289/input.js"
-Expect Syntax Error: "es2015/uncategorised/291/input.js"
 Expect Syntax Error: "es2015/uncategorised/296/input.js"
 Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2015/uncategorised/332/input.js"
@@ -3359,6 +3358,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ "use strict"; `${test}\02`;
    ·                       ─┬─
    ·                        ╰── Bad escape sequence in untagged template literal
+   ╰────
+
+  × Cannot use import statement outside a module
+   ╭─[es2015/uncategorised/291/input.js:1:1]
+ 1 │ if (1) import "acorn";
+   ·        ──────
    ╰────
 
   × Unexpected token

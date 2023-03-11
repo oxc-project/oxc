@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3072/3917 (78.43%)
+Negative Passed: 3158/3917 (80.62%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -388,92 +388,6 @@ Expect Syntax Error: "language/module-code/early-import-as-arguments.js"
 Expect Syntax Error: "language/module-code/early-import-as-eval.js"
 Expect Syntax Error: "language/module-code/early-import-eval.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-arrow-function.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-block-stmt-list.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-block-stmt.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-class-decl-meth-static.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-class-decl-meth.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-class-decl-method-gen-static.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-class-decl-method-gen.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-class-expr-meth-gen-static.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-class-expr-meth-gen.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-class-expr-meth-static.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-class-expr-meth.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-do-while.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-const.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-in-const.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-in-let.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-in-lhs.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-in-var.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-let.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-lhs.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-of-const.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-of-let.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-of-lhs.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-of-var.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-for-var.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-function-decl.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-function-expr.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-generator-decl.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-generator-expr.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-if-else.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-if-if.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-labeled.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-object-gen-method.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-object-getter.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-object-method.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-object-setter.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-switch-case-dflt.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-switch-case.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-switch-dftl.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-try-catch-finally.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-try-catch.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-try-finally.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-try-try.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-while.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-arrow-function.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-block-stmt-list.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-block-stmt.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-class-decl-meth-static.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-class-decl-meth.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-class-decl-method-gen-static.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-class-decl-method-gen.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-class-expr-meth-gen-static.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-class-expr-meth-gen.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-class-expr-meth-static.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-class-expr-meth.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-do-while.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-const.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-in-const.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-in-let.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-in-lhs.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-in-var.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-let.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-lhs.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-of-const.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-of-let.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-of-lhs.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-of-var.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-for-var.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-function-decl.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-function-expr.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-generator-decl.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-generator-expr.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-if-else.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-if-if.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-labeled.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-object-gen-method.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-object-getter.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-object-method.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-object-setter.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-switch-case-dflt.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-switch-case.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-switch-dftl.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-try-catch-finally.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-try-catch.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-try-finally.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-try-try.js"
-Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-while.js"
 Expect Syntax Error: "language/module-code/parse-err-return.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-body.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js"
@@ -18036,6 +17950,616 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  39 │ 
  40 │ this.#x
     ·      ──
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-arrow-function.js:13:1]
+ 13 │ 
+ 14 │ () => { export default null; };
+    ·         ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-block-stmt-list.js:13:1]
+ 13 │ 
+ 14 │ { void 0; export default null; }
+    ·           ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-block-stmt.js:13:1]
+ 13 │ 
+ 14 │ { export default null; }
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-class-decl-meth-static.js:13:1]
+ 13 │ 
+ 14 │ class C { static method() { export default null; } }
+    ·                             ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-class-decl-meth.js:13:1]
+ 13 │ 
+ 14 │ class C { method() { export default null; } }
+    ·                      ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-class-decl-method-gen-static.js:14:1]
+ 14 │ 
+ 15 │ class C { static *method() { export default null; } }
+    ·                              ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-class-decl-method-gen.js:14:1]
+ 14 │ 
+ 15 │ class C { *method() { export default null; } }
+    ·                       ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-class-expr-meth-gen-static.js:14:1]
+ 14 │ 
+ 15 │ (class { static *method() { export default null; } });
+    ·                             ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-class-expr-meth-gen.js:14:1]
+ 14 │ 
+ 15 │ (class { *method() { export default null; } });
+    ·                      ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-class-expr-meth-static.js:13:1]
+ 13 │ 
+ 14 │ (class { static method() { export default null; } });
+    ·                            ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-class-expr-meth.js:13:1]
+ 13 │ 
+ 14 │ (class { method() { export default null; } });
+    ·                     ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-do-while.js:13:1]
+ 13 │ 
+ 14 │ do export default null; while (false)
+    ·    ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-const.js:14:1]
+ 14 │ for (const x = 0; false;)
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-in-const.js:14:1]
+ 14 │ for (const y in [])
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-in-let.js:14:1]
+ 14 │ for (let y in [])
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-in-lhs.js:14:1]
+ 14 │ for (y in [])
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-in-var.js:14:1]
+ 14 │ for (var y in [])
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-let.js:14:1]
+ 14 │ for (let x = 0; false;)
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-lhs.js:14:1]
+ 14 │ for (x = 0; false;)
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-of-const.js:14:1]
+ 14 │ for (const y of [])
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-of-let.js:14:1]
+ 14 │ for (let y of [])
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-of-lhs.js:14:1]
+ 14 │ for (y of [])
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-of-var.js:14:1]
+ 14 │ for (var y of [])
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-for-var.js:14:1]
+ 14 │ for (var x = 0; false;)
+ 15 │   export default null;
+    ·   ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-function-decl.js:13:1]
+ 13 │ 
+ 14 │ function f() { export default null; }
+    ·                ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-function-expr.js:13:1]
+ 13 │ 
+ 14 │ (function() { export default null; });
+    ·               ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-generator-decl.js:14:1]
+ 14 │ 
+ 15 │ function* g() { export default null; }
+    ·                 ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-generator-expr.js:13:1]
+ 13 │ 
+ 14 │ (function*() { export default null; });
+    ·                ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-if-else.js:13:1]
+ 13 │ 
+ 14 │ if (true) { } else export default null;
+    ·                    ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-if-if.js:13:1]
+ 13 │ 
+ 14 │ if (false) export default null;
+    ·            ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-labeled.js:13:1]
+ 13 │ 
+ 14 │ test262: export default null;
+    ·          ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-object-gen-method.js:14:1]
+ 14 │ 
+ 15 │ ({ *m() { export default null; } });
+    ·           ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-object-getter.js:13:1]
+ 13 │ 
+ 14 │ ({ get m() { export default null; } });
+    ·              ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-object-method.js:13:1]
+ 13 │ 
+ 14 │ ({ m() { export default null; } });
+    ·          ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-object-setter.js:13:1]
+ 13 │ 
+ 14 │ ({ set m(x) { export default null; } });
+    ·               ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-switch-case-dflt.js:13:1]
+ 13 │ 
+ 14 │ switch(0) { case 1: export default null; default: }
+    ·                     ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-switch-case.js:13:1]
+ 13 │ 
+ 14 │ switch(0) { case 1: export default null; }
+    ·                     ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-switch-dftl.js:13:1]
+ 13 │ 
+ 14 │ switch(0) { default: export default null; }
+    ·                      ──────
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-try-catch-finally.js:14:1]
+ 14 │ try { } catch (err) { } finally {
+ 15 │   export default null;
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-try-catch.js:14:1]
+ 14 │ try { } catch (err) {
+ 15 │   export default null;
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-try-finally.js:14:1]
+ 14 │ try { } finally {
+ 15 │   export default null;
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-try-try.js:14:1]
+ 14 │ try {
+ 15 │   export default null;
+    ·   ──────
+ 16 │ } catch (err) { }
+    ╰────
+
+  × 'export statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-export-while.js:13:1]
+ 13 │ 
+ 14 │ while (false) export default null;
+    ·               ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-arrow-function.js:13:1]
+ 13 │ 
+ 14 │ () => { import v from './decl-pos-import-arrow-function.js'; };
+    ·         ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-block-stmt-list.js:13:1]
+ 13 │ 
+ 14 │ { void 0; import v from './decl-pos-import-block-stmt-list.js'; }
+    ·           ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-block-stmt.js:13:1]
+ 13 │ 
+ 14 │ { import v from './decl-pos-import-block-stmt.js'; }
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-class-decl-meth-static.js:13:1]
+ 13 │ 
+ 14 │ class C { static method() { import v from './decl-pos-import-class-decl-meth-static.js'; } }
+    ·                             ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-class-decl-meth.js:13:1]
+ 13 │ 
+ 14 │ class C { method() { import v from './decl-pos-import-class-decl-meth.js'; } }
+    ·                      ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-class-decl-method-gen-static.js:14:1]
+ 14 │ 
+ 15 │ class C { static *method() { import v from './decl-pos-import-class-decl-method-gen-static.js'; } }
+    ·                              ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-class-decl-method-gen.js:14:1]
+ 14 │ 
+ 15 │ class C { *method() { import v from './decl-pos-import-class-decl-method-gen.js'; } }
+    ·                       ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-class-expr-meth-gen-static.js:14:1]
+ 14 │ 
+ 15 │ (class { static *method() { import v from './decl-pos-import-class-expr-meth-gen-static.js'; } });
+    ·                             ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-class-expr-meth-gen.js:14:1]
+ 14 │ 
+ 15 │ (class { *method() { import v from './decl-pos-import-class-expr-meth-gen.js'; } });
+    ·                      ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-class-expr-meth-static.js:13:1]
+ 13 │ 
+ 14 │ (class { static method() { import v from './decl-pos-import-class-expr-meth-static.js'; } });
+    ·                            ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-class-expr-meth.js:13:1]
+ 13 │ 
+ 14 │ (class { method() { import v from './decl-pos-import-class-expr-meth.js'; } });
+    ·                     ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-do-while.js:13:1]
+ 13 │ 
+ 14 │ do import v from './decl-pos-import-do-while.js'; while (false)
+    ·    ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-const.js:14:1]
+ 14 │ for (const x = 0; false;)
+ 15 │   import v from './decl-pos-import-for-const.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-in-const.js:14:1]
+ 14 │ for (const y in [])
+ 15 │   import v from './decl-pos-import-for-in-const.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-in-let.js:14:1]
+ 14 │ for (let y in [])
+ 15 │   import v from './decl-pos-import-for-in-let.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-in-lhs.js:14:1]
+ 14 │ for (y in [])
+ 15 │   import v from './decl-pos-import-for-in-lhs.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-in-var.js:14:1]
+ 14 │ for (var y in [])
+ 15 │   import v from './decl-pos-import-for-in-var.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-let.js:14:1]
+ 14 │ for (let x = 0; false;)
+ 15 │   import v from './decl-pos-import-for-let.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-lhs.js:14:1]
+ 14 │ for (x = 0; false;)
+ 15 │   import v from './decl-pos-import-for-lhs.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-of-const.js:14:1]
+ 14 │ for (const y of [])
+ 15 │   import v from './decl-pos-import-for-of-const.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-of-let.js:14:1]
+ 14 │ for (let y of [])
+ 15 │   import v from './decl-pos-import-for-of-let.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-of-lhs.js:14:1]
+ 14 │ for (y of [])
+ 15 │   import v from './decl-pos-import-for-of-lhs.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-of-var.js:14:1]
+ 14 │ for (var y of [])
+ 15 │   import v from './decl-pos-import-for-of-var.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-for-var.js:14:1]
+ 14 │ for (var x = 0; false;)
+ 15 │   import v from './decl-pos-import-for-var.js';
+    ·   ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-function-decl.js:13:1]
+ 13 │ 
+ 14 │ function f() { import v from './decl-pos-import-function-decl.js'; }
+    ·                ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-function-expr.js:13:1]
+ 13 │ 
+ 14 │ (function() { import v from './decl-pos-import-function-expr.js'; });
+    ·               ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-generator-decl.js:14:1]
+ 14 │ 
+ 15 │ function* g() { import v from './decl-pos-import-generator-decl.js'; }
+    ·                 ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-generator-expr.js:13:1]
+ 13 │ 
+ 14 │ (function*() { import v from './decl-pos-import-generator-expr.js'; });
+    ·                ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-if-else.js:13:1]
+ 13 │ 
+ 14 │ if (true) { } else import v from './decl-pos-import-if-else.js';
+    ·                    ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-if-if.js:13:1]
+ 13 │ 
+ 14 │ if (false) import v from './decl-pos-import-if-if.js';
+    ·            ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-labeled.js:13:1]
+ 13 │ 
+ 14 │ test262: import v from './decl-pos-import-labeled.js';
+    ·          ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-object-gen-method.js:14:1]
+ 14 │ 
+ 15 │ ({ *m() { import v from './decl-pos-import-object-gen-method.js'; } });
+    ·           ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-object-getter.js:13:1]
+ 13 │ 
+ 14 │ ({ get m() { import v from './decl-pos-import-object-getter.js'; } });
+    ·              ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-object-method.js:13:1]
+ 13 │ 
+ 14 │ ({ m() { import v from './decl-pos-import-object-method.js'; } });
+    ·          ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-object-setter.js:13:1]
+ 13 │ 
+ 14 │ ({ set m(x) { import v from './decl-pos-import-object-setter.js'; } });
+    ·               ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-switch-case-dflt.js:13:1]
+ 13 │ 
+ 14 │ switch(0) { case 1: import v from './decl-pos-import-switch-case-dflt.js'; default: }
+    ·                     ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-switch-case.js:13:1]
+ 13 │ 
+ 14 │ switch(0) { case 1: import v from './decl-pos-import-switch-case.js'; }
+    ·                     ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-switch-dftl.js:13:1]
+ 13 │ 
+ 14 │ switch(0) { default: import v from './decl-pos-import-switch-dftl.js'; }
+    ·                      ──────
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-try-catch-finally.js:14:1]
+ 14 │ try { } catch (err) { } finally {
+ 15 │   import v from './decl-pos-import-try-catch-finally.js';
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-try-catch.js:14:1]
+ 14 │ try { } catch (err) {
+ 15 │   import v from './decl-pos-import-try-catch.js';
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-try-finally.js:14:1]
+ 14 │ try { } finally {
+ 15 │   import v from './decl-pos-import-try-finally.js';
+    ·   ──────
+ 16 │ }
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-try-try.js:14:1]
+ 14 │ try {
+ 15 │   import v from './decl-pos-import-try-try.js';
+    ·   ──────
+ 16 │ } catch (err) { }
+    ╰────
+
+  × 'import statement' declaration can only be used at the top level of a module
+    ╭─[language/module-code/parse-err-decl-pos-import-while.js:13:1]
+ 13 │ 
+ 14 │ while (false) import v from './decl-pos-import-while.js';
+    ·               ──────
     ╰────
 
   × Unexpected token
