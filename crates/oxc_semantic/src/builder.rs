@@ -178,6 +178,13 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
             }
+            AstKind::Function(func) => {
+                func.bind(self);
+            }
+            AstKind::Class(class) => {
+                self.current_node_flags |= NodeFlags::Class;
+                class.bind(self);
+            }
             AstKind::FormalParameters(params) => {
                 params.bind(self);
             }
@@ -189,10 +196,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::JSXElementName(elem) => {
                 self.reference_jsx_element_name(elem);
-            }
-            AstKind::Class(class) => {
-                self.current_node_flags |= NodeFlags::Class;
-                class.bind(self);
             }
             _ => {}
         }
