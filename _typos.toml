@@ -1,0 +1,15 @@
+# https://github.com/crate-ci/typos
+# cargo install typos
+# typos
+
+[files]
+extend-exclude = [
+	"tasks/coverage/test262",
+	"tasks/coverage/babel",
+	"tasks/coverage/typescript",
+	"**/*.snap",
+]
+
+[default.extend-words]
+trivias = "trivias"
+trivia = "trivia"
