@@ -1,0 +1,27 @@
+name: Cargo Fuzz
+
+on:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_QUIET: true
+
+jobs:
+  fuzz:
+    name: Cargo Fuzz
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz
+
+      - name: Run
+        run: |
+          cd crates/oxc_parser/fuzz
+          cargo fuzz run --release parser -- -only_ascii=1 -max_total_time=900
+

@@ -1,0 +1,26 @@
+[package]
+name = "oxc_fuzzer"
+version = "0.0.0"
+publish = false
+edition = "2018"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+oxc_ast = { path = "../../oxc_ast" }
+oxc_allocator = { path = "../../oxc_allocator" }
+libfuzzer-sys = "0.4"
+
+[dependencies.oxc_parser]
+path = ".."
+
+# Prevent this from interfering with workspaces
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "parser"
+path = "fuzz_targets/parser.rs"
+test = false
+doc = false
