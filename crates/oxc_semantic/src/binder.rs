@@ -93,3 +93,30 @@ impl<'a> Binder for FormalParameters<'a> {
         }
     }
 }
+
+impl<'a> Binder for CatchClause<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        let current_scope_id = builder.scope.current_scope_id;
+        if let Some(param) = &self.param {
+            // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
+            // It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the VarDeclaredNames of Block
+            // unless CatchParameter is CatchParameter : BindingIdentifier
+            if let BindingPatternKind::BindingIdentifier(ident) = &param.kind {
+                let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
+                // Overshadows declarations so redeclarator error is not reported here
+                let symbol_id = builder.symbols.create(ident.name.clone(), ident.span, includes);
+                builder.scope.current_scope_mut().variables.insert(ident.name.clone(), symbol_id);
+            } else {
+                for ident in param.bound_names() {
+                    builder.declare_symbol(
+                        &ident.name,
+                        ident.span,
+                        current_scope_id,
+                        SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
+                        SymbolFlags::BlockScopedVariableExcludes,
+                    );
+                }
+            }
+        }
+    }
+}

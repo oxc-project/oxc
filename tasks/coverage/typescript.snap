@@ -1,7 +1,7 @@
 TypeScript Summary:
-AST Parsed     : 2306/2338 (98.63%)
-Positive Passed: 2306/2338 (98.63%)
-Negative Passed: 587/2532 (23.18%)
+AST Parsed     : 2305/2338 (98.59%)
+Positive Passed: 2305/2338 (98.59%)
+Negative Passed: 589/2532 (23.26%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -998,7 +998,6 @@ Expect Syntax Error: "jsdoc/jsdocAugments_errorInExtendsExpression.ts"
 Expect Syntax Error: "jsdoc/jsdocAugments_nameMismatch.ts"
 Expect Syntax Error: "jsdoc/jsdocAugments_noExtends.ts"
 Expect Syntax Error: "jsdoc/jsdocAugments_notAClass.ts"
-Expect Syntax Error: "jsdoc/jsdocCatchClauseWithTypeAnnotation.ts"
 Expect Syntax Error: "jsdoc/jsdocFunctionType.ts"
 Expect Syntax Error: "jsdoc/jsdocFunction_missingReturn.ts"
 Expect Syntax Error: "jsdoc/jsdocImplements_class.ts"
@@ -1561,7 +1560,6 @@ Expect Syntax Error: "statements/for-ofStatements/ES5For-ofTypeCheck9.ts"
 Expect Syntax Error: "statements/forStatements/forStatementsMultipleInvalidDecl.ts"
 Expect Syntax Error: "statements/returnStatements/invalidReturnStatements.ts"
 Expect Syntax Error: "statements/switchStatements/switchStatements.ts"
-Expect Syntax Error: "statements/tryStatements/catchClauseWithTypeAnnotation.ts"
 Expect Syntax Error: "types/any/anyAsConstructor.ts"
 Expect Syntax Error: "types/any/anyAsGenericFunctionCall.ts"
 Expect Syntax Error: "types/any/assignAnyToEveryType.ts"
@@ -1947,6 +1945,19 @@ Expect Syntax Error: "types/unknown/unknownControlFlow.ts"
 Expect Syntax Error: "types/unknown/unknownType1.ts"
 Expect Syntax Error: "types/unknown/unknownType2.ts"
 Expect Syntax Error: "types/witness/witness.ts"
+Expect to Parse: "async/es6/asyncWithVarShadowing_es6.ts"
+
+  × Identifier `"x"` has already been declared
+     ╭─[async/es6/asyncWithVarShadowing_es6.ts:131:1]
+ 131 │     }
+ 132 │     catch ({ x }) {
+     ·              ┬
+     ·              ╰── `x` has already been declared here
+ 133 │         var x;
+     ·             ┬
+     ·             ╰── It can not be redeclared here
+ 134 │     }
+     ╰────
 Expect to Parse: "classes/propertyMemberDeclarations/autoAccessor4.ts"
 
   × Automatic Semicolon Insertion
@@ -6104,6 +6115,19 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ }
    ╰────
 
+  × Identifier `"err"` has already been declared
+    ╭─[jsdoc/jsdocCatchClauseWithTypeAnnotation.ts:39:1]
+ 39 │     try { }
+ 40 │     catch (err) {
+    ·            ─┬─
+    ·             ╰── `err` has already been declared here
+ 41 │         /** @type {string} */
+ 42 │         let err;
+    ·             ─┬─
+    ·              ╰── It can not be redeclared here
+ 43 │     }
+    ╰────
+
   × Unexpected token
    ╭─[jsdoc/jsdocDisallowedInTypescript.ts:3:1]
  3 │ // grammar error from checker
@@ -8872,6 +8896,16 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·      ─
  4 │ 
    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[statements/tryStatements/catchClauseWithTypeAnnotation.ts:28:1]
+ 28 │     // minor bug: shows that the `catch` argument is skipped when checking scope
+ 29 │     try { } catch (x) { let x: string; }
+    ·                    ┬        ┬
+    ·                    │        ╰── It can not be redeclared here
+    ·                    ╰── `x` has already been declared here
+ 30 │     try { } catch (x) { var x: string; }
+    ╰────
 
   × Unexpected token
    ╭─[statements/tryStatements/invalidTryStatements.ts:1:1]
