@@ -69,35 +69,6 @@ impl SourceType {
     }
 
     #[must_use]
-    pub fn builder() -> SourceTypeBuilder {
-        SourceTypeBuilder::default()
-    }
-
-    pub fn set_script(&mut self) {
-        self.module_kind = ModuleKind::Script;
-    }
-
-    pub fn set_module(&mut self) {
-        self.module_kind = ModuleKind::Module;
-    }
-
-    pub fn set_typescript(&mut self) {
-        self.language = Language::TypeScript { is_definition_file: false };
-    }
-
-    pub fn set_typescript_definition(&mut self) {
-        self.language = Language::TypeScript { is_definition_file: true };
-    }
-
-    pub fn set_jsx(&mut self) {
-        self.variant = LanguageVariant::Jsx;
-    }
-
-    pub fn set_always_strict(&mut self, yes: bool) {
-        self.always_strict = yes;
-    }
-
-    #[must_use]
     pub fn is_script(self) -> bool {
         self.module_kind == ModuleKind::Script
     }
@@ -135,6 +106,52 @@ impl SourceType {
     #[must_use]
     pub fn always_strict(self) -> bool {
         self.always_strict
+    }
+
+    #[must_use]
+    pub fn with_script(&mut self, yes: bool) -> &mut Self {
+        if yes {
+            self.module_kind = ModuleKind::Script;
+        }
+        self
+    }
+
+    #[must_use]
+    pub fn with_module(&mut self, yes: bool) -> &mut Self {
+        if yes {
+            self.module_kind = ModuleKind::Module;
+        }
+        self
+    }
+
+    #[must_use]
+    pub fn with_typescript(&mut self, yes: bool) -> &mut Self {
+        if yes {
+            self.language = Language::TypeScript { is_definition_file: false };
+        }
+        self
+    }
+
+    #[must_use]
+    pub fn with_typescript_definition(&mut self, yes: bool) -> &mut Self {
+        if yes {
+            self.language = Language::TypeScript { is_definition_file: true };
+        }
+        self
+    }
+
+    #[must_use]
+    pub fn with_jsx(&mut self, yes: bool) -> &mut Self {
+        if yes {
+            self.variant = LanguageVariant::Jsx;
+        }
+        self
+    }
+
+    #[must_use]
+    pub fn with_always_strict(&mut self, yes: bool) -> &mut Self {
+        self.always_strict = yes;
+        self
     }
 
     /// Converts file path to `SourceType`
@@ -176,58 +193,5 @@ impl SourceType {
         };
 
         Ok(Self { language, module_kind: ModuleKind::Module, variant, always_strict: false })
-    }
-}
-
-#[derive(Default)]
-pub struct SourceTypeBuilder {
-    source_type: SourceType,
-}
-
-impl SourceTypeBuilder {
-    #[must_use]
-    pub fn build(self) -> SourceType {
-        self.source_type
-    }
-
-    /// turn on `ModuleKind::Module`
-    #[must_use]
-    pub fn module(mut self) -> Self {
-        self.source_type.module_kind = ModuleKind::Module;
-        self
-    }
-
-    /// turn on `ModuleKind::Script`
-    #[must_use]
-    pub fn script(mut self) -> Self {
-        self.source_type.module_kind = ModuleKind::Script;
-        self
-    }
-
-    /// turn on `LanguageVariant::JSX`
-    #[must_use]
-    pub fn jsx(mut self) -> Self {
-        self.source_type.variant = LanguageVariant::Jsx;
-        self
-    }
-
-    /// turn on `Language::TypeScript { is_definition_file: false }`
-    #[must_use]
-    pub fn typescript(mut self) -> Self {
-        self.source_type.language = Language::TypeScript { is_definition_file: false };
-        self
-    }
-
-    #[must_use]
-    /// turn on `Language::TypeScript { is_definition_file: true }`
-    pub fn typescript_definition(mut self) -> Self {
-        self.source_type.language = Language::TypeScript { is_definition_file: true };
-        self
-    }
-
-    #[must_use]
-    pub fn always_strict(mut self, yes: bool) -> Self {
-        self.source_type.always_strict = yes;
-        self
     }
 }

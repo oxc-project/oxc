@@ -215,21 +215,11 @@ impl Case for BabelCase {
 
     fn run(&mut self) {
         let mut source_type = SourceType::from_path(self.path()).unwrap();
-        source_type.set_script();
-
-        if self.is_jsx() {
-            source_type.set_jsx();
-        }
-
-        if self.is_typescript() {
-            source_type.set_typescript();
-        }
-
-        // `options.source_type.is_module()` is read from the file extension
-        if !source_type.is_module() && self.is_module() {
-            source_type.set_module();
-        }
-
+        let source_type = *source_type
+            .with_script(true)
+            .with_jsx(self.is_jsx())
+            .with_typescript(self.is_typescript())
+            .with_module(self.is_module());
         self.result = self.execute(source_type);
     }
 }

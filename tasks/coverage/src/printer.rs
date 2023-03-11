@@ -55,13 +55,8 @@ impl PrinterTest262Case {
     fn get_result(&self, options: PrinterOptions) -> TestResult {
         let allocator = Allocator::default();
         let source_text = self.base.code().to_string();
-        let source_type = {
-            let mut builder = SourceType::builder();
-            if self.base.meta().flags.contains(&TestFlag::Module) {
-                builder = builder.module();
-            }
-            builder.build()
-        };
+        let is_module = self.base.meta().flags.contains(&TestFlag::Module);
+        let source_type = *SourceType::default().with_module(is_module);
         let program1 = Parser::new(&allocator, &source_text, source_type).parse().program;
         let source_text1 = Printer::new(source_text.len(), options).build(&program1);
         let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;

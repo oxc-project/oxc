@@ -101,8 +101,15 @@ impl Case for TypeScriptCase {
     }
 
     fn run(&mut self) {
-        let mut source_type = SourceType::from_path(self.path()).unwrap();
-        self.meta.derive_options(&mut source_type);
+        let compiler_options = &self.meta.options;
+        let is_module = ["esnext", "es2022", "es2020", "es2015"]
+            .into_iter()
+            .any(|module| compiler_options.modules.contains(&module.to_string()));
+        let source_type = *SourceType::from_path(self.path())
+            .unwrap()
+            .with_script(true)
+            .with_module(is_module)
+            .with_typescript_definition(compiler_options.declaration);
         self.result = self.execute(source_type);
     }
 }
@@ -115,22 +122,6 @@ struct TypeScriptTestMeta {
 }
 
 impl TypeScriptTestMeta {
-    pub fn derive_options(&self, source_type: &mut SourceType) {
-        let compiler_options = &self.options;
-        source_type.set_script();
-
-        if ["esnext", "es2022", "es2020", "es2015"]
-            .into_iter()
-            .any(|module| compiler_options.modules.contains(&module.to_string()))
-        {
-            source_type.set_module();
-        }
-
-        if compiler_options.declaration {
-            source_type.set_typescript_definition();
-        }
-    }
-
     /// TypeScript supports multiple files in a single test case.
     /// These files start with `// @<option-name>: <option-value>` and are followed by the file's content.
     /// This function extracts the individual files with their content and drops unsupported files.
