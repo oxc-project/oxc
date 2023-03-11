@@ -2,7 +2,7 @@
 use oxc_ast::{ast::*, AstKind, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::Error,
+    thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
 
@@ -59,7 +59,7 @@ struct NoConstantBinaryExpressionDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "eslint(no-constant-binary-expression): Unexpected constant {0:?} on the left-hand side of a `{1:?}` expression"
+    "eslint(no-constant-binary-expression): Unexpected constant {0} on the left-hand side of a `{1}` expression"
 )]
 #[diagnostic(severity(warning))]
 struct ConstantShortCircuit(

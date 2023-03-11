@@ -1,7 +1,7 @@
 use oxc_ast::{Atom, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::Error,
+    thiserror::{self, Error},
 };
 
 #[derive(Debug, Error, Diagnostic)]
@@ -38,7 +38,7 @@ pub struct NonOctalDecimalEscapeSequence(
 pub struct UnicodeEscapeSequence(#[label("Invalid Unicode escape sequence")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Invalid Character `{0:?}`")]
+#[error("Invalid Character `{0}`")]
 pub struct InvalidCharacter(pub char, #[label("Invalid Character `{0}`")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
@@ -54,14 +54,14 @@ pub struct UnterminatedMultiLineComment(#[label("Unterminated multiline comment"
 pub struct UnterminatedString(#[label("Unterminated string")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected flag {0:?} in regular expression literal")]
+#[error("Unexpected flag {0} in regular expression literal")]
 pub struct RegExpFlag(
     pub char,
     #[label("Unexpected flag {0} in regular expression literal")] pub Span,
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Flag {0:?} is mentioned twice in regular expression literal")]
+#[error("Flag {0} is mentioned twice in regular expression literal")]
 pub struct RegExpFlagTwice(
     pub char,
     #[label("Flag {0} is mentioned twice in regular expression literal")] pub Span,
@@ -161,7 +161,7 @@ pub struct InvalidContinue(#[label("continue statement is not allowed here")] pu
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "A `{0:?}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."
+    "A `{0}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."
 )]
 #[diagnostic()]
 pub struct InvalidLabelNonIteration(
@@ -181,7 +181,7 @@ pub struct InvalidLabelTarget(#[label("This label is used, but not defined")] pu
 pub struct InvalidLabelJumpTarget(#[label("Jump target cannot cross function boundary.")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected '{0:?}' strict mode")]
+#[error("Unexpected '{0}' strict mode")]
 #[diagnostic()]
 pub struct UnexpectedIdentifierAssign(
     Atom,
@@ -194,12 +194,12 @@ pub struct UnexpectedIdentifierAssign(
 pub struct UnexpectedLhsAssign(#[label("Invalid left-hand side in assignment")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("The keyword '{0:?}' is reserved")]
+#[error("The keyword '{0}' is reserved")]
 #[diagnostic()]
 pub struct ReservedKeyword(Atom, #[label("{0} is reserved")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("{0:?} is disallowed as a lexically bound name")]
+#[error("{0} is disallowed as a lexically bound name")]
 #[diagnostic()]
 pub struct DisallowedLexicalName(
     pub Atom,
@@ -207,7 +207,7 @@ pub struct DisallowedLexicalName(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("`let` cannot be declared as a variable name inside of a `{0:?}` declaration")]
+#[error("`let` cannot be declared as a variable name inside of a `{0}` declaration")]
 #[diagnostic()]
 pub struct InvalidLetDeclaration(String, #[label("Rename the let identifier here")] pub Span);
 
@@ -229,11 +229,11 @@ pub struct MissinginitializerInConst(#[label("const declaration need an initiali
 pub struct FunctionsCannotBeLabelled(#[label("Functions cannot be labelled")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Cannot use {0:?} outside a method")]
+#[error("Cannot use {0} outside a method")]
 pub struct MethodCode(&'static str, #[label("Cannot use {0} outside a method")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Cannot use {0:?} outside a module")]
+#[error("Cannot use {0} outside a module")]
 #[diagnostic()]
 pub struct ModuleCode(&'static str, #[label("Cannot use {0} outside a module")] pub Span);
 
@@ -360,7 +360,7 @@ pub struct ForAwait(
 pub struct NewDynamicImport(#[label("Cannot use new with dynamic import")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("'{0:?}' declaration can only be used at the top level of a module")]
+#[error("'{0}' declaration can only be used at the top level of a module")]
 #[diagnostic()]
 pub struct TopLevel(
     &'static str,
@@ -368,7 +368,7 @@ pub struct TopLevel(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Duplicated export '{0:?}'")]
+#[error("Duplicated export '{0}'")]
 #[diagnostic()]
 pub struct DuplicateExport(
     Atom,
@@ -391,7 +391,7 @@ pub struct PrivateNameConstructor(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Private field '{0:?}' must be declared in an enclosing class")]
+#[error("Private field '{0}' must be declared in an enclosing class")]
 #[diagnostic()]
 pub struct PrivateFieldUndeclared(
     Atom,
@@ -424,12 +424,12 @@ pub struct ConstructorGetterSetter(#[label("Constructor can't have get/set modif
 pub struct ConstructorAsync(#[label("Constructor can't be an async method")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Cannot use `{0:?}` as an identifier in an async context")]
+#[error("Cannot use `{0}` as an identifier in an async context")]
 #[diagnostic()]
 pub struct IdentifierAsync(&'static str, #[label("{0} cannot be used here")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Cannot use `{0:?}` as an identifier in a generator context")]
+#[error("Cannot use `{0}` as an identifier in a generator context")]
 #[diagnostic()]
 pub struct IdentifierGenerator(&'static str, #[label("{0} cannot be used here")] pub Span);
 
@@ -507,7 +507,7 @@ pub struct MixedCoalesce(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("'Unexpected `{0:?}`")]
+#[error("'Unexpected `{0}`")]
 #[diagnostic()]
 pub struct UnexpectedKeyword(
     pub &'static str,
@@ -515,7 +515,7 @@ pub struct UnexpectedKeyword(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("{0:?} loop variable declaration may not have an initializer")]
+#[error("{0} loop variable declaration may not have an initializer")]
 #[diagnostic()]
 pub struct UnexpectedInitializerInForLoopHead(
     &'static str,
@@ -523,7 +523,7 @@ pub struct UnexpectedInitializerInForLoopHead(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Only a single declaration is allowed in a `for...{0:?}` statement")]
+#[error("Only a single declaration is allowed in a `for...{0}` statement")]
 #[diagnostic()]
 pub struct MultipleDeclarationInForLoopHead(
     &'static str,
@@ -531,7 +531,7 @@ pub struct MultipleDeclarationInForLoopHead(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Illegal newline after {0:?}")]
+#[error("Illegal newline after {0}")]
 #[diagnostic()]
 pub struct IllegalNewline(
     pub &'static str,
@@ -554,7 +554,7 @@ pub struct IllegalUseStrict(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("'arguments' is not allowed in {0:?}")]
+#[error("'arguments' is not allowed in {0}")]
 #[diagnostic()]
 pub struct UnexpectedArguments(
     &'static str,
@@ -562,7 +562,7 @@ pub struct UnexpectedArguments(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected {0:?} expression")]
+#[error("Unexpected {0} expression")]
 #[diagnostic()]
 pub struct UnexpectedExpression(&'static str, #[label("Unexpected {0} expression")] pub Span);
 
@@ -601,7 +601,7 @@ pub struct SetterParametersRestPattern(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("{0:?} expression not allowed in formal parameter")]
+#[error("{0} expression not allowed in formal parameter")]
 #[diagnostic()]
 pub struct AwaitOrYieldInParameter(
     &'static str,
@@ -671,7 +671,7 @@ pub struct ExpectFunctionName(#[label("Function name is required here")] pub Spa
 pub struct ExpectCatchFinally(#[label("Expected `catch` or `finally` here")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Cannot assign to '{0:?}' because it is a {1:?}")]
+#[error("Cannot assign to '{0}' because it is a {1}")]
 #[diagnostic()]
 pub struct CannotAssignTo(
     Atom,

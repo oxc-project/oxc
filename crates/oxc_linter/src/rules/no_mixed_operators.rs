@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, GetSpan, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::Error,
+    thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
@@ -9,7 +9,7 @@ use oxc_semantic::AstNode;
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-mixed-operators): Unexpected mix of {0:?} with {1:?}")]
+#[error("eslint(no-mixed-operators): Unexpected mix of {0} with {1}")]
 #[diagnostic(
     severity(warning),
     help("Use parentheses to clarify the intended order of operations.")

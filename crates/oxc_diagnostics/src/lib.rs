@@ -35,7 +35,7 @@ impl Diagnostics {
 }
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Identifier `{0:?}` has already been declared")]
+#[error("Identifier `{0}` has already been declared")]
 #[diagnostic()]
 pub struct Redeclaration(
     pub Atom,

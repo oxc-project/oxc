@@ -4,14 +4,14 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::Error,
+    thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(eqeqeq): Expected {1:?} and instead saw {0:?}")]
+#[error("eslint(eqeqeq): Expected {1} and instead saw {0}")]
 #[diagnostic(severity(warning), help("Prefer strict {1} operator"))]
 struct EqEqEqDiagnostic(&'static str, &'static str, #[label] pub Span);
 

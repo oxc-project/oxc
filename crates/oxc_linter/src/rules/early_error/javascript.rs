@@ -2,7 +2,7 @@
 use oxc_ast::{ast::*, AstKind, Atom, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::Error,
+    thiserror::{self, Error},
     Redeclaration,
 };
 
@@ -38,7 +38,7 @@ impl Rule for EarlyErrorJavaScript {
 }
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("The keyword '{0:?}' is reserved")]
+#[error("The keyword '{0}' is reserved")]
 #[diagnostic()]
 struct ReservedKeyword(Atom, #[label] Span);
 
@@ -87,7 +87,7 @@ fn check_binding_identifier<'a>(
                 AstKind::VariableDeclaration(decl) if decl.kind.is_lexical() => {
                     #[derive(Debug, Error, Diagnostic)]
                     #[error(
-                        "`let` cannot be declared as a variable name inside of a `{0:?}` declaration"
+                        "`let` cannot be declared as a variable name inside of a `{0}` declaration"
                     )]
                     #[diagnostic()]
                     struct InvalidLetDeclaration(String, #[label] Span);
@@ -109,12 +109,12 @@ fn check_identifier_reference<'a>(
     ctx: &LintContext<'a>,
 ) {
     #[derive(Debug, Error, Diagnostic)]
-    #[error("Cannot assign to '{0:?}' in strict mode")]
+    #[error("Cannot assign to '{0}' in strict mode")]
     #[diagnostic()]
     struct UnexpectedIdentifierAssign(Atom, #[label] Span);
 
     #[derive(Debug, Error, Diagnostic)]
-    #[error("'arguments' is not allowed in {0:?}")]
+    #[error("'arguments' is not allowed in {0}")]
     #[diagnostic()]
     struct UnexpectedArguments(&'static str, #[label] Span);
 
@@ -185,7 +185,7 @@ fn check_private_identifier<'a>(
 
     if classes.is_empty() {
         #[derive(Debug, Error, Diagnostic)]
-        #[error("Private identifier '#{0:?}' is not allowed outside class bodies")]
+        #[error("Private identifier '#{0}' is not allowed outside class bodies")]
         #[diagnostic()]
         struct PrivateNotInClass(Atom, #[label] Span);
         return ctx.diagnostic(PrivateNotInClass(ident.name.clone(), ident.span));
@@ -212,7 +212,7 @@ fn check_private_identifier<'a>(
 
     if !found_private_ident {
         #[derive(Debug, Error, Diagnostic)]
-        #[error("Private field '{0:?}' must be declared in an enclosing class")]
+        #[error("Private field '{0}' must be declared in an enclosing class")]
         #[diagnostic()]
         struct PrivateFieldUndeclared(Atom, #[label] Span);
         ctx.diagnostic(PrivateFieldUndeclared(ident.name.clone(), ident.span));
@@ -376,7 +376,7 @@ fn check_continue_statement<'a>(
 
     #[derive(Debug, Error, Diagnostic)]
     #[error(
-        "A `{0:?}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."
+        "A `{0}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."
     )]
     #[diagnostic()]
     struct InvalidLabelNonIteration(

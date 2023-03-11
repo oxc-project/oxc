@@ -1946,7 +1946,7 @@ Expect Syntax Error: "types/unknown/unknownType2.ts"
 Expect Syntax Error: "types/witness/witness.ts"
 Expect to Parse: "async/es6/asyncWithVarShadowing_es6.ts"
 
-  × Identifier `"x"` has already been declared
+  × Identifier `x` has already been declared
      ╭─[async/es6/asyncWithVarShadowing_es6.ts:131:1]
  131 │     }
  132 │     catch ({ x }) {
@@ -2000,7 +2000,7 @@ Expect to Parse: "classes/propertyMemberDeclarations/staticPropertyNameConflicts
     ╰────
 Expect to Parse: "es6/for-ofStatements/for-of53.ts"
 
-  × Identifier `"v"` has already been declared
+  × Identifier `v` has already been declared
    ╭─[es6/for-ofStatements/for-of53.ts:1:1]
  1 │ //@target: ES6
  2 │ for (let v of []) {
@@ -2197,7 +2197,7 @@ Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_propertyValueCon
   help: Try insert a semicolon here
 Expect to Parse: "externalModules/topLevelAwait.2.ts"
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwait.2.ts:3:1]
  3 │ 
  4 │ declare namespace foo { const await: any; }
@@ -2205,7 +2205,7 @@ Expect to Parse: "externalModules/topLevelAwait.2.ts"
  5 │ 
    ╰────
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwait.2.ts:6:1]
  6 │ // await allowed in import=namespace when not a module
  7 │ import await = foo.await;
@@ -2213,7 +2213,7 @@ Expect to Parse: "externalModules/topLevelAwait.2.ts"
    ╰────
 Expect to Parse: "externalModules/topLevelAwait.3.ts"
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwait.3.ts:6:1]
  6 │ export {};
  7 │ declare const await: any;
@@ -2221,7 +2221,7 @@ Expect to Parse: "externalModules/topLevelAwait.3.ts"
  8 │ declare class C extends await {}
    ╰────
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwait.3.ts:7:1]
  7 │ declare const await: any;
  8 │ declare class C extends await {}
@@ -2268,7 +2268,7 @@ Expect to Parse: "jsx/tsxReactEmitSpreadAttribute.ts"
    ╰────
 Expect to Parse: "salsa/plainJSRedeclare3.ts"
 
-  × Identifier `"orbitol"` has already been declared
+  × Identifier `orbitol` has already been declared
    ╭─[salsa/plainJSRedeclare3.ts:4:1]
  4 │ // @filename: plainJSRedeclare.js
  5 │ const orbitol = 1
@@ -2281,7 +2281,7 @@ Expect to Parse: "salsa/plainJSRedeclare3.ts"
    ╰────
 Expect to Parse: "salsa/privateIdentifierExpando.ts"
 
-  × Private identifier '#"bar"' is not allowed outside class bodies
+  × Private identifier '#bar' is not allowed outside class bodies
    ╭─[salsa/privateIdentifierExpando.ts:7:1]
  7 │ const x = {};
  8 │ x.#bar.baz = 20;
@@ -2526,7 +2526,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ import abstract class D {}
    ╰────
 
-  × Identifier `"CC1"` has already been declared
+  × Identifier `CC1` has already been declared
     ╭─[classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts:12:1]
  12 │ 
  13 │ abstract class CC1 {}
@@ -2538,7 +2538,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  15 │ 
     ╰────
 
-  × Identifier `"CC2"` has already been declared
+  × Identifier `CC2` has already been declared
     ╭─[classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts:15:1]
  15 │ 
  16 │ class CC2 {}
@@ -2559,7 +2559,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  17 │ }
     ╰────
 
-  × Identifier `"C"` has already been declared
+  × Identifier `C` has already been declared
    ╭─[classes/classDeclarations/classAndVariableWithSameName.ts:1:1]
  1 │ class C { foo: string; } // error
    ·       ┬
@@ -2570,7 +2570,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ 
    ╰────
 
-  × Identifier `"D"` has already been declared
+  × Identifier `D` has already been declared
     ╭─[classes/classDeclarations/classAndVariableWithSameName.ts:4:1]
   4 │ module M {
   5 │     class D { // error
@@ -2644,7 +2644,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·         ╰── Expect `{` here, but found `void`
    ╰────
 
-  × Private field '"y"' must be declared in an enclosing class
+  × Private field 'y' must be declared in an enclosing class
     ╭─[classes/classStaticBlock/classStaticBlock16.ts:12:1]
  12 │     getX = (obj: C) => obj.#x;
  13 │     getY = (obj: D) => obj.#y;
@@ -2652,7 +2652,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  14 │   }
     ╰────
 
-  × Private field '"x"' must be declared in an enclosing class
+  × Private field 'x' must be declared in an enclosing class
     ╭─[classes/classStaticBlock/classStaticBlock16.ts:22:1]
  22 │     // getY has privileged access to y
  23 │     getX = (obj: C) => obj.#x;
@@ -2756,7 +2756,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╰────
   help: Try insert a semicolon here
 
-  × Private identifier '#"prop"' is not allowed outside class bodies
+  × Private identifier '#prop' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameAccessorsAccess.ts:15:1]
  15 │ }
  16 │ new A2().#prop; // Error
@@ -2764,7 +2764,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  17 │ 
     ╰────
 
-  × Private identifier '#"prop"' is not allowed outside class bodies
+  × Private identifier '#prop' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameAccessorsAccess.ts:18:1]
  18 │ function  foo (){
  19 │     new A2().#prop; // Error
@@ -2772,7 +2772,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  20 │ }
     ╰────
 
-  × Private field '"prop"' must be declared in an enclosing class
+  × Private field 'prop' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameAccessorsAccess.ts:23:1]
  23 │     m() {
  24 │         new A2().#prop;
@@ -2780,7 +2780,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  25 │     }
     ╰────
 
-  × Private field '"prop"' must be declared in an enclosing class
+  × Private field 'prop' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameAccessorssDerivedClasses.ts:10:1]
  10 │     static method(x: Derived) {
  11 │         console.log(x.#prop);
@@ -2788,7 +2788,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │     }
     ╰────
 
-  × Private field '"bar"' must be declared in an enclosing class
+  × Private field 'bar' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameAndAny.ts:11:1]
  11 │         thing.#baz;
  12 │         thing.#bar; // Error
@@ -2796,7 +2796,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  13 │         thing.#foo();
     ╰────
 
-  × Private field '"bar"' must be declared in an enclosing class
+  × Private field 'bar' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameAndAny.ts:18:1]
  18 │         thing.#baz;
  19 │         thing.#bar;
@@ -2804,7 +2804,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  20 │         thing.#foo();
     ╰────
 
-  × Private field '"bar"' must be declared in an enclosing class
+  × Private field 'bar' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameAndAny.ts:25:1]
  25 │         thing.#baz;
  26 │         thing.#bar;
@@ -2812,7 +2812,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  27 │         thing.#foo();
     ╰────
 
-  × Private field '"f"' must be declared in an enclosing class
+  × Private field 'f' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameAndIndexSignature.ts:8:1]
   8 │     constructor(message: string) {
   9 │         this.#f = 3           // Error (index signatures do not implicitly declare private names)
@@ -2828,7 +2828,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │     #bar(): string;
    ╰────
 
-  × Private identifier '#"nope"' is not allowed outside class bodies
+  × Private identifier '#nope' is not allowed outside class bodies
    ╭─[classes/members/privateNames/privateNameBadAssignment.ts:2:1]
  2 │ 
  3 │ exports.#nope = 1;           // Error (outside class body)
@@ -2836,7 +2836,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ function A() { }
    ╰────
 
-  × Private identifier '#"no"' is not allowed outside class bodies
+  × Private identifier '#no' is not allowed outside class bodies
    ╭─[classes/members/privateNames/privateNameBadAssignment.ts:4:1]
  4 │ function A() { }
  5 │ A.prototype.#no = 2;         // Error (outside class body)
@@ -2844,7 +2844,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ 
    ╰────
 
-  × Private identifier '#"foo"' is not allowed outside class bodies
+  × Private identifier '#foo' is not allowed outside class bodies
    ╭─[classes/members/privateNames/privateNameBadAssignment.ts:7:1]
  7 │ class B {}
  8 │ B.#foo = 3;                  // Error (outside class body)
@@ -2852,7 +2852,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  9 │ 
    ╰────
 
-  × Private field '"foo"' must be declared in an enclosing class
+  × Private field 'foo' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameBadAssignment.ts:13:1]
  13 │         exports.#bar = 6;    // Error
  14 │         this.#foo = 3;       // Error (undeclared)
@@ -2877,7 +2877,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │ }
    ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:7:1]
   7 │     class A_Field_Field {
   8 │         #foo = "foo";
@@ -2889,7 +2889,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  10 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:13:1]
  13 │     class A_Field_Method {
  14 │         #foo = "foo";
@@ -2901,7 +2901,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  16 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:19:1]
  19 │     class A_Field_Getter {
  20 │         #foo = "foo";
@@ -2913,7 +2913,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  22 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:25:1]
  25 │     class A_Field_Setter {
  26 │         #foo = "foo";
@@ -2925,7 +2925,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  28 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:31:1]
  31 │     class A_Field_StaticField {
  32 │         #foo = "foo";
@@ -2937,7 +2937,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  34 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:37:1]
  37 │     class A_Field_StaticMethod {
  38 │         #foo = "foo";
@@ -2949,7 +2949,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  40 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:43:1]
  43 │     class A_Field_StaticGetter {
  44 │         #foo = "foo";
@@ -2961,7 +2961,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  46 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:49:1]
  49 │     class A_Field_StaticSetter {
  50 │         #foo = "foo";
@@ -2973,7 +2973,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  52 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:57:1]
  57 │     class A_Method_Field {
  58 │         #foo() { }
@@ -2985,7 +2985,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  60 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:63:1]
  63 │     class A_Method_Method {
  64 │         #foo() { }
@@ -2997,7 +2997,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  66 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:69:1]
  69 │     class A_Method_Getter {
  70 │         #foo() { }
@@ -3009,7 +3009,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  72 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:75:1]
  75 │     class A_Method_Setter {
  76 │         #foo() { }
@@ -3021,7 +3021,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  78 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:81:1]
  81 │     class A_Method_StaticField {
  82 │         #foo() { }
@@ -3033,7 +3033,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  84 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:87:1]
  87 │     class A_Method_StaticMethod {
  88 │         #foo() { }
@@ -3045,7 +3045,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  90 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
     ╭─[classes/members/privateNames/privateNameDuplicateField.ts:93:1]
  93 │     class A_Method_StaticGetter {
  94 │         #foo() { }
@@ -3057,7 +3057,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  96 │     }
     ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:99:1]
   99 │     class A_Method_StaticSetter {
  100 │         #foo() { }
@@ -3069,7 +3069,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  102 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:108:1]
  108 │     class A_Getter_Field {
  109 │         get #foo() { return ""}
@@ -3081,7 +3081,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  111 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:114:1]
  114 │     class A_Getter_Method {
  115 │         get #foo() { return ""}
@@ -3093,7 +3093,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  117 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:120:1]
  120 │     class A_Getter_Getter {
  121 │         get #foo() { return ""}
@@ -3105,7 +3105,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  123 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:132:1]
  132 │     class A_Getter_StaticField {
  133 │         get #foo() { return ""}
@@ -3117,7 +3117,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  135 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:138:1]
  138 │     class A_Getter_StaticMethod {
  139 │         get #foo() { return ""}
@@ -3129,7 +3129,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  141 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:144:1]
  144 │     class A_Getter_StaticGetter {
  145 │         get #foo() { return ""}
@@ -3141,7 +3141,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  147 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:150:1]
  150 │     class A_Getter_StaticSetter {
  151 │         get #foo() { return ""}
@@ -3153,7 +3153,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  153 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:158:1]
  158 │     class A_Setter_Field {
  159 │         set #foo(value: string) { }
@@ -3165,7 +3165,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  161 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:164:1]
  164 │     class A_Setter_Method {
  165 │         set #foo(value: string) { }
@@ -3177,7 +3177,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  167 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:176:1]
  176 │     class A_Setter_Setter {
  177 │         set #foo(value: string) { }
@@ -3189,7 +3189,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  179 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:182:1]
  182 │     class A_Setter_StaticField {
  183 │         set #foo(value: string) { }
@@ -3201,7 +3201,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  185 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:188:1]
  188 │     class A_Setter_StaticMethod {
  189 │         set #foo(value: string) { }
@@ -3213,7 +3213,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  191 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:194:1]
  194 │     class A_Setter_StaticGetter {
  195 │         set #foo(value: string) { }
@@ -3225,7 +3225,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  197 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:200:1]
  200 │     class A_Setter_StaticSetter {
  201 │         set #foo(value: string) { }
@@ -3237,7 +3237,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  203 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:208:1]
  208 │     class A_StaticField_Field {
  209 │         static #foo = "foo";
@@ -3249,7 +3249,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  211 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:214:1]
  214 │     class A_StaticField_Method {
  215 │         static #foo = "foo";
@@ -3261,7 +3261,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  217 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:220:1]
  220 │     class A_StaticField_Getter {
  221 │         static #foo = "foo";
@@ -3273,7 +3273,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  223 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:226:1]
  226 │     class A_StaticField_Setter {
  227 │         static #foo = "foo";
@@ -3285,7 +3285,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  229 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:232:1]
  232 │     class A_StaticField_StaticField {
  233 │         static #foo = "foo";
@@ -3297,7 +3297,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  235 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:238:1]
  238 │     class A_StaticField_StaticMethod {
  239 │         static #foo = "foo";
@@ -3309,7 +3309,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  241 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:244:1]
  244 │     class A_StaticField_StaticGetter {
  245 │         static #foo = "foo";
@@ -3321,7 +3321,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  247 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:250:1]
  250 │     class A_StaticField_StaticSetter {
  251 │         static #foo = "foo";
@@ -3333,7 +3333,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  253 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:258:1]
  258 │     class A_StaticMethod_Field {
  259 │         static #foo() { }
@@ -3345,7 +3345,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  261 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:264:1]
  264 │     class A_StaticMethod_Method {
  265 │         static #foo() { }
@@ -3357,7 +3357,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  267 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:270:1]
  270 │     class A_StaticMethod_Getter {
  271 │         static #foo() { }
@@ -3369,7 +3369,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  273 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:276:1]
  276 │     class A_StaticMethod_Setter {
  277 │         static #foo() { }
@@ -3381,7 +3381,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  279 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:282:1]
  282 │     class A_StaticMethod_StaticField {
  283 │         static #foo() { }
@@ -3393,7 +3393,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  285 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:288:1]
  288 │     class A_StaticMethod_StaticMethod {
  289 │         static #foo() { }
@@ -3405,7 +3405,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  291 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:294:1]
  294 │     class A_StaticMethod_StaticGetter {
  295 │         static #foo() { }
@@ -3417,7 +3417,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  297 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:300:1]
  300 │     class A_StaticMethod_StaticSetter {
  301 │         static #foo() { }
@@ -3429,7 +3429,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  303 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:309:1]
  309 │     class A_StaticGetter_Field {
  310 │         static get #foo() { return ""}
@@ -3441,7 +3441,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  312 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:315:1]
  315 │     class A_StaticGetter_Method {
  316 │         static get #foo() { return ""}
@@ -3453,7 +3453,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  318 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:321:1]
  321 │     class A_StaticGetter_Getter {
  322 │         static get #foo() { return ""}
@@ -3465,7 +3465,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  324 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:327:1]
  327 │     class A_StaticGetter_Setter {
  328 │         static get #foo() { return ""}
@@ -3477,7 +3477,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  330 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:333:1]
  333 │     class A_StaticGetter_StaticField {
  334 │         static get #foo() { return ""}
@@ -3489,7 +3489,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  336 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:339:1]
  339 │     class A_StaticGetter_StaticMethod {
  340 │         static get #foo() { return ""}
@@ -3501,7 +3501,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  342 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:345:1]
  345 │     class A_StaticGetter_StaticGetter {
  346 │         static get #foo() { return ""}
@@ -3513,7 +3513,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  348 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:358:1]
  358 │     class A_StaticSetter_Field {
  359 │         static set #foo(value: string) { }
@@ -3525,7 +3525,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  361 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:364:1]
  364 │     class A_StaticSetter_Method {
  365 │         static set #foo(value: string) { }
@@ -3537,7 +3537,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  367 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:371:1]
  371 │     class A_StaticSetter_Getter {
  372 │         static set #foo(value: string) { }
@@ -3549,7 +3549,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  374 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:377:1]
  377 │     class A_StaticSetter_Setter {
  378 │         static set #foo(value: string) { }
@@ -3561,7 +3561,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  380 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:383:1]
  383 │     class A_StaticSetter_StaticField {
  384 │         static set #foo(value: string) { }
@@ -3573,7 +3573,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  386 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:389:1]
  389 │     class A_StaticSetter_StaticMethod {
  390 │         static set #foo(value: string) { }
@@ -3585,7 +3585,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  392 │     }
      ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
      ╭─[classes/members/privateNames/privateNameDuplicateField.ts:401:1]
  401 │     class A_StaticSetter_StaticSetter {
  402 │         static set #foo(value: string) { }
@@ -3605,7 +3605,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ }
    ╰────
 
-  × Private field '"prop"' must be declared in an enclosing class
+  × Private field 'prop' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameFieldDerivedClasses.ts:10:1]
  10 │     static method(x: Derived) {
  11 │         console.log(x.#prop);
@@ -3613,7 +3613,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │     }
     ╰────
 
-  × Invalid Character `'\r'`
+  × Invalid Character ``
    ╭─[classes/members/privateNames/privateNameHashCharName.ts:2:1]
  2 │ 
  3 │ #
@@ -3622,7 +3622,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ 
    ╰────
 
-  × Private field '"x"' must be declared in an enclosing class
+  × Private field 'x' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameImplicitDeclaration.ts:8:1]
   8 │         /** @type {string} */
   9 │         this.#x;
@@ -3672,7 +3672,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │         return ""
    ╰────
 
-  × Private identifier '#"nope"' is not allowed outside class bodies
+  × Private identifier '#nope' is not allowed outside class bodies
    ╭─[classes/members/privateNames/privateNameJsBadAssignment.ts:6:1]
  6 │ 
  7 │ exports.#nope = 1;           // Error (outside class body)
@@ -3680,7 +3680,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  8 │ function A() { }
    ╰────
 
-  × Private identifier '#"no"' is not allowed outside class bodies
+  × Private identifier '#no' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameJsBadAssignment.ts:8:1]
   8 │ function A() { }
   9 │ A.prototype.#no = 2;         // Error (outside class body)
@@ -3688,7 +3688,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  10 │ 
     ╰────
 
-  × Private identifier '#"foo"' is not allowed outside class bodies
+  × Private identifier '#foo' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameJsBadAssignment.ts:11:1]
  11 │ class B {}
  12 │ B.#foo = 3;                  // Error (outside class body)
@@ -3696,7 +3696,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  13 │ 
     ╰────
 
-  × Private field '"foo"' must be declared in an enclosing class
+  × Private field 'foo' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameJsBadAssignment.ts:16:1]
  16 │     constructor () {
  17 │         this.#foo = 3;       // Error (undeclared)
@@ -3712,7 +3712,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  9 │   #m() {},       // Error
    ╰────
 
-  × Private identifier '#"method"' is not allowed outside class bodies
+  × Private identifier '#method' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameMethodAccess.ts:13:1]
  13 │ }
  14 │ new A2().#method(); // Error
@@ -3720,7 +3720,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  15 │ 
     ╰────
 
-  × Private identifier '#"method"' is not allowed outside class bodies
+  × Private identifier '#method' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameMethodAccess.ts:16:1]
  16 │ function  foo (){
  17 │     new A2().#method(); // Error
@@ -3728,7 +3728,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  18 │ }
     ╰────
 
-  × Private field '"method"' must be declared in an enclosing class
+  × Private field 'method' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameMethodAccess.ts:21:1]
  21 │     m() {
  22 │         new A2().#method();
@@ -3736,7 +3736,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  23 │     }
     ╰────
 
-  × Private identifier '#"method"' is not allowed outside class bodies
+  × Private identifier '#method' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameMethodClassExpression.ts:10:1]
  10 │ console.log(C.getInstance().getField());
  11 │ C.getInstance().#method; // Error
@@ -3744,7 +3744,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │ C.getInstance().#field; // Error
     ╰────
 
-  × Private identifier '#"field"' is not allowed outside class bodies
+  × Private identifier '#field' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameMethodClassExpression.ts:11:1]
  11 │ C.getInstance().#method; // Error
  12 │ C.getInstance().#field; // Error
@@ -3752,7 +3752,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  13 │ 
     ╰────
 
-  × Private field '"prop"' must be declared in an enclosing class
+  × Private field 'prop' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameMethodsDerivedClasses.ts:10:1]
  10 │     static method(x: Derived) {
  11 │         console.log(x.#prop());
@@ -3760,7 +3760,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │     }
     ╰────
 
-  × Private field '"unknown"' must be declared in an enclosing class
+  × Private field 'unknown' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameNestedMethodAccess.ts:20:1]
  20 │                 x.#bar;
  21 │                 x.#unknown; // Error
@@ -3768,7 +3768,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  22 │             }
     ╰────
 
-  × Private identifier '#"foo"' is not allowed outside class bodies
+  × Private identifier '#foo' is not allowed outside class bodies
    ╭─[classes/members/privateNames/privateNameNotAccessibleOutsideDefiningClass.ts:7:1]
  7 │ 
  8 │ new A().#foo = 4;               // Error
@@ -3782,7 +3782,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·       ────
    ╰────
 
-  × Private identifier '#"prop"' is not allowed outside class bodies
+  × Private identifier '#prop' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameStaticAccessorsAccess.ts:16:1]
  16 │ 
  17 │ A2.#prop; // Error
@@ -3790,7 +3790,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  18 │ 
     ╰────
 
-  × Private identifier '#"prop"' is not allowed outside class bodies
+  × Private identifier '#prop' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameStaticAccessorsAccess.ts:19:1]
  19 │ function  foo (){
  20 │     A2.#prop; // Error
@@ -3798,7 +3798,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  21 │ }
     ╰────
 
-  × Private field '"prop"' must be declared in an enclosing class
+  × Private field 'prop' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameStaticAccessorsAccess.ts:24:1]
  24 │     m() {
  25 │         A2.#prop;
@@ -3806,7 +3806,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  26 │     }
     ╰────
 
-  × Private field '"prop"' must be declared in an enclosing class
+  × Private field 'prop' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameStaticAccessorssDerivedClasses.ts:10:1]
  10 │     static method(x: typeof Derived) {
  11 │         console.log(x.#prop);
@@ -3814,7 +3814,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │     }
     ╰────
 
-  × Private field '"derivedProp"' must be declared in an enclosing class
+  × Private field 'derivedProp' must be declared in an enclosing class
    ╭─[classes/members/privateNames/privateNameStaticFieldDerivedClasses.ts:5:1]
  5 │     static method(x: Derived) {
  6 │         Derived.#derivedProp // error
@@ -3822,7 +3822,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  7 │         Base.#prop  = 10;
    ╰────
 
-  × Private field '"prop"' must be declared in an enclosing class
+  × Private field 'prop' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameStaticFieldDerivedClasses.ts:13:1]
  13 │         Derived.#derivedProp
  14 │         Base.#prop  = 10; // error
@@ -3839,7 +3839,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  14 │ }
     ╰────
 
-  × Private identifier '#"method"' is not allowed outside class bodies
+  × Private identifier '#method' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameStaticMethodClassExpression.ts:10:1]
  10 │ console.log(C.getClass().getField());
  11 │ C.getClass().#method; // Error
@@ -3847,7 +3847,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │ C.getClass().#field; // Error
     ╰────
 
-  × Private identifier '#"field"' is not allowed outside class bodies
+  × Private identifier '#field' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameStaticMethodClassExpression.ts:11:1]
  11 │ C.getClass().#method; // Error
  12 │ C.getClass().#field; // Error
@@ -3855,7 +3855,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  13 │ 
     ╰────
 
-  × Private field '"foo"' must be declared in an enclosing class
+  × Private field 'foo' must be declared in an enclosing class
     ╭─[classes/members/privateNames/privateNameUncheckedJsOptionalChain.ts:9:1]
   9 │     constructor () {
  10 │         this?.#foo;
@@ -3863,7 +3863,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  11 │         this?.#bar;
     ╰────
 
-  × Private identifier '#"foo"' is not allowed outside class bodies
+  × Private identifier '#foo' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNamesAndGenericClasses-2.ts:26:1]
  26 │ const x: number = a.baz                   // OK
  27 │ a.#foo;                                   // Error
@@ -3879,7 +3879,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │         // will never use this syntax, already taken:
     ╰────
 
-  × Private identifier '#"foo"' is not allowed outside class bodies
+  × Private identifier '#foo' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNamesInGenericClasses.ts:25:1]
  25 │ declare let b: C<string>;
  26 │ a.#foo;                                   // Error
@@ -3887,7 +3887,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  27 │ a.#method;                                // Error
     ╰────
 
-  × Private identifier '#"method"' is not allowed outside class bodies
+  × Private identifier '#method' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNamesInGenericClasses.ts:26:1]
  26 │ a.#foo;                                   // Error
  27 │ a.#method;                                // Error
@@ -3895,7 +3895,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  28 │ a.#prop;                                  // Error
     ╰────
 
-  × Private identifier '#"prop"' is not allowed outside class bodies
+  × Private identifier '#prop' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNamesInGenericClasses.ts:27:1]
  27 │ a.#method;                                // Error
  28 │ a.#prop;                                  // Error
@@ -3912,7 +3912,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  31 │     async set #asyncProp(value: number) { }      // Error
     ╰────
 
-  × Private identifier '#"prop"' is not allowed outside class bodies
+  × Private identifier '#prop' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNamesInterfaceExtendingClass.ts:11:1]
  11 │ function func(x: I) {
  12 │     x.#prop = 123;
@@ -3935,7 +3935,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·       ────
    ╰────
 
-  × Identifier `"foo"` has already been declared
+  × Identifier `foo` has already been declared
    ╭─[classes/members/privateNames/privateNamesUnique-3.ts:3:1]
  3 │ class A {
  4 │     #foo = 1;
@@ -4398,7 +4398,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ var bin1 = 0b11023410;
    ╰────
 
-  × Invalid Character `'2'`
+  × Invalid Character `2`
    ╭─[es6/binaryAndOctalIntegerLiteral/invalidBinaryIntegerLiteralAndOctalIntegerLiteral.ts:1:1]
  1 │ // Error
  2 │ var binary = 0b21010;
@@ -4416,7 +4416,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ var oct2 = 0o34318592;
    ╰────
 
-  × Cannot assign to '"arguments"' in strict mode
+  × Cannot assign to 'arguments' in strict mode
    ╭─[es6/classDeclaration/parseClassDeclarationInStrictModeByDefaultInES6.ts:6:1]
  6 │     private bar(eval:any) {
  7 │         arguments = "hello";
@@ -4503,7 +4503,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  8 │ function a1({public}) { }
    ╰────
 
-  × Identifier `"foo1"` has already been declared
+  × Identifier `foo1` has already been declared
     ╭─[es6/destructuring/destructuringSameNames.ts:20:1]
  20 │ 
  21 │ let { foo1, foo1 } = { foo1: 10 };
@@ -4513,7 +4513,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  22 │ let { foo2, bar2: foo2 } = { foo2: 20, bar2: 220 };
     ╰────
 
-  × Identifier `"foo2"` has already been declared
+  × Identifier `foo2` has already been declared
     ╭─[es6/destructuring/destructuringSameNames.ts:21:1]
  21 │ let { foo1, foo1 } = { foo1: 10 };
  22 │ let { foo2, bar2: foo2 } = { foo2: 20, bar2: 220 };
@@ -4523,7 +4523,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  23 │ let { bar3: foo3, foo3 } = { foo3: 30, bar3: 330 };
     ╰────
 
-  × Identifier `"foo3"` has already been declared
+  × Identifier `foo3` has already been declared
     ╭─[es6/destructuring/destructuringSameNames.ts:22:1]
  22 │ let { foo2, bar2: foo2 } = { foo2: 20, bar2: 220 };
  23 │ let { bar3: foo3, foo3 } = { foo3: 30, bar3: 330 };
@@ -4533,7 +4533,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  24 │ const { foo4, foo4 } = { foo4: 40 };
     ╰────
 
-  × Identifier `"foo4"` has already been declared
+  × Identifier `foo4` has already been declared
     ╭─[es6/destructuring/destructuringSameNames.ts:23:1]
  23 │ let { bar3: foo3, foo3 } = { foo3: 30, bar3: 330 };
  24 │ const { foo4, foo4 } = { foo4: 40 };
@@ -4543,7 +4543,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  25 │ const { foo5, bar5: foo5 } = { foo5: 50, bar5: 550 };
     ╰────
 
-  × Identifier `"foo5"` has already been declared
+  × Identifier `foo5` has already been declared
     ╭─[es6/destructuring/destructuringSameNames.ts:24:1]
  24 │ const { foo4, foo4 } = { foo4: 40 };
  25 │ const { foo5, bar5: foo5 } = { foo5: 50, bar5: 550 };
@@ -4553,7 +4553,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  26 │ const { bar6: foo6, foo6 } = { foo6: 60, bar6: 660 };
     ╰────
 
-  × Identifier `"foo6"` has already been declared
+  × Identifier `foo6` has already been declared
     ╭─[es6/destructuring/destructuringSameNames.ts:25:1]
  25 │ const { foo5, bar5: foo5 } = { foo5: 50, bar5: 550 };
  26 │ const { bar6: foo6, foo6 } = { foo6: 60, bar6: 660 };
@@ -4563,7 +4563,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  27 │ 
     ╰────
 
-  × Identifier `"blah1"` has already been declared
+  × Identifier `blah1` has already been declared
     ╭─[es6/destructuring/destructuringSameNames.ts:27:1]
  27 │ 
  28 │ let [blah1, blah1] = [111, 222];
@@ -4573,7 +4573,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  29 │ const [blah2, blah2] = [333, 444];
     ╰────
 
-  × Identifier `"blah2"` has already been declared
+  × Identifier `blah2` has already been declared
     ╭─[es6/destructuring/destructuringSameNames.ts:28:1]
  28 │ let [blah1, blah1] = [111, 222];
  29 │ const [blah2, blah2] = [333, 444];
@@ -4807,14 +4807,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·      ───
    ╰────
 
-  × `let` cannot be declared as a variable name inside of a `"let"` declaration
+  × `let` cannot be declared as a variable name inside of a `let` declaration
    ╭─[es6/for-ofStatements/for-of51.ts:1:1]
  1 │ //@target: ES6
  2 │ for (let let of []) {}
    ·          ───
    ╰────
 
-  × Identifier `"v"` has already been declared
+  × Identifier `v` has already been declared
    ╭─[es6/for-ofStatements/for-of52.ts:1:1]
  1 │ //@target: ES6
  2 │ for (let [v, v] of [[]]) {}
@@ -4823,7 +4823,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·           ╰── `v` has already been declared here
    ╰────
 
-  × Identifier `"v"` has already been declared
+  × Identifier `v` has already been declared
    ╭─[es6/for-ofStatements/for-of54.ts:1:1]
  1 │ //@target: ES6
  2 │ for (let v of []) {
@@ -4886,7 +4886,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    · ╰── Expect `(` here, but found `}`
    ╰────
 
-  × Invalid Character `'¬'`
+  × Invalid Character `¬`
    ╭─[es6/memberFunctionDeclarations/MemberFunctionDeclaration8_es6.ts:4:1]
  4 │     // Make sure we don't think of *bar as the start of a generator method.
  5 │     if (a) ¬ * bar;
@@ -4895,7 +4895,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │     return bar;
    ╰────
 
-  × Identifier `"C"` has already been declared
+  × Identifier `C` has already been declared
    ╭─[es6/modules/multipleDefaultExports03.ts:3:1]
  3 │ 
  4 │ export default class C {
@@ -5992,7 +5992,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  11 │ 
     ╰────
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.12.ts:4:1]
  4 │ export {};
  5 │ declare namespace foo { const await: any; }
@@ -6000,35 +6000,35 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ 
    ╰────
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.12.ts:7:1]
  7 │ // await disallowed in import=namespace when in a module
  8 │ import await = foo.await;
    ·        ─────
    ╰────
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.2.ts:6:1]
  6 │ // reparse variable name as await should fail
  7 │ var await = 1;
    ·     ─────
    ╰────
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.3.ts:6:1]
  6 │ // reparse binding pattern as await should fail
  7 │ var {await} = {await:1};
    ·      ─────
    ╰────
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.4.ts:6:1]
  6 │ // reparse binding pattern as await should fail
  7 │ var [await] = [1];
    ·      ─────
    ╰────
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.5.ts:4:1]
  4 │ // await in exported class name should fail
  5 │ export class await {
@@ -6036,7 +6036,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ }
    ╰────
 
-  × The keyword '"await"' is reserved
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.6.ts:4:1]
  4 │ // await in exported function name should fail
  5 │ export function await() {
@@ -6053,7 +6053,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  15 │ }
     ╰────
 
-  × Identifier `"fn1"` has already been declared
+  × Identifier `fn1` has already been declared
    ╭─[functions/functionNameConflicts.ts:4:1]
  4 │ module M {
  5 │     function fn1() { }
@@ -6065,7 +6065,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  7 │ 
    ╰────
 
-  × Identifier `"fn2"` has already been declared
+  × Identifier `fn2` has already been declared
     ╭─[functions/functionNameConflicts.ts:7:1]
   7 │ 
   8 │     var fn2;
@@ -6077,7 +6077,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  10 │ }
     ╰────
 
-  × Identifier `"fn3"` has already been declared
+  × Identifier `fn3` has already been declared
     ╭─[functions/functionNameConflicts.ts:11:1]
  11 │ 
  12 │ function fn3() { }
@@ -6089,7 +6089,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  14 │ 
     ╰────
 
-  × Identifier `"fn5"` has already been declared
+  × Identifier `fn5` has already been declared
     ╭─[functions/functionNameConflicts.ts:18:1]
  18 │ 
  19 │     function fn5() { }
@@ -6150,7 +6150,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │     let;
    ╰────
 
-  × Identifier `"Point"` has already been declared
+  × Identifier `Point` has already been declared
    ╭─[internalModules/moduleDeclarations/invalidInstantiatedModule.ts:1:1]
  1 │ module M {
  2 │     export class Point { x: number; y: number }
@@ -6162,7 +6162,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ }
    ╰────
 
-  × Identifier `"err"` has already been declared
+  × Identifier `err` has already been declared
     ╭─[jsdoc/jsdocCatchClauseWithTypeAnnotation.ts:39:1]
  39 │     try { }
  40 │     catch (err) {
@@ -6524,7 +6524,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ }
    ╰────
 
-  × Invalid Character `'¬'`
+  × Invalid Character `¬`
    ╭─[parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block2.ts:1:1]
  1 │ function f() {
  2 │     ¬
@@ -6563,7 +6563,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Invalid Character `'¬'`
+  × Invalid Character `¬`
    ╭─[parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement3.ts:1:1]
  1 │ module M {
  2 │    ¬
@@ -6764,7 +6764,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    · ╰── Expect `)` here, but found `EOF`
    ╰────
 
-  × Invalid Character `'¬'`
+  × Invalid Character `¬`
    ╭─[parser/ecmascript5/ErrorRecovery/ParameterLists/parserErrorRecovery_ParameterList4.ts:1:1]
  1 │ function f(a,¬) {
    ·              ┬
@@ -7448,7 +7448,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × The keyword '"static"' is reserved
+  × The keyword 'static' is reserved
    ╭─[parser/ecmascript5/RegressionTests/parser642331.ts:1:1]
  1 │ class test {
  2 │     constructor (static) { }
@@ -7456,7 +7456,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ }
    ╰────
 
-  × The keyword '"static"' is reserved
+  × The keyword 'static' is reserved
    ╭─[parser/ecmascript5/RegressionTests/parser642331_1.ts:3:1]
  3 │ class test {
  4 │     constructor (static) { }
@@ -7480,7 +7480,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected flag 'a' in regular expression literal
+  × Unexpected flag a in regular expression literal
    ╭─[parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:1]
  1 │ if (1) /regexp/a.foo();
    ·                 ▲
@@ -7802,7 +7802,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
-  × A `"continue"` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
+  × A `continue` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement.
    ╭─[parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget1.ts:1:1]
  1 │ target:
    · ───┬──
@@ -7829,7 +7829,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ }
    ╰────
 
-  × Identifier `"target"` has already been declared
+  × Identifier `target` has already been declared
    ╭─[parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel1.ts:1:1]
  1 │ target:
    · ───┬──
@@ -7840,7 +7840,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ while (true) {
    ╰────
 
-  × Identifier `"target"` has already been declared
+  × Identifier `target` has already been declared
    ╭─[parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel2.ts:1:1]
  1 │ target:
    · ───┬──
@@ -8129,7 +8129,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ }
    ╰────
 
-  × The keyword '"public"' is reserved
+  × The keyword 'public' is reserved
    ╭─[parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName36.ts:2:1]
  2 │ class C {
  3 │     [public ]: string;
@@ -8137,7 +8137,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ }
    ╰────
 
-  × The keyword '"public"' is reserved
+  × The keyword 'public' is reserved
    ╭─[parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName38.ts:2:1]
  2 │ class C {
  3 │     [public]() { }
@@ -8145,7 +8145,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ }
    ╰────
 
-  × The keyword '"public"' is reserved
+  × The keyword 'public' is reserved
    ╭─[parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName39.ts:3:1]
  3 │ class C {
  4 │     [public]() { }
@@ -8298,7 +8298,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  10 │         #p
     ╰────
 
-  × Identifier `"orbitol"` has already been declared
+  × Identifier `orbitol` has already been declared
    ╭─[salsa/plainJSRedeclare.ts:3:1]
  3 │ // @filename: plainJSRedeclare.js
  4 │ const orbitol = 1
@@ -8310,7 +8310,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ orbitol.toExponential()
    ╰────
 
-  × Identifier `"orbitol"` has already been declared
+  × Identifier `orbitol` has already been declared
    ╭─[salsa/plainJSRedeclare2.ts:4:1]
  4 │ // @filename: plainJSRedeclare.js
  5 │ const orbitol = 1
@@ -8399,7 +8399,8 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     · ╰──── Unterminated multiline comment
     ╰────
 
-  × Invalid Character `'\n'`
+  × Invalid Character `
+  │ `
     ╭─[scanner/ecmascript5/scannerS7.8.3_A6.1_T1.ts:12:1]
  12 │ //CHECK#1
  13 │ 0x
@@ -8427,7 +8428,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  11 │ "Should error because of end of file.
     ╰────
 
-  × Invalid Character `'\0'`
+  × Invalid Character ` `
    ╭─[scanner/ecmascript5/scannerUnexpectedNullCharacter1.ts:1:1]
  1 │ foo + bar;
    ·    ┬
@@ -8944,7 +8945,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ 
    ╰────
 
-  × Identifier `"x"` has already been declared
+  × Identifier `x` has already been declared
     ╭─[statements/tryStatements/catchClauseWithTypeAnnotation.ts:28:1]
  28 │     // minor bug: shows that the `catch` argument is skipped when checking scope
  29 │     try { } catch (x) { let x: string; }
