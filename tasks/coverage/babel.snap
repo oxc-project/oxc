@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2053/2069 (99.23%)
 Positive Passed: 2053/2069 (99.23%)
-Negative Passed: 992/1502 (66.05%)
+Negative Passed: 1000/1502 (66.58%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -118,10 +118,6 @@ Expect Syntax Error: "es2015/modules/duplicate-named-export-function-declaration
 Expect Syntax Error: "es2015/modules/duplicate-named-export-variable-declaration/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export/input.js"
 Expect Syntax Error: "es2015/object/disallow-duplicate-method-params/input.js"
-Expect Syntax Error: "es2015/object/invalid-property-initializer-1/input.js"
-Expect Syntax Error: "es2015/object/invalid-property-initializer-in-call/input.js"
-Expect Syntax Error: "es2015/object/invalid-property-initializer-in-rhs/input.js"
-Expect Syntax Error: "es2015/object/invalid-property-initializer/input.js"
 Expect Syntax Error: "es2015/shorthand/reserved-word-strict/input.js"
 Expect Syntax Error: "es2015/statements/label-invalid-func-strict/input.js"
 Expect Syntax Error: "es2015/uncategorised/.191/input.js"
@@ -197,9 +193,6 @@ Expect Syntax Error: "es2016/simple-parameter-list/object-pattern-default/input.
 Expect Syntax Error: "es2016/simple-parameter-list/object-pattern/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/rest/input.js"
 Expect Syntax Error: "es2017/async-call/parenthesized-argument-object-double-proto/input.js"
-Expect Syntax Error: "es2017/async-call/parenthesized-argument-object-with-assignment/input.js"
-Expect Syntax Error: "es2017/async-functions/35/input.js"
-Expect Syntax Error: "es2017/async-functions/36/input.js"
 Expect Syntax Error: "es2017/async-functions/9/input.js"
 Expect Syntax Error: "es2017/async-functions/allow-await-outside-function-throw/input.js"
 Expect Syntax Error: "es2017/async-functions/async-await-as-arrow-binding-identifier/input.js"
@@ -237,7 +230,6 @@ Expect Syntax Error: "esprima/es2015-arrow-function/complex-rest-in-arrow-not-al
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-duplicated-params/input.js"
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-class/.migrated_0026/input.js"
-Expect Syntax Error: "esprima/es2015-destructuring-assignment/invalid-cover-grammar/input.js"
 Expect Syntax Error: "esprima/es2015-export-declaration/invalid-export-named-default/input.js"
 Expect Syntax Error: "esprima/es2015-for-of/invalid-const-init/input.js"
 Expect Syntax Error: "esprima/es2015-for-of/invalid-let-init/input.js"
@@ -2805,6 +2797,38 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │     set *iterator(iter) { }
    ╰────
 
+  × Invalid assignment in object literal
+   ╭─[es2015/object/invalid-property-initializer-1/input.js:2:1]
+ 2 │   bar: x = 123,
+ 3 │   foo = 123
+   ·   ─────────
+ 4 │ };
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[es2015/object/invalid-property-initializer-in-call/input.js:1:1]
+ 1 │ f({x = 0})
+   ·    ─────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[es2015/object/invalid-property-initializer-in-rhs/input.js:1:1]
+ 1 │ obj = {x = 0}
+   ·        ─────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[es2015/object/invalid-property-initializer/input.js:1:1]
+ 1 │ const obj = {
+ 2 │   foo = 123,
+   ·   ─────────
+ 3 │   bar: x = 123
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
   × Flag i is mentioned twice in regular expression literal
    ╭─[es2015/regex/duplicate-flags/input.js:1:1]
  1 │ /./gii;
@@ -3738,6 +3762,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Invalid assignment in object literal
+   ╭─[es2017/async-call/parenthesized-argument-object-with-assignment/input.js:1:1]
+ 1 │ async({ foo33 = 1 });
+   ·         ─────────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
   × Expect token
    ╭─[es2017/async-call/with-optional-operator/input.js:1:1]
  1 │ async(x?)
@@ -3761,6 +3792,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ─
  3 │ }
    ╰────
+
+  × Invalid assignment in object literal
+   ╭─[es2017/async-functions/35/input.js:1:1]
+ 1 │ const foo = { async = true };
+   ·               ────────────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
+   ╭─[es2017/async-functions/36/input.js:1:1]
+ 1 │ const foo = ({ async = true });
+   ·                ────────────
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Expect token
    ╭─[es2017/async-functions/4/input.js:1:1]
@@ -5906,6 +5951,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·    ──┬─
    ·      ╰── Cannot assign to this expression
    ╰────
+
+  × Invalid assignment in object literal
+   ╭─[esprima/es2015-destructuring-assignment/invalid-cover-grammar/input.js:1:1]
+ 1 │ [[[[[[[[[[[[[[[[[[[[{a=b}]]]]]]]]]]]]]]]]]]]]
+   ·                      ───
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Invalid assignment
    ╭─[esprima/es2015-destructuring-assignment/invalid-group-assignment/input.js:1:1]

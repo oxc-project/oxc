@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 2961/3917 (75.59%)
+Negative Passed: 2962/3917 (75.62%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -346,7 +346,6 @@ Expect Syntax Error: "language/expressions/generators/yield-as-generator-express
 Expect Syntax Error: "language/expressions/import.meta/syntax/goal-script.js"
 Expect Syntax Error: "language/expressions/object/11.1.5-1gs.js"
 Expect Syntax Error: "language/expressions/object/__proto__-duplicate.js"
-Expect Syntax Error: "language/expressions/object/cover-initialized-name.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -12976,6 +12975,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·              ╰── keyword cannot contain escape characters
  25 │ }
     ╰────
+
+  × Invalid assignment in object literal
+    ╭─[language/expressions/object/cover-initialized-name.js:31:1]
+ 31 │ 
+ 32 │ ({ a = 1 });
+    ·    ─────
+    ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Rest element must be last element
     ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-not-final-ary.js:37:1]

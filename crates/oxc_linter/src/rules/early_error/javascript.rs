@@ -34,6 +34,7 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::LabeledStatement(stmt) => check_labeled_statement(stmt, node, ctx),
             AstKind::Class(class) => check_class(class, ctx),
             AstKind::Super(sup) => check_super(sup, node, ctx),
+            AstKind::Property(prop) => check_property(prop, ctx),
             _ => {}
         }
     }
@@ -569,6 +570,23 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 );
             }
             _ => {}
+        }
+    }
+}
+
+fn check_property(prop: &Property, ctx: &LintContext) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Invalid assignment in object literal")]
+    #[diagnostic(help(
+        "Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern."
+    ))]
+    struct CoverInitializedName(#[label] Span);
+
+    // PropertyDefinition : CoverInitializedName
+    // It is a Syntax Error if any source text is matched by this production.
+    if prop.shorthand {
+        if let PropertyValue::Expression(Expression::AssignmentExpression(expr)) = &prop.value {
+            ctx.diagnostic(CoverInitializedName(expr.span));
         }
     }
 }
