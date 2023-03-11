@@ -1,7 +1,7 @@
 Babel Summary:
-AST Parsed     : 2054/2069 (99.28%)
-Positive Passed: 2054/2069 (99.28%)
-Negative Passed: 987/1502 (65.71%)
+AST Parsed     : 2053/2069 (99.23%)
+Positive Passed: 2053/2069 (99.23%)
+Negative Passed: 989/1502 (65.85%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -131,7 +131,6 @@ Expect Syntax Error: "es2015/uncategorised/.335/input.js"
 Expect Syntax Error: "es2015/uncategorised/.343/input.js"
 Expect Syntax Error: "es2015/uncategorised/109/input.js"
 Expect Syntax Error: "es2015/uncategorised/123/input.js"
-Expect Syntax Error: "es2015/uncategorised/125/input.js"
 Expect Syntax Error: "es2015/uncategorised/166/input.js"
 Expect Syntax Error: "es2015/uncategorised/220/input.js"
 Expect Syntax Error: "es2015/uncategorised/227/input.js"
@@ -382,7 +381,6 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0247/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0249/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0250/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0260/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0274/input.js"
 Expect Syntax Error: "esprima/statement-if/.migrated_0003/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
@@ -558,6 +556,19 @@ Expect to Parse: "typescript/cast/satisfies/input.ts"
  2 │ x < y satisfies boolean; // (x < y) satisfies boolean;
    ╰────
   help: Try insert a semicolon here
+Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
+
+  × Multiple constructor implementations are not allowed.
+   ╭─[typescript/class/constructor-with-modifier-names/input.ts:1:1]
+ 1 │ class Foo {
+ 2 │   constructor(set, readonly) {}
+   ·   ─────┬─────
+   ·        ╰── constructor has already been declared here
+ 3 │   constructor(set: any, readonly: boolean) {}
+   ·   ─────┬─────
+   ·        ╰── it cannot be redeclared here
+ 4 │ }
+   ╰────
 Expect to Parse: "typescript/declare/function-rest-trailing-comma/input.ts"
 
   × Rest element must be last element
@@ -2858,6 +2869,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ class A { set prop() {} }
    ·                   ─┬
    ·                    ╰── A 'set' accessor must have exactly one parameter.
+   ╰────
+
+  × Multiple constructor implementations are not allowed.
+   ╭─[es2015/uncategorised/125/input.js:1:1]
+ 1 │ class A { constructor() {} 'constructor'() {} }
+   ·           ─────┬─────      ──────┬──────
+   ·                │                 ╰── it cannot be redeclared here
+   ·                ╰── constructor has already been declared here
    ╰────
 
   × Constructor can't have get/set modifier
@@ -7614,6 +7633,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ class A {set constructor(m){}}
    ·              ─────┬─────
    ·                   ╰── Constructor can't have get/set modifier
+   ╰────
+
+  × Multiple constructor implementations are not allowed.
+   ╭─[esprima/invalid-syntax/migrated_0274/input.js:1:1]
+ 1 │ class A {constructor(){} "constructor"(){}}
+   ·          ─────┬─────     ──────┬──────
+   ·               │                ╰── it cannot be redeclared here
+   ·               ╰── constructor has already been declared here
    ╰────
 
   × Automatic Semicolon Insertion

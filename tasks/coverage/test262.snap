@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 2821/3917 (72.02%)
+Negative Passed: 2823/3917 (72.07%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -307,7 +307,6 @@ Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/de
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-class-body-ctor-duplicate.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-ctor-super-no-heritage.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-private-field-super-access.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js"
@@ -818,7 +817,6 @@ Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/del
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-class-body-ctor-duplicate.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-ctor-super-no-heritage.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-private-field-super-access.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js"
@@ -9532,6 +9530,18 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  42 │     delete ((this.#m));
     ·                   ──
  43 │   }
+    ╰────
+
+  × Multiple constructor implementations are not allowed.
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-class-body-ctor-duplicate.js:22:1]
+ 22 │ var C = class {
+ 23 │   constructor() {}
+    ·   ─────┬─────
+    ·        ╰── constructor has already been declared here
+ 24 │   constructor() {}
+    ·   ─────┬─────
+    ·        ╰── it cannot be redeclared here
+ 25 │ };
     ╰────
 
   × Invalid Character ` `
@@ -20301,6 +20311,18 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  42 │     delete ((this.#m));
     ·                   ──
  43 │   }
+    ╰────
+
+  × Multiple constructor implementations are not allowed.
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-class-body-ctor-duplicate.js:22:1]
+ 22 │ class C {
+ 23 │   constructor() {}
+    ·   ─────┬─────
+    ·        ╰── constructor has already been declared here
+ 24 │   constructor() {}
+    ·   ─────┬─────
+    ·        ╰── it cannot be redeclared here
+ 25 │ }
     ╰────
 
   × Invalid Character ` `

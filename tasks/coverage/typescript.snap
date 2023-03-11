@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 590/2532 (23.30%)
+Negative Passed: 591/2532 (23.34%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -122,7 +122,6 @@ Expect Syntax Error: "classes/constructorDeclarations/classConstructorAccessibil
 Expect Syntax Error: "classes/constructorDeclarations/classConstructorOverloadsAccessibility.ts"
 Expect Syntax Error: "classes/constructorDeclarations/classConstructorParametersAccessibility.ts"
 Expect Syntax Error: "classes/constructorDeclarations/classConstructorParametersAccessibility2.ts"
-Expect Syntax Error: "classes/constructorDeclarations/classWithTwoConstructorDefinitions.ts"
 Expect Syntax Error: "classes/constructorDeclarations/constructorParameters/constructorDefaultValuesReferencingThis.ts"
 Expect Syntax Error: "classes/constructorDeclarations/constructorParameters/constructorImplementationWithDefaultValues2.ts"
 Expect Syntax Error: "classes/constructorDeclarations/constructorParameters/constructorOverloadsWithDefaultValues.ts"
@@ -2726,6 +2725,30 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  16 │                 }
     ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
+
+  × Multiple constructor implementations are not allowed.
+   ╭─[classes/constructorDeclarations/classWithTwoConstructorDefinitions.ts:1:1]
+ 1 │ class C {
+ 2 │     constructor() { } // error
+   ·     ─────┬─────
+   ·          ╰── constructor has already been declared here
+ 3 │     constructor(x) { } // error
+   ·     ─────┬─────
+   ·          ╰── it cannot be redeclared here
+ 4 │ }
+   ╰────
+
+  × Multiple constructor implementations are not allowed.
+   ╭─[classes/constructorDeclarations/classWithTwoConstructorDefinitions.ts:6:1]
+ 6 │ class D<T> {
+ 7 │     constructor(x: T) { } // error
+   ·     ─────┬─────
+   ·          ╰── constructor has already been declared here
+ 8 │     constructor(x: T, y: T) { } // error
+   ·     ─────┬─────
+   ·          ╰── it cannot be redeclared here
+ 9 │ }
+   ╰────
 
   × Automatic Semicolon Insertion
    ╭─[classes/constructorDeclarations/superCalls/derivedClassSuperCallsInNonConstructorMembers.ts:7:1]
@@ -8226,6 +8249,18 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·       ┬
    ·       ╰── Expect `]` here, but found `:`
  4 │ }
+   ╰────
+
+  × Multiple constructor implementations are not allowed.
+   ╭─[salsa/constructorNameInAccessor.ts:2:1]
+ 2 │ class C1 {
+ 3 │     get constructor() { return }
+   ·         ─────┬─────
+   ·              ╰── constructor has already been declared here
+ 4 │     set constructor(value) {}
+   ·         ─────┬─────
+   ·              ╰── it cannot be redeclared here
+ 5 │ }
    ╰────
 
   × Constructor can't have get/set modifier

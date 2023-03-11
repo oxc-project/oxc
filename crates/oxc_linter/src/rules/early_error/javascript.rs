@@ -1,5 +1,5 @@
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstKind, Atom, Span};
+use oxc_ast::{ast::*, syntax_directed_operations::PropName, AstKind, Atom, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -32,6 +32,7 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::BreakStatement(stmt) => check_break_statement(stmt, node, ctx),
             AstKind::ContinueStatement(stmt) => check_continue_statement(stmt, node, ctx),
             AstKind::LabeledStatement(stmt) => check_labeled_statement(stmt, node, ctx),
+            AstKind::Class(class) => check_class(class, ctx),
             _ => {}
         }
     }
@@ -442,5 +443,35 @@ fn check_labeled_statement<'a>(stmt: &LabeledStatement, node: &AstNode<'a>, ctx:
             }
             _ => {}
         }
+    }
+}
+
+fn check_class(class: &Class, ctx: &LintContext) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Multiple constructor implementations are not allowed.")]
+    #[diagnostic()]
+    struct DuplicateConstructor(
+        #[label("constructor has already been declared here")] Span,
+        #[label("it cannot be redeclared here")] Span,
+    );
+
+    // ClassBody : ClassElementList
+    // It is a Syntax Error if PrototypePropertyNameList of ClassElementList contains more than one occurrence of "constructor".
+    let mut prev_constructor: Option<Span> = None;
+    let constructors = class.body.body.iter().filter_map(|e| {
+        if let ClassElement::MethodDefinition(def) = e {
+            // is declaration
+            def.value.body.as_ref()?;
+            if def.kind == MethodDefinitionKind::Constructor {
+                return def.key.prop_name().map_or(Some(def.span), |(_, node)| Some(node));
+            }
+        }
+        None
+    });
+    for new_span in constructors {
+        if let Some(prev_span) = prev_constructor {
+            return ctx.diagnostic(DuplicateConstructor(prev_span, new_span));
+        }
+        prev_constructor = Some(new_span);
     }
 }
