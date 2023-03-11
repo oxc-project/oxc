@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44022/44034 (99.97%)
 Positive Passed: 44022/44034 (99.97%)
-Negative Passed: 2686/3917 (68.57%)
+Negative Passed: 2694/3917 (68.78%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -141,7 +141,6 @@ Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arr
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-body-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-eval-in-formal-parameters.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-formals-body-duplicate.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-call.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/object-destructuring-param-strict-body.js"
@@ -154,7 +153,6 @@ Expect Syntax Error: "language/expressions/async-function/early-errors-expressio
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-body-contains-super-call.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-body-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-eval-in-formal-parameters.js"
-Expect Syntax Error: "language/expressions/async-function/early-errors-expression-formals-body-duplicate.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-formals-contains-super-call.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-formals-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-function/named-array-destructuring-param-strict-body.js"
@@ -194,8 +192,6 @@ Expect Syntax Error: "language/expressions/async-generator/early-errors-expressi
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-body-contains-super-call.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-body-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-eval-in-formal-parameters.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-body-duplicate-const.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-body-duplicate-let.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-await-expr.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-await.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-super-call.js"
@@ -541,8 +537,6 @@ Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-obj
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-param-id-yield.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-param-init-yield.js"
-Expect Syntax Error: "language/expressions/object/method-definition/generator-param-redecl-const.js"
-Expect Syntax Error: "language/expressions/object/method-definition/generator-param-redecl-let.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-super-call-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-super-call-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-use-strict-with-non-simple-param.js"
@@ -551,7 +545,6 @@ Expect Syntax Error: "language/expressions/object/method-definition/meth-dflt-pa
 Expect Syntax Error: "language/expressions/object/method-definition/meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/name-param-redecl.js"
 Expect Syntax Error: "language/expressions/object/method-definition/name-super-call-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/name-super-call-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/setter-use-strict-with-non-simple-param.js"
@@ -711,7 +704,6 @@ Expect Syntax Error: "language/statements/async-function/early-errors-declaratio
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-body-contains-super-property.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-eval-in-formal-parameters.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-formals-body-duplicate.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-formals-contains-super-call.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-formals-contains-super-property.js"
 Expect Syntax Error: "language/statements/async-function/object-destructuring-param-strict-body.js"
@@ -5807,6 +5799,15 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
   help: Try insert a semicolon here
 
+  × Identifier `"bar"` has already been declared
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-formals-body-duplicate.js:14:1]
+ 14 │ 
+ 15 │ async(bar) => { let bar; }
+    ·       ─┬─           ─┬─
+    ·        │             ╰── It can not be redeclared here
+    ·        ╰── `bar` has already been declared here
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-formals-lineterminator.js:32:1]
  32 │ async
@@ -5881,6 +5882,15 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  29 │   await: ;
     ·        ─
  30 │ };
+    ╰────
+
+  × Identifier `"bar"` has already been declared
+    ╭─[language/expressions/async-function/early-errors-expression-formals-body-duplicate.js:14:1]
+ 14 │ 
+ 15 │ (async function foo (bar) { let bar; });
+    ·                      ─┬─        ─┬─
+    ·                       │          ╰── It can not be redeclared here
+    ·                       ╰── `bar` has already been declared here
     ╰────
 
   × Invalid assignment
@@ -6123,6 +6133,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·                        ────┬───
     ·                            ╰── Rest element must be last element
  34 │   
+    ╰────
+
+  × Identifier `"a"` has already been declared
+    ╭─[language/expressions/async-generator/early-errors-expression-formals-body-duplicate-const.js:20:1]
+ 20 │ 
+ 21 │ (async function*(a) { const a = 0; });
+    ·                  ┬          ┬
+    ·                  │          ╰── It can not be redeclared here
+    ·                  ╰── `a` has already been declared here
+    ╰────
+
+  × Identifier `"a"` has already been declared
+    ╭─[language/expressions/async-generator/early-errors-expression-formals-body-duplicate-let.js:17:1]
+ 17 │ 
+ 18 │ (async function*(a) { let a; });
+    ·                  ┬        ┬
+    ·                  │        ╰── It can not be redeclared here
+    ·                  ╰── `a` has already been declared here
     ╰────
 
   × The keyword '"yield"' is reserved
@@ -12501,6 +12529,30 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  28 │         throw new Test262Error();
     ╰────
 
+  × Identifier `"a"` has already been declared
+    ╭─[language/expressions/object/method-definition/generator-param-redecl-const.js:19:1]
+ 19 │ var obj = {
+ 20 │     *foo(a) {
+    ·          ┬
+    ·          ╰── `a` has already been declared here
+ 21 │         const a = 3;
+    ·               ┬
+    ·               ╰── It can not be redeclared here
+ 22 │     }
+    ╰────
+
+  × Identifier `"a"` has already been declared
+    ╭─[language/expressions/object/method-definition/generator-param-redecl-let.js:19:1]
+ 19 │ var obj = {
+ 20 │     *foo(a) {
+    ·          ┬
+    ·          ╰── `a` has already been declared here
+ 21 │         let a = 3;
+    ·             ┬
+    ·             ╰── It can not be redeclared here
+ 22 │     }
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:57:1]
  57 │ 0, {
@@ -12508,6 +12560,18 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·          ──┬─
     ·            ╰── Rest element must be last element
  59 │     
+    ╰────
+
+  × Identifier `"param"` has already been declared
+    ╭─[language/expressions/object/method-definition/name-param-redecl.js:17:1]
+ 17 │ var obj = {
+ 18 │   method(param) {
+    ·          ──┬──
+    ·            ╰── `param` has already been declared here
+ 19 │     let param;
+    ·         ──┬──
+    ·           ╰── It can not be redeclared here
+ 20 │   }
     ╰────
 
   × Unexpected token
@@ -16417,6 +16481,15 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  13 │ $DONOTEVALUATE();
  14 │ async function foo (x = await) {  }
     ·                              ─
+    ╰────
+
+  × Identifier `"bar"` has already been declared
+    ╭─[language/statements/async-function/early-errors-declaration-formals-body-duplicate.js:14:1]
+ 14 │ 
+ 15 │ async function foo (bar) { let bar; }
+    ·                     ─┬─        ─┬─
+    ·                      │          ╰── It can not be redeclared here
+    ·                      ╰── `bar` has already been declared here
     ╰────
 
   × Keywords cannot contain escape characters
