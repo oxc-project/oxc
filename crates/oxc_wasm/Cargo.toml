@@ -29,7 +29,7 @@ wasm-bindgen = {version = "0.2", features = ["serde-serialize"]}
 # logging them with `console.error`. This is great for development, but requires
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
-console_error_panic_hook = {version = "0.1.6", optional = true}
+console_error_panic_hook = {version = "0.1.7", optional = true}
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.13"
+wasm-bindgen-test = "0.3.34"
