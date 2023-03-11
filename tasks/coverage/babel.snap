@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 936/1502 (62.32%)
+Negative Passed: 938/1502 (62.45%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -37,7 +37,6 @@ Expect Syntax Error: "core/scope/dupl-bind-catch-let/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-obj-destr/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-var-arr-destr/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-var-obj-destr/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-class-class/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-class-const/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-class-func/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-class-let/input.js"
@@ -510,7 +509,6 @@ Expect Syntax Error: "typescript/interface/invalid-modifiers-method/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-property/input.ts"
 Expect Syntax Error: "typescript/module-namespace/top-level-await/input.ts"
 Expect Syntax Error: "typescript/regression/keyword-qualified-type-disallowed/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-class-class/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-class-enum/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-class-type/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-constenum-enum/input.ts"
@@ -897,6 +895,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-class-class/input.js:1:1]
+ 1 │ class foo {};
+   ·       ─┬─
+   ·        ╰── `foo` has already been declared here
+ 2 │ class foo {};
+   ·       ─┬─
+   ·        ╰── It can not be redeclared here
+   ╰────
 
   × A 'get' accessor must not have any formal parameters.
    ╭─[core/uncategorised/.542/input.js:1:1]
@@ -7694,6 +7702,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × Identifier `"A"` has already been declared
+   ╭─[typescript/scope/redeclaration-class-class/input.ts:1:1]
+ 1 │ class A {}
+   ·       ┬
+   ·       ╰── `A` has already been declared here
+ 2 │ class A {}
+   ·       ┬
+   ·       ╰── It can not be redeclared here
+   ╰────
 
   × Automatic Semicolon Insertion
    ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-private-02/input.ts:1:1]

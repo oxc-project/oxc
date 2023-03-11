@@ -1,5 +1,7 @@
 #![feature(is_some_and)]
+#![feature(let_chains)]
 
+mod binder;
 mod builder;
 mod node;
 mod scope;

@@ -9,6 +9,7 @@ use oxc_ast::{ast::*, visit::Visit, AstKind, Atom, GetSpan, SourceType, Span, Tr
 use oxc_diagnostics::{Error, Redeclaration};
 
 use crate::{
+    binder::Binder,
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
     scope::{ScopeBuilder, ScopeId},
     symbol::{Reference, ReferenceFlag, SymbolFlags, SymbolId, SymbolTable},
@@ -16,19 +17,19 @@ use crate::{
 };
 
 pub struct SemanticBuilder<'a> {
-    source_type: SourceType,
+    pub source_type: SourceType,
 
     /// Semantic early errors such as redeclaration errors.
     errors: Vec<Error>,
 
     // states
-    current_node_id: AstNodeId,
-    current_node_flags: NodeFlags,
+    pub current_node_id: AstNodeId,
+    pub current_node_flags: NodeFlags,
 
     // builders
-    nodes: AstNodes<'a>,
-    scope: ScopeBuilder,
-    symbols: SymbolTable,
+    pub nodes: AstNodes<'a>,
+    pub scope: ScopeBuilder,
+    pub symbols: SymbolTable,
 }
 
 pub struct ScopeBuilderReturn<'a> {
@@ -172,19 +173,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 }
 
 impl<'a> SemanticBuilder<'a> {
-    #[allow(clippy::single_match)]
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::BindingIdentifier(ident) => {
-                self.enter_binding_identifier(ident);
-            }
             AstKind::IdentifierReference(ident) => {
-                self.enter_identifier_reference(ident);
+                self.reference_identifier(ident);
             }
             AstKind::JSXElementName(elem) => {
-                self.enter_jsx_element_name(elem);
+                self.reference_jsx_element_name(elem);
             }
-            AstKind::Class(class) => self.enter_class(class),
+            AstKind::Class(class) => {
+                self.current_node_flags |= NodeFlags::Class;
+                class.bind(self);
+            }
             _ => {}
         }
     }
@@ -192,22 +192,14 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Class(class) => self.leave_class(class),
+            AstKind::Class(_) => {
+                self.current_node_flags -= NodeFlags::Class;
+            }
             _ => {}
         }
     }
 
-    fn enter_binding_identifier(&mut self, ident: &BindingIdentifier) {
-        self.declare_symbol(
-            &ident.name,
-            ident.span,
-            self.scope.current_scope_id,
-            SymbolFlags::empty(),
-            SymbolFlags::empty(),
-        );
-    }
-
-    fn enter_identifier_reference(&mut self, ident: &IdentifierReference) {
+    fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = if matches!(
             self.parent_kind(),
             AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)
@@ -220,7 +212,7 @@ impl<'a> SemanticBuilder<'a> {
         self.scope.reference_identifier(&ident.name, reference);
     }
 
-    fn enter_jsx_element_name(&mut self, elem: &JSXElementName) {
+    fn reference_jsx_element_name(&mut self, elem: &JSXElementName) {
         if matches!(self.parent_kind(), AstKind::JSXOpeningElement(_)) {
             if let Some(ident) = match elem {
                 JSXElementName::Identifier(ident)
@@ -236,13 +228,5 @@ impl<'a> SemanticBuilder<'a> {
                 self.scope.reference_identifier(&ident.name, reference);
             }
         }
-    }
-
-    fn enter_class(&mut self, _: &Class<'a>) {
-        self.current_node_flags |= NodeFlags::Class;
-    }
-
-    fn leave_class(&mut self, _: &Class<'a>) {
-        self.current_node_flags -= NodeFlags::Class;
     }
 }

@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2308/2338 (98.72%)
 Positive Passed: 2308/2338 (98.72%)
-Negative Passed: 578/2532 (22.83%)
+Negative Passed: 580/2532 (22.91%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -80,7 +80,6 @@ Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstra
 Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstractInheritance.ts"
 Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts"
 Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts"
-Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts"
 Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts"
 Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts"
 Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts"
@@ -588,7 +587,6 @@ Expect Syntax Error: "es6/functionPropertyAssignments/FunctionPropertyAssignment
 Expect Syntax Error: "es6/memberFunctionDeclarations/MemberFunctionDeclaration3_es6.ts"
 Expect Syntax Error: "es6/modules/defaultExportsCannotMerge04.ts"
 Expect Syntax Error: "es6/modules/importEmptyFromModuleNotExisted.ts"
-Expect Syntax Error: "es6/modules/multipleDefaultExports03.ts"
 Expect Syntax Error: "es6/modules/multipleDefaultExports04.ts"
 Expect Syntax Error: "es6/modules/multipleDefaultExports05.ts"
 Expect Syntax Error: "es6/newTarget/invalidNewTarget.es5.ts"
@@ -2498,6 +2496,30 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    · ───────
  4 │ import abstract class D {}
    ╰────
+
+  × Identifier `"CC1"` has already been declared
+    ╭─[classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts:12:1]
+ 12 │ 
+ 13 │ abstract class CC1 {}
+    ·                ─┬─
+    ·                 ╰── `CC1` has already been declared here
+ 14 │ class CC1 {}
+    ·       ─┬─
+    ·        ╰── It can not be redeclared here
+ 15 │ 
+    ╰────
+
+  × Identifier `"CC2"` has already been declared
+    ╭─[classes/classDeclarations/classAbstractKeyword/classAbstractMergedDeclaration.ts:15:1]
+ 15 │ 
+ 16 │ class CC2 {}
+    ·       ─┬─
+    ·        ╰── `CC2` has already been declared here
+ 17 │ abstract class CC2 {}
+    ·                ─┬─
+    ·                 ╰── It can not be redeclared here
+ 18 │ 
+    ╰────
 
   × Expect token
     ╭─[classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:15:1]
@@ -4716,6 +4738,20 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·            ┬
    ·            ╰── Invalid Character `¬`
  6 │     return bar;
+   ╰────
+
+  × Identifier `"C"` has already been declared
+   ╭─[es6/modules/multipleDefaultExports03.ts:3:1]
+ 3 │ 
+ 4 │ export default class C {
+   ·                      ┬
+   ·                      ╰── `C` has already been declared here
+ 5 │ }
+ 6 │ 
+ 7 │ export default class C {
+   ·                      ┬
+   ·                      ╰── It can not be redeclared here
+ 8 │ }
    ╰────
 
   × Unexpected token

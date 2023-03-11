@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44022/44034 (99.97%)
 Positive Passed: 44022/44034 (99.97%)
-Negative Passed: 2626/3917 (67.04%)
+Negative Passed: 2630/3917 (67.14%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -35,7 +35,6 @@ Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-class.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js"
@@ -985,8 +984,6 @@ Expect Syntax Error: "language/statements/class/static-init-invalid-lex-dup.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-lex-var.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-super-call.js"
-Expect Syntax Error: "language/statements/class/syntax/early-errors/class-definition-evaluation-block-duplicate-binding.js"
-Expect Syntax Error: "language/statements/class/syntax/early-errors/class-definition-evaluation-scriptbody-duplicate-binding.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-obj.js"
@@ -1196,7 +1193,6 @@ Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-gene
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-class.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js"
@@ -1720,6 +1716,15 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·      ┬
     ·      ╰── Expect `while` here, but found `;`
  17 │ while (false)
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ { class f {} class f {} }
+    ·         ┬          ┬
+    ·         │          ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
     ╰────
 
   × Unterminated multiline comment
@@ -20662,6 +20667,29 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  15 │ 
     ╰────
 
+  × Identifier `"A"` has already been declared
+    ╭─[language/statements/class/syntax/early-errors/class-definition-evaluation-block-duplicate-binding.js:15:1]
+ 15 │ {
+ 16 │   class A {}
+    ·         ┬
+    ·         ╰── `A` has already been declared here
+ 17 │   class A {}
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 18 │ }
+    ╰────
+
+  × Identifier `"A"` has already been declared
+    ╭─[language/statements/class/syntax/early-errors/class-definition-evaluation-scriptbody-duplicate-binding.js:14:1]
+ 14 │ $DONOTEVALUATE();
+ 15 │ class A {}
+    ·       ┬
+    ·       ╰── `A` has already been declared here
+ 16 │ class A {}
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/syntax/escaped-static.js:23:1]
  23 │ class C {
@@ -23660,6 +23688,15 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  19 │     result =2;
     ·     ──────
  20 │     case 0:
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: class f {} default: class f {} }
+    ·                            ┬                   ┬
+    ·                            │                   ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
     ╰────
 
   × Expect token
