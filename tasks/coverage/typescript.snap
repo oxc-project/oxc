@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 597/2532 (23.58%)
+Negative Passed: 608/2532 (24.01%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -1325,21 +1325,14 @@ Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement14.ts
 Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement15.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement16.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement20.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement3.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement4.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement5.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement6.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement7.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement8.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement9.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserEmptyStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserExpressionStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserForInStatement1.d.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserForInStatement3.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserForInStatement4.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserForInStatement5.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserForInStatement6.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserForInStatement7.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserForStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserForStatement2.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserForStatement3.ts"
@@ -1462,11 +1455,7 @@ Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement14.ts"
 Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement15.ts"
 Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement16.ts"
 Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement20.ts"
-Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement3.ts"
-Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement4.ts"
 Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement5.ts"
-Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement6.ts"
-Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement7.ts"
 Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement8.ts"
 Expect Syntax Error: "parser/ecmascript6/Iterators/parserForOfStatement9.ts"
 Expect Syntax Error: "pedantic/noUncheckedIndexedAccess.ts"
@@ -8137,10 +8126,63 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·               ─
    ╰────
 
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[parser/ecmascript5/Statements/parserES5ForOfStatement3.ts:1:1]
+ 1 │ //@target: ES5
+ 2 │ for (var a, b of X) {
+   ·      ────────
+ 3 │ }
+   ╰────
+
+  × for-of loop variable declaration may not have an initializer
+   ╭─[parser/ecmascript5/Statements/parserES5ForOfStatement4.ts:1:1]
+ 1 │ //@target: ES5
+ 2 │ for (var a = 1 of X) {
+   ·      ─────────
+ 3 │ }
+   ╰────
+
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[parser/ecmascript5/Statements/parserES5ForOfStatement6.ts:1:1]
+ 1 │ //@target: ES5
+ 2 │ for (var a = 1, b = 2 of X) {
+   ·      ────────────────
+ 3 │ }
+   ╰────
+
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[parser/ecmascript5/Statements/parserES5ForOfStatement7.ts:1:1]
+ 1 │ //@target: ES5
+ 2 │ for (var a: number = 1, b: string = "" of X) {
+   ·      ─────────────────────────────────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[parser/ecmascript5/Statements/parserForInStatement2.ts:1:1]
  1 │ for (var in X) {
    ·          ──
+ 2 │ }
+   ╰────
+
+  × Only a single declaration is allowed in a `for...in` statement
+   ╭─[parser/ecmascript5/Statements/parserForInStatement3.ts:1:1]
+ 1 │ for (var a, b in X) {
+   ·      ────────
+ 2 │ }
+   ╰────
+
+  × Only a single declaration is allowed in a `for...in` statement
+   ╭─[parser/ecmascript5/Statements/parserForInStatement6.ts:1:1]
+ 1 │ for (var a = 1, b = 2 in X) {
+   ·      ────────────────
+ 2 │ }
+   ╰────
+
+  × Only a single declaration is allowed in a `for...in` statement
+   ╭─[parser/ecmascript5/Statements/parserForInStatement7.ts:1:1]
+ 1 │ for (var a: number = 1, b: string = "" in X) {
+   ·      ─────────────────────────────────
  2 │ }
    ╰────
 
@@ -8447,6 +8489,38 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ for (async of [1, 2]) {}
    ·      ──┬──
    ·        ╰── The left-hand side of a `for...of` statement may not be `async`
+   ╰────
+
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[parser/ecmascript6/Iterators/parserForOfStatement3.ts:1:1]
+ 1 │ //@target: ES6
+ 2 │ for (var a, b of X) {
+   ·      ────────
+ 3 │ }
+   ╰────
+
+  × for-of loop variable declaration may not have an initializer
+   ╭─[parser/ecmascript6/Iterators/parserForOfStatement4.ts:1:1]
+ 1 │ //@target: ES6
+ 2 │ for (var a = 1 of X) {
+   ·      ─────────
+ 3 │ }
+   ╰────
+
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[parser/ecmascript6/Iterators/parserForOfStatement6.ts:1:1]
+ 1 │ //@target: ES6
+ 2 │ for (var a = 1, b = 2 of X) {
+   ·      ────────────────
+ 3 │ }
+   ╰────
+
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[parser/ecmascript6/Iterators/parserForOfStatement7.ts:1:1]
+ 1 │ //@target: ES6
+ 2 │ for (var a: number = 1, b: string = "" of X) {
+   ·      ─────────────────────────────────
+ 3 │ }
    ╰────
 
   × Expect token

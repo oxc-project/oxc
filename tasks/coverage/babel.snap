@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2053/2069 (99.23%)
 Positive Passed: 2053/2069 (99.23%)
-Negative Passed: 1000/1502 (66.58%)
+Negative Passed: 1014/1502 (67.51%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -31,7 +31,6 @@ Expect Syntax Error: "core/scope/undecl-export-builtin-as/input.js"
 Expect Syntax Error: "core/scope/undecl-export-builtin/input.js"
 Expect Syntax Error: "core/scope/undecl-export-if/input.js"
 Expect Syntax Error: "core/scope/undecl-export/input.js"
-Expect Syntax Error: "core/uncategorised/415/input.js"
 Expect Syntax Error: "core/uncategorised/427/input.js"
 Expect Syntax Error: "core/uncategorised/454/input.js"
 Expect Syntax Error: "core/uncategorised/466/input.js"
@@ -100,11 +99,7 @@ Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
 Expect Syntax Error: "es2015/duplicate-proto/in-new-expression/input.js"
 Expect Syntax Error: "es2015/duplicate-proto/with-assignment-expression/input.js"
 Expect Syntax Error: "es2015/duplicate-proto/without-assignment-expression/input.js"
-Expect Syntax Error: "es2015/for-in/const-initializer/input.js"
-Expect Syntax Error: "es2015/for-in/let-initializer/input.js"
 Expect Syntax Error: "es2015/for-in/strict-initializer/input.js"
-Expect Syntax Error: "es2015/for-in/var-arraybindingpattern-initializer/input.js"
-Expect Syntax Error: "es2015/for-in/var-objectbindingpattern-initializer/input.js"
 Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
 Expect Syntax Error: "es2015/let/let-as-identifier-strict-fail/input.js"
 Expect Syntax Error: "es2015/meta-properties/invalid-arrow-function/input.js"
@@ -124,15 +119,12 @@ Expect Syntax Error: "es2015/uncategorised/.191/input.js"
 Expect Syntax Error: "es2015/uncategorised/.260/input.js"
 Expect Syntax Error: "es2015/uncategorised/.335/input.js"
 Expect Syntax Error: "es2015/uncategorised/.343/input.js"
-Expect Syntax Error: "es2015/uncategorised/109/input.js"
 Expect Syntax Error: "es2015/uncategorised/166/input.js"
 Expect Syntax Error: "es2015/uncategorised/220/input.js"
 Expect Syntax Error: "es2015/uncategorised/227/input.js"
 Expect Syntax Error: "es2015/uncategorised/228/input.js"
 Expect Syntax Error: "es2015/uncategorised/233/input.js"
 Expect Syntax Error: "es2015/uncategorised/234/input.js"
-Expect Syntax Error: "es2015/uncategorised/235/input.js"
-Expect Syntax Error: "es2015/uncategorised/236/input.js"
 Expect Syntax Error: "es2015/uncategorised/242/input.js"
 Expect Syntax Error: "es2015/uncategorised/243/input.js"
 Expect Syntax Error: "es2015/uncategorised/244/input.js"
@@ -231,9 +223,6 @@ Expect Syntax Error: "esprima/es2015-arrow-function/invalid-duplicated-params/in
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-class/.migrated_0026/input.js"
 Expect Syntax Error: "esprima/es2015-export-declaration/invalid-export-named-default/input.js"
-Expect Syntax Error: "esprima/es2015-for-of/invalid-const-init/input.js"
-Expect Syntax Error: "esprima/es2015-for-of/invalid-let-init/input.js"
-Expect Syntax Error: "esprima/es2015-for-of/invalid-var-init/input.js"
 Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
 Expect Syntax Error: "esprima/es2015-generator/generator-method-with-invalid-computed-name/input.js"
 Expect Syntax Error: "esprima/es2015-generator/generator-parameter-binding-element/input.js"
@@ -245,8 +234,6 @@ Expect Syntax Error: "esprima/es2015-generator/generator-parameter-invalid-compu
 Expect Syntax Error: "esprima/es2015-identifier/.invalid_function_wait/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/invalid_expression_await/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/invalid_var_await/input.js"
-Expect Syntax Error: "esprima/es2015-lexical-declaration/invalid_const_forin/input.js"
-Expect Syntax Error: "esprima/es2015-lexical-declaration/invalid_let_forin/input.js"
 Expect Syntax Error: "esprima/es2015-meta-property/invalid-new-target/input.js"
 Expect Syntax Error: "esprima/es2015-meta-property/unknown-property/input.js"
 Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-getter-literal-identifier/input.js"
@@ -301,7 +288,6 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0093/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0094/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0100/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0123/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0143/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0171/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0183/input.js"
@@ -1658,6 +1644,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ─
    ╰────
 
+  × Only a single declaration is allowed in a `for...in` statement
+   ╭─[core/uncategorised/415/input.js:1:1]
+ 1 │ for (var i, i2 in {});
+   ·      ─────────
+   ╰────
+
   × Expect token
    ╭─[core/uncategorised/416/input.js:1:1]
  1 │ for ((i in {}));
@@ -2343,6 +2335,30 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ─────
    ╰────
 
+  × for-in loop variable declaration may not have an initializer
+   ╭─[es2015/for-in/const-initializer/input.js:1:1]
+ 1 │ for (const a = 0 in {});
+   ·      ───────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[es2015/for-in/let-initializer/input.js:1:1]
+ 1 │ for (let a = 0 in {});
+   ·      ─────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[es2015/for-in/var-arraybindingpattern-initializer/input.js:1:1]
+ 1 │ for (var [a] = 0 in {});
+   ·      ───────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[es2015/for-in/var-objectbindingpattern-initializer/input.js:1:1]
+ 1 │ for (var {a} = 0 in {});
+   ·      ───────────
+   ╰────
+
   × Unexpected token
    ╭─[es2015/for-of/bare-initializer/input.js:1:1]
  1 │ var a;
@@ -2901,6 +2917,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ╰── A 'set' accessor must have exactly one parameter.
    ╰────
 
+  × for-of loop variable declaration may not have an initializer
+   ╭─[es2015/uncategorised/109/input.js:1:1]
+ 1 │ for (var x = 42 of list) process(x);
+   ·      ──────────
+   ╰────
+
   × 'super' can only be referenced in a derived class.
    ╭─[es2015/uncategorised/123/input.js:1:1]
  1 │ "use strict"; (class A {constructor() { super() }})
@@ -3151,6 +3173,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/uncategorised/232/input.js:1:1]
  1 │ const default = 2
    ·       ───────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[es2015/uncategorised/235/input.js:1:1]
+ 1 │ for (let x = 42 in list) process(x);
+   ·      ──────────
+   ╰────
+
+  × for-of loop variable declaration may not have an initializer
+   ╭─[es2015/uncategorised/236/input.js:1:1]
+ 1 │ for (let x = 42 of list) process(x);
+   ·      ──────────
    ╰────
 
   × Expect token
@@ -6002,10 +6036,28 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × for-of loop variable declaration may not have an initializer
+   ╭─[esprima/es2015-for-of/invalid-const-init/input.js:1:1]
+ 1 │ for (const x = 1 of y);
+   ·      ───────────
+   ╰────
+
+  × for-of loop variable declaration may not have an initializer
+   ╭─[esprima/es2015-for-of/invalid-let-init/input.js:1:1]
+ 1 │ for (let x = 1 of y);
+   ·      ─────────
+   ╰────
+
   × Unexpected token
    ╭─[esprima/es2015-for-of/invalid-lhs-init/input.js:1:1]
  1 │ for (this of that);
    ·      ────
+   ╰────
+
+  × for-of loop variable declaration may not have an initializer
+   ╭─[esprima/es2015-for-of/invalid-var-init/input.js:1:1]
+ 1 │ for (var x = 1 of y);
+   ·      ─────────
    ╰────
 
   × Expect token
@@ -6164,6 +6216,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ let []
    ·     ─┬
    ·      ╰── Missing initializer in destructuring declaration
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[esprima/es2015-lexical-declaration/invalid_const_forin/input.js:1:1]
+ 1 │ for (const x = 0 in y){}
+   ·      ───────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[esprima/es2015-lexical-declaration/invalid_let_forin/input.js:1:1]
+ 1 │ for (let x = 0 in y){}
+   ·      ─────────
    ╰────
 
   × Unexpected token
@@ -7191,6 +7255,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0122/input.js:1:1]
  1 │ throw
    ·      ▲
+   ╰────
+
+  × Only a single declaration is allowed in a `for...in` statement
+   ╭─[esprima/invalid-syntax/migrated_0123/input.js:1:1]
+ 1 │ for (var i, i2 in {});
+   ·      ─────────
    ╰────
 
   × Expect token

@@ -32,6 +32,8 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::BreakStatement(stmt) => check_break_statement(stmt, node, ctx),
             AstKind::ContinueStatement(stmt) => check_continue_statement(stmt, node, ctx),
             AstKind::LabeledStatement(stmt) => check_labeled_statement(stmt, node, ctx),
+            AstKind::ForInStatement(stmt) => check_for_statement_left(&stmt.left, true, node, ctx),
+            AstKind::ForOfStatement(stmt) => check_for_statement_left(&stmt.left, false, node, ctx),
             AstKind::Class(class) => check_class(class, ctx),
             AstKind::Super(sup) => check_super(sup, node, ctx),
             AstKind::Property(prop) => check_property(prop, ctx),
@@ -444,6 +446,48 @@ fn check_labeled_statement<'a>(stmt: &LabeledStatement, node: &AstNode<'a>, ctx:
                 ));
             }
             _ => {}
+        }
+    }
+}
+
+fn check_for_statement_left<'a>(
+    left: &ForStatementLeft,
+    is_for_in: bool,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Only a single declaration is allowed in a `for...{0}` statement")]
+    #[diagnostic()]
+    struct MultipleDeclarationInForLoopHead(&'static str, #[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("{0} loop variable declaration may not have an initializer")]
+    #[diagnostic()]
+    struct UnexpectedInitializerInForLoopHead(&'static str, #[label] Span);
+
+    let ForStatementLeft::VariableDeclaration(decl) = left else { return };
+
+    // initializer is not allowed for for-in / for-of
+    if decl.declarations.len() > 1 {
+        return ctx.diagnostic(MultipleDeclarationInForLoopHead(
+            if is_for_in { "in" } else { "of" },
+            decl.span,
+        ));
+    }
+
+    let strict_mode = ctx.strict_mode(node);
+    for declarator in &decl.declarations {
+        if declarator.init.is_some()
+            && (strict_mode
+                || !is_for_in
+                || decl.kind.is_lexical()
+                || !matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_)))
+        {
+            return ctx.diagnostic(UnexpectedInitializerInForLoopHead(
+                if is_for_in { "for-in" } else { "for-of" },
+                decl.span,
+            ));
         }
     }
 }

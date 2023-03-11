@@ -1,17 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 2962/3917 (75.62%)
-Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
-Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
-Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
-Expect Syntax Error: "annexB/language/statements/for-in/var-arraybindingpattern-initializer.js"
-Expect Syntax Error: "annexB/language/statements/for-in/var-objectbindingpattern-initializer.js"
-Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-initialization-assignment.js"
-Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings-with-and-without-initializer.js"
-Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings-with-initializer.js"
-Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings-without-and-with-initializer.js"
-Expect Syntax Error: "language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings.js"
+Negative Passed: 2993/3917 (76.41%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -757,65 +747,44 @@ Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-ary-p
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-obj-ptrn-init-err.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-obj-ptrn-init-err.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-obj-ptrn-init-err.js"
-Expect Syntax Error: "language/statements/for-await-of/head-const-init.js"
-Expect Syntax Error: "language/statements/for-await-of/head-let-init.js"
-Expect Syntax Error: "language/statements/for-await-of/head-var-init.js"
 Expect Syntax Error: "language/statements/for-in/decl-fun.js"
 Expect Syntax Error: "language/statements/for-in/dstr/obj-id-identifier-yield-expr.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-lhs.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-var.js"
-Expect Syntax Error: "language/statements/for-in/var-arguments-fn-strict-init.js"
 Expect Syntax Error: "language/statements/for-in/var-arguments-fn-strict.js"
-Expect Syntax Error: "language/statements/for-in/var-arguments-strict-init.js"
 Expect Syntax Error: "language/statements/for-in/var-arguments-strict.js"
-Expect Syntax Error: "language/statements/for-in/var-eval-strict-init.js"
 Expect Syntax Error: "language/statements/for-in/var-eval-strict.js"
 Expect Syntax Error: "language/statements/for-of/decl-fun.js"
-Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-of/dstr/const-obj-ptrn-init-err.js"
-Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-of/dstr/let-obj-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/obj-id-identifier-yield-expr.js"
-Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-init-err.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-of/dstr/var-obj-ptrn-init-err.js"
-Expect Syntax Error: "language/statements/for-of/head-const-init.js"
-Expect Syntax Error: "language/statements/for-of/head-let-init.js"
-Expect Syntax Error: "language/statements/for-of/head-var-init.js"
 Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-lhs.js"
@@ -1187,6 +1156,44 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ─────
     ╰────
 
+  × for-in loop variable declaration may not have an initializer
+    ╭─[annexB/language/statements/for-in/const-initializer.js:13:1]
+ 13 │ 
+ 14 │ for (const a = 0 in {});
+    ·      ───────────
+ 15 │ 
+    ╰────
+
+  × for-in loop variable declaration may not have an initializer
+    ╭─[annexB/language/statements/for-in/let-initializer.js:13:1]
+ 13 │ 
+ 14 │ for (let a = 0 in {});
+    ·      ─────────
+ 15 │ 
+    ╰────
+
+  × for-in loop variable declaration may not have an initializer
+    ╭─[annexB/language/statements/for-in/strict-initializer.js:14:1]
+ 14 │ 
+ 15 │ for (var a = 0 in {});
+    ·      ─────────
+    ╰────
+
+  × for-in loop variable declaration may not have an initializer
+    ╭─[annexB/language/statements/for-in/var-arraybindingpattern-initializer.js:13:1]
+ 13 │ 
+ 14 │ for (var [a] = 0 in {});
+    ·      ───────────
+    ╰────
+
+  × for-in loop variable declaration may not have an initializer
+    ╭─[annexB/language/statements/for-in/var-objectbindingpattern-initializer.js:13:1]
+ 13 │ 
+ 14 │ for (var {a} = 0 in {});
+    ·      ───────────
+ 15 │ 
+    ╰────
+
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
     ╭─[built-ins/RegExp/prototype/unicodeSets/uv-flags.js:16:1]
  16 │ 
@@ -1496,6 +1503,46 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ┬
     ·      ╰── Expect `while` here, but found `;`
  17 │ while (false)
+    ╰────
+
+  × for-in loop variable declaration may not have an initializer
+    ╭─[language/block-scope/syntax/for-in/disallow-initialization-assignment.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ for (let x = 3 in {}) { }
+    ·      ─────────
+ 15 │ 
+    ╰────
+
+  × Only a single declaration is allowed in a `for...in` statement
+    ╭─[language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings-with-and-without-initializer.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ for (let x = 3, y in {}) { }
+    ·      ────────────
+ 15 │ 
+    ╰────
+
+  × Only a single declaration is allowed in a `for...in` statement
+    ╭─[language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings-with-initializer.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ for (let x = 3, y = 4 in {}) { }
+    ·      ────────────────
+ 15 │ 
+    ╰────
+
+  × Only a single declaration is allowed in a `for...in` statement
+    ╭─[language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings-without-and-with-initializer.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ for (let x, y = 4 in {}) { }
+    ·      ────────────
+ 15 │ 
+    ╰────
+
+  × Only a single declaration is allowed in a `for...in` statement
+    ╭─[language/block-scope/syntax/for-in/disallow-multiple-lexical-bindings.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ for (let x, y in {}) { }
+    ·      ────────
+ 15 │ 
     ╰────
 
   × Identifier `f` has already been declared
@@ -23521,6 +23568,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  56 │     
     ╰────
 
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-init-err.js:18:1]
+ 18 │ async function fn() {
+ 19 │   for await (const [x] = 1 of []) {}
+    ·              ─────────────
+ 20 │ }
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ async function *fn() {
@@ -23573,6 +23628,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                     ────┬───
     ·                         ╰── Rest element must be last element
  56 │     
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-const-obj-ptrn-init-err.js:18:1]
+ 18 │ async function fn() {
+ 19 │   for await (const {x} = 1 of []) {}
+    ·              ─────────────
+ 20 │ }
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-init-err.js:18:1]
+ 18 │ async function fn() {
+ 19 │   for await (let [x] = 1 of []) {}
+    ·              ───────────
+ 20 │ }
     ╰────
 
   × Rest element must be last element
@@ -23629,6 +23700,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  56 │     
     ╰────
 
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-let-obj-ptrn-init-err.js:18:1]
+ 18 │ async function fn() {
+ 19 │   for await (let {x} = 1 of []) {}
+    ·              ───────────
+ 20 │ }
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-init-err.js:18:1]
+ 18 │ async function fn() {
+ 19 │   for await (var [x] = 1 of []) {}
+    ·              ───────────
+ 20 │ }
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-not-final-ary.js:48:1]
  48 │ async function *fn() {
@@ -23683,6 +23770,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  56 │     
     ╰────
 
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-var-obj-ptrn-init-err.js:18:1]
+ 18 │ async function fn() {
+ 19 │   for await (var {x} = 1 of []) {}
+    ·              ───────────
+ 20 │ }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/for-await-of/escaped-of.js:24:1]
  24 │ async function* f() {
@@ -23690,6 +23785,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                    ───┬───
     ·                       ╰── keyword cannot contain escape characters
  26 │ }
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-await-of/head-const-init.js:18:1]
+ 18 │ async function fn() {
+ 19 │   for await (const x = 1 of []) {}
+    ·              ───────────
+ 20 │ }
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-await-of/head-let-init.js:18:1]
+ 18 │ async function fn() {
+ 19 │   for await (let x = 1 of []) {}
+    ·              ─────────
+ 20 │ }
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-await-of/head-var-init.js:18:1]
+ 18 │ async function fn() {
+ 19 │   for await (var x = 1 of []) {}
+    ·              ─────────
+ 20 │ }
     ╰────
 
   × Lexical declaration cannot appear in a single-statement context
@@ -24091,6 +24210,28 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Wrap this declaration in a block statement
 
+  × for-in loop variable declaration may not have an initializer
+    ╭─[language/statements/for-in/var-arguments-fn-strict-init.js:17:1]
+ 17 │ function f() {
+ 18 │   for (var arguments = 42 in null) {}
+    ·        ──────────────────
+ 19 │ }
+    ╰────
+
+  × for-in loop variable declaration may not have an initializer
+    ╭─[language/statements/for-in/var-arguments-strict-init.js:16:1]
+ 16 │ 
+ 17 │ for (var arguments = 42 in null) {}
+    ·      ──────────────────
+    ╰────
+
+  × for-in loop variable declaration may not have an initializer
+    ╭─[language/statements/for-in/var-eval-strict-init.js:14:1]
+ 14 │ 
+ 15 │ for (var eval = 42 in null) {}
+    ·      ─────────────
+    ╰────
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/for-of/decl-async-fun.js:19:1]
  19 │ 
@@ -24281,6 +24422,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·            ─────
     ╰────
 
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-of/dstr/const-ary-ptrn-init-err.js:16:1]
+ 16 │ 
+ 17 │ for (const [x] = 1 of []) {}
+    ·      ─────────────
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-not-final-ary.js:50:1]
  50 │ 
@@ -24308,6 +24456,20 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  52 │   
     ╰────
 
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-of/dstr/const-obj-ptrn-init-err.js:16:1]
+ 16 │ 
+ 17 │ for (const {x} = 1 of []) {}
+    ·      ─────────────
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-of/dstr/let-ary-ptrn-init-err.js:16:1]
+ 16 │ 
+ 17 │ for (let [x] = 1 of []) {}
+    ·      ───────────
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-not-final-ary.js:50:1]
  50 │ 
@@ -24333,6 +24495,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ────┬───
     ·               ╰── Rest element must be last element
  52 │   
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-of/dstr/let-obj-ptrn-init-err.js:16:1]
+ 16 │ 
+ 17 │ for (let {x} = 1 of []) {}
+    ·      ───────────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -24432,6 +24601,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ ]) ;
     ╰────
 
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-of/dstr/var-ary-ptrn-init-err.js:16:1]
+ 16 │ 
+ 17 │ for (var [x] = 1 of []) {}
+    ·      ───────────
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-not-final-ary.js:47:1]
  47 │ 
@@ -24457,6 +24633,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ────┬───
     ·               ╰── Rest element must be last element
  49 │   
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-of/dstr/var-obj-ptrn-init-err.js:16:1]
+ 16 │ 
+ 17 │ for (var {x} = 1 of []) {}
+    ·      ───────────
     ╰────
 
   × Keywords cannot contain escape characters
@@ -24493,6 +24676,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ 
  17 │ for (const let of []) {}
     ·            ───
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-of/head-const-init.js:16:1]
+ 16 │ 
+ 17 │ for (const x = 1 of []) {}
+    ·      ───────────
     ╰────
 
   × Expect token
@@ -24539,6 +24729,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ───
     ╰────
 
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-of/head-let-init.js:16:1]
+ 16 │ 
+ 17 │ for (let x = 1 of []) {}
+    ·      ─────────
+    ╰────
+
   × The left-hand side of a `for...of` statement may not be `async`
     ╭─[language/statements/for-of/head-lhs-async-invalid.js:16:1]
  16 │ var async;
@@ -24581,6 +24778,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  17 │ 
  18 │ for (this of []) {}
     ·      ────
+    ╰────
+
+  × for-of loop variable declaration may not have an initializer
+    ╭─[language/statements/for-of/head-var-init.js:16:1]
+ 16 │ 
+ 17 │ for (var x = 1 of []) {}
+    ·      ─────────
     ╰────
 
   × Expect token
