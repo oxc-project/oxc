@@ -73,7 +73,7 @@ declare_oxc_lint!(
     /// foo > NaN;
     /// ```
     UseIsnan,
-    correctness
+    nursery,
 );
 
 impl Rule for UseIsnan {

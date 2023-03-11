@@ -51,7 +51,7 @@ declare_oxc_lint! {
   /// var foo = a && (b || c || d);  /*GOOD*/
   /// ```
   NoMixedOperators,
-  correctness
+  nursery,
 }
 
 impl Rule for NoMixedOperators {

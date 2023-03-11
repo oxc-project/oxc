@@ -47,7 +47,7 @@ declare_oxc_lint!(
     /// // However, this will always result in `isEmpty` being `false`.
     /// ```
     NoConstantBinaryExpression,
-    nursery
+    correctness
 );
 
 #[derive(Debug, Error, Diagnostic)]

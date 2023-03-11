@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoEmpty,
-    correctness
+    nursery,
 );
 
 impl Rule for NoEmpty {
