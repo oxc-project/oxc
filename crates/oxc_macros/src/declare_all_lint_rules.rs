@@ -71,6 +71,7 @@ impl Parse for AllLintRulesMeta {
     }
 }
 
+#[allow(clippy::cognitive_complexity)]
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let AllLintRulesMeta { rules } = metadata;
 
@@ -82,7 +83,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         #(#mod_stmts)*
         #(#use_stmts)*
 
-        use crate::{context::LintContext, rule::Rule, rule::RuleMeta, AstNode};
+        use crate::{context::LintContext, rule::{Rule, RuleCategory}, rule::RuleMeta, AstNode};
 
         #[derive(Debug, Clone)]
         #[allow(clippy::enum_variant_names)]
@@ -91,9 +92,15 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         }
 
         impl RuleEnum {
-            pub const fn name(&self) -> &'static str {
+            pub fn name(&self) -> &'static str {
                 match self {
                     #(Self::#struct_names(_) => #struct_names::NAME),*
+                }
+            }
+
+            pub fn category(&self) -> RuleCategory {
+                match self {
+                    #(Self::#struct_names(_) => #struct_names::CATEGORY),*
                 }
             }
 

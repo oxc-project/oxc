@@ -2,6 +2,7 @@ use std::fmt::Debug;
 
 use crate::{context::LintContext, AstNode};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RuleCategory {
     Correctness,
     Nursery,

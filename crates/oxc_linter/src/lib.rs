@@ -15,7 +15,7 @@ use std::{fs, rc::Rc};
 pub use fixer::{Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
-use rule::Rule;
+use rule::{Rule, RuleCategory};
 
 use crate::{
     context::LintContext,
@@ -33,19 +33,17 @@ impl Linter {
     #[must_use]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        let rules_config = Self::read_rules_configuration();
-        let rules = rules_config.map_or_else(
-            || RULES.to_vec(),
-            |rules_config| {
-                RULES
-                    .iter()
-                    .map(|rule| {
-                        let value = rules_config.get(rule.name());
-                        rule.read_json(value.cloned())
-                    })
-                    .collect()
-            },
-        );
+        // let rules_config = Self::read_rules_configuration();
+        // let rules = rules_config.map_or_else(
+        // || RULES.to_vec(),
+        // |rules_config| {
+        let rules = RULES
+            .iter()
+            .cloned()
+            .filter(|rule| rule.category() == RuleCategory::Correctness)
+            .collect::<Vec<_>>();
+        // },
+        // );
         Self::from_rules(rules)
     }
 
@@ -109,6 +107,7 @@ impl Linter {
         ctx.into_message()
     }
 
+    #[allow(unused)]
     fn read_rules_configuration() -> Option<serde_json::Map<String, serde_json::Value>> {
         fs::read_to_string(".eslintrc.json")
             .ok()
