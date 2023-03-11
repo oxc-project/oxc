@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 591/2532 (23.34%)
+Negative Passed: 597/2532 (23.58%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -137,7 +137,6 @@ Expect Syntax Error: "classes/constructorDeclarations/superCalls/derivedClassPar
 Expect Syntax Error: "classes/constructorDeclarations/superCalls/derivedClassSuperCallsWithThisArg.ts"
 Expect Syntax Error: "classes/constructorDeclarations/superCalls/derivedClassSuperProperties.ts"
 Expect Syntax Error: "classes/constructorDeclarations/superCalls/derivedClassSuperStatementPosition.ts"
-Expect Syntax Error: "classes/constructorDeclarations/superCalls/superCallInConstructorWithNoBaseType.ts"
 Expect Syntax Error: "classes/constructorDeclarations/superCalls/superPropertyInConstructorBeforeSuperCall.ts"
 Expect Syntax Error: "classes/indexMemberDeclarations/privateIndexer.ts"
 Expect Syntax Error: "classes/indexMemberDeclarations/publicIndexer.ts"
@@ -181,7 +180,6 @@ Expect Syntax Error: "classes/members/instanceAndStaticMembers/typeOfThisInStati
 Expect Syntax Error: "classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers11.ts"
 Expect Syntax Error: "classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers12.ts"
 Expect Syntax Error: "classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers13.ts"
-Expect Syntax Error: "classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers6.ts"
 Expect Syntax Error: "classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers8.ts"
 Expect Syntax Error: "classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers9.ts"
 Expect Syntax Error: "classes/members/instanceAndStaticMembers/typeOfThisInstanceMemberNarrowedWithLoopAntecedent.ts"
@@ -409,7 +407,6 @@ Expect Syntax Error: "es6/classDeclaration/superCallBeforeThisAccessing3.ts"
 Expect Syntax Error: "es6/classDeclaration/superCallBeforeThisAccessing4.ts"
 Expect Syntax Error: "es6/classDeclaration/superCallBeforeThisAccessing6.ts"
 Expect Syntax Error: "es6/classDeclaration/superCallBeforeThisAccessing7.ts"
-Expect Syntax Error: "es6/classDeclaration/superCallFromClassThatHasNoBaseTypeButWithSameSymbolInterface.ts"
 Expect Syntax Error: "es6/classExpressions/typeArgumentInferenceWithClassExpression2.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames12_ES5.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames12_ES6.ts"
@@ -429,8 +426,6 @@ Expect Syntax Error: "es6/computedProperties/computedPropertyNames24_ES5.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames24_ES6.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames26_ES5.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames26_ES6.ts"
-Expect Syntax Error: "es6/computedProperties/computedPropertyNames27_ES5.ts"
-Expect Syntax Error: "es6/computedProperties/computedPropertyNames27_ES6.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames2_ES5.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames2_ES6.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames30_ES5.ts"
@@ -798,7 +793,6 @@ Expect Syntax Error: "expressions/propertyAccess/propertyAccessNumericLiterals.t
 Expect Syntax Error: "expressions/propertyAccess/propertyAccessStringIndexSignature.ts"
 Expect Syntax Error: "expressions/propertyAccess/propertyAccessStringIndexSignatureNoImplicitAny.ts"
 Expect Syntax Error: "expressions/propertyAccess/propertyAccessWidening.ts"
-Expect Syntax Error: "expressions/superPropertyAccess/errorSuperPropertyAccess.ts"
 Expect Syntax Error: "expressions/superPropertyAccess/superSymbolIndexedAccess3.ts"
 Expect Syntax Error: "expressions/superPropertyAccess/superSymbolIndexedAccess4.ts"
 Expect Syntax Error: "expressions/thisKeyword/thisInInvalidContexts.ts"
@@ -2760,6 +2754,32 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × 'super' can only be referenced in a derived class.
+   ╭─[classes/constructorDeclarations/superCalls/superCallInConstructorWithNoBaseType.ts:1:1]
+ 1 │ ╭─▶ class C {
+ 2 │ │       constructor() {
+ 3 │ │╭▶         super(); // error
+   · ││        ─────
+ 4 │ │       }
+ 5 │ ├─▶ }
+   · ╰──── class does not have `extends`
+ 6 │     
+   ╰────
+  help: either remove this super, or extend the class
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[classes/constructorDeclarations/superCalls/superCallInConstructorWithNoBaseType.ts:6:1]
+  6 │     
+  7 │ ╭─▶ class D<T> {
+  8 │ │       public constructor(public x: T) {
+  9 │ │╭▶         super(); // error
+    · ││        ─────
+ 10 │ │       }
+ 11 │ ├─▶ }
+    · ╰──── class does not have `extends`
+    ╰────
+  help: either remove this super, or extend the class
+
   × Expect token
    ╭─[classes/indexMemberDeclarations/privateIndexer2.ts:3:1]
  3 │ var x = {
@@ -2778,6 +2798,15 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  13 │ }
     ╰────
   help: Try insert a semicolon here
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+   ╭─[classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers6.ts:5:1]
+ 5 │ class D extends C {
+ 6 │     static c = super();
+   ·                ───────
+ 7 │ }
+   ╰────
 
   × Private identifier '#prop' is not allowed outside class bodies
     ╭─[classes/members/privateNames/privateNameAccessorsAccess.ts:15:1]
@@ -4447,6 +4476,37 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  8 │     }
    ╰────
 
+  × 'super' can only be referenced in a derived class.
+   ╭─[es6/classDeclaration/superCallFromClassThatHasNoBaseTypeButWithSameSymbolInterface.ts:2:1]
+ 2 │     
+ 3 │ ╭─▶ class Foo {
+ 4 │ │       constructor() {
+ 5 │ │╭▶         super(); // error
+   · ││        ─────
+ 6 │ │       }
+ 7 │ ├─▶ }
+   · ╰──── class does not have `extends`
+   ╰────
+  help: either remove this super, or extend the class
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+   ╭─[es6/computedProperties/computedPropertyNames27_ES5.ts:4:1]
+ 4 │ class C extends Base {
+ 5 │     [(super(), "prop")]() { }
+   ·       ───────
+ 6 │ }
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+   ╭─[es6/computedProperties/computedPropertyNames27_ES6.ts:4:1]
+ 4 │ class C extends Base {
+ 5 │     [(super(), "prop")]() { }
+   ·       ───────
+ 6 │ }
+   ╰────
+
   × A 'set' accessor must have exactly one parameter.
     ╭─[es6/computedProperties/computedPropertyNames49_ES5.ts:9:1]
   9 │     },
@@ -5662,6 +5722,162 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·        ╰── Tagged template expressions are not permitted in an optional chain
    ╰────
 
+  × 'super' can only be referenced in a derived class.
+    ╭─[expressions/superCalls/errorSuperCalls.ts:1:1]
+  1 │     //super call in class constructor with no base type
+  2 │ ╭─▶ class NoBase {
+  3 │ │       constructor() {
+  4 │ │╭▶         super();
+    · ││        ─────
+  5 │ │       }
+  6 │ │   
+  7 │ │       //super call in class member function with no base type
+  8 │ │       fn() {
+  9 │ │           super();
+ 10 │ │       }
+ 11 │ │   
+ 12 │ │       //super call in class accessor (get and set) with no base type
+ 13 │ │       get foo() {
+ 14 │ │           super();
+ 15 │ │           return null;
+ 16 │ │       }
+ 17 │ │       set foo(v) {
+ 18 │ │           super();
+ 19 │ │       }
+ 20 │ │   
+ 21 │ │       //super call in class member initializer with no base type
+ 22 │ │       p = super();
+ 23 │ │   
+ 24 │ │       //super call in static class member function with no base type
+ 25 │ │       static fn() {
+ 26 │ │           super();
+ 27 │ │       }
+ 28 │ │   
+ 29 │ │       //super call in static class member initializer with no base type
+ 30 │ │       static k = super();
+ 31 │ │   
+ 32 │ │       //super call in static class accessor (get and set) with no base type
+ 33 │ │       static get q() {
+ 34 │ │           super();
+ 35 │ │           return null;
+ 36 │ │       }
+ 37 │ │       static set q(n) {
+ 38 │ │           super();
+ 39 │ │       }
+ 40 │ ├─▶ }
+    · ╰──── class does not have `extends`
+ 41 │     
+    ╰────
+  help: either remove this super, or extend the class
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:8:1]
+  8 │     fn() {
+  9 │         super();
+    ·         ───────
+ 10 │     }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:13:1]
+ 13 │     get foo() {
+ 14 │         super();
+    ·         ───────
+ 15 │         return null;
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:17:1]
+ 17 │     set foo(v) {
+ 18 │         super();
+    ·         ───────
+ 19 │     }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:21:1]
+ 21 │     //super call in class member initializer with no base type
+ 22 │     p = super();
+    ·         ───────
+ 23 │ 
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:25:1]
+ 25 │     static fn() {
+ 26 │         super();
+    ·         ───────
+ 27 │     }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:29:1]
+ 29 │     //super call in static class member initializer with no base type
+ 30 │     static k = super();
+    ·                ───────
+ 31 │ 
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:33:1]
+ 33 │     static get q() {
+ 34 │         super();
+    ·         ───────
+ 35 │         return null;
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:37:1]
+ 37 │     static set q(n) {
+ 38 │         super();
+    ·         ───────
+ 39 │     }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:57:1]
+ 57 │     //super call in class member initializer of derived type
+ 58 │     t = super();
+    ·         ───────
+ 59 │ 
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:61:1]
+ 61 │         //super call in class member function of derived type
+ 62 │         super();
+    ·         ───────
+ 63 │     }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:66:1]
+ 66 │     get foo() {
+ 67 │         super();
+    ·         ───────
+ 68 │         return null;
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[expressions/superCalls/errorSuperCalls.ts:70:1]
+ 70 │     set foo(n) {
+ 71 │         super();
+    ·         ───────
+ 72 │     }
+    ╰────
+
   × 'super' can only be used with function calls or in property accesses
     ╭─[expressions/superCalls/errorSuperCalls.ts:45:1]
  45 │     constructor() {
@@ -5671,6 +5887,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  47 │         super();
     ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+     ╭─[expressions/superPropertyAccess/errorSuperPropertyAccess.ts:126:1]
+ 126 │ // In object literal
+ 127 │ var obj = { n: super.wat, p: super.foo() };
+     ·                ─────
+     ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+     ╭─[expressions/superPropertyAccess/errorSuperPropertyAccess.ts:126:1]
+ 126 │ // In object literal
+ 127 │ var obj = { n: super.wat, p: super.foo() };
+     ·                              ─────
+     ╰────
 
   × Expect token
     ╭─[expressions/typeAssertions/typeAssertions.ts:43:1]
@@ -7960,6 +8192,15 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ with (a) {
    · ────
  3 │ }
+   ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+   ╭─[parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:2:1]
+ 2 │   M() {
+ 3 │     super<T>(0);
+   ·     ───────────
+ 4 │   }
    ╰────
 
   × 'super' can only be used with function calls or in property accesses

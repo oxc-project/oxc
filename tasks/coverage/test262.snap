@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 2823/3917 (72.07%)
+Negative Passed: 2961/3917 (75.59%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -72,12 +72,8 @@ Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-rest
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-arguments-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-await-in-formals.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-body-contains-super-call.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-body-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-eval-in-formal-parameters.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-call.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/await-as-binding-identifier-escaped.js"
@@ -85,11 +81,7 @@ Expect Syntax Error: "language/expressions/async-function/await-as-binding-ident
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-binding-identifier-arguments.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-binding-identifier-eval.js"
-Expect Syntax Error: "language/expressions/async-function/early-errors-expression-body-contains-super-call.js"
-Expect Syntax Error: "language/expressions/async-function/early-errors-expression-body-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-eval-in-formal-parameters.js"
-Expect Syntax Error: "language/expressions/async-function/early-errors-expression-formals-contains-super-call.js"
-Expect Syntax Error: "language/expressions/async-function/early-errors-expression-formals-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-function/named-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/named-await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/async-function/named-await-as-binding-identifier.js"
@@ -124,13 +116,9 @@ Expect Syntax Error: "language/expressions/async-generator/early-errors-expressi
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-binding-identifier-arguments.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-binding-identifier-eval.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-body-contains-super-call.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-body-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-await-expr.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-await.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-super-call.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-super-property.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-yield-expr.js"
 Expect Syntax Error: "language/expressions/async-generator/named-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/named-await-as-binding-identifier-escaped.js"
@@ -242,7 +230,6 @@ Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-ary-pt
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/elements/arrow-fnc-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js"
@@ -251,32 +238,6 @@ Expect Syntax Error: "language/expressions/class/elements/async-private-method-s
 Expect Syntax Error: "language/expressions/class/elements/async-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/elements/async-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/equality-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-private-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-private-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-private-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-static-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-static-literal-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-static-private-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-static-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/nested-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/private-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/private-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/private-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/private-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/static-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/static-literal-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/static-private-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/static-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/string-literal-name-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js"
@@ -307,31 +268,8 @@ Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/de
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-ctor-super-no-heritage.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-private-field-super-access.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-async-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-get-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-private-meth-super.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-static-set-meth-super.js"
 Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/super-private-access-invalid.js"
-Expect Syntax Error: "language/expressions/class/elements/ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/expressions/class/elements/typeof-init-err-contains-super.js"
 Expect Syntax Error: "language/expressions/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-duplicates.js"
@@ -377,10 +315,6 @@ Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-obj.
 Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/function/early-body-super-call.js"
-Expect Syntax Error: "language/expressions/function/early-body-super-prop.js"
-Expect Syntax Error: "language/expressions/function/early-params-super-call.js"
-Expect Syntax Error: "language/expressions/function/early-params-super-prop.js"
 Expect Syntax Error: "language/expressions/function/name-arguments-strict-body.js"
 Expect Syntax Error: "language/expressions/function/name-arguments-strict.js"
 Expect Syntax Error: "language/expressions/function/name-eval-strict-body.js"
@@ -460,10 +394,8 @@ Expect Syntax Error: "language/expressions/object/method-definition/early-errors
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-arguments-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-await-in-formals.js"
-Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-body-contains-super-call.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-eval-in-formal-parameters.js"
-Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-formals-contains-super-call.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-rest.js"
@@ -471,16 +403,12 @@ Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-obj
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-param-id-yield.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-param-init-yield.js"
-Expect Syntax Error: "language/expressions/object/method-definition/generator-super-call-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/generator-super-call-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/name-super-call-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/name-super-call-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/setter-use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/object/setter-body-strict-inside.js"
@@ -488,16 +416,11 @@ Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-
 Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-outside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-outside.js"
-Expect Syntax Error: "language/expressions/optional-chaining/call-expression-super-no-base.js"
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
 Expect Syntax Error: "language/global-code/new.target-arrow.js"
 Expect Syntax Error: "language/global-code/new.target.js"
 Expect Syntax Error: "language/global-code/return.js"
-Expect Syntax Error: "language/global-code/super-call-arrow.js"
-Expect Syntax Error: "language/global-code/super-call.js"
-Expect Syntax Error: "language/global-code/super-prop-arrow.js"
-Expect Syntax Error: "language/global-code/super-prop.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
 Expect Syntax Error: "language/import/json-invalid.js"
 Expect Syntax Error: "language/import/json-named-bindings.js"
@@ -623,12 +546,8 @@ Expect Syntax Error: "language/statements/async-function/early-errors-declaratio
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-await-in-formals.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-binding-identifier-arguments.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-binding-identifier-eval.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-body-contains-super-call.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-body-contains-super-property.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-eval-in-formal-parameters.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-formals-contains-super-call.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-formals-contains-super-property.js"
 Expect Syntax Error: "language/statements/async-function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-function/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-generator/array-destructuring-param-strict-body.js"
@@ -676,10 +595,8 @@ Expect Syntax Error: "language/statements/class/definition/early-errors-class-as
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-NSPL-with-USD.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-arguments-in-formal-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-await-in-formals.js"
-Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-body-contains-super-call.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-eval-in-formal-parameters.js"
-Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-formals-contains-super-call.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -752,7 +669,6 @@ Expect Syntax Error: "language/statements/class/dstr/private-meth-static-ary-ptr
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/elements/arrow-fnc-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js"
@@ -761,32 +677,6 @@ Expect Syntax Error: "language/statements/class/elements/async-private-method-st
 Expect Syntax Error: "language/statements/class/elements/async-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/elements/async-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/equality-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-private-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-private-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-private-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-static-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-static-literal-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-static-private-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-static-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/nested-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/private-arrow-fnc-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/private-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/private-ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/private-typeof-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/static-comp-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/static-literal-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/static-private-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/static-string-literal-name-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/string-literal-name-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js"
@@ -817,31 +707,8 @@ Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/del
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-ctor-super-no-heritage.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-private-field-super-access.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-async-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-get-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-private-meth-super.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-static-set-meth-super.js"
 Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/super-private-access-invalid.js"
-Expect Syntax Error: "language/statements/class/elements/ternary-init-err-contains-super.js"
-Expect Syntax Error: "language/statements/class/elements/typeof-init-err-contains-super.js"
 Expect Syntax Error: "language/statements/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-duplicates.js"
@@ -867,7 +734,6 @@ Expect Syntax Error: "language/statements/class/static-gen-method-param-dflt-yie
 Expect Syntax Error: "language/statements/class/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-super-call.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-obj.js"
@@ -983,10 +849,6 @@ Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-obj.j
 Expect Syntax Error: "language/statements/function/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/function/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/function/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/function/early-body-super-call.js"
-Expect Syntax Error: "language/statements/function/early-body-super-prop.js"
-Expect Syntax Error: "language/statements/function/early-params-super-call.js"
-Expect Syntax Error: "language/statements/function/early-params-super-prop.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-body.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-outer-body.js"
 Expect Syntax Error: "language/statements/function/name-arguments-strict-body.js"
@@ -6377,6 +6239,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-body-contains-super-call.js:14:1]
+ 14 │ 
+ 15 │ async(foo) => { super() };
+    ·                 ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-body-contains-super-property.js:14:1]
+ 14 │ 
+ 15 │ async(foo) => { super.prop };
+    ·                 ─────
+    ╰────
+
   × Identifier `bar` has already been declared
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-formals-body-duplicate.js:14:1]
  14 │ 
@@ -6384,6 +6262,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·       ─┬─           ─┬─
     ·        │             ╰── It can not be redeclared here
     ·        ╰── `bar` has already been declared here
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-call.js:14:1]
+ 14 │ 
+ 15 │ async(foo = super()) => {}
+    ·             ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-property.js:14:1]
+ 14 │ 
+ 15 │ async (foo = super.foo) => { }
+    ·              ─────
     ╰────
 
   × Automatic Semicolon Insertion
@@ -6462,6 +6356,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │ };
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/async-function/early-errors-expression-body-contains-super-call.js:14:1]
+ 14 │ 
+ 15 │ (async function foo (foo) { super() })
+    ·                             ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/expressions/async-function/early-errors-expression-body-contains-super-property.js:14:1]
+ 14 │ 
+ 15 │ (async function foo (foo) { super.prop });
+    ·                             ─────
+ 16 │ 
+    ╰────
+
   × Identifier `bar` has already been declared
     ╭─[language/expressions/async-function/early-errors-expression-formals-body-duplicate.js:14:1]
  14 │ 
@@ -6469,6 +6380,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                      ─┬─        ─┬─
     ·                       │          ╰── It can not be redeclared here
     ·                       ╰── `bar` has already been declared here
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/async-function/early-errors-expression-formals-contains-super-call.js:14:1]
+ 14 │ 
+ 15 │ (async function foo (foo = super()) { var bar; });
+    ·                            ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/expressions/async-function/early-errors-expression-formals-contains-super-property.js:14:1]
+ 14 │ 
+ 15 │ (async function foo (foo = super.foo) { var bar; });
+    ·                            ─────
     ╰────
 
   × Invalid assignment
@@ -6713,6 +6640,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │   
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/async-generator/early-errors-expression-body-contains-super-call.js:16:1]
+ 16 │ 
+ 17 │ (async function*() { super(); });
+    ·                      ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/expressions/async-generator/early-errors-expression-body-contains-super-property.js:16:1]
+ 16 │ 
+ 17 │ (async function*() { super.prop; });
+    ·                      ─────
+    ╰────
+
   × Identifier `a` has already been declared
     ╭─[language/expressions/async-generator/early-errors-expression-formals-body-duplicate-const.js:20:1]
  20 │ 
@@ -6729,6 +6672,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ┬        ┬
     ·                  │        ╰── It can not be redeclared here
     ·                  ╰── `a` has already been declared here
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-super-call.js:16:1]
+ 16 │ 
+ 17 │ (async function*(a = super()) { });
+    ·                      ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-super-property.js:16:1]
+ 16 │ 
+ 17 │ (async function*(a = super.prop) { });
+    ·                      ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -8135,6 +8094,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/arrow-fnc-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   x = () => super();
+    ·             ───────
+ 27 │ }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
  34 │ var C = class { static async *#gen() {
@@ -8497,12 +8465,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/comp-name-init-err-contains-super.js:26:1]
+ 26 │ var C = class {
+ 27 │   [x] = super();
+    ·         ───────
+ 28 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/equality-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
  33 │   x = {} == arguments;
     ·             ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/equality-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   x = {} == super();
+    ·             ───────
+ 27 │ }
     ╰────
 
   × Automatic Semicolon Insertion
@@ -8773,6 +8759,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/literal-name-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   x = super();
+    ·       ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/nested-arrow-fnc-init-err-contains-arguments.js:33:1]
  33 │   x = () => {
@@ -8781,12 +8776,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │   }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-arrow-fnc-init-err-contains-super.js:26:1]
+ 26 │   x = () => {
+ 27 │     var t = () => super();
+    ·                   ───────
+ 28 │   }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/nested-comp-name-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
  33 │   [x] = () => arguments;
     ·               ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-comp-name-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   [x] = () => super();
+    ·               ───────
+ 27 │ }
     ╰────
 
   × Automatic Semicolon Insertion
@@ -8817,12 +8830,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-literal-name-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   x = () => super();
+    ·             ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-arguments.js:33:1]
  33 │   #x = () => {
  34 │     var t = () => arguments;
     ·                   ─────────
  35 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:26:1]
+ 26 │   #x = () => {
+ 27 │     var t = () => super();
+    ·                   ───────
+ 28 │   }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -8833,12 +8864,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-private-literal-name-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   #x = () => super();
+    ·              ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/nested-private-ternary-init-err-contains-arguments.js:31:1]
  31 │ var C = class {
  32 │   #x = () => true ? {} : arguments;
     ·                          ─────────
  33 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-private-ternary-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   #x = () => true ? {} : super();
+    ·                          ───────
+ 26 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -8849,12 +8898,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-private-typeof-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   #x = () => typeof super();
+    ·                     ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/nested-static-comp-name-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
  33 │   static [x] = () => arguments;
     ·                      ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-static-comp-name-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   static [x] = () => super();
+    ·                      ───────
+ 27 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -8865,12 +8932,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-static-literal-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   static x = () => super();
+    ·                    ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/nested-static-private-init-err-contains-arguments.js:31:1]
  31 │ var C = class {
  32 │   static #x = () => arguments;
     ·                     ─────────
  33 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-static-private-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   static #x = () => super();
+    ·                     ───────
+ 26 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -8881,12 +8966,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-static-string-literal-name-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   static 'x' = () => super();
+    ·                      ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/nested-string-literal-name-init-err-contains-arguments.js:31:1]
  31 │ var C = class {
  32 │   'x' = () => arguments;
     ·               ─────────
  33 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-string-literal-name-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   'x' = () => super();
+    ·               ───────
+ 26 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -8897,12 +9000,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-ternary-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   x = () => true ? {} : super();
+    ·                         ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/nested-typeof-init-err-contains-arguments.js:31:1]
  31 │ var C = class {
  32 │   x = () => typeof arguments;
     ·                    ─────────
  33 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/nested-typeof-init-err-contains-super.js:24:1]
+ 24 │ var C = class {
+ 25 │   x = () => typeof super();
+    ·                    ───────
+ 26 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -8913,12 +9034,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/private-arrow-fnc-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   #x = () => super();
+    ·              ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/private-literal-name-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
  33 │   #x = arguments;
     ·        ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/private-literal-name-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   #x = super();
+    ·        ───────
+ 27 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -8929,12 +9068,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/private-ternary-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   #x = true ? {} : super();
+    ·                    ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/private-typeof-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
  33 │   #x = typeof arguments;
     ·               ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/private-typeof-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   #x = typeof super();
+    ·               ───────
+ 27 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -8945,12 +9102,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/static-comp-name-init-err-contains-super.js:26:1]
+ 26 │ var C = class {
+ 27 │   static [x] = super();
+    ·                ───────
+ 28 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/static-literal-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
  33 │   static x = arguments;
     ·              ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/static-literal-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   static x = super();
+    ·              ───────
+ 27 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -8961,6 +9136,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/static-private-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   static #x = super();
+    ·               ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/static-string-literal-name-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
@@ -8969,12 +9153,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/static-string-literal-name-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   static 'x' = super();
+    ·                ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/string-literal-name-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
  33 │   'x' = arguments;
     ·         ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/string-literal-name-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   'x' = super();
+    ·         ───────
+ 27 │ }
     ╰────
 
   × Empty parenthesized expression
@@ -9543,6 +9745,19 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·        ╰── it cannot be redeclared here
  25 │ };
     ╰────
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-ctor-super-no-heritage.js:24:1]
+ 24 │     
+ 25 │ ╭─▶ var C = class {
+ 26 │ │     constructor() {
+ 27 │ │╭▶     super();
+    · ││    ─────
+ 28 │ │     }
+ 29 │ ├─▶ };
+    · ╰──── class does not have `extends`
+    ╰────
+  help: either remove this super, or extend the class
 
   × Invalid Character ` `
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-field-identifier-invalid-ues-error.js:68:1]
@@ -10126,6 +10341,96 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:24:1]
+ 24 │   async * method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js:24:1]
+ 24 │   async method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js:24:1]
+ 24 │   * method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js:24:1]
+ 24 │   get method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js:24:1]
+ 24 │   method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js:24:1]
+ 24 │   async * #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js:24:1]
+ 24 │   async #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js:24:1]
+ 24 │   * #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js:24:1]
+ 24 │   #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js:24:1]
+ 24 │   set method(_) {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Constructor can't be an async method
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-ctor-async-gen.js:23:1]
  23 │ var C = class {
@@ -10189,6 +10494,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ };
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js:24:1]
+ 24 │   static async * method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes may not have a static property named prototype
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-async-meth-prototype.js:23:1]
  23 │ var C = class {
@@ -10196,6 +10510,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                ────┬────
     ·                    ╰── Classes may not have a static property named prototype
  25 │ };
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-async-meth-super.js:24:1]
+ 24 │   static async method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Classes may not have a static property named prototype
@@ -10207,6 +10530,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ };
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js:24:1]
+ 24 │   static * method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes may not have a static property named prototype
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-get-meth-prototype.js:23:1]
  23 │ var C = class {
@@ -10214,6 +10546,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·              ────┬────
     ·                  ╰── Classes may not have a static property named prototype
  25 │ };
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-get-meth-super.js:24:1]
+ 24 │   static get method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Classes may not have a static property named prototype
@@ -10225,6 +10566,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ };
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-meth-super.js:24:1]
+ 24 │   static method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes can't have an element named '#constructor'
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-constructor.js:23:1]
  23 │ var C = class {
@@ -10232,6 +10582,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ──────┬─────
     ·                        ╰── Classes can't have an element named '#constructor'
  25 │ };
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js:24:1]
+ 24 │   static async * #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Classes can't have an element named '#constructor'
@@ -10243,6 +10602,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ };
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js:24:1]
+ 24 │   static async #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes can't have an element named '#constructor'
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-gen-meth-constructor.js:23:1]
  23 │ var C = class {
@@ -10252,6 +10620,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ };
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js:24:1]
+ 24 │   static * #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes can't have an element named '#constructor'
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-meth-constructor.js:23:1]
  23 │ var C = class {
@@ -10259,6 +10636,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ──────┬─────
     ·                ╰── Classes can't have an element named '#constructor'
  25 │ };
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-meth-super.js:24:1]
+ 24 │   static #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Classes can't have an element named '#constructor'
@@ -10277,6 +10663,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·              ────┬────
     ·                  ╰── Classes may not have a static property named prototype
  25 │ };
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-set-meth-super.js:24:1]
+ 24 │   static set method(_) {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Private field 'x' must be declared in an enclosing class
@@ -10574,12 +10969,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/ternary-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   x = true ? {} : super();
+    ·                   ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/typeof-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
  33 │   x = typeof arguments;
     ·              ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/class/elements/typeof-init-err-contains-super.js:25:1]
+ 25 │ var C = class {
+ 26 │   x = typeof super();
+    ·              ───────
+ 27 │ }
     ╰────
 
   × Rest element must be last element
@@ -11960,6 +12373,24 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  54 │   
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/function/early-body-super-call.js:16:1]
+ 16 │ 0, function() {
+ 17 │   super();
+    ·   ───────
+ 18 │ };
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/expressions/function/early-body-super-prop.js:16:1]
+ 16 │ 0, function() {
+ 17 │   super.x;
+    ·   ─────
+ 18 │ };
+    ╰────
+
   × Private identifier '#x' is not allowed outside class bodies
     ╭─[language/expressions/function/early-errors/invalid-names-call-expression-bad-reference.js:39:1]
  39 │ 
@@ -11986,6 +12417,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  39 │ 
  40 │ var fn = function() { this.#x };
     ·                            ──
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/function/early-params-super-call.js:15:1]
+ 15 │ 
+ 16 │ 0, function(x = super()) {};
+    ·                 ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/expressions/function/early-params-super-prop.js:15:1]
+ 15 │ 
+ 16 │ 0, function(x = super.x) {};
+    ·                 ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -12952,6 +13399,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  17 │ })
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/object/method-definition/early-errors-object-method-body-contains-super-call.js:15:1]
+ 15 │ ({
+ 16 │   async foo () { super() }
+    ·                  ───────
+ 17 │ })
+    ╰────
+
   × Expect token
     ╭─[language/expressions/object/method-definition/early-errors-object-method-formals-body-duplicate.js:16:1]
  16 │ ({
@@ -12959,6 +13415,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ─┬─
     ·                   ╰── Expect `(` here, but found `Identifier`
  18 │ })
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/object/method-definition/early-errors-object-method-formals-contains-super-call.js:14:1]
+ 14 │ ({
+ 15 │   async foo(foo = super()) { }
+    ·                   ───────
+ 16 │ })
     ╰────
 
   × Keywords cannot contain escape characters
@@ -13143,6 +13608,24 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  22 │     }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/object/method-definition/generator-super-call-body.js:20:1]
+ 20 │     *foo(a) {
+ 21 │         super();
+    ·         ───────
+ 22 │     }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/object/method-definition/generator-super-call-param.js:19:1]
+ 19 │ var obj = {
+ 20 │     *foo(a = super()) {
+    ·              ───────
+ 21 │     }
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:57:1]
  57 │ 0, {
@@ -13162,6 +13645,24 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·         ──┬──
     ·           ╰── It can not be redeclared here
  20 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/object/method-definition/name-super-call-body.js:16:1]
+ 16 │   method() {
+ 17 │     super();
+    ·     ───────
+ 18 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/expressions/object/method-definition/name-super-call-param.js:15:1]
+ 15 │ ({
+ 16 │   method(param = super()) {}
+    ·                  ───────
+ 17 │ });
     ╰────
 
   × Unexpected token
@@ -13317,6 +13818,19 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·     ──────
  19 │   }
     ╰────
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[language/expressions/optional-chaining/call-expression-super-no-base.js:18:1]
+ 18 │     
+ 19 │ ╭─▶ class C {
+ 20 │ │     constructor () {
+ 21 │ │╭▶     super()?.a;
+    · ││    ─────
+ 22 │ │     }
+ 23 │ ├─▶ }
+    · ╰──── class does not have `extends`
+    ╰────
+  help: either remove this super, or extend the class
 
   × Tagged template expressions are not permitted in an optional chain
     ╭─[language/expressions/optional-chaining/early-errors-tail-position-null-op-template-string-esi.js:24:1]
@@ -14021,6 +14535,40 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  39 │ 
  40 │ this.#x
     ·      ──
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/global-code/super-call-arrow.js:35:1]
+ 35 │ () => {
+ 36 │   super();
+    ·   ───────
+ 37 │ };
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/global-code/super-call.js:19:1]
+ 19 │ 
+ 20 │ super();
+    · ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/global-code/super-prop-arrow.js:35:1]
+ 35 │ () => {
+ 36 │   super.property;
+    ·   ─────
+ 37 │ };
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/global-code/super-prop.js:19:1]
+ 19 │ 
+ 20 │ super.property;
+    · ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -16450,6 +16998,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·     ──────
     ╰────
 
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/module-code/early-super.js:14:1]
+ 14 │ 
+ 15 │ super;
+    · ─────
+    ╰────
+
   × 'super' can only be used with function calls or in property accesses
     ╭─[language/module-code/early-super.js:14:1]
  14 │ 
@@ -17203,6 +17759,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                              ─
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/async-function/early-errors-declaration-body-contains-super-call.js:14:1]
+ 14 │ 
+ 15 │ async function foo (foo) { super() };
+    ·                            ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/statements/async-function/early-errors-declaration-body-contains-super-property.js:14:1]
+ 14 │ 
+ 15 │ async function foo (foo) { super.prop };
+    ·                            ─────
+    ╰────
+
   × Identifier `bar` has already been declared
     ╭─[language/statements/async-function/early-errors-declaration-formals-body-duplicate.js:14:1]
  14 │ 
@@ -17210,6 +17782,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                     ─┬─        ─┬─
     ·                      │          ╰── It can not be redeclared here
     ·                      ╰── `bar` has already been declared here
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/async-function/early-errors-declaration-formals-contains-super-call.js:14:1]
+ 14 │ 
+ 15 │ async function foo (foo = super()) { let bar; }
+    ·                           ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/statements/async-function/early-errors-declaration-formals-contains-super-property.js:14:1]
+ 14 │ 
+ 15 │ async function foo (foo = super.foo) { let bar; }
+    ·                           ─────
     ╰────
 
   × Keywords cannot contain escape characters
@@ -18140,6 +18728,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/definition/early-errors-class-method-body-contains-super-call.js:14:1]
+ 14 │ class Foo {
+ 15 │   async foo () { super() }
+    ·                  ───────
+ 16 │ }
+    ╰────
+
   × Expect token
     ╭─[language/statements/class/definition/early-errors-class-method-formals-body-duplicate.js:16:1]
  16 │ class Foo {
@@ -18147,6 +18744,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ─┬─
     ·                   ╰── Expect `(` here, but found `Identifier`
  18 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/definition/early-errors-class-method-formals-contains-super-call.js:14:1]
+ 14 │ class Foo {
+ 15 │   async foo(foo = super()) { }
+    ·                   ───────
+ 16 │ }
     ╰────
 
   × The keyword 'yield' is reserved
@@ -18855,6 +19461,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/arrow-fnc-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   x = () => super();
+    ·             ───────
+ 27 │ }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
  34 │ class C { static async *#gen() {
@@ -19217,12 +19832,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/comp-name-init-err-contains-super.js:26:1]
+ 26 │ class C {
+ 27 │   [x] = super();
+    ·         ───────
+ 28 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/equality-init-err-contains-arguments.js:32:1]
  32 │ class C {
  33 │   x = {} == arguments;
     ·             ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/equality-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   x = {} == super();
+    ·             ───────
+ 27 │ }
     ╰────
 
   × Automatic Semicolon Insertion
@@ -19493,6 +20126,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/literal-name-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   x = super();
+    ·       ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/nested-arrow-fnc-init-err-contains-arguments.js:33:1]
  33 │   x = () => {
@@ -19501,12 +20143,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │   }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-arrow-fnc-init-err-contains-super.js:26:1]
+ 26 │   x = () => {
+ 27 │     var t = () => super();
+    ·                   ───────
+ 28 │   }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/nested-comp-name-init-err-contains-arguments.js:32:1]
  32 │ class C {
  33 │   [x] = () => arguments;
     ·               ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-comp-name-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   [x] = () => super();
+    ·               ───────
+ 27 │ }
     ╰────
 
   × Automatic Semicolon Insertion
@@ -19537,12 +20197,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-literal-name-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   x = () => super();
+    ·             ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-arguments.js:33:1]
  33 │   #x = () => {
  34 │     var t = () => arguments;
     ·                   ─────────
  35 │     t();
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:26:1]
+ 26 │   #x = () => {
+ 27 │     var t = () => super();
+    ·                   ───────
+ 28 │     t();
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -19553,12 +20231,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-private-literal-name-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   #x = () => super();
+    ·              ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/nested-private-ternary-init-err-contains-arguments.js:31:1]
  31 │ class C {
  32 │   #x = () => false ? {} : arguments;
     ·                           ─────────
  33 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-private-ternary-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   #x = () => false ? {} : super();
+    ·                           ───────
+ 26 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -19569,12 +20265,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-private-typeof-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   #x = () => typeof super();
+    ·                     ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/nested-static-comp-name-init-err-contains-arguments.js:32:1]
  32 │ class C {
  33 │   static [x] = () => arguments;
     ·                      ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-static-comp-name-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   static [x] = () => super();
+    ·                      ───────
+ 27 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -19585,12 +20299,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-static-literal-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   static x = () => super();
+    ·                    ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/nested-static-private-init-err-contains-arguments.js:31:1]
  31 │ class C {
  32 │   static #x = () => arguments;
     ·                     ─────────
  33 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-static-private-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   static #x = () => super();
+    ·                     ───────
+ 26 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -19601,12 +20333,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-static-string-literal-name-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   static 'x' = () => super();
+    ·                      ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/nested-string-literal-name-init-err-contains-arguments.js:31:1]
  31 │ class C {
  32 │   'x' = () => arguments;
     ·               ─────────
  33 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-string-literal-name-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   'x' = () => super();
+    ·               ───────
+ 26 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -19617,12 +20367,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-ternary-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   x = () => false ? {} : super();
+    ·                          ───────
+ 26 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/nested-typeof-init-err-contains-arguments.js:31:1]
  31 │ class C {
  32 │   x = () => typeof arguments;
     ·                    ─────────
  33 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/nested-typeof-init-err-contains-super.js:24:1]
+ 24 │ class C {
+ 25 │   x = () => typeof super();
+    ·                    ───────
+ 26 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -19633,12 +20401,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/private-arrow-fnc-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   #x = () => super();
+    ·              ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/private-literal-name-init-err-contains-arguments.js:32:1]
  32 │ class C {
  33 │   #x = arguments;
     ·        ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/private-literal-name-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   #x = super();
+    ·        ───────
+ 27 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -19649,12 +20435,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/private-ternary-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   #x = false ? {} : super();
+    ·                     ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/private-typeof-init-err-contains-arguments.js:32:1]
  32 │ class C {
  33 │   #x = typeof arguments;
     ·               ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/private-typeof-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   #x = typeof super();
+    ·               ───────
+ 27 │ }
     ╰────
 
   × Private field 'x' must be declared in an enclosing class
@@ -19726,12 +20530,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/static-comp-name-init-err-contains-super.js:26:1]
+ 26 │ class C {
+ 27 │   static [x] = super();
+    ·                ───────
+ 28 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/static-literal-init-err-contains-arguments.js:32:1]
  32 │ class C {
  33 │   static x = arguments;
     ·              ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/static-literal-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   static x = super();
+    ·              ───────
+ 27 │ }
     ╰────
 
   × 'arguments' is not allowed in class field initializer
@@ -19742,6 +20564,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/static-private-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   static #x = super();
+    ·               ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/static-string-literal-name-init-err-contains-arguments.js:32:1]
  32 │ class C {
@@ -19750,12 +20581,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/static-string-literal-name-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   static 'x' = super();
+    ·                ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/string-literal-name-init-err-contains-arguments.js:32:1]
  32 │ class C {
  33 │   'x' = arguments;
     ·         ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/string-literal-name-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   'x' = super();
+    ·         ───────
+ 27 │ }
     ╰────
 
   × Empty parenthesized expression
@@ -20324,6 +21173,19 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·        ╰── it cannot be redeclared here
  25 │ }
     ╰────
+
+  × 'super' can only be referenced in a derived class.
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-ctor-super-no-heritage.js:24:1]
+ 24 │     
+ 25 │ ╭─▶ class C {
+ 26 │ │     constructor() {
+ 27 │ │╭▶     super();
+    · ││    ─────
+ 28 │ │     }
+ 29 │ ├─▶ }
+    · ╰──── class does not have `extends`
+    ╰────
+  help: either remove this super, or extend the class
 
   × Invalid Character ` `
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-field-identifier-invalid-ues-error.js:68:1]
@@ -20907,6 +21769,96 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:24:1]
+ 24 │   async * method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js:24:1]
+ 24 │   async method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js:24:1]
+ 24 │   * method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js:24:1]
+ 24 │   get method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js:24:1]
+ 24 │   method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js:24:1]
+ 24 │   async * #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js:24:1]
+ 24 │   async #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js:24:1]
+ 24 │   * #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js:24:1]
+ 24 │   #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js:24:1]
+ 24 │   set method(_) {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Constructor can't be an async method
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-ctor-async-gen.js:23:1]
  23 │ class C {
@@ -20970,6 +21922,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js:24:1]
+ 24 │   static async * method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes may not have a static property named prototype
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-async-meth-prototype.js:23:1]
  23 │ class C {
@@ -20977,6 +21938,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                ────┬────
     ·                    ╰── Classes may not have a static property named prototype
  25 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-async-meth-super.js:24:1]
+ 24 │   static async method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Classes may not have a static property named prototype
@@ -20988,6 +21958,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js:24:1]
+ 24 │   static * method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes may not have a static property named prototype
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-get-meth-prototype.js:23:1]
  23 │ class C {
@@ -20995,6 +21974,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·              ────┬────
     ·                  ╰── Classes may not have a static property named prototype
  25 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-get-meth-super.js:24:1]
+ 24 │   static get method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Classes may not have a static property named prototype
@@ -21006,6 +21994,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-meth-super.js:24:1]
+ 24 │   static method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes can't have an element named '#constructor'
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-constructor.js:23:1]
  23 │ class C {
@@ -21013,6 +22010,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ──────┬─────
     ·                        ╰── Classes can't have an element named '#constructor'
  25 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js:24:1]
+ 24 │   static async * #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Classes can't have an element named '#constructor'
@@ -21024,6 +22030,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js:24:1]
+ 24 │   static async #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes can't have an element named '#constructor'
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-gen-meth-constructor.js:23:1]
  23 │ class C {
@@ -21033,6 +22048,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js:24:1]
+ 24 │   static * #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
+    ╰────
+
   × Classes can't have an element named '#constructor'
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-meth-constructor.js:23:1]
  23 │ class C {
@@ -21040,6 +22064,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ──────┬─────
     ·                ╰── Classes can't have an element named '#constructor'
  25 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-meth-super.js:24:1]
+ 24 │   static #method() {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Classes can't have an element named '#constructor'
@@ -21058,6 +22091,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·              ────┬────
     ·                  ╰── Classes may not have a static property named prototype
  25 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-set-meth-super.js:24:1]
+ 24 │   static set method(_) {
+ 25 │       super();
+    ·       ───────
+ 26 │   }
     ╰────
 
   × Private field 'x' must be declared in an enclosing class
@@ -21355,12 +22397,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/ternary-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   x = false ? {} : super();
+    ·                    ───────
+ 27 │ }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/statements/class/elements/typeof-init-err-contains-arguments.js:32:1]
  32 │ class C {
  33 │   x = typeof arguments;
     ·              ─────────
  34 │ }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/elements/typeof-init-err-contains-super.js:25:1]
+ 25 │ class C {
+ 26 │   x = typeof super();
+    ·              ───────
+ 27 │ }
     ╰────
 
   × Rest element must be last element
@@ -21657,6 +22717,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·         ┬
     ·         ╰── It can not be redeclared here
  24 │   }
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/class/static-init-invalid-super-call.js:19:1]
+ 19 │   static {
+ 20 │     super();
+    ·     ───────
+ 21 │   }
     ╰────
 
   × Jump target cannot cross function boundary.
@@ -23924,6 +24993,24 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  54 │   
     ╰────
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/function/early-body-super-call.js:16:1]
+ 16 │ function f() {
+ 17 │   super();
+    ·   ───────
+ 18 │ }
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/statements/function/early-body-super-prop.js:16:1]
+ 16 │ function f() {
+ 17 │   super.x;
+    ·   ─────
+ 18 │ }
+    ╰────
+
   × Private identifier '#x' is not allowed outside class bodies
     ╭─[language/statements/function/early-errors/invalid-names-call-expression-bad-reference.js:39:1]
  39 │ 
@@ -23950,6 +25037,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  39 │ 
  40 │ function fn() { this.#x }
     ·                      ──
+    ╰────
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+    ╭─[language/statements/function/early-params-super-call.js:15:1]
+ 15 │ 
+ 16 │ function f(x = super()) {}
+    ·                ───────
+    ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/statements/function/early-params-super-prop.js:15:1]
+ 15 │ 
+ 16 │ function f(x = super.x) {}
+    ·                ─────
     ╰────
 
   × Cannot assign to 'eval' in strict mode

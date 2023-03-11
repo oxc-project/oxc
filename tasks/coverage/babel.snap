@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2053/2069 (99.23%)
 Positive Passed: 2053/2069 (99.23%)
-Negative Passed: 989/1502 (65.85%)
+Negative Passed: 992/1502 (66.05%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -92,7 +92,6 @@ Expect Syntax Error: "core/uncategorised/544/input.js"
 Expect Syntax Error: "core/uncategorised/550/input.js"
 Expect Syntax Error: "core/uncategorised/552/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
-Expect Syntax Error: "es2015/class-methods/direct-super-outside-constructor/input.js"
 Expect Syntax Error: "es2015/class-methods/disallow-duplicate-method-params/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-arguments-module/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-arguments-strict/input.js"
@@ -130,7 +129,6 @@ Expect Syntax Error: "es2015/uncategorised/.260/input.js"
 Expect Syntax Error: "es2015/uncategorised/.335/input.js"
 Expect Syntax Error: "es2015/uncategorised/.343/input.js"
 Expect Syntax Error: "es2015/uncategorised/109/input.js"
-Expect Syntax Error: "es2015/uncategorised/123/input.js"
 Expect Syntax Error: "es2015/uncategorised/166/input.js"
 Expect Syntax Error: "es2015/uncategorised/220/input.js"
 Expect Syntax Error: "es2015/uncategorised/227/input.js"
@@ -265,7 +263,6 @@ Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-identifier
 Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-literal-identifier/input.js"
 Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-literals/input.js"
 Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-setter-literal-identifier/input.js"
-Expect Syntax Error: "esprima/es2015-super-property/invalid_super_not_inside_function/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-binding-property/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-expression/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-arrow-default/input.js"
@@ -2184,6 +2181,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+   ╭─[es2015/class-methods/direct-super-outside-constructor/input.js:1:1]
+ 1 │ class A {
+ 2 │   x () {super()}
+   ·         ───────
+ 3 │ }
+   ╰────
+
   × Automatic Semicolon Insertion
    ╭─[es2015/class-methods/disallow-computed-async-identifier/input.js:1:1]
  1 │ class A {
@@ -2871,6 +2877,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ╰── A 'set' accessor must have exactly one parameter.
    ╰────
 
+  × 'super' can only be referenced in a derived class.
+   ╭─[es2015/uncategorised/123/input.js:1:1]
+ 1 │ "use strict"; (class A {constructor() { super() }})
+   ·                ─────────────────┬──────────────────
+   ·                                 ╰── class does not have `extends`
+   ╰────
+  help: either remove this super, or extend the class
+
   × Multiple constructor implementations are not allowed.
    ╭─[es2015/uncategorised/125/input.js:1:1]
  1 │ class A { constructor() {} 'constructor'() {} }
@@ -3392,6 +3406,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/uncategorised/342/input.js:1:1]
  1 │ x = { set method(val) v = val }
    ·                       ─
+   ╰────
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+   ╭─[es2015/uncategorised/344/input.js:1:1]
+ 1 │ super
+   · ─────
    ╰────
 
   × 'super' can only be used with function calls or in property accesses
@@ -6145,6 +6166,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
 
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+   ╭─[esprima/es2015-super-property/.invalid_super_id/input.js:1:1]
+ 1 │ class A {
+ 2 │     foo() { new super + 3 }
+   ·             ─────────
+ 3 │ }
+   ╰────
+
   × 'super' can only be used with function calls or in property accesses
    ╭─[esprima/es2015-super-property/.invalid_super_id/input.js:1:1]
  1 │ class A {
@@ -6154,6 +6184,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+   ╭─[esprima/es2015-super-property/invalid_super_not_inside_function/input.js:1:1]
+ 1 │ var x = super();
+   ·         ───────
+   ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[esprima/es2015-template-literals/.octal-literal/input.js:1:1]
