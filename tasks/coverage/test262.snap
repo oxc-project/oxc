@@ -1,6 +1,6 @@
 Test262 Summary:
-AST Parsed     : 43997/44009 (99.97%)
-Positive Passed: 43997/44009 (99.97%)
+AST Parsed     : 44022/44034 (99.97%)
+Positive Passed: 44022/44034 (99.97%)
 Negative Passed: 2626/3917 (67.04%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
