@@ -33,11 +33,24 @@ bitflags! {
     #[derive(Default)]
     pub struct SymbolFlags: u16 {
         const None                    = 0;
+        /// Variable (var) or parameter
+        const FunctionScopedVariable  = 1 << 0;
+        /// A block-scoped variable (let or const)
+        const BlockScopedVariable     = 1 << 1;
         const Class                   = 1 << 5;
 
-        const Value = Self::Class.bits;
+        const Variable = Self::FunctionScopedVariable.bits | Self::BlockScopedVariable.bits;
+        const Value = Self::Variable.bits | Self::Class.bits;
 
         const ClassExcludes = Self::Value.bits;
+
+        /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
+        /// same name, or any other value that is not a variable, e.g. ValueModule or Class
+        const FunctionScopedVariableExcludes = Self::Value.bits - Self::FunctionScopedVariable.bits;
+
+        /// Block-scoped declarations are not allowed to be re-declared
+        /// they can not merge with anything in the value space
+        const BlockScopedVariableExcludes = Self::Value.bits;
     }
 }
 

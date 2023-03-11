@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2056/2069 (99.37%)
 Positive Passed: 2056/2069 (99.37%)
-Negative Passed: 938/1502 (62.45%)
+Negative Passed: 965/1502 (64.25%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -26,30 +26,18 @@ Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict-function/i
 Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict/input.js"
 Expect Syntax Error: "core/opts/allowNewTargetOutsideFunction-false-2/input.js"
 Expect Syntax Error: "core/opts/allowNewTargetOutsideFunction-false/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-2nd-lvl-lex-nested/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-2nd-lvl-lex/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-2nd-lvl-var-nested/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-2nd-lvl-var/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-arr-destr/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-catch-dbl-let/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-func/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-let/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-obj-destr/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-var-arr-destr/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-var-obj-destr/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-class-const/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-class-func/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-class-let/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-class-var/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-const-const/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-func-gen/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-func-module-sloppy/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-func-module/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-func-var-sloppy/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-gen-func/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-let-let/input.js"
-Expect Syntax Error: "core/scope/dupl-bind-nested-let-var/input.js"
-Expect Syntax Error: "core/scope/for-var/input.js"
 Expect Syntax Error: "core/scope/undecl-export-as-default/input.js"
 Expect Syntax Error: "core/scope/undecl-export-as/input.js"
 Expect Syntax Error: "core/scope/undecl-export-block/input.js"
@@ -145,20 +133,10 @@ Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring10/inpu
 Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring11/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring12/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring13/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring14/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring15/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring16/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring17/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring18/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring19/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring2/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring3/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring4/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring5/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring6/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring7/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring8/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring9/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-function-declaration/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-variable-declaration/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export/input.js"
@@ -261,11 +239,6 @@ Expect Syntax Error: "es2017/async-functions/await-inside-parameters-of-nested-a
 Expect Syntax Error: "es2017/async-functions/await-inside-parameters-of-nested-function/input.js"
 Expect Syntax Error: "es2017/async-functions/await-inside-parameters/input.js"
 Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/11/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/12/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/13/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/14/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/15/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-rest/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-for-in/input.js"
@@ -897,6 +870,60 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   help: Try insert a semicolon here
 
   × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-2nd-lvl-lex-nested/input.js:2:1]
+ 2 │   let bar;
+ 3 │   var foo = 1;
+   ·       ─┬─
+   ·        ╰── `foo` has already been declared here
+ 4 │   let foo = 1;
+   ·       ─┬─
+   ·        ╰── It can not be redeclared here
+ 5 │ }
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-2nd-lvl-lex/input.js:1:1]
+ 1 │ let bar;
+ 2 │ var foo = 1;
+   ·     ─┬─
+   ·      ╰── `foo` has already been declared here
+ 3 │ let foo = 1;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-2nd-lvl-var-nested/input.js:2:1]
+ 2 │   let bar;
+ 3 │   let foo = 1;
+   ·       ─┬─
+   ·        ╰── `foo` has already been declared here
+ 4 │   var foo = 1;
+   ·       ─┬─
+   ·        ╰── It can not be redeclared here
+ 5 │ }
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-2nd-lvl-var/input.js:1:1]
+ 1 │ let bar;
+ 2 │ let foo = 1;
+   ·     ─┬─
+   ·      ╰── `foo` has already been declared here
+ 3 │ var foo = 1;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-catch-dbl-let/input.js:1:1]
+ 1 │ let foo; try {} catch (foo) {} let foo;
+   ·     ─┬─                            ─┬─
+   ·      │                              ╰── It can not be redeclared here
+   ·      ╰── `foo` has already been declared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
    ╭─[core/scope/dupl-bind-class-class/input.js:1:1]
  1 │ class foo {};
    ·       ─┬─
@@ -904,6 +931,75 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ class foo {};
    ·       ─┬─
    ·        ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-class-const/input.js:1:1]
+ 1 │ class foo {};
+   ·       ─┬─
+   ·        ╰── `foo` has already been declared here
+ 2 │ const foo = 1;
+   ·       ─┬─
+   ·        ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-class-let/input.js:1:1]
+ 1 │ class foo {};
+   ·       ─┬─
+   ·        ╰── `foo` has already been declared here
+ 2 │ let foo = 1;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-class-var/input.js:1:1]
+ 1 │ class foo {};
+   ·       ─┬─
+   ·        ╰── `foo` has already been declared here
+ 2 │ var foo;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-const-const/input.js:1:1]
+ 1 │ const foo=1, foo=2;
+   ·       ─┬─    ─┬─
+   ·        │      ╰── It can not be redeclared here
+   ·        ╰── `foo` has already been declared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[core/scope/dupl-bind-let-let/input.js:1:1]
+ 1 │ let foo, foo;
+   ·     ─┬─  ─┬─
+   ·      │    ╰── It can not be redeclared here
+   ·      ╰── `foo` has already been declared here
+   ╰────
+
+  × Identifier `"a"` has already been declared
+   ╭─[core/scope/dupl-bind-nested-let-var/input.js:1:1]
+ 1 │ {
+ 2 │   let a;
+   ·       ┬
+   ·       ╰── `a` has already been declared here
+ 3 │   { var a; }
+   ·         ┬
+   ·         ╰── It can not be redeclared here
+ 4 │ }
+   ╰────
+
+  × Identifier `"i"` has already been declared
+   ╭─[core/scope/for-var/input.js:1:1]
+ 1 │ for (let i = 0;;) {
+   ·          ┬
+   ·          ╰── `i` has already been declared here
+ 2 │     var i;
+   ·         ┬
+   ·         ╰── It can not be redeclared here
+ 3 │ }
    ╰────
 
   × A 'get' accessor must not have any formal parameters.
@@ -2291,6 +2387,112 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                         ╰── keyword cannot contain escape characters
    ╰────
 
+  × Identifier `"foo"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring14/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export const { foo2: foo } = bar;
+   ·                      ─┬─
+   ·                       ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `"foo2"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring15/input.js:1:1]
+ 1 │ export const { foo: foo2 } = bar;
+   ·                     ──┬─
+   ·                       ╰── `foo2` has already been declared here
+ 2 │ export const foo2 = 1;
+   ·              ──┬─
+   ·                ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring16/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export const [bar, ...foo] = baz;
+   ·                       ─┬─
+   ·                        ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `"bar"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring17/input.js:1:1]
+ 1 │ export const [foo, ...bar] = baz;
+   ·                       ─┬─
+   ·                        ╰── `bar` has already been declared here
+ 2 │ export const bar = 1;
+   ·              ─┬─
+   ·               ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring18/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export const [bar, [baz, ...foo]] = qux;
+   ·                             ─┬─
+   ·                              ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring19/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export const { bar: [baz, ...foo] } = qux;
+   ·                              ─┬─
+   ·                               ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring6/input.js:1:1]
+ 1 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── `foo` has already been declared here
+ 2 │ export const [foo] = bar2;
+   ·               ─┬─
+   ·                ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring7/input.js:1:1]
+ 1 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── `foo` has already been declared here
+ 2 │ export const { foo } = bar2;
+   ·                ─┬─
+   ·                 ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"Foo"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring8/input.js:1:1]
+ 1 │ export class Foo {};
+   ·              ─┬─
+   ·               ╰── `Foo` has already been declared here
+ 2 │ export const { Foo } = bar;
+   ·                ─┬─
+   ·                 ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"Foo"` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring9/input.js:1:1]
+ 1 │ export class Foo {};
+   ·              ─┬─
+   ·               ╰── `Foo` has already been declared here
+ 2 │ export const [Foo] = bar;
+   ·               ─┬─
+   ·                ╰── It can not be redeclared here
+   ╰────
+
   × Unexpected token
    ╭─[es2015/modules/export-default-variable-declaration/input.js:1:1]
  1 │ export default const Foo = () => {
@@ -3580,6 +3782,56 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·   ────────────┬───────────
    ·               ╰── await can only be used in conjunction with `for...of` statements
  3 │ }
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[es2018/object-rest-spread/11/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export const { bar, ...foo } = baz;
+   ·                        ─┬─
+   ·                         ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"bar"` has already been declared
+   ╭─[es2018/object-rest-spread/12/input.js:1:1]
+ 1 │ export const { foo, ...bar } = baz;
+   ·                        ─┬─
+   ·                         ╰── `bar` has already been declared here
+ 2 │ export const bar = 1;
+   ·              ─┬─
+   ·               ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[es2018/object-rest-spread/13/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export const { bar: { baz, ...foo } } = qux;
+   ·                               ─┬─
+   ·                                ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[es2018/object-rest-spread/14/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export const [bar, { baz, ...foo }] = qux;
+   ·                              ─┬─
+   ·                               ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `"foo"` has already been declared
+   ╭─[es2018/object-rest-spread/15/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── `foo` has already been declared here
+ 2 │ export const [bar, [{ baz, ...foo }]] = qux;
+   ·                               ─┬─
+   ·                                ╰── It can not be redeclared here
    ╰────
 
   × Invalid rest argument
