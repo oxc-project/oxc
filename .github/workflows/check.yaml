@@ -57,6 +57,15 @@ jobs:
       - name: Run clippy
         run: cargo lint
 
+  typos:
+    name: "spell check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: crate-ci/typos@master
+        with:
+          files: .
+
   check-dependencies:
     name: Check Dependencies
     runs-on: ubuntu-latest
