@@ -74,3 +74,22 @@ impl<'a> Binder for VariableDeclarator<'a> {
         }
     }
 }
+
+impl<'a> Binder for FormalParameters<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        let includes = SymbolFlags::FunctionScopedVariable;
+        let excludes = SymbolFlags::FunctionScopedVariableExcludes;
+        let is_signature = self.kind == FormalParameterKind::Signature;
+        for ident in self.bound_names() {
+            if !is_signature {
+                builder.declare_symbol(
+                    &ident.name,
+                    ident.span,
+                    builder.scope.current_scope_id,
+                    includes,
+                    excludes,
+                );
+            }
+        }
+    }
+}
