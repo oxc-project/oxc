@@ -175,6 +175,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 impl<'a> SemanticBuilder<'a> {
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         match kind {
+            AstKind::VariableDeclarator(decl) => decl.bind(self),
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }

@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44022/44034 (99.97%)
 Positive Passed: 44022/44034 (99.97%)
-Negative Passed: 2630/3917 (67.14%)
+Negative Passed: 2686/3917 (68.57%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -35,26 +35,16 @@ Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-let.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-declaration-attempt-to-redeclare-with-var-declaration-nested-in-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js"
@@ -74,40 +64,24 @@ Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-r
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-let.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-const.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-let.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-let.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-async-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-const.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-function.js"
 Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-let.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-2gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-5gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-8gs.js"
@@ -615,7 +589,6 @@ Expect Syntax Error: "language/module-code/early-dup-export-dflt-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-id-as.js"
 Expect Syntax Error: "language/module-code/early-dup-export-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
-Expect Syntax Error: "language/module-code/early-dup-lex.js"
 Expect Syntax Error: "language/module-code/early-dup-top-function-async-generator.js"
 Expect Syntax Error: "language/module-code/early-dup-top-function-async.js"
 Expect Syntax Error: "language/module-code/early-dup-top-function-generator.js"
@@ -626,7 +599,6 @@ Expect Syntax Error: "language/module-code/early-import-arguments.js"
 Expect Syntax Error: "language/module-code/early-import-as-arguments.js"
 Expect Syntax Error: "language/module-code/early-import-as-eval.js"
 Expect Syntax Error: "language/module-code/early-import-eval.js"
-Expect Syntax Error: "language/module-code/early-lex-and-var.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
 Expect Syntax Error: "language/module-code/export-default-asyncfunction-declaration-binding-exists.js"
 Expect Syntax Error: "language/module-code/export-default-asyncgenerator-declaration-binding-exists.js"
@@ -980,14 +952,11 @@ Expect Syntax Error: "language/statements/class/method/rest-param-strict-body.js
 Expect Syntax Error: "language/statements/class/static-gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/statements/class/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-lex-dup.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-lex-var.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-super-call.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/const/redeclaration-error-from-within-strict-mode-function-const.js"
 Expect Syntax Error: "language/statements/const/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/do-while/decl-fun.js"
 Expect Syntax Error: "language/statements/do-while/labelled-fn-stmt.js"
@@ -1038,10 +1007,6 @@ Expect Syntax Error: "language/statements/for-await-of/head-let-init.js"
 Expect Syntax Error: "language/statements/for-await-of/head-var-init.js"
 Expect Syntax Error: "language/statements/for-in/decl-fun.js"
 Expect Syntax Error: "language/statements/for-in/dstr/obj-id-identifier-yield-expr.js"
-Expect Syntax Error: "language/statements/for-in/head-const-bound-names-dup.js"
-Expect Syntax Error: "language/statements/for-in/head-const-bound-names-in-stmt.js"
-Expect Syntax Error: "language/statements/for-in/head-let-bound-names-dup.js"
-Expect Syntax Error: "language/statements/for-in/head-let-bound-names-in-stmt.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-lhs.js"
@@ -1069,11 +1034,7 @@ Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-obj-ptrn-init-err.js"
-Expect Syntax Error: "language/statements/for-of/head-const-bound-names-dup.js"
-Expect Syntax Error: "language/statements/for-of/head-const-bound-names-in-stmt.js"
 Expect Syntax Error: "language/statements/for-of/head-const-init.js"
-Expect Syntax Error: "language/statements/for-of/head-let-bound-names-dup.js"
-Expect Syntax Error: "language/statements/for-of/head-let-bound-names-in-stmt.js"
 Expect Syntax Error: "language/statements/for-of/head-let-init.js"
 Expect Syntax Error: "language/statements/for-of/head-var-init.js"
 Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-const.js"
@@ -1090,8 +1051,6 @@ Expect Syntax Error: "language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js
 Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for/head-const-bound-names-in-stmt.js"
-Expect Syntax Error: "language/statements/for/head-let-bound-names-in-stmt.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-expr.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-let.js"
@@ -1162,7 +1121,6 @@ Expect Syntax Error: "language/statements/labeled/decl-fun-strict.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/let/redeclaration-error-from-within-strict-mode-function.js"
 Expect Syntax Error: "language/statements/let/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T1.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T10.js"
@@ -1193,19 +1151,12 @@ Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-gene
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-class.js"
@@ -1224,19 +1175,12 @@ Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-var.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-const.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js"
 Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-let.js"
 Expect Syntax Error: "language/statements/try/catch-parameter-boundnames-restriction-arguments-negative-early.js"
 Expect Syntax Error: "language/statements/try/catch-parameter-boundnames-restriction-eval-negative-early.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-ary.js"
@@ -1725,6 +1669,243 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·         ┬          ┬
     ·         │          ╰── It can not be redeclared here
     ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ { class f {} const f = 0 }
+    ·         ┬          ┬
+    ·         │          ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ { class f {} let f }
+    ·         ┬        ┬
+    ·         │        ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-var.js:21:1]
+ 21 │ 
+ 22 │ { class f {} var f }
+    ·         ┬        ┬
+    ·         │        ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ { const f = 0; class f {} }
+    ·         ┬            ┬
+    ·         │            ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ { const f = 0; const f = 0 }
+    ·         ┬            ┬
+    ·         │            ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ { const f = 0; let f }
+    ·         ┬          ┬
+    ·         │          ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-var.js:21:1]
+ 21 │ 
+ 22 │ { const f = 0; var f }
+    ·         ┬          ┬
+    ·         │          ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-class.js:22:1]
+ 22 │ function x() {
+ 23 │   { class f {}; var f; }
+    ·           ┬         ┬
+    ·           │         ╰── It can not be redeclared here
+    ·           ╰── `f` has already been declared here
+ 24 │ }
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-const.js:22:1]
+ 22 │ function x() {
+ 23 │   { const f = 0; var f; }
+    ·           ┬          ┬
+    ·           │          ╰── It can not be redeclared here
+    ·           ╰── `f` has already been declared here
+ 24 │ }
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-let.js:22:1]
+ 22 │ function x() {
+ 23 │   { let f; var f; }
+    ·         ┬      ┬
+    ·         │      ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+ 24 │ }
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-class.js:37:1]
+ 37 │ 
+ 38 │ { { var f; } class f {}; }
+    ·         ┬          ┬
+    ·         │          ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-const.js:37:1]
+ 37 │ 
+ 38 │ { { var f; } const f = 0; }
+    ·         ┬          ┬
+    ·         │          ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-let.js:37:1]
+ 37 │ 
+ 38 │ { { var f; } let f; }
+    ·         ┬        ┬
+    ·         │        ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-class.js:37:1]
+ 37 │ 
+ 38 │ { class f {}; { var f; } }
+    ·         ┬           ┬
+    ·         │           ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-const.js:37:1]
+ 37 │ 
+ 38 │ { const f = 0; { var f; } }
+    ·         ┬            ┬
+    ·         │            ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-let.js:37:1]
+ 37 │ 
+ 38 │ { let f; { var f; } }
+    ·       ┬        ┬
+    ·       │        ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ { let f; class f {} }
+    ·       ┬        ┬
+    ·       │        ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ { let f; const f = 0 }
+    ·       ┬        ┬
+    ·       │        ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ { let f; let f }
+    ·       ┬      ┬
+    ·       │      ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-var.js:21:1]
+ 21 │ 
+ 22 │ { let f; var f }
+    ·       ┬      ┬
+    ·       │      ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ { var f; class f {} }
+    ·       ┬        ┬
+    ·       │        ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ { var f; const f = 0 }
+    ·       ┬        ┬
+    ·       │        ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ { var f; let f }
+    ·       ┬      ┬
+    ·       │      ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-class.js:21:1]
+ 21 │ 
+ 22 │ { class f {}; var f; }
+    ·         ┬         ┬
+    ·         │         ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-const.js:21:1]
+ 21 │ 
+ 22 │ { const f = 0; var f; }
+    ·         ┬          ┬
+    ·         │          ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-let.js:21:1]
+ 21 │ 
+ 22 │ { let f; var f; }
+    ·       ┬      ┬
+    ·       │      ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
     ╰────
 
   × Unterminated multiline comment
@@ -15496,6 +15677,17 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  18 │ }
     ╰────
 
+  × Identifier `"x"` has already been declared
+    ╭─[language/module-code/early-dup-lex.js:16:1]
+ 16 │ 
+ 17 │ let x;
+    ·     ┬
+    ·     ╰── `x` has already been declared here
+ 18 │ const x = 0;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+    ╰────
+
   × An export name cannot include a unicode lone surrogate
     ╭─[language/module-code/early-export-ill-formed-string.js:20:1]
  20 │ // 🌙 is '\uD83C\uDF19'
@@ -15521,6 +15713,17 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·         ────┬───
     ·             ╰── An export name cannot include a unicode lone surrogate
  24 │ 
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/module-code/early-lex-and-var.js:16:1]
+ 16 │ 
+ 17 │ let x;
+    ·     ┬
+    ·     ╰── `x` has already been declared here
+ 18 │ var x;
+    ·     ┬
+    ·     ╰── It can not be redeclared here
     ╰────
 
   × The keyword '"public"' is reserved
@@ -20627,6 +20830,30 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  22 │   }
     ╰────
 
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/class/static-init-invalid-lex-dup.js:20:1]
+ 20 │   static {
+ 21 │     let x;
+    ·         ┬
+    ·         ╰── `x` has already been declared here
+ 22 │     let x;
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 23 │   }
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/class/static-init-invalid-lex-var.js:21:1]
+ 21 │   static {
+ 22 │     let x;
+    ·         ┬
+    ·         ╰── `x` has already been declared here
+ 23 │     var x;
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 24 │   }
+    ╰────
+
   × Jump target cannot cross function boundary.
     ╭─[language/statements/class/static-init-invalid-undefined-break-target.js:21:1]
  21 │     x: while (false) {
@@ -20724,6 +20951,16 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·        ────┬───
     ·            ╰── Rest element must be last element
  31 │ 
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/const/redeclaration-error-from-within-strict-mode-function-const.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ (function() { 'use strict'; { const f = 1; var f; } })
+    ·                                     ┬          ┬
+    ·                                     │          ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+ 15 │ 
     ╰────
 
   × Missing initializer in const declaration
@@ -21880,11 +22117,53 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  34 │ ]) ;
     ╰────
 
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for-in/head-const-bound-names-dup.js:16:1]
+ 16 │ 
+ 17 │ for (const [x, x] in {}) {}
+    ·             ┬  ┬
+    ·             │  ╰── It can not be redeclared here
+    ·             ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for-in/head-const-bound-names-in-stmt.js:16:1]
+ 16 │ 
+ 17 │ for (const x in {}) {
+    ·            ┬
+    ·            ╰── `x` has already been declared here
+ 18 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 19 │ }
+    ╰────
+
   × `let` cannot be declared as a variable name inside of a `"const"` declaration
     ╭─[language/statements/for-in/head-const-bound-names-let.js:16:1]
  16 │ 
  17 │ for (const let in {}) {}
     ·            ───
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for-in/head-let-bound-names-dup.js:16:1]
+ 16 │ 
+ 17 │ for (let [x, x] in {}) {}
+    ·           ┬  ┬
+    ·           │  ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for-in/head-let-bound-names-in-stmt.js:16:1]
+ 16 │ 
+ 17 │ for (let x in {}) {
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 18 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 19 │ }
     ╰────
 
   × `let` cannot be declared as a variable name inside of a `"let"` declaration
@@ -22307,6 +22586,27 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·               ╰── keyword cannot contain escape characters
     ╰────
 
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for-of/head-const-bound-names-dup.js:16:1]
+ 16 │ 
+ 17 │ for (const [x, x] of []) {}
+    ·             ┬  ┬
+    ·             │  ╰── It can not be redeclared here
+    ·             ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for-of/head-const-bound-names-in-stmt.js:16:1]
+ 16 │ 
+ 17 │ for (const x of []) {
+    ·            ┬
+    ·            ╰── `x` has already been declared here
+ 18 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 19 │ }
+    ╰────
+
   × `let` cannot be declared as a variable name inside of a `"const"` declaration
     ╭─[language/statements/for-of/head-const-bound-names-let.js:16:1]
  16 │ 
@@ -22328,6 +22628,27 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  18 │ for (x of [], []) {}
     ·             ┬
     ·             ╰── Expect `)` here, but found `,`
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for-of/head-let-bound-names-dup.js:16:1]
+ 16 │ 
+ 17 │ for (let [x, x] of []) {}
+    ·           ┬  ┬
+    ·           │  ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for-of/head-let-bound-names-in-stmt.js:16:1]
+ 16 │ 
+ 17 │ for (let x of []) {
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 18 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 19 │ }
     ╰────
 
   × `let` cannot be declared as a variable name inside of a `"let"` declaration
@@ -22678,6 +22999,30 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·           ────┬───
     ·               ╰── Rest element must be last element
  46 │   
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for/head-const-bound-names-in-stmt.js:19:1]
+ 19 │ 
+ 20 │ for (const x = 0; false; ) {
+    ·            ┬
+    ·            ╰── `x` has already been declared here
+ 21 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 22 │ }
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/statements/for/head-let-bound-names-in-stmt.js:19:1]
+ 19 │ 
+ 20 │ for (let x; false; ) {
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 21 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 22 │ }
     ╰────
 
   × Lexical declaration cannot appear in a single-statement context
@@ -23481,6 +23826,16 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  31 │ 
     ╰────
 
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/let/redeclaration-error-from-within-strict-mode-function.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ (function() { 'use strict'; { let f; var f; } })
+    ·                                   ┬      ┬
+    ·                                   │      ╰── It can not be redeclared here
+    ·                                   ╰── `f` has already been declared here
+ 15 │ 
+    ╰────
+
   × The keyword '"let"' is reserved
     ╭─[language/statements/let/syntax/identifier-let-allowed-as-lefthandside-expression-strict.js:15:1]
  15 │ var o = { a: 1 };
@@ -23697,6 +24052,132 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·                            ┬                   ┬
     ·                            │                   ╰── It can not be redeclared here
     ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: class f {} default: const f = 0 }
+    ·                            ┬                   ┬
+    ·                            │                   ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: class f {} default: let f }
+    ·                            ┬                 ┬
+    ·                            │                 ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-var.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: class f {} default: var f }
+    ·                            ┬                 ┬
+    ·                            │                 ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: const f = 0; default: class f {} }
+    ·                            ┬                     ┬
+    ·                            │                     ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: const f = 0; default: const f = 0 }
+    ·                            ┬                     ┬
+    ·                            │                     ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: const f = 0; default: let f }
+    ·                            ┬                   ┬
+    ·                            │                   ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-var.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: const f = 0; default: var f }
+    ·                            ┬                   ┬
+    ·                            │                   ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: let f; default: class f {} }
+    ·                          ┬                 ┬
+    ·                          │                 ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: let f; default: const f = 0 }
+    ·                          ┬                 ┬
+    ·                          │                 ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: let f; default: let f }
+    ·                          ┬               ┬
+    ·                          │               ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-var.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: let f; default: var f }
+    ·                          ┬               ┬
+    ·                          │               ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: var f; default: class f {} }
+    ·                          ┬                 ┬
+    ·                          │                 ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: var f; default: const f = 0 }
+    ·                          ┬                 ┬
+    ·                          │                 ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: var f; default: let f }
+    ·                          ┬               ┬
+    ·                          │               ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
     ╰────
 
   × Expect token
