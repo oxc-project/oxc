@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2308/2338 (98.72%)
 Positive Passed: 2308/2338 (98.72%)
-Negative Passed: 578/2531 (22.84%)
+Negative Passed: 578/2532 (22.83%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -598,6 +598,7 @@ Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandProp
 Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesAssignmentErrorFromMissingIdentifier.ts"
 Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorFromNoneExistingIdentifier.ts"
 Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesFunctionArgument2.ts"
+Expect Syntax Error: "es6/spread/arraySpreadInCall.ts"
 Expect Syntax Error: "es6/spread/iteratorSpreadInArray10.ts"
 Expect Syntax Error: "es6/spread/iteratorSpreadInArray5.ts"
 Expect Syntax Error: "es6/spread/iteratorSpreadInArray6.ts"
