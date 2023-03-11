@@ -1,0 +1,111 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 53
+expression: no_self_compare
+---
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ if (x === x) { }
+   ·     ─     ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ if (x !== x) { }
+   ·     ─     ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ if (x > x) { }
+   ·     ─   ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ if ('x' > 'x') { }
+   ·     ───   ───
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ do {} while (x === x)
+   ·              ─     ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ x === x
+   · ─     ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ x !== x
+   · ─     ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ x == x
+   · ─    ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ x != x
+   · ─    ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ x > x
+   · ─   ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ x < x
+   · ─   ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ x >= x
+   · ─    ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ x <= x
+   · ─    ─
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ foo.bar().baz.qux >= foo.bar ().baz .qux
+   · ─────────────────    ───────────────────
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+
+  ⚠ eslint(no-self-compare): Disallow comparisons where both sides are exactly the same
+   ╭─[no_self_compare.tsx:1:1]
+ 1 │ class C { #field; foo() { this.#field === this.#field; } }
+   ·                           ───────────     ───────────
+   ╰────
+  help: If you are testing for NaN, you can use Number.isNaN function.
+

@@ -1,3 +1,12 @@
+use std::hash::{Hash, Hasher};
+
+use rustc_hash::FxHasher;
+
+pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
+    let mut hasher = FxHasher::default();
+    t.hash(&mut hasher);
+    hasher.finish()
+}
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use phf::{phf_set, Set};

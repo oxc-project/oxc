@@ -10,6 +10,7 @@ oxc_macros::declare_all_lint_rules! {
     no_array_constructor,
     no_empty,
     no_empty_pattern,
+    no_self_compare,
     no_mixed_operators,
     no_constant_binary_expression,
     deepscan::uninvoked_array_callback,
