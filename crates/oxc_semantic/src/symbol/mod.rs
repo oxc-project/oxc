@@ -39,11 +39,10 @@ bitflags! {
         const BlockScopedVariable     = 1 << 1;
         const Class                   = 1 << 5;
         const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
+        const Function                = 1 << 7;
 
         const Variable = Self::FunctionScopedVariable.bits | Self::BlockScopedVariable.bits;
-        const Value = Self::Variable.bits | Self::Class.bits;
-
-        const ClassExcludes = Self::Value.bits;
+        const Value = Self::Variable.bits | Self::Function.bits | Self::Class.bits;
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
         /// same name, or any other value that is not a variable, e.g. ValueModule or Class
@@ -52,6 +51,9 @@ bitflags! {
         /// Block-scoped declarations are not allowed to be re-declared
         /// they can not merge with anything in the value space
         const BlockScopedVariableExcludes = Self::Value.bits;
+
+        const FunctionExcludes = Self::Value.bits - (Self::Function.bits | Self::Class.bits);
+        const ClassExcludes = Self::Value.bits - Self::Function.bits;
     }
 }
 

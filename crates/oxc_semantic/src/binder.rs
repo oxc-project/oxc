@@ -2,31 +2,16 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::syntax_directed_operations::BoundNames;
+use oxc_ast::{syntax_directed_operations::BoundNames, AstKind};
 
 use crate::{
-    scope::{ScopeFlags, ScopeId},
+    scope::{Scope, ScopeFlags, ScopeId},
     symbol::SymbolFlags,
     SemanticBuilder,
 };
 
 pub trait Binder {
     fn bind(&self, _builder: &mut SemanticBuilder) {}
-}
-
-impl<'a> Binder for Class<'a> {
-    fn bind(&self, builder: &mut SemanticBuilder) {
-        if let Some(ident) = self.id.as_ref()
-            && self.r#type == ClassType::ClassDeclaration && !self.modifiers.contains(ModifierKind::Declare) {
-            builder.declare_symbol(
-                &ident.name,
-                ident.span,
-                builder.scope.current_scope_id,
-                SymbolFlags::Class ,
-                SymbolFlags::ClassExcludes,
-            );
-        }
-    }
 }
 
 impl<'a> Binder for VariableDeclarator<'a> {
@@ -71,6 +56,83 @@ impl<'a> Binder for VariableDeclarator<'a> {
                     }
                 }
             }
+        }
+    }
+}
+
+impl<'a> Binder for Class<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        if let Some(ident) = &self.id
+            && self.r#type == ClassType::ClassDeclaration && !self.modifiers.contains(ModifierKind::Declare) {
+            builder.declare_symbol(
+                &ident.name,
+                ident.span,
+                builder.scope.current_scope_id,
+                SymbolFlags::Class,
+                SymbolFlags::ClassExcludes,
+            );
+        }
+    }
+}
+
+// It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
+// unless the source text matched by this production is not strict mode code
+// and the duplicate entries are only bound by FunctionDeclarations.
+// https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
+#[must_use]
+fn function_as_var(scope: &Scope, is_script: bool) -> bool {
+    scope.flags.intersects(ScopeFlags::Function)
+        || (is_script && scope.flags.intersects(ScopeFlags::Top))
+}
+
+impl<'a> Binder for Function<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        if let Some(ident) = &self.id {
+            let current_scope_id = builder.scope.current_scope_id;
+            let scope = builder.scope.current_scope();
+            if !scope.strict_mode && matches!(builder.parent_kind(), AstKind::IfStatement(_)) {
+                // Do not declare in if single statements,
+                // if (false) function f() {} else function g() { }
+            } else if matches!(self.r#type, FunctionType::FunctionDeclaration) {
+                // the visitor is already inside the function scope,
+                // retrieve the parent scope for the function id to bind to.
+                let parent_scope_id =
+                    builder.scope.scopes[*current_scope_id].parent().unwrap().into();
+                let parent_scope: &Scope = &builder.scope.scopes[parent_scope_id];
+
+                let (includes, excludes) =
+                    if parent_scope.strict_mode || self.r#async || self.generator {
+                        if function_as_var(parent_scope, builder.source_type.is_script()) {
+                            (
+                                SymbolFlags::FunctionScopedVariable | SymbolFlags::Function,
+                                SymbolFlags::FunctionScopedVariableExcludes,
+                            )
+                        } else {
+                            (
+                                SymbolFlags::BlockScopedVariable | SymbolFlags::Function,
+                                SymbolFlags::BlockScopedVariableExcludes,
+                            )
+                        }
+                    } else if function_as_var(parent_scope, builder.source_type.is_script()) {
+                        (
+                            SymbolFlags::Function,
+                            SymbolFlags::FunctionScopedVariableExcludes - SymbolFlags::Function,
+                        )
+                    } else {
+                        (
+                            SymbolFlags::Function,
+                            SymbolFlags::BlockScopedVariableExcludes - SymbolFlags::Function,
+                        )
+                    };
+
+                builder.declare_symbol(
+                    &ident.name,
+                    ident.span,
+                    parent_scope_id,
+                    includes,
+                    excludes,
+                );
+            };
         }
     }
 }

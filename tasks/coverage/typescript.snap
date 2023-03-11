@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 589/2532 (23.26%)
+Negative Passed: 590/2532 (23.30%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -882,7 +882,6 @@ Expect Syntax Error: "externalModules/verbatimModuleSyntaxInternalImportEquals.t
 Expect Syntax Error: "fixSignatureCaching.ts"
 Expect Syntax Error: "functions/functionImplementationErrors.ts"
 Expect Syntax Error: "functions/functionImplementations.ts"
-Expect Syntax Error: "functions/functionNameConflicts.ts"
 Expect Syntax Error: "functions/functionOverloadCompatibilityWithVoid01.ts"
 Expect Syntax Error: "functions/functionOverloadErrors.ts"
 Expect Syntax Error: "functions/functionWithUseStrictAndSimpleParameterList_es2016.ts"
@@ -6052,6 +6051,54 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ·                ┬
     ·                ╰── Expect `=` here, but found `;`
  15 │ }
+    ╰────
+
+  × Identifier `"fn1"` has already been declared
+   ╭─[functions/functionNameConflicts.ts:4:1]
+ 4 │ module M {
+ 5 │     function fn1() { }
+   ·              ─┬─
+   ·               ╰── `fn1` has already been declared here
+ 6 │     var fn1;
+   ·         ─┬─
+   ·          ╰── It can not be redeclared here
+ 7 │ 
+   ╰────
+
+  × Identifier `"fn2"` has already been declared
+    ╭─[functions/functionNameConflicts.ts:7:1]
+  7 │ 
+  8 │     var fn2;
+    ·         ─┬─
+    ·          ╰── `fn2` has already been declared here
+  9 │     function fn2() { }
+    ·              ─┬─
+    ·               ╰── It can not be redeclared here
+ 10 │ }
+    ╰────
+
+  × Identifier `"fn3"` has already been declared
+    ╭─[functions/functionNameConflicts.ts:11:1]
+ 11 │ 
+ 12 │ function fn3() { }
+    ·          ─┬─
+    ·           ╰── `fn3` has already been declared here
+ 13 │ var fn3;
+    ·     ─┬─
+    ·      ╰── It can not be redeclared here
+ 14 │ 
+    ╰────
+
+  × Identifier `"fn5"` has already been declared
+    ╭─[functions/functionNameConflicts.ts:18:1]
+ 18 │ 
+ 19 │     function fn5() { }
+    ·              ─┬─
+    ·               ╰── `fn5` has already been declared here
+ 20 │     var fn5;
+    ·         ─┬─
+    ·          ╰── It can not be redeclared here
+ 21 │ }
     ╰────
 
   × Rest element must be last element

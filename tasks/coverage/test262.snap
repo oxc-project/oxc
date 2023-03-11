@@ -1,7 +1,7 @@
 Test262 Summary:
-AST Parsed     : 44022/44034 (99.97%)
-Positive Passed: 44022/44034 (99.97%)
-Negative Passed: 2696/3917 (68.83%)
+AST Parsed     : 44015/44034 (99.96%)
+Positive Passed: 44015/44034 (99.96%)
+Negative Passed: 2821/3917 (72.02%)
 Expect Syntax Error: "annexB/language/statements/for-in/const-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/let-initializer.js"
 Expect Syntax Error: "annexB/language/statements/for-in/strict-initializer.js"
@@ -17,71 +17,6 @@ Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-state
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-while-expression-statement.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-const.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-var.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-const.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-var.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-declaration-attempt-to-redeclare-with-var-declaration-nested-in-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-const.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-var.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-const.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-var.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-async-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-async-generator.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-function.js"
-Expect Syntax Error: "language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-generator.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-2gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-5gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-8gs.js"
@@ -577,15 +512,10 @@ Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-8-strict-explicit-pragma.js"
 Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-9-strict-explicit-pragma.js"
 Expect Syntax Error: "language/module-code/early-dup-export-as-star-as.js"
-Expect Syntax Error: "language/module-code/early-dup-export-decl.js"
 Expect Syntax Error: "language/module-code/early-dup-export-dflt-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-id-as.js"
 Expect Syntax Error: "language/module-code/early-dup-export-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
-Expect Syntax Error: "language/module-code/early-dup-top-function-async-generator.js"
-Expect Syntax Error: "language/module-code/early-dup-top-function-async.js"
-Expect Syntax Error: "language/module-code/early-dup-top-function-generator.js"
-Expect Syntax Error: "language/module-code/early-dup-top-function.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
 Expect Syntax Error: "language/module-code/early-import-arguments.js"
@@ -593,10 +523,6 @@ Expect Syntax Error: "language/module-code/early-import-as-arguments.js"
 Expect Syntax Error: "language/module-code/early-import-as-eval.js"
 Expect Syntax Error: "language/module-code/early-import-eval.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
-Expect Syntax Error: "language/module-code/export-default-asyncfunction-declaration-binding-exists.js"
-Expect Syntax Error: "language/module-code/export-default-asyncgenerator-declaration-binding-exists.js"
-Expect Syntax Error: "language/module-code/export-default-function-declaration-binding-exists.js"
-Expect Syntax Error: "language/module-code/export-default-generator-declaration-binding-exists.js"
 Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-arrow-function.js"
 Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-block-stmt-list.js"
 Expect Syntax Error: "language/module-code/parse-err-decl-pos-export-block-stmt.js"
@@ -683,8 +609,6 @@ Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-try-catch.j
 Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-try-finally.js"
 Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-try-try.js"
 Expect Syntax Error: "language/module-code/parse-err-decl-pos-import-while.js"
-Expect Syntax Error: "language/module-code/parse-err-hoist-lex-fun.js"
-Expect Syntax Error: "language/module-code/parse-err-hoist-lex-gen.js"
 Expect Syntax Error: "language/module-code/parse-err-return.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-body.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js"
@@ -1125,60 +1049,11 @@ Expect Syntax Error: "language/statements/return/S12.9_A1_T7.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T8.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T9.js"
 Expect Syntax Error: "language/statements/switch/S12.11_A2_T1.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-const.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-var.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-const.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-var.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-const.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-var.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-class.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-const.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-let.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-var.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js"
-Expect Syntax Error: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js"
 Expect Syntax Error: "language/statements/try/catch-parameter-boundnames-restriction-arguments-negative-early.js"
 Expect Syntax Error: "language/statements/try/catch-parameter-boundnames-restriction-eval-negative-early.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/try/early-catch-function.js"
 Expect Syntax Error: "language/statements/try/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/variable/12.2.1-1gs.js"
 Expect Syntax Error: "language/statements/variable/12.2.1-4gs.js"
@@ -1223,6 +1098,30 @@ Expect Syntax Error: "language/statements/with/decl-fun.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-1.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-2.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl.js"
+Expect to Parse: "language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js"
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js:8:1]
+  8 │ ---*/
+  9 │ function f() {} var f;
+    ·          ┬          ┬
+    ·          │          ╰── It can not be redeclared here
+    ·          ╰── `f` has already been declared here
+ 10 │ 
+    ╰────
+Expect to Parse: "language/destructuring/binding/syntax/recursive-array-and-object-patterns.js"
+
+  × Identifier `"fn4"` has already been declared
+    ╭─[language/destructuring/binding/syntax/recursive-array-and-object-patterns.js:22:1]
+ 22 │ 
+ 23 │ function fn4([], [[]], [[[[[[[[[x]]]]]]]]]) {}
+    ·          ─┬─
+    ·           ╰── `fn4` has already been declared here
+ 24 │ 
+ 25 │ function fn4([[x, y, ...z]]) {}
+    ·          ─┬─
+    ·           ╰── It can not be redeclared here
+    ╰────
 Expect to Parse: "language/expressions/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js"
 
   × Unexpected token
@@ -1292,6 +1191,17 @@ Expect to Parse: "language/expressions/class/decorator/syntax/valid/decorator-pa
     ·         ─
  54 │ @(_)
     ╰────
+Expect to Parse: "language/global-code/decl-func-dup.js"
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/global-code/decl-func-dup.js:8:1]
+  8 │ ---*/
+  9 │ function f() { return 1; } function f() { return 2; }
+    ·          ┬                          ┬
+    ·          │                          ╰── It can not be redeclared here
+    ·          ╰── `f` has already been declared here
+ 10 │ 
+    ╰────
 Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js"
 
   × Unexpected token
@@ -1324,6 +1234,83 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  51 │ 
  52 │ @(yield) class C {}
     ·   ─────
+    ╰────
+Expect to Parse: "language/statements/function/S13_A6_T1.js"
+
+  × Identifier `"__func"` has already been declared
+    ╭─[language/statements/function/S13_A6_T1.js:11:1]
+ 11 │ 
+ 12 │ function __func(){return 1};
+    ·          ───┬──
+    ·             ╰── `__func` has already been declared here
+ 13 │  
+ 14 │ var __store__func = __func;
+ 15 │  
+ 16 │ var __1 = __func();
+ 17 │  
+ 18 │  function __func(){return 'A'};
+    ·           ───┬──
+    ·              ╰── It can not be redeclared here
+ 19 │  
+    ╰────
+Expect to Parse: "language/statements/function/S13_A6_T2.js"
+
+  × Identifier `"__func"` has already been declared
+    ╭─[language/statements/function/S13_A6_T2.js:24:1]
+ 24 │ 
+ 25 │ function __func(){return "FIRST";};
+    ·          ───┬──
+    ·             ╰── `__func` has already been declared here
+ 26 │ 
+ 27 │ //////////////////////////////////////////////////////////////////////////////
+ 28 │ //CHECK#2
+ 29 │ __result = __func();
+ 30 │ if (__result !== "SECOND") {
+ 31 │     throw new Test262Error('#2: __result === "SECOND". Actual: __result ==='+__result);
+ 32 │ }
+ 33 │ //
+ 34 │ //////////////////////////////////////////////////////////////////////////////
+ 35 │ 
+ 36 │ function __func(){return "SECOND";};
+    ·          ───┬──
+    ·             ╰── It can not be redeclared here
+    ╰────
+Expect to Parse: "language/statements/function/S14_A5_T1.js"
+
+  × Identifier `"__func"` has already been declared
+    ╭─[language/statements/function/S14_A5_T1.js:21:1]
+ 21 │ 
+ 22 │ function __func(){return "ascii"};
+    ·          ───┬──
+    ·             ╰── `__func` has already been declared here
+ 23 │ function \u005f\u005f\u0066\u0075\u006e\u0063(){return "unicode"};//__func in unicode
+    ·          ──────────────────┬─────────────────
+    ·                            ╰── It can not be redeclared here
+ 24 │ function __\u0066\u0075\u006e\u0063(){return "both"};//__func in unicode
+    ╰────
+
+  × Identifier `"__func"` has already been declared
+    ╭─[language/statements/function/S14_A5_T1.js:21:1]
+ 21 │ 
+ 22 │ function __func(){return "ascii"};
+    ·          ───┬──
+    ·             ╰── `__func` has already been declared here
+ 23 │ function \u005f\u005f\u0066\u0075\u006e\u0063(){return "unicode"};//__func in unicode
+ 24 │ function __\u0066\u0075\u006e\u0063(){return "both"};//__func in unicode
+    ·          ─────────────┬────────────
+    ·                       ╰── It can not be redeclared here
+    ╰────
+Expect to Parse: "language/statements/function/S14_A5_T2.js"
+
+  × Identifier `"__func"` has already been declared
+    ╭─[language/statements/function/S14_A5_T2.js:21:1]
+ 21 │ 
+ 22 │ function __func(){return "ascii"};
+    ·          ───┬──
+    ·             ╰── `__func` has already been declared here
+ 23 │ function \u005f\u005f\u0066\u0075\u006e\u0063(){return "unicode"};//__func in unicode
+    ·          ──────────────────┬─────────────────
+    ·                            ╰── It can not be redeclared here
     ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -1653,6 +1640,168 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ { async function f() {} async function f() {} }
+    ·                  ┬                     ┬
+    ·                  │                     ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ { async function f() {} async function* f() {} }
+    ·                  ┬                      ┬
+    ·                  │                      ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-class.js:22:1]
+ 22 │ 
+ 23 │ { async function f() {} class f {} }
+    ·                  ┬            ┬
+    ·                  │            ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-const.js:22:1]
+ 22 │ 
+ 23 │ { async function f() {} const f = 0 }
+    ·                  ┬            ┬
+    ·                  │            ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-function.js:22:1]
+ 22 │ 
+ 23 │ { async function f() {} function f() {} }
+    ·                  ┬               ┬
+    ·                  │               ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ { async function f() {} function* f() {} }
+    ·                  ┬                ┬
+    ·                  │                ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-let.js:22:1]
+ 22 │ 
+ 23 │ { async function f() {} let f }
+    ·                  ┬          ┬
+    ·                  │          ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-var.js:22:1]
+ 22 │ 
+ 23 │ { async function f() {} var f }
+    ·                  ┬          ┬
+    ·                  │          ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ { async function* f() {} async function f() {} }
+    ·                   ┬                     ┬
+    ·                   │                     ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ { async function* f() {} async function* f() {} }
+    ·                   ┬                      ┬
+    ·                   │                      ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-class.js:22:1]
+ 22 │ 
+ 23 │ { async function* f() {} class f {} }
+    ·                   ┬            ┬
+    ·                   │            ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-const.js:22:1]
+ 22 │ 
+ 23 │ { async function* f() {} const f = 0 }
+    ·                   ┬            ┬
+    ·                   │            ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-function.js:22:1]
+ 22 │ 
+ 23 │ { async function* f() {} function f() {} }
+    ·                   ┬               ┬
+    ·                   │               ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ { async function* f() {} function* f() {} }
+    ·                   ┬                ┬
+    ·                   │                ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-let.js:22:1]
+ 22 │ 
+ 23 │ { async function* f() {} let f }
+    ·                   ┬          ┬
+    ·                   │          ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-var.js:22:1]
+ 22 │ 
+ 23 │ { async function* f() {} var f }
+    ·                   ┬          ┬
+    ·                   │          ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ { class f {} async function f() {} }
+    ·         ┬                   ┬
+    ·         │                   ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ { class f {} async function* f() {} }
+    ·         ┬                    ┬
+    ·         │                    ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-class.js:21:1]
  21 │ 
  22 │ { class f {} class f {} }
@@ -1667,6 +1816,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  22 │ { class f {} const f = 0 }
     ·         ┬          ┬
     ·         │          ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ { class f {} function f() {} }
+    ·         ┬             ┬
+    ·         │             ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ { class f {} function* f() {} }
+    ·         ┬              ┬
+    ·         │              ╰── It can not be redeclared here
     ·         ╰── `f` has already been declared here
     ╰────
 
@@ -1689,6 +1856,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ { const f = 0; async function f() {} }
+    ·         ┬                     ┬
+    ·         │                     ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ { const f = 0; async function* f() {} }
+    ·         ┬                      ┬
+    ·         │                      ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-class.js:21:1]
  21 │ 
  22 │ { const f = 0; class f {} }
@@ -1703,6 +1888,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  22 │ { const f = 0; const f = 0 }
     ·         ┬            ┬
     ·         │            ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ { const f = 0; function f() {} }
+    ·         ┬               ┬
+    ·         │               ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ { const f = 0; function* f() {} }
+    ·         ┬                ┬
+    ·         │                ╰── It can not be redeclared here
     ·         ╰── `f` has already been declared here
     ╰────
 
@@ -1722,6 +1925,26 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·         ┬          ┬
     ·         │          ╰── It can not be redeclared here
     ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-async-function.js:23:1]
+ 23 │ function x() {
+ 24 │   { async function f() {}; var f; }
+    ·                    ┬           ┬
+    ·                    │           ╰── It can not be redeclared here
+    ·                    ╰── `f` has already been declared here
+ 25 │ }
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-async-generator.js:23:1]
+ 23 │ function x() {
+ 24 │   { async function* f() {}; var f; }
+    ·                     ┬           ┬
+    ·                     │           ╰── It can not be redeclared here
+    ·                     ╰── `f` has already been declared here
+ 25 │ }
     ╰────
 
   × Identifier `"f"` has already been declared
@@ -1745,6 +1968,26 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-function.js:22:1]
+ 22 │ function x() {
+ 23 │   { function f() {}; var f; }
+    ·              ┬           ┬
+    ·              │           ╰── It can not be redeclared here
+    ·              ╰── `f` has already been declared here
+ 24 │ }
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-generator.js:23:1]
+ 23 │ function x() {
+ 24 │   { function* f() {}; var f; }
+    ·               ┬           ┬
+    ·               │           ╰── It can not be redeclared here
+    ·               ╰── `f` has already been declared here
+ 25 │ }
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/block-scope/syntax/redeclaration/fn-scope-var-name-redeclaration-attempt-with-let.js:22:1]
  22 │ function x() {
  23 │   { let f; var f; }
@@ -1752,6 +1995,183 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·         │      ╰── It can not be redeclared here
     ·         ╰── `f` has already been declared here
  24 │ }
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/function-declaration-attempt-to-redeclare-with-var-declaration-nested-in-function.js:23:1]
+ 23 │         // A lexically declared function declaration.
+ 24 │         function f() {}
+    ·                  ┬
+    ·                  ╰── `f` has already been declared here
+ 25 │ 
+ 26 │         // An inner block-statement with a variable-declared name.
+ 27 │         {
+ 28 │             var f;
+    ·                 ┬
+    ·                 ╰── It can not be redeclared here
+ 29 │         }
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ { function f() {} async function f() {} }
+    ·            ┬                     ┬
+    ·            │                     ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ { function f() {} async function* f() {} }
+    ·            ┬                      ┬
+    ·            │                      ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ { function f() {} class f {} }
+    ·            ┬            ┬
+    ·            │            ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ { function f() {} const f = 0 }
+    ·            ┬            ┬
+    ·            │            ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ { function f() {} function f() {} }
+    ·            ┬               ┬
+    ·            │               ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ { function f() {} function* f() {} }
+    ·            ┬                ┬
+    ·            │                ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ { function f() {} let f }
+    ·            ┬          ┬
+    ·            │          ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/function-name-redeclaration-attempt-with-var.js:21:1]
+ 21 │ 
+ 22 │ { function f() {} var f }
+    ·            ┬          ┬
+    ·            │          ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ { function* f() {} async function f() {} }
+    ·             ┬                     ┬
+    ·             │                     ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ { function* f() {} async function* f() {} }
+    ·             ┬                      ┬
+    ·             │                      ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-class.js:22:1]
+ 22 │ 
+ 23 │ { function* f() {} class f {} }
+    ·             ┬            ┬
+    ·             │            ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-const.js:22:1]
+ 22 │ 
+ 23 │ { function* f() {} const f = 0 }
+    ·             ┬            ┬
+    ·             │            ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-function.js:22:1]
+ 22 │ 
+ 23 │ { function* f() {} function f() {} }
+    ·             ┬               ┬
+    ·             │               ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ { function* f() {} function* f() {} }
+    ·             ┬                ┬
+    ·             │                ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-let.js:22:1]
+ 22 │ 
+ 23 │ { function* f() {} let f }
+    ·             ┬          ┬
+    ·             │          ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/generator-name-redeclaration-attempt-with-var.js:22:1]
+ 22 │ 
+ 23 │ { function* f() {} var f }
+    ·             ┬          ┬
+    ·             │          ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-function.js:38:1]
+ 38 │ 
+ 39 │ { { var f; } async function f() {}; }
+    ·         ┬                   ┬
+    ·         │                   ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-generator.js:38:1]
+ 38 │ 
+ 39 │ { { var f; } async function* f() {}; }
+    ·         ┬                    ┬
+    ·         │                    ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
     ╰────
 
   × Identifier `"f"` has already been declared
@@ -1773,12 +2193,48 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-function.js:37:1]
+ 37 │ 
+ 38 │ { { var f; } function f() {} }
+    ·         ┬             ┬
+    ·         │             ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-generator.js:38:1]
+ 38 │ 
+ 39 │ { { var f; } function* f() {}; }
+    ·         ┬              ┬
+    ·         │              ╰── It can not be redeclared here
+    ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-let.js:37:1]
  37 │ 
  38 │ { { var f; } let f; }
     ·         ┬        ┬
     ·         │        ╰── It can not be redeclared here
     ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-async-function.js:38:1]
+ 38 │ 
+ 39 │ { async function f() {}; { var f; } }
+    ·                  ┬             ┬
+    ·                  │             ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-async-generator.js:38:1]
+ 38 │ 
+ 39 │ { async function* f() {}; { var f; } }
+    ·                   ┬             ┬
+    ·                   │             ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
     ╰────
 
   × Identifier `"f"` has already been declared
@@ -1800,11 +2256,47 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-function.js:37:1]
+ 37 │ 
+ 38 │ { function f() {} { var f; } }
+    ·            ┬            ┬
+    ·            │            ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-generator.js:38:1]
+ 38 │ 
+ 39 │ { function* f() {}; { var f; } }
+    ·             ┬             ┬
+    ·             │             ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/block-scope/syntax/redeclaration/inner-block-var-redeclaration-attempt-after-let.js:37:1]
  37 │ 
  38 │ { let f; { var f; } }
     ·       ┬        ┬
     ·       │        ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ { let f; async function f() {} }
+    ·       ┬                 ┬
+    ·       │                 ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ { let f; async function* f() {} }
+    ·       ┬                  ┬
+    ·       │                  ╰── It can not be redeclared here
     ·       ╰── `f` has already been declared here
     ╰────
 
@@ -1827,6 +2319,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ { let f; function f() {} }
+    ·       ┬           ┬
+    ·       │           ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ { let f; function* f() {} }
+    ·       ┬            ┬
+    ·       │            ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-let.js:21:1]
  21 │ 
  22 │ { let f; let f }
@@ -1841,6 +2351,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  22 │ { let f; var f }
     ·       ┬      ┬
     ·       │      ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ { var f; async function f() {} }
+    ·       ┬                 ┬
+    ·       │                 ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ { var f; async function* f() {} }
+    ·       ┬                  ┬
+    ·       │                  ╰── It can not be redeclared here
     ·       ╰── `f` has already been declared here
     ╰────
 
@@ -1863,12 +2391,48 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ { var f; function f() {} }
+    ·       ┬           ┬
+    ·       │           ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ { var f; function* f() {} }
+    ·       ┬            ┬
+    ·       │            ╰── It can not be redeclared here
+    ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-let.js:21:1]
  21 │ 
  22 │ { var f; let f }
     ·       ┬      ┬
     ·       │      ╰── It can not be redeclared here
     ·       ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-async-function.js:22:1]
+ 22 │ 
+ 23 │ { async function f() {}; var f; }
+    ·                  ┬           ┬
+    ·                  │           ╰── It can not be redeclared here
+    ·                  ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-async-generator.js:22:1]
+ 22 │ 
+ 23 │ { async function* f() {}; var f; }
+    ·                   ┬           ┬
+    ·                   │           ╰── It can not be redeclared here
+    ·                   ╰── `f` has already been declared here
     ╰────
 
   × Identifier `"f"` has already been declared
@@ -1887,6 +2451,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·         ┬          ┬
     ·         │          ╰── It can not be redeclared here
     ·         ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-function.js:21:1]
+ 21 │ 
+ 22 │ { function f() {}; var f; }
+    ·            ┬           ┬
+    ·            │           ╰── It can not be redeclared here
+    ·            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/block-scope/syntax/redeclaration/var-redeclaration-attempt-after-generator.js:22:1]
+ 22 │ 
+ 23 │ { function* f() {}; var f; }
+    ·             ┬           ┬
+    ·             │           ╰── It can not be redeclared here
+    ·             ╰── `f` has already been declared here
     ╰────
 
   × Identifier `"f"` has already been declared
@@ -15719,6 +16301,17 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  25 │ };
     ╰────
 
+  × Identifier `"f"` has already been declared
+    ╭─[language/module-code/early-dup-export-decl.js:16:1]
+ 16 │ 
+ 17 │ export function f() {}
+    ·                 ┬
+    ·                 ╰── `f` has already been declared here
+ 18 │ export function *f() {}
+    ·                  ┬
+    ·                  ╰── It can not be redeclared here
+    ╰────
+
   × Unexpected token
     ╭─[language/module-code/early-dup-export-dflt.js:15:1]
  15 │ 
@@ -15748,6 +16341,50 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  18 │ const x = 0;
     ·       ┬
     ·       ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/module-code/early-dup-top-function-async-generator.js:18:1]
+ 18 │ 
+ 19 │ function x() {}
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 20 │ async function* x() {}
+    ·                 ┬
+    ·                 ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/module-code/early-dup-top-function-async.js:18:1]
+ 18 │ 
+ 19 │ function x() {}
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 20 │ async function x() {}
+    ·                ┬
+    ·                ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/module-code/early-dup-top-function-generator.js:18:1]
+ 18 │ 
+ 19 │ function x() {}
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 20 │ function* x() {}
+    ·           ┬
+    ·           ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `"x"` has already been declared
+    ╭─[language/module-code/early-dup-top-function.js:18:1]
+ 18 │ 
+ 19 │ function x() {}
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 20 │ function x() {}
+    ·          ┬
+    ·          ╰── It can not be redeclared here
     ╰────
 
   × An export name cannot include a unicode lone surrogate
@@ -15820,6 +16457,51 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·            ──┬──
     ·              ╰── This label is used, but not defined
  18 │ }
+    ╰────
+
+  × Identifier `"A"` has already been declared
+    ╭─[language/module-code/export-default-asyncfunction-declaration-binding-exists.js:21:1]
+ 21 │ 
+ 22 │ class A {};
+    ·       ┬
+    ·       ╰── `A` has already been declared here
+ 23 │ export default async function A() {}
+    ·                               ┬
+    ·                               ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `"AG"` has already been declared
+    ╭─[language/module-code/export-default-asyncgenerator-declaration-binding-exists.js:21:1]
+ 21 │ 
+ 22 │ class AG {}
+    ·       ─┬
+    ·        ╰── `AG` has already been declared here
+ 23 │ export default async function * AG() {}
+    ·                                 ─┬
+    ·                                  ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `"F"` has already been declared
+    ╭─[language/module-code/export-default-function-declaration-binding-exists.js:21:1]
+ 21 │ 
+ 22 │ class F {}
+    ·       ┬
+    ·       ╰── `F` has already been declared here
+ 23 │ export default function F() {}
+    ·                         ┬
+    ·                         ╰── It can not be redeclared here
+ 24 │ 
+    ╰────
+
+  × Identifier `"G"` has already been declared
+    ╭─[language/module-code/export-default-generator-declaration-binding-exists.js:21:1]
+ 21 │ 
+ 22 │ class G {}
+    ·       ┬
+    ·       ╰── `G` has already been declared here
+ 23 │ export default function * G() {}
+    ·                           ┬
+    ·                           ╰── It can not be redeclared here
     ╰────
 
   × An export name cannot include a unicode lone surrogate
@@ -15930,6 +16612,28 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  14 │ 
  15 │ export default var x;
     ·                ───
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/module-code/parse-err-hoist-lex-fun.js:23:1]
+ 23 │ 
+ 24 │ var f;
+    ·     ┬
+    ·     ╰── `f` has already been declared here
+ 25 │ function f() {}
+    ·          ┬
+    ·          ╰── It can not be redeclared here
+    ╰────
+
+  × Identifier `"g"` has already been declared
+    ╭─[language/module-code/parse-err-hoist-lex-gen.js:25:1]
+ 25 │ 
+ 26 │ var g;
+    ·     ┬
+    ·     ╰── `g` has already been declared here
+ 27 │ function* g() {}
+    ·           ┬
+    ·           ╰── It can not be redeclared here
     ╰────
 
   × Empty parenthesized expression
@@ -24117,6 +24821,168 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function f() {} default: async function f() {} }
+    ·                                     ┬                              ┬
+    ·                                     │                              ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function f() {} default: async function* f() {} }
+    ·                                     ┬                               ┬
+    ·                                     │                               ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-class.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function f() {} default: class f {} }
+    ·                                     ┬                     ┬
+    ·                                     │                     ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-const.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function f() {} default: const f = 0 }
+    ·                                     ┬                     ┬
+    ·                                     │                     ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function f() {} default: function f() {} }
+    ·                                     ┬                        ┬
+    ·                                     │                        ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function f() {} default: function* f() {} }
+    ·                                     ┬                         ┬
+    ·                                     │                         ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-let.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function f() {} default: let f }
+    ·                                     ┬                   ┬
+    ·                                     │                   ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-function-name-redeclaration-attempt-with-var.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function f() {} default: var f }
+    ·                                     ┬                   ┬
+    ·                                     │                   ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function* f() {} default: async function f() {} }
+    ·                                      ┬                              ┬
+    ·                                      │                              ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function* f() {} default: async function* f() {} }
+    ·                                      ┬                               ┬
+    ·                                      │                               ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-class.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function* f() {} default: class f {} }
+    ·                                      ┬                     ┬
+    ·                                      │                     ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-const.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function* f() {} default: const f = 0 }
+    ·                                      ┬                     ┬
+    ·                                      │                     ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function* f() {} default: function f() {} }
+    ·                                      ┬                        ┬
+    ·                                      │                        ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function* f() {} default: function* f() {} }
+    ·                                      ┬                         ┬
+    ·                                      │                         ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-let.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function* f() {} default: let f }
+    ·                                      ┬                   ┬
+    ·                                      │                   ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/async-generator-name-redeclaration-attempt-with-var.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: async function* f() {} default: var f }
+    ·                                      ┬                   ┬
+    ·                                      │                   ╰── It can not be redeclared here
+    ·                                      ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: class f {} default: async function f() {} }
+    ·                            ┬                            ┬
+    ·                            │                            ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: class f {} default: async function* f() {} }
+    ·                            ┬                             ┬
+    ·                            │                             ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-class.js:21:1]
  21 │ 
  22 │ switch (0) { case 1: class f {} default: class f {} }
@@ -24131,6 +24997,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  22 │ switch (0) { case 1: class f {} default: const f = 0 }
     ·                            ┬                   ┬
     ·                            │                   ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: class f {} default: function f() {} }
+    ·                            ┬                      ┬
+    ·                            │                      ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: class f {} default: function* f() {} }
+    ·                            ┬                       ┬
+    ·                            │                       ╰── It can not be redeclared here
     ·                            ╰── `f` has already been declared here
     ╰────
 
@@ -24153,6 +25037,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: const f = 0; default: async function f() {} }
+    ·                            ┬                              ┬
+    ·                            │                              ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: const f = 0; default: async function* f() {} }
+    ·                            ┬                               ┬
+    ·                            │                               ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-class.js:21:1]
  21 │ 
  22 │ switch (0) { case 1: const f = 0; default: class f {} }
@@ -24167,6 +25069,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  22 │ switch (0) { case 1: const f = 0; default: const f = 0 }
     ·                            ┬                     ┬
     ·                            │                     ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: const f = 0; default: function f() {} }
+    ·                            ┬                        ┬
+    ·                            │                        ╰── It can not be redeclared here
+    ·                            ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: const f = 0; default: function* f() {} }
+    ·                            ┬                         ┬
+    ·                            │                         ╰── It can not be redeclared here
     ·                            ╰── `f` has already been declared here
     ╰────
 
@@ -24189,6 +25109,168 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function f() {} default: async function f() {} }
+    ·                               ┬                              ┬
+    ·                               │                              ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function f() {} default: async function* f() {} }
+    ·                               ┬                               ┬
+    ·                               │                               ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-class.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: function f() {} default: class f {} }
+    ·                               ┬                     ┬
+    ·                               │                     ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-const.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: function f() {} default: const f = 0 }
+    ·                               ┬                     ┬
+    ·                               │                     ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: function f() {} default: function f() {} }
+    ·                               ┬                        ┬
+    ·                               │                        ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function f() {} default: function* f() {} }
+    ·                               ┬                         ┬
+    ·                               │                         ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-let.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: function f() {} default: let f }
+    ·                               ┬                   ┬
+    ·                               │                   ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/function-name-redeclaration-attempt-with-var.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: function f() {} default: var f }
+    ·                               ┬                   ┬
+    ·                               │                   ╰── It can not be redeclared here
+    ·                               ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function* f() {} default: async function f() {} }
+    ·                                ┬                              ┬
+    ·                                │                              ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function* f() {} default: async function* f() {} }
+    ·                                ┬                               ┬
+    ·                                │                               ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-class.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function* f() {} default: class f {} }
+    ·                                ┬                     ┬
+    ·                                │                     ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-const.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function* f() {} default: const f = 0 }
+    ·                                ┬                     ┬
+    ·                                │                     ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function* f() {} default: function f() {} }
+    ·                                ┬                        ┬
+    ·                                │                        ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function* f() {} default: function* f() {} }
+    ·                                ┬                         ┬
+    ·                                │                         ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-let.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function* f() {} default: let f }
+    ·                                ┬                   ┬
+    ·                                │                   ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/generator-name-redeclaration-attempt-with-var.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: function* f() {} default: var f }
+    ·                                ┬                   ┬
+    ·                                │                   ╰── It can not be redeclared here
+    ·                                ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: let f; default: async function f() {} }
+    ·                          ┬                          ┬
+    ·                          │                          ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: let f; default: async function* f() {} }
+    ·                          ┬                           ┬
+    ·                          │                           ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-class.js:21:1]
  21 │ 
  22 │ switch (0) { case 1: let f; default: class f {} }
@@ -24203,6 +25285,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  22 │ switch (0) { case 1: let f; default: const f = 0 }
     ·                          ┬                 ┬
     ·                          │                 ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: let f; default: function f() {} }
+    ·                          ┬                    ┬
+    ·                          │                    ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: let f; default: function* f() {} }
+    ·                          ┬                     ┬
+    ·                          │                     ╰── It can not be redeclared here
     ·                          ╰── `f` has already been declared here
     ╰────
 
@@ -24225,6 +25325,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ╰────
 
   × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: var f; default: async function f() {} }
+    ·                          ┬                          ┬
+    ·                          │                          ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: var f; default: async function* f() {} }
+    ·                          ┬                           ┬
+    ·                          │                           ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
     ╭─[language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-class.js:21:1]
  21 │ 
  22 │ switch (0) { case 1: var f; default: class f {} }
@@ -24239,6 +25357,24 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
  22 │ switch (0) { case 1: var f; default: const f = 0 }
     ·                          ┬                 ┬
     ·                          │                 ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js:21:1]
+ 21 │ 
+ 22 │ switch (0) { case 1: var f; default: function f() {} }
+    ·                          ┬                    ┬
+    ·                          │                    ╰── It can not be redeclared here
+    ·                          ╰── `f` has already been declared here
+    ╰────
+
+  × Identifier `"f"` has already been declared
+    ╭─[language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js:22:1]
+ 22 │ 
+ 23 │ switch (0) { case 1: var f; default: function* f() {} }
+    ·                          ┬                     ┬
+    ·                          │                     ╰── It can not be redeclared here
     ·                          ╰── `f` has already been declared here
     ╰────
 
@@ -24402,6 +25538,18 @@ Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-par
     ·                 ┬  ┬
     ·                 │  ╰── It can not be redeclared here
     ·                 ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `"e"` has already been declared
+    ╭─[language/statements/try/early-catch-function.js:21:1]
+ 21 │     try {
+ 22 │     } catch (e) {
+    ·              ┬
+    ·              ╰── `e` has already been declared here
+ 23 │         function e(){}
+    ·                  ┬
+    ·                  ╰── It can not be redeclared here
+ 24 │     }
     ╰────
 
   × Identifier `"x"` has already been declared
