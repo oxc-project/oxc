@@ -16,7 +16,7 @@ use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::{Error, Severity};
-use oxc_linter::{Fixer, Linter};
+use oxc_linter::Linter;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 
@@ -129,8 +129,9 @@ impl Cli {
         let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
         let parser_source_text = source_text.clone();
         let ret = Parser::new(&allocator, &parser_source_text, source_type).parse();
+
         if !ret.errors.is_empty() {
-            return ret.errors;
+            return Self::wrap_diagnostics(path, &source_text, ret.errors);
         };
 
         let program = allocator.alloc(ret.program);
@@ -138,7 +139,7 @@ impl Cli {
         let semantic_ret = SemanticBuilder::new(source_type).build(program, trivias);
 
         if !semantic_ret.errors.is_empty() {
-            return ret.errors;
+            return Self::wrap_diagnostics(path, &source_text, ret.errors);
         };
 
         let result = Linter::new().run(&Rc::new(semantic_ret.semantic), &source_text, fix);
@@ -147,23 +148,27 @@ impl Cli {
             return vec![];
         }
 
-        let path_cow = path.to_string_lossy();
-        let source = Arc::new(NamedSource::new(path_cow, source_text.clone()));
+        // if fix {
+        // let fix_result = Fixer::new(&source_text, result).fix();
+        // fs::write(path, fix_result.fixed_code.as_bytes())
+        // .unwrap_or_else(|_| panic!("{path:?} not found"));
+        // return fix_result
+        // .messages
+        // .into_iter()
+        // .map(|m| m.error.with_source_code(source.clone()))
+        // .collect();
+        // }
 
-        if fix {
-            let fix_result = Fixer::new(&source_text, result).fix();
-            fs::write(path, fix_result.fixed_code.as_bytes())
-                .unwrap_or_else(|_| panic!("{path:?} not found"));
-            return fix_result
-                .messages
-                .into_iter()
-                .map(|m| m.error.with_source_code(source.clone()))
-                .collect();
-        }
+        let errors = result.into_iter().map(|diagnostic| diagnostic.error).collect();
+        Self::wrap_diagnostics(path, &source_text, errors)
+    }
 
-        result
+    fn wrap_diagnostics(path: &Path, source_text: &str, diagnostics: Vec<Error>) -> Vec<Error> {
+        let path = path.to_string_lossy();
+        let source = Arc::new(NamedSource::new(path, source_text.to_owned()));
+        diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.error.with_source_code(source.clone()))
+            .map(|diagnostic| diagnostic.with_source_code(source.clone()))
             .collect()
     }
 }
