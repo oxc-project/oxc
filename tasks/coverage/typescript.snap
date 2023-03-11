@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 608/2532 (24.01%)
+Negative Passed: 617/2532 (24.37%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -213,7 +213,6 @@ Expect Syntax Error: "classes/members/privateNames/privateNamesConstructorChain-
 Expect Syntax Error: "classes/members/privateNames/privateNamesInNestedClasses-1.ts"
 Expect Syntax Error: "classes/members/privateNames/privateNamesInNestedClasses-2.ts"
 Expect Syntax Error: "classes/members/privateNames/privateNamesIncompatibleModifiersJs.ts"
-Expect Syntax Error: "classes/members/privateNames/privateNamesNoDelete.ts"
 Expect Syntax Error: "classes/members/privateNames/privateNamesUnique-1.ts"
 Expect Syntax Error: "classes/members/privateNames/privateNamesUnique-4.ts"
 Expect Syntax Error: "classes/members/privateNames/privateNamesUnique-5.ts"
@@ -442,8 +441,6 @@ Expect Syntax Error: "es6/computedProperties/computedPropertyNames38_ES5.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames38_ES6.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames39_ES5.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames39_ES6.ts"
-Expect Syntax Error: "es6/computedProperties/computedPropertyNames3_ES5.ts"
-Expect Syntax Error: "es6/computedProperties/computedPropertyNames3_ES6.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames40_ES5.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames40_ES6.ts"
 Expect Syntax Error: "es6/computedProperties/computedPropertyNames42_ES5.ts"
@@ -674,11 +671,6 @@ Expect Syntax Error: "es6/yieldExpressions/generatorTypeCheck9.ts"
 Expect Syntax Error: "es7/exponentiationOperator/compoundExponentiationAssignmentLHSCanBeAssigned1.ts"
 Expect Syntax Error: "es7/exponentiationOperator/compoundExponentiationAssignmentLHSCannotBeAssigned.ts"
 Expect Syntax Error: "es7/exponentiationOperator/emitExponentiationOperator4.ts"
-Expect Syntax Error: "es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts"
-Expect Syntax Error: "es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts"
-Expect Syntax Error: "es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts"
-Expect Syntax Error: "es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts"
-Expect Syntax Error: "es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts"
 Expect Syntax Error: "es7/exponentiationOperator/exponentiationOperatorWithInvalidOperands.ts"
 Expect Syntax Error: "es7/exponentiationOperator/exponentiationOperatorWithInvalidSimpleUnaryExpressionOperands.ts"
 Expect Syntax Error: "es7/exponentiationOperator/exponentiationOperatorWithNew.ts"
@@ -778,7 +770,6 @@ Expect Syntax Error: "expressions/literals/strictModeOctalLiterals.ts"
 Expect Syntax Error: "expressions/newOperator/newOperatorErrorCases_noImplicitAny.ts"
 Expect Syntax Error: "expressions/nullishCoalescingOperator/nullishCoalescingOperator11.ts"
 Expect Syntax Error: "expressions/nullishCoalescingOperator/nullishCoalescingOperator4.ts"
-Expect Syntax Error: "expressions/nullishCoalescingOperator/nullishCoalescingOperator5.ts"
 Expect Syntax Error: "expressions/nullishCoalescingOperator/nullishCoalescingOperatorInParameterBindingPattern.2.ts"
 Expect Syntax Error: "expressions/nullishCoalescingOperator/nullishCoalescingOperatorInParameterInitializer.2.ts"
 Expect Syntax Error: "expressions/objectLiterals/objectLiteralErrorsES3.ts"
@@ -3961,6 +3952,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  13 │ }
     ╰────
 
+  × Private fields can not be deleted
+   ╭─[classes/members/privateNames/privateNamesNoDelete.ts:6:1]
+ 6 │     constructor() {
+ 7 │         delete this.#v; // Error: The operand of a delete operator cannot be a private name.
+   ·                ───────
+ 8 │     }
+   ╰────
+
   × Unexpected token
    ╭─[classes/members/privateNames/privateNamesNotAllowedAsParameters.ts:3:1]
  3 │ class A {
@@ -4494,6 +4493,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │     [(super(), "prop")]() { }
    ·       ───────
  6 │ }
+   ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+   ╭─[es6/computedProperties/computedPropertyNames3_ES5.ts:5:1]
+ 5 │     static [() => { }]() { }
+ 6 │     get [delete id]() { }
+   ·                 ──
+ 7 │     set [[0, 1]](v) { }
+   ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+   ╭─[es6/computedProperties/computedPropertyNames3_ES6.ts:5:1]
+ 5 │     static [() => { }]() { }
+ 6 │     get [delete id]() { }
+   ·                 ──
+ 7 │     set [[0, 1]](v) { }
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
@@ -5547,6 +5562,1521 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  9 │     }
    ╰────
 
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:8:1]
+  8 │ // TempateHead & TemplateTail are empty
+  9 │ `${1 + typeof t1 ** t2 ** t1}`;
+    ·        ─────────────────────
+ 10 │ `${-t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:9:1]
+  9 │ `${1 + typeof t1 ** t2 ** t1}`;
+ 10 │ `${-t1 ** t2 - t1}`;
+    ·    ─────────
+ 11 │ `${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:10:1]
+ 10 │ `${-t1 ** t2 - t1}`;
+ 11 │ `${-++t1 ** t2 - t1}`;
+    ·    ───────────
+ 12 │ `${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:11:1]
+ 11 │ `${-++t1 ** t2 - t1}`;
+ 12 │ `${-t1++ ** t2 - t1}`;
+    ·    ───────────
+ 13 │ `${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:12:1]
+ 12 │ `${-t1++ ** t2 - t1}`;
+ 13 │ `${!t1 ** t2 ** --t1 }`;
+    ·    ─────────────────
+ 14 │ `${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:13:1]
+ 13 │ `${!t1 ** t2 ** --t1 }`;
+ 14 │ `${typeof t1 ** t2 ** t1}`;
+    ·    ─────────────────────
+ 15 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:15:1]
+ 15 │ 
+ 16 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
+    ·    ─────────
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:15:1]
+ 15 │ 
+ 16 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
+    ·                     ─────────
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:16:1]
+ 16 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+    ·    ───────────
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:16:1]
+ 16 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+    ·                       ───────────
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:17:1]
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+    ·    ───────────
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:17:1]
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+    ·                       ───────────
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:18:1]
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+    ·    ─────────────────
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:18:1]
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+    ·                         ─────────────────
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:19:1]
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+    ·    ─────────────────────
+ 21 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:19:1]
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+    ·                            ─────────────────────
+ 21 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:20:1]
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+ 21 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
+    ·        ─────────────────────
+ 22 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:20:1]
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+ 21 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
+    ·                                    ─────────────────────
+ 22 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:22:1]
+ 22 │ 
+ 23 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
+    ·    ─────────
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:22:1]
+ 22 │ 
+ 23 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
+    ·                                  ─────────
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:23:1]
+ 23 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+    ·    ───────────
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:23:1]
+ 23 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+    ·                                    ───────────
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:24:1]
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+    ·    ───────────
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:24:1]
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+    ·                                    ───────────
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:25:1]
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+    ·    ─────────────────
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:25:1]
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+    ·                                      ─────────────────
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:26:1]
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+    ·    ─────────────────────
+ 28 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:26:1]
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+    ·                                         ─────────────────────
+ 28 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:27:1]
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+ 28 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
+    ·        ─────────────────────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError1.ts:27:1]
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+ 28 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
+    ·                                                 ─────────────────────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:8:1]
+  8 │ // With templateHead
+  9 │ `hello ${-t1 ** t2 - t1}`;
+    ·          ─────────
+ 10 │ `hello ${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:9:1]
+  9 │ `hello ${-t1 ** t2 - t1}`;
+ 10 │ `hello ${-++t1 ** t2 - t1}`;
+    ·          ───────────
+ 11 │ `hello ${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:10:1]
+ 10 │ `hello ${-++t1 ** t2 - t1}`;
+ 11 │ `hello ${-t1++ ** t2 - t1}`;
+    ·          ───────────
+ 12 │ `hello ${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:11:1]
+ 11 │ `hello ${-t1++ ** t2 - t1}`;
+ 12 │ `hello ${!t1 ** t2 ** --t1 }`;
+    ·          ─────────────────
+ 13 │ `hello ${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:12:1]
+ 12 │ `hello ${!t1 ** t2 ** --t1 }`;
+ 13 │ `hello ${typeof t1 ** t2 ** t1}`;
+    ·          ─────────────────────
+ 14 │ `hello ${1 + typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:13:1]
+ 13 │ `hello ${typeof t1 ** t2 ** t1}`;
+ 14 │ `hello ${1 + typeof t1 ** t2 ** t1}`;
+    ·              ─────────────────────
+ 15 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:15:1]
+ 15 │ 
+ 16 │ `hello ${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
+    ·          ─────────
+ 17 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:15:1]
+ 15 │ 
+ 16 │ `hello ${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
+    ·                           ─────────
+ 17 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:16:1]
+ 16 │ `hello ${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
+ 17 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+    ·          ───────────
+ 18 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:16:1]
+ 16 │ `hello ${-t1 ** t2 - t1}${-t1 ** t2 - t1}`;
+ 17 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+    ·                             ───────────
+ 18 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:17:1]
+ 17 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+ 18 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+    ·          ───────────
+ 19 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:17:1]
+ 17 │ `hello ${-++t1 ** t2 - t1}${-++t1 ** t2 - t1}`;
+ 18 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+    ·                             ───────────
+ 19 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:18:1]
+ 18 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+ 19 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+    ·          ─────────────────
+ 20 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:18:1]
+ 18 │ `hello ${-t1++ ** t2 - t1}${-t1++ ** t2 - t1}`;
+ 19 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+    ·                               ─────────────────
+ 20 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:19:1]
+ 19 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+ 20 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+    ·          ─────────────────────
+ 21 │ `hello ${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:19:1]
+ 19 │ `hello ${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 }`;
+ 20 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+    ·                                  ─────────────────────
+ 21 │ `hello ${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:20:1]
+ 20 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+ 21 │ `hello ${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
+    ·              ─────────────────────
+ 22 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:20:1]
+ 20 │ `hello ${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1}`;
+ 21 │ `hello ${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1}`;
+    ·                                          ─────────────────────
+ 22 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:22:1]
+ 22 │ 
+ 23 │ `hello ${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
+    ·          ─────────
+ 24 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:22:1]
+ 22 │ 
+ 23 │ `hello ${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
+    ·                                        ─────────
+ 24 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:23:1]
+ 23 │ `hello ${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
+ 24 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+    ·          ───────────
+ 25 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:23:1]
+ 23 │ `hello ${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1}`;
+ 24 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+    ·                                          ───────────
+ 25 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:24:1]
+ 24 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+ 25 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+    ·          ───────────
+ 26 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:24:1]
+ 24 │ `hello ${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1}`;
+ 25 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+    ·                                          ───────────
+ 26 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:25:1]
+ 25 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+ 26 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+    ·          ─────────────────
+ 27 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:25:1]
+ 25 │ `hello ${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1}`;
+ 26 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+    ·                                            ─────────────────
+ 27 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:26:1]
+ 26 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+ 27 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+    ·          ─────────────────────
+ 28 │ `hello ${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:26:1]
+ 26 │ `hello ${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 }`;
+ 27 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+    ·                                               ─────────────────────
+ 28 │ `hello ${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:27:1]
+ 27 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+ 28 │ `hello ${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
+    ·              ─────────────────────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError2.ts:27:1]
+ 27 │ `hello ${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1}`;
+ 28 │ `hello ${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1}`;
+    ·                                                       ─────────────────────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:8:1]
+  8 │ // With TemplateTail
+  9 │ `${-t1 ** t2 - t1} world`;
+    ·    ─────────
+ 10 │ `${-++t1 ** t2 - t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:9:1]
+  9 │ `${-t1 ** t2 - t1} world`;
+ 10 │ `${-++t1 ** t2 - t1} world`;
+    ·    ───────────
+ 11 │ `${-t1++ ** t2 - t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:10:1]
+ 10 │ `${-++t1 ** t2 - t1} world`;
+ 11 │ `${-t1++ ** t2 - t1} world`;
+    ·    ───────────
+ 12 │ `${!t1 ** t2 ** --t1 } world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:11:1]
+ 11 │ `${-t1++ ** t2 - t1} world`;
+ 12 │ `${!t1 ** t2 ** --t1 } world`;
+    ·    ─────────────────
+ 13 │ `${typeof t1 ** t2 ** t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:12:1]
+ 12 │ `${!t1 ** t2 ** --t1 } world`;
+ 13 │ `${typeof t1 ** t2 ** t1} world`;
+    ·    ─────────────────────
+ 14 │ `${1 + typeof t1 ** t2 ** t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:13:1]
+ 13 │ `${typeof t1 ** t2 ** t1} world`;
+ 14 │ `${1 + typeof t1 ** t2 ** t1} world`;
+    ·        ─────────────────────
+ 15 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:15:1]
+ 15 │ 
+ 16 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1} world`;
+    ·    ─────────
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:15:1]
+ 15 │ 
+ 16 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1} world`;
+    ·                     ─────────
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:16:1]
+ 16 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1} world`;
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
+    ·    ───────────
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:16:1]
+ 16 │ `${-t1 ** t2 - t1}${-t1 ** t2 - t1} world`;
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
+    ·                       ───────────
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:17:1]
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
+    ·    ───────────
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:17:1]
+ 17 │ `${-++t1 ** t2 - t1}${-++t1 ** t2 - t1} world`;
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
+    ·                       ───────────
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:18:1]
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
+    ·    ─────────────────
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:18:1]
+ 18 │ `${-t1++ ** t2 - t1}${-t1++ ** t2 - t1} world`;
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
+    ·                         ─────────────────
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:19:1]
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
+    ·    ─────────────────────
+ 21 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:19:1]
+ 19 │ `${!t1 ** t2 ** --t1 }${!t1 ** t2 ** --t1 } world`;
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
+    ·                            ─────────────────────
+ 21 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1} world`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:20:1]
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
+ 21 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1} world`;
+    ·        ─────────────────────
+ 22 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:20:1]
+ 20 │ `${typeof t1 ** t2 ** t1}${typeof t1 ** t2 ** t1} world`;
+ 21 │ `${1 + typeof t1 ** t2 ** t1}${1 + typeof t1 ** t2 ** t1} world`;
+    ·                                    ─────────────────────
+ 22 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:22:1]
+ 22 │ 
+ 23 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1} !!`;
+    ·    ─────────
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:22:1]
+ 22 │ 
+ 23 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1} !!`;
+    ·                                  ─────────
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:23:1]
+ 23 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1} !!`;
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
+    ·    ───────────
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:23:1]
+ 23 │ `${-t1 ** t2 - t1} hello world ${-t1 ** t2 - t1} !!`;
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
+    ·                                    ───────────
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:24:1]
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
+    ·    ───────────
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:24:1]
+ 24 │ `${-++t1 ** t2 - t1} hello world ${-++t1 ** t2 - t1} !!`;
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
+    ·                                    ───────────
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:25:1]
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
+    ·    ─────────────────
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:25:1]
+ 25 │ `${-t1++ ** t2 - t1} hello world ${-t1++ ** t2 - t1} !!`;
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
+    ·                                      ─────────────────
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:26:1]
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
+    ·    ─────────────────────
+ 28 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1} !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:26:1]
+ 26 │ `${!t1 ** t2 ** --t1 } hello world ${!t1 ** t2 ** --t1 } !!`;
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
+    ·                                         ─────────────────────
+ 28 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1} !!`;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:27:1]
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
+ 28 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1} !!`;
+    ·        ─────────────────────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorInTemplateStringWithSyntaxError3.ts:27:1]
+ 27 │ `${typeof t1 ** t2 ** t1} hello world ${typeof t1 ** t2 ** t1} !!`;
+ 28 │ `${1 + typeof t1 ** t2 ** t1} hello world ${1 + typeof t1 ** t2 ** t1} !!`;
+    ·                                                 ─────────────────────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:3:1]
+ 3 │ // Error: early syntax error using ES7 SimpleUnaryExpression on left-hand side without ()
+ 4 │ -1 ** 2;
+   · ───────
+ 5 │ +1 ** 2
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:4:1]
+ 4 │ -1 ** 2;
+ 5 │ +1 ** 2
+   · ───────
+ 6 │ 1 ** -2 ** 3;
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:5:1]
+ 5 │ +1 ** 2
+ 6 │ 1 ** -2 ** 3;
+   ·      ───────
+ 7 │ 1 ** -2 ** -3;
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:6:1]
+ 6 │ 1 ** -2 ** 3;
+ 7 │ 1 ** -2 ** -3;
+   ·      ────────
+ 8 │ -1 ** -2 ** -3;
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:7:1]
+ 7 │ 1 ** -2 ** -3;
+ 8 │ -1 ** -2 ** -3;
+   · ──────────────
+ 9 │ -(1 ** 2) ** 3;
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:7:1]
+ 7 │ 1 ** -2 ** -3;
+ 8 │ -1 ** -2 ** -3;
+   ·       ────────
+ 9 │ -(1 ** 2) ** 3;
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:8:1]
+  8 │ -1 ** -2 ** -3;
+  9 │ -(1 ** 2) ** 3;
+    · ──────────────
+ 10 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:12:1]
+ 12 │ 
+ 13 │ -++temp ** 3;
+    · ────────────
+ 14 │ +--temp ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:13:1]
+ 13 │ -++temp ** 3;
+ 14 │ +--temp ** 3;
+    · ────────────
+ 15 │ -temp++ ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:14:1]
+ 14 │ +--temp ** 3;
+ 15 │ -temp++ ** 3;
+    · ────────────
+ 16 │ +temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:15:1]
+ 15 │ -temp++ ** 3;
+ 16 │ +temp-- ** 3;
+    · ────────────
+ 17 │ 1 ** -++temp ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:16:1]
+ 16 │ +temp-- ** 3;
+ 17 │ 1 ** -++temp ** 3;
+    ·      ────────────
+ 18 │ 1 ** +--temp ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:17:1]
+ 17 │ 1 ** -++temp ** 3;
+ 18 │ 1 ** +--temp ** 3;
+    ·      ────────────
+ 19 │ 1 ** -temp++ ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:18:1]
+ 18 │ 1 ** +--temp ** 3;
+ 19 │ 1 ** -temp++ ** 3;
+    ·      ────────────
+ 20 │ 1 ** +temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:19:1]
+ 19 │ 1 ** -temp++ ** 3;
+ 20 │ 1 ** +temp-- ** 3;
+    ·      ────────────
+ 21 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:21:1]
+ 21 │ 
+ 22 │ -3 ** temp++;
+    · ────────────
+ 23 │ -3 ** temp--;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:22:1]
+ 22 │ -3 ** temp++;
+ 23 │ -3 ** temp--;
+    · ────────────
+ 24 │ -3 ** ++temp;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:23:1]
+ 23 │ -3 ** temp--;
+ 24 │ -3 ** ++temp;
+    · ────────────
+ 25 │ -3 ** --temp;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:24:1]
+ 24 │ -3 ** ++temp;
+ 25 │ -3 ** --temp;
+    · ────────────
+ 26 │ +3 ** temp++;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:25:1]
+ 25 │ -3 ** --temp;
+ 26 │ +3 ** temp++;
+    · ────────────
+ 27 │ +3 ** temp--;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:26:1]
+ 26 │ +3 ** temp++;
+ 27 │ +3 ** temp--;
+    · ────────────
+ 28 │ +3 ** ++temp;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:27:1]
+ 27 │ +3 ** temp--;
+ 28 │ +3 ** ++temp;
+    · ────────────
+ 29 │ +3 ** --temp;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:28:1]
+ 28 │ +3 ** ++temp;
+ 29 │ +3 ** --temp;
+    · ────────────
+ 30 │ -3 ** temp++ ** 2;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:29:1]
+ 29 │ +3 ** --temp;
+ 30 │ -3 ** temp++ ** 2;
+    · ─────────────────
+ 31 │ -3 ** temp-- ** 2;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:30:1]
+ 30 │ -3 ** temp++ ** 2;
+ 31 │ -3 ** temp-- ** 2;
+    · ─────────────────
+ 32 │ -3 ** ++temp ** 2;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:31:1]
+ 31 │ -3 ** temp-- ** 2;
+ 32 │ -3 ** ++temp ** 2;
+    · ─────────────────
+ 33 │ -3 ** --temp ** 2;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:32:1]
+ 32 │ -3 ** ++temp ** 2;
+ 33 │ -3 ** --temp ** 2;
+    · ─────────────────
+ 34 │ +3 ** temp++ ** 2;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:33:1]
+ 33 │ -3 ** --temp ** 2;
+ 34 │ +3 ** temp++ ** 2;
+    · ─────────────────
+ 35 │ +3 ** temp-- ** 2;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:34:1]
+ 34 │ +3 ** temp++ ** 2;
+ 35 │ +3 ** temp-- ** 2;
+    · ─────────────────
+ 36 │ +3 ** ++temp ** 2;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:35:1]
+ 35 │ +3 ** temp-- ** 2;
+ 36 │ +3 ** ++temp ** 2;
+    · ─────────────────
+ 37 │ +3 ** --temp ** 2;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:36:1]
+ 36 │ +3 ** ++temp ** 2;
+ 37 │ +3 ** --temp ** 2;
+    · ─────────────────
+ 38 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:5:1]
+ 5 │ 
+ 6 │ delete --temp ** 3;
+   · ──────────────────
+ 7 │ delete ++temp ** 3;
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:6:1]
+ 6 │ delete --temp ** 3;
+ 7 │ delete ++temp ** 3;
+   · ──────────────────
+ 8 │ delete temp-- ** 3;
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:7:1]
+ 7 │ delete ++temp ** 3;
+ 8 │ delete temp-- ** 3;
+   · ──────────────────
+ 9 │ delete temp++ ** 3;
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:8:1]
+  8 │ delete temp-- ** 3;
+  9 │ delete temp++ ** 3;
+    · ──────────────────
+ 10 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:11:1]
+ 11 │ 
+ 12 │ 1 ** delete --temp ** 3;
+    ·      ──────────────────
+ 13 │ 1 ** delete ++temp ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:12:1]
+ 12 │ 1 ** delete --temp ** 3;
+ 13 │ 1 ** delete ++temp ** 3;
+    ·      ──────────────────
+ 14 │ 1 ** delete temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:13:1]
+ 13 │ 1 ** delete ++temp ** 3;
+ 14 │ 1 ** delete temp-- ** 3;
+    ·      ──────────────────
+ 15 │ 1 ** delete temp++ ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:14:1]
+ 14 │ 1 ** delete temp-- ** 3;
+ 15 │ 1 ** delete temp++ ** 3;
+    ·      ──────────────────
+ 16 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:16:1]
+ 16 │ 
+ 17 │ typeof --temp ** 3;
+    · ──────────────────
+ 18 │ typeof temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:17:1]
+ 17 │ typeof --temp ** 3;
+ 18 │ typeof temp-- ** 3;
+    · ──────────────────
+ 19 │ typeof 3 ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:18:1]
+ 18 │ typeof temp-- ** 3;
+ 19 │ typeof 3 ** 4;
+    · ─────────────
+ 20 │ typeof temp++ ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:19:1]
+ 19 │ typeof 3 ** 4;
+ 20 │ typeof temp++ ** 4;
+    · ──────────────────
+ 21 │ typeof temp-- ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:20:1]
+ 20 │ typeof temp++ ** 4;
+ 21 │ typeof temp-- ** 4;
+    · ──────────────────
+ 22 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:22:1]
+ 22 │ 
+ 23 │ 1 ** typeof --temp ** 3;
+    ·      ──────────────────
+ 24 │ 1 ** typeof temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:23:1]
+ 23 │ 1 ** typeof --temp ** 3;
+ 24 │ 1 ** typeof temp-- ** 3;
+    ·      ──────────────────
+ 25 │ 1 ** typeof 3 ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:24:1]
+ 24 │ 1 ** typeof temp-- ** 3;
+ 25 │ 1 ** typeof 3 ** 4;
+    ·      ─────────────
+ 26 │ 1 ** typeof temp++ ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:25:1]
+ 25 │ 1 ** typeof 3 ** 4;
+ 26 │ 1 ** typeof temp++ ** 4;
+    ·      ──────────────────
+ 27 │ 1 ** typeof temp-- ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:26:1]
+ 26 │ 1 ** typeof temp++ ** 4;
+ 27 │ 1 ** typeof temp-- ** 4;
+    ·      ──────────────────
+ 28 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:28:1]
+ 28 │ 
+ 29 │ void --temp ** 3;
+    · ────────────────
+ 30 │ void temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:29:1]
+ 29 │ void --temp ** 3;
+ 30 │ void temp-- ** 3;
+    · ────────────────
+ 31 │ void 3 ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:30:1]
+ 30 │ void temp-- ** 3;
+ 31 │ void 3 ** 4;
+    · ───────────
+ 32 │ void temp++ ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:31:1]
+ 31 │ void 3 ** 4;
+ 32 │ void temp++ ** 4;
+    · ────────────────
+ 33 │ void temp-- ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:32:1]
+ 32 │ void temp++ ** 4;
+ 33 │ void temp-- ** 4;
+    · ────────────────
+ 34 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:34:1]
+ 34 │ 
+ 35 │ 1 ** void --temp ** 3;
+    ·      ────────────────
+ 36 │ 1 ** void temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:35:1]
+ 35 │ 1 ** void --temp ** 3;
+ 36 │ 1 ** void temp-- ** 3;
+    ·      ────────────────
+ 37 │ 1 ** void 3 ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:36:1]
+ 36 │ 1 ** void temp-- ** 3;
+ 37 │ 1 ** void 3 ** 4;
+    ·      ───────────
+ 38 │ 1 ** void temp++ ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:37:1]
+ 37 │ 1 ** void 3 ** 4;
+ 38 │ 1 ** void temp++ ** 4;
+    ·      ────────────────
+ 39 │ 1 ** void temp-- ** 4 ;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:38:1]
+ 38 │ 1 ** void temp++ ** 4;
+ 39 │ 1 ** void temp-- ** 4 ;
+    ·      ────────────────
+ 40 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:40:1]
+ 40 │ 
+ 41 │ ~ --temp ** 3;
+    · ─────────────
+ 42 │ ~temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:41:1]
+ 41 │ ~ --temp ** 3;
+ 42 │ ~temp-- ** 3;
+    · ────────────
+ 43 │ ~3 ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:42:1]
+ 42 │ ~temp-- ** 3;
+ 43 │ ~3 ** 4;
+    · ───────
+ 44 │ ~temp++ ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:43:1]
+ 43 │ ~3 ** 4;
+ 44 │ ~temp++ ** 4;
+    · ────────────
+ 45 │ ~temp-- ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:44:1]
+ 44 │ ~temp++ ** 4;
+ 45 │ ~temp-- ** 4;
+    · ────────────
+ 46 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:46:1]
+ 46 │ 
+ 47 │ 1 ** ~ --temp ** 3;
+    ·      ─────────────
+ 48 │ 1 ** ~temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:47:1]
+ 47 │ 1 ** ~ --temp ** 3;
+ 48 │ 1 ** ~temp-- ** 3;
+    ·      ────────────
+ 49 │ 1 ** ~3 ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:48:1]
+ 48 │ 1 ** ~temp-- ** 3;
+ 49 │ 1 ** ~3 ** 4;
+    ·      ───────
+ 50 │ 1 ** ~temp++ ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:49:1]
+ 49 │ 1 ** ~3 ** 4;
+ 50 │ 1 ** ~temp++ ** 4;
+    ·      ────────────
+ 51 │ 1 ** ~temp-- ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:50:1]
+ 50 │ 1 ** ~temp++ ** 4;
+ 51 │ 1 ** ~temp-- ** 4;
+    ·      ────────────
+ 52 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:52:1]
+ 52 │ 
+ 53 │ ! --temp ** 3;
+    · ─────────────
+ 54 │ !temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:53:1]
+ 53 │ ! --temp ** 3;
+ 54 │ !temp-- ** 3;
+    · ────────────
+ 55 │ !3 ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:54:1]
+ 54 │ !temp-- ** 3;
+ 55 │ !3 ** 4;
+    · ───────
+ 56 │ !temp++ ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:55:1]
+ 55 │ !3 ** 4;
+ 56 │ !temp++ ** 4;
+    · ────────────
+ 57 │ !temp-- ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:56:1]
+ 56 │ !temp++ ** 4;
+ 57 │ !temp-- ** 4;
+    · ────────────
+ 58 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:58:1]
+ 58 │ 
+ 59 │ 1 ** ! --temp ** 3;
+    ·      ─────────────
+ 60 │ 1 ** !temp-- ** 3;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:59:1]
+ 59 │ 1 ** ! --temp ** 3;
+ 60 │ 1 ** !temp-- ** 3;
+    ·      ────────────
+ 61 │ 1 ** !3 ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:60:1]
+ 60 │ 1 ** !temp-- ** 3;
+ 61 │ 1 ** !3 ** 4;
+    ·      ───────
+ 62 │ 1 ** !temp++ ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:61:1]
+ 61 │ 1 ** !3 ** 4;
+ 62 │ 1 ** !temp++ ** 4;
+    ·      ────────────
+ 63 │ 1 ** !temp-- ** 4;
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError2.ts:62:1]
+ 62 │ 1 ** !temp++ ** 4;
+ 63 │ 1 ** !temp-- ** 4;
+    ·      ────────────
+ 64 │ 
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
   × Unexpected trailing comma after rest element
    ╭─[es7/trailingCommasInBindingPatterns.ts:1:1]
  1 │ const [...a,] = [];
@@ -5658,6 +7188,42 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  28 │ 
     ╰────
   help: Try insert a semicolon here
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[expressions/nullishCoalescingOperator/nullishCoalescingOperator5.ts:7:1]
+ 7 │ // should be a syntax error
+ 8 │ a ?? b || c;
+   · ───────────
+ 9 │ 
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+    ╭─[expressions/nullishCoalescingOperator/nullishCoalescingOperator5.ts:10:1]
+ 10 │ // should be a syntax error
+ 11 │ a || b ?? c;
+    · ───────────
+ 12 │ 
+    ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+    ╭─[expressions/nullishCoalescingOperator/nullishCoalescingOperator5.ts:13:1]
+ 13 │ // should be a syntax error
+ 14 │ a ?? b && c;
+    · ───────────
+ 15 │ 
+    ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+    ╭─[expressions/nullishCoalescingOperator/nullishCoalescingOperator5.ts:16:1]
+ 16 │ // should be a syntax error
+ 17 │ a && b ?? c;
+    · ───────────
+ 18 │ 
+    ╰────
+  help: Wrap either expression by parentheses
 
   × Unexpected token
     ╭─[expressions/objectLiterals/objectLiteralErrors.ts:51:1]
@@ -8604,6 +10170,30 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·           ╰── Constructor can't be a generator
  4 │ }
    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[salsa/plainJSBinderErrors.ts:18:1]
+ 18 │         function container(f) {
+ 19 │             delete f
+    ·                    ─
+ 20 │         }
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[salsa/plainJSBinderErrors.ts:21:1]
+ 21 │         var g = 6
+ 22 │         delete g
+    ·                ─
+ 23 │         delete container
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[salsa/plainJSBinderErrors.ts:22:1]
+ 22 │         delete g
+ 23 │         delete container
+    ·                ─────────
+ 24 │     }
+    ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[salsa/plainJSBinderErrors.ts:29:1]

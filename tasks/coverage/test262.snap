@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 2993/3917 (76.41%)
+Negative Passed: 3071/3917 (78.40%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -228,38 +228,6 @@ Expect Syntax Error: "language/expressions/class/elements/async-private-method-s
 Expect Syntax Error: "language/expressions/class/elements/async-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/expressions/class/elements/async-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/grammar-private-field-super-access.js"
-Expect Syntax Error: "language/expressions/class/elements/syntax/early-errors/super-private-access-invalid.js"
 Expect Syntax Error: "language/expressions/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-duplicates.js"
@@ -283,19 +251,6 @@ Expect Syntax Error: "language/expressions/class/method/object-destructuring-par
 Expect Syntax Error: "language/expressions/class/method/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/static-gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/class/static-init-await-binding.js"
-Expect Syntax Error: "language/expressions/coalesce/cannot-chain-head-with-logical-and.js"
-Expect Syntax Error: "language/expressions/coalesce/cannot-chain-head-with-logical-or.js"
-Expect Syntax Error: "language/expressions/coalesce/cannot-chain-tail-with-logical-and.js"
-Expect Syntax Error: "language/expressions/coalesce/cannot-chain-tail-with-logical-or.js"
-Expect Syntax Error: "language/expressions/delete/identifier-strict-recursive.js"
-Expect Syntax Error: "language/expressions/delete/identifier-strict.js"
-Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-bitnot-unary-expression-base.js"
-Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-delete-unary-expression-base.js"
-Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-logical-not-unary-expression-base.js"
-Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-negate-unary-expression-base.js"
-Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-plus-unary-expression-base.js"
-Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-typeof-unary-expression-base.js"
-Expect Syntax Error: "language/expressions/exponentiation/exp-operator-syntax-error-void-unary-expression-base.js"
 Expect Syntax Error: "language/expressions/function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/function/dflt-params-rest.js"
@@ -335,7 +290,6 @@ Expect Syntax Error: "language/expressions/generators/use-strict-with-non-simple
 Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
 Expect Syntax Error: "language/expressions/import.meta/syntax/goal-script.js"
 Expect Syntax Error: "language/expressions/object/11.1.5-1gs.js"
-Expect Syntax Error: "language/expressions/object/__proto__-duplicate.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -666,38 +620,6 @@ Expect Syntax Error: "language/statements/class/elements/async-private-method-st
 Expect Syntax Error: "language/statements/class/elements/async-private-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
 Expect Syntax Error: "language/statements/class/elements/async-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/grammar-private-field-super-access.js"
-Expect Syntax Error: "language/statements/class/elements/syntax/early-errors/super-private-access-invalid.js"
 Expect Syntax Error: "language/statements/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-duplicates.js"
@@ -9252,11 +9174,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  24 │   
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·               ──────
+ 41 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·               ──────
  41 │ 
     ╰────
 
@@ -9268,11 +9206,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·               ──────
+ 41 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·               ──────
  41 │ 
     ╰────
 
@@ -9284,11 +9238,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·               ──────
+ 41 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:39:1]
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·               ──────
  41 │ 
     ╰────
 
@@ -9300,6 +9270,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·               ──────
+ 41 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:39:1]
  39 │   g = this.f;
@@ -9308,11 +9286,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#x);
+    ·               ──────
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·               ───────
+ 41 │ );
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
  39 │   
  40 │   x = delete (this.#m
     ·                    ──
+ 41 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·               ───────
  41 │ );
     ╰────
 
@@ -9324,12 +9326,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ );
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·               ───────
+ 41 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·               ───────
+ 41 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-gen.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·               ───────
+ 41 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·               ───────
+ 41 │ );
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:39:1]
  39 │   
  40 │   x = delete (this.#m
     ·                    ──
  41 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m);
+    ·               ───────
+ 41 │ 
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -9340,11 +9382,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#x);
+    ·               ───────
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
+ 35 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
  35 │ 
     ╰────
 
@@ -9356,11 +9422,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
+ 35 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
  35 │ 
     ╰────
 
@@ -9372,11 +9454,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
+ 35 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
  35 │ 
     ╰────
 
@@ -9388,6 +9486,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
+ 35 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
  33 │   g = this.f;
@@ -9396,11 +9502,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#x;
+    ·              ──────
+ 35 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
  33 │   
  34 │   x = delete this.#m
     ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
  35 │ ;
     ╰────
 
@@ -9412,12 +9542,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ ;
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-gen.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
  33 │   
  34 │   x = delete this.#m
     ·                   ──
  35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m;
+    ·              ───────
+ 35 │ 
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -9428,11 +9598,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#x;
+    ·              ───────
+ 35 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                ──────
+ 41 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                ──────
  41 │ 
     ╰────
 
@@ -9444,11 +9638,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                ──────
+ 41 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                ──────
  41 │ 
     ╰────
 
@@ -9460,11 +9670,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                ──────
+ 41 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:39:1]
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                ──────
  41 │ 
     ╰────
 
@@ -9476,6 +9702,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                ──────
+ 41 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:39:1]
  39 │   g = this.f;
@@ -9484,11 +9718,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#x));
+    ·                ──────
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                ───────
+ 41 │ ));
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
  39 │   
  40 │   x = delete ((this.#m
     ·                     ──
+ 41 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                ───────
  41 │ ));
     ╰────
 
@@ -9500,12 +9758,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ ));
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                ───────
+ 41 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                ───────
+ 41 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-gen.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                ───────
+ 41 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                ───────
+ 41 │ ));
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:39:1]
  39 │   
  40 │   x = delete ((this.#m
     ·                     ──
  41 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m));
+    ·                ───────
+ 41 │ 
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -9516,11 +9814,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  41 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#x));
+    ·                ───────
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
  43 │   }
     ╰────
 
@@ -9532,11 +9854,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
  43 │   }
     ╰────
 
@@ -9548,11 +9886,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
  43 │   }
     ╰────
 
@@ -9564,6 +9918,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
  41 │     var g = this.f;
@@ -9572,11 +9934,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#x);
+    ·             ──────
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
  42 │     delete (this.#m
     ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
  43 │ );
     ╰────
 
@@ -9588,12 +9974,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │ );
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-gen.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
  41 │     
  42 │     delete (this.#m
     ·                  ──
  43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m);
+    ·             ───────
+ 43 │   }
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -9604,11 +10030,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js:41:1]
+ 41 │     
+ 42 │     delete (this.#x);
+    ·             ───────
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
+ 37 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·                ──
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
  37 │   }
     ╰────
 
@@ -9620,11 +10070,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
+ 37 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·                ──
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
  37 │   }
     ╰────
 
@@ -9636,11 +10102,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
+ 37 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·                ──
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
  37 │   }
     ╰────
 
@@ -9652,6 +10134,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
+ 37 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
  35 │     var g = this.f;
@@ -9660,11 +10150,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#x;
+    ·            ──────
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
  35 │     
  36 │     delete this.#m
     ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
  37 │ ;
     ╰────
 
@@ -9676,12 +10190,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │ ;
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-gen.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
  35 │     
  36 │     delete this.#m
     ·                 ──
  37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:35:1]
+ 35 │     
+ 36 │     delete this.#m;
+    ·            ───────
+ 37 │   }
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -9692,11 +10246,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js:35:1]
+ 35 │     
+ 36 │     delete this.#x;
+    ·            ───────
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
  43 │   }
     ╰────
 
@@ -9708,11 +10286,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
  43 │   }
     ╰────
 
@@ -9724,11 +10318,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
  43 │   }
     ╰────
 
@@ -9740,6 +10350,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
  41 │     var g = this.f;
@@ -9748,11 +10366,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#x));
+    ·              ──────
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
  42 │     delete ((this.#m
     ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
  43 │ ));
     ╰────
 
@@ -9764,6 +10406,38 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │ ));
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
  41 │     
@@ -9772,11 +10446,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │ ));
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m));
+    ·              ───────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete ((this.#m));
     ·                   ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#x));
+    ·              ───────
  43 │   }
     ╰────
 
@@ -9914,6 +10604,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │     const { #x: x } = this;
     ·             ──
  31 │   }
+    ╰────
+
+  × Private fields cannot be accessed on super
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-field-super-access.js:27:1]
+ 27 │     access() {
+ 28 │       return super.#m;
+    ·              ────────
+ 29 │     }
+    ╰────
+
+  × Private fields cannot be accessed on super
+    ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-field-super-access.js:31:1]
+ 31 │     method() {
+ 32 │       return super.#m();
+    ·              ────────
+ 33 │     }
     ╰────
 
   × Identifier `m` has already been declared
@@ -11007,6 +11713,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ };
     ╰────
 
+  × Private fields cannot be accessed on super
+    ╭─[language/expressions/class/elements/syntax/early-errors/super-private-access-invalid.js:33:1]
+ 33 │   method() {
+ 34 │     super.#x();
+    ·     ────────
+ 35 │   }
+    ╰────
+
   × 'arguments' is not allowed in class field initializer
     ╭─[language/expressions/class/elements/ternary-init-err-contains-arguments.js:32:1]
  32 │ var C = class {
@@ -11254,6 +11968,38 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                ─────
  22 │ };
     ╰────
+
+  × Logical expressions and coalesce expressions cannot be mixed
+    ╭─[language/expressions/coalesce/cannot-chain-head-with-logical-and.js:30:1]
+ 30 │ 
+ 31 │ 0 && 0 ?? true;
+    · ──────────────
+    ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+    ╭─[language/expressions/coalesce/cannot-chain-head-with-logical-or.js:30:1]
+ 30 │ 
+ 31 │ 0 || 0 ?? true;
+    · ──────────────
+    ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+    ╭─[language/expressions/coalesce/cannot-chain-tail-with-logical-and.js:31:1]
+ 31 │ 
+ 32 │ 0 ?? 0 && true;
+    · ──────────────
+    ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+    ╭─[language/expressions/coalesce/cannot-chain-tail-with-logical-or.js:31:1]
+ 31 │ 
+ 32 │ 0 ?? 0 || true;
+    · ──────────────
+    ╰────
+  help: Wrap either expression by parentheses
 
   × Cannot assign to 'eval' in strict mode
     ╭─[language/expressions/compound-assignment/11.13.2-6-1gs.js:16:1]
@@ -11516,6 +12262,20 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  21 │ 
  22 │ for ('' in {} ? 0 : 0; false; ) ;
     ·      ──
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[language/expressions/delete/identifier-strict-recursive.js:17:1]
+ 17 │ 
+ 18 │ delete ((identifier));
+    ·          ──────────
+    ╰────
+
+  × Delete of an unqualified identifier in strict mode.
+    ╭─[language/expressions/delete/identifier-strict.js:16:1]
+ 16 │ 
+ 17 │ delete test262identifier;
+    ·        ─────────────────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -12365,6 +13125,62 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                                   ╰── Expect `)` here, but found `string`
     ╰────
 
+  × Unexpected exponentiation expression
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-bitnot-unary-expression-base.js:23:1]
+ 23 │ $DONOTEVALUATE();
+ 24 │ ~3 ** 2;
+    · ───────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-delete-unary-expression-base.js:23:1]
+ 23 │ $DONOTEVALUATE();
+ 24 │ delete o.p ** 2;
+    · ───────────────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-logical-not-unary-expression-base.js:23:1]
+ 23 │ $DONOTEVALUATE();
+ 24 │ !1 ** 2;
+    · ───────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-negate-unary-expression-base.js:23:1]
+ 23 │ $DONOTEVALUATE();
+ 24 │ -3 ** 2;
+    · ───────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-plus-unary-expression-base.js:23:1]
+ 23 │ $DONOTEVALUATE();
+ 24 │ +1 ** 2;
+    · ───────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-typeof-unary-expression-base.js:23:1]
+ 23 │ $DONOTEVALUATE();
+ 24 │ typeof 1 ** 2;
+    · ─────────────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-void-unary-expression-base.js:23:1]
+ 23 │ $DONOTEVALUATE();
+ 24 │ void 1 ** 2;
+    · ───────────
+    ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
   × Rest element must be last element
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var f;
@@ -13021,6 +13837,19 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·         ─────┬─────
     ·              ╰── keyword cannot contain escape characters
  25 │ }
+    ╰────
+
+  × Identifier `__proto__` has already been declared
+    ╭─[language/expressions/object/__proto__-duplicate.js:19:1]
+ 19 │ ({
+ 20 │   __proto__: null,
+    ·   ────┬────
+    ·       ╰── `__proto__` has already been declared here
+ 21 │   other: null,
+ 22 │   '__proto__': null
+    ·   ─────┬─────
+    ·        ╰── It can not be redeclared here
+ 23 │ });
     ╰────
 
   × Invalid assignment in object literal
@@ -20688,11 +21517,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  24 │   
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·               ──────
+ 38 │   f() {
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·               ──────
  38 │   f() {
     ╰────
 
@@ -20704,11 +21549,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │   f() {
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·               ──────
+ 38 │   f() {
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·               ──────
  38 │   f() {
     ╰────
 
@@ -20720,11 +21581,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │   f() {
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·               ──────
+ 38 │   f() {
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:36:1]
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·               ──────
  38 │   f() {
     ╰────
 
@@ -20736,6 +21613,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │   f() {
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·               ──────
+ 38 │   f() {
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:36:1]
  36 │   g = this.f;
@@ -20744,11 +21629,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │   f() {
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-privatename.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#x);
+    ·               ──────
+ 38 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·               ───────
+ 38 │ );
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
  36 │   
  37 │   x = delete (this.#m
     ·                    ──
+ 38 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·               ───────
  38 │ );
     ╰────
 
@@ -20760,12 +21669,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │ );
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async-gen.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·               ───────
+ 38 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-async.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·               ───────
+ 38 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-gen.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·               ───────
+ 38 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·               ───────
+ 38 │ );
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:36:1]
  36 │   
  37 │   x = delete (this.#m
     ·                    ──
  38 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m);
+    ·               ───────
+ 38 │   
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -20776,11 +21725,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │   
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-privatename.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#x);
+    ·               ───────
+ 38 │   
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
+ 35 │   f() {
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
  35 │   f() {
     ╰────
 
@@ -20792,11 +21765,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │   f() {
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
+ 35 │   f() {
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
  35 │   f() {
     ╰────
 
@@ -20808,11 +21797,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │   f() {
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
+ 35 │   f() {
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
  35 │   f() {
     ╰────
 
@@ -20824,6 +21829,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │   f() {
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
+ 35 │   f() {
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
  33 │   g = this.f;
@@ -20832,11 +21845,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │   f() {
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-privatename.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#x;
+    ·              ──────
+ 35 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
  33 │   
  34 │   x = delete this.#m
     ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
  35 │ ;
     ╰────
 
@@ -20848,12 +21885,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ ;
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async-gen.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-async.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-gen.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
  33 │   
  34 │   x = delete this.#m
     ·                   ──
  35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m;
+    ·              ───────
+ 35 │   
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -20864,11 +21941,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │   
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-privatename.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#x;
+    ·              ───────
+ 35 │   
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                ──────
+ 38 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                ──────
  38 │ 
     ╰────
 
@@ -20880,11 +21981,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                ──────
+ 38 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                ──────
  38 │ 
     ╰────
 
@@ -20896,11 +22013,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                ──────
+ 38 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:36:1]
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                ──────
  38 │ 
     ╰────
 
@@ -20912,6 +22045,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                ──────
+ 38 │ 
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:36:1]
  36 │   g = this.f;
@@ -20920,11 +22061,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-privatename.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#x));
+    ·                ──────
+ 38 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                ───────
+ 38 │ ));
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
  36 │   
  37 │   x = delete ((this.#m
     ·                     ──
+ 38 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                ───────
  38 │ ));
     ╰────
 
@@ -20936,12 +22101,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │ ));
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                ───────
+ 38 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-async.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                ───────
+ 38 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-gen.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                ───────
+ 38 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                ───────
+ 38 │ ));
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:36:1]
  36 │   
  37 │   x = delete ((this.#m
     ·                     ──
  38 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m));
+    ·                ───────
+ 38 │ 
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -20952,11 +22157,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │ 
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-privatename.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#x));
+    ·                ───────
+ 38 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
  43 │   }
     ╰────
 
@@ -20968,11 +22197,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
  43 │   }
     ╰────
 
@@ -20984,11 +22229,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
  43 │   }
     ╰────
 
@@ -21000,6 +22261,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
  41 │     var g = this.f;
@@ -21008,11 +22277,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-privatename.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#x);
+    ·             ──────
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
  42 │     delete (this.#m
     ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
  43 │ );
     ╰────
 
@@ -21024,12 +22317,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │ );
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async-gen.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-async.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-gen.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
  41 │     
  42 │     delete (this.#m
     ·                  ──
  43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m);
+    ·             ───────
+ 43 │   }
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -21040,11 +22373,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-privatename.js:41:1]
+ 41 │     
+ 42 │     delete (this.#x);
+    ·             ───────
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
+ 37 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·                ──
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
  37 │   }
     ╰────
 
@@ -21056,11 +22413,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
+ 37 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·                ──
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
  37 │   }
     ╰────
 
@@ -21072,11 +22445,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
+ 37 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·                ──
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
  37 │   }
     ╰────
 
@@ -21088,6 +22477,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
+ 37 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
  35 │     var g = this.f;
@@ -21096,11 +22493,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-privatename.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#x;
+    ·            ──────
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
  35 │     
  36 │     delete this.#m
     ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
  37 │ ;
     ╰────
 
@@ -21112,12 +22533,52 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │ ;
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async-gen.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-async.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-gen.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
  35 │     
  36 │     delete this.#m
     ·                 ──
  37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:35:1]
+ 35 │     
+ 36 │     delete this.#m;
+    ·            ───────
+ 37 │   }
     ╰────
 
   × Private field 'm' must be declared in an enclosing class
@@ -21128,11 +22589,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-privatename.js:35:1]
+ 35 │     
+ 36 │     delete this.#x;
+    ·            ───────
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
  43 │   }
     ╰────
 
@@ -21144,11 +22629,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
  43 │   }
     ╰────
 
@@ -21160,11 +22661,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
  43 │   }
     ╰────
 
@@ -21176,6 +22693,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
  41 │     var g = this.f;
@@ -21184,11 +22709,35 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │   }
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-privatename.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#x));
+    ·              ──────
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
  42 │     delete ((this.#m
     ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
  43 │ ));
     ╰────
 
@@ -21200,6 +22749,38 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │ ));
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async-gen.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-async.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-gen.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
  41 │     
@@ -21208,11 +22789,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  43 │ ));
     ╰────
 
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m));
+    ·              ───────
+ 43 │   }
+    ╰────
+
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete ((this.#m));
     ·                   ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-privatename.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#x));
+    ·              ───────
  43 │   }
     ╰────
 
@@ -21350,6 +22947,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │     const { #x: x } = this;
     ·             ──
  31 │   }
+    ╰────
+
+  × Private fields cannot be accessed on super
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-field-super-access.js:27:1]
+ 27 │     access() {
+ 28 │       return super.#m;
+    ·              ────────
+ 29 │     }
+    ╰────
+
+  × Private fields cannot be accessed on super
+    ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-field-super-access.js:31:1]
+ 31 │     method() {
+ 32 │       return super.#m();
+    ·              ────────
+ 33 │     }
     ╰────
 
   × Identifier `m` has already been declared
@@ -22441,6 +24054,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·         ▲
     ·         ╰── Invalid Character `#`
  25 │ }
+    ╰────
+
+  × Private fields cannot be accessed on super
+    ╭─[language/statements/class/elements/syntax/early-errors/super-private-access-invalid.js:33:1]
+ 33 │   method() {
+ 34 │     super.#x();
+    ·     ────────
+ 35 │   }
     ╰────
 
   × 'arguments' is not allowed in class field initializer

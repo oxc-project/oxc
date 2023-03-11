@@ -37,6 +37,11 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::Class(class) => check_class(class, ctx),
             AstKind::Super(sup) => check_super(sup, node, ctx),
             AstKind::Property(prop) => check_property(prop, ctx),
+            AstKind::ObjectExpression(expr) => check_object_expression(expr, ctx),
+            AstKind::BinaryExpression(expr) => check_binary_expression(expr, ctx),
+            AstKind::LogicalExpression(expr) => check_logical_expression(expr, ctx),
+            AstKind::MemberExpression(expr) => check_member_expression(expr, ctx),
+            AstKind::UnaryExpression(expr) => check_unary_expression(expr, node, ctx),
             _ => {}
         }
     }
@@ -631,6 +636,115 @@ fn check_property(prop: &Property, ctx: &LintContext) {
     if prop.shorthand {
         if let PropertyValue::Expression(Expression::AssignmentExpression(expr)) = &prop.value {
             ctx.diagnostic(CoverInitializedName(expr.span));
+        }
+    }
+}
+
+fn check_object_expression(obj_expr: &ObjectExpression, ctx: &LintContext) {
+    // ObjectLiteral : { PropertyDefinitionList }
+    // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
+    // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
+    let mut prev_proto: Option<Span> = None;
+    let prop_names = obj_expr.properties.iter().filter_map(PropName::prop_name);
+    for prop_name in prop_names {
+        if prop_name.0 == "__proto__" {
+            if let Some(prev_span) = prev_proto {
+                ctx.diagnostic(Redeclaration("__proto__".into(), prev_span, prop_name.1));
+            }
+            prev_proto = Some(prop_name.1);
+        }
+    }
+}
+
+fn check_binary_expression(binary_expr: &BinaryExpression, ctx: &LintContext) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Unexpected exponentiation expression")]
+    #[diagnostic(help("Wrap {0} expression in parentheses to enforce operator precedence"))]
+    struct UnexpectedExponential(&'static str, #[label] Span);
+
+    if binary_expr.operator == BinaryOperator::Exponential {
+        match binary_expr.left {
+            // async () => await 5 ** 6
+            // async () => await -5 ** 6
+            Expression::AwaitExpression(_) => {
+                ctx.diagnostic(UnexpectedExponential("await", binary_expr.span));
+            }
+            // -5 ** 6
+            Expression::UnaryExpression(_) => {
+                ctx.diagnostic(UnexpectedExponential("unary", binary_expr.span));
+            }
+            _ => {}
+        }
+    }
+}
+
+fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &LintContext) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Logical expressions and coalesce expressions cannot be mixed")]
+    #[diagnostic(help("Wrap either expression by parentheses"))]
+    struct MixedCoalesce(#[label] Span);
+
+    // check mixed coalesce
+    // a ?? b || c - a ?? (b || c)
+    // a ?? b && c - a ?? (b && c)
+    // a || b ?? c - (a || b) ?? c
+    // a && b ?? c - (a && b) ?? c
+    if logical_expr.operator == LogicalOperator::Coalesce {
+        let mut maybe_mixed_coalesce_expr = None;
+        if let Expression::LogicalExpression(rhs) = &logical_expr.right {
+            maybe_mixed_coalesce_expr = Some(rhs);
+        } else if let Expression::LogicalExpression(lhs) = &logical_expr.left {
+            maybe_mixed_coalesce_expr = Some(lhs);
+        }
+        if let Some(expr) = maybe_mixed_coalesce_expr {
+            if matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or) {
+                ctx.diagnostic(MixedCoalesce(logical_expr.span));
+            }
+        }
+    }
+}
+
+fn check_member_expression(member_expr: &MemberExpression, ctx: &LintContext) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Private fields cannot be accessed on super")]
+    #[diagnostic()]
+    struct SuperPrivate(#[label] Span);
+
+    if let MemberExpression::PrivateFieldExpression(private_expr) = member_expr {
+        // super.#m
+        if let Expression::Super(_) = &private_expr.object {
+            ctx.diagnostic(SuperPrivate(private_expr.span));
+        }
+    }
+}
+
+fn check_unary_expression<'a>(
+    unary_expr: &'a UnaryExpression,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Delete of an unqualified identifier in strict mode.")]
+    #[diagnostic()]
+    struct DeleteOfUnqualified(#[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Private fields can not be deleted")]
+    #[diagnostic()]
+    struct DeletePrivateField(#[label] Span);
+
+    // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
+    if unary_expr.operator == UnaryOperator::Delete {
+        match unary_expr.argument.get_inner_expression() {
+            Expression::Identifier(ident) if ctx.strict_mode(node) => {
+                ctx.diagnostic(DeleteOfUnqualified(ident.span));
+            }
+            Expression::MemberExpression(expr) => {
+                if let MemberExpression::PrivateFieldExpression(expr) = &**expr {
+                    ctx.diagnostic(DeletePrivateField(expr.span));
+                }
+            }
+            _ => {}
         }
     }
 }

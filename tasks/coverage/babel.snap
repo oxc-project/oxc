@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2053/2069 (99.23%)
 Positive Passed: 2053/2069 (99.23%)
-Negative Passed: 1014/1502 (67.51%)
+Negative Passed: 1040/1502 (69.24%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -96,9 +96,6 @@ Expect Syntax Error: "es2015/destructuring/binding-arguments-module/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-arguments-strict/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-eval/input.js"
 Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
-Expect Syntax Error: "es2015/duplicate-proto/in-new-expression/input.js"
-Expect Syntax Error: "es2015/duplicate-proto/with-assignment-expression/input.js"
-Expect Syntax Error: "es2015/duplicate-proto/without-assignment-expression/input.js"
 Expect Syntax Error: "es2015/for-in/strict-initializer/input.js"
 Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
 Expect Syntax Error: "es2015/let/let-as-identifier-strict-fail/input.js"
@@ -140,7 +137,6 @@ Expect Syntax Error: "es2015/uncategorised/291/input.js"
 Expect Syntax Error: "es2015/uncategorised/296/input.js"
 Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2015/uncategorised/332/input.js"
-Expect Syntax Error: "es2015/uncategorised/349/input.js"
 Expect Syntax Error: "es2015/yield/function-name-function-declaration-inside-generator/input.js"
 Expect Syntax Error: "es2015/yield/function-name-generator-expression/input.js"
 Expect Syntax Error: "es2015/yield/function-name-strict-body/input.js"
@@ -164,14 +160,6 @@ Expect Syntax Error: "es2015/yield/parameter-name-generator/input.js"
 Expect Syntax Error: "es2015/yield/parameter-name-strict-body/input.js"
 Expect Syntax Error: "es2015/yield/parameter-name-strict/input.js"
 Expect Syntax Error: "es2015/yield/yield-star-parameter-default-inside-generator/input.js"
-Expect Syntax Error: "es2016/exponentiation-operator/10/input.js"
-Expect Syntax Error: "es2016/exponentiation-operator/11/input.js"
-Expect Syntax Error: "es2016/exponentiation-operator/12/input.js"
-Expect Syntax Error: "es2016/exponentiation-operator/15/input.js"
-Expect Syntax Error: "es2016/exponentiation-operator/16/input.js"
-Expect Syntax Error: "es2016/exponentiation-operator/await-before-exponential/input.js"
-Expect Syntax Error: "es2016/exponentiation-operator/await-unary-before-exponential/input.js"
-Expect Syntax Error: "es2016/exponentiation-operator/nested-unary-before-exponential/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/array-pattern-default/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/array-pattern/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/arrow-function/input.js"
@@ -184,7 +172,6 @@ Expect Syntax Error: "es2016/simple-parameter-list/method/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/object-pattern-default/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/object-pattern/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/rest/input.js"
-Expect Syntax Error: "es2017/async-call/parenthesized-argument-object-double-proto/input.js"
 Expect Syntax Error: "es2017/async-functions/9/input.js"
 Expect Syntax Error: "es2017/async-functions/allow-await-outside-function-throw/input.js"
 Expect Syntax Error: "es2017/async-functions/async-await-as-arrow-binding-identifier/input.js"
@@ -209,10 +196,6 @@ Expect Syntax Error: "es2020/dynamic-import/direct-calls-only/input.js"
 Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
 Expect Syntax Error: "es2020/import-meta/error-in-script/input.js"
 Expect Syntax Error: "es2020/import-meta/no-other-prop-names/input.js"
-Expect Syntax Error: "es2020/nullish-coalescing-operator/no-paren-and-nullish/input.js"
-Expect Syntax Error: "es2020/nullish-coalescing-operator/no-paren-nullish-and/input.js"
-Expect Syntax Error: "es2020/nullish-coalescing-operator/no-paren-nullish-or/input.js"
-Expect Syntax Error: "es2020/nullish-coalescing-operator/no-paren-or-nullish/input.js"
 Expect Syntax Error: "esprima/declaration-function/dupe-param/input.js"
 Expect Syntax Error: "esprima/es2015-array-binding-pattern/invalid-dup-param/input.js"
 Expect Syntax Error: "esprima/es2015-array-pattern/dupe-param-1/input.js"
@@ -236,12 +219,6 @@ Expect Syntax Error: "esprima/es2015-identifier/invalid_expression_await/input.j
 Expect Syntax Error: "esprima/es2015-identifier/invalid_var_await/input.js"
 Expect Syntax Error: "esprima/es2015-meta-property/invalid-new-target/input.js"
 Expect Syntax Error: "esprima/es2015-meta-property/unknown-property/input.js"
-Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-getter-literal-identifier/input.js"
-Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-identifier-literal/input.js"
-Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-identifiers/input.js"
-Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-literal-identifier/input.js"
-Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-literals/input.js"
-Expect Syntax Error: "esprima/es2015-object-initialiser/invalid-proto-setter-literal-identifier/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-binding-property/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-expression/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-arrow-default/input.js"
@@ -354,7 +331,6 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0245/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0246/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0247/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0249/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0250/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0260/input.js"
 Expect Syntax Error: "esprima/statement-if/.migrated_0003/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
@@ -413,8 +389,6 @@ Expect Syntax Error: "typescript/dts/invalid-class-initializer/input.ts"
 Expect Syntax Error: "typescript/expect-plugin/export-interface/input.js"
 Expect Syntax Error: "typescript/expect-plugin/export-type-named/input.js"
 Expect Syntax Error: "typescript/expect-plugin/export-type/input.js"
-Expect Syntax Error: "typescript/exponentiation/await-non-null-before-exponential/input.ts"
-Expect Syntax Error: "typescript/exponentiation/unary-non-null-before-exponential/input.ts"
 Expect Syntax Error: "typescript/export/double-declare/input.ts"
 Expect Syntax Error: "typescript/function/empty-type-parameters/input.ts"
 Expect Syntax Error: "typescript/function/parameter-properties/input.ts"
@@ -2328,6 +2302,38 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·   ╰── Cannot assign to this expression
    ╰────
 
+  × Identifier `__proto__` has already been declared
+   ╭─[es2015/duplicate-proto/in-new-expression/input.js:1:1]
+ 1 │ new {__proto__: Number, __proto__: Number}.__proto__;
+   ·      ────┬────          ────┬────
+   ·          │                  ╰── It can not be redeclared here
+   ·          ╰── `__proto__` has already been declared here
+   ╰────
+
+  × Identifier `__proto__` has already been declared
+   ╭─[es2015/duplicate-proto/with-assignment-expression/input.js:1:1]
+ 1 │ ({
+ 2 │   __proto__: a,
+   ·   ────┬────
+   ·       ╰── `__proto__` has already been declared here
+ 3 │   __proto__: a,
+   ·   ────┬────
+   ·       ╰── It can not be redeclared here
+ 4 │   a: a = 1
+   ╰────
+
+  × Identifier `__proto__` has already been declared
+   ╭─[es2015/duplicate-proto/without-assignment-expression/input.js:1:1]
+ 1 │ ({
+ 2 │   __proto__: a,
+   ·   ────┬────
+   ·       ╰── `__proto__` has already been declared here
+ 3 │   __proto__: a,
+   ·   ────┬────
+   ·       ╰── It can not be redeclared here
+ 4 │ })
+   ╰────
+
   × Unexpected token
    ╭─[es2015/for-in/bare-initializer/input.js:1:1]
  1 │ var a;
@@ -3488,6 +3494,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                      ╰── A 'set' accessor must have exactly one parameter.
    ╰────
 
+  × Identifier `__proto__` has already been declared
+   ╭─[es2015/uncategorised/349/input.js:1:1]
+ 1 │ ({ '__proto__': 1, __proto__: 2 })
+   ·    ─────┬─────     ────┬────
+   ·         │              ╰── It can not be redeclared here
+   ·         ╰── `__proto__` has already been declared here
+   ╰────
+
   × Unexpected token
    ╭─[es2015/uncategorised/357/input.js:1:1]
  1 │ await = foo();
@@ -3712,6 +3726,27 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Unexpected exponentiation expression
+   ╭─[es2016/exponentiation-operator/10/input.js:1:1]
+ 1 │ -5 ** 6;
+   · ───────
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es2016/exponentiation-operator/11/input.js:1:1]
+ 1 │ -(5) ** 6;
+   · ─────────
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es2016/exponentiation-operator/12/input.js:1:1]
+ 1 │ (-5 ** 6);
+   ·  ───────
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
   × Unexpected token
    ╭─[es2016/exponentiation-operator/13/input.js:1:1]
  1 │ 1 %* 1;
@@ -3723,6 +3758,41 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ a %*= 1;
    ·    ──
    ╰────
+
+  × Unexpected exponentiation expression
+   ╭─[es2016/exponentiation-operator/15/input.js:1:1]
+ 1 │ -(5) ** 6;
+   · ─────────
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es2016/exponentiation-operator/16/input.js:1:1]
+ 1 │ (-5 ** 6);
+   ·  ───────
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es2016/exponentiation-operator/await-before-exponential/input.js:1:1]
+ 1 │ async () => await 5 ** 6;
+   ·             ────────────
+   ╰────
+  help: Wrap await expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es2016/exponentiation-operator/await-unary-before-exponential/input.js:1:1]
+ 1 │ async () => await -5 ** 6;
+   ·             ─────────────
+   ╰────
+  help: Wrap await expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[es2016/exponentiation-operator/nested-unary-before-exponential/input.js:1:1]
+ 1 │ (-+5 ** 6);
+   ·  ────────
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Automatic Semicolon Insertion
    ╭─[es2016/simple-parameter-list/async-arrow-function-after-binary-operator/input.js:1:1]
@@ -3795,6 +3865,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × Identifier `__proto__` has already been declared
+   ╭─[es2017/async-call/parenthesized-argument-object-double-proto/input.js:1:1]
+ 1 │ async({ __proto__: x, __proto__: y })
+   ·         ────┬────     ────┬────
+   ·             │             ╰── It can not be redeclared here
+   ·             ╰── `__proto__` has already been declared here
+   ╰────
 
   × Invalid assignment in object literal
    ╭─[es2017/async-call/parenthesized-argument-object-with-assignment/input.js:1:1]
@@ -4334,6 +4412,34 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ─────┬─────
    ·      ╰── Cannot assign to this expression
    ╰────
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[es2020/nullish-coalescing-operator/no-paren-and-nullish/input.js:1:1]
+ 1 │ c && d ?? e;
+   · ───────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[es2020/nullish-coalescing-operator/no-paren-nullish-and/input.js:1:1]
+ 1 │ a ?? b && c;
+   · ───────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[es2020/nullish-coalescing-operator/no-paren-nullish-or/input.js:1:1]
+ 1 │ e ?? f ?? g || h;
+   · ────────────────
+   ╰────
+  help: Wrap either expression by parentheses
+
+  × Logical expressions and coalesce expressions cannot be mixed
+   ╭─[es2020/nullish-coalescing-operator/no-paren-or-nullish/input.js:1:1]
+ 1 │ h || i ?? j;
+   · ───────────
+   ╰────
+  help: Wrap either expression by parentheses
 
   × Optional chaining cannot appear in the callee of new expressions
    ╭─[es2020/optional-chaining/class-contructor-call/input.js:1:1]
@@ -6236,6 +6342,54 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                              ─
    ╰────
 
+  × Identifier `__proto__` has already been declared
+   ╭─[esprima/es2015-object-initialiser/invalid-proto-getter-literal-identifier/input.js:1:1]
+ 1 │ ({ get __proto(){}, "__proto__": null, __proto__: null, })
+   ·                     ─────┬─────        ────┬────
+   ·                          │                 ╰── It can not be redeclared here
+   ·                          ╰── `__proto__` has already been declared here
+   ╰────
+
+  × Identifier `__proto__` has already been declared
+   ╭─[esprima/es2015-object-initialiser/invalid-proto-identifier-literal/input.js:1:1]
+ 1 │ ({ __proto__: null, "__proto__": null })
+   ·    ────┬────        ─────┬─────
+   ·        │                 ╰── It can not be redeclared here
+   ·        ╰── `__proto__` has already been declared here
+   ╰────
+
+  × Identifier `__proto__` has already been declared
+   ╭─[esprima/es2015-object-initialiser/invalid-proto-identifiers/input.js:1:1]
+ 1 │ ({ __proto__: null, __proto__: null })
+   ·    ────┬────        ────┬────
+   ·        │                ╰── It can not be redeclared here
+   ·        ╰── `__proto__` has already been declared here
+   ╰────
+
+  × Identifier `__proto__` has already been declared
+   ╭─[esprima/es2015-object-initialiser/invalid-proto-literal-identifier/input.js:1:1]
+ 1 │ ({ "__proto__": null, __proto__: null })
+   ·    ─────┬─────        ────┬────
+   ·         │                 ╰── It can not be redeclared here
+   ·         ╰── `__proto__` has already been declared here
+   ╰────
+
+  × Identifier `__proto__` has already been declared
+   ╭─[esprima/es2015-object-initialiser/invalid-proto-literals/input.js:1:1]
+ 1 │ ({ "__proto__": null, '__proto__': null })
+   ·    ─────┬─────        ─────┬─────
+   ·         │                  ╰── It can not be redeclared here
+   ·         ╰── `__proto__` has already been declared here
+   ╰────
+
+  × Identifier `__proto__` has already been declared
+   ╭─[esprima/es2015-object-initialiser/invalid-proto-setter-literal-identifier/input.js:1:1]
+ 1 │ ({ set __proto__(x){}, "__proto__": null, __proto__: null, })
+   ·                        ─────┬─────        ────┬────
+   ·                             │                 ╰── It can not be redeclared here
+   ·                             ╰── `__proto__` has already been declared here
+   ╰────
+
   × Unexpected token
    ╭─[esprima/es2015-spread-element/invalid-call-dot-dot/input.js:1:1]
  1 │ f(..g);
@@ -7662,6 +7816,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ╰── `__proto__` has already been declared here
    ╰────
 
+  × Identifier `__proto__` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0250/input.js:1:1]
+ 1 │ x = { __proto__: 42, __proto__: 43 }
+   ·       ────┬────      ────┬────
+   ·           │              ╰── It can not be redeclared here
+   ·           ╰── `__proto__` has already been declared here
+   ╰────
+
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0252/input.js:1:1]
  1 │ var
@@ -8202,6 +8364,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ────┬───
    ·           ╰── Missing initializer in destructuring declaration
    ╰────
+
+  × Unexpected exponentiation expression
+   ╭─[typescript/exponentiation/await-non-null-before-exponential/input.ts:1:1]
+ 1 │ async (a) => await a! ** 6;
+   ·              ─────────────
+   ╰────
+  help: Wrap await expression in parentheses to enforce operator precedence
+
+  × Unexpected exponentiation expression
+   ╭─[typescript/exponentiation/unary-non-null-before-exponential/input.ts:1:1]
+ 1 │ (a) => +a! ** 6;
+   ·        ────────
+   ╰────
+  help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected token
    ╭─[typescript/export/declare-invalid/input.ts:1:1]
