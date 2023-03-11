@@ -26,7 +26,7 @@ pub struct Symbol {
 #[test]
 fn symbol_size() {
     use std::mem::size_of;
-    assert_eq!(size_of::<Symbol>(), 40);
+    assert_eq!(size_of::<Symbol>(), 48);
 }
 
 bitflags! {
