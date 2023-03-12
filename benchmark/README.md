@@ -31,25 +31,29 @@ Using the shell `time` command for cpu utilization
 
 ### Hyperfine
 
+## Intel i7 6-core
+
 ```
 Benchmark 1: oxc
-  Time (mean ± σ):      30.9 ms ±   1.4 ms    [User: 138.2 ms, System: 54.7 ms]
-  Range (min … max):    28.6 ms …  35.7 ms    83 runs
+  Time (mean ± σ):      34.6 ms ±   1.3 ms    [User: 160.1 ms, System: 67.2 ms]
+  Range (min … max):    31.8 ms …  40.9 ms    75 runs
+
+  Warning: Ignoring non-zero exit code.
 
 Benchmark 2: rome
-  Time (mean ± σ):     145.0 ms ±   2.8 ms    [User: 674.9 ms, System: 69.9 ms]
-  Range (min … max):   141.5 ms … 151.8 ms    19 runs
+  Time (mean ± σ):     147.4 ms ±   3.7 ms    [User: 695.4 ms, System: 72.4 ms]
+  Range (min … max):   141.9 ms … 153.8 ms    20 runs
 
   Warning: Ignoring non-zero exit code.
 
 Benchmark 3: eslint
-  Time (mean ± σ):      2.661 s ±  0.057 s    [User: 4.076 s, System: 0.223 s]
-  Range (min … max):    2.593 s …  2.790 s    10 runs
+  Time (mean ± σ):      2.905 s ±  0.185 s    [User: 4.387 s, System: 0.254 s]
+  Range (min … max):    2.710 s …  3.287 s    10 runs
 
   Warning: Ignoring non-zero exit code.
 
 Summary
   'oxc' ran
-    4.70 ± 0.23 times faster than 'rome'
-   86.20 ± 4.35 times faster than 'eslint'
+    4.26 ± 0.20 times faster than 'rome'
+   83.94 ± 6.25 times faster than 'eslint'
 ```
