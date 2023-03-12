@@ -20,7 +20,6 @@ concurrency:
 
 env:
   CARGO_TERM_QUIET: true
-  RUSTFLAGS: -D warnings # https://rust-unofficial.github.io/patterns/anti_patterns/deny-warnings.html#alternatives
 
 jobs:
   format:
@@ -55,7 +54,7 @@ jobs:
         run: cargo check --workspace --all-targets --all-features --release --locked
 
       - name: Run clippy
-        run: cargo lint
+        run: cargo lint -- -D warnings
 
   typos:
     name: "spell check"

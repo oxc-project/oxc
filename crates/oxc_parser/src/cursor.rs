@@ -94,9 +94,9 @@ impl<'a> Parser<'a> {
         self.cur_kind() == kind
     }
 
-    /// StringValue of IdentifierName normalizes any Unicode escape sequences
-    /// in IdentifierName hence such escapes cannot be used to write an Identifier
-    /// whose code point sequence is the same as a ReservedWord.
+    /// `StringValue` of `IdentifierName` normalizes any Unicode escape sequences
+    /// in `IdentifierName` hence such escapes cannot be used to write an Identifier
+    /// whose code point sequence is the same as a `ReservedWord`.
     #[inline]
     fn test_escaped_keyword(&mut self, kind: Kind) {
         if self.cur_token().escaped && kind.is_all_keyword() {
@@ -113,7 +113,7 @@ impl<'a> Parser<'a> {
         self.token = self.lexer.next_token();
     }
 
-    /// Move to the next JSXChild
+    /// Move to the next `JSXChild`
     /// Checks if the current token is escaped if it is a keyword
     fn advance_for_jsx_child(&mut self, kind: Kind) {
         self.test_escaped_keyword(kind);
@@ -171,6 +171,7 @@ impl<'a> Parser<'a> {
         kind == Kind::RCurly || kind == Kind::Eof || self.cur_token().is_on_new_line
     }
 
+    /// # Errors
     pub fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.current_range();
