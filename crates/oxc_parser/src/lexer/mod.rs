@@ -47,8 +47,6 @@ pub struct LexerCheckpoint<'a> {
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum LexerContext {
     Regular,
-    /// Lex the next token, returns `<` or `{` or `JSXText`
-    JsxChild,
     /// Lex the next token, returns `JsxString` or any other token
     JsxAttributeValue,
 }
@@ -171,6 +169,11 @@ impl<'a> Lexer<'a> {
             return checkpoint.token;
         }
         let kind = self.read_next_token();
+        self.finish_next(kind)
+    }
+
+    pub fn next_jsx_child(&mut self) -> Token {
+        let kind = self.read_jsx_child();
         self.finish_next(kind)
     }
 
@@ -339,10 +342,6 @@ impl<'a> Lexer<'a> {
     /// Whitespace and line terminators are skipped
     fn read_next_token(&mut self) -> Kind {
         self.current.token.start = self.offset();
-
-        if self.context == LexerContext::JsxChild {
-            return self.read_jsx_child();
-        }
 
         loop {
             self.skip_whitespace();
@@ -1027,7 +1026,6 @@ impl<'a> Lexer<'a> {
 
         while let ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9') = self.peek() {
             self.current.chars.next();
-            // dbg!(ch);
             if !ch.is_ascii_lowercase() {
                 self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
                 continue;
