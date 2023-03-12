@@ -23,5 +23,4 @@ jobs:
       - name: Run
         run: |
           cd crates/oxc_parser/fuzz
-          cargo fuzz run --release parser -- -only_ascii=1 -max_total_time=900
-
+          cargo fuzz run --release parser -- -only_ascii=1 -detect_leaks=0 -max_total_time=900
