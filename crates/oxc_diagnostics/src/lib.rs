@@ -1,7 +1,7 @@
 //! Diagnostics Wrapper
 //! Exports `thiserror` and `miette`
 
-use std::{cell::RefCell, ops::Deref, rc::Rc};
+use std::{cell::RefCell, ops::Deref, path::PathBuf, rc::Rc};
 
 pub use miette;
 use miette::Diagnostic;
@@ -42,3 +42,8 @@ pub struct Redeclaration(
     #[label("`{0}` has already been declared here")] pub Span,
     #[label("It can not be redeclared here")] pub Span,
 );
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("File is too long to fit on the screen")]
+#[diagnostic(help("{0:?} seems like a minified file"))]
+pub struct MinifiedFileError(pub PathBuf);
