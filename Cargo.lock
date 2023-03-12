@@ -875,6 +875,7 @@ dependencies = [
  "jemallocator",
  "miette",
  "mimalloc",
+ "num_cpus",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",

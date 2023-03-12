@@ -34,7 +34,8 @@ impl Termination for CliRunResult {
                 duration,
             } => {
                 let ms = duration.as_millis();
-                println!("Checked {number_of_files} files in {ms}ms.");
+                let cpus = num_cpus::get();
+                println!("Checked {number_of_files} files in {ms}ms using {cpus} cores.");
 
                 if max_warnings_exceeded {
                     println!("Exceeded maximum number of warnings. Found {number_of_warnings}.");

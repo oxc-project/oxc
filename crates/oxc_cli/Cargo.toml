@@ -28,5 +28,6 @@ glob = { workspace = true }
 rayon = { workspace = true }
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
 
+num_cpus = "1.15.0"
 ignore = { version = "0.4.20", features = ["simd-accel"] }
 # git2 = { version = "0.16.1", default_features = false }
