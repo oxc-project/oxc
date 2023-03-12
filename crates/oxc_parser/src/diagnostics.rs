@@ -282,9 +282,7 @@ pub struct AwaitExpression(#[label] pub Span);
 #[derive(Debug, Error, Diagnostic)]
 #[error("A 'yield' expression is only allowed in a generator body.")]
 #[diagnostic()]
-pub struct YieldExpression(
-    #[label("A 'yield' expression is only allowed in a generator body.")] pub Span,
-);
+pub struct YieldExpression(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid class declaration")]

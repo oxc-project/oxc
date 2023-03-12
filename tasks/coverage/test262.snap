@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3319/3917 (84.73%)
+Negative Passed: 3320/3917 (84.76%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -43,7 +43,6 @@ Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/ar
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-rest.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/assignmenttargettype/direct-yieldexpression-0.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/await-as-param-nested-arrow-body-position.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-duplicates.js"
@@ -4723,6 +4722,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·       ╰── Cannot assign to this expression
     ╰────
 
+  × A 'yield' expression is only allowed in a generator body.
+    ╭─[language/expressions/assignmenttargettype/direct-yieldexpression-0.js:19:1]
+ 19 │ 
+ 20 │ yield x = 1;
+    · ─────
+    ╰────
+
   × Invalid assignment
     ╭─[language/expressions/assignmenttargettype/direct-yieldexpression-1.js:19:1]
  19 │ 
@@ -5926,6 +5932,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  23 │ (true ** false) = 1;
     ·  ──────┬──────
     ·        ╰── Cannot assign to this expression
+    ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+    ╭─[language/expressions/assignmenttargettype/parenthesized-yieldexpression-0.js:22:1]
+ 22 │ 
+ 23 │ (yield x) = 1;
+    ·  ─────
     ╰────
 
   × Invalid assignment

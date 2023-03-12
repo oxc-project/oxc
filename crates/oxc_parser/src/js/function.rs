@@ -306,6 +306,11 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `yield`
 
+        let has_yield = self.ctx.has_yield();
+        if !has_yield {
+            self.error(diagnostics::YieldExpression(Span::new(span.start, span.start + 5)));
+        }
+
         let mut delegate = false;
         let mut argument = None;
 
@@ -322,7 +327,6 @@ impl<'a> Parser<'a> {
                     | Kind::Comma
             );
             if !not_assignment_expr || delegate {
-                let has_yield = self.ctx.has_yield();
                 self.ctx = self.ctx.union_yield_if(true);
                 argument = Some(self.parse_assignment_expression_base()?);
                 self.ctx = self.ctx.and_yield(has_yield);

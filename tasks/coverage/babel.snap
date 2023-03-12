@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2051/2069 (99.13%)
 Positive Passed: 2051/2069 (99.13%)
-Negative Passed: 1068/1502 (71.11%)
+Negative Passed: 1077/1502 (71.70%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -110,7 +110,6 @@ Expect Syntax Error: "es2015/object/disallow-duplicate-method-params/input.js"
 Expect Syntax Error: "es2015/shorthand/reserved-word-strict/input.js"
 Expect Syntax Error: "es2015/statements/label-invalid-func-strict/input.js"
 Expect Syntax Error: "es2015/uncategorised/.191/input.js"
-Expect Syntax Error: "es2015/uncategorised/.260/input.js"
 Expect Syntax Error: "es2015/uncategorised/.335/input.js"
 Expect Syntax Error: "es2015/uncategorised/.343/input.js"
 Expect Syntax Error: "es2015/uncategorised/166/input.js"
@@ -137,8 +136,6 @@ Expect Syntax Error: "es2015/yield/function-name-function-declaration-inside-gen
 Expect Syntax Error: "es2015/yield/function-name-generator-expression/input.js"
 Expect Syntax Error: "es2015/yield/function-name-strict-body/input.js"
 Expect Syntax Error: "es2015/yield/function-name-strict/input.js"
-Expect Syntax Error: "es2015/yield/in-global-scope/input.js"
-Expect Syntax Error: "es2015/yield/in-plain-function/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-1/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-2/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-3/input.js"
@@ -191,10 +188,6 @@ Expect Syntax Error: "esprima/es2015-arrow-function/invalid-duplicated-params/in
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-export-declaration/invalid-export-named-default/input.js"
 Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
-Expect Syntax Error: "esprima/es2015-generator/generator-method-with-invalid-computed-name/input.js"
-Expect Syntax Error: "esprima/es2015-generator/generator-parameter-binding-element/input.js"
-Expect Syntax Error: "esprima/es2015-generator/generator-parameter-binding-property/input.js"
-Expect Syntax Error: "esprima/es2015-generator/generator-parameter-computed-property-name/input.js"
 Expect Syntax Error: "esprima/es2015-generator/generator-parameter-invalid-binding-element/input.js"
 Expect Syntax Error: "esprima/es2015-generator/generator-parameter-invalid-binding-property/input.js"
 Expect Syntax Error: "esprima/es2015-generator/generator-parameter-invalid-computed-property-name/input.js"
@@ -203,8 +196,6 @@ Expect Syntax Error: "esprima/es2015-identifier/invalid_expression_await/input.j
 Expect Syntax Error: "esprima/es2015-identifier/invalid_var_await/input.js"
 Expect Syntax Error: "esprima/es2015-meta-property/invalid-new-target/input.js"
 Expect Syntax Error: "esprima/es2015-meta-property/unknown-property/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-binding-property/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-expression/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-arrow-default/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-declaration/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-name/input.js"
@@ -2919,6 +2910,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │     `;
    ╰────
 
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[es2015/uncategorised/.260/input.js:1:1]
+ 1 │ (function() { "use strict"; f(yield v) })
+   ·                               ─────
+   ╰────
+
   × A 'get' accessor must not have any formal parameters.
    ╭─[es2015/uncategorised/.345/input.js:1:1]
  1 │ class A { get prop(x) {} }
@@ -3736,12 +3733,24 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                       ╰── Expect `{` here, but found `Identifier`
    ╰────
 
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[es2015/yield/in-global-scope/input.js:1:1]
+ 1 │ yield 10
+   · ─────
+   ╰────
+
   × Unexpected token
    ╭─[es2015/yield/in-iterator-stmt/input.js:1:1]
  1 │ function* g() {
  2 │   for (yield '' in {}; ; ) ;
    ·        ────────
  3 │ }
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[es2015/yield/in-plain-function/input.js:1:1]
+ 1 │ (function () { yield 10 })
+   ·                ─────
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context
@@ -6285,6 +6294,36 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ╰── Expect `;` here, but found `decimal`
    ╰────
 
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[esprima/es2015-generator/generator-method-with-invalid-computed-name/input.js:1:1]
+ 1 │ ({ *[yield iter]() {} })
+   ·      ─────
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[esprima/es2015-generator/generator-parameter-binding-element/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function(x = yield 3) {}
+   ·                  ─────
+ 3 │ })
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[esprima/es2015-generator/generator-parameter-binding-property/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function({x: y = yield 3}) {}
+   ·                      ─────
+ 3 │ })
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[esprima/es2015-generator/generator-parameter-computed-property-name/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function({[yield 3]: y}) {}
+   ·                ─────
+ 3 │ })
+   ╰────
+
   × Unexpected token
    ╭─[esprima/es2015-generator/incomplete-yield-delegate/input.js:1:1]
  1 │ (function*() { yield* })
@@ -6620,6 +6659,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ `test
    · ───┬──
    ·    ╰── Unterminated string
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[esprima/es2015-yield/invalid-yield-binding-property/input.js:1:1]
+ 1 │ var {x: y = yield 3} = z;
+   ·             ─────
+   ╰────
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[esprima/es2015-yield/invalid-yield-expression/input.js:1:1]
+ 1 │ (function() { yield 3; })
+   ·               ─────
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context
