@@ -25,13 +25,11 @@ These tools include:
 
 The goal of this project is to:
 
-* Create a *really* fast native program by using the Rust programming language.
+* Create a *really* fast native program by using the Rust programming language
 * Provide the basic building blocks for creating your own tools by having good API designs
-* Provide good documentation on learning Rust and compiler techniques.
+* Provide good documentation on learning Rust and compiler techniques
 
 > Performance issues are considered as bugs in this project.
-
-Rust but would like to learn things.
 
 ## Contributing
 
