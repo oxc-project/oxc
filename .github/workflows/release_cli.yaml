@@ -33,7 +33,8 @@ jobs:
         uses: EndBug/version-check@v1
         id: version
         with:
-          diff-search: true
+          static-checking: localIsNew
+          file-url: https://unpkg.com/oxidation-compiler@latest/package.json
           file-name: npm/oxc/package.json
 
       - name: Set version name
