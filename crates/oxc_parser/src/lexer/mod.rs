@@ -499,13 +499,19 @@ impl<'a> Lexer<'a> {
     /// Section 12.4 Single Line Comment
     #[must_use]
     fn skip_single_line_comment(&mut self) -> Kind {
+        let mut comment = String::new_in(&self.allocator);
         while let Some(c) = self.current.chars.next().as_ref() {
+            comment.push(*c);
             if is_line_terminator(*c) {
                 break;
             }
         }
         self.current.token.is_on_new_line = true;
-        self.trivia_builder.add_single_line_comment(self.current.token.start, self.offset());
+        self.trivia_builder.add_single_line_comment(
+            self.current.token.start,
+            self.offset(),
+            comment.trim().starts_with("eslint-disable-next-line"),
+        );
         Kind::Comment
     }
 
@@ -530,7 +536,7 @@ impl<'a> Lexer<'a> {
             return Kind::Eof;
         }
 
-        self.trivia_builder.add_single_line_comment(self.current.token.start, self.offset());
+        self.trivia_builder.add_single_line_comment(self.current.token.start, self.offset(), false);
         Kind::MultiLineComment
     }
 

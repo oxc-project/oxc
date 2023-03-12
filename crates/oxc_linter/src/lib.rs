@@ -13,6 +13,7 @@ mod rules;
 use std::{fs, rc::Rc};
 
 pub use fixer::{Fixer, Message};
+use oxc_ast::GetSpan;
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 use rule::{Rule, RuleCategory};

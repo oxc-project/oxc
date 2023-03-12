@@ -11,9 +11,16 @@ impl TriviaBuilder {
         self.trivias
     }
 
-    pub fn add_single_line_comment(&mut self, start: u32, end: u32) {
+    pub fn add_single_line_comment(&mut self, start: u32, end: u32, is_config_comment: bool) {
         // skip leading `//`
-        self.trivias.add_comment(Span::new(start + 2, end), CommentKind::SingleLine);
+        self.trivias.add_comment(
+            Span::new(start + 2, end),
+            if is_config_comment {
+                CommentKind::ConfigurationSingleLine
+            } else {
+                CommentKind::SingleLine
+            },
+        );
     }
 
     #[allow(unused)]
