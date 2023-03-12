@@ -478,3 +478,28 @@ impl<'a> NormalList<'a> for SwitchCases<'a> {
         Ok(())
     }
 }
+
+pub struct ImportSpecifierList<'a> {
+    pub import_specifiers: Vec<'a, ImportDeclarationSpecifier>,
+}
+
+impl<'a> SeparatedList<'a> for ImportSpecifierList<'a> {
+    fn new(p: &Parser<'a>) -> Self {
+        Self { import_specifiers: p.ast.new_vec() }
+    }
+
+    fn open(&self) -> Kind {
+        Kind::LCurly
+    }
+
+    fn close(&self) -> Kind {
+        Kind::RCurly
+    }
+
+    fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
+        let import_specifier = p.parse_import_specifier()?;
+        let specifier = ImportDeclarationSpecifier::ImportSpecifier(import_specifier);
+        self.import_specifiers.push(specifier);
+        Ok(())
+    }
+}
