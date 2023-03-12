@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3229/3917 (82.44%)
+Negative Passed: 3302/3917 (84.30%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -31,9 +31,6 @@ Expect Syntax Error: "language/expressions/arrow-function/object-destructuring-p
 Expect Syntax Error: "language/expressions/arrow-function/param-dflt-yield-expr.js"
 Expect Syntax Error: "language/expressions/arrow-function/params-duplicate.js"
 Expect Syntax Error: "language/expressions/arrow-function/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-arguments.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-eval.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-arguments.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-1.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-2.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-3.js"
@@ -45,7 +42,6 @@ Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/ar
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-6.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-rest.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-eval.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/assignmenttargettype/direct-yieldexpression-0.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/array-destructuring-param-strict-body.js"
@@ -53,15 +49,10 @@ Expect Syntax Error: "language/expressions/async-arrow-function/await-as-param-n
 Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-NSPL-with-USD.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-arguments-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-duplicate-parameters.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-NSPL-with-USD.js"
-Expect Syntax Error: "language/expressions/async-function/early-errors-expression-binding-identifier-arguments.js"
-Expect Syntax Error: "language/expressions/async-function/early-errors-expression-binding-identifier-eval.js"
-Expect Syntax Error: "language/expressions/async-function/early-errors-expression-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-function/named-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/named-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-function/named-dflt-params-rest.js"
@@ -88,11 +79,7 @@ Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-p
 Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-NSPL-with-USD.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-arguments-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-binding-identifier-arguments.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-binding-identifier-eval.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-await-expr.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-yield-expr.js"
 Expect Syntax Error: "language/expressions/async-generator/named-array-destructuring-param-strict-body.js"
@@ -227,9 +214,7 @@ Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init
 Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/function/name-arguments-strict-body.js"
-Expect Syntax Error: "language/expressions/function/name-arguments-strict.js"
 Expect Syntax Error: "language/expressions/function/name-eval-strict-body.js"
-Expect Syntax Error: "language/expressions/function/name-eval-strict.js"
 Expect Syntax Error: "language/expressions/function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-1.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-2.js"
@@ -255,7 +240,6 @@ Expect Syntax Error: "language/expressions/generators/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/generators/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
 Expect Syntax Error: "language/expressions/import.meta/syntax/goal-script.js"
-Expect Syntax Error: "language/expressions/object/11.1.5-1gs.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -296,9 +280,7 @@ Expect Syntax Error: "language/expressions/object/method-definition/async-meth-o
 Expect Syntax Error: "language/expressions/object/method-definition/async-meth-rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-async-method-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-NSPL-with-USD.js"
-Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-arguments-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-duplicate-parameters.js"
-Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-rest.js"
@@ -315,9 +297,7 @@ Expect Syntax Error: "language/expressions/object/method-definition/setter-use-s
 Expect Syntax Error: "language/expressions/object/method-definition/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/object/setter-body-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-inside.js"
-Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-outside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-inside.js"
-Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-outside.js"
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
 Expect Syntax Error: "language/global-code/new.target-arrow.js"
@@ -342,10 +322,6 @@ Expect Syntax Error: "language/module-code/early-dup-export-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
-Expect Syntax Error: "language/module-code/early-import-arguments.js"
-Expect Syntax Error: "language/module-code/early-import-as-arguments.js"
-Expect Syntax Error: "language/module-code/early-import-as-eval.js"
-Expect Syntax Error: "language/module-code/early-import-eval.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
 Expect Syntax Error: "language/module-code/parse-err-return.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-body.js"
@@ -356,11 +332,7 @@ Expect Syntax Error: "language/statements/async-function/array-destructuring-par
 Expect Syntax Error: "language/statements/async-function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/async-function/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-NSPL-with-USD.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-arguments-in-formal-parameters.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-binding-identifier-arguments.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-binding-identifier-eval.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-duplicate-parameters.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/statements/async-function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-function/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-generator/array-destructuring-param-strict-body.js"
@@ -396,9 +368,7 @@ Expect Syntax Error: "language/statements/class/async-method/object-destructurin
 Expect Syntax Error: "language/statements/class/async-method/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-async-method-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-NSPL-with-USD.js"
-Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-arguments-in-formal-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-duplicate-parameters.js"
-Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -541,9 +511,6 @@ Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-lhs.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-var.js"
-Expect Syntax Error: "language/statements/for-in/var-arguments-fn-strict.js"
-Expect Syntax Error: "language/statements/for-in/var-arguments-strict.js"
-Expect Syntax Error: "language/statements/for-in/var-eval-strict.js"
 Expect Syntax Error: "language/statements/for-of/decl-fun.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js"
@@ -572,9 +539,6 @@ Expect Syntax Error: "language/statements/for/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-expr.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-var.js"
-Expect Syntax Error: "language/statements/function/13.1-13gs.js"
-Expect Syntax Error: "language/statements/function/13.1-1gs.js"
-Expect Syntax Error: "language/statements/function/13.1-4gs.js"
 Expect Syntax Error: "language/statements/function/13.1-5gs.js"
 Expect Syntax Error: "language/statements/function/13.1-8gs.js"
 Expect Syntax Error: "language/statements/function/array-destructuring-param-strict-body.js"
@@ -589,12 +553,9 @@ Expect Syntax Error: "language/statements/function/dstr/dflt-ary-ptrn-rest-init-
 Expect Syntax Error: "language/statements/function/enable-strict-via-body.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-outer-body.js"
 Expect Syntax Error: "language/statements/function/name-arguments-strict-body.js"
-Expect Syntax Error: "language/statements/function/name-arguments-strict.js"
 Expect Syntax Error: "language/statements/function/name-eval-strict-body.js"
-Expect Syntax Error: "language/statements/function/name-eval-strict.js"
 Expect Syntax Error: "language/statements/function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/function/param-arguments-strict-body.js"
-Expect Syntax Error: "language/statements/function/param-arguments-strict.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-1.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-2.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-3.js"
@@ -602,7 +563,6 @@ Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-2.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-3.js"
 Expect Syntax Error: "language/statements/function/param-eval-strict-body.js"
-Expect Syntax Error: "language/statements/function/param-eval-strict.js"
 Expect Syntax Error: "language/statements/function/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/function/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/function/use-strict-with-non-simple-param.js"
@@ -644,46 +604,13 @@ Expect Syntax Error: "language/statements/return/S12.9_A1_T6.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T7.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T8.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T9.js"
-Expect Syntax Error: "language/statements/try/catch-parameter-boundnames-restriction-arguments-negative-early.js"
-Expect Syntax Error: "language/statements/try/catch-parameter-boundnames-restriction-eval-negative-early.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/variable/12.2.1-1gs.js"
-Expect Syntax Error: "language/statements/variable/12.2.1-4gs.js"
-Expect Syntax Error: "language/statements/variable/arguments-fn-strict-list-final-init.js"
-Expect Syntax Error: "language/statements/variable/arguments-fn-strict-list-final.js"
-Expect Syntax Error: "language/statements/variable/arguments-fn-strict-list-first-init.js"
-Expect Syntax Error: "language/statements/variable/arguments-fn-strict-list-first.js"
-Expect Syntax Error: "language/statements/variable/arguments-fn-strict-list-middle-init.js"
-Expect Syntax Error: "language/statements/variable/arguments-fn-strict-list-middle.js"
-Expect Syntax Error: "language/statements/variable/arguments-fn-strict-list-repeated.js"
-Expect Syntax Error: "language/statements/variable/arguments-fn-strict-single-init.js"
-Expect Syntax Error: "language/statements/variable/arguments-fn-strict-single.js"
-Expect Syntax Error: "language/statements/variable/arguments-strict-list-final-init.js"
-Expect Syntax Error: "language/statements/variable/arguments-strict-list-final.js"
-Expect Syntax Error: "language/statements/variable/arguments-strict-list-first-init.js"
-Expect Syntax Error: "language/statements/variable/arguments-strict-list-first.js"
-Expect Syntax Error: "language/statements/variable/arguments-strict-list-middle-init.js"
-Expect Syntax Error: "language/statements/variable/arguments-strict-list-middle.js"
-Expect Syntax Error: "language/statements/variable/arguments-strict-list-repeated.js"
-Expect Syntax Error: "language/statements/variable/arguments-strict-single-init.js"
-Expect Syntax Error: "language/statements/variable/arguments-strict-single.js"
 Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js"
-Expect Syntax Error: "language/statements/variable/eval-strict-list-final-init.js"
-Expect Syntax Error: "language/statements/variable/eval-strict-list-final.js"
-Expect Syntax Error: "language/statements/variable/eval-strict-list-first-init.js"
-Expect Syntax Error: "language/statements/variable/eval-strict-list-first.js"
-Expect Syntax Error: "language/statements/variable/eval-strict-list-middle-init.js"
-Expect Syntax Error: "language/statements/variable/eval-strict-list-middle.js"
-Expect Syntax Error: "language/statements/variable/eval-strict-list-repeated.js"
-Expect Syntax Error: "language/statements/variable/eval-strict-single-init.js"
-Expect Syntax Error: "language/statements/variable/eval-strict-single.js"
-Expect Syntax Error: "language/statements/variable/id-arguments-strict.js"
-Expect Syntax Error: "language/statements/variable/id-eval-strict.js"
 Expect Syntax Error: "language/statements/while/decl-fun.js"
 Expect Syntax Error: "language/statements/while/labelled-fn-stmt.js"
 Expect Syntax Error: "language/statements/with/decl-fun.js"
@@ -2881,6 +2808,20 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ──────
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-arguments.js:18:1]
+ 18 │ $DONOTEVALUATE();
+ 19 │ var af = arguments => 1;
+    ·          ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-eval.js:19:1]
+ 19 │ $DONOTEVALUATE();
+ 20 │ var af = eval => 1;
+    ·          ────
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-yield.js:19:1]
  19 │ $DONOTEVALUATE();
@@ -2893,6 +2834,20 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │ $DONOTEVALUATE();
  16 │ var af = ...x => x;
     ·          ───
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-arguments.js:23:1]
+ 23 │ $DONOTEVALUATE();
+ 24 │ var af = (arguments) => 1;
+    ·           ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-eval.js:23:1]
+ 23 │ $DONOTEVALUATE();
+ 24 │ var af = (eval) => 1;
+    ·           ────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -6093,6 +6048,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·               ─────
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-arguments-in-formal-parameters.js:15:1]
+ 15 │ 
+ 16 │ async(arguments) => {  }
+    ·       ─────────
+ 17 │ 
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:13:1]
  13 │ $DONOTEVALUATE();
@@ -6123,6 +6086,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  14 │ 
  15 │ async(foo) => { super.prop };
     ·                 ─────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-eval-in-formal-parameters.js:15:1]
+ 15 │ 
+ 16 │ async(eval) => {  }
+    ·       ────
     ╰────
 
   × Identifier `bar` has already been declared
@@ -6242,6 +6212,21 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │ };
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/async-function/early-errors-expression-binding-identifier-arguments.js:15:1]
+ 15 │ $DONOTEVALUATE();
+ 16 │ (async function arguments () {  })
+    ·                 ─────────
+ 17 │ 
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/async-function/early-errors-expression-binding-identifier-eval.js:15:1]
+ 15 │ $DONOTEVALUATE();
+ 16 │ (async function eval () { })
+    ·                 ────
+    ╰────
+
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
     ╭─[language/expressions/async-function/early-errors-expression-body-contains-super-call.js:14:1]
@@ -6257,6 +6242,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │ (async function foo (foo) { super.prop });
     ·                             ─────
  16 │ 
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/async-function/early-errors-expression-eval-in-formal-parameters.js:15:1]
+ 15 │ 
+ 16 │ (async function foo (eval) {  })
+    ·                      ────
     ╰────
 
   × Identifier `bar` has already been declared
@@ -6558,6 +6550,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │   
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/async-generator/early-errors-expression-arguments-in-formal-parameters.js:17:1]
+ 17 │ 
+ 18 │ (async function*(arguments) { });
+    ·                  ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/async-generator/early-errors-expression-binding-identifier-arguments.js:18:1]
+ 18 │ 
+ 19 │ (async function* arguments() { });
+    ·                  ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/async-generator/early-errors-expression-binding-identifier-eval.js:18:1]
+ 18 │ 
+ 19 │ (async function* eval() { });
+    ·                  ────
+    ╰────
+
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
     ╭─[language/expressions/async-generator/early-errors-expression-body-contains-super-call.js:16:1]
@@ -6572,6 +6585,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ 
  17 │ (async function*() { super.prop; });
     ·                      ─────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/async-generator/early-errors-expression-eval-in-formal-parameters.js:17:1]
+ 17 │ 
+ 18 │ (async function*(eval) { });
+    ·                  ────
     ╰────
 
   × Identifier `a` has already been declared
@@ -13747,6 +13767,20 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ─────
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/function/name-arguments-strict.js:16:1]
+ 16 │ 
+ 17 │ (function arguments() {});
+    ·           ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/function/name-eval-strict.js:16:1]
+ 16 │ 
+ 17 │ (function eval() {});
+    ·           ────
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[language/expressions/function/param-dflt-yield-strict.js:21:1]
  21 │ function *g() {
@@ -14367,6 +14401,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ }
     ╰────
 
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/object/11.1.5-1gs.js:17:1]
+ 17 │ 
+ 18 │ var obj = { set _11_1_5_1_fun(eval) {}};
+    ·                               ────
+    ╰────
+
   × Identifier `__proto__` has already been declared
     ╭─[language/expressions/object/__proto__-duplicate.js:19:1]
  19 │ ({
@@ -14865,6 +14906,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │     
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/object/method-definition/early-errors-object-method-arguments-in-formal-parameters.js:16:1]
+ 16 │ ({
+ 17 │   async foo (arguments) { }
+    ·              ─────────
+ 18 │ })
+    ╰────
+
   × Expect token
     ╭─[language/expressions/object/method-definition/early-errors-object-method-async-lineterminator.js:20:1]
  20 │   async
@@ -14897,6 +14946,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │   async foo () { super() }
     ·                  ───────
  17 │ })
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/object/method-definition/early-errors-object-method-eval-in-formal-parameters.js:16:1]
+ 16 │ ({
+ 17 │   async foo(eval) { }
+    ·             ────
+ 18 │ })
     ╰────
 
   × Expect token
@@ -15364,6 +15421,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  18 │     public = 42;
     ·     ──────
  19 │   }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/object/setter-param-arguments-strict-outside.js:17:1]
+ 17 │ void {
+ 18 │   set x(arguments) {}
+    ·         ─────────
+ 19 │ };
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/object/setter-param-eval-strict-outside.js:17:1]
+ 17 │ void {
+ 18 │   set x(eval) {}
+    ·         ────
+ 19 │ };
     ╰────
 
   × 'super' can only be referenced in a derived class.
@@ -18527,6 +18600,34 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  24 │ 
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/module-code/early-import-arguments.js:34:1]
+ 34 │ 
+ 35 │ import { arguments } from './early-import-arguments.js';
+    ·          ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/module-code/early-import-as-arguments.js:34:1]
+ 34 │ 
+ 35 │ import { x as arguments } from './early-import-as-arguments.js';
+    ·               ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/module-code/early-import-as-eval.js:34:1]
+ 34 │ 
+ 35 │ import { x as eval } from './early-import-as-eval.js';
+    ·               ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/module-code/early-import-eval.js:34:1]
+ 34 │ 
+ 35 │ import { eval } from './early-import-eval.js';
+    ·          ────
+    ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/module-code/early-lex-and-var.js:16:1]
  16 │ 
@@ -19939,6 +20040,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │ }
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/async-function/early-errors-declaration-arguments-in-formal-parameters.js:15:1]
+ 15 │ 
+ 16 │ async function foo (arguments) {  }
+    ·                     ─────────
+ 17 │ 
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/async-function/early-errors-declaration-await-in-formals-default.js:13:1]
  13 │ $DONOTEVALUATE();
@@ -19951,6 +20060,21 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  13 │ $DONOTEVALUATE();
  14 │ async function foo (await) {  }
     ·                     ─────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/async-function/early-errors-declaration-binding-identifier-arguments.js:15:1]
+ 15 │ $DONOTEVALUATE();
+ 16 │ async function arguments () {  }
+    ·                ─────────
+ 17 │ 
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/async-function/early-errors-declaration-binding-identifier-eval.js:15:1]
+ 15 │ $DONOTEVALUATE();
+ 16 │ async function eval () {  }
+    ·                ────
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
@@ -19967,6 +20091,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  14 │ 
  15 │ async function foo (foo) { super.prop };
     ·                            ─────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/async-function/early-errors-declaration-eval-in-formal-parameters.js:15:1]
+ 15 │ 
+ 16 │ async function foo (eval) {  }
+    ·                     ────
     ╰────
 
   × Identifier `bar` has already been declared
@@ -21112,6 +21243,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·       ─────
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/class/definition/early-errors-class-method-arguments-in-formal-parameters.js:14:1]
+ 14 │ class Foo {
+ 15 │   async foo (arguments) { }
+    ·              ─────────
+ 16 │ }
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/class/definition/early-errors-class-method-await-in-formals-default.js:14:1]
  14 │ class Foo {
@@ -21134,6 +21273,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  14 │ class Foo {
  15 │   async foo () { super() }
     ·                  ───────
+ 16 │ }
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/class/definition/early-errors-class-method-eval-in-formal-parameters.js:14:1]
+ 14 │ class Foo {
+ 15 │   async foo(eval) { }
+    ·             ────
  16 │ }
     ╰────
 
@@ -27652,6 +27799,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  19 │ }
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/for-in/var-arguments-fn-strict-init.js:17:1]
+ 17 │ function f() {
+ 18 │   for (var arguments = 42 in null) {}
+    ·            ─────────
+ 19 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/for-in/var-arguments-fn-strict.js:17:1]
+ 17 │ function f() {
+ 18 │   for (var arguments in null) {}
+    ·            ─────────
+ 19 │ }
+    ╰────
+
   × for-in loop variable declaration may not have an initializer
     ╭─[language/statements/for-in/var-arguments-strict-init.js:16:1]
  16 │ 
@@ -27659,11 +27822,39 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ──────────────────
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/for-in/var-arguments-strict-init.js:16:1]
+ 16 │ 
+ 17 │ for (var arguments = 42 in null) {}
+    ·          ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/for-in/var-arguments-strict.js:14:1]
+ 14 │ 
+ 15 │ for (var arguments in null) {}
+    ·          ─────────
+    ╰────
+
   × for-in loop variable declaration may not have an initializer
     ╭─[language/statements/for-in/var-eval-strict-init.js:14:1]
  14 │ 
  15 │ for (var eval = 42 in null) {}
     ·      ─────────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/for-in/var-eval-strict-init.js:14:1]
+ 14 │ 
+ 15 │ for (var eval = 42 in null) {}
+    ·          ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/for-in/var-eval-strict.js:14:1]
+ 14 │ 
+ 15 │ for (var eval in null) {}
+    ·          ────
     ╰────
 
   × Async functions can only be declared at the top level or inside a block
@@ -28568,6 +28759,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                            ────
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/function/13.1-13gs.js:16:1]
+ 16 │ 
+ 17 │ function arguments() { };
+    ·          ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/function/13.1-1gs.js:17:1]
+ 17 │ 
+ 18 │ function _13_1_1_fun(eval) { }
+    ·                      ────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/function/13.1-4gs.js:17:1]
+ 17 │ 
+ 18 │ var _13_1_4_fun = function (arguments) { };
+    ·                             ─────────
+    ╰────
+
   × Invalid Unicode escape sequence
     ╭─[language/statements/function/S13_A7_T3.js:14:1]
  14 │ 
@@ -28771,12 +28983,40 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·             ╰── Expect `(` here, but found `.`
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/function/name-arguments-strict.js:16:1]
+ 16 │ 
+ 17 │ function arguments() { }
+    ·          ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/function/name-eval-strict.js:16:1]
+ 16 │ 
+ 17 │ function eval() { }
+    ·          ────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/function/param-arguments-strict.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_3_fun(arguments) { }
+    ·                      ─────────
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[language/statements/function/param-dflt-yield-strict.js:21:1]
  21 │ function *g() {
  22 │   function f(x = yield) {
     ·                  ─────
  23 │     paramValue = x;
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/function/param-eval-strict.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_1_fun(eval) { }
+    ·                      ────
     ╰────
 
   × Rest element must be last element
@@ -30366,6 +30606,20 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  19 │ finally{}
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/try/catch-parameter-boundnames-restriction-arguments-negative-early.js:15:1]
+ 15 │ 
+ 16 │ try { } catch (arguments) { }
+    ·                ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/try/catch-parameter-boundnames-restriction-eval-negative-early.js:15:1]
+ 15 │ 
+ 16 │ try { } catch (eval) { }
+    ·                ────
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/try/dstr/ary-ptrn-rest-not-final-ary.js:31:1]
  31 │   throw [1, 2, 3];
@@ -30437,6 +30691,20 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  24 │     try {} catch (await) {}
     ·                   ─────
  25 │   }
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/12.2.1-1gs.js:16:1]
+ 16 │ 
+ 17 │ for (var eval in arrObj) { }
+    ·          ────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/12.2.1-4gs.js:16:1]
+ 16 │ 
+ 17 │ var arguments;
+    ·     ─────────
     ╰────
 
   × Automatic Semicolon Insertion
@@ -30517,6 +30785,156 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-list-final-init.js:18:1]
+ 18 │ function f() {
+ 19 │   var a, arguments = 42;
+    ·          ─────────
+ 20 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-list-final.js:18:1]
+ 18 │ function f() {
+ 19 │   var a = 42, arguments;
+    ·               ─────────
+ 20 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-list-first-init.js:17:1]
+ 17 │ function f() {
+ 18 │   var arguments = 42, a;
+    ·       ─────────
+ 19 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-list-first.js:18:1]
+ 18 │ function f() {
+ 19 │   var arguments, a;
+    ·       ─────────
+ 20 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-list-middle-init.js:17:1]
+ 17 │ function f() {
+ 18 │   var a, arguments = 42, b;
+    ·          ─────────
+ 19 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-list-middle.js:18:1]
+ 18 │ function f() {
+ 19 │   var a, arguments, b;
+    ·          ─────────
+ 20 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-list-repeated.js:18:1]
+ 18 │ function f() {
+ 19 │   var arguments, arguments = 42;
+    ·       ─────────
+ 20 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-list-repeated.js:18:1]
+ 18 │ function f() {
+ 19 │   var arguments, arguments = 42;
+    ·                  ─────────
+ 20 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-single-init.js:18:1]
+ 18 │ function f() {
+ 19 │   var arguments = 42;
+    ·       ─────────
+ 20 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-fn-strict-single.js:18:1]
+ 18 │ function f() {
+ 19 │   var arguments;
+    ·       ─────────
+ 20 │ }
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-list-final-init.js:17:1]
+ 17 │ 
+ 18 │ var a, arguments = 42;
+    ·        ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-list-final.js:15:1]
+ 15 │ 
+ 16 │ var a = 42, arguments;
+    ·             ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-list-first-init.js:14:1]
+ 14 │ 
+ 15 │ var arguments = 42, a;
+    ·     ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-list-first.js:15:1]
+ 15 │ 
+ 16 │ var arguments, a;
+    ·     ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-list-middle-init.js:14:1]
+ 14 │ 
+ 15 │ var a, arguments = 42, b;
+    ·        ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-list-middle.js:15:1]
+ 15 │ 
+ 16 │ var a, arguments, b;
+    ·        ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-list-repeated.js:17:1]
+ 17 │ 
+ 18 │ var arguments, arguments = 42;
+    ·     ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-list-repeated.js:17:1]
+ 17 │ 
+ 18 │ var arguments, arguments = 42;
+    ·                ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-single-init.js:17:1]
+ 17 │ 
+ 18 │ var arguments = 42;
+    ·     ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/arguments-strict-single.js:15:1]
+ 15 │ 
+ 16 │ var arguments;
+    ·     ─────────
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/variable/dstr/ary-ptrn-elem-id-static-init-await-invalid.js:23:1]
  23 │   static {
@@ -30550,6 +30968,90 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ────┬───
     ·          ╰── Rest element must be last element
  30 │ 
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-list-final-init.js:14:1]
+ 14 │ 
+ 15 │ var a, eval = 42;
+    ·        ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-list-final.js:15:1]
+ 15 │ 
+ 16 │ var a, eval;
+    ·        ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-list-first-init.js:17:1]
+ 17 │ 
+ 18 │ var eval = 42, a;
+    ·     ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-list-first.js:15:1]
+ 15 │ 
+ 16 │ var eval, a = 42;
+    ·     ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-list-middle-init.js:14:1]
+ 14 │ 
+ 15 │ var a, eval = 42, b;
+    ·        ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-list-middle.js:14:1]
+ 14 │ 
+ 15 │ var a, eval, b;
+    ·        ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-list-repeated.js:17:1]
+ 17 │ 
+ 18 │ var eval, eval;
+    ·     ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-list-repeated.js:17:1]
+ 17 │ 
+ 18 │ var eval, eval;
+    ·           ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-single-init.js:17:1]
+ 17 │ 
+ 18 │ var eval = 42;
+    ·     ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/eval-strict-single.js:17:1]
+ 17 │ 
+ 18 │ var eval;
+    ·     ────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/variable/id-arguments-strict.js:15:1]
+ 15 │ 
+ 16 │ var arguments;
+    ·     ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/variable/id-eval-strict.js:15:1]
+ 15 │ 
+ 16 │ var eval;
+    ·     ────
     ╰────
 
   × Cannot use `await` as an identifier in an async context

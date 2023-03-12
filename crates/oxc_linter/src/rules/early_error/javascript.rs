@@ -71,6 +71,11 @@ fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &LintC
     }
 }
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("Cannot assign to '{0}' in strict mode")]
+#[diagnostic()]
+struct UnexpectedIdentifierAssign(Atom, #[label] Span);
+
 fn check_binding_identifier<'a>(
     ident: &BindingIdentifier,
     node: &AstNode<'a>,
@@ -78,9 +83,9 @@ fn check_binding_identifier<'a>(
 ) {
     let strict_mode = ctx.strict_mode(node);
     // It is a Diagnostic if the StringValue of a BindingIdentifier is "eval" or "arguments" within strict mode code.
-    // if strict_mode && !span.ctx.has_ambient() && matches!(name.as_str(), "eval" | "arguments") {
-    // return Some(Diagnostic::UnexpectedIdentifierAssign(name.clone(), span.range()));
-    // }
+    if strict_mode && matches!(ident.name.as_str(), "eval" | "arguments") {
+        return ctx.diagnostic(UnexpectedIdentifierAssign(ident.name.clone(), ident.span));
+    }
 
     // LexicalDeclaration : LetOrConst BindingList ;
     // * It is a Syntax Error if the BoundNames of BindingList contains "let".
@@ -111,11 +116,6 @@ fn check_identifier_reference<'a>(
     node: &AstNode<'a>,
     ctx: &LintContext<'a>,
 ) {
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("Cannot assign to '{0}' in strict mode")]
-    #[diagnostic()]
-    struct UnexpectedIdentifierAssign(Atom, #[label] Span);
-
     #[derive(Debug, Error, Diagnostic)]
     #[error("'arguments' is not allowed in {0}")]
     #[diagnostic()]

@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 635/2532 (25.08%)
+Negative Passed: 637/2532 (25.16%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -381,8 +381,6 @@ Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments07.ts
 Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments09.ts"
 Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments10.ts"
 Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments11.ts"
-Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments12.ts"
-Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments12_ES6.ts"
 Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments14.ts"
 Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments15.ts"
 Expect Syntax Error: "es6/arrowFunction/emitArrowFunctionWhenUsingArguments16.ts"
@@ -4594,6 +4592,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  73 │ }
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[es6/arrowFunction/emitArrowFunctionWhenUsingArguments12.ts:3:1]
+ 3 │ class C {
+ 4 │     f(arguments) {
+   ·       ─────────
+ 5 │         var a = () => arguments;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[es6/arrowFunction/emitArrowFunctionWhenUsingArguments12_ES6.ts:3:1]
+ 3 │ class C {
+ 4 │     f(arguments) {
+   ·       ─────────
+ 5 │         var a = () => arguments;
+   ╰────
+
   × Invalid characters after number
    ╭─[es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteralError.ts:1:1]
  1 │ // error
@@ -4619,6 +4633,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                   ┬
    ·                   ╰── Invalid characters after number
  3 │ var oct2 = 0o34318592;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[es6/classDeclaration/parseClassDeclarationInStrictModeByDefaultInES6.ts:4:1]
+ 4 │     public implements() { }
+ 5 │     public foo(arguments: any) { }
+   ·                ─────────
+ 6 │     private bar(eval:any) {
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es6/classDeclaration/parseClassDeclarationInStrictModeByDefaultInES6.ts:5:1]
+ 5 │     public foo(arguments: any) { }
+ 6 │     private bar(eval:any) {
+   ·                 ────
+ 7 │         arguments = "hello";
    ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -10427,6 +10457,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  23 │         delete container
     ·                ─────────
  24 │     }
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[salsa/plainJSBinderErrors.ts:25:1]
+ 25 │     evalArguments() {
+ 26 │         const eval = 7
+    ·               ────
+ 27 │         const arguments = 8
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[salsa/plainJSBinderErrors.ts:26:1]
+ 26 │         const eval = 7
+ 27 │         const arguments = 8
+    ·               ─────────
+ 28 │     }
     ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated

@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2053/2069 (99.23%)
 Positive Passed: 2053/2069 (99.23%)
-Negative Passed: 1059/1502 (70.51%)
+Negative Passed: 1061/1502 (70.64%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -91,7 +91,6 @@ Expect Syntax Error: "core/uncategorised/550/input.js"
 Expect Syntax Error: "core/uncategorised/552/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
 Expect Syntax Error: "es2015/class-methods/disallow-duplicate-method-params/input.js"
-Expect Syntax Error: "es2015/destructuring/binding-arguments-module/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-arguments-strict/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-eval/input.js"
 Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
@@ -195,7 +194,6 @@ Expect Syntax Error: "esprima/es2015-array-pattern/dupe-param-3/input.js"
 Expect Syntax Error: "esprima/es2015-arrow-function/complex-rest-in-arrow-not-allowed/input.js"
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-duplicated-params/input.js"
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
-Expect Syntax Error: "esprima/es2015-class/.migrated_0026/input.js"
 Expect Syntax Error: "esprima/es2015-export-declaration/invalid-export-named-default/input.js"
 Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
 Expect Syntax Error: "esprima/es2015-generator/generator-method-with-invalid-computed-name/input.js"
@@ -2261,6 +2259,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ class X { st\u0061tic y() {} }
    ·           ─────┬─────
    ·                ╰── keyword cannot contain escape characters
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[es2015/destructuring/binding-arguments-module/input.js:1:1]
+ 1 │ const { arguments } = foo();
+   ·         ─────────
    ╰────
 
   × Expect token
@@ -6126,6 +6130,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ (...a) + 1
    ·        ┬
    ·        ╰── Expect `=>` here, but found `+`
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/es2015-class/.migrated_0026/input.js:1:1]
+ 1 │ class A {a(eval){}}
+   ·            ────
    ╰────
 
   × Invalid assignment
