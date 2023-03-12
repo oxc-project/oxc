@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2051/2069 (99.13%)
 Positive Passed: 2051/2069 (99.13%)
-Negative Passed: 1063/1502 (70.77%)
+Negative Passed: 1068/1502 (71.11%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -162,17 +162,13 @@ Expect Syntax Error: "es2016/simple-parameter-list/method/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/object-pattern-default/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/object-pattern/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/rest/input.js"
-Expect Syntax Error: "es2017/async-functions/9/input.js"
-Expect Syntax Error: "es2017/async-functions/allow-await-outside-function-throw/input.js"
 Expect Syntax Error: "es2017/async-functions/await-async-function-expression-name/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
 Expect Syntax Error: "es2017/async-functions/await-function-declaration-name-inside-async-function/input.js"
 Expect Syntax Error: "es2017/async-functions/await-inside-arguments-of-async-call-inside-parameters-of-async-arrow-function/input.js"
-Expect Syntax Error: "es2017/async-functions/await-inside-arrow-expression-disallowed/input.js"
 Expect Syntax Error: "es2017/async-functions/await-inside-parameters-of-async-arrow-function/input.js"
 Expect Syntax Error: "es2017/async-functions/await-inside-parameters-of-nested-arrow-function/input.js"
 Expect Syntax Error: "es2017/async-functions/await-inside-parameters-of-nested-async-arrow-function/input.js"
-Expect Syntax Error: "es2017/async-functions/await-inside-parameters-of-nested-function/input.js"
 Expect Syntax Error: "es2017/async-functions/await-inside-parameters/input.js"
 Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
@@ -382,7 +378,6 @@ Expect Syntax Error: "typescript/interface/get-set-invalid-reset-parameter/input
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-property/input.ts"
-Expect Syntax Error: "typescript/module-namespace/top-level-await/input.ts"
 Expect Syntax Error: "typescript/regression/keyword-qualified-type-disallowed/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-class-enum/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-class-type/input.ts"
@@ -4018,6 +4013,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[es2017/async-functions/9/input.js:1:1]
+ 1 │ function foo(promise) { await promise; }
+   ·                         ─────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[es2017/async-functions/allow-await-outside-function-throw/input.js:1:1]
+ 1 │ function a() {
+ 2 │   return await 1
+   ·          ─────
+ 3 │ }
+   ╰────
+
   × Cannot use `await` as an identifier in an async context
    ╭─[es2017/async-functions/async-await-as-arrow-binding-identifier/input.js:1:1]
  1 │ async await => {}
@@ -4031,6 +4040,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[es2017/async-functions/await-inside-arrow-expression-disallowed/input.js:1:1]
+ 1 │ () => { await x }
+   ·         ─────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[es2017/async-functions/await-inside-parameters-of-nested-function/input.js:1:1]
+ 1 │ async function foo() {
+ 2 │   function bar(x = await 2) {}
+   ·                    ─────
+ 3 │ }
+   ╰────
 
   × Unexpected token
    ╭─[es2017/async-functions/export-async/input.js:1:1]
@@ -8710,6 +8733,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/module-namespace/top-level-await/input.ts:1:1]
+ 1 │ namespace N {
+ 2 │     const x = await 42;
+   ·               ─────
+ 3 │ }
+   ╰────
 
   × Identifier `A` has already been declared
    ╭─[typescript/scope/redeclaration-class-class/input.ts:1:1]

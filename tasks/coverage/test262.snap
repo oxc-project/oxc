@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3315/3917 (84.63%)
+Negative Passed: 3319/3917 (84.73%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -322,10 +322,6 @@ Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
-Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-body.js"
-Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js"
-Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-body.js"
-Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js"
 Expect Syntax Error: "language/statements/async-function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/async-function/dflt-params-rest.js"
@@ -19649,6 +19645,37 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ 
  17 │ await;
     ·      ─
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-body.js:37:1]
+ 37 │ 
+ 38 │ function fn() { await 0; }
+    ·                 ─────
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js:37:1]
+ 37 │ 
+ 38 │ function fn(x = await 1) {
+    ·                 ─────
+ 39 │   return x;
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-body.js:28:1]
+ 28 │ 0, function () {
+ 29 │   await 1;
+    ·   ─────
+ 30 │ };
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js:27:1]
+ 27 │ 
+ 28 │ 0, function (x = await 1) {
+    ·                  ─────
+ 29 │   return x;
     ╰────
 
   × Keywords cannot contain escape characters

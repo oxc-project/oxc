@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 644/2532 (25.43%)
+Negative Passed: 645/2532 (25.47%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -300,7 +300,6 @@ Expect Syntax Error: "dynamicImport/importCallExpressionAsyncES3CJS.ts"
 Expect Syntax Error: "dynamicImport/importCallExpressionAsyncES3System.ts"
 Expect Syntax Error: "dynamicImport/importCallExpressionAsyncES3UMD.ts"
 Expect Syntax Error: "dynamicImport/importCallExpressionSpecifierNotStringTypeError.ts"
-Expect Syntax Error: "enums/awaitAndYield.ts"
 Expect Syntax Error: "enums/enumConstantMemberWithString.ts"
 Expect Syntax Error: "enums/enumConstantMemberWithTemplateLiterals.ts"
 Expect Syntax Error: "enums/enumConstantMembers.ts"
@@ -4405,6 +4404,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ·        ───
  10 │ 
     ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[enums/awaitAndYield.ts:4:1]
+ 4 │     enum E {
+ 5 │         foo = await x,
+   ·               ─────
+ 6 │         baz = yield 1,
+   ╰────
 
   × Expect token
     ╭─[enums/enumErrors.ts:47:1]

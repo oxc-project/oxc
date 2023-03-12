@@ -277,10 +277,7 @@ pub struct FunctionDeclarationNonStrict(
 #[derive(Debug, Error, Diagnostic)]
 #[error("`await` is only allowed within async functions and at the top levels of modules")]
 #[diagnostic()]
-pub struct AwaitExpression(
-    #[label("`await` is only allowed within async functions and at the top levels of modules")]
-    pub Span,
-);
+pub struct AwaitExpression(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("A 'yield' expression is only allowed in a generator body.")]
