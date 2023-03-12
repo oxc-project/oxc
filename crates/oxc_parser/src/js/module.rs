@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, context::Context, Span};
 use oxc_diagnostics::Result;
 
 use super::function::FunctionKind;
-use super::list::{AssertEntries, ExportNamedSpecifiers};
+use super::list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList};
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
 
 impl<'a> Parser<'a> {
@@ -127,24 +127,10 @@ impl<'a> Parser<'a> {
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
     fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier>> {
-        self.bump_any(); // advance `{`
-        let mut first = true;
-        let mut specifiers = self.ast.new_vec();
-        // TODO: move to list.rs
-        while !self.at(Kind::RCurly) && !self.at(Kind::Eof) {
-            if first {
-                first = false;
-            } else {
-                self.expect(Kind::Comma)?;
-                if self.at(Kind::RCurly) {
-                    break;
-                }
-            }
-            let import_specifier = self.parse_import_specifier()?;
-            let specifier = ImportDeclarationSpecifier::ImportSpecifier(import_specifier);
-            specifiers.push(specifier);
-        }
-        self.expect(Kind::RCurly)?;
+        let ctx = self.ctx;
+        self.ctx = Context::default();
+        let specifiers = ImportSpecifierList::parse(self)?.import_specifiers;
+        self.ctx = ctx;
         Ok(specifiers)
     }
 
@@ -350,7 +336,7 @@ impl<'a> Parser<'a> {
     // ImportSpecifier :
     //   ImportedBinding
     //   ModuleExportName as ImportedBinding
-    fn parse_import_specifier(&mut self) -> Result<ImportSpecifier> {
+    pub fn parse_import_specifier(&mut self) -> Result<ImportSpecifier> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
