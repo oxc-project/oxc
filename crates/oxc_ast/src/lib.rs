@@ -24,7 +24,7 @@ pub use crate::source_type::*;
 pub use crate::span::*;
 pub use crate::trivia::*;
 
-pub type Atom = compact_str::CompactString;
+pub type Atom = flexstr::SharedStr;
 
 // After experimenting with two types of boxed enum variants:
 //   1.
