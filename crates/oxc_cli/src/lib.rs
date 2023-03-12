@@ -129,9 +129,10 @@ impl Cli {
     }
 
     fn lint_path(path: &Path, fix: bool) -> Option<(PathBuf, Vec<Error>)> {
-        let source_text = fs::read_to_string(path).expect("{name} not found");
+        let source_text = fs::read_to_string(path).unwrap_or_else(|_| panic!("{path:?} not found"));
         let allocator = Allocator::default();
-        let source_type = SourceType::from_path(path).expect("incorrect {path:?}");
+        let source_type =
+            SourceType::from_path(path).unwrap_or_else(|_| panic!("incorrect {path:?}"));
         let parser_source_text = source_text.clone();
         let ret = Parser::new(&allocator, &parser_source_text, source_type).parse();
 
