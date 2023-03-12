@@ -101,7 +101,6 @@ impl<'a> Parser<'a> {
             }
             Kind::Export => self.parse_export_declaration(),
             // [+Return] ReturnStatement[?Yield, ?Await]
-            // Error is checked in linter
             Kind::Return => self.parse_return_statement(),
             Kind::Var => self.parse_variable_statement(stmt_ctx),
             Kind::Const if !(self.ts_enabled() && self.is_at_enum_declaration()) => {
@@ -374,6 +373,12 @@ impl<'a> Parser<'a> {
             self.asi()?;
             Some(expr)
         };
+        if !self.ctx.has_return() {
+            self.error(diagnostics::ReturnStatementOnlyInFunctionBody(Span::new(
+                span.start,
+                span.start + 6,
+            )));
+        }
         Ok(self.ast.return_statement(self.end_span(span), argument))
     }
 

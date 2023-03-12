@@ -1,7 +1,7 @@
 Babel Summary:
-AST Parsed     : 2053/2069 (99.23%)
-Positive Passed: 2053/2069 (99.23%)
-Negative Passed: 1061/1502 (70.64%)
+AST Parsed     : 2051/2069 (99.13%)
+Positive Passed: 2051/2069 (99.13%)
+Negative Passed: 1063/1502 (70.77%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -31,7 +31,6 @@ Expect Syntax Error: "core/scope/undecl-export-builtin-as/input.js"
 Expect Syntax Error: "core/scope/undecl-export-builtin/input.js"
 Expect Syntax Error: "core/scope/undecl-export-if/input.js"
 Expect Syntax Error: "core/scope/undecl-export/input.js"
-Expect Syntax Error: "core/uncategorised/454/input.js"
 Expect Syntax Error: "core/uncategorised/466/input.js"
 Expect Syntax Error: "core/uncategorised/467/input.js"
 Expect Syntax Error: "core/uncategorised/468/input.js"
@@ -245,7 +244,6 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0093/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0094/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0100/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0171/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0183/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0184/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0185/input.js"
@@ -464,6 +462,23 @@ Expect to Parse: "core/scope/dupl-bind-gen-gen-script/input.js"
  2 │ function *foo() {};
    ·           ─┬─
    ·            ╰── It can not be redeclared here
+   ╰────
+Expect to Parse: "core/uncategorised/327/input.js"
+
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[core/uncategorised/327/input.js:1:1]
+ 1 │ return {} / 2
+   · ───┬──
+   ·    ╰── A 'return' statement can only be used within a function body.
+   ╰────
+Expect to Parse: "core/uncategorised/328/input.js"
+
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[core/uncategorised/328/input.js:1:1]
+ 1 │ return
+   · ───┬──
+   ·    ╰── A 'return' statement can only be used within a function body.
+ 2 │ {}
    ╰────
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
@@ -1866,6 +1881,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ "\u
    · ─┬─
    ·  ╰── Unterminated string
+   ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[core/uncategorised/454/input.js:1:1]
+ 1 │ return
+   · ───┬──
+   ·    ╰── A 'return' statement can only be used within a function body.
    ╰────
 
   × Illegal break statement
@@ -7859,6 +7881,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0170/input.js:1:1]
  1 │ try { } catch() {}
    ·               ─
+   ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[esprima/invalid-syntax/migrated_0171/input.js:1:1]
+ 1 │ return
+   · ───┬──
+   ·    ╰── A 'return' statement can only be used within a function body.
    ╰────
 
   × Illegal break statement

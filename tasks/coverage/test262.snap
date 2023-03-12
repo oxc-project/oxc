@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3302/3917 (84.30%)
+Negative Passed: 3315/3917 (84.63%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -302,7 +302,6 @@ Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
 Expect Syntax Error: "language/global-code/new.target-arrow.js"
 Expect Syntax Error: "language/global-code/new.target.js"
-Expect Syntax Error: "language/global-code/return.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
 Expect Syntax Error: "language/import/json-invalid.js"
 Expect Syntax Error: "language/import/json-named-bindings.js"
@@ -323,7 +322,6 @@ Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
-Expect Syntax Error: "language/module-code/parse-err-return.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-body.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-body.js"
@@ -464,7 +462,6 @@ Expect Syntax Error: "language/statements/class/method/object-destructuring-para
 Expect Syntax Error: "language/statements/class/method/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/static-gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-obj.js"
@@ -594,16 +591,6 @@ Expect Syntax Error: "language/statements/labeled/decl-fun-strict.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T1.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T10.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T2.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T3.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T4.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T5.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T6.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T7.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T8.js"
-Expect Syntax Error: "language/statements/return/S12.9_A1_T9.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-obj.js"
@@ -16157,6 +16144,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ──
     ╰────
 
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/global-code/return.js:21:1]
+ 21 │ 
+ 22 │ return;
+    · ───┬──
+    ·    ╰── A 'return' statement can only be used within a function body.
+    ╰────
+
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
     ╭─[language/global-code/super-call-arrow.js:35:1]
@@ -19482,6 +19477,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  28 │ export default function* () {}();
     ·                                ▲
     ·                                ╰── Expected an expression here
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/module-code/parse-err-return.js:31:1]
+ 31 │ 
+ 32 │ return;
+    · ───┬──
+    ·    ╰── A 'return' statement can only be used within a function body.
     ╰────
 
   × Automatic Semicolon Insertion
@@ -26338,6 +26341,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  24 │   }
     ╰────
 
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/class/static-init-invalid-return.js:23:1]
+ 23 │     static {
+ 24 │       return;
+    ·       ───┬──
+    ·          ╰── A 'return' statement can only be used within a function body.
+ 25 │     }
+    ╰────
+
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
     ╭─[language/statements/class/static-init-invalid-super-call.js:19:1]
@@ -29866,6 +29878,105 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
     ╰────
   help: Try insert a semicolon here
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T1.js:17:1]
+ 17 │ var x=1;
+ 18 │ return;
+    · ───┬──
+    ·    ╰── A 'return' statement can only be used within a function body.
+ 19 │ var y=2;
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T10.js:16:1]
+ 16 │ //CHECK#1
+ 17 │ return (0);
+    · ───┬──
+    ·    ╰── A 'return' statement can only be used within a function body.
+ 18 │ //
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T2.js:17:1]
+ 17 │ var x=1;
+ 18 │ return x;
+    · ───┬──
+    ·    ╰── A 'return' statement can only be used within a function body.
+ 19 │ var y=2;
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T3.js:17:1]
+ 17 │ try {
+ 18 │     return 1;
+    ·     ───┬──
+    ·        ╰── A 'return' statement can only be used within a function body.
+ 19 │ } catch(e){
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T3.js:19:1]
+ 19 │ } catch(e){
+ 20 │     return 1;
+    ·     ───┬──
+    ·        ╰── A 'return' statement can only be used within a function body.
+ 21 │ }
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T4.js:16:1]
+ 16 │ //CHECK#1
+ 17 │ return;
+    · ───┬──
+    ·    ╰── A 'return' statement can only be used within a function body.
+ 18 │ //
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T5.js:20:1]
+ 20 │     var x=1;
+ 21 │     return;
+    ·     ───┬──
+    ·        ╰── A 'return' statement can only be used within a function body.
+ 22 │     var y=2;
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T6.js:20:1]
+ 20 │     var x=1;
+ 21 │     return;
+    ·     ───┬──
+    ·        ╰── A 'return' statement can only be used within a function body.
+ 22 │     var y=2;
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T7.js:20:1]
+ 20 │     var x=1;
+ 21 │     return x;
+    ·     ───┬──
+    ·        ╰── A 'return' statement can only be used within a function body.
+ 22 │     var y=2;
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T8.js:20:1]
+ 20 │     var x=1;
+ 21 │     return x;
+    ·     ───┬──
+    ·        ╰── A 'return' statement can only be used within a function body.
+ 22 │     var y=2;
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[language/statements/return/S12.9_A1_T9.js:19:1]
+ 19 │ } catch(e){
+ 20 │     return e;
+    ·     ───┬──
+    ·        ╰── A 'return' statement can only be used within a function body.
+ 21 │ }
+    ╰────
 
   × Identifier `default` has already been declared
     ╭─[language/statements/switch/S12.11_A2_T1.js:20:1]

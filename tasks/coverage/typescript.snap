@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 637/2532 (25.16%)
+Negative Passed: 644/2532 (25.43%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -94,7 +94,6 @@ Expect Syntax Error: "classes/classStaticBlock/classStaticBlock19.ts"
 Expect Syntax Error: "classes/classStaticBlock/classStaticBlock23.ts"
 Expect Syntax Error: "classes/classStaticBlock/classStaticBlock3.ts"
 Expect Syntax Error: "classes/classStaticBlock/classStaticBlock4.ts"
-Expect Syntax Error: "classes/classStaticBlock/classStaticBlock7.ts"
 Expect Syntax Error: "classes/classStaticBlock/classStaticBlock9.ts"
 Expect Syntax Error: "classes/classStaticBlock/classStaticBlockUseBeforeDef2.ts"
 Expect Syntax Error: "classes/classStaticBlock/classStaticBlockUseBeforeDef3.ts"
@@ -1164,7 +1163,6 @@ Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/ParameterLists/parserErro
 Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserCommaInTypeMemberList2.ts"
 Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserModifierOnPropertySignature1.ts"
 Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock2.ts"
-Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts"
 Expect Syntax Error: "parser/ecmascript5/ExportAssignments/parserExportAssignment1.ts"
 Expect Syntax Error: "parser/ecmascript5/ExportAssignments/parserExportAssignment2.ts"
 Expect Syntax Error: "parser/ecmascript5/ExportAssignments/parserExportAssignment5.ts"
@@ -1271,7 +1269,6 @@ Expect Syntax Error: "parser/ecmascript5/RegressionTests/parser553699.ts"
 Expect Syntax Error: "parser/ecmascript5/RegressionTests/parser618973.ts"
 Expect Syntax Error: "parser/ecmascript5/RegressionTests/parserTernaryAndCommaOperators1.ts"
 Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parseRegularExpressionMixedWithComments.ts"
-Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parserRegularExpression1.ts"
 Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parserRegularExpression2.ts"
 Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parserRegularExpression3.ts"
 Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parserRegularExpression4.ts"
@@ -1282,8 +1279,6 @@ Expect Syntax Error: "parser/ecmascript5/RegularExpressions/parserRegularExpress
 Expect Syntax Error: "parser/ecmascript5/Statements/BreakStatements/parser_breakInIterationOrSwitchStatement4.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueInIterationStatement4.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement1.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement2.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserBlockStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserDebuggerStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserDoStatement1.d.ts"
@@ -1311,7 +1306,6 @@ Expect Syntax Error: "parser/ecmascript5/Statements/parserForStatement5.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserIfStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserIfStatement2.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserLabeledStatement1.d.ts"
-Expect Syntax Error: "parser/ecmascript5/Statements/parserReturnStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserSwitchStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserThrowStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserTryStatement1.d.ts"
@@ -1367,7 +1361,6 @@ Expect Syntax Error: "parser/ecmascript5/parserArgumentList1.ts"
 Expect Syntax Error: "parser/ecmascript5/parserAstSpans1.ts"
 Expect Syntax Error: "parser/ecmascript5/parserImportDeclaration1.ts"
 Expect Syntax Error: "parser/ecmascript5/parserNoASIOnCallAfterFunctionExpression1.ts"
-Expect Syntax Error: "parser/ecmascript5/parserNotRegex1.ts"
 Expect Syntax Error: "parser/ecmascript5/parserObjectCreationArrayLiteral2.ts"
 Expect Syntax Error: "parser/ecmascript5/parserObjectCreationArrayLiteral4.ts"
 Expect Syntax Error: "parser/ecmascript5/parserRealSource1.ts"
@@ -2827,6 +2820,24 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  13 │         await: if (true) {
     ·              ─
  14 │ 
+    ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[classes/classStaticBlock/classStaticBlock7.ts:4:1]
+ 4 │         yield 1;
+ 5 │         return 1;
+   ·         ───┬──
+   ·            ╰── A 'return' statement can only be used within a function body.
+ 6 │     }
+   ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+    ╭─[classes/classStaticBlock/classStaticBlock7.ts:35:1]
+ 35 │         static {
+ 36 │             return 1;
+    ·             ───┬──
+    ·                ╰── A 'return' statement can only be used within a function body.
+ 37 │ 
     ╰────
 
   × Jump target cannot cross function boundary.
@@ -8745,6 +8756,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                             ─
    ╰────
 
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[parser/ecmascript5/ErrorRecovery/ModuleElements/parserErrorRecovery_ModuleElement1.ts:1:1]
+ 1 │ return foo;
+   · ───┬──
+   ·    ╰── A 'return' statement can only be used within a function body.
+ 2 │ }
+   ╰────
+
   × Unexpected token
    ╭─[parser/ecmascript5/ErrorRecovery/ModuleElements/parserErrorRecovery_ModuleElement1.ts:1:1]
  1 │ return foo;
@@ -8987,6 +9006,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts:1:1]
+ 1 │ return {
+   · ───┬──
+   ·    ╰── A 'return' statement can only be used within a function body.
+ 2 │ 
+   ╰────
 
   × Automatic Semicolon Insertion
    ╭─[parser/ecmascript5/ErrorRecovery/parserUnfinishedTypeNameBeforeKeyword1.ts:1:1]
@@ -9554,6 +9581,13 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[parser/ecmascript5/RegularExpressions/parserRegularExpression1.ts:1:1]
+ 1 │ return /(#?-?\d*\.\d\w*%?)|(@?#?[\w-?]+%?)/g;
+   · ───┬──
+   ·    ╰── A 'return' statement can only be used within a function body.
+   ╰────
+
   × Unexpected flag a in regular expression literal
    ╭─[parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:1]
  1 │ if (1) /regexp/a.foo();
@@ -9926,6 +9960,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │   while (true) {
    ╰────
 
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement1.ts:1:1]
+ 1 │ return;
+   · ───┬──
+   ·    ╰── A 'return' statement can only be used within a function body.
+   ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement2.ts:1:1]
+ 1 │ {
+ 2 │    return;
+   ·    ───┬──
+   ·       ╰── A 'return' statement can only be used within a function body.
+ 3 │ }
+   ╰────
+
   × Illegal break statement
    ╭─[parser/ecmascript5/Statements/parserBreakStatement1.d.ts:1:1]
  1 │ break;
@@ -10044,6 +10094,13 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ }
    ╰────
 
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[parser/ecmascript5/Statements/parserReturnStatement1.d.ts:1:1]
+ 1 │ return;
+   · ───┬──
+   ·    ╰── A 'return' statement can only be used within a function body.
+   ╰────
+
   × 'with' statements are not allowed
    ╭─[parser/ecmascript5/Statements/parserWithStatement1.d.ts:1:1]
  1 │ with (foo) {
@@ -10056,6 +10113,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  1 │ with (1)
    · ────
  2 │   return;
+   ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[parser/ecmascript5/Statements/parserWithStatement2.ts:1:1]
+ 1 │ with (1)
+ 2 │   return;
+   ·   ───┬──
+   ·      ╰── A 'return' statement can only be used within a function body.
    ╰────
 
   × 'with' statements are not allowed
@@ -10140,6 +10205,15 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ a.public /*
    ·          ─┬
    ·           ╰── Unterminated multiline comment
+   ╰────
+
+  × TS1108: A 'return' statement can only be used within a function body
+   ╭─[parser/ecmascript5/parserNotRegex1.ts:2:1]
+ 2 │   {
+ 3 │     return true;
+   ·     ───┬──
+   ·        ╰── A 'return' statement can only be used within a function body.
+ 4 │   }
    ╰────
 
   × Unexpected token
