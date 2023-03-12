@@ -6,6 +6,8 @@
 //!     * [v8](https://v8.dev/blog/scanner)
 
 mod constants;
+#[allow(clippy::all)]
+mod keyword_generated;
 mod kind;
 mod number;
 mod simd;

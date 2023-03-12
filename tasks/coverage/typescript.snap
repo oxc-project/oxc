@@ -556,7 +556,6 @@ Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandProp
 Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesAssignmentErrorFromMissingIdentifier.ts"
 Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorFromNoneExistingIdentifier.ts"
 Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesFunctionArgument2.ts"
-Expect Syntax Error: "es6/spread/arraySpreadInCall.ts"
 Expect Syntax Error: "es6/spread/iteratorSpreadInArray10.ts"
 Expect Syntax Error: "es6/spread/iteratorSpreadInArray5.ts"
 Expect Syntax Error: "es6/spread/iteratorSpreadInArray6.ts"
@@ -3797,12 +3796,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │     }
     ╰────
 
-  × Invalid Character ``
+  × Invalid Character `
+`
    ╭─[classes/members/privateNames/privateNameHashCharName.ts:2:1]
  2 │ 
  3 │ #
    ·  ▲
-   ·  ╰── Invalid Character ``
+   ·  ╰── Invalid Character `
+`
  4 │ 
    ╰────
 
