@@ -79,9 +79,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install Rust toolchain
-        run: |
-          rustup target add ${{ matrix.target }}
-          rustup component add rust-src --toolchain nightly
+        run: rustup target add ${{ matrix.target }}
 
       - name: Install arm64 toolchain
         if: matrix.code-target == 'linux-arm64'
@@ -96,7 +94,7 @@ jobs:
 
       - name: Build Binary
         # strip debug symbols from std, see https://github.com/johnthagen/min-sized-rust#remove-panic-string-formatting-with-panic_immediate_abort
-        run: cargo build --release -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target ${{ matrix.target }} -p oxc_cli
+        run: cargo build --release --target ${{ matrix.target }} -p oxc_cli
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
