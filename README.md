@@ -1,37 +1,50 @@
 # The JavaScript Oxidation Compiler (oxc)
 
-[![MIT licensed][mit-badge]][mit-url]
 [![Discord chat][discord-badge]][discord-url]
+[![MIT licensed][mit-badge]][mit-url]
+[![npm version][npm-badge]][npm-url]
 
-## Why this project?
+[discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
+[discord-url]: https://discord.gg/9uXCAwqQZW
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
+[mit-url]: LICENSE
+[npm-badge]: https://img.shields.io/npm/v/oxidation-compiler/latest?color=brightgreen
+[npm-url]: https://www.npmjs.com/package/oxidation-compiler/v/latest
+
+The Oxidation Compiler is building a set of tools for the JavaScript / TypeScript language.
+
+These tools include:
+
+* Parser - Done
+* Linter - Work in progress
+* Formatter
+* Transpiler
+* Minifier
+
+## Goals
 
 The goal of this project is to:
 
-* Create a blazingly fast JavaScript Compiler written in Rust.
+* Create a *really* fast native program by using the Rust programming language.
+* Provide the basic building blocks for creating your own tools by having good API designs
 * Provide good documentation on learning Rust and compiler techniques.
-* Create a linter.
 
-And mostly importantly, an invitation for you to come and learn Rust with me.
-We will learn a lot from each other!
+> Performance issues are considered as bugs in this project.
 
-You can watch this project and also [follow me on twitter](https://twitter.com/boshen_c) if you don't have the time to
 Rust but would like to learn things.
 
 ## Contributing
 
+This project is an invitation for you to come and learn Rust with us.
+
 Contributions are welcome and highly appreciated. To get started, check out [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-You can also join us on [Discord](https://discord.gg/9uXCAwqQZW).
+If you do not have the time to contribute code, you can still participate by:
 
-## Call for action
-
-
-You can take a look at some of the [good first issues](
-https://github.com/Boshen/oxc/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) if you want to practice some Rust.
-
-I welcome all nitpickings and bikesheddings if you think any of the code can be improved, just make an issue.
-
-I have also created some [discussions](https://github.com/Boshen/oxc/discussions) for documenting my thought processes.
+* star and watch this project
+* join us on [Discord](https://discord.gg/9uXCAwqQZW)
+* [follow me on twitter](https://twitter.com/boshen_c)
+* provide your wisdom in [discussions](https://github.com/Boshen/oxc/discussions)
 
 ## Milestone
 
@@ -41,11 +54,9 @@ The current objectives are:
 
 * A MVP (Most Viable Product) for the linter.
 * Improve the parser for real usage. Areas include:
-  * API
-  * Diagnostics reporting
   * Performance
+  * API
   * Pass more conformance tests
-  * You may start with https://github.com/Boshen/oxc/issues/36
 
 ## Parser Conformance
 
@@ -66,29 +77,25 @@ AST Parsed     : 4291/4861 (88.27%)
 
 ## Linter Performance
 
-See [benchmark](./benchmark/) for details. Hyperfine results are:
+See [benchmark](./benchmark/) for details. Hyperfine results on an Intel i7 6-core are:
 
 ```
 Benchmark 1: oxc
-  Time (mean ± σ):      30.9 ms ±   1.4 ms    [User: 138.2 ms, System: 54.7 ms]
-  Range (min … max):    28.6 ms …  35.7 ms    83 runs
+  Time (mean ± σ):      34.6 ms ±   1.3 ms    [User: 160.1 ms, System: 67.2 ms]
+  Range (min … max):    31.8 ms …  40.9 ms    75 runs
 
 Benchmark 2: rome
-  Time (mean ± σ):     145.0 ms ±   2.8 ms    [User: 674.9 ms, System: 69.9 ms]
-  Range (min … max):   141.5 ms … 151.8 ms    19 runs
-
-  Warning: Ignoring non-zero exit code.
+  Time (mean ± σ):     147.4 ms ±   3.7 ms    [User: 695.4 ms, System: 72.4 ms]
+  Range (min … max):   141.9 ms … 153.8 ms    20 runs
 
 Benchmark 3: eslint
-  Time (mean ± σ):      2.661 s ±  0.057 s    [User: 4.076 s, System: 0.223 s]
-  Range (min … max):    2.593 s …  2.790 s    10 runs
-
-  Warning: Ignoring non-zero exit code.
+  Time (mean ± σ):      2.905 s ±  0.185 s    [User: 4.387 s, System: 0.254 s]
+  Range (min … max):    2.710 s …  3.287 s    10 runs
 
 Summary
   'oxc' ran
-    4.70 ± 0.23 times faster than 'rome'
-   86.20 ± 4.35 times faster than 'eslint'
+    4.26 ± 0.20 times faster than 'rome'
+   83.94 ± 6.25 times faster than 'eslint'
 ```
 
 ## Learning Resources
@@ -126,8 +133,3 @@ This project partially copies code from the following projects:
 | [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus) | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0)  |
 | [acorn](https://github.com/acornjs/acorn) | [MIT](https://github.com/acornjs/acorn/blob/master/acorn/LICENSE) |
 | [sindresorhus/globals](https://github.com/sindresorhus/globals) | [MIT](https://github.com/sindresorhus/globals/blob/main/license) |
-
-[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
-[mit-url]: LICENSE
-[discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
-[discord-url]: https://discord.gg/9uXCAwqQZW
