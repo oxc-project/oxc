@@ -45,7 +45,7 @@ impl Trivias {
         let comment = Comment::new(span.end, kind);
         match kind {
             CommentKind::ConfigurationSingleLine => {
-                self.configuration_comments.insert(span.start, comment)
+                self.configuration_comments.insert(span.start, comment);
             }
             _ => self.comments.insert(span.start, comment),
         }
