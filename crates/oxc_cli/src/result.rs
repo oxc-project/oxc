@@ -41,11 +41,12 @@ impl Termination for CliRunResult {
                     return ExitCode::from(1);
                 }
 
-                if number_of_files > 0 {
-                    println!("Found {number_of_diagnostics} diagnostics.");
+                if number_of_diagnostics > 0 {
+                    println!("Found {number_of_diagnostics} errors.");
                     return ExitCode::from(1);
                 }
 
+                println!("Found no errors.");
                 ExitCode::from(0)
             }
         }
