@@ -60,24 +60,10 @@ impl Rule for EarlyErrorJavaScript {
 struct ReservedKeyword(Atom, #[label] Span);
 
 fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    // if span.ctx.has_ambient() {
-    // return None;
-    // }
-
-    // It is a Syntax Error if this production has an [Await] parameter.
-    // if *name == "await" && span.ctx.has_await() {
-    // return Some(Diagnostic::IdentifierAsync("await", span.range()));
-    // }
-
     // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
     if *name == "await" && ctx.source_type().is_module() {
         return ctx.diagnostic(ReservedKeyword(name.clone(), span));
     }
-
-    // It is a Syntax Error if this production has a [Yield] parameter.
-    // if *name == "yield" && span.ctx.has_yield() {
-    // return Some(Diagnostic::IdentifierGenerator("yield", span.range()));
-    // }
 
     // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
     if ctx.strict_mode(node) && STRICT_MODE_NAMES.contains(name.as_str()) {

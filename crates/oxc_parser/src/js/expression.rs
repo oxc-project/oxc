@@ -60,6 +60,7 @@ impl<'a> Parser<'a> {
             return self.unexpected();
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        self.check_identifier(span, &name);
         Ok(IdentifierReference { span, name })
     }
 
@@ -69,6 +70,7 @@ impl<'a> Parser<'a> {
             return self.unexpected();
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        self.check_identifier(span, &name);
         Ok(BindingIdentifier { span, name })
     }
 
@@ -77,6 +79,7 @@ impl<'a> Parser<'a> {
             return self.unexpected();
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        self.check_identifier(span, &name);
         Ok(LabelIdentifier { span, name })
     }
 
@@ -102,6 +105,17 @@ impl<'a> Parser<'a> {
         };
         self.bump_remap(kind);
         (self.end_span(span), name)
+    }
+
+    fn check_identifier(&mut self, span: Span, name: &Atom) {
+        // It is a Syntax Error if this production has an [Await] parameter.
+        if *name == "await" && self.ctx.has_await() {
+            self.error(diagnostics::IdentifierAsync("await", span));
+        }
+        // It is a Syntax Error if this production has a [Yield] parameter.
+        if *name == "yield" && self.ctx.has_yield() {
+            self.error(diagnostics::IdentifierGenerator("yield", span));
+        }
     }
 
     /// Section `https://tc39.es/ecma262/#prod-PrivateIdentifier`

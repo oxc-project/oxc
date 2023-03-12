@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 620/2532 (24.49%)
+Negative Passed: 635/2532 (25.08%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -11,24 +11,18 @@ Expect Syntax Error: "ambient/ambientExternalModuleInsideNonAmbient.ts"
 Expect Syntax Error: "ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts"
 Expect Syntax Error: "async/es2017/asyncArrowFunction/asyncArrowFunction10_es2017.ts"
 Expect Syntax Error: "async/es2017/asyncArrowFunction/asyncArrowFunction3_es2017.ts"
-Expect Syntax Error: "async/es2017/asyncArrowFunction/asyncArrowFunction5_es2017.ts"
-Expect Syntax Error: "async/es2017/asyncArrowFunction/asyncArrowFunction9_es2017.ts"
 Expect Syntax Error: "async/es2017/asyncArrowFunction/asyncArrowFunction_allowJs.ts"
 Expect Syntax Error: "async/es2017/asyncAwaitIsolatedModules_es2017.ts"
 Expect Syntax Error: "async/es2017/await_incorrectThisType.ts"
 Expect Syntax Error: "async/es2017/await_unaryExpression_es2017_1.ts"
 Expect Syntax Error: "async/es2017/await_unaryExpression_es2017_2.ts"
-Expect Syntax Error: "async/es2017/functionDeclarations/asyncFunctionDeclaration10_es2017.ts"
 Expect Syntax Error: "async/es2017/functionDeclarations/asyncFunctionDeclaration12_es2017.ts"
 Expect Syntax Error: "async/es2017/functionDeclarations/asyncFunctionDeclaration13_es2017.ts"
 Expect Syntax Error: "async/es2017/functionDeclarations/asyncFunctionDeclaration3_es2017.ts"
-Expect Syntax Error: "async/es2017/functionDeclarations/asyncFunctionDeclaration5_es2017.ts"
 Expect Syntax Error: "async/es2017/functionDeclarations/asyncFunctionDeclaration8_es2017.ts"
 Expect Syntax Error: "async/es5/asyncAliasReturnType_es5.ts"
 Expect Syntax Error: "async/es5/asyncArrowFunction/asyncArrowFunction10_es5.ts"
 Expect Syntax Error: "async/es5/asyncArrowFunction/asyncArrowFunction3_es5.ts"
-Expect Syntax Error: "async/es5/asyncArrowFunction/asyncArrowFunction5_es5.ts"
-Expect Syntax Error: "async/es5/asyncArrowFunction/asyncArrowFunction9_es5.ts"
 Expect Syntax Error: "async/es5/asyncArrowFunction/asyncArrowFunctionCapturesArguments_es5.ts"
 Expect Syntax Error: "async/es5/asyncAwaitIsolatedModules_es5.ts"
 Expect Syntax Error: "async/es5/asyncClass_es5.ts"
@@ -36,18 +30,14 @@ Expect Syntax Error: "async/es5/asyncDeclare_es5.ts"
 Expect Syntax Error: "async/es5/asyncEnum_es5.ts"
 Expect Syntax Error: "async/es5/asyncInterface_es5.ts"
 Expect Syntax Error: "async/es5/asyncModule_es5.ts"
-Expect Syntax Error: "async/es5/functionDeclarations/asyncFunctionDeclaration10_es5.ts"
 Expect Syntax Error: "async/es5/functionDeclarations/asyncFunctionDeclaration12_es5.ts"
 Expect Syntax Error: "async/es5/functionDeclarations/asyncFunctionDeclaration13_es5.ts"
 Expect Syntax Error: "async/es5/functionDeclarations/asyncFunctionDeclaration15_es5.ts"
 Expect Syntax Error: "async/es5/functionDeclarations/asyncFunctionDeclaration3_es5.ts"
-Expect Syntax Error: "async/es5/functionDeclarations/asyncFunctionDeclaration5_es5.ts"
 Expect Syntax Error: "async/es5/functionDeclarations/asyncFunctionDeclaration8_es5.ts"
 Expect Syntax Error: "async/es5/functionDeclarations/asyncFunctionDeclarationCapturesArguments_es5.ts"
 Expect Syntax Error: "async/es6/asyncArrowFunction/asyncArrowFunction10_es6.ts"
 Expect Syntax Error: "async/es6/asyncArrowFunction/asyncArrowFunction3_es6.ts"
-Expect Syntax Error: "async/es6/asyncArrowFunction/asyncArrowFunction5_es6.ts"
-Expect Syntax Error: "async/es6/asyncArrowFunction/asyncArrowFunction9_es6.ts"
 Expect Syntax Error: "async/es6/asyncAwaitIsolatedModules_es6.ts"
 Expect Syntax Error: "async/es6/asyncClass_es6.ts"
 Expect Syntax Error: "async/es6/asyncDeclare_es6.ts"
@@ -57,14 +47,11 @@ Expect Syntax Error: "async/es6/asyncModule_es6.ts"
 Expect Syntax Error: "async/es6/asyncQualifiedReturnType_es6.ts"
 Expect Syntax Error: "async/es6/await_unaryExpression_es6_1.ts"
 Expect Syntax Error: "async/es6/await_unaryExpression_es6_2.ts"
-Expect Syntax Error: "async/es6/functionDeclarations/asyncFunctionDeclaration10_es6.ts"
 Expect Syntax Error: "async/es6/functionDeclarations/asyncFunctionDeclaration12_es6.ts"
 Expect Syntax Error: "async/es6/functionDeclarations/asyncFunctionDeclaration13_es6.ts"
 Expect Syntax Error: "async/es6/functionDeclarations/asyncFunctionDeclaration15_es6.ts"
 Expect Syntax Error: "async/es6/functionDeclarations/asyncFunctionDeclaration3_es6.ts"
-Expect Syntax Error: "async/es6/functionDeclarations/asyncFunctionDeclaration5_es6.ts"
 Expect Syntax Error: "async/es6/functionDeclarations/asyncFunctionDeclaration8_es6.ts"
-Expect Syntax Error: "async/es6/functionDeclarations/asyncOrYieldAsBindingIdentifier1.ts"
 Expect Syntax Error: "classes/awaitAndYieldInProperty.ts"
 Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts"
 Expect Syntax Error: "classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts"
@@ -562,11 +549,9 @@ Expect Syntax Error: "es6/for-ofStatements/for-of48.ts"
 Expect Syntax Error: "es6/for-ofStatements/for-of55.ts"
 Expect Syntax Error: "es6/for-ofStatements/for-of6.ts"
 Expect Syntax Error: "es6/for-ofStatements/for-of7.ts"
-Expect Syntax Error: "es6/functionDeclarations/FunctionDeclaration10_es6.ts"
 Expect Syntax Error: "es6/functionDeclarations/FunctionDeclaration12_es6.ts"
 Expect Syntax Error: "es6/functionDeclarations/FunctionDeclaration13_es6.ts"
 Expect Syntax Error: "es6/functionDeclarations/FunctionDeclaration3_es6.ts"
-Expect Syntax Error: "es6/functionDeclarations/FunctionDeclaration5_es6.ts"
 Expect Syntax Error: "es6/functionDeclarations/FunctionDeclaration6_es6.ts"
 Expect Syntax Error: "es6/functionDeclarations/FunctionDeclaration7_es6.ts"
 Expect Syntax Error: "es6/functionDeclarations/FunctionDeclaration8_es6.ts"
@@ -2181,6 +2166,13 @@ Expect to Parse: "externalModules/topLevelAwait.2.ts"
  7 │ import await = foo.await;
    ·        ─────
    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[externalModules/topLevelAwait.2.ts:6:1]
+ 6 │ // await allowed in import=namespace when not a module
+ 7 │ import await = foo.await;
+   ·        ─────
+   ╰────
 Expect to Parse: "externalModules/topLevelAwait.3.ts"
 
   × The keyword 'await' is reserved
@@ -2258,6 +2250,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·   ────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es2017/asyncArrowFunction/asyncArrowFunction5_es2017.ts:3:1]
+ 3 │ 
+ 4 │ var foo = async (await): Promise<void> => {
+   ·                  ─────
+ 5 │ }
+   ╰────
+
   × Automatic Semicolon Insertion
    ╭─[async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts:3:1]
  3 │ 
@@ -2284,6 +2284,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ }
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es2017/asyncArrowFunction/asyncArrowFunction9_es2017.ts:2:1]
+ 2 │ // @noEmitHelpers: true
+ 3 │ var foo = async (a = await => await): Promise<void> => {
+   ·                      ─────
+ 4 │ }
+   ╰────
+
   × Invalid assignment
    ╭─[async/es2017/await_unaryExpression_es2017_3.ts:3:1]
  3 │ async function bar1() {
@@ -2291,6 +2299,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·       ────┬───
    ·           ╰── Cannot assign to this expression
  5 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es2017/functionDeclarations/asyncFunctionDeclaration10_es2017.ts:2:1]
+ 2 │ // @noEmitHelpers: true
+ 3 │ async function foo(a = await => await): Promise<void> {
+   ·                        ─────
+ 4 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es2017/functionDeclarations/asyncFunctionDeclaration5_es2017.ts:2:1]
+ 2 │ // @noEmitHelpers: true
+ 3 │ async function foo(await): Promise<void> {
+   ·                    ─────
+ 4 │ }
    ╰────
 
   × Unexpected token
@@ -2317,6 +2341,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │ }
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es5/asyncArrowFunction/asyncArrowFunction5_es5.ts:4:1]
+ 4 │ 
+ 5 │ var foo = async (await): Promise<void> => {
+   ·                  ─────
+ 6 │ }
+   ╰────
+
   × Automatic Semicolon Insertion
    ╭─[async/es5/asyncArrowFunction/asyncArrowFunction6_es5.ts:4:1]
  4 │ 
@@ -2341,6 +2373,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │   var v = { [await]: foo }
    ·                   ─
  7 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es5/asyncArrowFunction/asyncArrowFunction9_es5.ts:3:1]
+ 3 │ // @noEmitHelpers: true
+ 4 │ var foo = async (a = await => await): Promise<void> => {
+   ·                      ─────
+ 5 │ }
    ╰────
 
   × Constructor can't be an async method
@@ -2370,6 +2410,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │   }
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es5/functionDeclarations/asyncFunctionDeclaration10_es5.ts:3:1]
+ 3 │ // @noEmitHelpers: true
+ 4 │ async function foo(a = await => await): Promise<void> {
+   ·                        ─────
+ 5 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es5/functionDeclarations/asyncFunctionDeclaration5_es5.ts:3:1]
+ 3 │ // @noEmitHelpers: true
+ 4 │ async function foo(await): Promise<void> {
+   ·                    ─────
+ 5 │ }
+   ╰────
+
   × Unexpected token
    ╭─[async/es5/functionDeclarations/asyncFunctionDeclaration6_es5.ts:3:1]
  3 │ // @noEmitHelpers: true
@@ -2392,6 +2448,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │   var v = { [await]: foo }
    ·                   ─
  6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es6/asyncArrowFunction/asyncArrowFunction5_es6.ts:3:1]
+ 3 │ 
+ 4 │ var foo = async (await): Promise<void> => {
+   ·                  ─────
+ 5 │ }
    ╰────
 
   × Automatic Semicolon Insertion
@@ -2418,6 +2482,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │   var v = { [await]: foo }
    ·                   ─
  6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es6/asyncArrowFunction/asyncArrowFunction9_es6.ts:2:1]
+ 2 │ // @noEmitHelpers: true
+ 3 │ var foo = async (a = await => await): Promise<void> => {
+   ·                      ─────
+ 4 │ }
    ╰────
 
   × Constructor can't be an async method
@@ -2456,6 +2528,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │ }
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es6/functionDeclarations/asyncFunctionDeclaration10_es6.ts:2:1]
+ 2 │ // @noEmitHelpers: true
+ 3 │ async function foo(a = await => await): Promise<void> {
+   ·                        ─────
+ 4 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[async/es6/functionDeclarations/asyncFunctionDeclaration5_es6.ts:2:1]
+ 2 │ // @noEmitHelpers: true
+ 3 │ async function foo(await): Promise<void> {
+   ·                    ─────
+ 4 │ }
+   ╰────
+
   × Unexpected token
    ╭─[async/es6/functionDeclarations/asyncFunctionDeclaration6_es6.ts:2:1]
  2 │ // @noEmitHelpers: true
@@ -2479,6 +2567,54 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                   ─
  5 │ }
    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[async/es6/functionDeclarations/asyncOrYieldAsBindingIdentifier1.ts:15:1]
+ 15 │ async function f2_let () {
+ 16 │     let await = 1
+    ·         ─────
+ 17 │ }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[async/es6/functionDeclarations/asyncOrYieldAsBindingIdentifier1.ts:19:1]
+ 19 │ async function f2_var () {
+ 20 │     var await = 1
+    ·         ─────
+ 21 │ }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[async/es6/functionDeclarations/asyncOrYieldAsBindingIdentifier1.ts:23:1]
+ 23 │ async function f2_const () {
+ 24 │     const await = 1
+    ·           ─────
+ 25 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[async/es6/functionDeclarations/asyncOrYieldAsBindingIdentifier1.ts:39:1]
+ 39 │ function * f4_let () {
+ 40 │     let yield = 2;
+    ·         ─────
+ 41 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[async/es6/functionDeclarations/asyncOrYieldAsBindingIdentifier1.ts:43:1]
+ 43 │ function * f4_var () {
+ 44 │     var yield = 2;
+    ·         ─────
+ 45 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[async/es6/functionDeclarations/asyncOrYieldAsBindingIdentifier1.ts:47:1]
+ 47 │ function * f4_const () {
+ 48 │     const yield = 2;
+    ·           ─────
+ 49 │ }
+    ╰────
 
   × Unexpected token
    ╭─[classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts:7:1]
@@ -2639,6 +2775,30 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │         // something
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[classes/classStaticBlock/classStaticBlock22.ts:5:1]
+ 5 │   static {
+ 6 │     let await: any; // illegal, cannot declare a new binding for await
+   ·         ─────
+ 7 │   }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[classes/classStaticBlock/classStaticBlock22.ts:14:1]
+ 14 │   static {
+ 15 │     let await; // illegal, cannot declare a new binding for await
+    ·         ─────
+ 16 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[classes/classStaticBlock/classStaticBlock22.ts:20:1]
+ 20 │   static {
+ 21 │     class await { }; // illegal
+    ·           ─────
+ 22 │   }
+    ╰────
+
   × Unexpected token
     ╭─[classes/classStaticBlock/classStaticBlock22.ts:26:1]
  26 │       await = 1; // legal
@@ -2653,6 +2813,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │         await; // illegal
    ·              ─
  6 │     }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[classes/classStaticBlock/classStaticBlock6.ts:6:1]
+ 6 │     static {
+ 7 │         let await = 1;
+   ·             ─────
+ 8 │         let arguments = 1;
    ╰────
 
   × Unexpected token
@@ -4917,6 +5085,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·         ┬
    ·         ╰── It can not be redeclared here
  4 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es6/functionDeclarations/FunctionDeclaration10_es6.ts:1:1]
+ 1 │ // @target: es6
+ 2 │ function * foo(a = yield => yield) {
+   ·                    ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es6/functionDeclarations/FunctionDeclaration5_es6.ts:1:1]
+ 1 │ // @target: es6
+ 2 │ function*foo(yield) {
+   ·              ─────
+ 3 │ }
    ╰────
 
   × Unexpected token
@@ -7814,7 +7998,21 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·        ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[externalModules/topLevelAwaitErrors.12.ts:7:1]
+ 7 │ // await disallowed in import=namespace when in a module
+ 8 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
   × The keyword 'await' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.2.ts:6:1]
+ 6 │ // reparse variable name as await should fail
+ 7 │ var await = 1;
+   ·     ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
    ╭─[externalModules/topLevelAwaitErrors.2.ts:6:1]
  6 │ // reparse variable name as await should fail
  7 │ var await = 1;
@@ -7835,7 +8033,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·      ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[externalModules/topLevelAwaitErrors.4.ts:6:1]
+ 6 │ // reparse binding pattern as await should fail
+ 7 │ var [await] = [1];
+   ·      ─────
+   ╰────
+
   × The keyword 'await' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.5.ts:4:1]
+ 4 │ // await in exported class name should fail
+ 5 │ export class await {
+   ·              ─────
+ 6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
    ╭─[externalModules/topLevelAwaitErrors.5.ts:4:1]
  4 │ // await in exported class name should fail
  5 │ export class await {
@@ -10239,6 +10452,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  38 │             break label
     ·                   ─────
  39 │         }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[salsa/plainJSBinderErrors.ts:9:1]
+  9 │ async function f() {
+ 10 │     const await = 3
+    ·           ─────
+ 11 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[salsa/plainJSBinderErrors.ts:12:1]
+ 12 │ function* g() {
+ 13 │     const yield = 4
+    ·           ─────
+ 14 │ }
     ╰────
 
   × Classes can't have an element named '#constructor'

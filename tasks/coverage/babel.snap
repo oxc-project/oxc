@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2053/2069 (99.23%)
 Positive Passed: 2053/2069 (99.23%)
-Negative Passed: 1043/1502 (69.44%)
+Negative Passed: 1059/1502 (70.51%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -145,16 +145,10 @@ Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generat
 Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-2/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-3/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-4/input.js"
-Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-5/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-6/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-inside-generator-method/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-inside-generator/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-strict/input.js"
-Expect Syntax Error: "es2015/yield/parameter-name-arrow-inside-generator-1/input.js"
-Expect Syntax Error: "es2015/yield/parameter-name-arrow-inside-generator-3/input.js"
-Expect Syntax Error: "es2015/yield/parameter-name-arrow-no-parens-inside-generator/input.js"
-Expect Syntax Error: "es2015/yield/parameter-name-generator-method/input.js"
-Expect Syntax Error: "es2015/yield/parameter-name-generator/input.js"
 Expect Syntax Error: "es2015/yield/parameter-name-strict-body/input.js"
 Expect Syntax Error: "es2015/yield/parameter-name-strict/input.js"
 Expect Syntax Error: "es2015/yield/yield-star-parameter-default-inside-generator/input.js"
@@ -172,7 +166,6 @@ Expect Syntax Error: "es2016/simple-parameter-list/object-pattern/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/rest/input.js"
 Expect Syntax Error: "es2017/async-functions/9/input.js"
 Expect Syntax Error: "es2017/async-functions/allow-await-outside-function-throw/input.js"
-Expect Syntax Error: "es2017/async-functions/async-await-as-arrow-binding-identifier/input.js"
 Expect Syntax Error: "es2017/async-functions/await-async-function-expression-name/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
 Expect Syntax Error: "es2017/async-functions/await-function-declaration-name-inside-async-function/input.js"
@@ -220,20 +213,11 @@ Expect Syntax Error: "esprima/es2015-meta-property/unknown-property/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-binding-property/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-expression/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-arrow-default/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-arrow-parameter/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-arrow-parameters/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-catch/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-declaration/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-name/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-parameter/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-rest/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-function-declaration/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-lexical-declaration/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-parameter/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-rest/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-strict-function-expression/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-strict-function-parameter/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-variable-declaration/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-array-pattern/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-arrow-parameter-default/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-arrow-parameter-name/input.js"
@@ -3525,6 +3509,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[es2015/uncategorised/359/input.js:1:1]
+ 1 │ const await = foo();
+   ·       ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[es2015/uncategorised/361/input.js:1:1]
  1 │ const { await } = foo();
@@ -3544,6 +3534,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × The keyword 'await' is reserved
+   ╭─[es2015/uncategorised/367/input.js:1:1]
+ 1 │ class await {}
+   ·       ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
    ╭─[es2015/uncategorised/367/input.js:1:1]
  1 │ class await {}
    ·       ─────
@@ -3727,6 +3723,22 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es2015/yield/parameter-default-inside-arrow-inside-generator-5/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   (x = (yield) => {}) => {};
+   ·         ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es2015/yield/parameter-name-arrow-inside-generator-1/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   (yield) => {};
+   ·    ─────
+ 3 │ }
+   ╰────
+
   × Automatic Semicolon Insertion
    ╭─[es2015/yield/parameter-name-arrow-inside-generator-2/input.js:1:1]
  1 │ function* fn() {
@@ -3736,6 +3748,34 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
   help: Try insert a semicolon here
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es2015/yield/parameter-name-arrow-inside-generator-3/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   (a, b, yield) => {};
+   ·          ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es2015/yield/parameter-name-arrow-no-parens-inside-generator/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   yield => {};
+   ·   ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es2015/yield/parameter-name-generator-method/input.js:1:1]
+ 1 │ ({ *method(yield) {} });
+   ·            ─────
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es2015/yield/parameter-name-generator/input.js:1:1]
+ 1 │ function* fn(yield) {}
+   ·              ─────
+   ╰────
 
   × Unexpected exponentiation expression
    ╭─[es2016/exponentiation-operator/10/input.js:1:1]
@@ -3951,6 +3991,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·               ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[es2017/async-functions/async-await-as-arrow-binding-identifier/input.js:1:1]
+ 1 │ async await => {}
+   ·       ─────
+   ╰────
 
   × Automatic Semicolon Insertion
    ╭─[es2017/async-functions/async-function-and-non-bmp-character/input.js:1:1]
@@ -6521,16 +6567,70 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·    ╰── Unterminated string
    ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-arrow-parameter/input.js:1:1]
+ 1 │ function *g(){ (yield) => 42 }
+   ·                 ─────
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-arrow-parameters/input.js:1:1]
+ 1 │ function *g(){ (a, b, c, yield) => 42 }
+   ·                          ─────
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-catch/input.js:1:1]
+ 1 │ function *g() { try {} catch (yield) {} }
+   ·                               ─────
+   ╰────
+
   × The keyword 'yield' is reserved
    ╭─[esprima/es2015-yield/invalid-yield-generator-export-default/input.js:1:1]
  1 │ export default function *yield() {}
    ·                          ─────
    ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-expression-parameter/input.js:1:1]
+ 1 │ (function *(yield){})
+   ·             ─────
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-expression-rest/input.js:1:1]
+ 1 │ (function *(x, ...yield){})
+   ·                   ─────
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-lexical-declaration/input.js:1:1]
+ 1 │ function *g() { let yield; }
+   ·                     ─────
+   ╰────
+
   × Unexpected token
    ╭─[esprima/es2015-yield/invalid-yield-generator-member-expression/input.js:1:1]
  1 │ function *g() { return yield.x; }
    ·                             ─
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-parameter/input.js:1:1]
+ 1 │ function *g(yield){}
+   ·             ─────
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-rest/input.js:1:1]
+ 1 │ function *g(a, b, c, ...yield){}
+   ·                         ─────
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-variable-declaration/input.js:1:1]
+ 1 │ function *g() { var yield; }
+   ·                     ─────
    ╰────
 
   × Invalid Character ` `

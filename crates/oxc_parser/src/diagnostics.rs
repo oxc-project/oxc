@@ -426,12 +426,12 @@ pub struct ConstructorAsync(#[label("Constructor can't be an async method")] pub
 #[derive(Debug, Error, Diagnostic)]
 #[error("Cannot use `{0}` as an identifier in an async context")]
 #[diagnostic()]
-pub struct IdentifierAsync(&'static str, #[label("{0} cannot be used here")] pub Span);
+pub struct IdentifierAsync(pub &'static str, #[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Cannot use `{0}` as an identifier in a generator context")]
 #[diagnostic()]
-pub struct IdentifierGenerator(&'static str, #[label("{0} cannot be used here")] pub Span);
+pub struct IdentifierGenerator(pub &'static str, #[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Constructor can't be a generator")]

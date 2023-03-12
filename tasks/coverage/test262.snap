@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3158/3917 (80.62%)
+Negative Passed: 3229/3917 (82.44%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -31,7 +31,6 @@ Expect Syntax Error: "language/expressions/arrow-function/object-destructuring-p
 Expect Syntax Error: "language/expressions/arrow-function/param-dflt-yield-expr.js"
 Expect Syntax Error: "language/expressions/arrow-function/params-duplicate.js"
 Expect Syntax Error: "language/expressions/arrow-function/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/arrow-function/static-init-await-binding.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-arguments.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-bindingidentifier-no-eval.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-arguments.js"
@@ -48,33 +47,22 @@ Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/ar
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-eval.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/assignment/dstr/obj-id-identifier-yield-expr.js"
 Expect Syntax Error: "language/expressions/assignmenttargettype/direct-yieldexpression-0.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/await-as-param-ident-nested-arrow-parameter-position.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/await-as-param-nested-arrow-body-position.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/await-as-param-nested-arrow-parameter-position.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/await-as-param-rest-nested-arrow-parameter-position.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-arguments-in-formal-parameters.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-await-in-formals.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-function/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/async-function/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-binding-identifier-arguments.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-binding-identifier-eval.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-function/named-array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-function/named-await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/async-function/named-await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/async-function/named-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-function/named-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-function/named-object-destructuring-param-strict-body.js"
@@ -85,8 +73,6 @@ Expect Syntax Error: "language/expressions/async-function/nameless-dflt-params-r
 Expect Syntax Error: "language/expressions/async-function/nameless-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/nameless-rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/async-generator/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/async-generator/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-generator/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-ary.js"
@@ -108,11 +94,8 @@ Expect Syntax Error: "language/expressions/async-generator/early-errors-expressi
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-binding-identifier-eval.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-await-expr.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-await.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-yield-expr.js"
 Expect Syntax Error: "language/expressions/async-generator/named-array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/named-await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/async-generator/named-await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-generator/named-object-destructuring-param-strict-body.js"
@@ -121,29 +104,21 @@ Expect Syntax Error: "language/expressions/async-generator/object-destructuring-
 Expect Syntax Error: "language/expressions/async-generator/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/await/await-BindingIdentifier-nested.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-method-static/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/async-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-method/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/async-method/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/async-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/async-method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-method/object-destructuring-param-strict-body.js"
@@ -220,14 +195,6 @@ Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-ary-pt
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/async-gen-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/async-private-method-static/await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/class/elements/async-private-method/await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-duplicates.js"
@@ -250,7 +217,6 @@ Expect Syntax Error: "language/expressions/class/method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/method/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/static-gen-method-param-dflt-yield.js"
-Expect Syntax Error: "language/expressions/class/static-init-await-binding.js"
 Expect Syntax Error: "language/expressions/function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/function/dflt-params-rest.js"
@@ -316,13 +282,8 @@ Expect Syntax Error: "language/expressions/object/identifier-shorthand-package-i
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-private-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-protected-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-public-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-static-init-await-invalid.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-static-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-yield-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-await-as-binding-identifier.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-await-as-binding-identifier.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js"
@@ -336,7 +297,6 @@ Expect Syntax Error: "language/expressions/object/method-definition/async-meth-r
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-async-method-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-arguments-in-formal-parameters.js"
-Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-await-in-formals.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-array-destructuring-param-strict-body.js"
@@ -344,7 +304,6 @@ Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dfl
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/generator-param-id-yield.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-param-init-yield.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-array-destructuring-param-strict-body.js"
@@ -394,13 +353,10 @@ Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-body.js"
 Expect Syntax Error: "language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js"
 Expect Syntax Error: "language/statements/async-function/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/async-function/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/async-function/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/async-function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/async-function/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-NSPL-with-USD.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-arguments-in-formal-parameters.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-await-in-formals.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-binding-identifier-arguments.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-binding-identifier-eval.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-duplicate-parameters.js"
@@ -408,8 +364,6 @@ Expect Syntax Error: "language/statements/async-function/early-errors-declaratio
 Expect Syntax Error: "language/statements/async-function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-function/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-generator/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/async-generator/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/async-generator/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/async-generator/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/async-generator/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-ary.js"
@@ -421,29 +375,21 @@ Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-res
 Expect Syntax Error: "language/statements/async-generator/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-generator/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-method-static/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/async-method-static/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/async-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/async-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-method/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/async-method/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/async-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/async-method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-method/object-destructuring-param-strict-body.js"
@@ -451,7 +397,6 @@ Expect Syntax Error: "language/statements/class/async-method/rest-param-strict-b
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-async-method-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-NSPL-with-USD.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-arguments-in-formal-parameters.js"
-Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-await-in-formals.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-eval-in-formal-parameters.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
@@ -526,14 +471,6 @@ Expect Syntax Error: "language/statements/class/dstr/private-meth-static-ary-ptr
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/async-gen-private-method/await-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/async-private-method-static/await-as-binding-identifier.js"
-Expect Syntax Error: "language/statements/class/elements/async-private-method/await-as-binding-identifier-escaped.js"
-Expect Syntax Error: "language/statements/class/elements/async-private-method/await-as-binding-identifier.js"
 Expect Syntax Error: "language/statements/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-duplicates.js"
@@ -556,13 +493,11 @@ Expect Syntax Error: "language/statements/class/method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/method/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/static-gen-method-param-dflt-yield.js"
-Expect Syntax Error: "language/statements/class/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-return.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/const/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/do-while/decl-fun.js"
 Expect Syntax Error: "language/statements/do-while/labelled-fn-stmt.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js"
@@ -602,7 +537,6 @@ Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/for-in/decl-fun.js"
-Expect Syntax Error: "language/statements/for-in/dstr/obj-id-identifier-yield-expr.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-lhs.js"
@@ -617,7 +551,6 @@ Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-o
 Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-of/dstr/obj-id-identifier-yield-expr.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj.js"
@@ -701,7 +634,6 @@ Expect Syntax Error: "language/statements/labeled/decl-fun-strict.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/let/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T1.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T10.js"
 Expect Syntax Error: "language/statements/return/S12.9_A1_T2.js"
@@ -717,7 +649,6 @@ Expect Syntax Error: "language/statements/try/catch-parameter-boundnames-restric
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/try/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/variable/12.2.1-1gs.js"
 Expect Syntax Error: "language/statements/variable/12.2.1-4gs.js"
 Expect Syntax Error: "language/statements/variable/arguments-fn-strict-list-final-init.js"
@@ -738,7 +669,6 @@ Expect Syntax Error: "language/statements/variable/arguments-strict-list-middle.
 Expect Syntax Error: "language/statements/variable/arguments-strict-list-repeated.js"
 Expect Syntax Error: "language/statements/variable/arguments-strict-single-init.js"
 Expect Syntax Error: "language/statements/variable/arguments-strict-single.js"
-Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-elem-id-static-init-await-invalid.js"
 Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-obj.js"
@@ -754,7 +684,6 @@ Expect Syntax Error: "language/statements/variable/eval-strict-single-init.js"
 Expect Syntax Error: "language/statements/variable/eval-strict-single.js"
 Expect Syntax Error: "language/statements/variable/id-arguments-strict.js"
 Expect Syntax Error: "language/statements/variable/id-eval-strict.js"
-Expect Syntax Error: "language/statements/variable/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/while/decl-fun.js"
 Expect Syntax Error: "language/statements/while/labelled-fn-stmt.js"
 Expect Syntax Error: "language/statements/with/decl-fun.js"
@@ -2915,6 +2844,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  55 │   
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/arrow-function/static-init-await-binding.js:15:1]
+ 15 │   static {
+ 16 │     (await => 0);
+    ·      ─────
+ 17 │   }
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/arrow-function/static-init-await-reference.js:15:1]
  15 │   static {
@@ -3132,6 +3069,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  23 │ 
  24 │ 0, [...x[yield]] = [];
     ·          ─────
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/assignment/dstr/obj-id-identifier-yield-expr.js:23:1]
+ 23 │ 
+ 24 │ 0, { yield } = {};
+    ·      ─────
+ 25 │ 
     ╰────
 
   × The keyword 'yield' is reserved
@@ -6061,6 +6006,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ╰── Cannot assign to this expression
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-arrow-function/await-as-binding-identifier-escaped.js:32:1]
+ 32 │ async () => {
+ 33 │   var \u0061wait;
+    ·       ──────────
+ 34 │ }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-arrow-function/await-as-binding-identifier.js:32:1]
+ 32 │ async () => {
+ 33 │   var await;
+    ·       ─────
+ 34 │ }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/async-arrow-function/await-as-identifier-reference-escaped.js:32:1]
  32 │ async () => {
@@ -6111,6 +6072,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-arrow-function/await-as-param-ident-nested-arrow-parameter-position.js:15:1]
+ 15 │ 
+ 16 │ async(a = await => {}) => {};
+    ·           ─────
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-arrow-function/await-as-param-nested-arrow-parameter-position.js:15:1]
+ 15 │ 
+ 16 │ async(a = (await) => {}) => {};
+    ·            ─────
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-arrow-function/await-as-param-rest-nested-arrow-parameter-position.js:15:1]
+ 15 │ 
+ 16 │ async(a = (...await) => {}) => {};
+    ·               ─────
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:13:1]
  13 │ $DONOTEVALUATE();
@@ -6119,6 +6101,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
     ╰────
   help: Try insert a semicolon here
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-await-in-formals.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ async(await) => {  }
+    ·       ─────
+    ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
@@ -6185,6 +6174,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·         ──┬─
     ·           ╰── Rest element must be last element
  47 │   
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-function/await-as-binding-identifier-escaped.js:28:1]
+ 28 │ var asyncFn = async function () {
+ 29 │   var \u0061wait;
+    ·       ──────────
+ 30 │ };
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-function/await-as-binding-identifier.js:28:1]
+ 28 │ var asyncFn = async function () {
+ 29 │   var await;
+    ·       ─────
+ 30 │ };
     ╰────
 
   × Keywords cannot contain escape characters
@@ -6295,6 +6300,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ╰── keyword cannot contain escape characters
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-function/named-await-as-binding-identifier-escaped.js:28:1]
+ 28 │ var asyncFn = async function asyncFn() {
+ 29 │   var \u0061wait;
+    ·       ──────────
+ 30 │ };
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-function/named-await-as-binding-identifier.js:28:1]
+ 28 │ var asyncFn = async function asyncFn() {
+ 29 │   var await;
+    ·       ─────
+ 30 │ };
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/async-function/named-await-as-identifier-reference-escaped.js:28:1]
  28 │ var asyncFn = async function asyncFn() {
@@ -6361,6 +6382,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ──┬─
     ·                   ╰── Rest element must be last element
  34 │   
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-generator/await-as-binding-identifier-escaped.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   var \u0061wait;
+    ·       ──────────
+ 31 │ };
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-generator/await-as-binding-identifier.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   var await;
+    ·       ─────
+ 31 │ };
     ╰────
 
   × Keywords cannot contain escape characters
@@ -6555,6 +6592,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ╰── `a` has already been declared here
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-await.js:17:1]
+ 17 │ 
+ 18 │ (async function*(await) { });
+    ·                  ─────
+    ╰────
+
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
     ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-super-call.js:16:1]
@@ -6572,6 +6616,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-yield.js:17:1]
+ 17 │ 
+ 18 │ (async function*(yield) { });
+    ·                  ─────
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-yield.js:17:1]
  17 │ 
  18 │ (async function*(yield) { });
@@ -6625,6 +6676,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  24 │ void \u0061sync function* f(){};
     ·      ─────┬────
     ·           ╰── keyword cannot contain escape characters
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-generator/named-await-as-binding-identifier-escaped.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   var \u0061wait;
+    ·       ──────────
+ 31 │ };
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-generator/named-await-as-binding-identifier.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   var await;
+    ·       ─────
+ 31 │ };
     ╰────
 
   × Keywords cannot contain escape characters
@@ -6694,7 +6761,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  31 │ };
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/async-generator/named-yield-as-binding-identifier-escaped.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   var yi\u0065ld;
+    ·       ──────────
+ 31 │ };
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/async-generator/named-yield-as-binding-identifier.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   var yield;
+    ·       ─────
+ 31 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/named-yield-as-binding-identifier.js:29:1]
  29 │ var gen = async function *g() {
  30 │   var yield;
@@ -6710,7 +6793,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  31 │ };
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/async-generator/named-yield-as-identifier-reference-escaped.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   void yi\u0065ld;
+    ·        ──────────
+ 31 │ };
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/async-generator/named-yield-as-identifier-reference.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   void yield;
+    ·        ─────
+ 31 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/named-yield-as-identifier-reference.js:29:1]
  29 │ var gen = async function *g() {
  30 │   void yield;
@@ -6780,7 +6879,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  31 │ };
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/async-generator/yield-as-binding-identifier-escaped.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   var yi\u0065ld;
+    ·       ──────────
+ 31 │ };
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/async-generator/yield-as-binding-identifier.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   var yield;
+    ·       ─────
+ 31 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/yield-as-binding-identifier.js:29:1]
  29 │ var gen = async function *() {
  30 │   var yield;
@@ -6796,7 +6911,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  31 │ };
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/async-generator/yield-as-identifier-reference-escaped.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   void yi\u0065ld;
+    ·        ──────────
+ 31 │ };
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/async-generator/yield-as-identifier-reference.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   void yield;
+    ·        ─────
+ 31 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/yield-as-identifier-reference.js:29:1]
  29 │ var gen = async function *() {
  30 │   void yield;
@@ -6873,6 +7004,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·         ─
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-gen-method-static/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var \u0061wait;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-gen-method-static/await-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var await;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
  34 │ var C = class { static async *gen() {
@@ -6940,7 +7087,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
  34 │ var C = class { static async *gen() {
  35 │     var yield;
@@ -6956,7 +7119,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { static async *gen() {
  35 │     void yield;
@@ -7007,6 +7186,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │         var yield;
     ·             ─────
  34 │         throw new Test262Error();
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-gen-method/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     var \u0061wait;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-gen-method/await-as-binding-identifier.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     var await;
+    ·         ─────
+ 36 │ }};
     ╰────
 
   × Keywords cannot contain escape characters
@@ -7076,7 +7271,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier.js:34:1]
  34 │ var C = class { async *gen() {
  35 │     var yield;
@@ -7092,7 +7303,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/async-gen-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/async-gen-method/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { async *gen() {
  35 │     void yield;
@@ -7143,6 +7370,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │         var yield;
     ·             ─────
  34 │         throw new Test262Error();
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-method-static/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-method-static/await-as-binding-identifier.js:35:1]
+ 35 │   static async method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
     ╰────
 
   × Keywords cannot contain escape characters
@@ -7202,6 +7445,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                       ──┬─
     ·                         ╰── Rest element must be last element
  58 │     
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-method/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   async method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-method/await-as-binding-identifier.js:35:1]
+ 35 │   async method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
     ╰────
 
   × Keywords cannot contain escape characters
@@ -7270,7 +7529,21 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·               ──────────
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/class-name-ident-await-escaped-module.js:22:1]
+ 22 │ 
+ 23 │ var C = class aw\u0061it {};
+    ·               ──────────
+    ╰────
+
   × The keyword 'await' is reserved
+    ╭─[language/expressions/class/class-name-ident-await-module.js:21:1]
+ 21 │ 
+ 22 │ var C = class await {};
+    ·               ─────
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/class/class-name-ident-await-module.js:21:1]
  21 │ 
  22 │ var C = class await {};
@@ -7984,6 +8257,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ }
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var \u0061wait;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var await;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
  34 │ var C = class { static async *#gen() {
@@ -8042,7 +8331,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
  34 │ var C = class { static async *#gen() {
  35 │     var yield;
@@ -8058,7 +8363,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { static async *#gen() {
  35 │     void yield;
@@ -8109,6 +8430,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │             var yield;
     ·                 ─────
  35 │             throw new Test262Error();
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     var \u0061wait;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-gen-private-method/await-as-binding-identifier.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     var await;
+    ·         ─────
+ 36 │ }};
     ╰────
 
   × Keywords cannot contain escape characters
@@ -8169,7 +8506,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
  34 │ var C = class { async *#gen() {
  35 │     var yield;
@@ -8185,7 +8538,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { async *#gen() {
  35 │     void yield;
@@ -8238,6 +8607,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │             throw new Test262Error();
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-binding-identifier.js:35:1]
+ 35 │   static async #method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
  35 │   static async #method() {
@@ -8285,6 +8670,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │   static async #method() {
  36 │     await: ;
     ·          ─
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-private-method/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   async #method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-private-method/await-as-binding-identifier.js:35:1]
+ 35 │   async #method() {
+ 36 │     var await;
+    ·         ─────
  37 │   }
     ╰────
 
@@ -8486,7 +8887,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
  33 │ var C = class { static *#gen() {
  34 │     var yield;
@@ -8502,7 +8919,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
  33 │ var C = class { static *#gen() {
  34 │     void yield;
@@ -8563,7 +8996,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class {*#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class {*#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
  33 │ var C = class {*#gen() {
  34 │     var yield;
@@ -8579,7 +9028,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class {*#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class {*#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
  33 │ var C = class {*#gen() {
  34 │     void yield;
@@ -11685,7 +12150,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class { static *gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class { static *gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier.js:33:1]
  33 │ var C = class { static *gen() {
  34 │     var yield;
@@ -11701,7 +12182,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/gen-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class { static *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class { static *gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/gen-method-static/yield-as-identifier-reference.js:33:1]
  33 │ var C = class { static *gen() {
  34 │     void yield;
@@ -11771,7 +12268,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/gen-method/yield-as-binding-identifier.js:33:1]
  33 │ var C = class {*gen() {
  34 │     var yield;
@@ -11787,7 +12300,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }};
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/gen-method/yield-as-identifier-reference.js:33:1]
  33 │ var C = class {*gen() {
  34 │     void yield;
@@ -11872,6 +12401,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ──┬─
     ·            ╰── Rest element must be last element
  77 │     
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/static-init-await-binding.js:20:1]
+ 20 │   static {
+ 21 │     (class await {});
+    ·            ─────
+ 22 │   }
     ╰────
 
   × The keyword 'yield' is reserved
@@ -13289,7 +13826,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  29 │ };
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/generators/named-yield-as-binding-identifier-escaped.js:27:1]
+ 27 │ var gen = function *g() {
+ 28 │   var yi\u0065ld;
+    ·       ──────────
+ 29 │ };
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/generators/named-yield-as-binding-identifier.js:27:1]
+ 27 │ var gen = function *g() {
+ 28 │   var yield;
+    ·       ─────
+ 29 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/named-yield-as-binding-identifier.js:27:1]
  27 │ var gen = function *g() {
  28 │   var yield;
@@ -13305,7 +13858,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  29 │ };
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/generators/named-yield-as-identifier-reference-escaped.js:27:1]
+ 27 │ var gen = function *g() {
+ 28 │   void yi\u0065ld;
+    ·        ──────────
+ 29 │ };
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/generators/named-yield-as-identifier-reference.js:27:1]
+ 27 │ var gen = function *g() {
+ 28 │   void yield;
+    ·        ─────
+ 29 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/named-yield-as-identifier-reference.js:27:1]
  27 │ var gen = function *g() {
  28 │   void yield;
@@ -13375,7 +13944,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  29 │ };
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/generators/yield-as-binding-identifier-escaped.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   var yi\u0065ld;
+    ·       ──────────
+ 29 │ };
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/generators/yield-as-binding-identifier.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   var yield;
+    ·       ─────
+ 29 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/yield-as-binding-identifier.js:27:1]
  27 │ var gen = function *() {
  28 │   var yield;
@@ -13391,7 +13976,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  29 │ };
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/generators/yield-as-identifier-reference-escaped.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   void yi\u0065ld;
+    ·        ──────────
+ 29 │ };
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/generators/yield-as-identifier-reference.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   void yield;
+    ·        ─────
+ 29 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/yield-as-identifier-reference.js:27:1]
  27 │ var gen = function *() {
  28 │   void yield;
@@ -13443,6 +14044,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ─────
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/generators/yield-as-parameter.js:16:1]
+ 16 │ 
+ 17 │ var g = function*(yield) {};
+    ·                   ─────
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[language/expressions/generators/yield-identifier-spread-strict.js:33:1]
  33 │        ...(function() {
@@ -13465,6 +14073,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  18 │   * 1
     ·   ─
  19 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/generators/yield-weak-binding.js:15:1]
+ 15 │ 
+ 16 │ var g = function*() { yield 3 + yield 4; };
+    ·                                 ─────
     ╰────
 
   × Automatic Semicolon Insertion
@@ -13965,6 +14580,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·    ─
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/object/identifier-shorthand-static-init-await-invalid.js:22:1]
+ 22 │   static {
+ 23 │     ({ await });
+    ·        ─────
+ 24 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/object/method-definition/async-await-as-binding-identifier-escaped.js:29:1]
+ 29 │   async method() {
+ 30 │     var \u0061wait;
+    ·         ──────────
+ 31 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/object/method-definition/async-await-as-binding-identifier.js:29:1]
+ 29 │   async method() {
+ 30 │     var await;
+    ·         ─────
+ 31 │   }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/object/method-definition/async-await-as-identifier-reference-escaped.js:29:1]
  29 │   async method() {
@@ -14013,6 +14652,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │     await: ;
     ·          ─
  31 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/object/method-definition/async-gen-await-as-binding-identifier-escaped.js:28:1]
+ 28 │   async *method() {
+ 29 │     var \u0061wait;
+    ·         ──────────
+ 30 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/object/method-definition/async-gen-await-as-binding-identifier.js:28:1]
+ 28 │   async *method() {
+ 29 │     var await;
+    ·         ─────
+ 30 │   }
     ╰────
 
   × Keywords cannot contain escape characters
@@ -14091,7 +14746,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │   }
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier-escaped.js:28:1]
+ 28 │   async *method() {
+ 29 │     var yi\u0065ld;
+    ·         ──────────
+ 30 │   }
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier.js:28:1]
+ 28 │   async *method() {
+ 29 │     var yield;
+    ·         ─────
+ 30 │   }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier.js:28:1]
  28 │   async *method() {
  29 │     var yield;
@@ -14107,7 +14778,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │   }
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-identifier-reference-escaped.js:28:1]
+ 28 │   async *method() {
+ 29 │     void yi\u0065ld;
+    ·          ──────────
+ 30 │   }
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-identifier-reference.js:28:1]
+ 28 │   async *method() {
+ 29 │     void yield;
+    ·          ─────
+ 30 │   }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/object/method-definition/async-gen-yield-as-identifier-reference.js:28:1]
  28 │   async *method() {
  29 │     void yield;
@@ -14192,6 +14879,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │ ({
  16 │   async foo (x = await) {  }
     ·                       ─
+ 17 │ })
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/object/method-definition/early-errors-object-method-await-in-formals.js:15:1]
+ 15 │ ({
+ 16 │   async foo (await) {  }
+    ·              ─────
  17 │ })
     ╰────
 
@@ -14311,7 +15006,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │   }
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier-escaped.js:28:1]
+ 28 │   *method() {
+ 29 │     var yi\u0065ld;
+    ·         ──────────
+ 30 │   }
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier.js:28:1]
+ 28 │   *method() {
+ 29 │     var yield;
+    ·         ─────
+ 30 │   }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier.js:28:1]
  28 │   *method() {
  29 │     var yield;
@@ -14327,7 +15038,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │   }
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/object/method-definition/gen-yield-as-identifier-reference-escaped.js:28:1]
+ 28 │   *method() {
+ 29 │     void yi\u0065ld;
+    ·          ──────────
+ 30 │   }
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/object/method-definition/gen-yield-as-identifier-reference.js:28:1]
+ 28 │   *method() {
+ 29 │     void yield;
+    ·          ─────
+ 30 │   }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/object/method-definition/gen-yield-as-identifier-reference.js:28:1]
  28 │   *method() {
  29 │     void yield;
@@ -14378,6 +15105,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │         var yield;
     ·             ─────
  28 │         throw new Test262Error();
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/object/method-definition/generator-param-id-yield.js:18:1]
+ 18 │ ({
+ 19 │   *method(yield) {}
+    ·           ─────
+ 20 │ });
     ╰────
 
   × Identifier `a` has already been declared
@@ -14573,12 +15308,28 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  19 │ };
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/object/method-definition/yield-as-parameter.js:17:1]
+ 17 │ var obj = {
+ 18 │   *g(yield) {}
+    ·      ─────
+ 19 │ };
+    ╰────
+
   × Unexpected token
     ╭─[language/expressions/object/method-definition/yield-star-after-newline.js:18:1]
  18 │     yield
  19 │     * 1
     ·     ─
  20 │   }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/object/method-definition/yield-weak-binding.js:16:1]
+ 16 │ var obj = {
+ 17 │   *g() { yield 3 + yield 4; }
+    ·                    ─────
+ 18 │ };
     ╰────
 
   × Automatic Semicolon Insertion
@@ -18782,6 +19533,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·     ─────
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/module-code/top-level-await/new-await.js:16:1]
+ 16 │ 
+ 17 │ new await;
+    ·     ─────
+    ╰────
+
   × Unexpected token
     ╭─[language/module-code/top-level-await/no-operand.js:16:1]
  16 │ 
@@ -18953,6 +19711,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·     ─────
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/reserved-words/await-module.js:14:1]
+ 14 │ 
+ 15 │ var await;
+    ·     ─────
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/reserved-words/ident-reference-false-escaped.js:19:1]
  19 │ 
@@ -19108,6 +19873,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ╰── Rest element must be last element
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/async-function/await-as-binding-identifier-escaped.js:28:1]
+ 28 │ async function asyncFn() {
+ 29 │   var \u0061wait;
+    ·       ──────────
+ 30 │ }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/async-function/await-as-binding-identifier.js:28:1]
+ 28 │ async function asyncFn() {
+ 29 │   var await;
+    ·       ─────
+ 30 │ }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/async-function/await-as-identifier-reference-escaped.js:28:1]
  28 │ async function asyncFn() {
@@ -19165,6 +19946,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                              ─
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/async-function/early-errors-declaration-await-in-formals.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ async function foo (await) {  }
+    ·                     ─────
+    ╰────
+
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
     ╭─[language/statements/async-function/early-errors-declaration-body-contains-super-call.js:14:1]
@@ -19214,6 +20002,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ╰── keyword cannot contain escape characters
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/async-function/let-newline-await-in-async-function.js:22:1]
+ 22 │     let
+ 23 │     await 0;
+    ·     ─────
+ 24 │ }
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[language/statements/async-function/let-newline-await-in-async-function.js:22:1]
  22 │     let
@@ -19231,6 +20027,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ──┬─
     ·                    ╰── Rest element must be last element
  34 │   
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/async-generator/await-as-binding-identifier-escaped.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   var \u0061wait;
+    ·       ──────────
+ 31 │ }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/async-generator/await-as-binding-identifier.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   var await;
+    ·       ─────
+ 31 │ }
     ╰────
 
   × Keywords cannot contain escape characters
@@ -19362,7 +20174,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  31 │ }
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/async-generator/yield-as-binding-identifier-escaped.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   var yi\u0065ld;
+    ·       ──────────
+ 31 │ }
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/async-generator/yield-as-binding-identifier.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   var yield;
+    ·       ─────
+ 31 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/async-generator/yield-as-binding-identifier.js:29:1]
  29 │ async function *gen() {
  30 │   var yield;
@@ -19378,7 +20206,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  31 │ }
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/async-generator/yield-as-identifier-reference-escaped.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   void yi\u0065ld;
+    ·        ──────────
+ 31 │ }
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/async-generator/yield-as-identifier-reference.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   void yield;
+    ·        ─────
+ 31 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/async-generator/yield-as-identifier-reference.js:29:1]
  29 │ async function *gen() {
  30 │   void yield;
@@ -19671,6 +20515,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  26 │ };
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-gen-method-static/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var \u0061wait;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-gen-method-static/await-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var await;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
  34 │ class C { static async *gen() {
@@ -19738,7 +20598,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
  34 │ class C { static async *gen() {
  35 │     var yield;
@@ -19754,7 +20630,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
  34 │ class C { static async *gen() {
  35 │     void yield;
@@ -19805,6 +20697,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │         var yield;
     ·             ─────
  34 │         throw new Test262Error();
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-gen-method/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     var \u0061wait;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-gen-method/await-as-binding-identifier.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     var await;
+    ·         ─────
+ 36 │ }}
     ╰────
 
   × Keywords cannot contain escape characters
@@ -19874,7 +20782,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier.js:34:1]
  34 │ class C { async *gen() {
  35 │     var yield;
@@ -19890,7 +20814,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/async-gen-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/async-gen-method/yield-as-identifier-reference.js:34:1]
  34 │ class C { async *gen() {
  35 │     void yield;
@@ -19952,6 +20892,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  26 │ };
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-method-static/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-method-static/await-as-binding-identifier.js:35:1]
+ 35 │   static async method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
  35 │   static async method() {
@@ -20009,6 +20965,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                       ──┬─
     ·                         ╰── Rest element must be last element
  57 │     
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-method/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   async method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-method/await-as-binding-identifier.js:35:1]
+ 35 │   async method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
     ╰────
 
   × Keywords cannot contain escape characters
@@ -20077,7 +21049,21 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·       ──────────
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/class-name-ident-await-escaped-module.js:22:1]
+ 22 │ 
+ 23 │ class aw\u0061it {}
+    ·       ──────────
+    ╰────
+
   × The keyword 'await' is reserved
+    ╭─[language/statements/class/class-name-ident-await-module.js:21:1]
+ 21 │ 
+ 22 │ class await {}
+    ·       ─────
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/class-name-ident-await-module.js:21:1]
  21 │ 
  22 │ class await {}
@@ -20131,6 +21117,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  14 │ class Foo {
  15 │   async foo (x = await) {  }
     ·                       ─
+ 16 │ }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/definition/early-errors-class-method-await-in-formals.js:14:1]
+ 14 │ class Foo {
+ 15 │   async foo (await) {  }
+    ·              ─────
  16 │ }
     ╰────
 
@@ -20193,12 +21187,28 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  19 │ }
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/definition/methods-gen-yield-as-parameter.js:17:1]
+ 17 │ class A {
+ 18 │   *g(yield) {}
+    ·      ─────
+ 19 │ }
+    ╰────
+
   × Unexpected token
     ╭─[language/statements/class/definition/methods-gen-yield-star-after-newline.js:18:1]
  18 │     yield
  19 │     * 1
     ·     ─
  20 │   }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/definition/methods-gen-yield-weak-binding.js:16:1]
+ 16 │ class A {
+ 17 │   *g() { yield 3 + yield 4; }
+    ·                    ─────
+ 18 │ }
     ╰────
 
   × Automatic Semicolon Insertion
@@ -20876,6 +21886,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ }
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var \u0061wait;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var await;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
  34 │ class C { static async *#gen() {
@@ -20934,7 +21960,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
  34 │ class C { static async *#gen() {
  35 │     var yield;
@@ -20950,7 +21992,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
  34 │ class C { static async *#gen() {
  35 │     void yield;
@@ -21001,6 +22059,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │             var yield;
     ·                 ─────
  35 │             throw new Test262Error();
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     var \u0061wait;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-gen-private-method/await-as-binding-identifier.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     var await;
+    ·         ─────
+ 36 │ }}
     ╰────
 
   × Keywords cannot contain escape characters
@@ -21061,7 +22135,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
  34 │ class C { async *#gen() {
  35 │     var yield;
@@ -21077,7 +22167,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
  34 │ class C { async *#gen() {
  35 │     void yield;
@@ -21130,6 +22236,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │             throw new Test262Error();
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-binding-identifier.js:35:1]
+ 35 │   static async #method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
  35 │   static async #method() {
@@ -21177,6 +22299,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │   static async #method() {
  36 │     await: ;
     ·          ─
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-private-method/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   async #method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-private-method/await-as-binding-identifier.js:35:1]
+ 35 │   async #method() {
+ 36 │     var await;
+    ·         ─────
  37 │   }
     ╰────
 
@@ -21378,7 +22516,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
  33 │ class C {static *#gen() {
  34 │     var yield;
@@ -21394,7 +22548,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
  33 │ class C {static *#gen() {
  34 │     void yield;
@@ -21455,7 +22625,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C { *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
+ 33 │ class C { *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
  33 │ class C { *#gen() {
  34 │     var yield;
@@ -21471,7 +22657,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C { *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
+ 33 │ class C { *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
  33 │ class C { *#gen() {
  34 │     void yield;
@@ -24638,7 +25840,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C {static *gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ class C {static *gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier.js:33:1]
  33 │ class C {static *gen() {
  34 │     var yield;
@@ -24654,7 +25872,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/gen-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C {static *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ class C {static *gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/gen-method-static/yield-as-identifier-reference.js:33:1]
  33 │ class C {static *gen() {
  34 │     void yield;
@@ -24724,7 +25958,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/gen-method/yield-as-binding-identifier.js:33:1]
  33 │ class C { *gen() {
  34 │     var yield;
@@ -24740,7 +25990,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │ }}
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-identifier-reference.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/gen-method/yield-as-identifier-reference.js:33:1]
  33 │ class C { *gen() {
  34 │     void yield;
@@ -24873,6 +26139,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·       ─┬
     ·        ╰── It can not be redeclared here
  18 │ }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     class await {}
+    ·           ─────
+ 25 │   }
     ╰────
 
   × 'arguments' is not allowed in static initialization block
@@ -25033,6 +26307,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                                     │          ╰── It can not be redeclared here
     ·                                     ╰── `f` has already been declared here
  15 │ 
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/const/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     const await = 0;
+    ·           ─────
+ 25 │   }
     ╰────
 
   × Missing initializer in const declaration
@@ -26164,6 +27446,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·            ─────
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/for-in/dstr/obj-id-identifier-yield-expr.js:32:1]
+ 32 │ 
+ 33 │ for ({ yield } in [{}]) ;
+    ·        ─────
+ 34 │ 
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[language/statements/for-in/dstr/obj-id-identifier-yield-ident-invalid.js:31:1]
  31 │ 
@@ -26646,6 +27936,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ 
  17 │ for (let {x} = 1 of []) {}
     ·      ───────────
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/for-of/dstr/obj-id-identifier-yield-expr.js:32:1]
+ 32 │ 
+ 33 │ for ({ yield } of [{}]) ;
+    ·        ─────
+ 34 │ 
     ╰────
 
   × The keyword 'yield' is reserved
@@ -27561,7 +28859,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  29 │ }
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/generators/yield-as-binding-identifier-escaped.js:27:1]
+ 27 │ function *gen() {
+ 28 │   var yi\u0065ld;
+    ·       ──────────
+ 29 │ }
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/generators/yield-as-binding-identifier.js:27:1]
+ 27 │ function *gen() {
+ 28 │   var yield;
+    ·       ─────
+ 29 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/generators/yield-as-binding-identifier.js:27:1]
  27 │ function *gen() {
  28 │   var yield;
@@ -27577,7 +28891,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  29 │ }
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/generators/yield-as-identifier-reference-escaped.js:27:1]
+ 27 │ function *gen() {
+ 28 │   void yi\u0065ld;
+    ·        ──────────
+ 29 │ }
+    ╰────
+
   × The keyword 'yield' is reserved
+    ╭─[language/statements/generators/yield-as-identifier-reference.js:27:1]
+ 27 │ function *gen() {
+ 28 │   void yield;
+    ·        ─────
+ 29 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/generators/yield-as-identifier-reference.js:27:1]
  27 │ function *gen() {
  28 │   void yield;
@@ -27629,6 +28959,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·             ─────
     ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/generators/yield-as-parameter.js:16:1]
+ 16 │ 
+ 17 │ function* g(yield) {}
+    ·             ─────
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[language/statements/generators/yield-identifier-spread-strict.js:33:1]
  33 │        ...(function() {
@@ -27651,6 +28988,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  18 │   * 1
     ·   ─
  19 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/generators/yield-weak-binding.js:15:1]
+ 15 │ 
+ 16 │ function* g() { yield 3 + yield 4; }
+    ·                           ─────
     ╰────
 
   × Automatic Semicolon Insertion
@@ -28099,6 +29443,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │ 
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/let/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     let await;
+    ·         ─────
+ 25 │   }
+    ╰────
+
   × The keyword 'let' is reserved
     ╭─[language/statements/let/syntax/identifier-let-allowed-as-lefthandside-expression-strict.js:15:1]
  15 │ var o = { a: 1 };
@@ -28138,6 +29490,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  24 │ }
     ╰────
   help: Try insert a semicolon here
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/let/syntax/let-newline-yield-in-generator-function.js:23:1]
+ 23 │     let
+ 24 │     yield 0;
+    ·     ─────
+ 25 │ }
+    ╰────
 
   × Automatic Semicolon Insertion
     ╭─[language/statements/let/syntax/let-newline-yield-in-generator-function.js:23:1]
@@ -29071,6 +30431,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  21 │ 
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/try/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     try {} catch (await) {}
+    ·                   ─────
+ 25 │   }
+    ╰────
+
   × Automatic Semicolon Insertion
     ╭─[language/statements/variable/S12.2_A8_T1.js:16:1]
  16 │ //CHECK#1
@@ -29149,6 +30517,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/variable/dstr/ary-ptrn-elem-id-static-init-await-invalid.js:23:1]
+ 23 │   static {
+ 24 │     var [await] = [];
+    ·          ─────
+ 25 │   }
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/variable/dstr/ary-ptrn-rest-not-final-ary.js:28:1]
  28 │ 
@@ -29174,6 +30550,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ────┬───
     ·          ╰── Rest element must be last element
  30 │ 
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/variable/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     var await;
+    ·         ─────
+ 25 │   }
     ╰────
 
   × Unexpected token
