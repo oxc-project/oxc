@@ -94,18 +94,31 @@ impl<'a> Parser<'a> {
         self.cur_kind() == kind
     }
 
-    /// Move to the next token
-    /// Checks if the current token is escaped if it is a keyword
-    fn advance(&mut self, kind: Kind) {
-        // StringValue of IdentifierName normalizes any Unicode escape sequences
-        // in IdentifierName hence such escapes cannot be used to write an Identifier
-        // whose code point sequence is the same as a ReservedWord.
+    /// StringValue of IdentifierName normalizes any Unicode escape sequences
+    /// in IdentifierName hence such escapes cannot be used to write an Identifier
+    /// whose code point sequence is the same as a ReservedWord.
+    #[inline]
+    fn test_escaped_keyword(&mut self, kind: Kind) {
         if self.cur_token().escaped && kind.is_all_keyword() {
             let span = self.cur_token().span();
             self.error(diagnostics::EscapedKeyword(span));
         }
+    }
+
+    /// Move to the next token
+    /// Checks if the current token is escaped if it is a keyword
+    fn advance(&mut self, kind: Kind) {
+        self.test_escaped_keyword(kind);
         self.prev_token_end = self.token.end;
         self.token = self.lexer.next_token();
+    }
+
+    /// Move to the next JSXChild
+    /// Checks if the current token is escaped if it is a keyword
+    fn advance_for_jsx_child(&mut self, kind: Kind) {
+        self.test_escaped_keyword(kind);
+        self.prev_token_end = self.token.end;
+        self.token = self.lexer.next_jsx_child();
     }
 
     /// Advance and return true if we are at `Kind`, return false otherwise
@@ -158,15 +171,20 @@ impl<'a> Parser<'a> {
         kind == Kind::RCurly || kind == Kind::Eof || self.cur_token().is_on_new_line
     }
 
-    /// Expect a `Kind` or return error
-    /// # Errors
-    pub fn expect(&mut self, kind: Kind) -> Result<()> {
+    pub fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.current_range();
             return Err(
                 diagnostics::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into()
             );
         }
+        Ok(())
+    }
+
+    /// Expect a `Kind` or return error
+    /// # Errors
+    pub fn expect(&mut self, kind: Kind) -> Result<()> {
+        self.expect_without_advance(kind)?;
         self.advance(kind);
         Ok(())
     }
@@ -189,9 +207,8 @@ impl<'a> Parser<'a> {
     /// Expect the next next token to be a `JsxChild`, i.e. `<` or `{` or `JSXText`
     /// # Errors
     pub fn expect_jsx_child(&mut self, kind: Kind) -> Result<()> {
-        self.lexer.set_context(LexerContext::JsxChild);
-        self.expect(kind)?;
-        self.lexer.set_context(LexerContext::Regular);
+        self.expect_without_advance(kind)?;
+        self.advance_for_jsx_child(kind);
         Ok(())
     }
 
