@@ -2,8 +2,6 @@
 
 use std::fmt;
 
-use oxc_ast::Atom;
-
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum Kind {
@@ -191,91 +189,6 @@ pub enum Kind {
 
 #[allow(clippy::enum_glob_use)]
 use self::Kind::*;
-
-static KW_IS: Atom = Atom::new_inline("is");
-static KW_AS: Atom = Atom::new_inline("as");
-static KW_DO: Atom = Atom::new_inline("do");
-static KW_IF: Atom = Atom::new_inline("if");
-static KW_IN: Atom = Atom::new_inline("in");
-static KW_OF: Atom = Atom::new_inline("of");
-static KW_ANY: Atom = Atom::new_inline("any");
-static KW_FOR: Atom = Atom::new_inline("for");
-static KW_GET: Atom = Atom::new_inline("get");
-static KW_LET: Atom = Atom::new_inline("let");
-static KW_NEW: Atom = Atom::new_inline("new");
-static KW_OUT: Atom = Atom::new_inline("out");
-static KW_SET: Atom = Atom::new_inline("set");
-static KW_TRY: Atom = Atom::new_inline("try");
-static KW_VAR: Atom = Atom::new_inline("var");
-static KW_CASE: Atom = Atom::new_inline("case");
-static KW_ELSE: Atom = Atom::new_inline("else");
-static KW_ENUM: Atom = Atom::new_inline("enum");
-static KW_FROM: Atom = Atom::new_inline("from");
-static KW_META: Atom = Atom::new_inline("meta");
-static KW_NULL: Atom = Atom::new_inline("null");
-static KW_THIS: Atom = Atom::new_inline("this");
-static KW_TRUE: Atom = Atom::new_inline("true");
-static KW_TYPE: Atom = Atom::new_inline("type");
-static KW_VOID: Atom = Atom::new_inline("void");
-static KW_WITH: Atom = Atom::new_inline("with");
-static KW_ASYNC: Atom = Atom::new_inline("async");
-static KW_AWAIT: Atom = Atom::new_inline("await");
-static KW_BREAK: Atom = Atom::new_inline("break");
-static KW_CATCH: Atom = Atom::new_inline("catch");
-static KW_CLASS: Atom = Atom::new_inline("class");
-static KW_CONST: Atom = Atom::new_inline("const");
-static KW_FALSE: Atom = Atom::new_inline("false");
-static KW_INFER: Atom = Atom::new_inline("infer");
-static KW_KEYOF: Atom = Atom::new_inline("keyof");
-static KW_NEVER: Atom = Atom::new_inline("never");
-static KW_SUPER: Atom = Atom::new_inline("super");
-static KW_THROW: Atom = Atom::new_inline("throw");
-static KW_WHILE: Atom = Atom::new_inline("while");
-static KW_YIELD: Atom = Atom::new_inline("yield");
-static KW_ASSERT: Atom = Atom::new_inline("assert");
-static KW_BIGINT: Atom = Atom::new_inline("bigint");
-static KW_DELETE: Atom = Atom::new_inline("delete");
-static KW_EXPORT: Atom = Atom::new_inline("export");
-static KW_GLOBAL: Atom = Atom::new_inline("global");
-static KW_IMPORT: Atom = Atom::new_inline("import");
-static KW_MODULE: Atom = Atom::new_inline("module");
-static KW_NUMBER: Atom = Atom::new_inline("number");
-static KW_OBJECT: Atom = Atom::new_inline("object");
-static KW_PUBLIC: Atom = Atom::new_inline("public");
-static KW_RETURN: Atom = Atom::new_inline("return");
-static KW_STATIC: Atom = Atom::new_inline("static");
-static KW_STRING: Atom = Atom::new_inline("string");
-static KW_SWITCH: Atom = Atom::new_inline("switch");
-static KW_SYMBOL: Atom = Atom::new_inline("symbol");
-static KW_TARGET: Atom = Atom::new_inline("target");
-static KW_TYPEOF: Atom = Atom::new_inline("typeof");
-static KW_UNIQUE: Atom = Atom::new_inline("unique");
-static KW_ASSERTS: Atom = Atom::new_inline("asserts");
-static KW_BOOLEAN: Atom = Atom::new_inline("boolean");
-static KW_DECLARE: Atom = Atom::new_inline("declare");
-static KW_DEFAULT: Atom = Atom::new_inline("default");
-static KW_EXTENDS: Atom = Atom::new_inline("extends");
-static KW_FINALLY: Atom = Atom::new_inline("finally");
-static KW_PACKAGE: Atom = Atom::new_inline("package");
-static KW_PRIVATE: Atom = Atom::new_inline("private");
-static KW_REQUIRE: Atom = Atom::new_inline("require");
-static KW_UNKNOWN: Atom = Atom::new_inline("unknown");
-static KW_ABSTRACT: Atom = Atom::new_inline("abstract");
-static KW_ACCESSOR: Atom = Atom::new_inline("accessor");
-static KW_CONTINUE: Atom = Atom::new_inline("continue");
-static KW_DEBUGGER: Atom = Atom::new_inline("debugger");
-static KW_FUNCTION: Atom = Atom::new_inline("function");
-static KW_OVERRIDE: Atom = Atom::new_inline("override");
-static KW_READONLY: Atom = Atom::new_inline("readonly");
-static KW_INTERFACE: Atom = Atom::new_inline("interface");
-static KW_INTRINSIC: Atom = Atom::new_inline("intrinsic");
-static KW_NAMESPACE: Atom = Atom::new_inline("namespace");
-static KW_PROTECTED: Atom = Atom::new_inline("protected");
-static KW_SATISFIES: Atom = Atom::new_inline("satisfies");
-static KW_UNDEFINED: Atom = Atom::new_inline("undefined");
-static KW_IMPLEMENTS: Atom = Atom::new_inline("implements");
-static KW_INSTANCEOF: Atom = Atom::new_inline("instanceof");
-static KW_CONSTRUCTOR: Atom = Atom::new_inline("constructor");
 
 impl Kind {
     #[must_use]
@@ -475,110 +388,110 @@ impl Kind {
     }
 
     #[must_use]
-    pub fn match_keyword(s: &str) -> (Self, Atom) {
+    pub fn match_keyword(s: &str) -> Self {
         let len = s.len();
         if len == 1 || len >= 12 {
-            return (Ident, Atom::new(s));
+            return Ident;
         }
-        Self::match_keyword_impl(s).map_or_else(|| (Ident, Atom::new(s)), |(k, s)| (k, s.clone()))
+        Self::match_keyword_impl(s)
     }
 
-    fn match_keyword_impl(s: &str) -> Option<(Self, &'static Atom)> {
+    fn match_keyword_impl(s: &str) -> Self {
         match s {
-            "as" => Some((As, &KW_AS)),
-            "do" => Some((Do, &KW_DO)),
-            "if" => Some((If, &KW_IF)),
-            "in" => Some((In, &KW_IN)),
-            "is" => Some((Is, &KW_IS)),
-            "of" => Some((Of, &KW_OF)),
+            "as" => As,
+            "do" => Do,
+            "if" => If,
+            "in" => In,
+            "is" => Is,
+            "of" => Of,
 
-            "any" => Some((Any, &KW_ANY)),
-            "for" => Some((For, &KW_FOR)),
-            "get" => Some((Get, &KW_GET)),
-            "let" => Some((Let, &KW_LET)),
-            "new" => Some((New, &KW_NEW)),
-            "out" => Some((Out, &KW_OUT)),
-            "set" => Some((Set, &KW_SET)),
-            "try" => Some((Try, &KW_TRY)),
-            "var" => Some((Var, &KW_VAR)),
+            "any" => Any,
+            "for" => For,
+            "get" => Get,
+            "let" => Let,
+            "new" => New,
+            "out" => Out,
+            "set" => Set,
+            "try" => Try,
+            "var" => Var,
 
-            "case" => Some((Case, &KW_CASE)),
-            "else" => Some((Else, &KW_ELSE)),
-            "enum" => Some((Enum, &KW_ENUM)),
-            "from" => Some((From, &KW_FROM)),
-            "meta" => Some((Meta, &KW_META)),
-            "null" => Some((Null, &KW_NULL)),
-            "this" => Some((This, &KW_THIS)),
-            "true" => Some((True, &KW_TRUE)),
-            "type" => Some((Type, &KW_TYPE)),
-            "void" => Some((Void, &KW_VOID)),
-            "with" => Some((With, &KW_WITH)),
+            "case" => Case,
+            "else" => Else,
+            "enum" => Enum,
+            "from" => From,
+            "meta" => Meta,
+            "null" => Null,
+            "this" => This,
+            "true" => True,
+            "type" => Type,
+            "void" => Void,
+            "with" => With,
 
-            "async" => Some((Async, &KW_ASYNC)),
-            "await" => Some((Await, &KW_AWAIT)),
-            "break" => Some((Break, &KW_BREAK)),
-            "catch" => Some((Catch, &KW_CATCH)),
-            "class" => Some((Class, &KW_CLASS)),
-            "const" => Some((Const, &KW_CONST)),
-            "false" => Some((False, &KW_FALSE)),
-            "infer" => Some((Infer, &KW_INFER)),
-            "keyof" => Some((KeyOf, &KW_KEYOF)),
-            "never" => Some((Never, &KW_NEVER)),
-            "super" => Some((Super, &KW_SUPER)),
-            "throw" => Some((Throw, &KW_THROW)),
-            "while" => Some((While, &KW_WHILE)),
-            "yield" => Some((Yield, &KW_YIELD)),
+            "async" => Async,
+            "await" => Await,
+            "break" => Break,
+            "catch" => Catch,
+            "class" => Class,
+            "const" => Const,
+            "false" => False,
+            "infer" => Infer,
+            "keyof" => KeyOf,
+            "never" => Never,
+            "super" => Super,
+            "throw" => Throw,
+            "while" => While,
+            "yield" => Yield,
 
-            "assert" => Some((Assert, &KW_ASSERT)),
-            "bigint" => Some((BigInt, &KW_BIGINT)),
-            "delete" => Some((Delete, &KW_DELETE)),
-            "export" => Some((Export, &KW_EXPORT)),
-            "global" => Some((Global, &KW_GLOBAL)),
-            "import" => Some((Import, &KW_IMPORT)),
-            "module" => Some((Module, &KW_MODULE)),
-            "number" => Some((Number, &KW_NUMBER)),
-            "object" => Some((Object, &KW_OBJECT)),
-            "public" => Some((Public, &KW_PUBLIC)),
-            "return" => Some((Return, &KW_RETURN)),
-            "static" => Some((Static, &KW_STATIC)),
-            "string" => Some((String, &KW_STRING)),
-            "switch" => Some((Switch, &KW_SWITCH)),
-            "symbol" => Some((Symbol, &KW_SYMBOL)),
-            "target" => Some((Target, &KW_TARGET)),
-            "typeof" => Some((Typeof, &KW_TYPEOF)),
-            "unique" => Some((Unique, &KW_UNIQUE)),
+            "assert" => Assert,
+            "bigint" => BigInt,
+            "delete" => Delete,
+            "export" => Export,
+            "global" => Global,
+            "import" => Import,
+            "module" => Module,
+            "number" => Number,
+            "object" => Object,
+            "public" => Public,
+            "return" => Return,
+            "static" => Static,
+            "string" => String,
+            "switch" => Switch,
+            "symbol" => Symbol,
+            "target" => Target,
+            "typeof" => Typeof,
+            "unique" => Unique,
 
-            "asserts" => Some((Asserts, &KW_ASSERTS)),
-            "boolean" => Some((Boolean, &KW_BOOLEAN)),
-            "declare" => Some((Declare, &KW_DECLARE)),
-            "default" => Some((Default, &KW_DEFAULT)),
-            "extends" => Some((Extends, &KW_EXTENDS)),
-            "finally" => Some((Finally, &KW_FINALLY)),
-            "package" => Some((Package, &KW_PACKAGE)),
-            "private" => Some((Private, &KW_PRIVATE)),
-            "require" => Some((Require, &KW_REQUIRE)),
-            "unknown" => Some((Unknown, &KW_UNKNOWN)),
+            "asserts" => Asserts,
+            "boolean" => Boolean,
+            "declare" => Declare,
+            "default" => Default,
+            "extends" => Extends,
+            "finally" => Finally,
+            "package" => Package,
+            "private" => Private,
+            "require" => Require,
+            "unknown" => Unknown,
 
-            "abstract" => Some((Abstract, &KW_ABSTRACT)),
-            "accessor" => Some((Accessor, &KW_ACCESSOR)),
-            "continue" => Some((Continue, &KW_CONTINUE)),
-            "debugger" => Some((Debugger, &KW_DEBUGGER)),
-            "function" => Some((Function, &KW_FUNCTION)),
-            "override" => Some((Override, &KW_OVERRIDE)),
-            "readonly" => Some((Readonly, &KW_READONLY)),
+            "abstract" => Abstract,
+            "accessor" => Accessor,
+            "continue" => Continue,
+            "debugger" => Debugger,
+            "function" => Function,
+            "override" => Override,
+            "readonly" => Readonly,
 
-            "interface" => Some((Interface, &KW_INTERFACE)),
-            "intrinsic" => Some((Intrinsic, &KW_INTRINSIC)),
-            "namespace" => Some((Namespace, &KW_NAMESPACE)),
-            "protected" => Some((Protected, &KW_PROTECTED)),
-            "satisfies" => Some((Satisfies, &KW_SATISFIES)),
-            "undefined" => Some((Undefined, &KW_UNDEFINED)),
+            "interface" => Interface,
+            "intrinsic" => Intrinsic,
+            "namespace" => Namespace,
+            "protected" => Protected,
+            "satisfies" => Satisfies,
+            "undefined" => Undefined,
 
-            "implements" => Some((Implements, &KW_IMPLEMENTS)),
-            "instanceof" => Some((Instanceof, &KW_INSTANCEOF)),
+            "implements" => Implements,
+            "instanceof" => Instanceof,
 
-            "constructor" => Some((Constructor, &KW_CONSTRUCTOR)),
-            _ => None,
+            "constructor" => Constructor,
+            _ => Ident,
         }
     }
 

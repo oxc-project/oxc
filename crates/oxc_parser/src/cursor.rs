@@ -1,6 +1,6 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_ast::{context::Context, Atom, Span};
+use oxc_ast::{context::Context, Span};
 use oxc_diagnostics::Result;
 
 use crate::lexer::{Kind, LexerCheckpoint, LexerContext, Token};
@@ -8,7 +8,7 @@ use crate::{diagnostics, Parser};
 
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
-    cur_token: Token,
+    cur_token: Token<'a>,
     prev_span_end: u32,
     errors_pos: usize,
 }
@@ -46,10 +46,10 @@ impl<'a> Parser<'a> {
         unsafe { self.source.get_unchecked(range.start as usize..range.end as usize) }
     }
 
-    /// Get current atom
+    /// Get current string
     #[must_use]
-    pub fn cur_atom(&self) -> Option<&Atom> {
-        self.cur_token().value.get_atom()
+    pub fn cur_string(&self) -> Option<&str> {
+        self.cur_token().value.get_string()
     }
 
     /// Peek next token, returns EOF for final peek

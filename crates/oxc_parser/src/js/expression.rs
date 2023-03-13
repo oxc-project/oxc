@@ -101,10 +101,10 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         let name = match std::mem::take(&mut self.token.value) {
             TokenValue::String(value) => value,
-            _ => "".into(),
+            _ => "",
         };
         self.bump_remap(kind);
-        (self.end_span(span), name)
+        (self.end_span(span), Atom::from(name))
     }
 
     fn check_identifier(&mut self, span: Span, name: &Atom) {
@@ -124,7 +124,7 @@ impl<'a> Parser<'a> {
     /// # Panics
     pub fn parse_private_identifier(&mut self) -> PrivateIdentifier {
         let span = self.start_span();
-        let name = self.cur_atom().unwrap().clone();
+        let name = Atom::from(self.cur_string().unwrap());
         self.bump_any();
         PrivateIdentifier { span: self.end_span(span), name }
     }
@@ -318,7 +318,7 @@ impl<'a> Parser<'a> {
         };
         let span = self.start_span();
         self.bump_any();
-        Ok(StringLiteral { span: self.end_span(span), value })
+        Ok(StringLiteral { span: self.end_span(span), value: value.into() })
     }
 
     /// Section Array Expression `https://tc39.es/ecma262/#prod-ArrayLiteral`
@@ -408,7 +408,7 @@ impl<'a> Parser<'a> {
         };
 
         // cooked = None when template literal has invalid escape sequence
-        let cooked = self.cur_atom().map(Clone::clone);
+        let cooked = self.cur_string().map(Atom::from);
 
         let raw = &self.cur_src()[1..self.cur_src().len() - end_offset as usize];
         let raw = Atom::from(if cooked.is_some() && raw.contains('\r') {

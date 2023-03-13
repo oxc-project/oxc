@@ -182,8 +182,8 @@ pub enum TSTypeOperator {
 
 impl TSTypeOperator {
     #[must_use]
-    pub fn from_src(src: &Atom) -> Option<Self> {
-        match src.as_str() {
+    pub fn from_src(src: &str) -> Option<Self> {
+        match src {
             "keyof" => Some(Self::Keyof),
             "unique" => Some(Self::Unique),
             "readonly" => Some(Self::Readonly),
