@@ -16,7 +16,7 @@ mod trivia_builder;
 use std::{collections::VecDeque, str::Chars};
 
 use oxc_allocator::{Allocator, String};
-use oxc_ast::{ast::RegExpFlags, Atom, SourceType, Span};
+use oxc_ast::{ast::RegExpFlags, SourceType, Span};
 use oxc_diagnostics::{Diagnostics, Error};
 use simd::{SkipMultilineComment, SkipWhitespace};
 pub use token::{RegExp, Token, TokenValue};
@@ -197,7 +197,7 @@ impl<'a> Lexer<'a> {
                 Kind::SlashEq => 2,
                 _ => unreachable!(),
             };
-        let kind = self.read_regex(kind);
+        let kind = self.read_regex();
         self.lookahead.clear();
         self.finish_next(kind)
     }
@@ -986,12 +986,8 @@ impl<'a> Lexer<'a> {
     }
 
     /// 12.8.5 Regular Expression Literals
-    fn read_regex(&mut self, kind: Kind) -> Kind {
-        let start = self.current.chars.as_str();
-        let mut pattern = String::new_in(self.allocator);
-        if kind == Kind::SlashEq {
-            pattern.push('=');
-        }
+    fn read_regex(&mut self) -> Kind {
+        let start = self.current.token.start + 1; // +1 to exclude `/`
         let mut in_escape = false;
         let mut in_character_class = false;
         loop {
@@ -1020,7 +1016,8 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        pattern.push_str(&start[..start.len() - self.current.chars.as_str().len() - 1]);
+        let end = self.offset() - 1; // -1 to exclude `/`
+        let pattern = &self.source[start as usize..end as usize];
 
         let mut flags = RegExpFlags::empty();
 
@@ -1051,8 +1048,7 @@ impl<'a> Lexer<'a> {
             flags |= flag;
         }
 
-        self.current.token.value =
-            TokenValue::RegExp(RegExp { pattern: Atom::from(pattern.as_str()), flags });
+        self.current.token.value = TokenValue::RegExp(RegExp { pattern, flags });
 
         Kind::RegExp
     }

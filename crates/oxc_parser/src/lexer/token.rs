@@ -1,7 +1,7 @@
 //! Token
 
 use num_bigint::BigUint;
-use oxc_ast::{ast::RegExpFlags, Atom, Span};
+use oxc_ast::{ast::RegExpFlags, Span};
 
 use super::kind::Kind;
 
@@ -29,7 +29,7 @@ pub struct Token<'a> {
 #[test]
 fn no_bloat_token() {
     use std::mem::size_of;
-    assert_eq!(size_of::<Token>(), 56);
+    assert_eq!(size_of::<Token>(), 48);
 }
 
 impl<'a> Token<'a> {
@@ -45,12 +45,12 @@ pub enum TokenValue<'a> {
     Number(f64),
     BigInt(BigUint),
     String(&'a str),
-    RegExp(RegExp),
+    RegExp(RegExp<'a>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RegExp {
-    pub pattern: Atom,
+pub struct RegExp<'a> {
+    pub pattern: &'a str,
     pub flags: RegExpFlags,
 }
 
@@ -78,9 +78,9 @@ impl<'a> TokenValue<'a> {
     }
 
     #[must_use]
-    pub fn as_regex(&self) -> RegExp {
+    pub fn as_regex(&self) -> &RegExp<'a> {
         match self {
-            Self::RegExp(regex) => regex.clone(),
+            Self::RegExp(regex) => regex,
             _ => panic!("expected regex!"),
         }
     }

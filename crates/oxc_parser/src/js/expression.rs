@@ -301,11 +301,13 @@ impl<'a> Parser<'a> {
             Kind::RegExp => self.cur_token().value.as_regex(),
             _ => return self.unexpected(),
         };
+        let pattern = Atom::from(r.pattern);
+        let flags = r.flags;
         self.bump_any();
         Ok(RegExpLiteral {
             span: self.end_span(span),
             value: EmptyObject {},
-            regex: RegExp { pattern: r.pattern, flags: r.flags },
+            regex: RegExp { pattern, flags },
         })
     }
 
