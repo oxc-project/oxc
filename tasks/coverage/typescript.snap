@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 657/2532 (25.95%)
+Negative Passed: 658/2532 (25.99%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -838,7 +838,6 @@ Expect Syntax Error: "functions/functionImplementationErrors.ts"
 Expect Syntax Error: "functions/functionImplementations.ts"
 Expect Syntax Error: "functions/functionOverloadCompatibilityWithVoid01.ts"
 Expect Syntax Error: "functions/functionOverloadErrors.ts"
-Expect Syntax Error: "functions/functionWithUseStrictAndSimpleParameterList_es2016.ts"
 Expect Syntax Error: "functions/parameterInitializersForwardReferencing.2.ts"
 Expect Syntax Error: "functions/parameterInitializersForwardReferencing.ts"
 Expect Syntax Error: "functions/parameterInitializersForwardReferencing1.ts"
@@ -8280,6 +8279,70 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ·                         ─────┬─────
     ·                              ╰── Rest element must be last element
  10 │ function fn5() { }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+   ╭─[functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:3:1]
+ 3 │ function a(a = 10) {
+ 4 │     "use strict";
+   ·     ─────────────
+ 5 │ }
+   ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:17:1]
+ 17 │ function rest(...args: any[]) {
+ 18 │     'use strict';
+    ·     ─────────────
+ 19 │ }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:21:1]
+ 21 │ function rest1(a = 1, ...args) {
+ 22 │     'use strict';
+    ·     ─────────────
+ 23 │ }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:25:1]
+ 25 │ function paramDefault(param = 1) {
+ 26 │     'use strict';
+    ·     ─────────────
+ 27 │ }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:29:1]
+ 29 │ function objectBindingPattern({foo}: any) {
+ 30 │     'use strict';
+    ·     ─────────────
+ 31 │ }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:33:1]
+ 33 │ function arrayBindingPattern([foo]: any[]) {
+ 34 │     'use strict';
+    ·     ─────────────
+ 35 │ }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:37:1]
+ 37 │ function manyParameter(a = 10, b = 20) {
+ 38 │     "use strict";
+    ·     ─────────────
+ 39 │ }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[functions/functionWithUseStrictAndSimpleParameterList_es2016.ts:42:1]
+ 42 │     "foo";
+ 43 │     "use strict";
+    ·     ─────────────
+ 44 │ }
     ╰────
 
   × Expect token

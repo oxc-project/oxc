@@ -34,6 +34,7 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
 
+            AstKind::Directive(dir) => check_directive(dir, node, ctx),
             AstKind::ModuleDeclaration(decl) => check_module_declaration(decl, node, ctx),
 
             AstKind::WithStatement(stmt) => check_with_statement(stmt, node, ctx),
@@ -296,6 +297,36 @@ fn check_string_literal<'a>(lit: &StringLiteral, node: &AstNode<'a>, ctx: &LintC
                     _ => {}
                 }
             }
+        }
+    }
+}
+
+// It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody is true and IsSimpleParameterList of FormalParameters is false.
+// background: https://humanwhocodes.com/blog/2016/10/the-ecmascript-2016-change-you-probably-dont-know/
+fn check_directive<'a>(directive: &Directive, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Illegal 'use strict' directive in function with non-simple parameter list")]
+    #[diagnostic()]
+    struct IllegalUseStrict(#[label] Span);
+
+    if directive.expression.value != "use strict" {
+        return;
+    }
+
+    if !ctx.scope(node).is_function() {
+        return;
+    }
+
+    for node_id in ctx.ancestors(node) {
+        match ctx.kind(node_id) {
+            AstKind::Function(Function { params, .. })
+            | AstKind::ArrowExpression(ArrowExpression { params, .. }) => {
+                if !params.is_simple_parameter_list() {
+                    return ctx.diagnostic(IllegalUseStrict(directive.span));
+                }
+                break;
+            }
+            _ => {}
         }
     }
 }

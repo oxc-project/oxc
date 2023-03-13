@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3389/3917 (86.52%)
+Negative Passed: 3499/3917 (89.33%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -18,7 +18,6 @@ Expect Syntax Error: "language/directive-prologue/func-decl-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-inside-func-decl-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-no-semi-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-parse.js"
-Expect Syntax Error: "language/expressions/arrow-function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/arrow-function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-id.js"
@@ -26,24 +25,9 @@ Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-ini
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/arrow-function/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/arrow-function/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-NSPL-with-USD.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-function/early-errors-expression-NSPL-with-USD.js"
-Expect Syntax Error: "language/expressions/async-function/named-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/named-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/async-function/named-object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-function/named-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-function/nameless-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/nameless-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/async-function/nameless-object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-function/nameless-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-id.js"
@@ -57,31 +41,13 @@ Expect Syntax Error: "language/expressions/async-generator/dstr/named-ary-ptrn-r
 Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
-Expect Syntax Error: "language/expressions/async-generator/named-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/async-generator/named-object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/named-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/await/await-BindingIdentifier-nested.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/async-method-static/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/async-method/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-method/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -154,23 +120,10 @@ Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-ary-pt
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/gen-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/gen-method/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/gen-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/method-static/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/method/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/method/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/method/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-id.js"
@@ -180,14 +133,10 @@ Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init
 Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/function/name-arguments-strict-body.js"
 Expect Syntax Error: "language/expressions/function/name-eval-strict-body.js"
-Expect Syntax Error: "language/expressions/function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-1.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-2.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-3.js"
 Expect Syntax Error: "language/expressions/function/param-eval-strict-body.js"
-Expect Syntax Error: "language/expressions/function/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/function/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/generators/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/generators/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-id.js"
@@ -195,9 +144,6 @@ Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-ob
 Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/generators/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/generators/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/generators/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
 Expect Syntax Error: "language/expressions/import.meta/syntax/goal-script.js"
 Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
@@ -228,26 +174,10 @@ Expect Syntax Error: "language/expressions/object/identifier-shorthand-protected
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-public-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-static-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-yield-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-meth-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-meth-object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-NSPL-with-USD.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/generator-use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/object/method-definition/meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/object/method-definition/meth-object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/setter-use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/expressions/object/method-definition/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/object/setter-body-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-inside.js"
@@ -275,12 +205,7 @@ Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
-Expect Syntax Error: "language/statements/async-function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-function/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-NSPL-with-USD.js"
-Expect Syntax Error: "language/statements/async-function/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/async-function/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/async-generator/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-generator/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-id.js"
@@ -288,25 +213,10 @@ Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-ini
 Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/async-generator/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/async-generator/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/async-method-static/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/async-method/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-NSPL-with-USD.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -379,22 +289,10 @@ Expect Syntax Error: "language/statements/class/dstr/private-meth-static-ary-ptr
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/gen-method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/gen-method/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/gen-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/method-static/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/method-static/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/method/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/method/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/method/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/method/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
@@ -470,7 +368,6 @@ Expect Syntax Error: "language/statements/for/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-expr.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-var.js"
-Expect Syntax Error: "language/statements/function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/function/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-id.js"
@@ -482,16 +379,12 @@ Expect Syntax Error: "language/statements/function/enable-strict-via-body.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-outer-body.js"
 Expect Syntax Error: "language/statements/function/name-arguments-strict-body.js"
 Expect Syntax Error: "language/statements/function/name-eval-strict-body.js"
-Expect Syntax Error: "language/statements/function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/function/param-arguments-strict-body.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-1.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-2.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-3.js"
 Expect Syntax Error: "language/statements/function/param-eval-strict-body.js"
-Expect Syntax Error: "language/statements/function/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/function/static-init-await-binding-invalid.js"
-Expect Syntax Error: "language/statements/function/use-strict-with-non-simple-param.js"
-Expect Syntax Error: "language/statements/generators/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/generators/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-id.js"
@@ -499,9 +392,6 @@ Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-obj
 Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/generators/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/generators/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/generators/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/statements/if/if-decl-else-decl-strict.js"
 Expect Syntax Error: "language/statements/if/if-decl-else-stmt-strict.js"
 Expect Syntax Error: "language/statements/if/if-decl-no-else-strict.js"
@@ -2299,6 +2189,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·               ╰── keyword cannot contain escape characters
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/arrow-function/array-destructuring-param-strict-body.js:129:1]
+ 129 │ 0, ([element]) => {
+ 130 │   "use strict";
+     ·   ─────────────
+ 131 │ };
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/expressions/arrow-function/dflt-params-duplicates.js:57:1]
  57 │ 
@@ -2678,6 +2576,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                      ─
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/arrow-function/object-destructuring-param-strict-body.js:129:1]
+ 129 │ 0, ({property}) => {
+ 130 │   "use strict";
+     ·   ─────────────
+ 131 │ };
+     ╰────
+
   × yield expression not allowed in formal parameter
     ╭─[language/expressions/arrow-function/param-dflt-yield-expr.js:26:1]
  26 │ function *g() {
@@ -2702,6 +2608,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·     │  ╰── It can not be redeclared here
     ·     ╰── `a` has already been declared here
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/arrow-function/rest-param-strict-body.js:129:1]
+ 129 │ 0, (a,...rest) => {
+ 130 │   "use strict";
+     ·   ─────────────
+ 131 │ };
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:53:1]
@@ -2917,6 +2831,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │ => {};
     · ─┬
     ·  ╰── Line terminator not permitted before arrow
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js:19:1]
+ 19 │ var f = (a = 0) => {
+ 20 │   "use strict";
+    ·   ─────────────
+ 21 │ };
     ╰────
 
   × The keyword 'yield' is reserved
@@ -6015,6 +5937,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ╰── Cannot assign to this expression
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-arrow-function/array-destructuring-param-strict-body.js:121:1]
+ 121 │ (async ([element]) => {
+ 122 │   "use strict";
+     ·   ─────────────
+ 123 │ });
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/async-arrow-function/await-as-binding-identifier-escaped.js:32:1]
  32 │ async () => {
@@ -6120,6 +6050,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  51 │   
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-NSPL-with-USD.js:15:1]
+ 15 │ 
+ 16 │ async (x = 1) => {"use strict"}
+    ·                   ────────────
+    ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-arguments-in-formal-parameters.js:15:1]
  15 │ 
@@ -6218,6 +6155,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ╰── keyword cannot contain escape characters
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-arrow-function/object-destructuring-param-strict-body.js:121:1]
+ 121 │ (async ({property}) => {
+ 122 │   "use strict";
+     ·   ─────────────
+ 123 │ });
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-arrow-function/rest-param-strict-body.js:121:1]
+ 121 │ (async (a,...rest) => {
+ 122 │   "use strict";
+     ·   ─────────────
+ 123 │ });
+     ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:45:1]
  45 │ 
@@ -6291,6 +6244,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  29 │   await: ;
     ·        ─
  30 │ };
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/async-function/early-errors-expression-NSPL-with-USD.js:15:1]
+ 15 │ 
+ 16 │ (async function (x = 1) {"use strict"})
+    ·                          ────────────
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -6373,6 +6333,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ╰── keyword cannot contain escape characters
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-function/named-array-destructuring-param-strict-body.js:107:1]
+ 107 │ (async function f([element]) {
+ 108 │   "use strict";
+     ·   ─────────────
+ 109 │ });
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/async-function/named-await-as-binding-identifier-escaped.js:28:1]
  28 │ var asyncFn = async function asyncFn() {
@@ -6449,6 +6417,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-function/named-object-destructuring-param-strict-body.js:107:1]
+ 107 │ (async function f({property}) {
+ 108 │   "use strict";
+     ·   ─────────────
+ 109 │ });
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-function/named-rest-param-strict-body.js:107:1]
+ 107 │ (async function f(a,...rest) {
+ 108 │   "use strict";
+     ·   ─────────────
+ 109 │ });
+     ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:32:1]
  32 │ 
@@ -6457,6 +6441,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                     ╰── Rest element must be last element
  34 │   
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-function/nameless-array-destructuring-param-strict-body.js:107:1]
+ 107 │ (async function([element]) {
+ 108 │   "use strict";
+     ·   ─────────────
+ 109 │ });
+     ╰────
 
   × Identifier `x` has already been declared
     ╭─[language/expressions/async-function/nameless-dflt-params-duplicates.js:35:1]
@@ -6468,6 +6460,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-function/nameless-object-destructuring-param-strict-body.js:107:1]
+ 107 │ (async function({property}) {
+ 108 │   "use strict";
+     ·   ─────────────
+ 109 │ });
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-function/nameless-rest-param-strict-body.js:107:1]
+ 107 │ (async function(a,...rest) {
+ 108 │   "use strict";
+     ·   ─────────────
+ 109 │ });
+     ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:32:1]
  32 │ 
@@ -6476,6 +6484,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ╰── Rest element must be last element
  34 │   
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-generator/array-destructuring-param-strict-body.js:110:1]
+ 110 │ 0, async function*([element]) {
+ 111 │   "use strict";
+     ·   ─────────────
+ 112 │ };
+     ╰────
 
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/async-generator/await-as-binding-identifier-escaped.js:29:1]
@@ -6661,6 +6677,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │   
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/async-generator/early-errors-expression-NSPL-with-USD.js:17:1]
+ 17 │ 
+ 18 │ (async function*(x = 1) {"use strict"});
+    ·                          ────────────
+    ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/expressions/async-generator/early-errors-expression-arguments-in-formal-parameters.js:17:1]
  17 │ 
@@ -6825,6 +6848,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ╰── keyword cannot contain escape characters
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-generator/named-array-destructuring-param-strict-body.js:110:1]
+ 110 │ 0, async function* g([element]) {
+ 111 │   "use strict";
+     ·   ─────────────
+ 112 │ };
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/async-generator/named-await-as-binding-identifier-escaped.js:29:1]
  29 │ var gen = async function *g() {
@@ -6900,6 +6931,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                      ╰── `x` has already been declared here
  40 │   
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-generator/named-object-destructuring-param-strict-body.js:110:1]
+ 110 │ 0, async function* g({property}) {
+ 111 │   "use strict";
+     ·   ─────────────
+ 112 │ };
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-generator/named-rest-param-strict-body.js:110:1]
+ 110 │ 0, async function* g(a,...rest) {
+ 111 │   "use strict";
+     ·   ─────────────
+ 112 │ };
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:35:1]
@@ -7018,6 +7065,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ─────
  29 │       throw new Test262Error();
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-generator/object-destructuring-param-strict-body.js:110:1]
+ 110 │ 0, async function*({property}) {
+ 111 │   "use strict";
+     ·   ─────────────
+ 112 │ };
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/async-generator/rest-param-strict-body.js:110:1]
+ 110 │ 0, async function*(a,...rest) {
+ 111 │   "use strict";
+     ·   ─────────────
+ 112 │ };
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/async-generator/rest-params-trailing-comma-early-error.js:35:1]
@@ -7161,6 +7224,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·         ─
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-gen-method-static/array-destructuring-param-strict-body.js:134:1]
+ 134 │   static async *method([element]) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/class/async-gen-method-static/await-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { static async *gen() {
@@ -7236,6 +7307,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                        ╰── `x` has already been declared here
  64 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-gen-method-static/object-destructuring-param-strict-body.js:134:1]
+ 134 │   static async *method({property}) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-gen-method-static/rest-param-strict-body.js:134:1]
+ 134 │   static async *method(a,...rest) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
@@ -7355,6 +7442,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │         throw new Test262Error();
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-gen-method/array-destructuring-param-strict-body.js:134:1]
+ 134 │   async *method([element]) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/class/async-gen-method/await-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { async *gen() {
@@ -7430,6 +7525,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ╰── `x` has already been declared here
  64 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-gen-method/object-destructuring-param-strict-body.js:134:1]
+ 134 │   async *method({property}) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-gen-method/rest-param-strict-body.js:134:1]
+ 134 │   async *method(a,...rest) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:59:1]
@@ -7549,6 +7660,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │         throw new Test262Error();
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-method-static/array-destructuring-param-strict-body.js:132:1]
+ 132 │   static async method([element]) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/class/async-method-static/await-as-binding-identifier-escaped.js:35:1]
  35 │   static async method() {
@@ -7625,6 +7744,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  62 │     
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-method-static/object-destructuring-param-strict-body.js:132:1]
+ 132 │   static async method({property}) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-method-static/rest-param-strict-body.js:132:1]
+ 132 │   static async method(a,...rest) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:56:1]
  56 │ var C = class {
@@ -7633,6 +7768,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                         ╰── Rest element must be last element
  58 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-method/array-destructuring-param-strict-body.js:132:1]
+ 132 │   static async method([element]) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
 
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/class/async-method/await-as-binding-identifier-escaped.js:35:1]
@@ -7709,6 +7852,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                       ╰── `x` has already been declared here
  62 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-method/object-destructuring-param-strict-body.js:132:1]
+ 132 │   static async method({property}) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-method/rest-param-strict-body.js:132:1]
+ 132 │   static async method(a,...rest) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:56:1]
@@ -12339,6 +12498,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ };
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/gen-method-static/array-destructuring-param-strict-body.js:155:1]
+ 155 │   static *method([element]) {
+ 156 │     "use strict";
+     ·     ─────────────
+ 157 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/expressions/class/gen-method-static/dflt-params-duplicates.js:83:1]
  83 │ 0, class {
@@ -12348,6 +12515,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ╰── `x` has already been declared here
  85 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/gen-method-static/object-destructuring-param-strict-body.js:155:1]
+ 155 │   static *method({property}) {
+ 156 │     "use strict";
+     ·     ─────────────
+ 157 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/gen-method-static/rest-param-strict-body.js:155:1]
+ 155 │   static *method(a,...rest) {
+ 156 │     "use strict";
+     ·     ─────────────
+ 157 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:1]
@@ -12467,6 +12650,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │         throw new Test262Error();
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/gen-method/array-destructuring-param-strict-body.js:155:1]
+ 155 │   *method([element]) {
+ 156 │     "use strict";
+     ·     ─────────────
+ 157 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/expressions/class/gen-method/dflt-params-duplicates.js:83:1]
  83 │ 0, class {
@@ -12476,6 +12667,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ╰── `x` has already been declared here
  85 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/gen-method/object-destructuring-param-strict-body.js:155:1]
+ 155 │   *method({property}) {
+ 156 │     "use strict";
+     ·     ─────────────
+ 157 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/gen-method/rest-param-strict-body.js:155:1]
+ 155 │   *method(a,...rest) {
+ 156 │     "use strict";
+     ·     ─────────────
+ 157 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:80:1]
@@ -12611,6 +12818,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  22 │ };
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/method-static/array-destructuring-param-strict-body.js:151:1]
+ 151 │   static method([element]) {
+ 152 │     "use strict";
+     ·     ─────────────
+ 153 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/expressions/class/method-static/dflt-params-duplicates.js:79:1]
  79 │ 0, class {
@@ -12621,6 +12836,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  81 │     
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/method-static/object-destructuring-param-strict-body.js:151:1]
+ 151 │   static method({property}) {
+ 152 │     "use strict";
+     ·     ─────────────
+ 153 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/method-static/rest-param-strict-body.js:151:1]
+ 151 │   static method(a,...rest) {
+ 152 │     "use strict";
+     ·     ─────────────
+ 153 │   }
+     ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:75:1]
  75 │ 0, class {
@@ -12629,6 +12860,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ╰── Rest element must be last element
  77 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/method/array-destructuring-param-strict-body.js:151:1]
+ 151 │   method([element]) {
+ 152 │     "use strict";
+     ·     ─────────────
+ 153 │   }
+     ╰────
 
   × Identifier `x` has already been declared
     ╭─[language/expressions/class/method/dflt-params-duplicates.js:79:1]
@@ -12639,6 +12878,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ╰── `x` has already been declared here
  81 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/method/object-destructuring-param-strict-body.js:151:1]
+ 151 │   method({property}) {
+ 152 │     "use strict";
+     ·     ─────────────
+ 153 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/method/rest-param-strict-body.js:151:1]
+ 151 │   method(a,...rest) {
+ 152 │     "use strict";
+     ·     ─────────────
+ 153 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/class/method/rest-params-trailing-comma-early-error.js:75:1]
@@ -13886,6 +14141,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/function/array-destructuring-param-strict-body.js:130:1]
+ 130 │ 0, function([element]) {
+ 131 │   "use strict";
+     ·   ─────────────
+ 132 │ };
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/expressions/function/dflt-params-duplicates.js:58:1]
  58 │ 
@@ -14026,6 +14289,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ────
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/function/object-destructuring-param-strict-body.js:130:1]
+ 130 │ 0, function({property}) {
+ 131 │   "use strict";
+     ·   ─────────────
+ 132 │ };
+     ╰────
+
   × The keyword 'yield' is reserved
     ╭─[language/expressions/function/param-dflt-yield-strict.js:21:1]
  21 │ function *g() {
@@ -14070,6 +14341,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                     ╰── `param` has already been declared here
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/function/rest-param-strict-body.js:130:1]
+ 130 │ 0, function(a,...rest) {
+ 131 │   "use strict";
+     ·   ─────────────
+ 132 │ };
+     ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/function/rest-params-trailing-comma-early-error.js:54:1]
  54 │ 
@@ -14078,6 +14357,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·               ╰── Rest element must be last element
  56 │   
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/function/use-strict-with-non-simple-param.js:19:1]
+ 19 │ var f = function(a = 0) {
+ 20 │   "use strict";
+    ·   ─────────────
+ 21 │ }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/generators/array-destructuring-param-strict-body.js:131:1]
+ 131 │ 0, function*([element]) {
+ 132 │   "use strict";
+     ·   ─────────────
+ 133 │ };
+     ╰────
 
   × Identifier `x` has already been declared
     ╭─[language/expressions/generators/dflt-params-duplicates.js:59:1]
@@ -14252,6 +14547,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │       throw new Test262Error();
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/generators/object-destructuring-param-strict-body.js:131:1]
+ 131 │ 0, function*({property}) {
+ 132 │   "use strict";
+     ·   ─────────────
+ 133 │ };
+     ╰────
+
   × yield expression not allowed in formal parameter
     ╭─[language/expressions/generators/param-dflt-yield.js:24:1]
  24 │ 
@@ -14260,6 +14563,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                    ╰── yield expression not allowed in formal parameter
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/generators/rest-param-strict-body.js:131:1]
+ 131 │ 0, function*(a,...rest) {
+ 132 │   "use strict";
+     ·   ─────────────
+ 133 │ };
+     ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/generators/rest-params-trailing-comma-early-error.js:56:1]
  56 │ 
@@ -14267,6 +14578,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·              ──┬─
     ·                ╰── Rest element must be last element
  58 │   
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/generators/use-strict-with-non-simple-param.js:20:1]
+ 20 │ var f = function*(a = 0) {
+ 21 │   "use strict";
+    ·   ─────────────
+ 22 │ }
     ╰────
 
   × The keyword 'yield' is reserved
@@ -15060,6 +15379,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │   }
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/async-gen-meth-array-destructuring-param-strict-body.js:115:1]
+ 115 │   async *method([element]) {
+ 116 │     "use strict";
+     ·     ─────────────
+ 117 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/expressions/object/method-definition/async-gen-meth-dflt-params-duplicates.js:43:1]
  43 │ 0, {
@@ -15078,6 +15405,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ╰── keyword cannot contain escape characters
  26 │ });
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/async-gen-meth-object-destructuring-param-strict-body.js:115:1]
+ 115 │   async *method({property}) {
+ 116 │     "use strict";
+     ·     ─────────────
+ 117 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/async-gen-meth-rest-param-strict-body.js:115:1]
+ 115 │   async *method(a,...rest) {
+ 116 │     "use strict";
+     ·     ─────────────
+ 117 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:40:1]
@@ -15197,6 +15540,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  28 │         throw new Test262Error();
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/async-meth-array-destructuring-param-strict-body.js:108:1]
+ 108 │   async *method([element]) {
+ 109 │     "use strict";
+     ·     ─────────────
+ 110 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/expressions/object/method-definition/async-meth-dflt-params-duplicates.js:36:1]
  36 │ ({
@@ -15216,6 +15567,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  26 │ });
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/async-meth-object-destructuring-param-strict-body.js:108:1]
+ 108 │   async *method({property}) {
+ 109 │     "use strict";
+     ·     ─────────────
+ 110 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/async-meth-rest-param-strict-body.js:108:1]
+ 108 │   async *method(a,...rest) {
+ 109 │     "use strict";
+     ·     ─────────────
+ 110 │   }
+     ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:33:1]
  33 │ ({
@@ -15233,6 +15600,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·             │  ╰── It can not be redeclared here
     ·             ╰── `a` has already been declared here
  28 │ })
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/object/method-definition/early-errors-object-method-NSPL-with-USD.js:15:1]
+ 15 │ ({
+ 16 │   foo(x = 1) {"use strict"}
+    ·               ────────────
+ 17 │ });
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -15385,6 +15760,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ });
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/gen-meth-array-destructuring-param-strict-body.js:137:1]
+ 137 │   *method([element]) {
+ 138 │     "use strict";
+     ·     ─────────────
+ 139 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/expressions/object/method-definition/gen-meth-dflt-params-duplicates.js:65:1]
  65 │ 0, {
@@ -15394,6 +15777,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ╰── `x` has already been declared here
  67 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/gen-meth-object-destructuring-param-strict-body.js:137:1]
+ 137 │   *method({property}) {
+ 138 │     "use strict";
+     ·     ─────────────
+ 139 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/gen-meth-rest-param-strict-body.js:137:1]
+ 137 │   *method(a,...rest) {
+ 138 │     "use strict";
+     ·     ─────────────
+ 139 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:62:1]
@@ -15572,6 +15971,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  21 │     }
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/object/method-definition/generator-use-strict-with-non-simple-param.js:21:1]
+ 21 │   *m(a = 0) {
+ 22 │     "use strict";
+    ·     ─────────────
+ 23 │   }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/meth-array-destructuring-param-strict-body.js:133:1]
+ 133 │   method([element]) {
+ 134 │     "use strict";
+     ·     ─────────────
+ 135 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/expressions/object/method-definition/meth-dflt-params-duplicates.js:61:1]
  61 │ 0, {
@@ -15581,6 +15996,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ╰── `x` has already been declared here
  63 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/meth-object-destructuring-param-strict-body.js:133:1]
+ 133 │   method({property}) {
+ 134 │     "use strict";
+     ·     ─────────────
+ 135 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/object/method-definition/meth-rest-param-strict-body.js:133:1]
+ 133 │   method(a,...rest) {
+ 134 │     "use strict";
+     ·     ─────────────
+ 135 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:57:1]
@@ -15715,6 +16146,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  23 │   set #m(x) {}
     ·       ──
  24 │ };
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/object/method-definition/setter-use-strict-with-non-simple-param.js:20:1]
+ 20 │   set m(a = 0) {
+ 21 │     "use strict";
+    ·     ─────────────
+ 22 │   }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/expressions/object/method-definition/use-strict-with-non-simple-param.js:20:1]
+ 20 │   m(a = 0) {
+ 21 │     "use strict";
+    ·     ─────────────
+ 22 │   }
     ╰────
 
   × Unexpected token
@@ -20407,6 +20854,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ╰── Rest element must be last element
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/async-function/array-destructuring-param-strict-body.js:107:1]
+ 107 │ async function f([element]) {
+ 108 │   "use strict";
+     ·   ─────────────
+ 109 │ }
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/async-function/await-as-binding-identifier-escaped.js:28:1]
  28 │ async function asyncFn() {
@@ -20481,6 +20936,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  │      ╰── It can not be redeclared here
     ·                  ╰── `x` has already been declared here
  37 │   
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/statements/async-function/early-errors-declaration-NSPL-with-USD.js:15:1]
+ 15 │ 
+ 16 │ async function foo(x = 1){"use strict"}
+    ·                           ────────────
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -20603,6 +21065,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/async-function/object-destructuring-param-strict-body.js:107:1]
+ 107 │ async function f({property}) {
+ 108 │   "use strict";
+     ·   ─────────────
+ 109 │ }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/async-function/rest-param-strict-body.js:107:1]
+ 107 │ async function f(a,...rest) {
+ 108 │   "use strict";
+     ·   ─────────────
+ 109 │ }
+     ╰────
+
   × Rest element must be last element
     ╭─[language/statements/async-function/rest-params-trailing-comma-early-error.js:32:1]
  32 │ 
@@ -20611,6 +21089,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                    ╰── Rest element must be last element
  34 │   
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/async-generator/array-destructuring-param-strict-body.js:110:1]
+ 110 │ async function* f([element]) {
+ 111 │   "use strict";
+     ·   ─────────────
+ 112 │ }
+     ╰────
 
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/async-generator/await-as-binding-identifier-escaped.js:29:1]
@@ -20749,6 +21235,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     · ─────┬────
     ·      ╰── keyword cannot contain escape characters
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/async-generator/object-destructuring-param-strict-body.js:110:1]
+ 110 │ async function* f({property}) {
+ 111 │   "use strict";
+     ·   ─────────────
+ 112 │ }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/async-generator/rest-param-strict-body.js:110:1]
+ 110 │ async function* f(a,...rest) {
+ 111 │   "use strict";
+     ·   ─────────────
+ 112 │ }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/statements/async-generator/rest-params-trailing-comma-early-error.js:35:1]
@@ -21108,6 +21610,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  26 │ };
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js:134:1]
+ 134 │   static async *method([element]) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/async-gen-method-static/await-as-binding-identifier-escaped.js:34:1]
  34 │ class C { static async *gen() {
@@ -21183,6 +21693,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                        ╰── `x` has already been declared here
  64 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-gen-method-static/object-destructuring-param-strict-body.js:134:1]
+ 134 │   static async *method({property}) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-gen-method-static/rest-param-strict-body.js:134:1]
+ 134 │   static async *method(a,...rest) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
@@ -21302,6 +21828,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │         throw new Test262Error();
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-gen-method/array-destructuring-param-strict-body.js:133:1]
+ 133 │   async *method([element]) {
+ 134 │     "use strict";
+     ·     ─────────────
+ 135 │   }
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/async-gen-method/await-as-binding-identifier-escaped.js:34:1]
  34 │ class C { async *gen() {
@@ -21377,6 +21911,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ╰── `x` has already been declared here
  63 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-gen-method/object-destructuring-param-strict-body.js:133:1]
+ 133 │   async *method({property}) {
+ 134 │     "use strict";
+     ·     ─────────────
+ 135 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-gen-method/rest-param-strict-body.js:133:1]
+ 133 │   async *method(a,...rest) {
+ 134 │     "use strict";
+     ·     ─────────────
+ 135 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:58:1]
@@ -21505,6 +22055,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  26 │ };
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-method-static/array-destructuring-param-strict-body.js:131:1]
+ 131 │   static async method([element]) {
+ 132 │     "use strict";
+     ·     ─────────────
+ 133 │   }
+     ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/async-method-static/await-as-binding-identifier-escaped.js:35:1]
  35 │   static async method() {
@@ -21581,6 +22139,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  61 │     
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-method-static/object-destructuring-param-strict-body.js:131:1]
+ 131 │   static async method({property}) {
+ 132 │     "use strict";
+     ·     ─────────────
+ 133 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-method-static/rest-param-strict-body.js:131:1]
+ 131 │   static async method(a,...rest) {
+ 132 │     "use strict";
+     ·     ─────────────
+ 133 │   }
+     ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:55:1]
  55 │ class C {
@@ -21589,6 +22163,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                         ╰── Rest element must be last element
  57 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-method/array-destructuring-param-strict-body.js:132:1]
+ 132 │   async method([element]) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
 
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/async-method/await-as-binding-identifier-escaped.js:35:1]
@@ -21665,6 +22247,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                ╰── `x` has already been declared here
  62 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-method/object-destructuring-param-strict-body.js:132:1]
+ 132 │   async method({property}) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-method/rest-param-strict-body.js:132:1]
+ 132 │   async method(a,...rest) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/statements/class/async-method/rest-params-trailing-comma-early-error.js:56:1]
@@ -21753,6 +22351,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·             │  ╰── It can not be redeclared here
     ·             ╰── `a` has already been declared here
  29 │ }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/statements/class/definition/early-errors-class-method-NSPL-with-USD.js:15:1]
+ 15 │ class Foo {
+ 16 │   async bar(x = 1) {"use strict"}
+    ·                     ────────────
+ 17 │ }
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -26501,6 +27107,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ }
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/gen-method-static/array-destructuring-param-strict-body.js:153:1]
+ 153 │   static *method([element]) {
+ 154 │     "use strict";
+     ·     ─────────────
+ 155 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/statements/class/gen-method-static/dflt-params-duplicates.js:81:1]
  81 │ class C {
@@ -26510,6 +27124,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ╰── `x` has already been declared here
  83 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/gen-method-static/object-destructuring-param-strict-body.js:153:1]
+ 153 │   static *method({property}) {
+ 154 │     "use strict";
+     ·     ─────────────
+ 155 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/gen-method-static/rest-param-strict-body.js:153:1]
+ 153 │   static *method(a,...rest) {
+ 154 │     "use strict";
+     ·     ─────────────
+ 155 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:78:1]
@@ -26629,6 +27259,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │         throw new Test262Error();
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/gen-method/array-destructuring-param-strict-body.js:153:1]
+ 153 │   *method([element]) {
+ 154 │     "use strict";
+     ·     ─────────────
+ 155 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/statements/class/gen-method/dflt-params-duplicates.js:81:1]
  81 │ class C {
@@ -26638,6 +27276,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ╰── `x` has already been declared here
  83 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/gen-method/object-destructuring-param-strict-body.js:153:1]
+ 153 │   *method({property}) {
+ 154 │     "use strict";
+     ·     ─────────────
+ 155 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/gen-method/rest-param-strict-body.js:153:1]
+ 153 │   *method(a,...rest) {
+ 154 │     "use strict";
+     ·     ─────────────
+ 155 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:78:1]
@@ -26773,6 +27427,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  22 │ }
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/method-static/array-destructuring-param-strict-body.js:150:1]
+ 150 │   static method([element]) {
+ 151 │     "use strict";
+     ·     ─────────────
+ 152 │   }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/statements/class/method-static/dflt-params-duplicates.js:78:1]
  78 │ class C {
@@ -26783,6 +27445,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  80 │     
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/method-static/object-destructuring-param-strict-body.js:150:1]
+ 150 │   static method({property}) {
+ 151 │     "use strict";
+     ·     ─────────────
+ 152 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/method-static/rest-param-strict-body.js:150:1]
+ 150 │   static method(a,...rest) {
+ 151 │     "use strict";
+     ·     ─────────────
+ 152 │   }
+     ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/method-static/rest-params-trailing-comma-early-error.js:74:1]
  74 │ class C {
@@ -26791,6 +27469,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ╰── Rest element must be last element
  76 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/method/array-destructuring-param-strict-body.js:150:1]
+ 150 │   method([element]) {
+ 151 │     "use strict";
+     ·     ─────────────
+ 152 │   }
+     ╰────
 
   × Identifier `x` has already been declared
     ╭─[language/statements/class/method/dflt-params-duplicates.js:78:1]
@@ -26801,6 +27487,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ╰── `x` has already been declared here
  80 │     
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/method/object-destructuring-param-strict-body.js:150:1]
+ 150 │   method({property}) {
+ 151 │     "use strict";
+     ·     ─────────────
+ 152 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/method/rest-param-strict-body.js:150:1]
+ 150 │   method(a,...rest) {
+ 151 │     "use strict";
+     ·     ─────────────
+ 152 │   }
+     ╰────
 
   × Rest element must be last element
     ╭─[language/statements/class/method/rest-params-trailing-comma-early-error.js:74:1]
@@ -29411,6 +30113,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                        ╰── Invalid Unicode escape sequence
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/function/array-destructuring-param-strict-body.js:131:1]
+ 131 │ function f([element]) {
+ 132 │   "use strict";
+     ·   ─────────────
+ 133 │ }
+     ╰────
+
   × Identifier `x` has already been declared
     ╭─[language/statements/function/dflt-params-duplicates.js:59:1]
  59 │ 
@@ -29614,6 +30324,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ────
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/function/object-destructuring-param-strict-body.js:131:1]
+ 131 │ function f({property}) {
+ 132 │   "use strict";
+     ·   ─────────────
+ 133 │ }
+     ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/statements/function/param-arguments-strict.js:21:1]
  21 │ 
@@ -29672,6 +30390,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                      ────
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/function/rest-param-strict-body.js:131:1]
+ 131 │ function f(a,...rest) {
+ 132 │   "use strict";
+     ·   ─────────────
+ 133 │ }
+     ╰────
+
   × Rest element must be last element
     ╭─[language/statements/function/rest-params-trailing-comma-early-error.js:55:1]
  55 │ 
@@ -29680,6 +30406,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·              ╰── Rest element must be last element
  57 │   
     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/statements/function/use-strict-with-non-simple-param.js:19:1]
+ 19 │ function f(a = 0) {
+ 20 │   "use strict";
+    ·   ─────────────
+ 21 │ }
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/generators/array-destructuring-param-strict-body.js:131:1]
+ 131 │ function* f([element]) {
+ 132 │   "use strict";
+     ·   ─────────────
+ 133 │ }
+     ╰────
 
   × Identifier `x` has already been declared
     ╭─[language/statements/generators/dflt-params-duplicates.js:59:1]
@@ -29745,6 +30487,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  53 │   
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/generators/object-destructuring-param-strict-body.js:131:1]
+ 131 │ function* f({property}) {
+ 132 │   "use strict";
+     ·   ─────────────
+ 133 │ }
+     ╰────
+
   × yield expression not allowed in formal parameter
     ╭─[language/statements/generators/param-dflt-yield.js:23:1]
  23 │ 
@@ -29753,6 +30503,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ╰── yield expression not allowed in formal parameter
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/generators/rest-param-strict-body.js:131:1]
+ 131 │ function* f(a,...rest) {
+ 132 │   "use strict";
+     ·   ─────────────
+ 133 │ }
+     ╰────
+
   × Rest element must be last element
     ╭─[language/statements/generators/rest-params-trailing-comma-early-error.js:56:1]
  56 │ 
@@ -29760,6 +30518,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·             ──┬─
     ·               ╰── Rest element must be last element
  58 │   
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+    ╭─[language/statements/generators/use-strict-with-non-simple-param.js:20:1]
+ 20 │ function* f(a = 0) {
+ 21 │   "use strict";
+    ·   ─────────────
+ 22 │ }
     ╰────
 
   × The keyword 'yield' is reserved
