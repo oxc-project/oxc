@@ -45,7 +45,7 @@ pub struct Parser<'a> {
     errors: Diagnostics,
 
     /// The current parsing token
-    token: Token,
+    token: Token<'a>,
 
     /// The end range of the previous token
     prev_token_end: u32,

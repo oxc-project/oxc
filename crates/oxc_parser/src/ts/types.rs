@@ -288,7 +288,7 @@ impl<'a> Parser<'a> {
         let mut operator = None;
 
         if !self.at(Kind::Str) {
-            if let Some(atom) = self.cur_atom() {
+            if let Some(atom) = self.cur_string() {
                 operator = TSTypeOperator::from_src(atom);
             }
         }

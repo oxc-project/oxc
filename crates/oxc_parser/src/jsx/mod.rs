@@ -3,7 +3,7 @@
 #![allow(clippy::missing_errors_doc)]
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, Span};
+use oxc_ast::{ast::*, Atom, Span};
 use oxc_diagnostics::Result;
 
 use crate::diagnostics;
@@ -351,14 +351,14 @@ impl<'a> Parser<'a> {
         }
         // we are at a valid normal Ident or Keyword, let's keep on lexing for `-`
         self.re_lex_jsx_identifier();
-        let name = self.cur_atom().unwrap().clone();
+        let name = Atom::from(self.cur_string().unwrap());
         self.bump_any();
         Ok(self.ast.jsx_identifier(self.end_span(span), name))
     }
 
     fn parse_jsx_text(&mut self) -> JSXText {
         let span = self.start_span();
-        let value = self.cur_atom().unwrap().clone();
+        let value = Atom::from(self.cur_string().unwrap());
         self.bump_any();
         self.ast.jsx_text(self.end_span(span), value)
     }

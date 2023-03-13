@@ -39,7 +39,7 @@ pub struct LexerCheckpoint<'a> {
     /// Remaining chars to be tokenized
     chars: Chars<'a>,
 
-    token: Token,
+    token: Token<'a>,
 
     errors_pos: usize,
 }
@@ -122,7 +122,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Find the nth lookahead token lazily
-    pub fn lookahead(&mut self, n: u8) -> &Token {
+    pub fn lookahead(&mut self, n: u8) -> &Token<'a> {
         let n = n as usize;
         debug_assert!(n > 0);
 
@@ -162,7 +162,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Main entry point
-    pub fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Token<'a> {
         if let Some(checkpoint) = self.lookahead.pop_front() {
             self.current.chars = checkpoint.chars;
             self.current.errors_pos = checkpoint.errors_pos;
@@ -172,12 +172,12 @@ impl<'a> Lexer<'a> {
         self.finish_next(kind)
     }
 
-    pub fn next_jsx_child(&mut self) -> Token {
+    pub fn next_jsx_child(&mut self) -> Token<'a> {
         let kind = self.read_jsx_child();
         self.finish_next(kind)
     }
 
-    fn finish_next(&mut self, kind: Kind) -> Token {
+    fn finish_next(&mut self, kind: Kind) -> Token<'a> {
         self.current.token.kind = kind;
         self.current.token.end = self.offset();
         debug_assert!(self.current.token.start <= self.current.token.end);
@@ -190,7 +190,7 @@ impl<'a> Lexer<'a> {
     ///   where a `RegularExpressionLiteral` is permitted
     /// Which meams the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
-    pub fn next_regex(&mut self, kind: Kind) -> Token {
+    pub fn next_regex(&mut self, kind: Kind) -> Token<'a> {
         self.current.token.start = self.offset()
             - match kind {
                 Kind::Slash => 1,
@@ -202,7 +202,7 @@ impl<'a> Lexer<'a> {
         self.finish_next(kind)
     }
 
-    pub fn next_right_angle(&mut self) -> Token {
+    pub fn next_right_angle(&mut self) -> Token<'a> {
         let kind = self.read_right_angle();
         self.lookahead.clear();
         self.finish_next(kind)
@@ -210,7 +210,7 @@ impl<'a> Lexer<'a> {
 
     /// Re-tokenize the current `}` token for `TemplateSubstitutionTail`
     /// See Section 12, the parser needs to re-tokenize on `TemplateSubstitutionTail`,
-    pub fn next_template_substitution_tail(&mut self) -> Token {
+    pub fn next_template_substitution_tail(&mut self) -> Token<'a> {
         self.current.token.start = self.offset() - 1;
         let kind = self.read_template_literal(Kind::TemplateMiddle, Kind::TemplateTail);
         self.lookahead.clear();
@@ -218,14 +218,14 @@ impl<'a> Lexer<'a> {
     }
 
     /// Expand the current token for `JSXIdentifier`
-    pub fn next_jsx_identifier(&mut self, prev_len: u32) -> Token {
+    pub fn next_jsx_identifier(&mut self, prev_len: u32) -> Token<'a> {
         let kind = self.read_jsx_identifier(prev_len);
         self.lookahead.clear();
         self.finish_next(kind)
     }
 
     /// Re-tokenize '<<' or '<=' or '<<=' to '<'
-    pub fn re_lex_as_typescript_l_angle(&mut self, kind: Kind) -> Token {
+    pub fn re_lex_as_typescript_l_angle(&mut self, kind: Kind) -> Token<'a> {
         let offset = match kind {
             Kind::ShiftLeft | Kind::LtEq => 2,
             Kind::ShiftLeftEq => 3,
@@ -239,7 +239,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Re-tokenize '>>' or '>=' or '>>>' or '>>=' or '>>>=' to '<'
-    pub fn re_lex_as_typescript_r_angle(&mut self, kind: Kind) -> Token {
+    pub fn re_lex_as_typescript_r_angle(&mut self, kind: Kind) -> Token<'a> {
         let offset = match kind {
             Kind::ShiftRight | Kind::GtEq => 2,
             Kind::ShiftRightEq | Kind::ShiftRight3 => 3,
@@ -309,8 +309,8 @@ impl<'a> Lexer<'a> {
     }
 
     /// Add string to `SourceAtomSet` and get `TokenValue::Atom`
-    fn string_to_token_value(&mut self, s: &'a str) -> TokenValue {
-        TokenValue::String(Atom::from(s))
+    fn string_to_token_value(&mut self, s: &'a str) -> TokenValue<'a> {
+        TokenValue::String(s)
     }
 
     fn set_numeric_value(&mut self, kind: Kind, src: &'a str) {
@@ -556,9 +556,9 @@ impl<'a> Lexer<'a> {
 
     fn identifier_name_or_keyword(&mut self, builder: AutoCow<'a>) -> Kind {
         let (has_escape, text) = self.identifier_name(builder);
-        let (kind, atom) = Kind::match_keyword(text);
+        let kind = Kind::match_keyword(text);
         self.current.token.escaped = has_escape;
-        self.current.token.value = TokenValue::String(atom);
+        self.current.token.value = TokenValue::String(text);
         kind
     }
 

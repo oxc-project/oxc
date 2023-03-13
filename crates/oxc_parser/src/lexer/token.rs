@@ -6,7 +6,7 @@ use oxc_ast::{ast::RegExpFlags, Atom, Span};
 use super::kind::Kind;
 
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct Token {
+pub struct Token<'a> {
     /// Token Kind
     pub kind: Kind,
 
@@ -22,7 +22,7 @@ pub struct Token {
     /// Is the original string escaped?
     pub escaped: bool,
 
-    pub value: TokenValue,
+    pub value: TokenValue<'a>,
 }
 
 #[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
@@ -32,7 +32,7 @@ fn no_bloat_token() {
     assert_eq!(size_of::<Token>(), 56);
 }
 
-impl Token {
+impl<'a> Token<'a> {
     #[must_use]
     pub fn span(&self) -> Span {
         Span::new(self.start, self.end)
@@ -40,11 +40,11 @@ impl Token {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum TokenValue {
+pub enum TokenValue<'a> {
     None,
     Number(f64),
     BigInt(BigUint),
-    String(Atom),
+    String(&'a str),
     RegExp(RegExp),
 }
 
@@ -54,13 +54,13 @@ pub struct RegExp {
     pub flags: RegExpFlags,
 }
 
-impl Default for TokenValue {
+impl<'a> Default for TokenValue<'a> {
     fn default() -> Self {
         Self::None
     }
 }
 
-impl TokenValue {
+impl<'a> TokenValue<'a> {
     #[must_use]
     pub fn as_number(&self) -> f64 {
         match self {
@@ -86,7 +86,7 @@ impl TokenValue {
     }
 
     #[must_use]
-    pub fn get_atom(&self) -> Option<&Atom> {
+    pub fn get_string(&self) -> Option<&str> {
         match self {
             Self::String(s) => Some(s),
             _ => None,
