@@ -72,14 +72,8 @@ impl Trivias {
     /// Computes the associated line numbers given source text and starts/end offsets.
     #[must_use]
     pub fn line_numbers(&self, source_text: &str, start: u32, end: u32) -> BTreeSet<usize> {
-        let mut lines = BTreeSet::new();
-        let lines_to_start = &source_text[..start as usize].lines().collect::<Vec<_>>();
-        let lines_in_span = &source_text[start as usize..end as usize].lines().collect::<Vec<_>>();
-
-        lines.insert(lines_to_start.len());
-        for (offset, _) in lines_in_span.iter().enumerate() {
-            lines.insert(lines_to_start.len() + offset);
-        }
-        lines
+        let start_line = source_text[..start as usize].lines().count();
+        let end_line = source_text[..end as usize].lines().count();
+        (start_line..=end_line).collect()
     }
 }

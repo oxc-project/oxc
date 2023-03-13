@@ -85,15 +85,20 @@ impl Linter {
         let ctx = LintContext::new(source_text, semantic.clone(), fix);
         let trivias = semantic.trivias();
         let configuration_affected_lines = trivias.configuration_lines(source_text);
-        let nodes_to_lint = semantic
-            .nodes()
-            .iter()
-            .filter(|node| {
-                let span = node.get().kind().span();
-                let lines = trivias.line_numbers(source_text, span.start, span.end);
-                !configuration_affected_lines.iter().any(|l| lines.contains(l))
-            })
-            .collect::<Vec<_>>();
+        let nodes = semantic.nodes();
+        let nodes_to_lint = if configuration_affected_lines.is_empty() {
+            nodes.iter().collect()
+        } else {
+            nodes
+                .iter()
+                .filter(|node| {
+                    let span = node.get().kind().span();
+                    !configuration_affected_lines.iter().any(|l| {
+                        trivias.line_numbers(source_text, span.start, span.end).contains(l)
+                    })
+                })
+                .collect::<Vec<_>>()
+        };
 
         for node in nodes_to_lint {
             self.early_error_javascript.run(node, &ctx);
