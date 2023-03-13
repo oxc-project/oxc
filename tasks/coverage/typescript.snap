@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 661/2532 (26.11%)
+Negative Passed: 663/2532 (26.18%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -551,8 +551,6 @@ Expect Syntax Error: "es6/modules/defaultExportsCannotMerge04.ts"
 Expect Syntax Error: "es6/modules/importEmptyFromModuleNotExisted.ts"
 Expect Syntax Error: "es6/modules/multipleDefaultExports04.ts"
 Expect Syntax Error: "es6/modules/multipleDefaultExports05.ts"
-Expect Syntax Error: "es6/newTarget/invalidNewTarget.es5.ts"
-Expect Syntax Error: "es6/newTarget/invalidNewTarget.es6.ts"
 Expect Syntax Error: "es6/restParameters/readonlyRestParameters.ts"
 Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesAssignmentError.ts"
 Expect Syntax Error: "es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesAssignmentErrorFromMissingIdentifier.ts"
@@ -5286,6 +5284,150 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                      ╰── It can not be redeclared here
  8 │ }
    ╰────
+
+  × Unexpected new.target expression
+   ╭─[es6/newTarget/invalidNewTarget.es5.ts:1:1]
+ 1 │ // @target: es5
+ 2 │ const a = new.target;
+   ·           ──────────
+ 3 │ const b = () => new.target;
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+   ╭─[es6/newTarget/invalidNewTarget.es5.ts:2:1]
+ 2 │ const a = new.target;
+ 3 │ const b = () => new.target;
+   ·                 ──────────
+ 4 │ 
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+   ╭─[es6/newTarget/invalidNewTarget.es5.ts:5:1]
+ 5 │ class C {
+ 6 │     [new.target]() { }
+   ·      ──────────
+ 7 │     c() { return new.target; }
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es5.ts:9:1]
+  9 │     set e(_) { _ = new.target; }
+ 10 │     f = () => new.target;
+    ·               ──────────
+ 11 │ 
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es5.ts:11:1]
+ 11 │ 
+ 12 │     static [new.target]() { }
+    ·             ──────────
+ 13 │     static g() { return new.target; }
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es5.ts:15:1]
+ 15 │     static set i(_) { _ = new.target; }
+ 16 │     static j = () => new.target;
+    ·                      ──────────
+ 17 │ }
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es5.ts:19:1]
+ 19 │ const O = {
+ 20 │     [new.target]: undefined,
+    ·      ──────────
+ 21 │     k() { return new.target; },
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es5.ts:23:1]
+ 23 │     set m(_) { _ = new.target; },
+ 24 │     n: new.target,
+    ·        ──────────
+ 25 │ };
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+   ╭─[es6/newTarget/invalidNewTarget.es6.ts:1:1]
+ 1 │ // @target: es6
+ 2 │ const a = new.target;
+   ·           ──────────
+ 3 │ const b = () => new.target;
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+   ╭─[es6/newTarget/invalidNewTarget.es6.ts:2:1]
+ 2 │ const a = new.target;
+ 3 │ const b = () => new.target;
+   ·                 ──────────
+ 4 │ 
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+   ╭─[es6/newTarget/invalidNewTarget.es6.ts:5:1]
+ 5 │ class C {
+ 6 │     [new.target]() { }
+   ·      ──────────
+ 7 │     c() { return new.target; }
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es6.ts:9:1]
+  9 │     set e(_) { _ = new.target; }
+ 10 │     f = () => new.target;
+    ·               ──────────
+ 11 │ 
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es6.ts:11:1]
+ 11 │ 
+ 12 │     static [new.target]() { }
+    ·             ──────────
+ 13 │     static g() { return new.target; }
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es6.ts:15:1]
+ 15 │     static set i(_) { _ = new.target; }
+ 16 │     static j = () => new.target;
+    ·                      ──────────
+ 17 │ }
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es6.ts:19:1]
+ 19 │ const O = {
+ 20 │     [new.target]: undefined,
+    ·      ──────────
+ 21 │     k() { return new.target; },
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[es6/newTarget/invalidNewTarget.es6.ts:23:1]
+ 23 │     set m(_) { _ = new.target; },
+ 24 │     n: new.target,
+    ·        ──────────
+ 25 │ };
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
   × Unexpected token
    ╭─[es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorFromNotUsingIdentifier.ts:2:1]

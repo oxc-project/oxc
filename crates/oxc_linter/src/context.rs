@@ -104,6 +104,11 @@ impl<'a> LintContext<'a> {
     }
 
     #[must_use]
+    pub fn scope_ancestors(&self, node: &AstNode) -> Ancestors<'_, Scope> {
+        self.semantic().scopes().ancestors(node.get().scope_id())
+    }
+
+    #[must_use]
     pub fn strict_mode(&self, node: &AstNode) -> bool {
         let scope = self.scope(node);
         node.get().strict_mode(scope)

@@ -1,7 +1,7 @@
 Babel Summary:
-AST Parsed     : 2051/2069 (99.13%)
-Positive Passed: 2051/2069 (99.13%)
-Negative Passed: 1123/1502 (74.77%)
+AST Parsed     : 2050/2069 (99.08%)
+Positive Passed: 2050/2069 (99.08%)
+Negative Passed: 1133/1502 (75.43%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -21,8 +21,6 @@ Expect Syntax Error: "core/escape-string/numeric-escape-in-directive/input.js"
 Expect Syntax Error: "core/escape-string/numeric-escape-in-property-name/input.js"
 Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict-function/input.js"
 Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict/input.js"
-Expect Syntax Error: "core/opts/allowNewTargetOutsideFunction-false-2/input.js"
-Expect Syntax Error: "core/opts/allowNewTargetOutsideFunction-false/input.js"
 Expect Syntax Error: "core/scope/undecl-export-as-default/input.js"
 Expect Syntax Error: "core/scope/undecl-export-as/input.js"
 Expect Syntax Error: "core/scope/undecl-export-block/input.js"
@@ -93,9 +91,6 @@ Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
 Expect Syntax Error: "es2015/for-in/strict-initializer/input.js"
 Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
 Expect Syntax Error: "es2015/let/let-as-identifier-strict-fail/input.js"
-Expect Syntax Error: "es2015/meta-properties/invalid-arrow-function/input.js"
-Expect Syntax Error: "es2015/meta-properties/new-invalid-prop/input.js"
-Expect Syntax Error: "es2015/meta-properties/new-target-invalid/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-export-default-and-export-as-default/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-export-default/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-class-declaration/input.js"
@@ -142,10 +137,7 @@ Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-for-in/input.
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-nested/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest/input.js"
-Expect Syntax Error: "es2020/dynamic-import/direct-calls-only/input.js"
 Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
-Expect Syntax Error: "es2020/import-meta/error-in-script/input.js"
-Expect Syntax Error: "es2020/import-meta/no-other-prop-names/input.js"
 Expect Syntax Error: "esprima/declaration-function/dupe-param/input.js"
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-export-declaration/invalid-export-named-default/input.js"
@@ -153,8 +145,6 @@ Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-prop
 Expect Syntax Error: "esprima/es2015-identifier/.invalid_function_wait/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/invalid_expression_await/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/invalid_var_await/input.js"
-Expect Syntax Error: "esprima/es2015-meta-property/invalid-new-target/input.js"
-Expect Syntax Error: "esprima/es2015-meta-property/unknown-property/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-declaration/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-name/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-function-declaration/input.js"
@@ -381,6 +371,23 @@ Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
 Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
 Expect Syntax Error: "typescript/types/tuple-unlabeled-spread-after-labeled/input.ts"
 Expect Syntax Error: "typescript/types/tuple-unlabeled-spread-before-labeled/input.ts"
+Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
+
+  × Unexpected new.target expression
+   ╭─[core/opts/allowNewTargetOutsideFunction-true/input.js:1:1]
+ 1 │ const x = new.target;
+   ·           ──────────
+ 2 │ const y = () => new.target;
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+   ╭─[core/opts/allowNewTargetOutsideFunction-true/input.js:1:1]
+ 1 │ const x = new.target;
+ 2 │ const y = () => new.target;
+   ·                 ──────────
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 Expect to Parse: "core/scope/dupl-bind-func-var/input.js"
 
   × Identifier `foo` has already been declared
@@ -760,6 +767,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ──┬──
    ·       ╰── Expect `(` here, but found `await`
    ╰────
+
+  × Unexpected new.target expression
+   ╭─[core/opts/allowNewTargetOutsideFunction-false-2/input.js:1:1]
+ 1 │ const y = () => new.target;
+   ·                 ──────────
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+   ╭─[core/opts/allowNewTargetOutsideFunction-false/input.js:1:1]
+ 1 │ const x = new.target;
+   ·           ──────────
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
   × Unexpected token
    ╭─[core/regression/13694-invalid-dot-bracketL-member/input.js:1:1]
@@ -2533,6 +2554,23 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
+  × Unexpected new.target expression
+   ╭─[es2015/meta-properties/invalid-arrow-function/input.js:1:1]
+ 1 │ const A = () => {
+ 2 │   new.target;
+   ·   ──────────
+ 3 │ }
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × The only valid meta property for new is new.target
+   ╭─[es2015/meta-properties/new-invalid-prop/input.js:1:1]
+ 1 │ function f() {
+ 2 │   new.prop
+   ·   ────────
+ 3 │ }
+   ╰────
+
   × Keywords cannot contain escape characters
    ╭─[es2015/meta-properties/new-target-invalid-escaped-new/input.js:1:1]
  1 │ function f() { n\u0065w.target; }
@@ -2546,6 +2584,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ─────┬─────
    ·                         ╰── keyword cannot contain escape characters
    ╰────
+
+  × Unexpected new.target expression
+   ╭─[es2015/meta-properties/new-target-invalid/input.js:1:1]
+ 1 │ new.target
+   · ──────────
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
   × Identifier `foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring10/input.js:1:1]
@@ -4746,6 +4791,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ╰── Invalid characters after number
    ╰────
 
+  × The only valid meta property for import is import.meta
+   ╭─[es2020/dynamic-import/direct-calls-only/input.js:1:1]
+ 1 │ function failsParse() {
+ 2 │   return import.then();
+   ·          ───────────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[es2020/dynamic-import/invalid-arguments-spread/input.js:1:1]
  1 │ import(...[1])
@@ -4770,6 +4823,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/dynamic-import/no-args/input.js:1:1]
  1 │ import();
    ·        ─
+   ╰────
+
+  × Unexpected import.meta expression
+   ╭─[es2020/import-meta/error-in-script/input.js:1:1]
+ 1 │ const x = import.meta;
+   ·           ───────────
+   ╰────
+  help: import.meta is only allowed in module code
+
+  × The only valid meta property for import is import.meta
+   ╭─[es2020/import-meta/no-other-prop-names/input.js:1:1]
+ 1 │ import.notMeta;
+   · ──────────────
    ╰────
 
   × Invalid assignment
@@ -6847,6 +6913,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/es2015-meta-property/invalid-dots/input.js:1:1]
  1 │ var x = function() { y = new..target; }
    ·                              ─
+   ╰────
+
+  × Unexpected new.target expression
+   ╭─[esprima/es2015-meta-property/invalid-new-target/input.js:1:1]
+ 1 │ var x = new.target;
+   ·         ──────────
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × The only valid meta property for new is new.target
+   ╭─[esprima/es2015-meta-property/unknown-property/input.js:1:1]
+ 1 │ var f = function() { new.unknown_property; }
+   ·                      ────────────────────
    ╰────
 
   × Identifier `__proto__` has already been declared

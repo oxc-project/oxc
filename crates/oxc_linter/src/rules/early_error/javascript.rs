@@ -9,6 +9,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
     Redeclaration,
 };
+use oxc_semantic::ScopeFlags;
 
 use crate::{ast_util::STRICT_MODE_NAMES, context::LintContext, rule::Rule, AstNode};
 
@@ -39,6 +40,7 @@ impl Rule for EarlyErrorJavaScript {
 
             AstKind::Directive(dir) => check_directive(dir, node, ctx),
             AstKind::ModuleDeclaration(decl) => check_module_declaration(decl, node, ctx),
+            AstKind::MetaProperty(prop) => check_meta_property(prop, node, ctx),
 
             AstKind::WithStatement(stmt) => check_with_statement(stmt, node, ctx),
             AstKind::SwitchStatement(stmt) => check_switch_statement(stmt, ctx),
@@ -373,6 +375,64 @@ fn check_module_declaration<'a>(
         ModuleKind::Module => {
             ctx.diagnostic(TopLevel(text, span));
         }
+    }
+}
+
+fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Unexpected new.target expression")]
+    #[diagnostic(help(
+        "new.target is only allowed in constructors and functions invoked using thew `new` operator"
+    ))]
+    struct NewTarget(#[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("The only valid meta property for new is new.target")]
+    #[diagnostic()]
+    struct NewTargetProperty(#[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Unexpected import.meta expression")]
+    #[diagnostic(help("import.meta is only allowed in module code"))]
+    struct ImportMeta(#[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("The only valid meta property for import is import.meta")]
+    #[diagnostic()]
+    struct ImportMetaProperty(#[label] Span);
+
+    match prop.meta.name.as_str() {
+        "import" => {
+            if prop.property.name == "meta" {
+                if ctx.source_type().is_script() {
+                    return ctx.diagnostic(ImportMeta(prop.span));
+                }
+                return;
+            }
+            ctx.diagnostic(ImportMetaProperty(prop.span));
+        }
+        "new" => {
+            if prop.property.name == "target" {
+                let mut in_function_scope = false;
+                for scope_id in ctx.scope_ancestors(node) {
+                    let flags = ctx.scopes()[scope_id].get().flags;
+                    // In arrow functions, new.target is inherited from the surrounding scope.
+                    if flags.contains(ScopeFlags::Arrow) {
+                        continue;
+                    }
+                    if flags.intersects(ScopeFlags::Function | ScopeFlags::ClassStaticBlock) {
+                        in_function_scope = true;
+                        break;
+                    }
+                }
+                if !in_function_scope {
+                    return ctx.diagnostic(NewTarget(prop.span));
+                }
+                return;
+            }
+            ctx.diagnostic(NewTargetProperty(prop.span));
+        }
+        _ => {}
     }
 }
 

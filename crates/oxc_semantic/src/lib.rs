@@ -12,7 +12,7 @@ use std::rc::Rc;
 pub use builder::SemanticBuilder;
 pub use node::{AstNode, AstNodes, SemanticNode};
 use oxc_ast::{SourceType, Trivias};
-pub use scope::{Scope, ScopeTree};
+pub use scope::{Scope, ScopeFlags, ScopeTree};
 
 pub struct Semantic<'a> {
     source_type: SourceType,

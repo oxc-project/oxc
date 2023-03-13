@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3844/3917 (98.14%)
+Negative Passed: 3848/3917 (98.24%)
 Expect Syntax Error: "language/directive-prologue/10.1.1-2gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-5gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-8gs.js"
@@ -22,7 +22,6 @@ Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-3.js"
 Expect Syntax Error: "language/expressions/function/param-eval-strict-body.js"
 Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
-Expect Syntax Error: "language/expressions/import.meta/syntax/goal-script.js"
 Expect Syntax Error: "language/expressions/object/getter-body-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-implements-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-interface-invalid-strict-mode.js"
@@ -38,8 +37,6 @@ Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-
 Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-inside.js"
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
-Expect Syntax Error: "language/global-code/new.target-arrow.js"
-Expect Syntax Error: "language/global-code/new.target.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
 Expect Syntax Error: "language/import/json-invalid.js"
 Expect Syntax Error: "language/import/json-named-bindings.js"
@@ -59,7 +56,6 @@ Expect Syntax Error: "language/module-code/early-dup-export-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
-Expect Syntax Error: "language/module-code/early-new-target.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-body.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-outer-body.js"
@@ -15403,6 +15399,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·            ╰── keyword cannot contain escape characters
     ╰────
 
+  × Unexpected import.meta expression
+    ╭─[language/expressions/import.meta/syntax/goal-script.js:17:1]
+ 17 │ 
+ 18 │ import.meta;
+    · ───────────
+    ╰────
+  help: import.meta is only allowed in module code
+
   × Invalid assignment
     ╭─[language/expressions/import.meta/syntax/invalid-assignment-target-array-destructuring-expr.js:30:1]
  30 │ 
@@ -17791,6 +17795,23 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  40 │ this.#x
     ·      ──
     ╰────
+
+  × Unexpected new.target expression
+    ╭─[language/global-code/new.target-arrow.js:35:1]
+ 35 │ () => {
+ 36 │   new.target;
+    ·   ──────────
+ 37 │ };
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
+  × Unexpected new.target expression
+    ╭─[language/global-code/new.target.js:19:1]
+ 19 │ 
+ 20 │ new.target;
+    · ──────────
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
   × TS1108: A 'return' statement can only be used within a function body
     ╭─[language/global-code/return.js:21:1]
@@ -20281,6 +20302,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·     ┬
     ·     ╰── It can not be redeclared here
     ╰────
+
+  × Unexpected new.target expression
+    ╭─[language/module-code/early-new-target.js:15:1]
+ 15 │ 
+ 16 │ new.target;
+    · ──────────
+    ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
   × The keyword 'public' is reserved
     ╭─[language/module-code/early-strict-mode.js:14:1]
