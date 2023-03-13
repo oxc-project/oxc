@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3904/3917 (99.67%)
+Negative Passed: 3903/3917 (99.64%)
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
@@ -14,6 +14,7 @@ Expect Syntax Error: "language/module-code/early-dup-export-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
+Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
 Expect Syntax Error: "language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js"
 Expect to Parse: "language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js"
 
@@ -2410,14 +2411,6 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │   static {
  16 │     (await => 0);
     ·      ─────
- 17 │   }
-    ╰────
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[language/expressions/arrow-function/static-init-await-reference.js:15:1]
- 15 │   static {
- 16 │     ((x = await) => 0);
-    ·           ─────
  17 │   }
     ╰────
 
@@ -18087,14 +18080,6 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     · ─────
     ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[language/identifier-resolution/static-init-invalid-await.js:22:1]
- 22 │   static {
- 23 │     await;
-    ·     ─────
- 24 │   }
-    ╰────
-
   × Unexpected token
     ╭─[language/identifier-resolution/static-init-invalid-await.js:22:1]
  22 │   static {
@@ -29444,14 +29429,6 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  22 │   }
     ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[language/statements/class/static-init-invalid-await.js:29:1]
- 29 │     static {
- 30 │       await 0;
-    ·       ─────
- 31 │     }
-    ╰────
-
   × Identifier `x` has already been declared
     ╭─[language/statements/class/static-init-invalid-label-dup.js:20:1]
  20 │   static {
@@ -34048,14 +34025,6 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  24 │     }
     ╰────
   help: Wrap this declaration in a block statement
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[language/statements/labeled/static-init-invalid-await.js:22:1]
- 22 │   static {
- 23 │     await: 0;
-    ·     ─────
- 24 │   }
-    ╰────
 
   × Unexpected token
     ╭─[language/statements/labeled/static-init-invalid-await.js:22:1]

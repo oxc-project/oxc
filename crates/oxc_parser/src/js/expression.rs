@@ -999,7 +999,7 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         self.bump_any();
         let has_await = self.ctx.has_await();
-        if !has_await || self.ctx.has_class_static_block() {
+        if !has_await {
             self.error(diagnostics::AwaitExpression(Span::new(span.start, span.start + 5)));
         }
         self.ctx = self.ctx.and_await(true);
