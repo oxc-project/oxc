@@ -49,6 +49,8 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::LogicalExpression(expr) => check_logical_expression(expr, ctx),
             AstKind::MemberExpression(expr) => check_member_expression(expr, ctx),
             AstKind::UnaryExpression(expr) => check_unary_expression(expr, node, ctx),
+            AstKind::AwaitExpression(expr) => check_await_expression(expr, node, ctx),
+            AstKind::YieldExpression(expr) => check_yield_expression(expr, node, ctx),
             _ => {}
         }
     }
@@ -792,5 +794,36 @@ fn check_unary_expression<'a>(
             }
             _ => {}
         }
+    }
+}
+
+fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    for node_id in ctx.ancestors(node).skip(1) {
+        match ctx.kind(node_id) {
+            AstKind::FormalParameters(_) => return true,
+            AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowExpression(_) => break,
+            _ => {}
+        }
+    }
+    false
+}
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("{0} expression not allowed in formal parameter")]
+#[diagnostic()]
+struct AwaitOrYieldInParameter(
+    &'static str,
+    #[label("{0} expression not allowed in formal parameter")] Span,
+);
+
+fn check_await_expression<'a>(expr: &AwaitExpression, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    if is_in_formal_parameters(node, ctx) {
+        ctx.diagnostic(AwaitOrYieldInParameter("await", expr.span));
+    }
+}
+
+fn check_yield_expression<'a>(expr: &YieldExpression, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    if is_in_formal_parameters(node, ctx) {
+        ctx.diagnostic(AwaitOrYieldInParameter("yield", expr.span));
     }
 }

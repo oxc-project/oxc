@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3320/3917 (84.76%)
+Negative Passed: 3331/3917 (85.04%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -28,7 +28,6 @@ Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-res
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/arrow-function/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/arrow-function/param-dflt-yield-expr.js"
 Expect Syntax Error: "language/expressions/arrow-function/params-duplicate.js"
 Expect Syntax Error: "language/expressions/arrow-function/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-1.js"
@@ -44,7 +43,6 @@ Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/ar
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/await-as-param-nested-arrow-body-position.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-NSPL-with-USD.js"
@@ -79,8 +77,6 @@ Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-p
 Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-await-expr.js"
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-formals-contains-yield-expr.js"
 Expect Syntax Error: "language/expressions/async-generator/named-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-rest.js"
@@ -181,7 +177,6 @@ Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-ary-pt
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-rest.js"
@@ -202,7 +197,6 @@ Expect Syntax Error: "language/expressions/class/method/dflt-params-duplicates.j
 Expect Syntax Error: "language/expressions/class/method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/method/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/static-gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/function/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/function/dflt-params-rest.js"
@@ -234,7 +228,6 @@ Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-in
 Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/generators/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/generators/param-dflt-yield.js"
 Expect Syntax Error: "language/expressions/generators/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/generators/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
@@ -285,7 +278,6 @@ Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dfl
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/generator-param-init-yield.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-dflt-params-duplicates.js"
@@ -434,7 +426,6 @@ Expect Syntax Error: "language/statements/class/dstr/private-meth-static-ary-ptr
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/array-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-rest.js"
@@ -455,7 +446,6 @@ Expect Syntax Error: "language/statements/class/method/dflt-params-duplicates.js
 Expect Syntax Error: "language/statements/class/method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/method/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/static-gen-method-param-dflt-yield.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
@@ -568,7 +558,6 @@ Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-ini
 Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/generators/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/generators/param-dflt-yield.js"
 Expect Syntax Error: "language/statements/generators/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/generators/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/statements/if/if-decl-else-decl-strict.js"
@@ -2735,6 +2724,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  39 │ 
  40 │ var x = ({ w\u0069th }) => {};
     ·                      ─
+    ╰────
+
+  × yield expression not allowed in formal parameter
+    ╭─[language/expressions/arrow-function/param-dflt-yield-expr.js:26:1]
+ 26 │ function *g() {
+ 27 │   (x = yield) => {};
+    ·        ──┬──
+    ·          ╰── yield expression not allowed in formal parameter
+ 28 │ }
     ╰────
 
   × The keyword 'yield' is reserved
@@ -6030,6 +6028,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ─────
     ╰────
 
+  × await expression not allowed in formal parameter
+    ╭─[language/expressions/async-arrow-function/await-as-param-nested-arrow-body-position.js:15:1]
+ 15 │ 
+ 16 │ async() => { (a = await/r/g) => {} };
+    ·                   ────┬────
+    ·                       ╰── await expression not allowed in formal parameter
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/async-arrow-function/await-as-param-nested-arrow-parameter-position.js:15:1]
  15 │ 
@@ -6608,6 +6614,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ╰── `a` has already been declared here
     ╰────
 
+  × await expression not allowed in formal parameter
+    ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-await-expr.js:16:1]
+ 16 │ 
+ 17 │ (async function*(x = await 1) { });
+    ·                      ───┬───
+    ·                         ╰── await expression not allowed in formal parameter
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-await.js:17:1]
  17 │ 
@@ -6629,6 +6643,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ 
  17 │ (async function*(a = super.prop) { });
     ·                      ─────
+    ╰────
+
+  × yield expression not allowed in formal parameter
+    ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-yield-expr.js:16:1]
+ 16 │ 
+ 17 │ (async function*(x = yield) { });
+    ·                      ──┬──
+    ·                        ╰── yield expression not allowed in formal parameter
     ╰────
 
   × The keyword 'yield' is reserved
@@ -12149,6 +12171,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ }
     ╰────
 
+  × yield expression not allowed in formal parameter
+    ╭─[language/expressions/class/gen-method-param-dflt-yield.js:25:1]
+ 25 │ 0, class {
+ 26 │   *g(x = yield) {}
+    ·          ──┬──
+    ·            ╰── yield expression not allowed in formal parameter
+ 27 │ };
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:1]
  80 │ 0, class {
@@ -12417,6 +12448,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ──┬─
     ·            ╰── Rest element must be last element
  77 │     
+    ╰────
+
+  × yield expression not allowed in formal parameter
+    ╭─[language/expressions/class/static-gen-method-param-dflt-yield.js:25:1]
+ 25 │ 0, class {
+ 26 │   static *g(x = yield) {}
+    ·                 ──┬──
+    ·                   ╰── yield expression not allowed in formal parameter
+ 27 │ };
     ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -13957,6 +13997,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │       throw new Test262Error();
     ╰────
 
+  × yield expression not allowed in formal parameter
+    ╭─[language/expressions/generators/param-dflt-yield.js:24:1]
+ 24 │ 
+ 25 │ 0, function*(x = yield) {};
+    ·                  ──┬──
+    ·                    ╰── yield expression not allowed in formal parameter
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/generators/rest-params-trailing-comma-early-error.js:56:1]
  56 │ 
@@ -15166,6 +15214,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  19 │   *method(yield) {}
     ·           ─────
  20 │ });
+    ╰────
+
+  × yield expression not allowed in formal parameter
+    ╭─[language/expressions/object/method-definition/generator-param-init-yield.js:19:1]
+ 19 │   ({
+ 20 │     *method(x = yield) {}
+    ·                 ──┬──
+    ·                   ╰── yield expression not allowed in formal parameter
+ 21 │   });
     ╰────
 
   × Identifier `a` has already been declared
@@ -19667,6 +19724,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ─────
     ╰────
 
+  × await expression not allowed in formal parameter
+    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js:37:1]
+ 37 │ 
+ 38 │ function fn(x = await 1) {
+    ·                 ───┬───
+    ·                    ╰── await expression not allowed in formal parameter
+ 39 │   return x;
+    ╰────
+
   × `await` is only allowed within async functions and at the top levels of modules
     ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js:37:1]
  37 │ 
@@ -19681,6 +19747,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  29 │   await 1;
     ·   ─────
  30 │ };
+    ╰────
+
+  × await expression not allowed in formal parameter
+    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js:27:1]
+ 27 │ 
+ 28 │ 0, function (x = await 1) {
+    ·                  ───┬───
+    ·                     ╰── await expression not allowed in formal parameter
+ 29 │   return x;
     ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
@@ -26013,6 +26088,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ }
     ╰────
 
+  × yield expression not allowed in formal parameter
+    ╭─[language/statements/class/gen-method-param-dflt-yield.js:25:1]
+ 25 │ class C {
+ 26 │   *g(x = yield) {}
+    ·          ──┬──
+    ·            ╰── yield expression not allowed in formal parameter
+ 27 │ }
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:78:1]
  78 │ class C {
@@ -26329,6 +26413,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·       ─┬
     ·        ╰── It can not be redeclared here
  18 │ }
+    ╰────
+
+  × yield expression not allowed in formal parameter
+    ╭─[language/statements/class/static-gen-method-param-dflt-yield.js:25:1]
+ 25 │ class C {
+ 26 │   static *g(x = yield) {}
+    ·                 ──┬──
+    ·                   ╰── yield expression not allowed in formal parameter
+ 27 │ }
     ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -29132,6 +29225,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·              ────┬───
     ·                  ╰── Rest element must be last element
  53 │   
+    ╰────
+
+  × yield expression not allowed in formal parameter
+    ╭─[language/statements/generators/param-dflt-yield.js:23:1]
+ 23 │ 
+ 24 │ function* g(x = yield) {}
+    ·                 ──┬──
+    ·                   ╰── yield expression not allowed in formal parameter
     ╰────
 
   × Rest element must be last element

@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2051/2069 (99.13%)
 Positive Passed: 2051/2069 (99.13%)
-Negative Passed: 1077/1502 (71.70%)
+Negative Passed: 1095/1502 (72.90%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -136,17 +136,9 @@ Expect Syntax Error: "es2015/yield/function-name-function-declaration-inside-gen
 Expect Syntax Error: "es2015/yield/function-name-generator-expression/input.js"
 Expect Syntax Error: "es2015/yield/function-name-strict-body/input.js"
 Expect Syntax Error: "es2015/yield/function-name-strict/input.js"
-Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-1/input.js"
-Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-2/input.js"
-Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-3/input.js"
-Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-4/input.js"
-Expect Syntax Error: "es2015/yield/parameter-default-inside-arrow-inside-generator-6/input.js"
-Expect Syntax Error: "es2015/yield/parameter-default-inside-generator-method/input.js"
-Expect Syntax Error: "es2015/yield/parameter-default-inside-generator/input.js"
 Expect Syntax Error: "es2015/yield/parameter-default-strict/input.js"
 Expect Syntax Error: "es2015/yield/parameter-name-strict-body/input.js"
 Expect Syntax Error: "es2015/yield/parameter-name-strict/input.js"
-Expect Syntax Error: "es2015/yield/yield-star-parameter-default-inside-generator/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/array-pattern-default/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/array-pattern/input.js"
 Expect Syntax Error: "es2016/simple-parameter-list/arrow-function/input.js"
@@ -162,11 +154,6 @@ Expect Syntax Error: "es2016/simple-parameter-list/rest/input.js"
 Expect Syntax Error: "es2017/async-functions/await-async-function-expression-name/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
 Expect Syntax Error: "es2017/async-functions/await-function-declaration-name-inside-async-function/input.js"
-Expect Syntax Error: "es2017/async-functions/await-inside-arguments-of-async-call-inside-parameters-of-async-arrow-function/input.js"
-Expect Syntax Error: "es2017/async-functions/await-inside-parameters-of-async-arrow-function/input.js"
-Expect Syntax Error: "es2017/async-functions/await-inside-parameters-of-nested-arrow-function/input.js"
-Expect Syntax Error: "es2017/async-functions/await-inside-parameters-of-nested-async-arrow-function/input.js"
-Expect Syntax Error: "es2017/async-functions/await-inside-parameters/input.js"
 Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-rest/input.js"
@@ -188,15 +175,11 @@ Expect Syntax Error: "esprima/es2015-arrow-function/invalid-duplicated-params/in
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-export-declaration/invalid-export-named-default/input.js"
 Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
-Expect Syntax Error: "esprima/es2015-generator/generator-parameter-invalid-binding-element/input.js"
-Expect Syntax Error: "esprima/es2015-generator/generator-parameter-invalid-binding-property/input.js"
-Expect Syntax Error: "esprima/es2015-generator/generator-parameter-invalid-computed-property-name/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/.invalid_function_wait/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/invalid_expression_await/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/invalid_var_await/input.js"
 Expect Syntax Error: "esprima/es2015-meta-property/invalid-new-target/input.js"
 Expect Syntax Error: "esprima/es2015-meta-property/unknown-property/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-arrow-default/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-declaration/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-name/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-function-declaration/input.js"
@@ -214,7 +197,6 @@ Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-identifier/input
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-lexical-declaration/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-rest-parameter/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-variable-declaration/input.js"
-Expect Syntax Error: "esprima/es2015-yield/yield-generator-arrow-default/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0005/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0006/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.u-flag-invalid-range-4-hex/input.js"
@@ -3753,12 +3735,71 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ─────
    ╰────
 
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/parameter-default-inside-arrow-inside-generator-1/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   (x = yield) => {};
+   ·        ──┬──
+   ·          ╰── yield expression not allowed in formal parameter
+ 3 │ }
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/parameter-default-inside-arrow-inside-generator-2/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   (x = 3 + a.b(yield) ** 2) => {};
+   ·                ──┬──
+   ·                  ╰── yield expression not allowed in formal parameter
+ 3 │ }
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/parameter-default-inside-arrow-inside-generator-3/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   (x = yield fn) => {};
+   ·        ────┬───
+   ·            ╰── yield expression not allowed in formal parameter
+ 3 │ }
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/parameter-default-inside-arrow-inside-generator-4/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   (a, b = 3, x = yield) => {};
+   ·                  ──┬──
+   ·                    ╰── yield expression not allowed in formal parameter
+ 3 │ }
+   ╰────
+
   × Cannot use `yield` as an identifier in a generator context
    ╭─[es2015/yield/parameter-default-inside-arrow-inside-generator-5/input.js:1:1]
  1 │ function* fn() {
  2 │   (x = (yield) => {}) => {};
    ·         ─────
  3 │ }
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/parameter-default-inside-arrow-inside-generator-6/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   (x = (yield)) => {};
+   ·         ──┬──
+   ·           ╰── yield expression not allowed in formal parameter
+ 3 │ }
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/parameter-default-inside-generator-method/input.js:1:1]
+ 1 │ ({ *method(x = yield) {} })
+   ·                ──┬──
+   ·                  ╰── yield expression not allowed in formal parameter
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/parameter-default-inside-generator/input.js:1:1]
+ 1 │ function* fn(x = yield) {}
+   ·                  ──┬──
+   ·                    ╰── yield expression not allowed in formal parameter
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context
@@ -3805,6 +3846,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/yield/parameter-name-generator/input.js:1:1]
  1 │ function* fn(yield) {}
    ·              ─────
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/yield-star-parameter-default-inside-generator/input.js:1:1]
+ 1 │ function* fn(x = yield* yield) {}
+   ·                  ──────┬─────
+   ·                        ╰── yield expression not allowed in formal parameter
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/yield-star-parameter-default-inside-generator/input.js:1:1]
+ 1 │ function* fn(x = yield* yield) {}
+   ·                         ──┬──
+   ·                           ╰── yield expression not allowed in formal parameter
    ╰────
 
   × Unexpected exponentiation expression
@@ -4050,10 +4105,53 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × await expression not allowed in formal parameter
+   ╭─[es2017/async-functions/await-inside-arguments-of-async-call-inside-parameters-of-async-arrow-function/input.js:1:1]
+ 1 │ async function fn() {
+ 2 │   async (x = async(y = await 2)) => {};
+   ·                        ───┬───
+   ·                           ╰── await expression not allowed in formal parameter
+ 3 │ }
+   ╰────
+
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[es2017/async-functions/await-inside-arrow-expression-disallowed/input.js:1:1]
  1 │ () => { await x }
    ·         ─────
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[es2017/async-functions/await-inside-parameters-of-async-arrow-function/input.js:1:1]
+ 1 │ async (x = await 2) => {};
+   ·            ───┬───
+   ·               ╰── await expression not allowed in formal parameter
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[es2017/async-functions/await-inside-parameters-of-nested-arrow-function/input.js:1:1]
+ 1 │ async function fn() {
+ 2 │   (x = await 2) => {};
+   ·        ───┬───
+   ·           ╰── await expression not allowed in formal parameter
+ 3 │ }
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[es2017/async-functions/await-inside-parameters-of-nested-async-arrow-function/input.js:1:1]
+ 1 │ async function fn() {
+ 2 │   async (x = await 2) => {};
+   ·              ───┬───
+   ·                 ╰── await expression not allowed in formal parameter
+ 3 │ }
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[es2017/async-functions/await-inside-parameters-of-nested-function/input.js:1:1]
+ 1 │ async function foo() {
+ 2 │   function bar(x = await 2) {}
+   ·                    ───┬───
+   ·                       ╰── await expression not allowed in formal parameter
+ 3 │ }
    ╰────
 
   × `await` is only allowed within async functions and at the top levels of modules
@@ -4062,6 +4160,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │   function bar(x = await 2) {}
    ·                    ─────
  3 │ }
+   ╰────
+
+  × await expression not allowed in formal parameter
+   ╭─[es2017/async-functions/await-inside-parameters/input.js:1:1]
+ 1 │ async function fn(x = await 2) {}
+   ·                       ───┬───
+   ·                          ╰── await expression not allowed in formal parameter
    ╰────
 
   × Unexpected token
@@ -6300,11 +6405,29 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ─────
    ╰────
 
+  × yield expression not allowed in formal parameter
+   ╭─[esprima/es2015-generator/generator-parameter-binding-element/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function(x = yield 3) {}
+   ·                  ───┬───
+   ·                     ╰── yield expression not allowed in formal parameter
+ 3 │ })
+   ╰────
+
   × A 'yield' expression is only allowed in a generator body.
    ╭─[esprima/es2015-generator/generator-parameter-binding-element/input.js:1:1]
  1 │ (function*() {
  2 │     function(x = yield 3) {}
    ·                  ─────
+ 3 │ })
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[esprima/es2015-generator/generator-parameter-binding-property/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function({x: y = yield 3}) {}
+   ·                      ───┬───
+   ·                         ╰── yield expression not allowed in formal parameter
  3 │ })
    ╰────
 
@@ -6316,11 +6439,47 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ })
    ╰────
 
+  × yield expression not allowed in formal parameter
+   ╭─[esprima/es2015-generator/generator-parameter-computed-property-name/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function({[yield 3]: y}) {}
+   ·                ───┬───
+   ·                   ╰── yield expression not allowed in formal parameter
+ 3 │ })
+   ╰────
+
   × A 'yield' expression is only allowed in a generator body.
    ╭─[esprima/es2015-generator/generator-parameter-computed-property-name/input.js:1:1]
  1 │ (function*() {
  2 │     function({[yield 3]: y}) {}
    ·                ─────
+ 3 │ })
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[esprima/es2015-generator/generator-parameter-invalid-binding-element/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function*(x = yield 3) {}
+   ·                   ───┬───
+   ·                      ╰── yield expression not allowed in formal parameter
+ 3 │ })
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[esprima/es2015-generator/generator-parameter-invalid-binding-property/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function*({x: y = yield 3}) {}
+   ·                       ───┬───
+   ·                          ╰── yield expression not allowed in formal parameter
+ 3 │ })
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[esprima/es2015-generator/generator-parameter-invalid-computed-property-name/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function*({[yield 3]: y}) {}
+   ·                 ───┬───
+   ·                    ╰── yield expression not allowed in formal parameter
  3 │ })
    ╰────
 
@@ -6673,6 +6832,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·               ─────
    ╰────
 
+  × yield expression not allowed in formal parameter
+   ╭─[esprima/es2015-yield/invalid-yield-generator-arrow-default/input.js:1:1]
+ 1 │ function* g() { (x = yield 42) => {} }
+   ·                      ────┬───
+   ·                          ╰── yield expression not allowed in formal parameter
+   ╰────
+
   × Cannot use `yield` as an identifier in a generator context
    ╭─[esprima/es2015-yield/invalid-yield-generator-arrow-parameter/input.js:1:1]
  1 │ function *g(){ (yield) => 42 }
@@ -6737,6 +6903,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/es2015-yield/invalid-yield-generator-variable-declaration/input.js:1:1]
  1 │ function *g() { var yield; }
    ·                     ─────
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[esprima/es2015-yield/yield-generator-arrow-default/input.js:1:1]
+ 1 │ function *g() { (x = yield) => {} }
+   ·                      ──┬──
+   ·                        ╰── yield expression not allowed in formal parameter
    ╰────
 
   × Invalid Character ` `
