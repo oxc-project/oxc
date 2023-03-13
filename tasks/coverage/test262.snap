@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3568/3917 (91.09%)
+Negative Passed: 3844/3917 (98.14%)
 Expect Syntax Error: "language/directive-prologue/10.1.1-2gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-5gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-8gs.js"
@@ -13,136 +13,16 @@ Expect Syntax Error: "language/directive-prologue/func-decl-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-inside-func-decl-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-no-semi-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-parse.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
 Expect Syntax Error: "language/expressions/await/await-BindingIdentifier-nested.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/function/name-arguments-strict-body.js"
 Expect Syntax Error: "language/expressions/function/name-eval-strict-body.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-1.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-2.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-3.js"
 Expect Syntax Error: "language/expressions/function/param-eval-strict-body.js"
-Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
 Expect Syntax Error: "language/expressions/import.meta/syntax/goal-script.js"
-Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/object/dstr/meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/object/dstr/meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/object/dstr/meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/object/getter-body-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-implements-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-interface-invalid-strict-mode.js"
@@ -180,148 +60,7 @@ Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
-Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
-Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for/dstr/let-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for/dstr/let-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/function/dstr/dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/function/dstr/dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/function/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-body.js"
 Expect Syntax Error: "language/statements/function/enable-strict-via-outer-body.js"
 Expect Syntax Error: "language/statements/function/name-arguments-strict-body.js"
@@ -332,21 +71,6 @@ Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-3.js"
 Expect Syntax Error: "language/statements/function/param-eval-strict-body.js"
 Expect Syntax Error: "language/statements/function/static-init-await-binding-invalid.js"
-Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/try/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-ary.js"
-Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-id.js"
-Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-1.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-2.js"
@@ -2191,6 +1915,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  63 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-init-ary.js:51:1]
+ 51 │ var f;
+ 52 │ f = ([...[ x ] = []]) => {
+    ·       ─────────────
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-init-id.js:51:1]
+ 51 │ var f;
+ 52 │ f = ([...x = []]) => {
+    ·       ─────────
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-init-obj.js:51:1]
+ 51 │ var f;
+ 52 │ f = ([...{ x } = []]) => {
+    ·       ─────────────
+ 53 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ var f;
@@ -2215,6 +1963,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  52 │ f = ([...{ x }, y]) => {
     ·       ────┬───
     ·           ╰── Rest element must be last element
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js:51:1]
+ 51 │ var f;
+ 52 │ f = ([...[ x ] = []] = []) => {
+    ·       ─────────────
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js:51:1]
+ 51 │ var f;
+ 52 │ f = ([...x = []] = []) => {
+    ·       ─────────
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js:51:1]
+ 51 │ var f;
+ 52 │ f = ([...{ x } = []] = []) => {
+    ·       ─────────────
  53 │   
     ╰────
 
@@ -6585,6 +6357,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  44 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-init-ary.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function*([...[ x ] = []]) {
+    ·                      ─────────────
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-init-id.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function*([...x = []]) {
+    ·                      ─────────
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-init-obj.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function*([...{ x } = []]) {
+    ·                      ─────────────
+ 34 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-not-final-ary.js:32:1]
  32 │ var f;
@@ -6609,6 +6405,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ f = async function*([...{ x }, y]) {
     ·                      ────┬───
     ·                          ╰── Rest element must be last element
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function*([...[ x ] = []] = []) {
+    ·                      ─────────────
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function*([...x = []] = []) {
+    ·                      ─────────
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function*([...{ x } = []] = []) {
+    ·                      ─────────────
  34 │   
     ╰────
 
@@ -6639,6 +6459,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-ary.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function* h([...[ x ] = []]) {
+    ·                        ─────────────
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-id.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function* h([...x = []]) {
+    ·                        ─────────
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-obj.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function* h([...{ x } = []]) {
+    ·                        ─────────────
+ 34 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-not-final-ary.js:32:1]
  32 │ var f;
@@ -6663,6 +6507,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  33 │ f = async function* h([...{ x }, y]) {
     ·                        ────┬───
     ·                            ╰── Rest element must be last element
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-ary.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function* h([...[ x ] = []] = []) {
+    ·                        ─────────────
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-id.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function* h([...x = []] = []) {
+    ·                        ─────────
+ 34 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-obj.js:32:1]
+ 32 │ var f;
+ 33 │ f = async function* h([...{ x } = []] = []) {
+    ·                        ─────────────
  34 │   
     ╰────
 
@@ -8004,6 +7872,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·               ─────
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:56:1]
+ 56 │ var C = class {
+ 57 │   async *method([...[ x ] = []]) {
+    ·                  ─────────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:56:1]
+ 56 │ var C = class {
+ 57 │   async *method([...x = []]) {
+    ·                  ─────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:56:1]
+ 56 │ var C = class {
+ 57 │   async *method([...{ x } = []]) {
+    ·                  ─────────────
+ 58 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
@@ -8028,6 +7920,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  57 │   async *method([...{ x }, y]) {
     ·                  ────┬───
     ·                      ╰── Rest element must be last element
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:56:1]
+ 56 │ var C = class {
+ 57 │   async *method([...[ x ] = []] = []) {
+    ·                  ─────────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:56:1]
+ 56 │ var C = class {
+ 57 │   async *method([...x = []] = []) {
+    ·                  ─────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:56:1]
+ 56 │ var C = class {
+ 57 │   async *method([...{ x } = []] = []) {
+    ·                  ─────────────
  58 │     
     ╰────
 
@@ -8058,6 +7974,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  58 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async *method([...[ x ] = []]) {
+    ·                         ─────────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async *method([...x = []]) {
+    ·                         ─────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async *method([...{ x } = []]) {
+    ·                         ─────────────
+ 58 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
@@ -8082,6 +8022,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  57 │   static async *method([...{ x }, y]) {
     ·                         ────┬───
     ·                             ╰── Rest element must be last element
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async *method([...[ x ] = []] = []) {
+    ·                         ─────────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async *method([...x = []] = []) {
+    ·                         ─────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async *method([...{ x } = []] = []) {
+    ·                         ─────────────
  58 │     
     ╰────
 
@@ -8112,6 +8076,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  58 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js:56:1]
+ 56 │ var C = class {
+ 57 │   async * #method([...[ x ] = []]) {
+    ·                    ─────────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js:56:1]
+ 56 │ var C = class {
+ 57 │   async * #method([...x = []]) {
+    ·                    ─────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js:56:1]
+ 56 │ var C = class {
+ 57 │   async * #method([...{ x } = []]) {
+    ·                    ─────────────
+ 58 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
@@ -8136,6 +8124,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  57 │   async * #method([...{ x }, y]) {
     ·                    ────┬───
     ·                        ╰── Rest element must be last element
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:56:1]
+ 56 │ var C = class {
+ 57 │   async * #method([...[ x ] = []] = []) {
+    ·                    ─────────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js:56:1]
+ 56 │ var C = class {
+ 57 │   async * #method([...x = []] = []) {
+    ·                    ─────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:56:1]
+ 56 │ var C = class {
+ 57 │   async * #method([...{ x } = []] = []) {
+    ·                    ─────────────
  58 │     
     ╰────
 
@@ -8166,6 +8178,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  58 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async * #method([...[ x ] = []]) {
+    ·                           ─────────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async * #method([...x = []]) {
+    ·                           ─────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async * #method([...{ x } = []]) {
+    ·                           ─────────────
+ 58 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
@@ -8190,6 +8226,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  57 │   static async * #method([...{ x }, y]) {
     ·                           ────┬───
     ·                               ╰── Rest element must be last element
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async * #method([...[ x ] = []] = []) {
+    ·                           ─────────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async * #method([...x = []] = []) {
+    ·                           ─────────
+ 58 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async * #method([...{ x } = []] = []) {
+    ·                           ─────────────
  58 │     
     ╰────
 
@@ -8220,6 +8280,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  58 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js:75:1]
+ 75 │ var C = class {
+ 76 │   *method([...[ x ] = []]) {
+    ·            ─────────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-id.js:75:1]
+ 75 │ var C = class {
+ 76 │   *method([...x = []]) {
+    ·            ─────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js:75:1]
+ 75 │ var C = class {
+ 76 │   *method([...{ x } = []]) {
+    ·            ─────────────
+ 77 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
@@ -8244,6 +8328,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  76 │   *method([...{ x }, y]) {
     ·            ────┬───
     ·                ╰── Rest element must be last element
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:75:1]
+ 75 │ var C = class {
+ 76 │   *method([...[ x ] = []] = []) {
+    ·            ─────────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:75:1]
+ 75 │ var C = class {
+ 76 │   *method([...x = []] = []) {
+    ·            ─────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:75:1]
+ 75 │ var C = class {
+ 76 │   *method([...{ x } = []] = []) {
+    ·            ─────────────
  77 │     
     ╰────
 
@@ -8274,6 +8382,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  77 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js:75:1]
+ 75 │ var C = class {
+ 76 │   static *method([...[ x ] = []]) {
+    ·                   ─────────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js:75:1]
+ 75 │ var C = class {
+ 76 │   static *method([...x = []]) {
+    ·                   ─────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js:75:1]
+ 75 │ var C = class {
+ 76 │   static *method([...{ x } = []]) {
+    ·                   ─────────────
+ 77 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
@@ -8298,6 +8430,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  76 │   static *method([...{ x }, y]) {
     ·                   ────┬───
     ·                       ╰── Rest element must be last element
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:75:1]
+ 75 │ var C = class {
+ 76 │   static *method([...[ x ] = []] = []) {
+    ·                   ─────────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js:75:1]
+ 75 │ var C = class {
+ 76 │   static *method([...x = []] = []) {
+    ·                   ─────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:75:1]
+ 75 │ var C = class {
+ 76 │   static *method([...{ x } = []] = []) {
+    ·                   ─────────────
  77 │     
     ╰────
 
@@ -8328,6 +8484,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  77 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-init-ary.js:72:1]
+ 72 │ var C = class {
+ 73 │   method([...[ x ] = []]) {
+    ·           ─────────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-init-id.js:72:1]
+ 72 │ var C = class {
+ 73 │   method([...x = []]) {
+    ·           ─────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-init-obj.js:72:1]
+ 72 │ var C = class {
+ 73 │   method([...{ x } = []]) {
+    ·           ─────────────
+ 74 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
@@ -8352,6 +8532,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  73 │   method([...{ x }, y]) {
     ·           ────┬───
     ·               ╰── Rest element must be last element
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:72:1]
+ 72 │ var C = class {
+ 73 │   method([...[ x ] = []] = []) {
+    ·           ─────────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js:72:1]
+ 72 │ var C = class {
+ 73 │   method([...x = []] = []) {
+    ·           ─────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:72:1]
+ 72 │ var C = class {
+ 73 │   method([...{ x } = []] = []) {
+    ·           ─────────────
  74 │     
     ╰────
 
@@ -8382,6 +8586,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  74 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-ary.js:72:1]
+ 72 │ var C = class {
+ 73 │   static method([...[ x ] = []]) {
+    ·                  ─────────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-id.js:72:1]
+ 72 │ var C = class {
+ 73 │   static method([...x = []]) {
+    ·                  ─────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-obj.js:72:1]
+ 72 │ var C = class {
+ 73 │   static method([...{ x } = []]) {
+    ·                  ─────────────
+ 74 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
@@ -8406,6 +8634,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  73 │   static method([...{ x }, y]) {
     ·                  ────┬───
     ·                      ╰── Rest element must be last element
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js:72:1]
+ 72 │ var C = class {
+ 73 │   static method([...[ x ] = []] = []) {
+    ·                  ─────────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js:72:1]
+ 72 │ var C = class {
+ 73 │   static method([...x = []] = []) {
+    ·                  ─────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js:72:1]
+ 72 │ var C = class {
+ 73 │   static method([...{ x } = []] = []) {
+    ·                  ─────────────
  74 │     
     ╰────
 
@@ -8436,6 +8688,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  74 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js:75:1]
+ 75 │ var C = class {
+ 76 │   * #method([...[ x ] = []]) {
+    ·              ─────────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js:75:1]
+ 75 │ var C = class {
+ 76 │   * #method([...x = []]) {
+    ·              ─────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js:75:1]
+ 75 │ var C = class {
+ 76 │   * #method([...{ x } = []]) {
+    ·              ─────────────
+ 77 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
@@ -8460,6 +8736,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  76 │   * #method([...{ x }, y]) {
     ·              ────┬───
     ·                  ╰── Rest element must be last element
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:75:1]
+ 75 │ var C = class {
+ 76 │   * #method([...[ x ] = []] = []) {
+    ·              ─────────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js:75:1]
+ 75 │ var C = class {
+ 76 │   * #method([...x = []] = []) {
+    ·              ─────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:75:1]
+ 75 │ var C = class {
+ 76 │   * #method([...{ x } = []] = []) {
+    ·              ─────────────
  77 │     
     ╰────
 
@@ -8490,6 +8790,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  77 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js:75:1]
+ 75 │ var C = class {
+ 76 │   static * #method([...[ x ] = []]) {
+    ·                     ─────────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js:75:1]
+ 75 │ var C = class {
+ 76 │   static * #method([...x = []]) {
+    ·                     ─────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js:75:1]
+ 75 │ var C = class {
+ 76 │   static * #method([...{ x } = []]) {
+    ·                     ─────────────
+ 77 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
@@ -8514,6 +8838,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  76 │   static * #method([...{ x }, y]) {
     ·                     ────┬───
     ·                         ╰── Rest element must be last element
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:75:1]
+ 75 │ var C = class {
+ 76 │   static * #method([...[ x ] = []] = []) {
+    ·                     ─────────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:75:1]
+ 75 │ var C = class {
+ 76 │   static * #method([...x = []] = []) {
+    ·                     ─────────
+ 77 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:75:1]
+ 75 │ var C = class {
+ 76 │   static * #method([...{ x } = []] = []) {
+    ·                     ─────────────
  77 │     
     ╰────
 
@@ -8544,6 +8892,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  77 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-ary.js:72:1]
+ 72 │ var C = class {
+ 73 │   #method([...[ x ] = []]) {
+    ·            ─────────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-id.js:72:1]
+ 72 │ var C = class {
+ 73 │   #method([...x = []]) {
+    ·            ─────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-obj.js:72:1]
+ 72 │ var C = class {
+ 73 │   #method([...{ x } = []]) {
+    ·            ─────────────
+ 74 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
@@ -8568,6 +8940,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  73 │   #method([...{ x }, y]) {
     ·            ────┬───
     ·                ╰── Rest element must be last element
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js:72:1]
+ 72 │ var C = class {
+ 73 │   #method([...[ x ] = []] = []) {
+    ·            ─────────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js:72:1]
+ 72 │ var C = class {
+ 73 │   #method([...x = []] = []) {
+    ·            ─────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js:72:1]
+ 72 │ var C = class {
+ 73 │   #method([...{ x } = []] = []) {
+    ·            ─────────────
  74 │     
     ╰────
 
@@ -8598,6 +8994,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  74 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js:72:1]
+ 72 │ var C = class {
+ 73 │   static #method([...[ x ] = []]) {
+    ·                   ─────────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js:72:1]
+ 72 │ var C = class {
+ 73 │   static #method([...x = []]) {
+    ·                   ─────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js:72:1]
+ 72 │ var C = class {
+ 73 │   static #method([...{ x } = []]) {
+    ·                   ─────────────
+ 74 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
@@ -8622,6 +9042,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  73 │   static #method([...{ x }, y]) {
     ·                   ────┬───
     ·                       ╰── Rest element must be last element
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js:72:1]
+ 72 │ var C = class {
+ 73 │   static #method([...[ x ] = []] = []) {
+    ·                   ─────────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js:72:1]
+ 72 │ var C = class {
+ 73 │   static #method([...x = []] = []) {
+    ·                   ─────────
+ 74 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js:72:1]
+ 72 │ var C = class {
+ 73 │   static #method([...{ x } = []] = []) {
+    ·                   ─────────────
  74 │     
     ╰────
 
@@ -14255,6 +14699,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  64 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/function/dstr/ary-ptrn-rest-init-ary.js:52:1]
+ 52 │ var f;
+ 53 │ f = function([...[ x ] = []]) {
+    ·               ─────────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/function/dstr/ary-ptrn-rest-init-id.js:52:1]
+ 52 │ var f;
+ 53 │ f = function([...x = []]) {
+    ·               ─────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/function/dstr/ary-ptrn-rest-init-obj.js:52:1]
+ 52 │ var f;
+ 53 │ f = function([...{ x } = []]) {
+    ·               ─────────────
+ 54 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var f;
@@ -14279,6 +14747,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  53 │ f = function([...{ x }, y]) {
     ·               ────┬───
     ·                   ╰── Rest element must be last element
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/function/dstr/dflt-ary-ptrn-rest-init-ary.js:52:1]
+ 52 │ var f;
+ 53 │ f = function([...[ x ] = []] = []) {
+    ·               ─────────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/function/dstr/dflt-ary-ptrn-rest-init-id.js:52:1]
+ 52 │ var f;
+ 53 │ f = function([...x = []] = []) {
+    ·               ─────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/function/dstr/dflt-ary-ptrn-rest-init-obj.js:52:1]
+ 52 │ var f;
+ 53 │ f = function([...{ x } = []] = []) {
+    ·               ─────────────
  54 │   
     ╰────
 
@@ -14488,6 +14980,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  65 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/generators/dstr/ary-ptrn-rest-init-ary.js:52:1]
+ 52 │ var f;
+ 53 │ f = function*([...[ x ] = []]) {
+    ·                ─────────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/generators/dstr/ary-ptrn-rest-init-id.js:52:1]
+ 52 │ var f;
+ 53 │ f = function*([...x = []]) {
+    ·                ─────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/generators/dstr/ary-ptrn-rest-init-obj.js:52:1]
+ 52 │ var f;
+ 53 │ f = function*([...{ x } = []]) {
+    ·                ─────────────
+ 54 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/generators/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var f;
@@ -14512,6 +15028,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  53 │ f = function*([...{ x }, y]) {
     ·                ────┬───
     ·                    ╰── Rest element must be last element
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-ary.js:52:1]
+ 52 │ var f;
+ 53 │ f = function*([...[ x ] = []] = []) {
+    ·                ─────────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-id.js:52:1]
+ 52 │ var f;
+ 53 │ f = function*([...x = []] = []) {
+    ·                ─────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-obj.js:52:1]
+ 52 │ var f;
+ 53 │ f = function*([...{ x } = []] = []) {
+    ·                ─────────────
  54 │   
     ╰────
 
@@ -15151,6 +15691,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:37:1]
+ 37 │ var obj = {
+ 38 │   async *method([...[ x ] = []]) {
+    ·                  ─────────────
+ 39 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:37:1]
+ 37 │ var obj = {
+ 38 │   async *method([...x = []]) {
+    ·                  ─────────
+ 39 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:37:1]
+ 37 │ var obj = {
+ 38 │   async *method([...{ x } = []]) {
+    ·                  ─────────────
+ 39 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-not-final-ary.js:37:1]
  37 │ var obj = {
@@ -15175,6 +15739,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  38 │   async *method([...{ x }, y]) {
     ·                  ────┬───
     ·                      ╰── Rest element must be last element
+ 39 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:37:1]
+ 37 │ var obj = {
+ 38 │   async *method([...[ x ] = []] = []) {
+    ·                  ─────────────
+ 39 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:37:1]
+ 37 │ var obj = {
+ 38 │   async *method([...x = []] = []) {
+    ·                  ─────────
+ 39 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:37:1]
+ 37 │ var obj = {
+ 38 │   async *method([...{ x } = []] = []) {
+    ·                  ─────────────
  39 │     
     ╰────
 
@@ -15205,6 +15793,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  39 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-ary.js:57:1]
+ 57 │ var obj = {
+ 58 │   *method([...[ x ] = []]) {
+    ·            ─────────────
+ 59 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-id.js:57:1]
+ 57 │ var obj = {
+ 58 │   *method([...x = []]) {
+    ·            ─────────
+ 59 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-obj.js:57:1]
+ 57 │ var obj = {
+ 58 │   *method([...{ x } = []]) {
+    ·            ─────────────
+ 59 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-not-final-ary.js:57:1]
  57 │ var obj = {
@@ -15229,6 +15841,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  58 │   *method([...{ x }, y]) {
     ·            ────┬───
     ·                ╰── Rest element must be last element
+ 59 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:57:1]
+ 57 │ var obj = {
+ 58 │   *method([...[ x ] = []] = []) {
+    ·            ─────────────
+ 59 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:57:1]
+ 57 │ var obj = {
+ 58 │   *method([...x = []] = []) {
+    ·            ─────────
+ 59 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:57:1]
+ 57 │ var obj = {
+ 58 │   *method([...{ x } = []] = []) {
+    ·            ─────────────
  59 │     
     ╰────
 
@@ -15259,6 +15895,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  59 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-init-ary.js:54:1]
+ 54 │ var obj = {
+ 55 │   method([...[ x ] = []]) {
+    ·           ─────────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-init-id.js:54:1]
+ 54 │ var obj = {
+ 55 │   method([...x = []]) {
+    ·           ─────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-init-obj.js:54:1]
+ 54 │ var obj = {
+ 55 │   method([...{ x } = []]) {
+    ·           ─────────────
+ 56 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-not-final-ary.js:54:1]
  54 │ var obj = {
@@ -15283,6 +15943,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  55 │   method([...{ x }, y]) {
     ·           ────┬───
     ·               ╰── Rest element must be last element
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:54:1]
+ 54 │ var obj = {
+ 55 │   method([...[ x ] = []] = []) {
+    ·           ─────────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-id.js:54:1]
+ 54 │ var obj = {
+ 55 │   method([...x = []] = []) {
+    ·           ─────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:54:1]
+ 54 │ var obj = {
+ 55 │   method([...{ x } = []] = []) {
+    ·           ─────────────
  56 │     
     ╰────
 
@@ -21326,6 +22010,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  44 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-init-ary.js:31:1]
+ 31 │ var callCount = 0;
+ 32 │ async function* f([...[ x ] = []]) {
+    ·                    ─────────────
+ 33 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-init-id.js:31:1]
+ 31 │ var callCount = 0;
+ 32 │ async function* f([...x = []]) {
+    ·                    ─────────
+ 33 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-init-obj.js:31:1]
+ 31 │ var callCount = 0;
+ 32 │ async function* f([...{ x } = []]) {
+    ·                    ─────────────
+ 33 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-not-final-ary.js:31:1]
  31 │ var callCount = 0;
@@ -21350,6 +22058,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  32 │ async function* f([...{ x }, y]) {
     ·                    ────┬───
     ·                        ╰── Rest element must be last element
+ 33 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js:31:1]
+ 31 │ var callCount = 0;
+ 32 │ async function* f([...[ x ] = []] = []) {
+    ·                    ─────────────
+ 33 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js:31:1]
+ 31 │ var callCount = 0;
+ 32 │ async function* f([...x = []] = []) {
+    ·                    ─────────
+ 33 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js:31:1]
+ 31 │ var callCount = 0;
+ 32 │ async function* f([...{ x } = []] = []) {
+    ·                    ─────────────
  33 │   
     ╰────
 
@@ -22680,6 +23412,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:55:1]
+ 55 │ class C {
+ 56 │   async *method([...[ x ] = []]) {
+    ·                  ─────────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:55:1]
+ 55 │ class C {
+ 56 │   async *method([...x = []]) {
+    ·                  ─────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:55:1]
+ 55 │ class C {
+ 56 │   async *method([...{ x } = []]) {
+    ·                  ─────────────
+ 57 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
@@ -22704,6 +23460,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  56 │   async *method([...{ x }, y]) {
     ·                  ────┬───
     ·                      ╰── Rest element must be last element
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:55:1]
+ 55 │ class C {
+ 56 │   async *method([...[ x ] = []] = []) {
+    ·                  ─────────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:55:1]
+ 55 │ class C {
+ 56 │   async *method([...x = []] = []) {
+    ·                  ─────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:55:1]
+ 55 │ class C {
+ 56 │   async *method([...{ x } = []] = []) {
+    ·                  ─────────────
  57 │     
     ╰────
 
@@ -22734,6 +23514,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  57 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js:55:1]
+ 55 │ class C {
+ 56 │   static async *method([...[ x ] = []]) {
+    ·                         ─────────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js:55:1]
+ 55 │ class C {
+ 56 │   static async *method([...x = []]) {
+    ·                         ─────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js:55:1]
+ 55 │ class C {
+ 56 │   static async *method([...{ x } = []]) {
+    ·                         ─────────────
+ 57 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
@@ -22758,6 +23562,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  56 │   static async *method([...{ x }, y]) {
     ·                         ────┬───
     ·                             ╰── Rest element must be last element
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:55:1]
+ 55 │ class C {
+ 56 │   static async *method([...[ x ] = []] = []) {
+    ·                         ─────────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:55:1]
+ 55 │ class C {
+ 56 │   static async *method([...x = []] = []) {
+    ·                         ─────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:55:1]
+ 55 │ class C {
+ 56 │   static async *method([...{ x } = []] = []) {
+    ·                         ─────────────
  57 │     
     ╰────
 
@@ -22788,6 +23616,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  57 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js:55:1]
+ 55 │ class C {
+ 56 │   async * #method([...[ x ] = []]) {
+    ·                    ─────────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js:55:1]
+ 55 │ class C {
+ 56 │   async * #method([...x = []]) {
+    ·                    ─────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js:55:1]
+ 55 │ class C {
+ 56 │   async * #method([...{ x } = []]) {
+    ·                    ─────────────
+ 57 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
@@ -22812,6 +23664,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  56 │   async * #method([...{ x }, y]) {
     ·                    ────┬───
     ·                        ╰── Rest element must be last element
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:55:1]
+ 55 │ class C {
+ 56 │   async * #method([...[ x ] = []] = []) {
+    ·                    ─────────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js:55:1]
+ 55 │ class C {
+ 56 │   async * #method([...x = []] = []) {
+    ·                    ─────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:55:1]
+ 55 │ class C {
+ 56 │   async * #method([...{ x } = []] = []) {
+    ·                    ─────────────
  57 │     
     ╰────
 
@@ -22842,6 +23718,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  57 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js:55:1]
+ 55 │ class C {
+ 56 │   static async * #method([...[ x ] = []]) {
+    ·                           ─────────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js:55:1]
+ 55 │ class C {
+ 56 │   static async * #method([...x = []]) {
+    ·                           ─────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js:55:1]
+ 55 │ class C {
+ 56 │   static async * #method([...{ x } = []]) {
+    ·                           ─────────────
+ 57 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
@@ -22866,6 +23766,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  56 │   static async * #method([...{ x }, y]) {
     ·                           ────┬───
     ·                               ╰── Rest element must be last element
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:55:1]
+ 55 │ class C {
+ 56 │   static async * #method([...[ x ] = []] = []) {
+    ·                           ─────────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:55:1]
+ 55 │ class C {
+ 56 │   static async * #method([...x = []] = []) {
+    ·                           ─────────
+ 57 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:55:1]
+ 55 │ class C {
+ 56 │   static async * #method([...{ x } = []] = []) {
+    ·                           ─────────────
  57 │     
     ╰────
 
@@ -22896,6 +23820,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  57 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js:73:1]
+ 73 │ class C {
+ 74 │   *method([...[ x ] = []]) {
+    ·            ─────────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-id.js:73:1]
+ 73 │ class C {
+ 74 │   *method([...x = []]) {
+    ·            ─────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js:73:1]
+ 73 │ class C {
+ 74 │   *method([...{ x } = []]) {
+    ·            ─────────────
+ 75 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
@@ -22920,6 +23868,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  74 │   *method([...{ x }, y]) {
     ·            ────┬───
     ·                ╰── Rest element must be last element
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:73:1]
+ 73 │ class C {
+ 74 │   *method([...[ x ] = []] = []) {
+    ·            ─────────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:73:1]
+ 73 │ class C {
+ 74 │   *method([...x = []] = []) {
+    ·            ─────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:73:1]
+ 73 │ class C {
+ 74 │   *method([...{ x } = []] = []) {
+    ·            ─────────────
  75 │     
     ╰────
 
@@ -22950,6 +23922,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  75 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js:73:1]
+ 73 │ class C {
+ 74 │   static *method([...[ x ] = []]) {
+    ·                   ─────────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js:73:1]
+ 73 │ class C {
+ 74 │   static *method([...x = []]) {
+    ·                   ─────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js:73:1]
+ 73 │ class C {
+ 74 │   static *method([...{ x } = []]) {
+    ·                   ─────────────
+ 75 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
@@ -22974,6 +23970,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  74 │   static *method([...{ x }, y]) {
     ·                   ────┬───
     ·                       ╰── Rest element must be last element
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:73:1]
+ 73 │ class C {
+ 74 │   static *method([...[ x ] = []] = []) {
+    ·                   ─────────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js:73:1]
+ 73 │ class C {
+ 74 │   static *method([...x = []] = []) {
+    ·                   ─────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:73:1]
+ 73 │ class C {
+ 74 │   static *method([...{ x } = []] = []) {
+    ·                   ─────────────
  75 │     
     ╰────
 
@@ -23004,6 +24024,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  75 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-init-ary.js:71:1]
+ 71 │ class C {
+ 72 │   method([...[ x ] = []]) {
+    ·           ─────────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-init-id.js:71:1]
+ 71 │ class C {
+ 72 │   method([...x = []]) {
+    ·           ─────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-init-obj.js:71:1]
+ 71 │ class C {
+ 72 │   method([...{ x } = []]) {
+    ·           ─────────────
+ 73 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
@@ -23028,6 +24072,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  72 │   method([...{ x }, y]) {
     ·           ────┬───
     ·               ╰── Rest element must be last element
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:71:1]
+ 71 │ class C {
+ 72 │   method([...[ x ] = []] = []) {
+    ·           ─────────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js:71:1]
+ 71 │ class C {
+ 72 │   method([...x = []] = []) {
+    ·           ─────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:71:1]
+ 71 │ class C {
+ 72 │   method([...{ x } = []] = []) {
+    ·           ─────────────
  73 │     
     ╰────
 
@@ -23058,6 +24126,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  73 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-init-ary.js:71:1]
+ 71 │ class C {
+ 72 │   static method([...[ x ] = []]) {
+    ·                  ─────────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-init-id.js:71:1]
+ 71 │ class C {
+ 72 │   static method([...x = []]) {
+    ·                  ─────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-init-obj.js:71:1]
+ 71 │ class C {
+ 72 │   static method([...{ x } = []]) {
+    ·                  ─────────────
+ 73 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
@@ -23082,6 +24174,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  72 │   static method([...{ x }, y]) {
     ·                  ────┬───
     ·                      ╰── Rest element must be last element
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js:71:1]
+ 71 │ class C {
+ 72 │   static method([...[ x ] = []] = []) {
+    ·                  ─────────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js:71:1]
+ 71 │ class C {
+ 72 │   static method([...x = []] = []) {
+    ·                  ─────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js:71:1]
+ 71 │ class C {
+ 72 │   static method([...{ x } = []] = []) {
+    ·                  ─────────────
  73 │     
     ╰────
 
@@ -23112,6 +24228,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  73 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js:73:1]
+ 73 │ class C {
+ 74 │   * #method([...[ x ] = []]) {
+    ·              ─────────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js:73:1]
+ 73 │ class C {
+ 74 │   * #method([...x = []]) {
+    ·              ─────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js:73:1]
+ 73 │ class C {
+ 74 │   * #method([...{ x } = []]) {
+    ·              ─────────────
+ 75 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
@@ -23136,6 +24276,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  74 │   * #method([...{ x }, y]) {
     ·              ────┬───
     ·                  ╰── Rest element must be last element
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:73:1]
+ 73 │ class C {
+ 74 │   * #method([...[ x ] = []] = []) {
+    ·              ─────────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js:73:1]
+ 73 │ class C {
+ 74 │   * #method([...x = []] = []) {
+    ·              ─────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:73:1]
+ 73 │ class C {
+ 74 │   * #method([...{ x } = []] = []) {
+    ·              ─────────────
  75 │     
     ╰────
 
@@ -23166,6 +24330,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  75 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js:73:1]
+ 73 │ class C {
+ 74 │   static * #method([...[ x ] = []]) {
+    ·                     ─────────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js:73:1]
+ 73 │ class C {
+ 74 │   static * #method([...x = []]) {
+    ·                     ─────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js:73:1]
+ 73 │ class C {
+ 74 │   static * #method([...{ x } = []]) {
+    ·                     ─────────────
+ 75 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
@@ -23190,6 +24378,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  74 │   static * #method([...{ x }, y]) {
     ·                     ────┬───
     ·                         ╰── Rest element must be last element
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:73:1]
+ 73 │ class C {
+ 74 │   static * #method([...[ x ] = []] = []) {
+    ·                     ─────────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:73:1]
+ 73 │ class C {
+ 74 │   static * #method([...x = []] = []) {
+    ·                     ─────────
+ 75 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:73:1]
+ 73 │ class C {
+ 74 │   static * #method([...{ x } = []] = []) {
+    ·                     ─────────────
  75 │     
     ╰────
 
@@ -23220,6 +24432,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  75 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-init-ary.js:71:1]
+ 71 │ class C {
+ 72 │   #method([...[ x ] = []]) {
+    ·            ─────────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-init-id.js:71:1]
+ 71 │ class C {
+ 72 │   #method([...x = []]) {
+    ·            ─────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-init-obj.js:71:1]
+ 71 │ class C {
+ 72 │   #method([...{ x } = []]) {
+    ·            ─────────────
+ 73 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
@@ -23244,6 +24480,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  72 │   #method([...{ x }, y]) {
     ·            ────┬───
     ·                ╰── Rest element must be last element
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js:71:1]
+ 71 │ class C {
+ 72 │   #method([...[ x ] = []] = []) {
+    ·            ─────────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js:71:1]
+ 71 │ class C {
+ 72 │   #method([...x = []] = []) {
+    ·            ─────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js:71:1]
+ 71 │ class C {
+ 72 │   #method([...{ x } = []] = []) {
+    ·            ─────────────
  73 │     
     ╰────
 
@@ -23274,6 +24534,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  73 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js:71:1]
+ 71 │ class C {
+ 72 │   static #method([...[ x ] = []]) {
+    ·                   ─────────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js:71:1]
+ 71 │ class C {
+ 72 │   static #method([...x = []]) {
+    ·                   ─────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js:71:1]
+ 71 │ class C {
+ 72 │   static #method([...{ x } = []]) {
+    ·                   ─────────────
+ 73 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
@@ -23298,6 +24582,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  72 │   static #method([...{ x }, y]) {
     ·                   ────┬───
     ·                       ╰── Rest element must be last element
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js:71:1]
+ 71 │ class C {
+ 72 │   static #method([...[ x ] = []] = []) {
+    ·                   ─────────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js:71:1]
+ 71 │ class C {
+ 72 │   static #method([...x = []] = []) {
+    ·                   ─────────
+ 73 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js:71:1]
+ 71 │ class C {
+ 72 │   static #method([...{ x } = []] = []) {
+    ·                   ─────────────
  73 │     
     ╰────
 
@@ -27926,6 +29234,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ }
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/const/dstr/ary-ptrn-rest-init-ary.js:29:1]
+ 29 │ 
+ 30 │ const [...[ x ] = []] = [];
+    ·        ─────────────
+ 31 │ 
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/const/dstr/ary-ptrn-rest-init-id.js:29:1]
+ 29 │ 
+ 30 │ const [...x = []] = [];
+    ·        ─────────
+ 31 │ 
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/const/dstr/ary-ptrn-rest-init-obj.js:29:1]
+ 29 │ 
+ 30 │ const [...{ x } = []] = [];
+    ·        ─────────────
+ 31 │ 
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/const/dstr/ary-ptrn-rest-not-final-ary.js:29:1]
  29 │ 
@@ -28526,6 +29858,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  34 │ }
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js:51:1]
+ 51 │ async function fn() {
+ 52 │   for await (const [...[ x ] = []] of [[]]) {
+    ·                     ─────────────
+ 53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-id.js:51:1]
+ 51 │ async function fn() {
+ 52 │   for await (const [...x = []] of [[]]) {
+    ·                     ─────────
+ 53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-obj.js:51:1]
+ 51 │ async function fn() {
+ 52 │   for await (const [...{ x } = []] of [[]]) {
+    ·                     ─────────────
+ 53 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ async function fn() {
@@ -28551,6 +29907,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                     ────┬───
     ·                         ╰── Rest element must be last element
  53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-ary.js:54:1]
+ 54 │ async function fn() {
+ 55 │   for await (const [...[ x ] = []] of asyncIter) {
+    ·                     ─────────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-id.js:54:1]
+ 54 │ async function fn() {
+ 55 │   for await (const [...x = []] of asyncIter) {
+    ·                     ─────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-obj.js:54:1]
+ 54 │ async function fn() {
+ 55 │   for await (const [...{ x } = []] of asyncIter) {
+    ·                     ─────────────
+ 56 │     
     ╰────
 
   × Rest element must be last element
@@ -28580,6 +29960,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  56 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-ary.js:51:1]
+ 51 │ async function fn() {
+ 52 │   for await (let [...[ x ] = []] of [[]]) {
+    ·                   ─────────────
+ 53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-id.js:51:1]
+ 51 │ async function fn() {
+ 52 │   for await (let [...x = []] of [[]]) {
+    ·                   ─────────
+ 53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-obj.js:51:1]
+ 51 │ async function fn() {
+ 52 │   for await (let [...{ x } = []] of [[]]) {
+    ·                   ─────────────
+ 53 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ async function fn() {
@@ -28605,6 +30009,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ────┬───
     ·                       ╰── Rest element must be last element
  53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-ary.js:54:1]
+ 54 │ async function fn() {
+ 55 │   for await (let [...[ x ] = []] of asyncIter) {
+    ·                   ─────────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-id.js:54:1]
+ 54 │ async function fn() {
+ 55 │   for await (let [...x = []] of asyncIter) {
+    ·                   ─────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-obj.js:54:1]
+ 54 │ async function fn() {
+ 55 │   for await (let [...{ x } = []] of asyncIter) {
+    ·                   ─────────────
+ 56 │     
     ╰────
 
   × Rest element must be last element
@@ -28634,6 +30062,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  56 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-ary.js:48:1]
+ 48 │ async function fn() {
+ 49 │   for await (var [...[ x ] = []] of [[]]) {
+    ·                   ─────────────
+ 50 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-id.js:48:1]
+ 48 │ async function fn() {
+ 49 │   for await (var [...x = []] of [[]]) {
+    ·                   ─────────
+ 50 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-obj.js:48:1]
+ 48 │ async function fn() {
+ 49 │   for await (var [...{ x } = []] of [[]]) {
+    ·                   ─────────────
+ 50 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-not-final-ary.js:48:1]
  48 │ async function fn() {
@@ -28659,6 +30111,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ────┬───
     ·                       ╰── Rest element must be last element
  50 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-ary.js:54:1]
+ 54 │ async function fn() {
+ 55 │   for await (var [...[ x ] = []] of asyncIter) {
+    ·                   ─────────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-id.js:54:1]
+ 54 │ async function fn() {
+ 55 │   for await (var [...x = []] of asyncIter) {
+    ·                   ─────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-obj.js:54:1]
+ 54 │ async function fn() {
+ 55 │   for await (var [...{ x } = []] of asyncIter) {
+    ·                   ─────────────
+ 56 │     
     ╰────
 
   × Rest element must be last element
@@ -28696,6 +30172,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  20 │ }
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-ary.js:51:1]
+ 51 │ async function *fn() {
+ 52 │   for await (const [...[ x ] = []] of [[]]) {
+    ·                     ─────────────
+ 53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-id.js:51:1]
+ 51 │ async function *fn() {
+ 52 │   for await (const [...x = []] of [[]]) {
+    ·                     ─────────
+ 53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-obj.js:51:1]
+ 51 │ async function *fn() {
+ 52 │   for await (const [...{ x } = []] of [[]]) {
+    ·                     ─────────────
+ 53 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ async function *fn() {
@@ -28721,6 +30221,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                     ────┬───
     ·                         ╰── Rest element must be last element
  53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-ary.js:54:1]
+ 54 │ async function *fn() {
+ 55 │   for await (const [...[ x ] = []] of asyncIter) {
+    ·                     ─────────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-id.js:54:1]
+ 54 │ async function *fn() {
+ 55 │   for await (const [...x = []] of asyncIter) {
+    ·                     ─────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-obj.js:54:1]
+ 54 │ async function *fn() {
+ 55 │   for await (const [...{ x } = []] of asyncIter) {
+    ·                     ─────────────
+ 56 │     
     ╰────
 
   × Rest element must be last element
@@ -28766,6 +30290,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  20 │ }
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-ary.js:51:1]
+ 51 │ async function *fn() {
+ 52 │   for await (let [...[ x ] = []] of [[]]) {
+    ·                   ─────────────
+ 53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-id.js:51:1]
+ 51 │ async function *fn() {
+ 52 │   for await (let [...x = []] of [[]]) {
+    ·                   ─────────
+ 53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-obj.js:51:1]
+ 51 │ async function *fn() {
+ 52 │   for await (let [...{ x } = []] of [[]]) {
+    ·                   ─────────────
+ 53 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ async function *fn() {
@@ -28791,6 +30339,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ────┬───
     ·                       ╰── Rest element must be last element
  53 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-ary.js:54:1]
+ 54 │ async function *fn() {
+ 55 │   for await (let [...[ x ] = []] of asyncIter) {
+    ·                   ─────────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-id.js:54:1]
+ 54 │ async function *fn() {
+ 55 │   for await (let [...x = []] of asyncIter) {
+    ·                   ─────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-obj.js:54:1]
+ 54 │ async function *fn() {
+ 55 │   for await (let [...{ x } = []] of asyncIter) {
+    ·                   ─────────────
+ 56 │     
     ╰────
 
   × Rest element must be last element
@@ -28836,6 +30408,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  20 │ }
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-ary.js:48:1]
+ 48 │ async function *fn() {
+ 49 │   for await (var [...[ x ] = []] of [[]]) {
+    ·                   ─────────────
+ 50 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-id.js:48:1]
+ 48 │ async function *fn() {
+ 49 │   for await (var [...x = []] of [[]]) {
+    ·                   ─────────
+ 50 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-obj.js:48:1]
+ 48 │ async function *fn() {
+ 49 │   for await (var [...{ x } = []] of [[]]) {
+    ·                   ─────────────
+ 50 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-not-final-ary.js:48:1]
  48 │ async function *fn() {
@@ -28861,6 +30457,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ────┬───
     ·                       ╰── Rest element must be last element
  50 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-ary.js:54:1]
+ 54 │ async function *fn() {
+ 55 │   for await (var [...[ x ] = []] of asyncIter) {
+    ·                   ─────────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-id.js:54:1]
+ 54 │ async function *fn() {
+ 55 │   for await (var [...x = []] of asyncIter) {
+    ·                   ─────────
+ 56 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-obj.js:54:1]
+ 54 │ async function *fn() {
+ 55 │   for await (var [...{ x } = []] of asyncIter) {
+    ·                   ─────────────
+ 56 │     
     ╰────
 
   × Rest element must be last element
@@ -29697,6 +31317,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ─────────────
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js:50:1]
+ 50 │ 
+ 51 │ for (const [...[ x ] = []] of [[]]) {
+    ·             ─────────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js:50:1]
+ 50 │ 
+ 51 │ for (const [...x = []] of [[]]) {
+    ·             ─────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-init-obj.js:50:1]
+ 50 │ 
+ 51 │ for (const [...{ x } = []] of [[]]) {
+    ·             ─────────────
+ 52 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-not-final-ary.js:50:1]
  50 │ 
@@ -29736,6 +31380,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ 
  17 │ for (let [x] = 1 of []) {}
     ·      ───────────
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-init-ary.js:50:1]
+ 50 │ 
+ 51 │ for (let [...[ x ] = []] of [[]]) {
+    ·           ─────────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-init-id.js:50:1]
+ 50 │ 
+ 51 │ for (let [...x = []] of [[]]) {
+    ·           ─────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj.js:50:1]
+ 50 │ 
+ 51 │ for (let [...{ x } = []] of [[]]) {
+    ·           ─────────────
+ 52 │   
     ╰────
 
   × Rest element must be last element
@@ -29882,6 +31550,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ 
  17 │ for (var [x] = 1 of []) {}
     ·      ───────────
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js:47:1]
+ 47 │ 
+ 48 │ for (var [...[ x ] = []] of [[]]) {
+    ·           ─────────────
+ 49 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js:47:1]
+ 47 │ 
+ 48 │ for (var [...x = []] of [[]]) {
+    ·           ─────────
+ 49 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj.js:47:1]
+ 47 │ 
+ 48 │ for (var [...{ x } = []] of [[]]) {
+    ·           ─────────────
+ 49 │   
     ╰────
 
   × Rest element must be last element
@@ -30345,6 +32037,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js:50:1]
+ 50 │ 
+ 51 │ for (const [...[ x ] = []] = []; iterCount < 1; ) {
+    ·             ─────────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-id.js:50:1]
+ 50 │ 
+ 51 │ for (const [...x = []] = []; iterCount < 1; ) {
+    ·             ─────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-obj.js:50:1]
+ 50 │ 
+ 51 │ for (const [...{ x } = []] = []; iterCount < 1; ) {
+    ·             ─────────────
+ 52 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-ary.js:50:1]
  50 │ 
@@ -30369,6 +32085,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  51 │ for (const [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
     ·             ────┬───
     ·                 ╰── Rest element must be last element
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-ary.js:50:1]
+ 50 │ 
+ 51 │ for (let [...[ x ] = []] = []; iterCount < 1; ) {
+    ·           ─────────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-id.js:50:1]
+ 50 │ 
+ 51 │ for (let [...x = []] = []; iterCount < 1; ) {
+    ·           ─────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js:50:1]
+ 50 │ 
+ 51 │ for (let [...{ x } = []] = []; iterCount < 1; ) {
+    ·           ─────────────
  52 │   
     ╰────
 
@@ -30397,6 +32137,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ────┬───
     ·               ╰── Rest element must be last element
  52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js:44:1]
+ 44 │ 
+ 45 │ for (var [...[ x ] = []] = []; iterCount < 1; ) {
+    ·           ─────────────
+ 46 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-id.js:44:1]
+ 44 │ 
+ 45 │ for (var [...x = []] = []; iterCount < 1; ) {
+    ·           ─────────
+ 46 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js:44:1]
+ 44 │ 
+ 45 │ for (var [...{ x } = []] = []; iterCount < 1; ) {
+    ·           ─────────────
+ 46 │   
     ╰────
 
   × Rest element must be last element
@@ -30587,6 +32351,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  65 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/function/dstr/ary-ptrn-rest-init-ary.js:52:1]
+ 52 │ var callCount = 0;
+ 53 │ function f([...[ x ] = []]) {
+    ·             ─────────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/function/dstr/ary-ptrn-rest-init-id.js:52:1]
+ 52 │ var callCount = 0;
+ 53 │ function f([...x = []]) {
+    ·             ─────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/function/dstr/ary-ptrn-rest-init-obj.js:52:1]
+ 52 │ var callCount = 0;
+ 53 │ function f([...{ x } = []]) {
+    ·             ─────────────
+ 54 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/function/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var callCount = 0;
@@ -30611,6 +32399,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  53 │ function f([...{ x }, y]) {
     ·             ────┬───
     ·                 ╰── Rest element must be last element
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/function/dstr/dflt-ary-ptrn-rest-init-ary.js:52:1]
+ 52 │ var callCount = 0;
+ 53 │ function f([...[ x ] = []] = []) {
+    ·             ─────────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/function/dstr/dflt-ary-ptrn-rest-init-id.js:52:1]
+ 52 │ var callCount = 0;
+ 53 │ function f([...x = []] = []) {
+    ·             ─────────
+ 54 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/function/dstr/dflt-ary-ptrn-rest-init-obj.js:52:1]
+ 52 │ var callCount = 0;
+ 53 │ function f([...{ x } = []] = []) {
+    ·             ─────────────
  54 │   
     ╰────
 
@@ -30897,6 +32709,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  65 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/generators/dstr/ary-ptrn-rest-init-ary.js:51:1]
+ 51 │ var callCount = 0;
+ 52 │ function* f([...[ x ] = []]) {
+    ·              ─────────────
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/generators/dstr/ary-ptrn-rest-init-id.js:51:1]
+ 51 │ var callCount = 0;
+ 52 │ function* f([...x = []]) {
+    ·              ─────────
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/generators/dstr/ary-ptrn-rest-init-obj.js:51:1]
+ 51 │ var callCount = 0;
+ 52 │ function* f([...{ x } = []]) {
+    ·              ─────────────
+ 53 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/generators/dstr/ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ var callCount = 0;
@@ -30921,6 +32757,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  52 │ function* f([...{ x }, y]) {
     ·              ────┬───
     ·                  ╰── Rest element must be last element
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/generators/dstr/dflt-ary-ptrn-rest-init-ary.js:51:1]
+ 51 │ var callCount = 0;
+ 52 │ function* f([...[ x ] = []] = []) {
+    ·              ─────────────
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/generators/dstr/dflt-ary-ptrn-rest-init-id.js:51:1]
+ 51 │ var callCount = 0;
+ 52 │ function* f([...x = []] = []) {
+    ·              ─────────
+ 53 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/generators/dstr/dflt-ary-ptrn-rest-init-obj.js:51:1]
+ 51 │ var callCount = 0;
+ 52 │ function* f([...{ x } = []] = []) {
+    ·              ─────────────
  53 │   
     ╰────
 
@@ -31801,6 +33661,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ 
  17 │ yield: 1;
     · ─────
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/let/dstr/ary-ptrn-rest-init-ary.js:29:1]
+ 29 │ 
+ 30 │ let [...[ x ] = []] = [];
+    ·      ─────────────
+ 31 │ 
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/let/dstr/ary-ptrn-rest-init-id.js:29:1]
+ 29 │ 
+ 30 │ let [...x = []] = [];
+    ·      ─────────
+ 31 │ 
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/let/dstr/ary-ptrn-rest-init-obj.js:29:1]
+ 29 │ 
+ 30 │ let [...{ x } = []] = [];
+    ·      ─────────────
+ 31 │ 
     ╰────
 
   × Rest element must be last element
@@ -32876,6 +34760,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                ────
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/try/dstr/ary-ptrn-rest-init-ary.js:31:1]
+ 31 │   throw [];
+ 32 │ } catch ([...[ x ] = []]) {
+    ·           ─────────────
+ 33 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/try/dstr/ary-ptrn-rest-init-id.js:31:1]
+ 31 │   throw [];
+ 32 │ } catch ([...x = []]) {
+    ·           ─────────
+ 33 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/try/dstr/ary-ptrn-rest-init-obj.js:31:1]
+ 31 │   throw [];
+ 32 │ } catch ([...{ x } = []]) {
+    ·           ─────────────
+ 33 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/try/dstr/ary-ptrn-rest-not-final-ary.js:31:1]
  31 │   throw [1, 2, 3];
@@ -33197,6 +35105,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  24 │     var [await] = [];
     ·          ─────
  25 │   }
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/variable/dstr/ary-ptrn-rest-init-ary.js:28:1]
+ 28 │ 
+ 29 │ var [...[ x ] = []] = [];
+    ·      ─────────────
+ 30 │ 
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/variable/dstr/ary-ptrn-rest-init-id.js:28:1]
+ 28 │ 
+ 29 │ var [...x = []] = [];
+    ·      ─────────
+ 30 │ 
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/variable/dstr/ary-ptrn-rest-init-obj.js:28:1]
+ 28 │ 
+ 29 │ var [...{ x } = []] = [];
+    ·      ─────────────
+ 30 │ 
     ╰────
 
   × Rest element must be last element

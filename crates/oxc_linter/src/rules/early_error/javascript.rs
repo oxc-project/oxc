@@ -2,7 +2,7 @@
 use oxc_ast::{
     ast::*,
     syntax_directed_operations::{BoundNames, IsSimpleParameterList, PropName},
-    AstKind, Atom, ModuleKind, Span,
+    AstKind, Atom, GetSpan, ModuleKind, Span,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -54,6 +54,7 @@ impl Rule for EarlyErrorJavaScript {
 
             AstKind::FormalParameters(params) => check_formal_parameters(params, node, ctx),
             AstKind::FormalParameter(param) => check_formal_parameter(param, ctx),
+            AstKind::ArrayPattern(pat) => check_array_pattern(pat, ctx),
 
             AstKind::ObjectExpression(expr) => check_object_expression(expr, ctx),
             AstKind::BinaryExpression(expr) => check_binary_expression(expr, ctx),
@@ -816,6 +817,26 @@ fn check_formal_parameter(param: &FormalParameter, ctx: &LintContext) {
             ctx.diagnostic(ARestParameterCannotHaveAnInitializer(param.span));
         }
         _ => {}
+    }
+}
+
+fn check_array_pattern(pattern: &ArrayPattern, ctx: &LintContext) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("A rest parameter cannot have an initializer")]
+    #[diagnostic()]
+    struct ARestParameterCannotHaveAnInitializer(#[label] Span);
+
+    for elem in pattern.elements.iter().flatten() {
+        match &elem.kind {
+            // function foo([...x = []]) { }
+            //                    ^^^^ A rest element cannot have an initializer
+            BindingPatternKind::RestElement(pat)
+                if matches!(pat.argument.kind, BindingPatternKind::AssignmentPattern(_)) =>
+            {
+                ctx.diagnostic(ARestParameterCannotHaveAnInitializer(elem.span()));
+            }
+            _ => {}
+        }
     }
 }
 
