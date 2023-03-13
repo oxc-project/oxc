@@ -3,8 +3,11 @@
 use std::fmt;
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[repr(u8)]
 #[non_exhaustive]
 pub enum Kind {
+    // 12.6 identifier
+    Ident = 0,
     Undetermined,
     #[default]
     Eof,
@@ -12,8 +15,6 @@ pub enum Kind {
     NewLine,
     Comment,
     MultiLineComment,
-    // 12.6 identifier
-    Ident,
     // 12.6.2 keyword
     Await,
     Break,

@@ -1,6 +1,6 @@
 Test262 Summary:
-AST Parsed     : 44015/44034 (99.96%)
-Positive Passed: 44015/44034 (99.96%)
+AST Parsed     : 43965/43984 (99.96%)
+Positive Passed: 43965/43984 (99.96%)
 Negative Passed: 3899/3917 (99.54%)
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
 Expect Syntax Error: "language/expressions/await/await-BindingIdentifier-nested.js"
@@ -19141,14 +19141,12 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
 `
     ╰────
 
-  × Invalid Character `
-`
+  × Invalid Character ``
     ╭─[language/line-terminators/S7.3_A6_T2.js:16:1]
  16 │ 
  17 │ var\u000Dx;
     ·          ▲
-    ·          ╰── Invalid Character `
-`
+    ·          ╰── Invalid Character ``
     ╰────
 
   × Invalid Character ` `
@@ -19169,8 +19167,7 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
 
   × Automatic Semicolon Insertion
     ╭─[language/line-terminators/invalid-comment-single-cr.js:16:1]
- 16 │ //
- this text is not included in the single-line comment that precedes it
+ 16 │ // this text is not included in the single-line comment that precedes it
     ·        ┬
     ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
     ╰────
@@ -19202,8 +19199,7 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
   × Unterminated regular expression
     ╭─[language/line-terminators/invalid-regexp-cr.js:16:1]
  16 │ 
- 17 │ /
-/
+ 17 │ //
     · ┬
     · ╰── Unterminated regular expression
     ╰────
@@ -19236,8 +19232,7 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
   × Unterminated string
     ╭─[language/line-terminators/invalid-string-cr.js:15:1]
  15 │ 
- 16 │ '
-'
+ 16 │ ''
     · ┬
     · ╰── Unterminated string
     ╰────

@@ -186,6 +186,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "cmov"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "254890f9fb6f7239e0f54eed04dea0c0862167206e8315aebfba3443d591871c"
+
+[[package]]
 name = "compact_str"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -955,6 +961,7 @@ name = "oxc_parser"
 version = "0.0.0"
 dependencies = [
  "bitflags",
+ "cmov",
  "miette",
  "num-bigint",
  "oxc_allocator",

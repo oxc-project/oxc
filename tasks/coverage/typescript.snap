@@ -1,7 +1,7 @@
 TypeScript Summary:
-AST Parsed     : 2305/2338 (98.59%)
-Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 682/2532 (26.94%)
+AST Parsed     : 2301/2334 (98.59%)
+Positive Passed: 2301/2334 (98.59%)
+Negative Passed: 682/2531 (26.95%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -3796,14 +3796,12 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │     }
     ╰────
 
-  × Invalid Character `
-`
+  × Invalid Character ``
    ╭─[classes/members/privateNames/privateNameHashCharName.ts:2:1]
  2 │ 
  3 │ #
    ·  ▲
-   ·  ╰── Invalid Character `
-`
+   ·  ╰── Invalid Character ``
  4 │ 
    ╰────
 
