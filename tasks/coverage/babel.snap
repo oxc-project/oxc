@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2050/2069 (99.08%)
 Positive Passed: 2050/2069 (99.08%)
-Negative Passed: 1133/1502 (75.43%)
+Negative Passed: 1312/1502 (87.35%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -13,84 +13,15 @@ Expect Syntax Error: "annex-b/disabled/3.5-for-in-initializer/input.js"
 Expect Syntax Error: "annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-if/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-loop/input.js"
-Expect Syntax Error: "core/escape-string/invalid-decimal-escape-strict-directive-function/input.js"
-Expect Syntax Error: "core/escape-string/invalid-decimal-escape-strict-directive/input.js"
-Expect Syntax Error: "core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js"
-Expect Syntax Error: "core/escape-string/non-octal-eight-and-nine/input.js"
-Expect Syntax Error: "core/escape-string/numeric-escape-in-directive/input.js"
-Expect Syntax Error: "core/escape-string/numeric-escape-in-property-name/input.js"
-Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict-function/input.js"
-Expect Syntax Error: "core/legacy-octal/legacy-octal-after-use-strict/input.js"
 Expect Syntax Error: "core/scope/undecl-export-as-default/input.js"
 Expect Syntax Error: "core/scope/undecl-export-as/input.js"
 Expect Syntax Error: "core/scope/undecl-export-block/input.js"
 Expect Syntax Error: "core/scope/undecl-export-builtin-as/input.js"
 Expect Syntax Error: "core/scope/undecl-export-builtin/input.js"
 Expect Syntax Error: "core/scope/undecl-export/input.js"
-Expect Syntax Error: "core/uncategorised/466/input.js"
-Expect Syntax Error: "core/uncategorised/467/input.js"
-Expect Syntax Error: "core/uncategorised/468/input.js"
-Expect Syntax Error: "core/uncategorised/469/input.js"
-Expect Syntax Error: "core/uncategorised/470/input.js"
-Expect Syntax Error: "core/uncategorised/471/input.js"
-Expect Syntax Error: "core/uncategorised/472/input.js"
-Expect Syntax Error: "core/uncategorised/473/input.js"
-Expect Syntax Error: "core/uncategorised/474/input.js"
-Expect Syntax Error: "core/uncategorised/475/input.js"
-Expect Syntax Error: "core/uncategorised/476/input.js"
-Expect Syntax Error: "core/uncategorised/477/input.js"
-Expect Syntax Error: "core/uncategorised/478/input.js"
-Expect Syntax Error: "core/uncategorised/479/input.js"
-Expect Syntax Error: "core/uncategorised/480/input.js"
-Expect Syntax Error: "core/uncategorised/481/input.js"
-Expect Syntax Error: "core/uncategorised/482/input.js"
-Expect Syntax Error: "core/uncategorised/483/input.js"
-Expect Syntax Error: "core/uncategorised/484/input.js"
-Expect Syntax Error: "core/uncategorised/485/input.js"
-Expect Syntax Error: "core/uncategorised/486/input.js"
-Expect Syntax Error: "core/uncategorised/487/input.js"
-Expect Syntax Error: "core/uncategorised/488/input.js"
-Expect Syntax Error: "core/uncategorised/489/input.js"
-Expect Syntax Error: "core/uncategorised/490/input.js"
-Expect Syntax Error: "core/uncategorised/491/input.js"
-Expect Syntax Error: "core/uncategorised/492/input.js"
-Expect Syntax Error: "core/uncategorised/493/input.js"
-Expect Syntax Error: "core/uncategorised/494/input.js"
-Expect Syntax Error: "core/uncategorised/495/input.js"
-Expect Syntax Error: "core/uncategorised/496/input.js"
-Expect Syntax Error: "core/uncategorised/497/input.js"
-Expect Syntax Error: "core/uncategorised/498/input.js"
-Expect Syntax Error: "core/uncategorised/500/input.js"
-Expect Syntax Error: "core/uncategorised/502/input.js"
-Expect Syntax Error: "core/uncategorised/504/input.js"
-Expect Syntax Error: "core/uncategorised/505/input.js"
-Expect Syntax Error: "core/uncategorised/506/input.js"
-Expect Syntax Error: "core/uncategorised/507/input.js"
-Expect Syntax Error: "core/uncategorised/508/input.js"
-Expect Syntax Error: "core/uncategorised/509/input.js"
-Expect Syntax Error: "core/uncategorised/510/input.js"
-Expect Syntax Error: "core/uncategorised/511/input.js"
-Expect Syntax Error: "core/uncategorised/512/input.js"
-Expect Syntax Error: "core/uncategorised/513/input.js"
-Expect Syntax Error: "core/uncategorised/514/input.js"
-Expect Syntax Error: "core/uncategorised/515/input.js"
-Expect Syntax Error: "core/uncategorised/516/input.js"
-Expect Syntax Error: "core/uncategorised/517/input.js"
-Expect Syntax Error: "core/uncategorised/518/input.js"
-Expect Syntax Error: "core/uncategorised/519/input.js"
-Expect Syntax Error: "core/uncategorised/520/input.js"
-Expect Syntax Error: "core/uncategorised/521/input.js"
-Expect Syntax Error: "core/uncategorised/522/input.js"
-Expect Syntax Error: "core/uncategorised/544/input.js"
-Expect Syntax Error: "core/uncategorised/550/input.js"
-Expect Syntax Error: "core/uncategorised/552/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
-Expect Syntax Error: "es2015/destructuring/binding-arguments-strict/input.js"
-Expect Syntax Error: "es2015/destructuring/binding-eval/input.js"
 Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
-Expect Syntax Error: "es2015/for-in/strict-initializer/input.js"
 Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
-Expect Syntax Error: "es2015/let/let-as-identifier-strict-fail/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-export-default-and-export-as-default/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-export-default/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export-class-declaration/input.js"
@@ -99,34 +30,12 @@ Expect Syntax Error: "es2015/modules/duplicate-named-export-function-declaration
 Expect Syntax Error: "es2015/modules/duplicate-named-export-variable-declaration/input.js"
 Expect Syntax Error: "es2015/modules/duplicate-named-export/input.js"
 Expect Syntax Error: "es2015/object/disallow-duplicate-method-params/input.js"
-Expect Syntax Error: "es2015/shorthand/reserved-word-strict/input.js"
-Expect Syntax Error: "es2015/statements/label-invalid-func-strict/input.js"
 Expect Syntax Error: "es2015/uncategorised/.191/input.js"
 Expect Syntax Error: "es2015/uncategorised/.335/input.js"
 Expect Syntax Error: "es2015/uncategorised/.343/input.js"
 Expect Syntax Error: "es2015/uncategorised/220/input.js"
-Expect Syntax Error: "es2015/uncategorised/227/input.js"
-Expect Syntax Error: "es2015/uncategorised/228/input.js"
-Expect Syntax Error: "es2015/uncategorised/233/input.js"
-Expect Syntax Error: "es2015/uncategorised/234/input.js"
-Expect Syntax Error: "es2015/uncategorised/242/input.js"
-Expect Syntax Error: "es2015/uncategorised/243/input.js"
-Expect Syntax Error: "es2015/uncategorised/244/input.js"
-Expect Syntax Error: "es2015/uncategorised/245/input.js"
-Expect Syntax Error: "es2015/uncategorised/246/input.js"
-Expect Syntax Error: "es2015/uncategorised/247/input.js"
-Expect Syntax Error: "es2015/uncategorised/249/input.js"
-Expect Syntax Error: "es2015/uncategorised/289/input.js"
-Expect Syntax Error: "es2015/uncategorised/296/input.js"
-Expect Syntax Error: "es2015/uncategorised/297/input.js"
-Expect Syntax Error: "es2015/uncategorised/332/input.js"
 Expect Syntax Error: "es2015/yield/function-name-function-declaration-inside-generator/input.js"
 Expect Syntax Error: "es2015/yield/function-name-generator-expression/input.js"
-Expect Syntax Error: "es2015/yield/function-name-strict-body/input.js"
-Expect Syntax Error: "es2015/yield/function-name-strict/input.js"
-Expect Syntax Error: "es2015/yield/parameter-default-strict/input.js"
-Expect Syntax Error: "es2015/yield/parameter-name-strict-body/input.js"
-Expect Syntax Error: "es2015/yield/parameter-name-strict/input.js"
 Expect Syntax Error: "es2017/async-functions/await-async-function-expression-name/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
 Expect Syntax Error: "es2017/async-functions/await-function-declaration-name-inside-async-function/input.js"
@@ -138,8 +47,6 @@ Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-nested/input.
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest/input.js"
 Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
-Expect Syntax Error: "esprima/declaration-function/dupe-param/input.js"
-Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-export-declaration/invalid-export-named-default/input.js"
 Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/.invalid_function_wait/input.js"
@@ -148,98 +55,12 @@ Expect Syntax Error: "esprima/es2015-identifier/invalid_var_await/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-declaration/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-name/input.js"
 Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-function-declaration/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-strict-function-expression/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-strict-function-parameter/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-array-pattern/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-arrow-parameter-default/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-arrow-parameter-name/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-binding-element/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-catch-parameter/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-formal-parameter/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-function-declaration/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-function-expression/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-identifier/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-lexical-declaration/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-rest-parameter/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-strict-variable-declaration/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0005/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0006/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.u-flag-invalid-range-4-hex/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.u-flag-invalid-range-var-hex/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/.GH-1106-09/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/.migrated_0035/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0087/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0088/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0089/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0090/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0091/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0094/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0100/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0183/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0184/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0185/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0186/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0187/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0188/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0189/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0190/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0191/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0192/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0193/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0194/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0195/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0196/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0197/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0198/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0199/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0200/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0201/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0202/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0203/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0204/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0205/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0206/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0207/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0208/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0209/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0210/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0211/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0212/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0213/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0214/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0215/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0216/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0217/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0218/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0219/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0220/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0221/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0222/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0223/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0224/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0225/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0226/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0227/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0228/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0229/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0230/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0231/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0232/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0233/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0234/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0235/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0236/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0239/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0240/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0241/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0242/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0243/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0244/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0245/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0246/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0247/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0249/input.js"
 Expect Syntax Error: "esprima/statement-if/.migrated_0003/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
@@ -733,6 +554,180 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ─
    ╰────
 
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive-function/input.js:1:1]
+ 1 │ function a() {
+ 2 │   "\5";
+   ·   ────
+ 3 │   "use strict";
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive-function/input.js:6:1]
+ 6 │ function b() {
+ 7 │   "\4";
+   ·   ────
+ 8 │   "\5";
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive-function/input.js:7:1]
+ 7 │   "\4";
+ 8 │   "\5";
+   ·   ────
+ 9 │   "use strict";
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[core/escape-string/invalid-decimal-escape-strict-directive-function/input.js:13:1]
+ 13 │   "use strict";
+ 14 │   "\5";
+    ·   ────
+ 15 │ }
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[core/escape-string/invalid-decimal-escape-strict-directive-function/input.js:18:1]
+ 18 │   "use strict";
+ 19 │   "\4";
+    ·   ────
+ 20 │   "\5";
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[core/escape-string/invalid-decimal-escape-strict-directive-function/input.js:19:1]
+ 19 │   "\4";
+ 20 │   "\5";
+    ·   ────
+ 21 │ }
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:1:1]
+ 1 │ "\01 foo \02 bar \03";
+   · ─────────────────────
+ 2 │ 
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:2:1]
+ 2 │ 
+ 3 │ "\4";
+   · ────
+ 4 │ "\5";
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:3:1]
+ 3 │ "\4";
+ 4 │ "\5";
+   · ────
+ 5 │ 
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:7:1]
+ 7 │ 
+ 8 │ "\4";
+   · ────
+ 9 │ "\5";
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:8:1]
+  8 │ "\4";
+  9 │ "\5";
+    · ────
+ 10 │ 
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:10:1]
+ 10 │ 
+ 11 │ "\04 foo \05 bar \06";
+    · ─────────────────────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × Invalid escape sequence
+   ╭─[core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:1:1]
+ 1 │ () => {
+ 2 │   "\8";"\9";
+   ·   ────
+ 3 │   "use strict";
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:1:1]
+ 1 │ () => {
+ 2 │   "\8";"\9";
+   ·        ────
+ 3 │   "use strict";
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:3:1]
+ 3 │   "use strict";
+ 4 │   "\8";"\9";
+   ·   ────
+ 5 │ }
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:3:1]
+ 3 │   "use strict";
+ 4 │   "\8";"\9";
+   ·        ────
+ 5 │ }
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[core/escape-string/non-octal-eight-and-nine/input.js:3:1]
+ 3 │   "use strict";
+ 4 │   "\8";"\9";
+   ·   ────
+ 5 │ }
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+   ╭─[core/escape-string/non-octal-eight-and-nine/input.js:3:1]
+ 3 │   "use strict";
+ 4 │   "\8";"\9";
+   ·        ────
+ 5 │ }
+   ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/numeric-escape-in-directive/input.js:1:1]
+ 1 │ function hello() { "use strict"; function inner() { "octal directive\1"; } }
+   ·                                                     ───────────────────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/numeric-escape-in-property-name/input.js:1:1]
+ 1 │ function hello() { 'use strict'; ({ "\1": 42 }); }
+   ·                                     ────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
   × Bad escape sequence in untagged template literal
    ╭─[core/escape-template/non-octal-eight/input.js:1:1]
  1 │ `\8`;
@@ -746,6 +741,47 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ─┬
    ·   ╰── Bad escape sequence in untagged template literal
    ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/legacy-octal/legacy-octal-after-use-strict-function/input.js:2:1]
+ 2 │   "use strict";
+ 3 │   05;
+   ·   ──
+ 4 │ }
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/legacy-octal/legacy-octal-after-use-strict-function/input.js:7:1]
+ 7 │   "use strict";
+ 8 │   04;
+   ·   ──
+ 9 │   05;
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[core/legacy-octal/legacy-octal-after-use-strict-function/input.js:8:1]
+  8 │   04;
+  9 │   05;
+    ·   ──
+ 10 │ }
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/legacy-octal/legacy-octal-after-use-strict/input.js:1:1]
+ 1 │ "use strict"; 04; 05;
+   ·               ──
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/legacy-octal/legacy-octal-after-use-strict/input.js:1:1]
+ 1 │ "use strict"; 04; 05;
+   ·                   ──
+   ╰────
+  help: for octal literals use the '0o' prefix instead
 
   × Keywords cannot contain escape characters
    ╭─[core/object/invalid-escape-get/input.js:1:1]
@@ -1942,6 +1978,341 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ╰── `x` has already been declared here
    ╰────
 
+  × Delete of an unqualified identifier in strict mode.
+   ╭─[core/uncategorised/466/input.js:1:1]
+ 1 │ (function () { 'use strict'; delete i; }())
+   ·                                     ─
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[core/uncategorised/467/input.js:1:1]
+ 1 │ (function () { 'use strict'; with (i); }())
+   ·                              ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/468/input.js:1:1]
+ 1 │ function hello() {'use strict'; var eval = 10; }
+   ·                                     ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/469/input.js:1:1]
+ 1 │ function hello() {'use strict'; var arguments = 10; }
+   ·                                     ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/470/input.js:1:1]
+ 1 │ function hello() {'use strict'; try { } catch (eval) { } }
+   ·                                                ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/471/input.js:1:1]
+ 1 │ function hello() {'use strict'; try { } catch (arguments) { } }
+   ·                                                ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/472/input.js:1:1]
+ 1 │ function hello() {'use strict'; eval = 10; }
+   ·                                 ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/473/input.js:1:1]
+ 1 │ function hello() {'use strict'; arguments = 10; }
+   ·                                 ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/474/input.js:1:1]
+ 1 │ function hello() {'use strict'; ++eval; }
+   ·                                   ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/475/input.js:1:1]
+ 1 │ function hello() {'use strict'; --eval; }
+   ·                                   ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/476/input.js:1:1]
+ 1 │ function hello() {'use strict'; ++arguments; }
+   ·                                   ─────────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/477/input.js:1:1]
+ 1 │ function hello() {'use strict'; --arguments; }
+   ·                                   ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/478/input.js:1:1]
+ 1 │ function hello() {'use strict'; eval++; }
+   ·                                 ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/479/input.js:1:1]
+ 1 │ function hello() {'use strict'; eval--; }
+   ·                                 ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/480/input.js:1:1]
+ 1 │ function hello() {'use strict'; arguments++; }
+   ·                                 ─────────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/481/input.js:1:1]
+ 1 │ function hello() {'use strict'; arguments--; }
+   ·                                 ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/482/input.js:1:1]
+ 1 │ function hello() {'use strict'; function eval() { } }
+   ·                                          ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/483/input.js:1:1]
+ 1 │ function hello() {'use strict'; function arguments() { } }
+   ·                                          ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/484/input.js:1:1]
+ 1 │ function eval() {'use strict'; }
+   ·          ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/485/input.js:1:1]
+ 1 │ function arguments() {'use strict'; }
+   ·          ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/486/input.js:1:1]
+ 1 │ function hello() {'use strict'; (function eval() { }()) }
+   ·                                           ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/487/input.js:1:1]
+ 1 │ function hello() {'use strict'; (function arguments() { }()) }
+   ·                                           ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/488/input.js:1:1]
+ 1 │ (function eval() {'use strict'; })()
+   ·           ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/489/input.js:1:1]
+ 1 │ (function arguments() {'use strict'; })()
+   ·           ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/490/input.js:1:1]
+ 1 │ function hello() {'use strict'; ({ s: function eval() { } }); }
+   ·                                                ────
+   ╰────
+
+  × The keyword 'package' is reserved
+   ╭─[core/uncategorised/491/input.js:1:1]
+ 1 │ (function package() {'use strict'; })()
+   ·           ───────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/492/input.js:1:1]
+ 1 │ function hello() {'use strict'; ({ i: 10, set s(eval) { } }); }
+   ·                                                 ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/493/input.js:1:1]
+ 1 │ function hello() {'use strict'; ({ set s(eval) { } }); }
+   ·                                          ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/494/input.js:1:1]
+ 1 │ function hello() {'use strict'; ({ s: function s(eval) { } }); }
+   ·                                                  ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/495/input.js:1:1]
+ 1 │ function hello(eval) {'use strict';}
+   ·                ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/496/input.js:1:1]
+ 1 │ function hello(arguments) {'use strict';}
+   ·                ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/497/input.js:1:1]
+ 1 │ function hello() { 'use strict'; function inner(eval) {} }
+   ·                                                 ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[core/uncategorised/498/input.js:1:1]
+ 1 │ function hello() { 'use strict'; function inner(arguments) {} }
+   ·                                                 ─────────
+   ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/uncategorised/500/input.js:1:1]
+ 1 │ function hello() { 'use strict'; 021; }
+   ·                                  ───
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/uncategorised/502/input.js:1:1]
+ 1 │ function hello() { 'use strict'; ({ 021: 42 }); }
+   ·                                     ───
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × The keyword 'implements' is reserved
+   ╭─[core/uncategorised/504/input.js:1:1]
+ 1 │ function hello() { "use strict"; var implements; }
+   ·                                      ──────────
+   ╰────
+
+  × The keyword 'interface' is reserved
+   ╭─[core/uncategorised/505/input.js:1:1]
+ 1 │ function hello() { "use strict"; var interface; }
+   ·                                      ─────────
+   ╰────
+
+  × The keyword 'package' is reserved
+   ╭─[core/uncategorised/506/input.js:1:1]
+ 1 │ function hello() { "use strict"; var package; }
+   ·                                      ───────
+   ╰────
+
+  × The keyword 'private' is reserved
+   ╭─[core/uncategorised/507/input.js:1:1]
+ 1 │ function hello() { "use strict"; var private; }
+   ·                                      ───────
+   ╰────
+
+  × The keyword 'protected' is reserved
+   ╭─[core/uncategorised/508/input.js:1:1]
+ 1 │ function hello() { "use strict"; var protected; }
+   ·                                      ─────────
+   ╰────
+
+  × The keyword 'public' is reserved
+   ╭─[core/uncategorised/509/input.js:1:1]
+ 1 │ function hello() { "use strict"; var public; }
+   ·                                      ──────
+   ╰────
+
+  × The keyword 'static' is reserved
+   ╭─[core/uncategorised/510/input.js:1:1]
+ 1 │ function hello() { "use strict"; var static; }
+   ·                                      ──────
+   ╰────
+
+  × The keyword 'static' is reserved
+   ╭─[core/uncategorised/511/input.js:1:1]
+ 1 │ function hello(static) { "use strict"; }
+   ·                ──────
+   ╰────
+
+  × The keyword 'static' is reserved
+   ╭─[core/uncategorised/512/input.js:1:1]
+ 1 │ function static() { "use strict"; }
+   ·          ──────
+   ╰────
+
+  × The keyword 'static' is reserved
+   ╭─[core/uncategorised/513/input.js:1:1]
+ 1 │ "use strict"; function static() { }
+   ·                        ──────
+   ╰────
+
+  × Identifier `t` has already been declared
+   ╭─[core/uncategorised/514/input.js:1:1]
+ 1 │ function a(t, t) { "use strict"; }
+   ·            ┬  ┬
+   ·            │  ╰── It can not be redeclared here
+   ·            ╰── `t` has already been declared here
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/515/input.js:1:1]
+ 1 │ function a(eval) { "use strict"; }
+   ·            ────
+   ╰────
+
+  × The keyword 'package' is reserved
+   ╭─[core/uncategorised/516/input.js:1:1]
+ 1 │ function a(package) { "use strict"; }
+   ·            ───────
+   ╰────
+
+  × Identifier `t` has already been declared
+   ╭─[core/uncategorised/517/input.js:1:1]
+ 1 │ function a() { "use strict"; function b(t, t) { }; }
+   ·                                         ┬  ┬
+   ·                                         │  ╰── It can not be redeclared here
+   ·                                         ╰── `t` has already been declared here
+   ╰────
+
+  × Identifier `t` has already been declared
+   ╭─[core/uncategorised/518/input.js:1:1]
+ 1 │ (function a(t, t) { "use strict"; })
+   ·             ┬  ┬
+   ·             │  ╰── It can not be redeclared here
+   ·             ╰── `t` has already been declared here
+   ╰────
+
+  × Identifier `t` has already been declared
+   ╭─[core/uncategorised/519/input.js:1:1]
+ 1 │ function a() { "use strict"; (function b(t, t) { }); }
+   ·                                          ┬  ┬
+   ·                                          │  ╰── It can not be redeclared here
+   ·                                          ╰── `t` has already been declared here
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[core/uncategorised/520/input.js:1:1]
+ 1 │ (function a(eval) { "use strict"; })
+   ·             ────
+   ╰────
+
+  × The keyword 'package' is reserved
+   ╭─[core/uncategorised/521/input.js:1:1]
+ 1 │ (function a(package) { "use strict"; })
+   ·             ───────
+   ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/uncategorised/522/input.js:1:1]
+ 1 │ "use strict";function foo(){"use strict";}function bar(){var v = 015}
+   ·                                                                  ───
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
   × Unexpected token
    ╭─[core/uncategorised/523/input.js:1:1]
  1 │ var this = 10;
@@ -1966,10 +2337,33 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × The keyword 'public' is reserved
+   ╭─[core/uncategorised/544/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ const { public } = foo();
+   ·         ──────
+   ╰────
+
+  × The keyword 'public' is reserved
    ╭─[core/uncategorised/545/input.js:1:1]
  1 │ const { public } = foo();
    ·         ──────
    ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/uncategorised/550/input.js:1:1]
+ 1 │ 'use strict';
+ 2 │ const a = 07;
+   ·           ──
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × Decimals with leading zeros are not allowed in strict mode
+   ╭─[core/uncategorised/552/input.js:1:1]
+ 1 │ 'use strict';
+ 2 │ const a = 08;
+   ·           ──
+   ╰────
+  help: remove the leading zero
 
   × Unexpected token
    ╭─[core/uncategorised/554/input.js:1:1]
@@ -2275,6 +2669,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·         ─────────
    ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[es2015/destructuring/binding-arguments-strict/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ const { arguments } = foo();
+   ·         ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/destructuring/binding-eval/input.js:1:1]
+ 1 │ 'use strict'; ({eval = defValue} = obj)
+   ·                 ────
+   ╰────
+
   × Expect token
    ╭─[es2015/destructuring/binding-this/input.js:1:1]
  1 │ var { this } = {};
@@ -2351,6 +2758,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × for-in loop variable declaration may not have an initializer
    ╭─[es2015/for-in/let-initializer/input.js:1:1]
  1 │ for (let a = 0 in {});
+   ·      ─────────
+   ╰────
+
+  × for-in loop variable declaration may not have an initializer
+   ╭─[es2015/for-in/strict-initializer/input.js:1:1]
+ 1 │ 'use strict';
+ 2 │ for (var a = 0 in {});
    ·      ─────────
    ╰────
 
@@ -2473,6 +2887,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │     while (false);
    ╰────
   help: Wrap this declaration in a block statement
+
+  × The keyword 'let' is reserved
+   ╭─[es2015/let/let-as-identifier-strict-fail/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ let + 1
+   · ───
+   ╰────
 
   × `let` cannot be declared as a variable name inside of a `let` declaration
    ╭─[es2015/let/let-at-binding-list-fail-1/input.js:1:1]
@@ -2890,6 +3311,27 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ╰── Flag i is mentioned twice in regular expression literal
    ╰────
 
+  × The keyword 'implements' is reserved
+   ╭─[es2015/shorthand/reserved-word-strict/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ var x = ({ implements, interface, package });
+   ·            ──────────
+   ╰────
+
+  × The keyword 'interface' is reserved
+   ╭─[es2015/shorthand/reserved-word-strict/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ var x = ({ implements, interface, package });
+   ·                        ─────────
+   ╰────
+
+  × The keyword 'package' is reserved
+   ╭─[es2015/shorthand/reserved-word-strict/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ var x = ({ implements, interface, package });
+   ·                                   ───────
+   ╰────
+
   × Unexpected token
    ╭─[es2015/shorthand/reserved-word/input.js:1:1]
  1 │ var x = ({ const, if, this });
@@ -2924,6 +3366,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ───────┬───────
    ·             ╰── Generators can only be declared at the top level or inside a block
    ╰────
+
+  × Invalid function declaration
+   ╭─[es2015/statements/label-invalid-func-strict/input.js:1:1]
+ 1 │ function foo() {"use strict"; bar: function baz() {}}
+   ·                                    ─────────────────
+   ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Automatic Semicolon Insertion
    ╭─[es2015/statements/label-invalid-let/input.js:1:1]
@@ -3203,6 +3652,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·             ╰── Expect `(` here, but found `default`
    ╰────
 
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/227/input.js:1:1]
+ 1 │ function hello() {'use strict'; ({ i: 10, s(eval) { } }); }
+   ·                                             ────
+   ╰────
+
+  × Identifier `t` has already been declared
+   ╭─[es2015/uncategorised/228/input.js:1:1]
+ 1 │ function a() { "use strict"; ({ b(t, t) { } }); }
+   ·                                   ┬  ┬
+   ·                                   │  ╰── It can not be redeclared here
+   ·                                   ╰── `t` has already been declared here
+   ╰────
+
   × Unexpected token
    ╭─[es2015/uncategorised/229/input.js:1:1]
  1 │ var super
@@ -3225,6 +3688,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/uncategorised/232/input.js:1:1]
  1 │ const default = 2
    ·       ───────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/233/input.js:1:1]
+ 1 │ "use strict"; ({ v: eval } = obj)
+   ·                     ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[es2015/uncategorised/234/input.js:1:1]
+ 1 │ "use strict"; ({ v: arguments } = obj)
+   ·                     ─────────
    ╰────
 
   × for-in loop variable declaration may not have an initializer
@@ -3259,6 +3734,42 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                 ───
    ╰────
 
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/242/input.js:1:1]
+ 1 │ "use strict"; (eval = 10) => 42
+   ·                ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/243/input.js:1:1]
+ 1 │ "use strict"; eval => 42
+   ·               ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[es2015/uncategorised/244/input.js:1:1]
+ 1 │ "use strict"; arguments => 42
+   ·               ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/245/input.js:1:1]
+ 1 │ "use strict"; (eval, a) => 42
+   ·                ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[es2015/uncategorised/246/input.js:1:1]
+ 1 │ "use strict"; (arguments, a) => 42
+   ·                ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/247/input.js:1:1]
+ 1 │ "use strict"; (eval, a = 10) => 42
+   ·                ────
+   ╰────
+
   × Identifier `a` has already been declared
    ╭─[es2015/uncategorised/248/input.js:1:1]
  1 │ "use strict"; (a, a) => 42
@@ -3266,6 +3777,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                │  ╰── It can not be redeclared here
    ·                ╰── `a` has already been declared here
    ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[es2015/uncategorised/249/input.js:1:1]
+ 1 │ "use strict"; (a) => 00
+   ·                      ──
+   ╰────
+  help: for octal literals use the '0o' prefix instead
 
   × Empty parenthesized expression
    ╭─[es2015/uncategorised/250/input.js:1:1]
@@ -3418,6 +3936,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ─
    ╰────
 
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/289/input.js:1:1]
+ 1 │ ({ t(eval) { "use strict"; } });
+   ·      ────
+   ╰────
+
   × Bad escape sequence in untagged template literal
    ╭─[es2015/uncategorised/290/input.js:1:1]
  1 │ "use strict"; `${test}\02`;
@@ -3448,6 +3972,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ switch (cond) { case 10: let a = 20;
    ·                                     ▲
    ·                                     ╰── Expect `}` here, but found `EOF`
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/296/input.js:1:1]
+ 1 │ "use strict"; (eval) => 42
+   ·                ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/297/input.js:1:1]
+ 1 │ (eval) => { "use strict"; 42 }
+   ·  ────
    ╰────
 
   × Automatic Semicolon Insertion
@@ -3515,6 +4051,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ if (1) ; else class Cls {}
    ·               ─────┬────
    ·                    ╰── Classes can only be declared at top level or inside a block
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[es2015/uncategorised/332/input.js:1:1]
+ 1 │ 'use strict'; [...eval] = arr
+   ·                   ────
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -3789,6 +4331,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·           ╰── Expect `from` here, but found `default`
    ╰────
 
+  × The keyword 'yield' is reserved
+   ╭─[es2015/yield/function-name-strict-body/input.js:1:1]
+ 1 │ function yield() { "use strict"; }
+   ·          ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[es2015/yield/function-name-strict/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ function yield() {}
+   ·          ─────
+   ╰────
+
   × Expect token
    ╭─[es2015/yield/in-class-heritage/input.js:1:1]
  1 │ class A extends yield B { }
@@ -3883,6 +4438,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ╰── yield expression not allowed in formal parameter
    ╰────
 
+  × The keyword 'yield' is reserved
+   ╭─[es2015/yield/parameter-default-strict/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ function fn(x = yield) {}
+   ·                 ─────
+   ╰────
+
   × Cannot use `yield` as an identifier in a generator context
    ╭─[es2015/yield/parameter-name-arrow-inside-generator-1/input.js:1:1]
  1 │ function* fn() {
@@ -3927,6 +4489,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/yield/parameter-name-generator/input.js:1:1]
  1 │ function* fn(yield) {}
    ·              ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[es2015/yield/parameter-name-strict-body/input.js:1:1]
+ 1 │ function fn(yield) { "use strict"; }
+   ·             ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[es2015/yield/parameter-name-strict/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ function fn(yield) {}
+   ·             ─────
    ╰────
 
   × yield expression not allowed in formal parameter
@@ -6409,6 +6984,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·          ╰── Bad escape sequence in untagged template literal
    ╰────
 
+  × Identifier `x` has already been declared
+   ╭─[esprima/declaration-function/dupe-param/input.js:1:1]
+ 1 │ function a(x, x) {'use strict';}
+   ·            ┬  ┬
+   ·            │  ╰── It can not be redeclared here
+   ·            ╰── `x` has already been declared here
+   ╰────
+
   × Unexpected trailing comma after rest element
    ╭─[esprima/es2015-array-binding-pattern/.invalid-elision-after-rest/input.js:1:1]
  1 │ ([a,...b,])=>0;
@@ -6494,6 +7077,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ => 42
    · ─┬
    ·  ╰── Line terminator not permitted before arrow
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/es2015-arrow-function/invalid-param-strict-mode/input.js:1:1]
+ 1 │ eval => {"use strict"};
+   · ────
    ╰────
 
   × Automatic Semicolon Insertion
@@ -7175,10 +7764,94 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                         ─────
    ╰────
 
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-generator-strict-function-expression/input.js:1:1]
+ 1 │ "use strict"; function *g(){ var y = function yield(){}; }
+   ·                                               ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-generator-strict-function-parameter/input.js:1:1]
+ 1 │ "use strict"; function *g() { var z = function(yield) {} }
+   ·                                                ─────
+   ╰────
+
   × Cannot use `yield` as an identifier in a generator context
    ╭─[esprima/es2015-yield/invalid-yield-generator-variable-declaration/input.js:1:1]
  1 │ function *g() { var yield; }
    ·                     ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-array-pattern/input.js:1:1]
+ 1 │ "use strict"; ([yield] = x)
+   ·                 ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-arrow-parameter-default/input.js:1:1]
+ 1 │ "use strict"; (x = yield) => {}
+   ·                    ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-arrow-parameter-name/input.js:1:1]
+ 1 │ "use strict"; (yield) => 42
+   ·                ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-binding-element/input.js:1:1]
+ 1 │ "use strict"; var { x: yield } = foo;
+   ·                        ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-catch-parameter/input.js:1:1]
+ 1 │ "use strict"; try {} catch (yield) {}
+   ·                             ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-formal-parameter/input.js:1:1]
+ 1 │ "use strict"; function f(yield) {}
+   ·                          ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-function-declaration/input.js:1:1]
+ 1 │ function yield(){ "use strict"; }
+   ·          ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-function-expression/input.js:1:1]
+ 1 │ (function yield(){ "use strict"; })
+   ·           ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-identifier/input.js:1:1]
+ 1 │ "use strict"; function f() { yield }
+   ·                              ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-lexical-declaration/input.js:1:1]
+ 1 │ "use strict"; let yield = 42;
+   ·                   ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-rest-parameter/input.js:1:1]
+ 1 │ "use strict"; function f(...yield) {}
+   ·                             ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/es2015-yield/invalid-yield-strict-variable-declaration/input.js:1:1]
+ 1 │ "use strict"; var yield;
+   ·                   ─────
    ╰────
 
   × yield expression not allowed in formal parameter
@@ -7931,6 +8604,36 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ╰── Expect `}` here, but found `EOF`
    ╰────
 
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0087/input.js:1:1]
+ 1 │ "use strict"; (eval = 10) => 42
+   ·                ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0088/input.js:1:1]
+ 1 │ "use strict"; eval => 42
+   ·               ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0089/input.js:1:1]
+ 1 │ "use strict"; arguments => 42
+   ·               ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0090/input.js:1:1]
+ 1 │ "use strict"; (eval, a) => 42
+   ·                ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0091/input.js:1:1]
+ 1 │ "use strict"; (arguments, a) => 42
+   ·                ─────────
+   ╰────
+
   × Identifier `a` has already been declared
    ╭─[esprima/invalid-syntax/migrated_0092/input.js:1:1]
  1 │ (a, a) => 42
@@ -7946,6 +8649,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                │  ╰── It can not be redeclared here
    ·                ╰── `a` has already been declared here
    ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0094/input.js:1:1]
+ 1 │ "use strict"; (a) => 00
+   ·                      ──
+   ╰────
+  help: for octal literals use the '0o' prefix instead
 
   × Empty parenthesized expression
    ╭─[esprima/invalid-syntax/migrated_0095/input.js:1:1]
@@ -7990,6 +8700,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0100/input.js:1:1]
+ 1 │ "use strict"; (eval) => 42
+   ·                ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0101/input.js:1:1]
+ 1 │ (eval) => { "use strict"; 42 }
+   ·  ────
+   ╰────
 
   × Expect token
    ╭─[esprima/invalid-syntax/migrated_0102/input.js:1:1]
@@ -8505,12 +9227,421 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ╰── `x` has already been declared here
    ╰────
 
+  × Delete of an unqualified identifier in strict mode.
+   ╭─[esprima/invalid-syntax/migrated_0183/input.js:1:1]
+ 1 │ (function () { 'use strict'; delete i; }())
+   ·                                     ─
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[esprima/invalid-syntax/migrated_0184/input.js:1:1]
+ 1 │ (function () { 'use strict'; with (i); }())
+   ·                              ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0185/input.js:1:1]
+ 1 │ function hello() {'use strict'; var eval = 10; }
+   ·                                     ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0186/input.js:1:1]
+ 1 │ function hello() {'use strict'; var arguments = 10; }
+   ·                                     ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0187/input.js:1:1]
+ 1 │ function hello() {'use strict'; try { } catch (eval) { } }
+   ·                                                ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0188/input.js:1:1]
+ 1 │ function hello() {'use strict'; try { } catch (arguments) { } }
+   ·                                                ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0189/input.js:1:1]
+ 1 │ function hello() {'use strict'; eval = 10; }
+   ·                                 ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0190/input.js:1:1]
+ 1 │ function hello() {'use strict'; arguments = 10; }
+   ·                                 ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0191/input.js:1:1]
+ 1 │ function hello() {'use strict'; ++eval; }
+   ·                                   ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0192/input.js:1:1]
+ 1 │ function hello() {'use strict'; --eval; }
+   ·                                   ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0193/input.js:1:1]
+ 1 │ function hello() {'use strict'; ++arguments; }
+   ·                                   ─────────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0194/input.js:1:1]
+ 1 │ function hello() {'use strict'; --arguments; }
+   ·                                   ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0195/input.js:1:1]
+ 1 │ function hello() {'use strict'; eval++; }
+   ·                                 ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0196/input.js:1:1]
+ 1 │ function hello() {'use strict'; eval--; }
+   ·                                 ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0197/input.js:1:1]
+ 1 │ function hello() {'use strict'; arguments++; }
+   ·                                 ─────────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0198/input.js:1:1]
+ 1 │ function hello() {'use strict'; arguments--; }
+   ·                                 ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0199/input.js:1:1]
+ 1 │ function hello() {'use strict'; function eval() { } }
+   ·                                          ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0200/input.js:1:1]
+ 1 │ function hello() {'use strict'; function arguments() { } }
+   ·                                          ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0201/input.js:1:1]
+ 1 │ function eval() {'use strict'; }
+   ·          ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0202/input.js:1:1]
+ 1 │ function arguments() {'use strict'; }
+   ·          ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0203/input.js:1:1]
+ 1 │ function hello() {'use strict'; (function eval() { }()) }
+   ·                                           ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0204/input.js:1:1]
+ 1 │ function hello() {'use strict'; (function arguments() { }()) }
+   ·                                           ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0205/input.js:1:1]
+ 1 │ (function eval() {'use strict'; })()
+   ·           ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0206/input.js:1:1]
+ 1 │ (function arguments() {'use strict'; })()
+   ·           ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0207/input.js:1:1]
+ 1 │ function hello() {'use strict'; ({ s: function eval() { } }); }
+   ·                                                ────
+   ╰────
+
+  × The keyword 'package' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0208/input.js:1:1]
+ 1 │ (function package() {'use strict'; })()
+   ·           ───────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0209/input.js:1:1]
+ 1 │ function hello() {'use strict'; ({ i: 10, set s(eval) { } }); }
+   ·                                                 ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0210/input.js:1:1]
+ 1 │ function hello() {'use strict'; ({ set s(eval) { } }); }
+   ·                                          ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0211/input.js:1:1]
+ 1 │ function hello() {'use strict'; ({ s: function s(eval) { } }); }
+   ·                                                  ────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0212/input.js:1:1]
+ 1 │ function hello(eval) {'use strict';}
+   ·                ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0213/input.js:1:1]
+ 1 │ function hello(arguments) {'use strict';}
+   ·                ─────────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0214/input.js:1:1]
+ 1 │ function hello() { 'use strict'; function inner(eval) {} }
+   ·                                                 ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0215/input.js:1:1]
+ 1 │ function hello() { 'use strict'; function inner(arguments) {} }
+   ·                                                 ─────────
+   ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0216/input.js:1:1]
+ 1 │ "\1"; 'use strict';
+   · ────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0217/input.js:1:1]
+ 1 │ function hello() { 'use strict'; "\1"; }
+   ·                                  ────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0218/input.js:1:1]
+ 1 │ function hello() { 'use strict'; 021; }
+   ·                                  ───
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0219/input.js:1:1]
+ 1 │ function hello() { 'use strict'; ({ "\1": 42 }); }
+   ·                                     ────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0220/input.js:1:1]
+ 1 │ function hello() { 'use strict'; ({ 021: 42 }); }
+   ·                                     ───
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0221/input.js:1:1]
+ 1 │ function hello() { "octal directive\1"; "use strict"; }
+   ·                    ───────────────────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0222/input.js:1:1]
+ 1 │ function hello() { "octal directive\1"; "octal directive\2"; "use strict"; }
+   ·                    ───────────────────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0222/input.js:1:1]
+ 1 │ function hello() { "octal directive\1"; "octal directive\2"; "use strict"; }
+   ·                                         ───────────────────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[esprima/invalid-syntax/migrated_0223/input.js:1:1]
+ 1 │ function hello() { "use strict"; function inner() { "octal directive\1"; } }
+   ·                                                     ───────────────────
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × The keyword 'implements' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0224/input.js:1:1]
+ 1 │ function hello() { "use strict"; var implements; }
+   ·                                      ──────────
+   ╰────
+
+  × The keyword 'interface' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0225/input.js:1:1]
+ 1 │ function hello() { "use strict"; var interface; }
+   ·                                      ─────────
+   ╰────
+
+  × The keyword 'package' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0226/input.js:1:1]
+ 1 │ function hello() { "use strict"; var package; }
+   ·                                      ───────
+   ╰────
+
+  × The keyword 'private' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0227/input.js:1:1]
+ 1 │ function hello() { "use strict"; var private; }
+   ·                                      ───────
+   ╰────
+
+  × The keyword 'protected' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0228/input.js:1:1]
+ 1 │ function hello() { "use strict"; var protected; }
+   ·                                      ─────────
+   ╰────
+
+  × The keyword 'public' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0229/input.js:1:1]
+ 1 │ function hello() { "use strict"; var public; }
+   ·                                      ──────
+   ╰────
+
+  × The keyword 'static' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0230/input.js:1:1]
+ 1 │ function hello() { "use strict"; var static; }
+   ·                                      ──────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0231/input.js:1:1]
+ 1 │ function hello() { "use strict"; var yield; }
+   ·                                      ─────
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0232/input.js:1:1]
+ 1 │ function hello() { "use strict"; var let; }
+   ·                                      ───
+   ╰────
+
+  × The keyword 'static' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0233/input.js:1:1]
+ 1 │ function hello(static) { "use strict"; }
+   ·                ──────
+   ╰────
+
+  × The keyword 'static' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0234/input.js:1:1]
+ 1 │ function static() { "use strict"; }
+   ·          ──────
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0235/input.js:1:1]
+ 1 │ function eval(a) { "use strict"; }
+   ·          ────
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0236/input.js:1:1]
+ 1 │ function arguments(a) { "use strict"; }
+   ·          ─────────
+   ╰────
+
+  × The keyword 'static' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0239/input.js:1:1]
+ 1 │ "use strict"; function static() { }
+   ·                        ──────
+   ╰────
+
+  × Identifier `t` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0240/input.js:1:1]
+ 1 │ function a(t, t) { "use strict"; }
+   ·            ┬  ┬
+   ·            │  ╰── It can not be redeclared here
+   ·            ╰── `t` has already been declared here
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0241/input.js:1:1]
+ 1 │ function a(eval) { "use strict"; }
+   ·            ────
+   ╰────
+
+  × The keyword 'package' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0242/input.js:1:1]
+ 1 │ function a(package) { "use strict"; }
+   ·            ───────
+   ╰────
+
+  × Identifier `t` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0243/input.js:1:1]
+ 1 │ function a() { "use strict"; function b(t, t) { }; }
+   ·                                         ┬  ┬
+   ·                                         │  ╰── It can not be redeclared here
+   ·                                         ╰── `t` has already been declared here
+   ╰────
+
+  × Identifier `t` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0244/input.js:1:1]
+ 1 │ (function a(t, t) { "use strict"; })
+   ·             ┬  ┬
+   ·             │  ╰── It can not be redeclared here
+   ·             ╰── `t` has already been declared here
+   ╰────
+
+  × Identifier `t` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0245/input.js:1:1]
+ 1 │ function a() { "use strict"; (function b(t, t) { }); }
+   ·                                          ┬  ┬
+   ·                                          │  ╰── It can not be redeclared here
+   ·                                          ╰── `t` has already been declared here
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[esprima/invalid-syntax/migrated_0246/input.js:1:1]
+ 1 │ (function a(eval) { "use strict"; })
+   ·             ────
+   ╰────
+
+  × The keyword 'package' is reserved
+   ╭─[esprima/invalid-syntax/migrated_0247/input.js:1:1]
+ 1 │ (function a(package) { "use strict"; })
+   ·             ───────
+   ╰────
+
   × Identifier `__proto__` has already been declared
    ╭─[esprima/invalid-syntax/migrated_0248/input.js:1:1]
  1 │ __proto__: __proto__: 42;
    · ────┬────  ────┬────
    ·     │          ╰── It can not be redeclared here
    ·     ╰── `__proto__` has already been declared here
+   ╰────
+
+  × Identifier `__proto__` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0249/input.js:1:1]
+ 1 │ "use strict"; function t(__proto__, __proto__) { }
+   ·                          ────┬────  ────┬────
+   ·                              │          ╰── It can not be redeclared here
+   ·                              ╰── `__proto__` has already been declared here
    ╰────
 
   × Identifier `__proto__` has already been declared

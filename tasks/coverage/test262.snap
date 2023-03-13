@@ -1,54 +1,15 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3848/3917 (98.24%)
-Expect Syntax Error: "language/directive-prologue/10.1.1-2gs.js"
-Expect Syntax Error: "language/directive-prologue/10.1.1-5gs.js"
-Expect Syntax Error: "language/directive-prologue/10.1.1-8gs.js"
-Expect Syntax Error: "language/directive-prologue/14.1-4gs.js"
-Expect Syntax Error: "language/directive-prologue/14.1-5gs.js"
-Expect Syntax Error: "language/directive-prologue/func-decl-inside-func-decl-parse.js"
-Expect Syntax Error: "language/directive-prologue/func-decl-no-semi-parse.js"
-Expect Syntax Error: "language/directive-prologue/func-decl-parse.js"
-Expect Syntax Error: "language/directive-prologue/func-expr-inside-func-decl-parse.js"
-Expect Syntax Error: "language/directive-prologue/func-expr-no-semi-parse.js"
-Expect Syntax Error: "language/directive-prologue/func-expr-parse.js"
+Negative Passed: 3899/3917 (99.54%)
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
 Expect Syntax Error: "language/expressions/await/await-BindingIdentifier-nested.js"
-Expect Syntax Error: "language/expressions/function/name-arguments-strict-body.js"
-Expect Syntax Error: "language/expressions/function/name-eval-strict-body.js"
-Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-1.js"
-Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-2.js"
-Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-3.js"
-Expect Syntax Error: "language/expressions/function/param-eval-strict-body.js"
 Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
-Expect Syntax Error: "language/expressions/object/getter-body-strict-inside.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-implements-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-interface-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-let-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-package-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-private-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-protected-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-public-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-static-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/identifier-shorthand-yield-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/setter-body-strict-inside.js"
-Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-inside.js"
-Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-inside.js"
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
 Expect Syntax Error: "language/import/json-invalid.js"
 Expect Syntax Error: "language/import/json-named-bindings.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-1-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-2-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-3-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-4-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-5-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-6-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-7-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-8-strict-explicit-pragma.js"
-Expect Syntax Error: "language/literals/string/legacy-non-octal-escape-sequence-9-strict-explicit-pragma.js"
 Expect Syntax Error: "language/module-code/early-dup-export-as-star-as.js"
 Expect Syntax Error: "language/module-code/early-dup-export-dflt-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-id-as.js"
@@ -57,20 +18,8 @@ Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
-Expect Syntax Error: "language/statements/function/enable-strict-via-body.js"
-Expect Syntax Error: "language/statements/function/enable-strict-via-outer-body.js"
-Expect Syntax Error: "language/statements/function/name-arguments-strict-body.js"
-Expect Syntax Error: "language/statements/function/name-eval-strict-body.js"
-Expect Syntax Error: "language/statements/function/param-arguments-strict-body.js"
-Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-1.js"
-Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-2.js"
-Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-3.js"
-Expect Syntax Error: "language/statements/function/param-eval-strict-body.js"
 Expect Syntax Error: "language/statements/function/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js"
-Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-1.js"
-Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-2.js"
-Expect Syntax Error: "language/statements/with/strict-fn-decl.js"
 Expect to Parse: "language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js"
 
   × Identifier `f` has already been declared
@@ -1859,6 +1808,89 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  22 │ 
  23 │ ;-->
     ·    ─
+    ╰────
+
+  × The keyword 'public' is reserved
+    ╭─[language/directive-prologue/10.1.1-2gs.js:16:1]
+ 16 │ throw "Test262: This statement should not be evaluated.";
+ 17 │ var public = 1;
+    ·     ──────
+    ╰────
+
+  × The keyword 'public' is reserved
+    ╭─[language/directive-prologue/10.1.1-5gs.js:16:1]
+ 16 │ throw "Test262: This statement should not be evaluated.";
+ 17 │ var public = 1;
+    ·     ──────
+    ╰────
+
+  × The keyword 'public' is reserved
+    ╭─[language/directive-prologue/10.1.1-8gs.js:17:1]
+ 17 │ throw "Test262: This statement should not be evaluated.";
+ 18 │ var public = 1;
+    ·     ──────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/directive-prologue/14.1-4gs.js:16:1]
+ 16 │ throw "Test262: This statement should not be evaluated.";
+ 17 │ eval = 42;
+    · ────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/directive-prologue/14.1-5gs.js:18:1]
+ 18 │ throw "Test262: This statement should not be evaluated.";
+ 19 │ eval = 42;
+    · ────
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[language/directive-prologue/func-decl-inside-func-decl-parse.js:21:1]
+ 21 │   function fun() {
+ 22 │     var static;
+    ·         ──────
+ 23 │   }
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[language/directive-prologue/func-decl-no-semi-parse.js:19:1]
+ 19 │   "use strict"
+ 20 │   var static;
+    ·       ──────
+ 21 │ }
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[language/directive-prologue/func-decl-parse.js:19:1]
+ 19 │   "use strict";
+ 20 │   var static;
+    ·       ──────
+ 21 │ }
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[language/directive-prologue/func-expr-inside-func-decl-parse.js:20:1]
+ 20 │   "use strict";
+ 21 │   var static;
+    ·       ──────
+ 22 │ }
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[language/directive-prologue/func-expr-no-semi-parse.js:20:1]
+ 20 │ 
+ 21 │   var static;
+    ·       ──────
+ 22 │ });
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[language/directive-prologue/func-expr-parse.js:20:1]
+ 20 │ 
+ 21 │   var static;
+    ·       ──────
+ 22 │ });
     ╰────
 
   × Keywords cannot contain escape characters
@@ -14860,10 +14892,24 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/function/name-arguments-strict-body.js:17:1]
+ 17 │ 
+ 18 │ (function arguments() {'use strict';});
+    ·           ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
     ╭─[language/expressions/function/name-arguments-strict.js:16:1]
  16 │ 
  17 │ (function arguments() {});
     ·           ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/function/name-eval-strict-body.js:17:1]
+ 17 │ 
+ 18 │ (function eval() {'use strict';});
+    ·           ────
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -14923,6 +14969,49 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ──┬──  ──┬──
     ·                     │      ╰── It can not be redeclared here
     ·                     ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/expressions/function/param-duplicated-strict-body-1.js:21:1]
+ 21 │ 
+ 22 │ (function (param, param) { 'use strict'; });
+    ·            ──┬──  ──┬──
+    ·              │      ╰── It can not be redeclared here
+    ·              ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param1` has already been declared
+    ╭─[language/expressions/function/param-duplicated-strict-body-2.js:22:1]
+ 22 │ 
+ 23 │ (function (param1, param2, param1) { 'use strict'; });
+    ·            ───┬──          ───┬──
+    ·               │               ╰── It can not be redeclared here
+    ·               ╰── `param1` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/expressions/function/param-duplicated-strict-body-3.js:20:1]
+ 20 │ 
+ 21 │ (function (param, param, param) { 'use strict'; });
+    ·            ──┬──  ──┬──
+    ·              │      ╰── It can not be redeclared here
+    ·              ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/expressions/function/param-duplicated-strict-body-3.js:20:1]
+ 20 │ 
+ 21 │ (function (param, param, param) { 'use strict'; });
+    ·                   ──┬──  ──┬──
+    ·                     │      ╰── It can not be redeclared here
+    ·                     ╰── `param` has already been declared here
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/function/param-eval-strict-body.js:21:1]
+ 21 │ 
+ 22 │ (function (eval) { 'use strict'; });
+    ·            ────
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -16002,6 +16091,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
 
   × The keyword 'public' is reserved
+    ╭─[language/expressions/object/getter-body-strict-inside.js:19:1]
+ 19 │     "use strict";
+ 20 │     public = 42;
+    ·     ──────
+ 21 │   }
+    ╰────
+
+  × The keyword 'public' is reserved
     ╭─[language/expressions/object/getter-body-strict-outside.js:17:1]
  17 │   get x() {
  18 │     public = 42;
@@ -16015,6 +16112,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  23 │ 0, { get a(param = null) {} };
     ·           ───────┬──────
     ·                  ╰── A 'get' accessor must not have any formal parameters.
+    ╰────
+
+  × The keyword 'implements' is reserved
+    ╭─[language/expressions/object/identifier-shorthand-implements-invalid-strict-mode.js:30:1]
+ 30 │   ({
+ 31 │     implements
+    ·     ──────────
+ 32 │   });
+    ╰────
+
+  × The keyword 'interface' is reserved
+    ╭─[language/expressions/object/identifier-shorthand-interface-invalid-strict-mode.js:30:1]
+ 30 │   ({
+ 31 │     interface
+    ·     ─────────
+ 32 │   });
     ╰────
 
   × Unexpected token
@@ -16031,12 +16144,68 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·    ─
     ╰────
 
+  × The keyword 'let' is reserved
+    ╭─[language/expressions/object/identifier-shorthand-let-invalid-strict-mode.js:30:1]
+ 30 │   ({
+ 31 │     let
+    ·     ───
+ 32 │   });
+    ╰────
+
+  × The keyword 'package' is reserved
+    ╭─[language/expressions/object/identifier-shorthand-package-invalid-strict-mode.js:30:1]
+ 30 │   ({
+ 31 │     package
+    ·     ───────
+ 32 │   });
+    ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[language/expressions/object/identifier-shorthand-private-invalid-strict-mode.js:30:1]
+ 30 │   ({
+ 31 │     private
+    ·     ───────
+ 32 │   });
+    ╰────
+
+  × The keyword 'protected' is reserved
+    ╭─[language/expressions/object/identifier-shorthand-protected-invalid-strict-mode.js:30:1]
+ 30 │   ({
+ 31 │     protected
+    ·     ─────────
+ 32 │   });
+    ╰────
+
+  × The keyword 'public' is reserved
+    ╭─[language/expressions/object/identifier-shorthand-public-invalid-strict-mode.js:30:1]
+ 30 │   ({
+ 31 │     public
+    ·     ──────
+ 32 │   });
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/object/identifier-shorthand-static-init-await-invalid.js:22:1]
  22 │   static {
  23 │     ({ await });
     ·        ─────
  24 │   }
+    ╰────
+
+  × The keyword 'static' is reserved
+    ╭─[language/expressions/object/identifier-shorthand-static-invalid-strict-mode.js:30:1]
+ 30 │   ({
+ 31 │     static
+    ·     ──────
+ 32 │   });
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/object/identifier-shorthand-yield-invalid-strict-mode.js:30:1]
+ 30 │   ({
+ 31 │     yield
+    ·     ─────
+ 32 │   });
     ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -17055,6 +17224,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
 
   × The keyword 'public' is reserved
+    ╭─[language/expressions/object/setter-body-strict-inside.js:19:1]
+ 19 │     "use strict";
+ 20 │     public = 42;
+    ·     ──────
+ 21 │   }
+    ╰────
+
+  × The keyword 'public' is reserved
     ╭─[language/expressions/object/setter-body-strict-outside.js:17:1]
  17 │   set x(value) {
  18 │     public = 42;
@@ -17063,11 +17240,27 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
+    ╭─[language/expressions/object/setter-param-arguments-strict-inside.js:17:1]
+ 17 │ void {
+ 18 │   set x(arguments) {
+    ·         ─────────
+ 19 │     "use strict";
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
     ╭─[language/expressions/object/setter-param-arguments-strict-outside.js:17:1]
  17 │ void {
  18 │   set x(arguments) {}
     ·         ─────────
  19 │ };
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/expressions/object/setter-param-eval-strict-inside.js:17:1]
+ 17 │ void {
+ 18 │   set x(eval) {
+    ·         ────
+ 19 │     "use strict";
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -20018,11 +20211,83 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·    ╰── Invalid escape sequence
     ╰────
 
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-1-strict-explicit-pragma.js:25:1]
+ 25 │ 
+ 26 │ function invalid() { "\1"; "use strict"; }
+    ·                      ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-2-strict-explicit-pragma.js:25:1]
+ 25 │ 
+ 26 │ function invalid() { "\2"; "use strict"; }
+    ·                      ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-3-strict-explicit-pragma.js:25:1]
+ 25 │ 
+ 26 │ function invalid() { "\3"; "use strict"; }
+    ·                      ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-4-strict-explicit-pragma.js:25:1]
+ 25 │ 
+ 26 │ function invalid() { "\4"; "use strict"; }
+    ·                      ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-5-strict-explicit-pragma.js:25:1]
+ 25 │ 
+ 26 │ function invalid() { "\5"; "use strict"; }
+    ·                      ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-6-strict-explicit-pragma.js:25:1]
+ 25 │ 
+ 26 │ function invalid() { "\6"; "use strict"; }
+    ·                      ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-7-strict-explicit-pragma.js:25:1]
+ 25 │ 
+ 26 │ function invalid() { "\7"; "use strict"; }
+    ·                      ────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × Invalid escape sequence
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-8-strict-explicit-pragma.js:25:1]
+ 25 │ 
+ 26 │ function invalid() { "\8"; "use strict"; }
+    ·                      ────
+    ╰────
+  help: \8 and \9 are not allowed in strict mode
+
   × Invalid escape sequence
     ╭─[language/literals/string/legacy-non-octal-escape-sequence-8-strict.js:30:1]
  30 │ 
  31 │ '\8';
     · ────
+    ╰────
+  help: \8 and \9 are not allowed in strict mode
+
+  × Invalid escape sequence
+    ╭─[language/literals/string/legacy-non-octal-escape-sequence-9-strict-explicit-pragma.js:25:1]
+ 25 │ 
+ 26 │ function invalid() { "\9"; "use strict"; }
+    ·                      ────
     ╰────
   help: \8 and \9 are not allowed in strict mode
 
@@ -32545,6 +32810,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
 
   × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/function/enable-strict-via-body.js:23:1]
+ 23 │         "use strict";
+ 24 │         eval = 42;
+    ·         ────
+ 25 │     }
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/function/enable-strict-via-outer-body.js:23:1]
+ 23 │     function _13_0_11_inner() {
+ 24 │         eval = 42;
+    ·         ────
+ 25 │     }
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
     ╭─[language/statements/function/enable-strict-via-outer-script.js:22:1]
  22 │     function _13_0_9_inner() {
  23 │         eval = 42;
@@ -32608,10 +32889,24 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/function/name-arguments-strict-body.js:17:1]
+ 17 │ 
+ 18 │ function arguments() { 'use strict'; }
+    ·          ─────────
+    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
     ╭─[language/statements/function/name-arguments-strict.js:16:1]
  16 │ 
  17 │ function arguments() { }
     ·          ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/function/name-eval-strict-body.js:17:1]
+ 17 │ 
+ 18 │ function eval() { 'use strict'; }
+    ·          ────
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -32628,6 +32923,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
      ·   ─────────────
  133 │ }
      ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/function/param-arguments-strict-body.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_20_fun(arguments) { 'use strict'; }
+    ·                       ─────────
+    ╰────
 
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/statements/function/param-arguments-strict.js:21:1]
@@ -32678,6 +32980,49 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                             ──┬──  ──┬──
     ·                               │      ╰── It can not be redeclared here
     ·                               ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/statements/function/param-duplicated-strict-body-1.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_24_fun(param, param) { 'use strict'; }
+    ·                       ──┬──  ──┬──
+    ·                         │      ╰── It can not be redeclared here
+    ·                         ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param1` has already been declared
+    ╭─[language/statements/function/param-duplicated-strict-body-2.js:22:1]
+ 22 │ 
+ 23 │ function _13_1_26_fun(param1, param2, param1) { 'use strict'; }
+    ·                       ───┬──          ───┬──
+    ·                          │               ╰── It can not be redeclared here
+    ·                          ╰── `param1` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/statements/function/param-duplicated-strict-body-3.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_28_fun(param, param, param) { 'use strict'; }
+    ·                       ──┬──  ──┬──
+    ·                         │      ╰── It can not be redeclared here
+    ·                         ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/statements/function/param-duplicated-strict-body-3.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_28_fun(param, param, param) { 'use strict'; }
+    ·                              ──┬──  ──┬──
+    ·                                │      ╰── It can not be redeclared here
+    ·                                ╰── `param` has already been declared here
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/function/param-eval-strict-body.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_16_fun(eval) { 'use strict'; }
+    ·                       ────
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -35559,6 +35904,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ 
  17 │ with ({}) {}
     · ────
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/strict-fn-decl-nested-1.js:20:1]
+ 20 │     var o = {};
+ 21 │     with (o) {};
+    ·     ────
+ 22 │   }
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/strict-fn-decl-nested-2.js:19:1]
+ 19 │     var o = {};
+ 20 │     with (o) {};
+    ·     ────
+ 21 │   }
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/strict-fn-decl.js:17:1]
+ 17 │   var o = {};
+ 18 │   with (o) {};
+    ·   ────
+ 19 │ }
     ╰────
 
   × 'with' statements are not allowed

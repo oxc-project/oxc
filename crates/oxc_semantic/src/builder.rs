@@ -197,6 +197,12 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::JSXElementName(elem) => {
                 self.reference_jsx_element_name(elem);
             }
+            AstKind::Directive(directive) => {
+                // Turn on strict mode for "use strict"
+                if directive.directive == "use strict" {
+                    self.scope.current_scope_mut().strict_mode = true;
+                }
+            }
             _ => {}
         }
     }
