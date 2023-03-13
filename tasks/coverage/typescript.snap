@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 655/2532 (25.87%)
+Negative Passed: 657/2532 (25.95%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -472,7 +472,6 @@ Expect Syntax Error: "es6/destructuring/destructuringInFunctionType.ts"
 Expect Syntax Error: "es6/destructuring/destructuringObjectBindingPatternAndAssignment4.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration1ES5.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration1ES5iterable.ts"
-Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration1ES6.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration3ES5.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration3ES5iterable.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration3ES6.ts"
@@ -1608,7 +1607,6 @@ Expect Syntax Error: "types/nonPrimitive/nonPrimitiveStrictNull.ts"
 Expect Syntax Error: "types/nonPrimitive/nonPrimitiveUnionIntersection.ts"
 Expect Syntax Error: "types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts"
 Expect Syntax Error: "types/objectTypeLiteral/callSignatures/callSignaturesThatDifferOnlyByReturnType2.ts"
-Expect Syntax Error: "types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts"
 Expect Syntax Error: "types/objectTypeLiteral/callSignatures/callSignaturesWithParameterInitializers.ts"
 Expect Syntax Error: "types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters.ts"
 Expect Syntax Error: "types/objectTypeLiteral/callSignatures/constructSignatureWithAccessibilityModifiersOnParameters2.ts"
@@ -4799,6 +4797,26 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·       ╰── Expect `,` here, but found `?`
  3 │ var {i}: string | number = { i: 2 };
    ╰────
+
+  × Identifier `number` has already been declared
+    ╭─[es6/destructuring/destructuringParameterDeclaration1ES6.ts:96:1]
+ 96 │ 
+ 97 │ function e6({x: [number, number, number]}) { }  // error, duplicate identifier;
+    ·                  ───┬──  ───┬──
+    ·                     │       ╰── It can not be redeclared here
+    ·                     ╰── `number` has already been declared here
+ 98 │ 
+    ╰────
+
+  × Identifier `number` has already been declared
+    ╭─[es6/destructuring/destructuringParameterDeclaration1ES6.ts:96:1]
+ 96 │ 
+ 97 │ function e6({x: [number, number, number]}) { }  // error, duplicate identifier;
+    ·                          ───┬──  ───┬──
+    ·                             │       ╰── It can not be redeclared here
+    ·                             ╰── `number` has already been declared here
+ 98 │ 
+    ╰────
 
   × Expect token
    ╭─[es6/destructuring/destructuringParameterDeclaration2.ts:6:1]
@@ -11398,6 +11416,146 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ·                   ┬
     ·                   ╰── Expect `,` here, but found `Identifier`
  13 │ var f8 = <T>(private x: T, public y: T) => { }
+    ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:5:1]
+ 5 │ var f2 = function (x, x) { }
+ 6 │ var f3 = (x, x) => { }
+   ·           ┬  ┬
+   ·           │  ╰── It can not be redeclared here
+   ·           ╰── `x` has already been declared here
+ 7 │ var f4 = <T>(x: T, x: T) => { }
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:6:1]
+ 6 │ var f3 = (x, x) => { }
+ 7 │ var f4 = <T>(x: T, x: T) => { }
+   ·              ┬     ┬
+   ·              │     ╰── It can not be redeclared here
+   ·              ╰── `x` has already been declared here
+ 8 │ 
+   ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:11:1]
+ 11 │ var f6 = function (x: string, x: number) { }
+ 12 │ var f7 = (x: string, x: number) => { }
+    ·           ┬          ┬
+    ·           │          ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+ 13 │ var f8 = <T>(x: T, y: T) => { }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:15:1]
+ 15 │ class C {
+ 16 │     foo(x, x) { }
+    ·         ┬  ┬
+    ·         │  ╰── It can not be redeclared here
+    ·         ╰── `x` has already been declared here
+ 17 │     foo2(x: number, x: string) { }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:16:1]
+ 16 │     foo(x, x) { }
+ 17 │     foo2(x: number, x: string) { }
+    ·          ┬          ┬
+    ·          │          ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
+ 18 │     foo3<T>(x: T, x: T) { }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:17:1]
+ 17 │     foo2(x: number, x: string) { }
+ 18 │     foo3<T>(x: T, x: T) { }
+    ·             ┬     ┬
+    ·             │     ╰── It can not be redeclared here
+    ·             ╰── `x` has already been declared here
+ 19 │ }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:21:1]
+ 21 │ interface I {
+ 22 │     (x, x);
+    ·      ┬  ┬
+    ·      │  ╰── It can not be redeclared here
+    ·      ╰── `x` has already been declared here
+ 23 │     (x: string, x: number);
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:22:1]
+ 22 │     (x, x);
+ 23 │     (x: string, x: number);
+    ·      ┬          ┬
+    ·      │          ╰── It can not be redeclared here
+    ·      ╰── `x` has already been declared here
+ 24 │     foo(x, x);
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:23:1]
+ 23 │     (x: string, x: number);
+ 24 │     foo(x, x);
+    ·         ┬  ┬
+    ·         │  ╰── It can not be redeclared here
+    ·         ╰── `x` has already been declared here
+ 25 │     foo(x: number, x: string);
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:24:1]
+ 24 │     foo(x, x);
+ 25 │     foo(x: number, x: string);
+    ·         ┬          ┬
+    ·         │          ╰── It can not be redeclared here
+    ·         ╰── `x` has already been declared here
+ 26 │     foo3<T>(x: T, x: T);
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:25:1]
+ 25 │     foo(x: number, x: string);
+ 26 │     foo3<T>(x: T, x: T);
+    ·             ┬     ┬
+    ·             │     ╰── It can not be redeclared here
+    ·             ╰── `x` has already been declared here
+ 27 │ }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:29:1]
+ 29 │ var a: {
+ 30 │     foo(x, x);
+    ·         ┬  ┬
+    ·         │  ╰── It can not be redeclared here
+    ·         ╰── `x` has already been declared here
+ 31 │     foo2(x: number, x: string);
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:30:1]
+ 30 │     foo(x, x);
+ 31 │     foo2(x: number, x: string);
+    ·          ┬          ┬
+    ·          │          ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
+ 32 │ };
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithDuplicateParameters.ts:36:1]
+ 36 │     a: function foo(x: number, x: string) { },
+ 37 │     b: <T>(x: T, x: T) => { }
+    ·            ┬     ┬
+    ·            │     ╰── It can not be redeclared here
+    ·            ╰── `x` has already been declared here
+ 38 │ }
     ╰────
 
   × Automatic Semicolon Insertion

@@ -1,5 +1,9 @@
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, syntax_directed_operations::PropName, AstKind, Atom, ModuleKind, Span};
+use oxc_ast::{
+    ast::*,
+    syntax_directed_operations::{BoundNames, IsSimpleParameterList, PropName},
+    AstKind, Atom, ModuleKind, Span,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -43,6 +47,8 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::Class(class) => check_class(class, ctx),
             AstKind::Super(sup) => check_super(sup, node, ctx),
             AstKind::Property(prop) => check_property(prop, ctx),
+
+            AstKind::FormalParameters(params) => check_formal_parameters(params, node, ctx),
 
             AstKind::ObjectExpression(expr) => check_object_expression(expr, ctx),
             AstKind::BinaryExpression(expr) => check_binary_expression(expr, ctx),
@@ -684,6 +690,34 @@ fn check_property(prop: &Property, ctx: &LintContext) {
     if prop.shorthand {
         if let PropertyValue::Expression(Expression::AssignmentExpression(expr)) = &prop.value {
             ctx.diagnostic(CoverInitializedName(expr.span));
+        }
+    }
+}
+
+fn check_formal_parameters<'a>(
+    params: &FormalParameters,
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) {
+    if params.is_empty() {
+        return;
+    }
+
+    // Note: all other cases forbid duplicate parameter names.
+    if params.kind == FormalParameterKind::FormalParameter
+        && !ctx.strict_mode(node)
+        && params.is_simple_parameter_list()
+    {
+        return;
+    }
+
+    // bound_names are usually small, a simple loop should be more performant checking with a hashmap
+    let mut idents = params.bound_names();
+    idents.sort_unstable_by_key(|ident| ident.name.as_str());
+    for i in 1..idents.len() {
+        let ident = &idents[i - 1];
+        if let Some(found) = idents[i..].iter().find(|i| i.name == ident.name) {
+            ctx.diagnostic(Redeclaration(ident.name.clone(), ident.span, found.span));
         }
     }
 }

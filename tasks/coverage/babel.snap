@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2051/2069 (99.13%)
 Positive Passed: 2051/2069 (99.13%)
-Negative Passed: 1095/1502 (72.90%)
+Negative Passed: 1108/1502 (73.77%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -89,7 +89,6 @@ Expect Syntax Error: "core/uncategorised/544/input.js"
 Expect Syntax Error: "core/uncategorised/550/input.js"
 Expect Syntax Error: "core/uncategorised/552/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
-Expect Syntax Error: "es2015/class-methods/disallow-duplicate-method-params/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-arguments-strict/input.js"
 Expect Syntax Error: "es2015/destructuring/binding-eval/input.js"
 Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
@@ -112,7 +111,6 @@ Expect Syntax Error: "es2015/statements/label-invalid-func-strict/input.js"
 Expect Syntax Error: "es2015/uncategorised/.191/input.js"
 Expect Syntax Error: "es2015/uncategorised/.335/input.js"
 Expect Syntax Error: "es2015/uncategorised/.343/input.js"
-Expect Syntax Error: "es2015/uncategorised/166/input.js"
 Expect Syntax Error: "es2015/uncategorised/220/input.js"
 Expect Syntax Error: "es2015/uncategorised/227/input.js"
 Expect Syntax Error: "es2015/uncategorised/228/input.js"
@@ -124,10 +122,7 @@ Expect Syntax Error: "es2015/uncategorised/244/input.js"
 Expect Syntax Error: "es2015/uncategorised/245/input.js"
 Expect Syntax Error: "es2015/uncategorised/246/input.js"
 Expect Syntax Error: "es2015/uncategorised/247/input.js"
-Expect Syntax Error: "es2015/uncategorised/248/input.js"
 Expect Syntax Error: "es2015/uncategorised/249/input.js"
-Expect Syntax Error: "es2015/uncategorised/280/input.js"
-Expect Syntax Error: "es2015/uncategorised/281/input.js"
 Expect Syntax Error: "es2015/uncategorised/289/input.js"
 Expect Syntax Error: "es2015/uncategorised/296/input.js"
 Expect Syntax Error: "es2015/uncategorised/297/input.js"
@@ -166,12 +161,6 @@ Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
 Expect Syntax Error: "es2020/import-meta/error-in-script/input.js"
 Expect Syntax Error: "es2020/import-meta/no-other-prop-names/input.js"
 Expect Syntax Error: "esprima/declaration-function/dupe-param/input.js"
-Expect Syntax Error: "esprima/es2015-array-binding-pattern/invalid-dup-param/input.js"
-Expect Syntax Error: "esprima/es2015-array-pattern/dupe-param-1/input.js"
-Expect Syntax Error: "esprima/es2015-array-pattern/dupe-param-2/input.js"
-Expect Syntax Error: "esprima/es2015-array-pattern/dupe-param-3/input.js"
-Expect Syntax Error: "esprima/es2015-arrow-function/complex-rest-in-arrow-not-allowed/input.js"
-Expect Syntax Error: "esprima/es2015-arrow-function/invalid-duplicated-params/input.js"
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-export-declaration/invalid-export-named-default/input.js"
 Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
@@ -208,8 +197,6 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0088/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0089/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0090/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0091/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0092/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0093/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0094/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0100/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
@@ -2165,6 +2152,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Identifier `a` has already been declared
+   ╭─[es2015/class-methods/disallow-duplicate-method-params/input.js:1:1]
+ 1 │ class Foo {
+ 2 │     bar(a, a) {}
+   ·         ┬  ┬
+   ·         │  ╰── It can not be redeclared here
+   ·         ╰── `a` has already been declared here
+ 3 │ }
+   ╰────
+
   × Automatic Semicolon Insertion
    ╭─[es2015/class-methods/disallow-literal-async/input.js:1:1]
  1 │ class A {
@@ -2954,6 +2951,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ─
    ╰────
 
+  × Identifier `a` has already been declared
+   ╭─[es2015/uncategorised/166/input.js:1:1]
+ 1 │ function x(a, { a }){}
+   ·            ┬    ┬
+   ·            │    ╰── It can not be redeclared here
+   ·            ╰── `a` has already been declared here
+   ╰────
+
   × Unexpected end of file
    ╭─[es2015/uncategorised/198/input.js:1:1]
  1 │ 0o
@@ -3202,6 +3207,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                 ───
    ╰────
 
+  × Identifier `a` has already been declared
+   ╭─[es2015/uncategorised/248/input.js:1:1]
+ 1 │ "use strict"; (a, a) => 42
+   ·                ┬  ┬
+   ·                │  ╰── It can not be redeclared here
+   ·                ╰── `a` has already been declared here
+   ╰────
+
   × Empty parenthesized expression
    ╭─[es2015/uncategorised/250/input.js:1:1]
  1 │ () <= 42
@@ -3308,6 +3321,22 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/uncategorised/278/input.js:1:1]
  1 │ function f(a, ...b = 0)
    ·                       ─
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[es2015/uncategorised/280/input.js:1:1]
+ 1 │ "use strict"; function x(a, { a }){}
+   ·                          ┬    ┬
+   ·                          │    ╰── It can not be redeclared here
+   ·                          ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[es2015/uncategorised/281/input.js:1:1]
+ 1 │ "use strict"; function x({ b: { a } }, [{ b: { a } }]){}
+   ·                                 ┬              ┬
+   ·                                 │              ╰── It can not be redeclared here
+   ·                                 ╰── `a` has already been declared here
    ╰────
 
   × Rest element must be last element
@@ -6204,6 +6233,41 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·         ╰── Unexpected trailing comma after rest element
    ╰────
 
+  × Identifier `b` has already been declared
+   ╭─[esprima/es2015-array-binding-pattern/invalid-dup-param/input.js:1:1]
+ 1 │ ([a,[b],...b])=>0;
+   ·      ┬     ┬
+   ·      │     ╰── It can not be redeclared here
+   ·      ╰── `b` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[esprima/es2015-array-pattern/dupe-param-1/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ function a([a,a]){ }
+   ·             ┬ ┬
+   ·             │ ╰── It can not be redeclared here
+   ·             ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[esprima/es2015-array-pattern/dupe-param-2/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ function a([a,...a]){ }
+   ·             ┬    ┬
+   ·             │    ╰── It can not be redeclared here
+   ·             ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[esprima/es2015-array-pattern/dupe-param-3/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ function a([{a},...a]){ }
+   ·              ┬     ┬
+   ·              │     ╰── It can not be redeclared here
+   ·              ╰── `a` has already been declared here
+   ╰────
+
   × Expect token
    ╭─[esprima/es2015-array-pattern/with-default-catch-param-fail/input.js:1:1]
  1 │ try { } catch ([a] = []) { }
@@ -6223,6 +6287,22 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ (...a, ...b) => 0
    ·  ──┬─
    ·    ╰── Rest element must be last element
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[esprima/es2015-arrow-function/complex-rest-in-arrow-not-allowed/input.js:1:1]
+ 1 │ (a,...[a]) => 0;
+   ·  ┬     ┬
+   ·  │     ╰── It can not be redeclared here
+   ·  ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[esprima/es2015-arrow-function/invalid-duplicated-params/input.js:1:1]
+ 1 │ (x, x) => y;
+   ·  ┬  ┬
+   ·  │  ╰── It can not be redeclared here
+   ·  ╰── `x` has already been declared here
    ╰────
 
   × Line terminator not permitted before arrow
@@ -7653,6 +7733,22 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ ({get
    ·      ▲
    ·      ╰── Expect `}` here, but found `EOF`
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0092/input.js:1:1]
+ 1 │ (a, a) => 42
+   ·  ┬  ┬
+   ·  │  ╰── It can not be redeclared here
+   ·  ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[esprima/invalid-syntax/migrated_0093/input.js:1:1]
+ 1 │ "use strict"; (a, a) => 42
+   ·                ┬  ┬
+   ·                │  ╰── It can not be redeclared here
+   ·                ╰── `a` has already been declared here
    ╰────
 
   × Empty parenthesized expression

@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3331/3917 (85.04%)
+Negative Passed: 3389/3917 (86.52%)
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
 Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
@@ -19,7 +19,6 @@ Expect Syntax Error: "language/directive-prologue/func-expr-inside-func-decl-par
 Expect Syntax Error: "language/directive-prologue/func-expr-no-semi-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-parse.js"
 Expect Syntax Error: "language/expressions/arrow-function/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/arrow-function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/arrow-function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-id.js"
@@ -28,40 +27,23 @@ Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-res
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/arrow-function/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/arrow-function/params-duplicate.js"
 Expect Syntax Error: "language/expressions/arrow-function/rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-1.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-2.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-3.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-1.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-2.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-3.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-4.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-5.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-6.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-rest.js"
-Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates.js"
 Expect Syntax Error: "language/expressions/arrow-function/syntax/early-errors/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-NSPL-with-USD.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/early-errors-arrow-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-arrow-function/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/early-errors-expression-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/async-function/named-array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-function/named-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-function/named-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-function/named-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/named-rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/nameless-array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-function/nameless-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-function/nameless-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-function/nameless-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-function/nameless-rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-generator/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-id.js"
@@ -78,7 +60,6 @@ Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-p
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-NSPL-with-USD.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
 Expect Syntax Error: "language/expressions/async-generator/named-array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-generator/named-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/async-generator/named-rest-param-strict-body.js"
@@ -86,22 +67,18 @@ Expect Syntax Error: "language/expressions/async-generator/object-destructuring-
 Expect Syntax Error: "language/expressions/async-generator/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/await/await-BindingIdentifier-nested.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-gen-method/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/async-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/async-method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/async-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/async-method/rest-param-strict-body.js"
@@ -178,27 +155,22 @@ Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-a
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/gen-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/gen-method/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/class/method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/class/method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/class/method/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/function/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-id.js"
@@ -209,9 +181,6 @@ Expect Syntax Error: "language/expressions/function/dstr/dflt-ary-ptrn-rest-init
 Expect Syntax Error: "language/expressions/function/name-arguments-strict-body.js"
 Expect Syntax Error: "language/expressions/function/name-eval-strict-body.js"
 Expect Syntax Error: "language/expressions/function/object-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/function/param-duplicated-strict-1.js"
-Expect Syntax Error: "language/expressions/function/param-duplicated-strict-2.js"
-Expect Syntax Error: "language/expressions/function/param-duplicated-strict-3.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-1.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-2.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-3.js"
@@ -219,7 +188,6 @@ Expect Syntax Error: "language/expressions/function/param-eval-strict-body.js"
 Expect Syntax Error: "language/expressions/function/rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/function/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/generators/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/generators/dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/generators/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-id.js"
@@ -261,26 +229,20 @@ Expect Syntax Error: "language/expressions/object/identifier-shorthand-public-in
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-static-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-yield-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-meth-array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-meth-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/async-meth-rest-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-async-method-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-NSPL-with-USD.js"
-Expect Syntax Error: "language/expressions/object/method-definition/early-errors-object-method-duplicate-parameters.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-rest-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/generator-use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/expressions/object/method-definition/meth-dflt-params-duplicates.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/expressions/object/method-definition/meth-rest-param-strict-body.js"
@@ -314,14 +276,11 @@ Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
 Expect Syntax Error: "language/statements/async-function/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/async-function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/async-function/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/async-function/early-errors-declaration-NSPL-with-USD.js"
-Expect Syntax Error: "language/statements/async-function/early-errors-declaration-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/async-function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-function/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-generator/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/async-generator/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/async-generator/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-id.js"
@@ -332,28 +291,22 @@ Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-res
 Expect Syntax Error: "language/statements/async-generator/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/async-generator/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-gen-method/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/async-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/async-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/async-method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/async-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/async-method/rest-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/definition/early-errors-class-async-method-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-NSPL-with-USD.js"
-Expect Syntax Error: "language/statements/class/definition/early-errors-class-method-duplicate-parameters.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -427,22 +380,18 @@ Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ar
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/gen-method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/gen-method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/gen-method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/gen-method/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/method-static/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/method-static/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/method-static/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/method-static/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/method-static/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/method/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/class/method/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/class/method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/method/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/class/method/rest-param-strict-body.js"
@@ -521,10 +470,7 @@ Expect Syntax Error: "language/statements/for/labelled-fn-stmt-const.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-expr.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-let.js"
 Expect Syntax Error: "language/statements/for/labelled-fn-stmt-var.js"
-Expect Syntax Error: "language/statements/function/13.1-5gs.js"
-Expect Syntax Error: "language/statements/function/13.1-8gs.js"
 Expect Syntax Error: "language/statements/function/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/function/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/function/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-id.js"
@@ -538,9 +484,6 @@ Expect Syntax Error: "language/statements/function/name-arguments-strict-body.js
 Expect Syntax Error: "language/statements/function/name-eval-strict-body.js"
 Expect Syntax Error: "language/statements/function/object-destructuring-param-strict-body.js"
 Expect Syntax Error: "language/statements/function/param-arguments-strict-body.js"
-Expect Syntax Error: "language/statements/function/param-duplicated-strict-1.js"
-Expect Syntax Error: "language/statements/function/param-duplicated-strict-2.js"
-Expect Syntax Error: "language/statements/function/param-duplicated-strict-3.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-1.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-2.js"
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-3.js"
@@ -549,7 +492,6 @@ Expect Syntax Error: "language/statements/function/rest-param-strict-body.js"
 Expect Syntax Error: "language/statements/function/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/function/use-strict-with-non-simple-param.js"
 Expect Syntax Error: "language/statements/generators/array-destructuring-param-strict-body.js"
-Expect Syntax Error: "language/statements/generators/dflt-params-duplicates.js"
 Expect Syntax Error: "language/statements/generators/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-id.js"
@@ -2357,6 +2299,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·               ╰── keyword cannot contain escape characters
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/dflt-params-duplicates.js:57:1]
+ 57 │ 
+ 58 │ 0, (x = 0, x) => {
+    ·     ┬      ┬
+    ·     │      ╰── It can not be redeclared here
+    ·     ╰── `x` has already been declared here
+ 59 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ var f;
@@ -2742,6 +2694,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ─────
     ╰────
 
+  × Identifier `a` has already been declared
+    ╭─[language/expressions/arrow-function/params-duplicate.js:32:1]
+ 32 │ 
+ 33 │ 0, (a, a) => { };
+    ·     ┬  ┬
+    ·     │  ╰── It can not be redeclared here
+    ·     ╰── `a` has already been declared here
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:53:1]
  53 │ 
@@ -2821,6 +2782,105 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  23 │ $DONOTEVALUATE();
  24 │ var af = (arguments) => 1;
     ·           ─────────
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-1.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ var af = (x, [x]) => 1;
+    ·           ┬   ┬
+    ·           │   ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-2.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ var af = ([x, x]) => 1;
+    ·            ┬  ┬
+    ·            │  ╰── It can not be redeclared here
+    ·            ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-array-3.js:26:1]
+ 26 │ $DONOTEVALUATE();
+ 27 │ var af = ([x], ...x) => 1;
+    ·            ┬      ┬
+    ·            │      ╰── It can not be redeclared here
+    ·            ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-1.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ var af = (x, {x}) => 1;
+    ·           ┬   ┬
+    ·           │   ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-2.js:26:1]
+ 26 │ $DONOTEVALUATE();
+ 27 │ var af = (x, {y: x}) => 1;
+    ·           ┬      ┬
+    ·           │      ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-3.js:26:1]
+ 26 │ $DONOTEVALUATE();
+ 27 │ var af = ({x}, {y: x}) => 1;
+    ·            ┬       ┬
+    ·            │       ╰── It can not be redeclared here
+    ·            ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-4.js:28:1]
+ 28 │ $DONOTEVALUATE();
+ 29 │ var af = ({x}, ...x) => 1;
+    ·            ┬      ┬
+    ·            │      ╰── It can not be redeclared here
+    ·            ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-5.js:28:1]
+ 28 │ $DONOTEVALUATE();
+ 29 │ var af = ({y: x}, ...x) => 1;
+    ·               ┬      ┬
+    ·               │      ╰── It can not be redeclared here
+    ·               ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-binding-object-6.js:26:1]
+ 26 │ $DONOTEVALUATE();
+ 27 │ var af = ({y: x, x}) => 1;
+    ·               ┬  ┬
+    ·               │  ╰── It can not be redeclared here
+    ·               ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates-rest.js:22:1]
+ 22 │ $DONOTEVALUATE();
+ 23 │ var af = (x, ...x) => 1;
+    ·           ┬     ┬
+    ·           │     ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/arrow-function/syntax/early-errors/arrowparameters-cover-no-duplicates.js:22:1]
+ 22 │ $DONOTEVALUATE();
+ 23 │ var af = (x, x) => 1;
+    ·           ┬  ┬
+    ·           │  ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -6050,6 +6110,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·               ─────
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/async-arrow-function/dflt-params-duplicates.js:49:1]
+ 49 │ 
+ 50 │ (async (x = 0, x) => {
+    ·         ┬      ┬
+    ·         │      ╰── It can not be redeclared here
+    ·         ╰── `x` has already been declared here
+ 51 │   
+    ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-arguments-in-formal-parameters.js:15:1]
  15 │ 
@@ -6088,6 +6158,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  14 │ 
  15 │ async(foo) => { super.prop };
     ·                 ─────
+    ╰────
+
+  × Identifier `a` has already been declared
+    ╭─[language/expressions/async-arrow-function/early-errors-arrow-duplicate-parameters.js:34:1]
+ 34 │ 
+ 35 │ async(a, a) => { }
+    ·       ┬  ┬
+    ·       │  ╰── It can not be redeclared here
+    ·       ╰── `a` has already been declared here
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -6360,6 +6439,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │ };
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/async-function/named-dflt-params-duplicates.js:35:1]
+ 35 │ 
+ 36 │ (async function f(x = 0, x) {
+    ·                   ┬      ┬
+    ·                   │      ╰── It can not be redeclared here
+    ·                   ╰── `x` has already been declared here
+ 37 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:32:1]
  32 │ 
@@ -6367,6 +6456,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ──┬─
     ·                     ╰── Rest element must be last element
  34 │   
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/async-function/nameless-dflt-params-duplicates.js:35:1]
+ 35 │ 
+ 36 │ (async function(x = 0, x) {
+    ·                 ┬      ┬
+    ·                 │      ╰── It can not be redeclared here
+    ·                 ╰── `x` has already been declared here
+ 37 │   
     ╰────
 
   × Rest element must be last element
@@ -6442,6 +6541,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │   await: ;
     ·        ─
  31 │ };
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/async-generator/dflt-params-duplicates.js:38:1]
+ 38 │ 
+ 39 │ 0, async function*(x = 0, x) {
+    ·                    ┬      ┬
+    ·                    │      ╰── It can not be redeclared here
+    ·                    ╰── `x` has already been declared here
+ 40 │   
     ╰────
 
   × Rest element must be last element
@@ -6782,6 +6891,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  31 │ };
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/async-generator/named-dflt-params-duplicates.js:38:1]
+ 38 │ 
+ 39 │ 0, async function* g(x = 0, x) {
+    ·                      ┬      ┬
+    ·                      │      ╰── It can not be redeclared here
+    ·                      ╰── `x` has already been declared here
+ 40 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:35:1]
  35 │ 
@@ -7108,6 +7227,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }};
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/async-gen-method-static/dflt-params-duplicates.js:62:1]
+ 62 │ 0, class {
+ 63 │   static async *method(x = 0, x) {
+    ·                        ┬      ┬
+    ·                        │      ╰── It can not be redeclared here
+    ·                        ╰── `x` has already been declared here
+ 64 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
  59 │ 0, class {
@@ -7290,6 +7419,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │     await: ;
     ·          ─
  36 │ }};
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/async-gen-method/dflt-params-duplicates.js:62:1]
+ 62 │ 0, class {
+ 63 │   async *method(x = 0, x) {
+    ·                 ┬      ┬
+    ·                 │      ╰── It can not be redeclared here
+    ·                 ╰── `x` has already been declared here
+ 64 │     
     ╰────
 
   × Rest element must be last element
@@ -7476,6 +7615,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/async-method-static/dflt-params-duplicates.js:60:1]
+ 60 │ var C = class {
+ 61 │   static async method(x = 0, x) {
+    ·                       ┬      ┬
+    ·                       │      ╰── It can not be redeclared here
+    ·                       ╰── `x` has already been declared here
+ 62 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:56:1]
  56 │ var C = class {
@@ -7549,6 +7698,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │     await: ;
     ·          ─
  37 │   }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/async-method/dflt-params-duplicates.js:60:1]
+ 60 │ var C = class {
+ 61 │   static async method(x = 0, x) {
+    ·                       ┬      ┬
+    ·                       │      ╰── It can not be redeclared here
+    ·                       ╰── `x` has already been declared here
+ 62 │     
     ╰────
 
   × Rest element must be last element
@@ -12180,6 +12339,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ };
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/gen-method-static/dflt-params-duplicates.js:83:1]
+ 83 │ 0, class {
+ 84 │   static *method(x = 0, x) {
+    ·                  ┬      ┬
+    ·                  │      ╰── It can not be redeclared here
+    ·                  ╰── `x` has already been declared here
+ 85 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:1]
  80 │ 0, class {
@@ -12296,6 +12465,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  32 │         var yield;
     ·             ─────
  33 │         throw new Test262Error();
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/gen-method/dflt-params-duplicates.js:83:1]
+ 83 │ 0, class {
+ 84 │   *method(x = 0, x) {
+    ·           ┬      ┬
+    ·           │      ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+ 85 │     
     ╰────
 
   × Rest element must be last element
@@ -12432,6 +12611,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  22 │ };
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/method-static/dflt-params-duplicates.js:79:1]
+ 79 │ 0, class {
+ 80 │   static method(x = 0, x) {
+    ·                 ┬      ┬
+    ·                 │      ╰── It can not be redeclared here
+    ·                 ╰── `x` has already been declared here
+ 81 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:75:1]
  75 │ 0, class {
@@ -12439,6 +12628,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ──┬─
     ·                   ╰── Rest element must be last element
  77 │     
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/method/dflt-params-duplicates.js:79:1]
+ 79 │ 0, class {
+ 80 │   method(x = 0, x) {
+    ·          ┬      ┬
+    ·          │      ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
+ 81 │     
     ╰────
 
   × Rest element must be last element
@@ -13687,6 +13886,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/function/dflt-params-duplicates.js:58:1]
+ 58 │ 
+ 59 │ 0, function(x = 0, x) {
+    ·             ┬      ┬
+    ·             │      ╰── It can not be redeclared here
+    ·             ╰── `x` has already been declared here
+ 60 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var f;
@@ -13825,6 +14034,42 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  23 │     paramValue = x;
     ╰────
 
+  × Identifier `param` has already been declared
+    ╭─[language/expressions/function/param-duplicated-strict-1.js:21:1]
+ 21 │ 
+ 22 │ (function (param, param) { });
+    ·            ──┬──  ──┬──
+    ·              │      ╰── It can not be redeclared here
+    ·              ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param1` has already been declared
+    ╭─[language/expressions/function/param-duplicated-strict-2.js:22:1]
+ 22 │ 
+ 23 │ (function (param1, param2, param1) { });
+    ·            ───┬──          ───┬──
+    ·               │               ╰── It can not be redeclared here
+    ·               ╰── `param1` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/expressions/function/param-duplicated-strict-3.js:21:1]
+ 21 │ 
+ 22 │ (function (param, param, param) { });
+    ·            ──┬──  ──┬──
+    ·              │      ╰── It can not be redeclared here
+    ·              ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/expressions/function/param-duplicated-strict-3.js:21:1]
+ 21 │ 
+ 22 │ (function (param, param, param) { });
+    ·                   ──┬──  ──┬──
+    ·                     │      ╰── It can not be redeclared here
+    ·                     ╰── `param` has already been declared here
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/function/rest-params-trailing-comma-early-error.js:54:1]
  54 │ 
@@ -13832,6 +14077,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·             ──┬─
     ·               ╰── Rest element must be last element
  56 │   
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/generators/dflt-params-duplicates.js:59:1]
+ 59 │ 
+ 60 │ 0, function*(x = 0, x) {
+    ·              ┬      ┬
+    ·              │      ╰── It can not be redeclared here
+    ·              ╰── `x` has already been declared here
+ 61 │   
     ╰────
 
   × Rest element must be last element
@@ -14805,6 +15060,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │   }
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/object/method-definition/async-gen-meth-dflt-params-duplicates.js:43:1]
+ 43 │ 0, {
+ 44 │   async *method(x = 0, x) {
+    ·                 ┬      ┬
+    ·                 │      ╰── It can not be redeclared here
+    ·                 ╰── `x` has already been declared here
+ 45 │     
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/object/method-definition/async-gen-meth-escaped-async.js:24:1]
  24 │ ({
@@ -14932,6 +15197,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  28 │         throw new Test262Error();
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/object/method-definition/async-meth-dflt-params-duplicates.js:36:1]
+ 36 │ ({
+ 37 │   async *method(x = 0, x) {
+    ·                 ┬      ┬
+    ·                 │      ╰── It can not be redeclared here
+    ·                 ╰── `x` has already been declared here
+ 38 │     
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/object/method-definition/async-meth-escaped-async.js:24:1]
  24 │ ({
@@ -14948,6 +15223,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ──┬─
     ·                   ╰── Rest element must be last element
  35 │     
+    ╰────
+
+  × Identifier `a` has already been declared
+    ╭─[language/expressions/object/method-definition/early-errors-object-async-method-duplicate-parameters.js:26:1]
+ 26 │ ({
+ 27 │   async foo(a, a) { }
+    ·             ┬  ┬
+    ·             │  ╰── It can not be redeclared here
+    ·             ╰── `a` has already been declared here
+ 28 │ })
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -14990,6 +15275,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │   async foo () { super() }
     ·                  ───────
  17 │ })
+    ╰────
+
+  × Identifier `a` has already been declared
+    ╭─[language/expressions/object/method-definition/early-errors-object-method-duplicate-parameters.js:25:1]
+ 25 │ ({
+ 26 │   foo(a, a) { }
+    ·       ┬  ┬
+    ·       │  ╰── It can not be redeclared here
+    ·       ╰── `a` has already been declared here
+ 27 │ })
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -15088,6 +15383,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·   ─────────┬────────
     ·            ╰── keyword cannot contain escape characters
  25 │ });
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/object/method-definition/gen-meth-dflt-params-duplicates.js:65:1]
+ 65 │ 0, {
+ 66 │   *method(x = 0, x) {
+    ·           ┬      ┬
+    ·           │      ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+ 67 │     
     ╰────
 
   × Rest element must be last element
@@ -15265,6 +15570,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  20 │     *foo(a = super()) {
     ·              ───────
  21 │     }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/object/method-definition/meth-dflt-params-duplicates.js:61:1]
+ 61 │ 0, {
+ 62 │   method(x = 0, x) {
+    ·          ┬      ┬
+    ·          │      ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
+ 63 │     
     ╰────
 
   × Rest element must be last element
@@ -20158,6 +20473,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │ }
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/statements/async-function/dflt-params-duplicates.js:35:1]
+ 35 │ 
+ 36 │ async function f(x = 0, x) {
+    ·                  ┬      ┬
+    ·                  │      ╰── It can not be redeclared here
+    ·                  ╰── `x` has already been declared here
+ 37 │   
+    ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/statements/async-function/early-errors-declaration-arguments-in-formal-parameters.js:15:1]
  15 │ 
@@ -20209,6 +20534,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  14 │ 
  15 │ async function foo (foo) { super.prop };
     ·                            ─────
+    ╰────
+
+  × Identifier `a` has already been declared
+    ╭─[language/statements/async-function/early-errors-declaration-duplicate-parameters.js:16:1]
+ 16 │ 
+ 17 │ async function foo(a, a) { }
+    ·                    ┬  ┬
+    ·                    │  ╰── It can not be redeclared here
+    ·                    ╰── `a` has already been declared here
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -20342,6 +20676,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  30 │   await: ;
     ·        ─
  31 │ }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/async-generator/dflt-params-duplicates.js:38:1]
+ 38 │ 
+ 39 │ async function* f(x = 0, x) {
+    ·                   ┬      ┬
+    ·                   │      ╰── It can not be redeclared here
+    ·                   ╰── `x` has already been declared here
+ 40 │   
     ╰────
 
   × Rest element must be last element
@@ -20830,6 +21174,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │ }}
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/async-gen-method-static/dflt-params-duplicates.js:62:1]
+ 62 │ class C {
+ 63 │   static async *method(x = 0, x) {
+    ·                        ┬      ┬
+    ·                        │      ╰── It can not be redeclared here
+    ·                        ╰── `x` has already been declared here
+ 64 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
  59 │ class C {
@@ -21012,6 +21366,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  35 │     await: ;
     ·          ─
  36 │ }}
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/async-gen-method/dflt-params-duplicates.js:61:1]
+ 61 │ class C {
+ 62 │   async *method(x = 0, x) {
+    ·                 ┬      ┬
+    ·                 │      ╰── It can not be redeclared here
+    ·                 ╰── `x` has already been declared here
+ 63 │     
     ╰────
 
   × Rest element must be last element
@@ -21207,6 +21571,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   }
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/async-method-static/dflt-params-duplicates.js:59:1]
+ 59 │ class C {
+ 60 │   static async method(x = 0, x) {
+    ·                       ┬      ┬
+    ·                       │      ╰── It can not be redeclared here
+    ·                       ╰── `x` has already been declared here
+ 61 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:55:1]
  55 │ class C {
@@ -21280,6 +21654,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  36 │     await: ;
     ·          ─
  37 │   }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/async-method/dflt-params-duplicates.js:60:1]
+ 60 │ class C {
+ 61 │   async method(x = 0, x) {
+    ·                ┬      ┬
+    ·                │      ╰── It can not be redeclared here
+    ·                ╰── `x` has already been declared here
+ 62 │     
     ╰────
 
   × Rest element must be last element
@@ -21361,6 +21745,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·       ─────
     ╰────
 
+  × Identifier `a` has already been declared
+    ╭─[language/statements/class/definition/early-errors-class-async-method-duplicate-parameters.js:27:1]
+ 27 │ class Foo {
+ 28 │   async foo(a, a) { }
+    ·             ┬  ┬
+    ·             │  ╰── It can not be redeclared here
+    ·             ╰── `a` has already been declared here
+ 29 │ }
+    ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/statements/class/definition/early-errors-class-method-arguments-in-formal-parameters.js:14:1]
  14 │ class Foo {
@@ -21392,6 +21786,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │   async foo () { super() }
     ·                  ───────
  16 │ }
+    ╰────
+
+  × Identifier `a` has already been declared
+    ╭─[language/statements/class/definition/early-errors-class-method-duplicate-parameters.js:26:1]
+ 26 │ class Foo {
+ 27 │   foo(a, a) { }
+    ·       ┬  ┬
+    ·       │  ╰── It can not be redeclared here
+    ·       ╰── `a` has already been declared here
+ 28 │ }
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -26097,6 +26501,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ }
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/gen-method-static/dflt-params-duplicates.js:81:1]
+ 81 │ class C {
+ 82 │   static *method(x = 0, x) {
+    ·                  ┬      ┬
+    ·                  │      ╰── It can not be redeclared here
+    ·                  ╰── `x` has already been declared here
+ 83 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:78:1]
  78 │ class C {
@@ -26213,6 +26627,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  32 │         var yield;
     ·             ─────
  33 │         throw new Test262Error();
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/gen-method/dflt-params-duplicates.js:81:1]
+ 81 │ class C {
+ 82 │   *method(x = 0, x) {
+    ·           ┬      ┬
+    ·           │      ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+ 83 │     
     ╰────
 
   × Rest element must be last element
@@ -26349,6 +26773,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  22 │ }
     ╰────
 
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/method-static/dflt-params-duplicates.js:78:1]
+ 78 │ class C {
+ 79 │   static method(x = 0, x) {
+    ·                 ┬      ┬
+    ·                 │      ╰── It can not be redeclared here
+    ·                 ╰── `x` has already been declared here
+ 80 │     
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/class/method-static/rest-params-trailing-comma-early-error.js:74:1]
  74 │ class C {
@@ -26356,6 +26790,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ──┬─
     ·                   ╰── Rest element must be last element
  76 │     
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/method/dflt-params-duplicates.js:78:1]
+ 78 │ class C {
+ 79 │   method(x = 0, x) {
+    ·          ┬      ┬
+    ·          │      ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
+ 80 │     
     ╰────
 
   × Rest element must be last element
@@ -28925,6 +29369,24 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                             ─────────
     ╰────
 
+  × Identifier `param` has already been declared
+    ╭─[language/statements/function/13.1-5gs.js:16:1]
+ 16 │ 
+ 17 │ function _13_1_5_fun(param, param) { }
+    ·                      ──┬──  ──┬──
+    ·                        │      ╰── It can not be redeclared here
+    ·                        ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/statements/function/13.1-8gs.js:16:1]
+ 16 │ 
+ 17 │ var _13_1_8_fun = function (param, param) { };
+    ·                             ──┬──  ──┬──
+    ·                               │      ╰── It can not be redeclared here
+    ·                               ╰── `param` has already been declared here
+    ╰────
+
   × Invalid Unicode escape sequence
     ╭─[language/statements/function/S13_A7_T3.js:14:1]
  14 │ 
@@ -28947,6 +29409,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │ function __func(){\A\B\C};
     ·                        ┬
     ·                        ╰── Invalid Unicode escape sequence
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/function/dflt-params-duplicates.js:59:1]
+ 59 │ 
+ 60 │ function f(x = 0, x) {
+    ·            ┬      ┬
+    ·            │      ╰── It can not be redeclared here
+    ·            ╰── `x` has already been declared here
+ 61 │   
     ╰────
 
   × Rest element must be last element
@@ -29157,6 +29629,42 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  23 │     paramValue = x;
     ╰────
 
+  × Identifier `param` has already been declared
+    ╭─[language/statements/function/param-duplicated-strict-1.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_5_fun(param, param) { }
+    ·                      ──┬──  ──┬──
+    ·                        │      ╰── It can not be redeclared here
+    ·                        ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param1` has already been declared
+    ╭─[language/statements/function/param-duplicated-strict-2.js:22:1]
+ 22 │ 
+ 23 │ function _13_1_6_fun(param1, param2, param1) { }
+    ·                      ───┬──          ───┬──
+    ·                         │               ╰── It can not be redeclared here
+    ·                         ╰── `param1` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/statements/function/param-duplicated-strict-3.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_7_fun(param, param, param) { }
+    ·                      ──┬──  ──┬──
+    ·                        │      ╰── It can not be redeclared here
+    ·                        ╰── `param` has already been declared here
+    ╰────
+
+  × Identifier `param` has already been declared
+    ╭─[language/statements/function/param-duplicated-strict-3.js:21:1]
+ 21 │ 
+ 22 │ function _13_1_7_fun(param, param, param) { }
+    ·                             ──┬──  ──┬──
+    ·                               │      ╰── It can not be redeclared here
+    ·                               ╰── `param` has already been declared here
+    ╰────
+
   × Cannot assign to 'eval' in strict mode
     ╭─[language/statements/function/param-eval-strict.js:21:1]
  21 │ 
@@ -29171,6 +29679,16 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·            ──┬─
     ·              ╰── Rest element must be last element
  57 │   
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/generators/dflt-params-duplicates.js:59:1]
+ 59 │ 
+ 60 │ function* f(x = 0, x) {
+    ·             ┬      ┬
+    ·             │      ╰── It can not be redeclared here
+    ·             ╰── `x` has already been declared here
+ 61 │   
     ╰────
 
   × Rest element must be last element
