@@ -48,6 +48,8 @@ bitflags! {
         /// Decorator context does not parse computed member expressions, e.g.
         /// `class C { @dec() ["method"]() {} }`
         const Decorator = 1 << 6;
+
+        const ClassStaticBlock = 1 << 7;
     }
 }
 
@@ -98,6 +100,12 @@ impl Context {
     #[inline]
     pub fn has_decorator(self) -> bool {
         self.contains(Self::Decorator)
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn has_class_static_block(self) -> bool {
+        self.contains(Self::ClassStaticBlock)
     }
 
     #[must_use]
@@ -158,6 +166,12 @@ impl Context {
     #[inline]
     pub fn and_decorator(self, include: bool) -> Self {
         self.and(Self::Decorator, include)
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn and_class_static_block(self, include: bool) -> Self {
+        self.and(Self::ClassStaticBlock, include)
     }
 
     #[must_use]

@@ -458,9 +458,19 @@ impl<'a> Parser<'a> {
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
         let has_return = self.ctx.has_return();
-        self.ctx = self.ctx.and_await(true).and_yield(false).and_return(false);
+        self.ctx = self
+            .ctx
+            .and_await(true)
+            .and_yield(false)
+            .and_return(false)
+            .and_class_static_block(true);
         let block = self.parse_block()?;
-        self.ctx = self.ctx.and_await(has_await).and_yield(has_yield).and_return(has_return);
+        self.ctx = self
+            .ctx
+            .and_await(has_await)
+            .and_yield(has_yield)
+            .and_return(has_return)
+            .and_class_static_block(false);
         Ok(self.ast.static_block(self.end_span(span), block.unbox().body))
     }
 

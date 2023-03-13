@@ -2777,6 +2777,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  22 │   }
     ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[classes/classStaticBlock/classStaticBlock22.ts:26:1]
+ 26 │       await = 1; // legal
+ 27 │       x = await; // legal (initializers have an implicit function boundary)
+    ·           ─────
+ 28 │     };
+    ╰────
+
   × Unexpected token
     ╭─[classes/classStaticBlock/classStaticBlock22.ts:26:1]
  26 │       await = 1; // legal
@@ -2784,6 +2792,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ·                ─
  28 │     };
     ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[classes/classStaticBlock/classStaticBlock26.ts:4:1]
+ 4 │     static {
+ 5 │         await; // illegal
+   ·         ─────
+ 6 │     }
+   ╰────
 
   × Unexpected token
    ╭─[classes/classStaticBlock/classStaticBlock26.ts:4:1]
@@ -2801,6 +2817,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  8 │         let arguments = 1;
    ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[classes/classStaticBlock/classStaticBlock6.ts:12:1]
+ 12 │     static {
+ 13 │         await: if (true) {
+    ·         ─────
+ 14 │ 
+    ╰────
+
   × Unexpected token
     ╭─[classes/classStaticBlock/classStaticBlock6.ts:12:1]
  12 │     static {
@@ -2808,6 +2832,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ·              ─
  14 │ 
     ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[classes/classStaticBlock/classStaticBlock7.ts:2:1]
+ 2 │     static {
+ 3 │         await 1;
+   ·         ─────
+ 4 │         yield 1;
+   ╰────
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[classes/classStaticBlock/classStaticBlock7.ts:3:1]
@@ -2825,6 +2857,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·            ╰── A 'return' statement can only be used within a function body.
  6 │     }
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[classes/classStaticBlock/classStaticBlock7.ts:11:1]
+ 11 │         static {
+ 12 │             await 1;
+    ·             ─────
+ 13 │ 
+    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[classes/classStaticBlock/classStaticBlock7.ts:14:1]
+ 14 │             async function ff () {
+ 15 │                 await 1;
+    ·                 ─────
+ 16 │             }
+    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
     ╭─[classes/classStaticBlock/classStaticBlock7.ts:23:1]
