@@ -1,12 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3499/3917 (89.33%)
-Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js"
-Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js"
-Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js"
-Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement.js"
-Expect Syntax Error: "language/block-scope/syntax/function-declarations/in-statement-position-while-expression-statement.js"
+Negative Passed: 3536/3917 (90.27%)
 Expect Syntax Error: "language/directive-prologue/10.1.1-2gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-5gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-8gs.js"
@@ -297,8 +292,6 @@ Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/do-while/decl-fun.js"
-Expect Syntax Error: "language/statements/do-while/labelled-fn-stmt.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-obj.js"
@@ -335,12 +328,6 @@ Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-ary-pt
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-in/decl-fun.js"
-Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-const.js"
-Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-let.js"
-Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-lhs.js"
-Expect Syntax Error: "language/statements/for-in/labelled-fn-stmt-var.js"
-Expect Syntax Error: "language/statements/for-of/decl-fun.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-of/dstr/const-ary-ptrn-rest-init-obj.js"
@@ -350,11 +337,6 @@ Expect Syntax Error: "language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-const.js"
-Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-let.js"
-Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-lhs.js"
-Expect Syntax Error: "language/statements/for-of/labelled-fn-stmt-var.js"
-Expect Syntax Error: "language/statements/for/decl-fun.js"
 Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for/dstr/const-ary-ptrn-rest-init-obj.js"
@@ -364,10 +346,6 @@ Expect Syntax Error: "language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js
 Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/for/labelled-fn-stmt-const.js"
-Expect Syntax Error: "language/statements/for/labelled-fn-stmt-expr.js"
-Expect Syntax Error: "language/statements/for/labelled-fn-stmt-let.js"
-Expect Syntax Error: "language/statements/for/labelled-fn-stmt-var.js"
 Expect Syntax Error: "language/statements/function/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-id.js"
@@ -392,18 +370,6 @@ Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-obj
 Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/generators/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/if/if-decl-else-decl-strict.js"
-Expect Syntax Error: "language/statements/if/if-decl-else-stmt-strict.js"
-Expect Syntax Error: "language/statements/if/if-decl-no-else-strict.js"
-Expect Syntax Error: "language/statements/if/if-fun-else-fun-strict.js"
-Expect Syntax Error: "language/statements/if/if-fun-else-stmt-strict.js"
-Expect Syntax Error: "language/statements/if/if-fun-no-else-strict.js"
-Expect Syntax Error: "language/statements/if/if-stmt-else-decl-strict.js"
-Expect Syntax Error: "language/statements/if/if-stmt-else-fun-strict.js"
-Expect Syntax Error: "language/statements/if/labelled-fn-stmt-first.js"
-Expect Syntax Error: "language/statements/if/labelled-fn-stmt-lone.js"
-Expect Syntax Error: "language/statements/if/labelled-fn-stmt-second.js"
-Expect Syntax Error: "language/statements/labeled/decl-fun-strict.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/let/dstr/ary-ptrn-rest-init-obj.js"
@@ -414,9 +380,6 @@ Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-ary.j
 Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/variable/dstr/ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js"
-Expect Syntax Error: "language/statements/while/decl-fun.js"
-Expect Syntax Error: "language/statements/while/labelled-fn-stmt.js"
-Expect Syntax Error: "language/statements/with/decl-fun.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-1.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl-nested-2.js"
 Expect Syntax Error: "language/statements/with/strict-fn-decl.js"
@@ -1038,6 +1001,51 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ────────
  15 │ 
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/block-scope/syntax/function-declarations/in-statement-position-do-statement-while-expression.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ do function g() {} while (false)
+    ·    ───────────────
+ 15 │ 
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/block-scope/syntax/function-declarations/in-statement-position-for-statement.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ for (;false;) function g() {}
+    ·               ───────────────
+ 15 │ 
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement-else-statement.js:14:1]
+ 14 │ $DONOTEVALUATE();
+ 15 │ if (true) {} else function g() {}
+    ·                   ───────────────
+ 16 │ 
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/block-scope/syntax/function-declarations/in-statement-position-if-expression-statement.js:14:1]
+ 14 │ $DONOTEVALUATE();
+ 15 │ if (true) function g() {}
+    ·           ───────────────
+ 16 │ 
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/block-scope/syntax/function-declarations/in-statement-position-while-expression-statement.js:13:1]
+ 13 │ $DONOTEVALUATE();
+ 14 │ while (false) function g() {}
+    ·               ───────────────
+ 15 │ 
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Identifier `f` has already been declared
     ╭─[language/block-scope/syntax/redeclaration/async-function-name-redeclaration-attempt-with-async-function.js:22:1]
@@ -28145,6 +28153,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  18 │ //
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/do-while/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ do async function f() {} while (false)
+    ·    ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/do-while/decl-async-fun.js:19:1]
  19 │ 
@@ -28152,6 +28168,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·    ─────────┬────────
     ·             ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/do-while/decl-async-gen.js:19:1]
+ 19 │ 
+ 20 │ do async function* g() {} while (false)
+    ·    ──────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/do-while/decl-async-gen.js:19:1]
@@ -28178,6 +28202,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Wrap this declaration in a block statement
 
+  × Invalid function declaration
+    ╭─[language/statements/do-while/decl-fun.js:13:1]
+ 13 │ 
+ 14 │ do function f() {} while (false)
+    ·    ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/do-while/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ do function* g() {} while (false)
+    ·    ────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/do-while/decl-gen.js:14:1]
  14 │ 
@@ -28194,6 +28234,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
     ╰────
   help: Try insert a semicolon here
+
+  × Invalid function declaration
+    ╭─[language/statements/do-while/labelled-fn-stmt.js:17:1]
+ 17 │ 
+ 18 │ do label1: label2: function f() {} while (false)
+    ·                    ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[language/statements/do-while/let-array-with-newline.js:19:1]
@@ -28694,6 +28742,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  20 │    break ;
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/for-in/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ for (var x in {}) async function f() {}
+    ·                   ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/for-in/decl-async-fun.js:19:1]
  19 │ 
@@ -28701,6 +28757,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ─────────┬────────
     ·                            ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/for-in/decl-async-gen.js:19:1]
+ 19 │ 
+ 20 │ for (var x in {}) async function* g() {}
+    ·                   ──────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/for-in/decl-async-gen.js:19:1]
@@ -28726,6 +28790,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                          ╰── Lexical declaration is not allowed here
     ╰────
   help: Wrap this declaration in a block statement
+
+  × Invalid function declaration
+    ╭─[language/statements/for-in/decl-fun.js:13:1]
+ 13 │ 
+ 14 │ for (var x in {}) function f() {}
+    ·                   ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for-in/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ for (var x in {}) function* g() {}
+    ·                   ────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/for-in/decl-gen.js:14:1]
@@ -29073,6 +29153,38 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ────
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/for-in/labelled-fn-stmt-const.js:17:1]
+ 17 │ 
+ 18 │ for (const x in {}) label1: label2: function f() {}
+    ·                                     ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for-in/labelled-fn-stmt-let.js:17:1]
+ 17 │ 
+ 18 │ for (let x in {}) label1: label2: function f() {}
+    ·                                   ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for-in/labelled-fn-stmt-lhs.js:17:1]
+ 17 │ 
+ 18 │ for (x in {}) label1: label2: function f() {}
+    ·                               ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for-in/labelled-fn-stmt-var.js:17:1]
+ 17 │ 
+ 18 │ for (var x in {}) label1: label2: function f() {}
+    ·                                   ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[language/statements/for-in/let-array-with-newline.js:19:1]
  19 │     
@@ -29148,6 +29260,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ────
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/for-of/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ for (var x of []) async function f() {}
+    ·                   ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/for-of/decl-async-fun.js:19:1]
  19 │ 
@@ -29155,6 +29275,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ─────────┬────────
     ·                            ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/for-of/decl-async-gen.js:19:1]
+ 19 │ 
+ 20 │ for (var x of []) async function* g() {}
+    ·                   ──────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/for-of/decl-async-gen.js:19:1]
@@ -29180,6 +29308,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                          ╰── Lexical declaration is not allowed here
     ╰────
   help: Wrap this declaration in a block statement
+
+  × Invalid function declaration
+    ╭─[language/statements/for-of/decl-fun.js:13:1]
+ 13 │ 
+ 14 │ for (var x of []) function f() {}
+    ·                   ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for-of/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ for (var x of []) function* g() {}
+    ·                   ────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/for-of/decl-gen.js:14:1]
@@ -29719,6 +29863,38 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 ╰── Expect `)` here, but found `,`
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/for-of/labelled-fn-stmt-const.js:17:1]
+ 17 │ 
+ 18 │ for (const x of []) label1: label2: function f() {}
+    ·                                     ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for-of/labelled-fn-stmt-let.js:17:1]
+ 17 │ 
+ 18 │ for (let x of []) label1: label2: function f() {}
+    ·                                   ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for-of/labelled-fn-stmt-lhs.js:17:1]
+ 17 │ 
+ 18 │ for (x of []) label1: label2: function f() {}
+    ·                               ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for-of/labelled-fn-stmt-var.js:17:1]
+ 17 │ 
+ 18 │ for (var x of []) label1: label2: function f() {}
+    ·                                   ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[language/statements/for-of/let-array-with-newline.js:19:1]
  19 │     
@@ -29879,6 +30055,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  22 │ //
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/for/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ for ( ; false; ) async function f() {}
+    ·                  ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/for/decl-async-fun.js:19:1]
  19 │ 
@@ -29886,6 +30070,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ─────────┬────────
     ·                           ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/for/decl-async-gen.js:19:1]
+ 19 │ 
+ 20 │ for ( ; false; ) async function* g() {}
+    ·                  ──────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/for/decl-async-gen.js:19:1]
@@ -29911,6 +30103,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                         ╰── Lexical declaration is not allowed here
     ╰────
   help: Wrap this declaration in a block statement
+
+  × Invalid function declaration
+    ╭─[language/statements/for/decl-fun.js:13:1]
+ 13 │ 
+ 14 │ for ( ; false; ) function f() {}
+    ·                  ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ for ( ; false; ) function* g() {}
+    ·                  ────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/for/decl-gen.js:14:1]
@@ -30033,6 +30241,38 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·       ╰── It can not be redeclared here
  22 │ }
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/for/labelled-fn-stmt-const.js:17:1]
+ 17 │ 
+ 18 │ for (const x = 0; false; ) label1: label2: function f() {}
+    ·                                            ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for/labelled-fn-stmt-expr.js:17:1]
+ 17 │ 
+ 18 │ for ( ; false; ) label1: label2: function f() {}
+    ·                                  ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for/labelled-fn-stmt-let.js:17:1]
+ 17 │ 
+ 18 │ for (let x; false; ) label1: label2: function f() {}
+    ·                                      ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for/labelled-fn-stmt-var.js:17:1]
+ 17 │ 
+ 18 │ for (var x; false; ) label1: label2: function f() {}
+    ·                                      ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[language/statements/for/let-array-with-newline.js:19:1]
@@ -30717,6 +30957,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  18 │ //
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/if/if-async-fun-else-async-fun.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function f() {  } else async function _f() {}
+    ·           ───────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-async-fun-else-async-fun.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function f() {  } else async function _f() {}
+    ·                                        ──────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-async-fun-else-async-fun.js:19:1]
  19 │ 
@@ -30733,6 +30989,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                                                 ╰── Async functions can only be declared at the top level or inside a block
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/if/if-async-fun-else-stmt.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function f() {  } else ;
+    ·           ───────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-async-fun-else-stmt.js:19:1]
  19 │ 
@@ -30741,6 +31005,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                    ╰── Async functions can only be declared at the top level or inside a block
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/if/if-async-fun-no-else.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function f() {  }
+    ·           ───────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-async-fun-no-else.js:19:1]
  19 │ 
@@ -30748,6 +31020,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ─────────┬────────
     ·                    ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-async-gen-else-async-gen.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function* f() {  } else async function* _f() {}
+    ·           ────────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-async-gen-else-async-gen.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function* f() {  } else async function* _f() {}
+    ·                                         ───────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-async-gen-else-async-gen.js:19:1]
@@ -30765,6 +31053,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                                                   ╰── Async functions can only be declared at the top level or inside a block
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/if/if-async-gen-else-stmt.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function* f() {  } else ;
+    ·           ────────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-async-gen-else-stmt.js:19:1]
  19 │ 
@@ -30772,6 +31068,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ─────────┬─────────
     ·                    ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-async-gen-no-else.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function* f() {  }
+    ·           ────────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-async-gen-no-else.js:19:1]
@@ -30849,6 +31153,86 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Wrap this declaration in a block statement
 
+  × Invalid function declaration
+    ╭─[language/statements/if/if-decl-else-decl-strict.js:23:1]
+ 23 │ 
+ 24 │ if (true) function f() {  } else function _f() {}
+    ·           ─────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-decl-else-decl-strict.js:23:1]
+ 23 │ 
+ 24 │ if (true) function f() {  } else function _f() {}
+    ·                                  ────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-decl-else-stmt-strict.js:23:1]
+ 23 │ 
+ 24 │ if (true) function f() {  } else ;
+    ·           ─────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-decl-no-else-strict.js:23:1]
+ 23 │ 
+ 24 │ if (true) function f() {  }
+    ·           ─────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-fun-else-fun-strict.js:24:1]
+ 24 │ 
+ 25 │ if (true) function f() {} else function _f() {}
+    ·           ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-fun-else-fun-strict.js:24:1]
+ 24 │ 
+ 25 │ if (true) function f() {} else function _f() {}
+    ·                                ────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-fun-else-stmt-strict.js:24:1]
+ 24 │ 
+ 25 │ if (true) function f() {} else ;
+    ·           ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-fun-no-else-strict.js:24:1]
+ 24 │ 
+ 25 │ if (true) function f() {}
+    ·           ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-gen-else-gen.js:14:1]
+ 14 │ 
+ 15 │ if (true) function* g() {  } else function* _g() {}
+    ·           ──────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-gen-else-gen.js:14:1]
+ 14 │ 
+ 15 │ if (true) function* g() {  } else function* _g() {}
+    ·                                   ─────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-gen-else-gen.js:14:1]
  14 │ 
@@ -30865,6 +31249,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                                          ╰── Generators can only be declared at the top level or inside a block
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/if/if-gen-else-stmt.js:14:1]
+ 14 │ 
+ 15 │ if (true) function* g() {  } else ;
+    ·           ──────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-gen-else-stmt.js:14:1]
  14 │ 
@@ -30872,6 +31264,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ──────┬──────
     ·                 ╰── Generators can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-gen-no-else.js:14:1]
+ 14 │ 
+ 15 │ if (true) function* g() {  }
+    ·           ──────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-gen-no-else.js:14:1]
@@ -30908,6 +31308,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × Invalid function declaration
+    ╭─[language/statements/if/if-stmt-else-async-fun.js:19:1]
+ 19 │ 
+ 20 │ if (false) ; else async function f() {  }
+    ·                   ───────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-stmt-else-async-fun.js:19:1]
  19 │ 
@@ -30915,6 +31323,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   ─────────┬────────
     ·                            ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-stmt-else-async-gen.js:19:1]
+ 19 │ 
+ 20 │ if (false) ; else async function* f() {  }
+    ·                   ────────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-stmt-else-async-gen.js:19:1]
@@ -30941,6 +31357,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Wrap this declaration in a block statement
 
+  × Invalid function declaration
+    ╭─[language/statements/if/if-stmt-else-decl-strict.js:27:1]
+ 27 │ 
+ 28 │ if (false) ; else function f() {  }
+    ·                   ─────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-stmt-else-fun-strict.js:28:1]
+ 28 │ 
+ 29 │ if (false) ; else function f() {}
+    ·                   ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/if-stmt-else-gen.js:14:1]
+ 14 │ 
+ 15 │ if (false) ; else function* g() {  }
+    ·                   ──────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/if/if-stmt-else-gen.js:14:1]
  14 │ 
@@ -30957,6 +31397,30 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
     ╰────
   help: Try insert a semicolon here
+
+  × Invalid function declaration
+    ╭─[language/statements/if/labelled-fn-stmt-first.js:28:1]
+ 28 │ 
+ 29 │ if (false) label1: label2: function test262() {} else ;
+    ·                            ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/labelled-fn-stmt-lone.js:28:1]
+ 28 │ 
+ 29 │ if (false) label1: label2: function test262() {}
+    ·                            ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/if/labelled-fn-stmt-second.js:28:1]
+ 28 │ 
+ 29 │ if (true) ; else label1: label2: function test262() {}
+    ·                                  ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[language/statements/if/let-array-with-newline.js:19:1]
@@ -30979,6 +31443,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  26 │   }
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/labeled/decl-async-function.js:19:1]
+ 19 │ 
+ 20 │ label: async function f() {}
+    ·        ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/labeled/decl-async-function.js:19:1]
  19 │ 
@@ -30986,6 +31458,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·        ─────────┬────────
     ·                 ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/labeled/decl-async-generator.js:19:1]
+ 19 │ 
+ 20 │ label: async function* g() {}
+    ·        ──────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/labeled/decl-async-generator.js:19:1]
@@ -31011,6 +31491,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·               ╰── Lexical declaration is not allowed here
     ╰────
   help: Wrap this declaration in a block statement
+
+  × Invalid function declaration
+    ╭─[language/statements/labeled/decl-fun-strict.js:16:1]
+ 16 │ 
+ 17 │ label: function g() {}
+    ·        ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/labeled/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ label: function* g() {}
+    ·        ────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/labeled/decl-gen.js:14:1]
@@ -32660,6 +33156,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  18 │ //
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/while/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ while (false) async function f() {}
+    ·               ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/while/decl-async-fun.js:19:1]
  19 │ 
@@ -32667,6 +33171,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·               ─────────┬────────
     ·                        ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/while/decl-async-gen.js:19:1]
+ 19 │ 
+ 20 │ while (false) async function* g() {}
+    ·               ──────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/while/decl-async-gen.js:19:1]
@@ -32693,6 +33205,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Wrap this declaration in a block statement
 
+  × Invalid function declaration
+    ╭─[language/statements/while/decl-fun.js:13:1]
+ 13 │ 
+ 14 │ while (false) function f() {}
+    ·               ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/while/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ while (false) function* g() {}
+    ·               ────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/while/decl-gen.js:14:1]
  14 │ 
@@ -32710,6 +33238,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Try insert a semicolon here
 
+  × Invalid function declaration
+    ╭─[language/statements/while/labelled-fn-stmt.js:17:1]
+ 17 │ 
+ 18 │ while (false) label1: label2: function f() {}
+    ·                               ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[language/statements/while/let-array-with-newline.js:19:1]
  19 │     
@@ -32726,6 +33262,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     · ────
     ╰────
 
+  × Invalid function declaration
+    ╭─[language/statements/with/decl-async-fun.js:20:1]
+ 20 │ 
+ 21 │ with ({}) async function f() {}
+    ·           ─────────────────────
+    ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
+
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/with/decl-async-fun.js:20:1]
  20 │ 
@@ -32733,6 +33277,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           ─────────┬────────
     ·                    ╰── Async functions can only be declared at the top level or inside a block
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/with/decl-async-gen.js:20:1]
+ 20 │ 
+ 21 │ with ({}) async function* g() {}
+    ·           ──────────────────────
+    ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
 
   × Async functions can only be declared at the top level or inside a block
     ╭─[language/statements/with/decl-async-gen.js:20:1]
@@ -32759,6 +33311,22 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
   help: Wrap this declaration in a block statement
 
+  × Invalid function declaration
+    ╭─[language/statements/with/decl-fun.js:14:1]
+ 14 │ 
+ 15 │ with ({}) function f() {}
+    ·           ───────────────
+    ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
+
+  × Invalid function declaration
+    ╭─[language/statements/with/decl-gen.js:15:1]
+ 15 │ 
+ 16 │ with ({}) function* g() {}
+    ·           ────────────────
+    ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
+
   × Generators can only be declared at the top level or inside a block
     ╭─[language/statements/with/decl-gen.js:15:1]
  15 │ 
@@ -32782,6 +33350,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  26 │ with ({}) label1: label2: function test262() {}
     · ────
     ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/with/labelled-fn-stmt.js:25:1]
+ 25 │ 
+ 26 │ with ({}) label1: label2: function test262() {}
+    ·                           ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[language/statements/with/let-array-with-newline.js:21:1]

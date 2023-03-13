@@ -18,7 +18,10 @@ pub struct EarlyErrorJavaScript;
 impl Rule for EarlyErrorJavaScript {
     #[allow(clippy::single_match)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.get().kind() {
+        let kind = node.get().kind();
+        check_function_declaration(kind, node, ctx);
+
+        match kind {
             AstKind::BindingIdentifier(ident) => {
                 check_identifier(&ident.name, ident.span, node, ctx);
                 check_binding_identifier(ident, node, ctx);
@@ -368,6 +371,52 @@ fn check_module_declaration<'a>(
         ModuleKind::Module => {
             ctx.diagnostic(TopLevel(text, span));
         }
+    }
+}
+
+fn check_function_declaration<'a>(kind: AstKind<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Invalid function declaration")]
+    #[diagnostic(help(
+        "In strict mode code, functions can only be declared at top level or inside a block"
+    ))]
+    struct FunctionDeclarationStrict(#[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Invalid function declaration")]
+    #[diagnostic(help(
+        "In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement"
+    ))]
+    struct FunctionDeclarationNonStrict(#[label] Span);
+
+    // Function declaration not allowed in statement position
+    let check = |stmt: &Statement<'a>| {
+        if let Statement::Declaration(Declaration::FunctionDeclaration(decl)) = stmt {
+            if ctx.strict_mode(node) {
+                ctx.diagnostic(FunctionDeclarationStrict(decl.span));
+            } else if !matches!(kind, AstKind::IfStatement(_) | AstKind::LabeledStatement(_)) {
+                ctx.diagnostic(FunctionDeclarationNonStrict(decl.span));
+            }
+        }
+    };
+
+    match kind {
+        AstKind::WithStatement(WithStatement { body, .. })
+        | AstKind::WhileStatement(WhileStatement { body, .. })
+        | AstKind::DoWhileStatement(DoWhileStatement { body, .. })
+        | AstKind::ForStatement(ForStatement { body, .. })
+        | AstKind::ForInStatement(ForInStatement { body, .. })
+        | AstKind::ForOfStatement(ForOfStatement { body, .. })
+        | AstKind::LabeledStatement(LabeledStatement { body, .. }) => {
+            check(body);
+        }
+        AstKind::IfStatement(if_stmt) => {
+            check(&if_stmt.consequent);
+            if let Some(alternate) = &if_stmt.alternate {
+                check(alternate);
+            }
+        }
+        _ => {}
     }
 }
 

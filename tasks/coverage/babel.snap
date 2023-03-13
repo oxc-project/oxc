@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2051/2069 (99.13%)
 Positive Passed: 2051/2069 (99.13%)
-Negative Passed: 1120/1502 (74.57%)
+Negative Passed: 1122/1502 (74.70%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -11,7 +11,6 @@ Expect Syntax Error: "annex-b/disabled/3.2.5-duplicate-function-in-switch/input.
 Expect Syntax Error: "annex-b/disabled/3.3-function-in-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.5-for-in-initializer/input.js"
 Expect Syntax Error: "annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js"
-Expect Syntax Error: "core/categorized/invalid-fn-decl-inside-loop/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-if/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-loop/input.js"
 Expect Syntax Error: "core/escape-string/invalid-decimal-escape-strict-directive-function/input.js"
@@ -29,7 +28,6 @@ Expect Syntax Error: "core/scope/undecl-export-as/input.js"
 Expect Syntax Error: "core/scope/undecl-export-block/input.js"
 Expect Syntax Error: "core/scope/undecl-export-builtin-as/input.js"
 Expect Syntax Error: "core/scope/undecl-export-builtin/input.js"
-Expect Syntax Error: "core/scope/undecl-export-if/input.js"
 Expect Syntax Error: "core/scope/undecl-export/input.js"
 Expect Syntax Error: "core/uncategorised/466/input.js"
 Expect Syntax Error: "core/uncategorised/467/input.js"
@@ -629,6 +627,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ╰── Cannot assign to this expression
    ╰────
 
+  × Invalid function declaration
+   ╭─[core/categorized/invalid-fn-decl-inside-loop/input.js:1:1]
+ 1 │ while (1) function foo(){}
+   ·           ────────────────
+   ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
+
   × Invalid assignment
    ╭─[core/categorized/invalid-left-hand-side-in-postfix-operation/input.js:1:1]
  1 │ a++ = t
@@ -1040,6 +1045,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·         ╰── It can not be redeclared here
  3 │ }
    ╰────
+
+  × Invalid function declaration
+   ╭─[core/scope/undecl-export-if/input.js:1:1]
+ 1 │ export { encrypt };
+ 2 │ if (true) function encrypt() {}
+   ·           ─────────────────────
+   ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
 
   × A 'get' accessor must not have any formal parameters.
    ╭─[core/uncategorised/.542/input.js:1:1]
@@ -2367,6 +2380,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ───────┬───────
    ·               ╰── Generators can only be declared at the top level or inside a block
    ╰────
+
+  × Invalid function declaration
+   ╭─[es2015/generators/invalid-sloppy-function/input.js:1:1]
+ 1 │ while (1) function *foo() {}
+   ·           ──────────────────
+   ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
 
   × Generators can only be declared at the top level or inside a block
    ╭─[es2015/generators/invalid-sloppy-function/input.js:1:1]
@@ -4391,12 +4411,26 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                       ╰── Expect `)` here, but found `;`
    ╰────
 
+  × Invalid function declaration
+   ╭─[es2017/async-functions/invalid-generator-inside-loop/input.js:1:1]
+ 1 │ while (1) async function *foo(){}
+   ·           ───────────────────────
+   ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
+
   × Async functions can only be declared at the top level or inside a block
    ╭─[es2017/async-functions/invalid-generator-inside-loop/input.js:1:1]
  1 │ while (1) async function *foo(){}
    ·           ──────────┬──────────
    ·                     ╰── Async functions can only be declared at the top level or inside a block
    ╰────
+
+  × Invalid function declaration
+   ╭─[es2017/async-functions/invalid-inside-loop/input.js:1:1]
+ 1 │ while (1) async function foo(){}
+   ·           ──────────────────────
+   ╰────
+  help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
 
   × Async functions can only be declared at the top level or inside a block
    ╭─[es2017/async-functions/invalid-inside-loop/input.js:1:1]
