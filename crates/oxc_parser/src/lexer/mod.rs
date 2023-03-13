@@ -30,7 +30,7 @@ use self::{
     },
     number::{parse_big_int, parse_float, parse_int},
     string_builder::AutoCow,
-    trivia_builder::TriviaBuilder,
+    trivia_builder::{is_eslint_configuration_comment, TriviaBuilder},
 };
 use crate::diagnostics;
 
@@ -510,7 +510,7 @@ impl<'a> Lexer<'a> {
         self.trivia_builder.add_single_line_comment(
             self.current.token.start,
             self.offset(),
-            comment.trim().starts_with("eslint-disable-next-line"),
+            is_eslint_configuration_comment(comment.trim()),
         );
         Kind::Comment
     }

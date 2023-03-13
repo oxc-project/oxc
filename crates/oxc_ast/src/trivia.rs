@@ -1,7 +1,7 @@
 //! Trivia (called that because it's trivial) represent the parts of the source text that are largely insignificant for normal understanding of the code.
 //! For example; whitespace, comments, and even conflict markers.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::Span;
 
@@ -23,6 +23,7 @@ pub struct Comment {
 #[derive(Debug, Clone, Copy)]
 pub enum CommentKind {
     ConfigurationSingleLine,
+    ConfigurationMultiLine,
     SingleLine,
     MultiLine,
 }
@@ -51,5 +52,35 @@ impl Trivias {
                 self.comments.insert(span.start, comment);
             }
         }
+    }
+
+    /// Checks the stored configuration comments against the associated source text to derive
+    /// the lines affected by the configuration comments.
+    #[must_use]
+    pub fn configuration_lines(&self, source_text: &str) -> Vec<usize> {
+        let mut configuration_lines = vec![];
+
+        for (start, comment) in &self.configuration_comments {
+            let lines = self.line_numbers(source_text, *start, comment.end);
+            if let Some(line) = lines.last() {
+                configuration_lines.push(*line + 1);
+            }
+        }
+
+        configuration_lines
+    }
+
+    /// Computes the associated line numbers given source text and starts/end offsets.
+    #[must_use]
+    pub fn line_numbers(&self, source_text: &str, start: u32, end: u32) -> BTreeSet<usize> {
+        let mut lines = BTreeSet::new();
+        let lines_to_start = &source_text[..start as usize].lines().collect::<Vec<_>>();
+        let lines_in_span = &source_text[start as usize..end as usize].lines().collect::<Vec<_>>();
+
+        lines.insert(lines_to_start.len());
+        for (offset, _) in lines_in_span.iter().enumerate() {
+            lines.insert(lines_to_start.len() + offset);
+        }
+        lines
     }
 }

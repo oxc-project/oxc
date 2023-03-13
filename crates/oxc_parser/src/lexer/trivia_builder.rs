@@ -29,3 +29,8 @@ impl TriviaBuilder {
         self.trivias.add_comment(Span::new(start + 2, end - 2), CommentKind::MultiLine);
     }
 }
+
+pub fn is_eslint_configuration_comment(comment: &str) -> bool {
+    // TODO: extend to support other types of configuration comments
+    comment.starts_with("eslint-disable-next-line")
+}
