@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 658/2532 (25.99%)
+Negative Passed: 660/2532 (26.07%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -475,7 +475,6 @@ Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration1ES5ite
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration3ES5.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration3ES5iterable.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration3ES6.ts"
-Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration4.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration5.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterDeclaration8.ts"
 Expect Syntax Error: "es6/destructuring/destructuringParameterProperties1.ts"
@@ -1227,7 +1226,6 @@ Expect Syntax Error: "parser/ecmascript5/ModuleDeclarations/parserModuleDeclarat
 Expect Syntax Error: "parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration3.ts"
 Expect Syntax Error: "parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration4.d.ts"
 Expect Syntax Error: "parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration5.ts"
-Expect Syntax Error: "parser/ecmascript5/ParameterLists/parserParameterList10.ts"
 Expect Syntax Error: "parser/ecmascript5/ParameterLists/parserParameterList11.ts"
 Expect Syntax Error: "parser/ecmascript5/ParameterLists/parserParameterList13.ts"
 Expect Syntax Error: "parser/ecmascript5/ParameterLists/parserParameterList14.ts"
@@ -4825,6 +4823,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                             ╰── Expect `,` here, but found `)`
  8 │ a0([1, 2, [["world"]], "string"]);  // Error
    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[es6/destructuring/destructuringParameterDeclaration4.ts:14:1]
+ 14 │ function a3(...b?) { }            // Error, can't be optional
+ 15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
+    ·             ──────────────
+ 16 │ function a5([a, b, [[c]]]) { }
+    ╰────
 
   × Expect token
    ╭─[es6/destructuring/destructuringParameterDeclaration6.ts:6:1]
@@ -9612,6 +9618,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │    F(...A, B) { }
    ·      ──┬─
    ·        ╰── Rest element must be last element
+ 3 │ }
+   ╰────
+
+  × A rest parameter cannot have an initializer
+   ╭─[parser/ecmascript5/ParameterLists/parserParameterList10.ts:1:1]
+ 1 │ class C {
+ 2 │    foo(...bar = 0) { }
+   ·        ──────────
  3 │ }
    ╰────
 

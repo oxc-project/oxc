@@ -53,6 +53,7 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::Property(prop) => check_property(prop, ctx),
 
             AstKind::FormalParameters(params) => check_formal_parameters(params, node, ctx),
+            AstKind::FormalParameter(param) => check_formal_parameter(param, ctx),
 
             AstKind::ObjectExpression(expr) => check_object_expression(expr, ctx),
             AstKind::BinaryExpression(expr) => check_binary_expression(expr, ctx),
@@ -799,6 +800,22 @@ fn check_formal_parameters<'a>(
         if let Some(found) = idents[i..].iter().find(|i| i.name == ident.name) {
             ctx.diagnostic(Redeclaration(ident.name.clone(), ident.span, found.span));
         }
+    }
+}
+
+fn check_formal_parameter(param: &FormalParameter, ctx: &LintContext) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("A rest parameter cannot have an initializer")]
+    #[diagnostic()]
+    struct ARestParameterCannotHaveAnInitializer(#[label] Span);
+
+    match &param.pattern.kind {
+        BindingPatternKind::RestElement(pat)
+            if matches!(pat.argument.kind, BindingPatternKind::AssignmentPattern(_)) =>
+        {
+            ctx.diagnostic(ARestParameterCannotHaveAnInitializer(param.span));
+        }
+        _ => {}
     }
 }
 

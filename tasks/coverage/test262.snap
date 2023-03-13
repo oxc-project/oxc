@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3536/3917 (90.27%)
+Negative Passed: 3568/3917 (91.09%)
 Expect Syntax Error: "language/directive-prologue/10.1.1-2gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-5gs.js"
 Expect Syntax Error: "language/directive-prologue/10.1.1-8gs.js"
@@ -13,17 +13,12 @@ Expect Syntax Error: "language/directive-prologue/func-decl-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-inside-func-decl-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-no-semi-parse.js"
 Expect Syntax Error: "language/directive-prologue/func-expr-parse.js"
-Expect Syntax Error: "language/expressions/arrow-function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/async-arrow-function/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/async-function/named-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/async-function/nameless-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/async-generator/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/ary-ptrn-rest-init-obj.js"
@@ -37,12 +32,7 @@ Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-p
 Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
-Expect Syntax Error: "language/expressions/async-generator/named-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/await/await-BindingIdentifier-nested.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/async-gen-method/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/async-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/async-method/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -115,11 +105,6 @@ Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-ary-pt
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/expressions/class/gen-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/gen-method/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/class/method/dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/function/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/function/dstr/ary-ptrn-rest-init-obj.js"
@@ -132,7 +117,6 @@ Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-2.js"
 Expect Syntax Error: "language/expressions/function/param-duplicated-strict-body-3.js"
 Expect Syntax Error: "language/expressions/function/param-eval-strict-body.js"
-Expect Syntax Error: "language/expressions/generators/dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/expressions/generators/dstr/ary-ptrn-rest-init-obj.js"
@@ -169,10 +153,6 @@ Expect Syntax Error: "language/expressions/object/identifier-shorthand-protected
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-public-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-static-invalid-strict-mode.js"
 Expect Syntax Error: "language/expressions/object/identifier-shorthand-yield-invalid-strict-mode.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/object/method-definition/async-meth-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/object/method-definition/gen-meth-dflt-params-rest.js"
-Expect Syntax Error: "language/expressions/object/method-definition/meth-dflt-params-rest.js"
 Expect Syntax Error: "language/expressions/object/setter-body-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-arguments-strict-inside.js"
 Expect Syntax Error: "language/expressions/object/setter-param-eval-strict-inside.js"
@@ -200,18 +180,12 @@ Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
 Expect Syntax Error: "language/module-code/early-new-target.js"
-Expect Syntax Error: "language/statements/async-function/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/async-generator/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/ary-ptrn-rest-init-obj.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/async-gen-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/async-gen-method/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/async-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/async-method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js"
@@ -284,10 +258,6 @@ Expect Syntax Error: "language/statements/class/dstr/private-meth-static-ary-ptr
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/class/gen-method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/gen-method/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/method-static/dflt-params-rest.js"
-Expect Syntax Error: "language/statements/class/method/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/const/dstr/ary-ptrn-rest-init-id.js"
@@ -346,7 +316,6 @@ Expect Syntax Error: "language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js
 Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js"
-Expect Syntax Error: "language/statements/function/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/function/dstr/ary-ptrn-rest-init-obj.js"
@@ -363,7 +332,6 @@ Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-
 Expect Syntax Error: "language/statements/function/param-duplicated-strict-body-3.js"
 Expect Syntax Error: "language/statements/function/param-eval-strict-body.js"
 Expect Syntax Error: "language/statements/function/static-init-await-binding-invalid.js"
-Expect Syntax Error: "language/statements/generators/dflt-params-rest.js"
 Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-ary.js"
 Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-id.js"
 Expect Syntax Error: "language/statements/generators/dstr/ary-ptrn-rest-init-obj.js"
@@ -2213,6 +2181,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·     │      ╰── It can not be redeclared here
     ·     ╰── `x` has already been declared here
  59 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/arrow-function/dflt-params-rest.js:61:1]
+ 61 │ 
+ 62 │ 0, (...x = []) => {
+    ·     ─────────
+ 63 │   
     ╰────
 
   × Rest element must be last element
@@ -6058,6 +6034,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  51 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-arrow-function/dflt-params-rest.js:53:1]
+ 53 │ 
+ 54 │ (async (...x = []) => {
+    ·         ─────────
+ 55 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-NSPL-with-USD.js:15:1]
  15 │ 
@@ -6425,6 +6409,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-function/named-dflt-params-rest.js:39:1]
+ 39 │ 
+ 40 │ (async function f(...x = []) {
+    ·                   ─────────
+ 41 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/expressions/async-function/named-object-destructuring-param-strict-body.js:107:1]
  107 │ (async function f({property}) {
@@ -6466,6 +6458,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 │      ╰── It can not be redeclared here
     ·                 ╰── `x` has already been declared here
  37 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-function/nameless-dflt-params-rest.js:39:1]
+ 39 │ 
+ 40 │ (async function(...x = []) {
+    ·                 ─────────
+ 41 │   
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -6575,6 +6575,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                    │      ╰── It can not be redeclared here
     ·                    ╰── `x` has already been declared here
  40 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/dflt-params-rest.js:42:1]
+ 42 │ 
+ 43 │ 0, async function*(...x = []) {
+    ·                    ─────────
+ 44 │   
     ╰────
 
   × Rest element must be last element
@@ -6938,6 +6946,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                      │      ╰── It can not be redeclared here
     ·                      ╰── `x` has already been declared here
  40 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/async-generator/named-dflt-params-rest.js:42:1]
+ 42 │ 
+ 43 │ 0, async function* g(...x = []) {
+    ·                      ─────────
+ 44 │   
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -7316,6 +7332,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  64 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/async-gen-method-static/dflt-params-rest.js:66:1]
+ 66 │ 0, class {
+ 67 │   static async *method(...x = []) {
+    ·                        ─────────
+ 68 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/expressions/class/async-gen-method-static/object-destructuring-param-strict-body.js:134:1]
  134 │   static async *method({property}) {
@@ -7532,6 +7556,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 │      ╰── It can not be redeclared here
     ·                 ╰── `x` has already been declared here
  64 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/async-gen-method/dflt-params-rest.js:66:1]
+ 66 │ 0, class {
+ 67 │   async *method(...x = []) {
+    ·                 ─────────
+ 68 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -7752,6 +7784,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  62 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/async-method-static/dflt-params-rest.js:64:1]
+ 64 │ var C = class {
+ 65 │   static async method(...x = []) {
+    ·                       ─────────
+ 66 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/expressions/class/async-method-static/object-destructuring-param-strict-body.js:132:1]
  132 │   static async method({property}) {
@@ -7859,6 +7899,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                       │      ╰── It can not be redeclared here
     ·                       ╰── `x` has already been declared here
  62 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/async-method/dflt-params-rest.js:64:1]
+ 64 │ var C = class {
+ 65 │   static async method(...x = []) {
+    ·                       ─────────
+ 66 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -12524,6 +12572,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  85 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/gen-method-static/dflt-params-rest.js:87:1]
+ 87 │ 0, class {
+ 88 │   static *method(...x = []) {
+    ·                  ─────────
+ 89 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/expressions/class/gen-method-static/object-destructuring-param-strict-body.js:155:1]
  155 │   static *method({property}) {
@@ -12674,6 +12730,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           │      ╰── It can not be redeclared here
     ·           ╰── `x` has already been declared here
  85 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/gen-method/dflt-params-rest.js:87:1]
+ 87 │ 0, class {
+ 88 │   *method(...x = []) {
+    ·           ─────────
+ 89 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -12844,6 +12908,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  81 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/method-static/dflt-params-rest.js:83:1]
+ 83 │ 0, class {
+ 84 │   static method(...x = []) {
+    ·                 ─────────
+ 85 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/expressions/class/method-static/object-destructuring-param-strict-body.js:151:1]
  151 │   static method({property}) {
@@ -12885,6 +12957,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          │      ╰── It can not be redeclared here
     ·          ╰── `x` has already been declared here
  81 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/method/dflt-params-rest.js:83:1]
+ 83 │ 0, class {
+ 84 │   method(...x = []) {
+    ·          ─────────
+ 85 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -14167,6 +14247,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  60 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/function/dflt-params-rest.js:62:1]
+ 62 │ 
+ 63 │ 0, function(...x = []) {
+    ·             ─────────
+ 64 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var f;
@@ -14390,6 +14478,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·              │      ╰── It can not be redeclared here
     ·              ╰── `x` has already been declared here
  61 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/generators/dflt-params-rest.js:63:1]
+ 63 │ 
+ 64 │ 0, function*(...x = []) {
+    ·              ─────────
+ 65 │   
     ╰────
 
   × Rest element must be last element
@@ -15405,6 +15501,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  45 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js:47:1]
+ 47 │ 0, {
+ 48 │   async *method(...x = []) {
+    ·                 ─────────
+ 49 │     
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/expressions/object/method-definition/async-gen-meth-escaped-async.js:24:1]
  24 │ ({
@@ -15564,6 +15668,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 │      ╰── It can not be redeclared here
     ·                 ╰── `x` has already been declared here
  38 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/method-definition/async-meth-dflt-params-rest.js:40:1]
+ 40 │ ({
+ 41 │   async *method(...x = []) {
+    ·                 ─────────
+ 42 │     
     ╰────
 
   × Keywords cannot contain escape characters
@@ -15786,6 +15898,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  67 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/method-definition/gen-meth-dflt-params-rest.js:69:1]
+ 69 │ 0, {
+ 70 │   *method(...x = []) {
+    ·           ─────────
+ 71 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/expressions/object/method-definition/gen-meth-object-destructuring-param-strict-body.js:137:1]
  137 │   *method({property}) {
@@ -16003,6 +16123,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          │      ╰── It can not be redeclared here
     ·          ╰── `x` has already been declared here
  63 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/object/method-definition/meth-dflt-params-rest.js:65:1]
+ 65 │ 0, {
+ 66 │   method(...x = []) {
+    ·          ─────────
+ 67 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -20946,6 +21074,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  37 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/async-function/dflt-params-rest.js:39:1]
+ 39 │ 
+ 40 │ async function f(...x = []) {
+    ·                  ─────────
+ 41 │   
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
     ╭─[language/statements/async-function/early-errors-declaration-NSPL-with-USD.js:15:1]
  15 │ 
@@ -21180,6 +21316,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                   │      ╰── It can not be redeclared here
     ·                   ╰── `x` has already been declared here
  40 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/async-generator/dflt-params-rest.js:42:1]
+ 42 │ 
+ 43 │ async function* f(...x = []) {
+    ·                   ─────────
+ 44 │   
     ╰────
 
   × Rest element must be last element
@@ -21702,6 +21846,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  64 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/async-gen-method-static/dflt-params-rest.js:66:1]
+ 66 │ class C {
+ 67 │   static async *method(...x = []) {
+    ·                        ─────────
+ 68 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/statements/class/async-gen-method-static/object-destructuring-param-strict-body.js:134:1]
  134 │   static async *method({property}) {
@@ -21918,6 +22070,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                 │      ╰── It can not be redeclared here
     ·                 ╰── `x` has already been declared here
  63 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/async-gen-method/dflt-params-rest.js:65:1]
+ 65 │ class C {
+ 66 │   async *method(...x = []) {
+    ·                 ─────────
+ 67 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -22147,6 +22307,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  61 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/async-method-static/dflt-params-rest.js:63:1]
+ 63 │ class C {
+ 64 │   static async method(...x = []) {
+    ·                       ─────────
+ 65 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/statements/class/async-method-static/object-destructuring-param-strict-body.js:131:1]
  131 │   static async method({property}) {
@@ -22254,6 +22422,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                │      ╰── It can not be redeclared here
     ·                ╰── `x` has already been declared here
  62 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/async-method/dflt-params-rest.js:64:1]
+ 64 │ class C {
+ 65 │   async method(...x = []) {
+    ·                ─────────
+ 66 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -27133,6 +27309,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  83 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/gen-method-static/dflt-params-rest.js:85:1]
+ 85 │ class C {
+ 86 │   static *method(...x = []) {
+    ·                  ─────────
+ 87 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/statements/class/gen-method-static/object-destructuring-param-strict-body.js:153:1]
  153 │   static *method({property}) {
@@ -27283,6 +27467,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·           │      ╰── It can not be redeclared here
     ·           ╰── `x` has already been declared here
  83 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/gen-method/dflt-params-rest.js:85:1]
+ 85 │ class C {
+ 86 │   *method(...x = []) {
+    ·           ─────────
+ 87 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -27453,6 +27645,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  80 │     
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/method-static/dflt-params-rest.js:82:1]
+ 82 │ class C {
+ 83 │   static method(...x = []) {
+    ·                 ─────────
+ 84 │     
+    ╰────
+
   × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/statements/class/method-static/object-destructuring-param-strict-body.js:150:1]
  150 │   static method({property}) {
@@ -27494,6 +27694,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          │      ╰── It can not be redeclared here
     ·          ╰── `x` has already been declared here
  80 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/method/dflt-params-rest.js:82:1]
+ 82 │ class C {
+ 83 │   method(...x = []) {
+    ·          ─────────
+ 84 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -30371,6 +30579,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  61 │   
     ╰────
 
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/function/dflt-params-rest.js:63:1]
+ 63 │ 
+ 64 │ function f(...x = []) {
+    ·            ─────────
+ 65 │   
+    ╰────
+
   × Rest element must be last element
     ╭─[language/statements/function/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var callCount = 0;
@@ -30671,6 +30887,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·             │      ╰── It can not be redeclared here
     ·             ╰── `x` has already been declared here
  61 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/generators/dflt-params-rest.js:63:1]
+ 63 │ 
+ 64 │ function* f(...x = []) {
+    ·             ─────────
+ 65 │   
     ╰────
 
   × Rest element must be last element

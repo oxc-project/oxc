@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2051/2069 (99.13%)
 Positive Passed: 2051/2069 (99.13%)
-Negative Passed: 1122/1502 (74.70%)
+Negative Passed: 1123/1502 (74.77%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -250,7 +250,6 @@ Expect Syntax Error: "esprima/invalid-syntax/migrated_0245/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0246/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0247/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0249/input.js"
-Expect Syntax Error: "esprima/invalid-syntax/migrated_0260/input.js"
 Expect Syntax Error: "esprima/statement-if/.migrated_0003/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
@@ -8482,6 +8481,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ function f(a, ...b, c){}
    ·               ──┬─
    ·                 ╰── Rest element must be last element
+   ╰────
+
+  × A rest parameter cannot have an initializer
+   ╭─[esprima/invalid-syntax/migrated_0260/input.js:1:1]
+ 1 │ function x(...a = 1){}
+   ·            ────────
    ╰────
 
   × Expect token
