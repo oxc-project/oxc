@@ -23,7 +23,6 @@ pub struct Comment {
 #[derive(Debug, Clone, Copy)]
 pub enum CommentKind {
     ConfigurationSingleLine,
-    ConfigurationMultiLine,
     SingleLine,
     MultiLine,
 }
