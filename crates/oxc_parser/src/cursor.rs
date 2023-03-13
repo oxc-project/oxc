@@ -29,7 +29,7 @@ impl<'a> Parser<'a> {
 
     /// Get current token
     #[must_use]
-    pub fn cur_token(&self) -> &Token {
+    pub fn cur_token(&self) -> &Token<'a> {
         &self.token
     }
 
