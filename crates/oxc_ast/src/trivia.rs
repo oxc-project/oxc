@@ -47,7 +47,9 @@ impl Trivias {
             CommentKind::ConfigurationSingleLine => {
                 self.configuration_comments.insert(span.start, comment);
             }
-            _ => self.comments.insert(span.start, comment),
+            _ => {
+                self.comments.insert(span.start, comment);
+            }
         }
     }
 }
