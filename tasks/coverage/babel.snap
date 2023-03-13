@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2050/2069 (99.08%)
 Positive Passed: 2050/2069 (99.08%)
-Negative Passed: 1312/1502 (87.35%)
+Negative Passed: 1319/1502 (87.82%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -34,11 +34,7 @@ Expect Syntax Error: "es2015/uncategorised/.191/input.js"
 Expect Syntax Error: "es2015/uncategorised/.335/input.js"
 Expect Syntax Error: "es2015/uncategorised/.343/input.js"
 Expect Syntax Error: "es2015/uncategorised/220/input.js"
-Expect Syntax Error: "es2015/yield/function-name-function-declaration-inside-generator/input.js"
-Expect Syntax Error: "es2015/yield/function-name-generator-expression/input.js"
-Expect Syntax Error: "es2017/async-functions/await-async-function-expression-name/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
-Expect Syntax Error: "es2017/async-functions/await-function-declaration-name-inside-async-function/input.js"
 Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-rest/input.js"
@@ -52,9 +48,6 @@ Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-prop
 Expect Syntax Error: "esprima/es2015-identifier/.invalid_function_wait/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/invalid_expression_await/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/invalid_var_await/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-declaration/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-expression-name/input.js"
-Expect Syntax Error: "esprima/es2015-yield/invalid-yield-generator-function-declaration/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0005/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0006/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.u-flag-invalid-range-4-hex/input.js"
@@ -4156,6 +4149,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·          ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[es2015/uncategorised/365/input.js:1:1]
+ 1 │ function await() {}
+   ·          ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[es2015/uncategorised/367/input.js:1:1]
  1 │ class await {}
@@ -4329,6 +4328,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ import default from "foo"
    ·        ───┬───
    ·           ╰── Expect `from` here, but found `default`
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es2015/yield/function-name-function-declaration-inside-generator/input.js:1:1]
+ 1 │ function* fn() {
+ 2 │   function yield() {}
+   ·            ─────
+ 3 │ }
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es2015/yield/function-name-generator-expression/input.js:1:1]
+ 1 │ +function* yield() {}
+   ·            ─────
    ╰────
 
   × The keyword 'yield' is reserved
@@ -4856,6 +4869,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[es2017/async-functions/await-async-function-expression-name/input.js:1:1]
+ 1 │ (async function await() {});
+   ·                 ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[es2017/async-functions/await-function-declaration-name-inside-async-function/input.js:1:1]
+ 1 │ async function foo() {
+ 2 │   function await() {}
+   ·            ─────
+ 3 │ }
+   ╰────
 
   × await expression not allowed in formal parameter
    ╭─[es2017/async-functions/await-inside-arguments-of-async-call-inside-parameters-of-async-arrow-function/input.js:1:1]
@@ -7722,10 +7749,22 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                               ─────
    ╰────
 
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-declaration/input.js:1:1]
+ 1 │ function *g() { function *yield(){} }
+   ·                           ─────
+   ╰────
+
   × The keyword 'yield' is reserved
    ╭─[esprima/es2015-yield/invalid-yield-generator-export-default/input.js:1:1]
  1 │ export default function *yield() {}
    ·                          ─────
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-expression-name/input.js:1:1]
+ 1 │ (function*yield(){})
+   ·           ─────
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context
@@ -7738,6 +7777,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/es2015-yield/invalid-yield-generator-expression-rest/input.js:1:1]
  1 │ (function *(x, ...yield){})
    ·                   ─────
+   ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[esprima/es2015-yield/invalid-yield-generator-function-declaration/input.js:1:1]
+ 1 │ function *g() { function yield() {} }
+   ·                          ─────
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context

@@ -1,10 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3899/3917 (99.54%)
-Expect Syntax Error: "language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js"
-Expect Syntax Error: "language/expressions/await/await-BindingIdentifier-nested.js"
-Expect Syntax Error: "language/expressions/generators/yield-as-generator-expression-binding-identifier.js"
+Negative Passed: 3903/3917 (99.64%)
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
@@ -18,7 +15,6 @@ Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
 Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
-Expect Syntax Error: "language/statements/function/static-init-await-binding-invalid.js"
 Expect Syntax Error: "language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js"
 Expect to Parse: "language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js"
 
@@ -6603,6 +6599,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ─────────
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/async-generator/early-errors-expression-await-as-function-binding-identifier.js:16:1]
+ 16 │ 
+ 17 │ (async function* await() { });
+    ·                  ─────
+    ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/expressions/async-generator/early-errors-expression-binding-identifier-arguments.js:18:1]
  18 │ 
@@ -6738,6 +6741,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/async-generator/early-errors-expression-yield-as-function-binding-identifier.js:16:1]
+ 16 │ 
+ 17 │ (async function* yield() { });
+    ·                  ─────
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/early-errors-expression-yield-as-function-binding-identifier.js:16:1]
  16 │ 
  17 │ (async function* yield() { });
@@ -7118,6 +7128,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  28 │       var yield;
     ·           ─────
  29 │       throw new Test262Error();
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/await/await-BindingIdentifier-nested.js:16:1]
+ 16 │ async function foo() {
+ 17 │   function await() {
+    ·            ─────
+ 18 │   }
     ╰────
 
   × Invalid assignment
@@ -15347,6 +15365,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  28 │   var yield;
     ·       ─────
  29 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/generators/yield-as-generator-expression-binding-identifier.js:16:1]
+ 16 │ 
+ 17 │ var g = function* yield() {};
+    ·                   ─────
     ╰────
 
   × The keyword 'yield' is reserved
@@ -33047,6 +33072,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·            ──┬─
     ·              ╰── Rest element must be last element
  57 │   
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/function/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     function await() {}
+    ·              ─────
+ 25 │   }
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
