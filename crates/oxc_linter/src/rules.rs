@@ -17,6 +17,7 @@ oxc_macros::declare_all_lint_rules! {
     no_mixed_operators,
     no_constant_binary_expression,
     no_compare_neg_zero,
+    no_unsafe_negation,
     deepscan::uninvoked_array_callback,
     use_isnan,
 }

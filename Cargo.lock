@@ -934,6 +934,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_macros",
  "oxc_parser",
+ "oxc_printer",
  "oxc_semantic",
  "phf",
  "rustc-hash",

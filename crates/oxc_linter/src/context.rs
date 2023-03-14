@@ -3,6 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use indextree::{Ancestors, NodeId};
 use oxc_ast::{ast::IdentifierReference, AstKind, SourceType};
 use oxc_diagnostics::Error;
+use oxc_printer::{Printer, PrinterOptions};
 use oxc_semantic::{AstNodes, Scope, ScopeTree, Semantic, SemanticNode};
 
 use crate::{
@@ -119,5 +120,10 @@ impl<'a> LintContext<'a> {
     #[allow(clippy::unused_self)]
     pub fn is_reference_to_global_variable(&self, _ident: &IdentifierReference) -> bool {
         true
+    }
+
+    #[allow(clippy::unused_self)]
+    pub fn printer(&self) -> Printer {
+        Printer::new(0, PrinterOptions::default())
     }
 }
