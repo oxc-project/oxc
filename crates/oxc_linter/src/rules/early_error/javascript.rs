@@ -71,14 +71,25 @@ impl Rule for EarlyErrorJavaScript {
 }
 
 #[derive(Debug, Error, Diagnostic)]
+#[error("Cannot use await in class static initialization block")]
+#[diagnostic()]
+struct ClassStatickBlockAwait(#[label] Span);
+
+#[derive(Debug, Error, Diagnostic)]
 #[error("The keyword '{0}' is reserved")]
 #[diagnostic()]
 struct ReservedKeyword(Atom, #[label] Span);
 
 fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
-    if *name == "await" && ctx.source_type().is_module() {
-        return ctx.diagnostic(ReservedKeyword(name.clone(), span));
+    if *name == "await" {
+        // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
+        if ctx.source_type().is_module() {
+            return ctx.diagnostic(ReservedKeyword(name.clone(), span));
+        }
+        // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
+        if ctx.scope(node).flags.contains(ScopeFlags::ClassStaticBlock) {
+            return ctx.diagnostic(ClassStatickBlockAwait(span));
+        }
     }
 
     // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
@@ -1031,6 +1042,11 @@ struct AwaitOrYieldInParameter(
 fn check_await_expression<'a>(expr: &AwaitExpression, node: &AstNode<'a>, ctx: &LintContext<'a>) {
     if is_in_formal_parameters(node, ctx) {
         ctx.diagnostic(AwaitOrYieldInParameter("await", expr.span));
+    }
+    // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
+    if ctx.scope(node).flags.contains(ScopeFlags::ClassStaticBlock) {
+        let start = expr.span.start;
+        ctx.diagnostic(ClassStatickBlockAwait(Span::new(start, start + 5)));
     }
 }
 

@@ -1,7 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3903/3917 (99.64%)
+Negative Passed: 3905/3917 (99.69%)
 Expect Syntax Error: "language/global-code/export.js"
 Expect Syntax Error: "language/global-code/import.js"
 Expect Syntax Error: "language/import/dup-bound-names.js"
@@ -14,8 +14,6 @@ Expect Syntax Error: "language/module-code/early-dup-export-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
 Expect Syntax Error: "language/module-code/early-export-global.js"
 Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
-Expect Syntax Error: "language/statements/class/static-init-invalid-await.js"
-Expect Syntax Error: "language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js"
 Expect to Parse: "language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js"
 
   × Identifier `f` has already been declared
@@ -13491,6 +13489,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ };
     ╰────
 
+  × Cannot use await in class static initialization block
+    ╭─[language/expressions/class/static-init-await-binding.js:20:1]
+ 20 │   static {
+ 21 │     (class await {});
+    ·            ─────
+ 22 │   }
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/class/static-init-await-binding.js:20:1]
  20 │   static {
@@ -16207,6 +16213,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  31 │     public
     ·     ──────
  32 │   });
+    ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[language/expressions/object/identifier-shorthand-static-init-await-invalid.js:22:1]
+ 22 │   static {
+ 23 │     ({ await });
+    ·        ─────
+ 24 │   }
     ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -29413,6 +29427,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  27 │ }
     ╰────
 
+  × Cannot use await in class static initialization block
+    ╭─[language/statements/class/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     class await {}
+    ·           ─────
+ 25 │   }
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/static-init-await-binding-invalid.js:23:1]
  23 │   static {
@@ -29427,6 +29449,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  21 │     (class { [argument\u0073]() {} });
     ·               ──────────────
  22 │   }
+    ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[language/statements/class/static-init-invalid-await.js:29:1]
+ 29 │     static {
+ 30 │       await 0;
+    ·       ─────
+ 31 │     }
     ╰────
 
   × Identifier `x` has already been declared
@@ -29612,6 +29642,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                                     │          ╰── It can not be redeclared here
     ·                                     ╰── `f` has already been declared here
  15 │ 
+    ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[language/statements/const/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     const await = 0;
+    ·           ─────
+ 25 │   }
     ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -34131,6 +34169,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │ 
     ╰────
 
+  × Cannot use await in class static initialization block
+    ╭─[language/statements/let/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     let await;
+    ·         ─────
+ 25 │   }
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/let/static-init-await-binding-invalid.js:23:1]
  23 │   static {
@@ -35506,6 +35552,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·     ─────────
     ╰────
 
+  × Cannot use await in class static initialization block
+    ╭─[language/statements/variable/dstr/ary-ptrn-elem-id-static-init-await-invalid.js:23:1]
+ 23 │   static {
+ 24 │     var [await] = [];
+    ·          ─────
+ 25 │   }
+    ╰────
+
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/variable/dstr/ary-ptrn-elem-id-static-init-await-invalid.js:23:1]
  23 │   static {
@@ -35563,6 +35617,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·      ────┬───
     ·          ╰── Rest element must be last element
  30 │ 
+    ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[language/statements/variable/dstr/obj-ptrn-elem-id-static-init-await-invalid.js:23:1]
+ 23 │   static {
+ 24 │     var {await} = {};
+    ·          ─────
+ 25 │   }
     ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -35647,6 +35709,14 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  15 │ 
  16 │ var eval;
     ·     ────
+    ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[language/statements/variable/static-init-await-binding-invalid.js:23:1]
+ 23 │   static {
+ 24 │     var await;
+    ·         ─────
+ 25 │   }
     ╰────
 
   × Cannot use `await` as an identifier in an async context
