@@ -7,6 +7,7 @@ oxc_macros::declare_all_lint_rules! {
     eq_eq_eq,
     for_direction,
     no_debugger,
+    no_duplicate_case,
     no_array_constructor,
     no_caller,
     no_empty,
