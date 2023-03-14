@@ -9,10 +9,12 @@ expression: no_caller
  1 │ var x = arguments.callee
    ·                   ──────
    ╰────
+  help: 'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them
 
   ⚠ eslint(no-caller): Disallow the use of arguments.caller or arguments.callee
    ╭─[no_caller.tsx:1:1]
  1 │ var x = arguments.caller
    ·                   ──────
    ╰────
+  help: 'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them
 

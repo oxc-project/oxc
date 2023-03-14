@@ -9,7 +9,12 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-caller): Disallow the use of arguments.caller or arguments.callee")]
-#[diagnostic(severity(warning))]
+#[diagnostic(
+    severity(warning),
+    help(
+        "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
+    )
+)]
 struct NoCallerDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
