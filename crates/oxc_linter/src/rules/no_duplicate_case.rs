@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, Span};
+use oxc_ast::{AstKind, GetSpan, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -11,7 +11,7 @@ use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode}
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-duplicate-case): Disallow duplicate case labels")]
 #[diagnostic(severity(warning), help("Remove the duplicated case"))]
-struct NoDuplicateCaseDiagnostic(#[label] pub Span);
+struct NoDuplicateCaseDiagnostic(#[label] pub Span, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDuplicateCase;
@@ -52,8 +52,9 @@ impl Rule for NoDuplicateCase {
             for case in ss.cases.iter() {
                 if let Some(test) = case.test.as_ref() {
                     let hash = calculate_hash(test);
-                    if map.insert(hash, case.span).is_some() {
-                        ctx.diagnostic(NoDuplicateCaseDiagnostic(case.span));
+
+                    if let Some(prev_span) = map.insert(hash, test.span()) {
+                        ctx.diagnostic(NoDuplicateCaseDiagnostic(prev_span, test.span()));
                     }
                 }
             }
