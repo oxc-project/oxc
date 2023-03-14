@@ -53,12 +53,14 @@ impl Rule for NoAsyncPromiseExecutor {
         if let AstKind::NewExpression(new_expression) = node.get().kind() {
             if let Expression::Identifier(ident) = &new_expression.callee && ident.name == "Promise" {
                 if let Some(Argument::Expression(expression)) = new_expression.arguments.first() {
-                    let span = match expression.get_inner_expression() {
+                    let mut span = match expression.get_inner_expression() {
                         Expression::ArrowFunctionExpression(arrow) if arrow.r#async => arrow.span,
                         Expression::FunctionExpression(func) if func.r#async => func.span,
 
                         _ => return,
                     };
+
+                    span.end = span.start + 5;
 
                     ctx.diagnostic(NoAsyncPromiseExecutorDiagnostic(span));
                 }
