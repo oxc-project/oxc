@@ -39,7 +39,6 @@ declare_oxc_lint!(
 impl Rule for NoDupeArgs {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::FormalParameters(params) = node.get().kind() {
-            println!("{:#?}", node.get());
             let mut map = FxHashMap::default();
             map.reserve(params.items.len());
             for formal_param in params.items.iter() {
