@@ -1,0 +1,18 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 53
+expression: no_caller
+---
+
+  ⚠ eslint(no-caller): Disallow the use of arguments.caller or arguments.callee
+   ╭─[no_caller.tsx:1:1]
+ 1 │ var x = arguments.callee
+   ·                   ──────
+   ╰────
+
+  ⚠ eslint(no-caller): Disallow the use of arguments.caller or arguments.callee
+   ╭─[no_caller.tsx:1:1]
+ 1 │ var x = arguments.caller
+   ·                   ──────
+   ╰────
+
