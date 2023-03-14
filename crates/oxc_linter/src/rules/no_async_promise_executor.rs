@@ -53,18 +53,7 @@ impl Rule for NoAsyncPromiseExecutor {
         if let AstKind::NewExpression(new_expression) = node.get().kind() {
             if let Expression::Identifier(ident) = &new_expression.callee && ident.name == "Promise" {
                 if let Some(Argument::Expression(expression)) = new_expression.arguments.first() {
-                    fn unwrap_parenthesized_expression<'e>(
-                        exp: &'e Expression<'e>,
-                    ) -> &'e Expression<'e> {
-                        let mut exp = exp;
-                        while let Expression::ParenthesizedExpression(inner) = exp {
-                            exp = &inner.expression;
-                        }
-
-                        exp
-                    }
-
-                    let span = match unwrap_parenthesized_expression(expression) {
+                    let span = match expression.get_inner_expression() {
                         Expression::ArrowFunctionExpression(arrow) if arrow.r#async => arrow.span,
                         Expression::FunctionExpression(function) if function.r#async => {
                             function.span
