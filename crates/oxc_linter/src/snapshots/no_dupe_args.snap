@@ -1,0 +1,186 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 53
+expression: no_dupe_args
+---
+
+  × Identifier `b` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, b) {}
+   ·               ┬  ┬
+   ·               │  ╰── It can not be redeclared here
+   ·               ╰── `b` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, b) {}
+   ·               ─  ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, a, a) {}
+   ·            ┬  ┬
+   ·            │  ╰── It can not be redeclared here
+   ·            ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, a, a) {}
+   ·               ┬  ┬
+   ·               │  ╰── It can not be redeclared here
+   ·               ╰── `a` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, a, a) {}
+   ·            ─  ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, a, a) {}
+   ·               ─  ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, a) {}
+   ·            ┬     ┬
+   ·            │     ╰── It can not be redeclared here
+   ·            ╰── `a` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, a) {}
+   ·            ─     ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, a, b) {}
+   ·            ┬     ┬
+   ·            │     ╰── It can not be redeclared here
+   ·            ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `b` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, a, b) {}
+   ·               ┬     ┬
+   ·               │     ╰── It can not be redeclared here
+   ·               ╰── `b` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, a, b) {}
+   ·            ─     ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, a, b) {}
+   ·               ─     ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  × Identifier `b` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, b) {}
+   ·                     ┬  ┬
+   ·                     │  ╰── It can not be redeclared here
+   ·                     ╰── `b` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, b) {}
+   ·                     ─  ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, a, a) {}
+   ·                  ┬  ┬
+   ·                  │  ╰── It can not be redeclared here
+   ·                  ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, a, a) {}
+   ·                     ┬  ┬
+   ·                     │  ╰── It can not be redeclared here
+   ·                     ╰── `a` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, a, a) {}
+   ·                  ─  ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, a, a) {}
+   ·                     ─  ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, a) {}
+   ·                  ┬     ┬
+   ·                  │     ╰── It can not be redeclared here
+   ·                  ╰── `a` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, a) {}
+   ·                  ─     ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  × Identifier `a` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, a, b) {}
+   ·                  ┬     ┬
+   ·                  │     ╰── It can not be redeclared here
+   ·                  ╰── `a` has already been declared here
+   ╰────
+
+  × Identifier `b` has already been declared
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, a, b) {}
+   ·                     ┬     ┬
+   ·                     │     ╰── It can not be redeclared here
+   ·                     ╰── `b` has already been declared here
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, a, b) {}
+   ·                  ─     ─
+   ╰────
+  help: Consider removing the duplicated argument
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, a, b) {}
+   ·                     ─     ─
+   ╰────
+  help: Consider removing the duplicated argument
+
