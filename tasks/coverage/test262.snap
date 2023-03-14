@@ -1,9 +1,7 @@
 Test262 Summary:
-AST Parsed     : 44015/44034 (99.96%)
-Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3908/3917 (99.77%)
-Expect Syntax Error: "language/import/json-invalid.js"
-Expect Syntax Error: "language/import/json-named-bindings.js"
+AST Parsed     : 44005/44024 (99.96%)
+Positive Passed: 44005/44024 (99.96%)
+Negative Passed: 3908/3915 (99.82%)
 Expect Syntax Error: "language/module-code/early-dup-export-as-star-as.js"
 Expect Syntax Error: "language/module-code/early-dup-export-dflt-id.js"
 Expect Syntax Error: "language/module-code/early-dup-export-id-as.js"

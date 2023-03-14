@@ -161,8 +161,13 @@ impl Case for Test262Case {
     }
 
     fn skip_test_case(&self) -> bool {
-        std::iter::once("regexp-unicode-property-escapes".to_string().into_boxed_str())
-            .any(|feature| self.meta.features.contains(&feature))
+        [
+            "regexp-unicode-property-escapes",
+            // Stage 3 `https://github.com/tc39/proposal-json-modules`
+            "json-modules",
+        ]
+        .iter()
+        .any(|feature| self.meta.features.iter().any(|f| **f == **feature))
     }
 
     // Unless configured otherwise (via the noStrict, onlyStrict, module, or raw flags),
