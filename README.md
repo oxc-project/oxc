@@ -56,6 +56,38 @@ The current objectives are:
   * API
   * Pass more conformance tests
 
+## Linter
+
+The linter is fast to the extent that it feels broken.
+
+With a few rules implemented, testing in the [VSCode](https://github.com/microsoft/vscode) repo:
+
+```
+vscode  main ❯ npx oxidation-compiler@latest lint src
+Checked 3479 files in 335ms using 12 cores.
+Found 17 errors.
+```
+
+And also in a large monorepo:
+
+```
+Checked 73660 files in 7415ms using 12 cores.
+Found 470 errors.
+```
+
+On my Intel i7 6-core, the linter is around 80 times faster than ESLint.
+See [benchmark](./benchmark/) for details.
+
+### Try it out yourself!
+
+The linter is already usable and it can potentially catch a few mistakes for you:
+
+```
+npx oxidation-compiler@latest lint path
+```
+
+All feedbacks are welcome.
+
 ## Parser Conformance
 
 The `cargo coverage` command currently reports the following summary
@@ -72,29 +104,6 @@ AST Parsed     : 4291/4861 (88.27%)
 ```
 
 (The parser is failing some of the TypeScript recoverable parser tests.)
-
-## Linter Performance
-
-See [benchmark](./benchmark/) for details. Hyperfine results on an Intel i7 6-core are:
-
-```
-Benchmark 1: oxc
-  Time (mean ± σ):      34.6 ms ±   1.3 ms    [User: 160.1 ms, System: 67.2 ms]
-  Range (min … max):    31.8 ms …  40.9 ms    75 runs
-
-Benchmark 2: rome
-  Time (mean ± σ):     147.4 ms ±   3.7 ms    [User: 695.4 ms, System: 72.4 ms]
-  Range (min … max):   141.9 ms … 153.8 ms    20 runs
-
-Benchmark 3: eslint
-  Time (mean ± σ):      2.905 s ±  0.185 s    [User: 4.387 s, System: 0.254 s]
-  Range (min … max):    2.710 s …  3.287 s    10 runs
-
-Summary
-  'oxc' ran
-    4.26 ± 0.20 times faster than 'rome'
-   83.94 ± 6.25 times faster than 'eslint'
-```
 
 ## Learning Resources
 
