@@ -222,10 +222,11 @@ fn main() {
     let mut args = std::env::args();
     args.next();
 
-    let rule_name = args.next().expect("expected rule name");
+    let rule_name = args.next().expect("expected rule name").to_case(Case::Snake);
     let upper_rule_name = rule_name.to_case(Case::UpperCamel);
+    let kebab_rule_name = rule_name.to_case(Case::Kebab);
 
-    let rule_test_path = format!("{ESLINT_TEST_PATH}/{rule_name}.js");
+    let rule_test_path = format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js");
     let body = ureq::get(&rule_test_path)
         .call()
         .expect("failed to fetch source")
