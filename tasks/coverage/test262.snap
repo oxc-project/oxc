@@ -1,8 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44015/44034 (99.96%)
 Positive Passed: 44015/44034 (99.96%)
-Negative Passed: 3907/3917 (99.74%)
-Expect Syntax Error: "language/import/dup-bound-names.js"
+Negative Passed: 3908/3917 (99.77%)
 Expect Syntax Error: "language/import/json-invalid.js"
 Expect Syntax Error: "language/import/json-named-bindings.js"
 Expect Syntax Error: "language/module-code/early-dup-export-as-star-as.js"
@@ -18947,6 +18946,15 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  16 │ var ⸯ; // U+2E2F
     ·     ┬
     ·     ╰── Invalid Character `ⸯ`
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/import/dup-bound-names.js:15:1]
+ 15 │ 
+ 16 │ import { x, y as x } from 'z';
+    ·          ┬       ┬
+    ·          │       ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
     ╰────
 
   × Keywords cannot contain escape characters

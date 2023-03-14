@@ -39,7 +39,12 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
 
             AstKind::Directive(dir) => check_directive(dir, node, ctx),
-            AstKind::ModuleDeclaration(decl) => check_module_declaration(decl, node, ctx),
+            AstKind::ModuleDeclaration(decl) => {
+                check_module_declaration(decl, node, ctx);
+                if let ModuleDeclarationKind::ImportDeclaration(import_decl) = &decl.kind {
+                    check_import_declaration(import_decl, ctx);
+                }
+            }
             AstKind::MetaProperty(prop) => check_meta_property(prop, node, ctx),
 
             AstKind::WithStatement(stmt) => check_with_statement(stmt, node, ctx),
@@ -66,6 +71,18 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::AwaitExpression(expr) => check_await_expression(expr, node, ctx),
             AstKind::YieldExpression(expr) => check_yield_expression(expr, node, ctx),
             _ => {}
+        }
+    }
+}
+
+fn check_duplicate_bound_names<T: BoundNames>(bound_names: &T, ctx: &LintContext) {
+    // bound_names are usually small, a simple loop should be more performant checking with a hashmap
+    let mut idents = bound_names.bound_names();
+    idents.sort_unstable_by_key(|ident| ident.name.as_str());
+    for i in 1..idents.len() {
+        let ident = &idents[i - 1];
+        if let Some(found) = idents[i..].iter().find(|i| i.name == ident.name) {
+            ctx.diagnostic(Redeclaration(ident.name.clone(), ident.span, found.span));
         }
     }
 }
@@ -391,6 +408,13 @@ fn check_module_declaration<'a>(
             ctx.diagnostic(TopLevel(text, span));
         }
     }
+}
+
+fn check_import_declaration(decl: &ImportDeclaration, ctx: &LintContext) {
+    // ModuleItem : ImportDeclaration
+    // It is a Syntax Error if the BoundNames of ImportDeclaration contains any duplicate entries.
+    // bound_names are usually small, a simple loop should be more performant checking with a hashmap
+    check_duplicate_bound_names(decl, ctx);
 }
 
 fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -868,15 +892,7 @@ fn check_formal_parameters<'a>(
         return;
     }
 
-    // bound_names are usually small, a simple loop should be more performant checking with a hashmap
-    let mut idents = params.bound_names();
-    idents.sort_unstable_by_key(|ident| ident.name.as_str());
-    for i in 1..idents.len() {
-        let ident = &idents[i - 1];
-        if let Some(found) = idents[i..].iter().find(|i| i.name == ident.name) {
-            ctx.diagnostic(Redeclaration(ident.name.clone(), ident.span, found.span));
-        }
-    }
+    check_duplicate_bound_names(params, ctx);
 }
 
 fn check_formal_parameter(param: &FormalParameter, ctx: &LintContext) {
