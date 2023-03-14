@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2305/2338 (98.59%)
 Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 686/2532 (27.09%)
+Negative Passed: 683/2532 (26.97%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -1139,7 +1139,10 @@ Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/
 Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/ParameterLists/parserErrorRecovery_ParameterList6.ts"
 Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserCommaInTypeMemberList2.ts"
 Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserModifierOnPropertySignature1.ts"
+Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock1.ts"
 Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock2.ts"
+Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock3.ts"
+Expect Syntax Error: "parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts"
 Expect Syntax Error: "parser/ecmascript5/ExportAssignments/parserExportAssignment1.ts"
 Expect Syntax Error: "parser/ecmascript5/ExportAssignments/parserExportAssignment2.ts"
 Expect Syntax Error: "parser/ecmascript5/ExportAssignments/parserExportAssignment5.ts"
@@ -9361,30 +9364,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │             var index = 0;
    ·             ───
  5 │             return this.doWhile((item, i) => filter(item, i) ? test(item, index++) : true);
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock1.ts:1:1]
- 1 │ export function foo() {
- 2 │    export var x = this;
-   ·    ──────
- 3 │ }
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock3.ts:1:1]
- 1 │ export function foo() {
- 2 │    export function bar() {
-   ·    ──────
- 3 │    }
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[parser/ecmascript5/ErrorRecovery/parserModifierOnStatementInBlock4.ts:1:1]
- 1 │ {
- 2 │    export function bar() {
-   ·    ──────
- 3 │    }
    ╰────
 
   × Automatic Semicolon Insertion

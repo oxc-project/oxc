@@ -364,12 +364,13 @@ fn check_module_declaration<'a>(
     #[diagnostic()]
     struct ModuleCode(&'static str, #[label] Span);
 
-    if ctx.source_type().is_typescript_definition()
-        || ctx.scope(node).is_ts_module()
-        || matches!(ctx.parent_kind(node), AstKind::Program(_))
-    {
+    // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
+    // Basically we need to "upgrade" from script to module if we see any module syntax inside the
+    // semantic builder
+    if ctx.source_type().is_typescript() {
         return;
     }
+
     let text = match decl.kind {
         ModuleDeclarationKind::ImportDeclaration(_) => "import statement",
         ModuleDeclarationKind::ExportAllDeclaration(_)
@@ -384,6 +385,9 @@ fn check_module_declaration<'a>(
             ctx.diagnostic(ModuleCode(text, span));
         }
         ModuleKind::Module => {
+            if matches!(ctx.parent_kind(node), AstKind::Program(_)) {
+                return;
+            }
             ctx.diagnostic(TopLevel(text, span));
         }
     }
