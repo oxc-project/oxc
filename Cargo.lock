@@ -928,6 +928,7 @@ dependencies = [
  "insta",
  "lazy_static",
  "miette",
+ "num-traits",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
