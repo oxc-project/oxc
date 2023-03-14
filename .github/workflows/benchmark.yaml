@@ -1,6 +1,7 @@
 name: Benchmark
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - 'crates/oxc_parser/**'
@@ -10,9 +11,8 @@ on:
       - 'rust-toolchain.toml'
       - '!**/*.md'
 
-# cancel previous job runs for the same workflow + pr
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 env:
@@ -20,10 +20,10 @@ env:
 
 jobs:
   benchmark:
-    name: Run benchmark
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest] # `macos-latest` is too unstable to be useful for benchmark, the variance is always huge.
+    name: Run benchmark on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -54,44 +54,90 @@ jobs:
           clean: false
           ref: main
 
+      - name: Install toolchain
+        run: rustup show
+
       - name: Compile
         run: cargo build --release -p oxc_benchmark
 
       - name: Run Bench on Main Branch
         run: cargo benchmark --save-baseline main
 
-      - name: Compare Bench Results
-        id: bench_comparison
-        shell: bash
-        run: |
-          echo "### Parser Benchmark Results - ${{ matrix.os }}" > output.md
-          echo "\`\`\`"  >> output.md
-          critcmp main pr >> output.md
-          echo "\`\`\`" >> output.md
-          cat output.md
-          cat output.md > $GITHUB_STEP_SUMMARY
-
-      - name: Find Comment
-        # Check if the event is not triggered by a fork
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: peter-evans/find-comment@v2
-        id: fc
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
         with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: Parser Benchmark Results - ${{ matrix.os }}
-
-      - name: Write a new comment
-        # Check if the event is not triggered by a fork
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        uses: peter-evans/create-or-update-comment@v2
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          edit-mode: replace
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          body-file: 'output.md'
+          name: benchmark-results-${{ matrix.os }}
+          path: ./target/criterion
 
       - name: Remove Criterion Artifact
         uses: JesseTG/rm@v1.0.3
         with:
           path: ./target/criterion
+
+  benchmark-compare:
+    runs-on: ubuntu-latest
+    name: Compare Benchmarks
+    needs:
+      - benchmark
+
+    steps:
+    - name: Install Rust toolchain
+      run: rustup show
+
+    - name: Install critcmp
+      run: cargo install --debug critcmp # Use debug build: Building takes much longer than the "slowness" of using the debug build.
+
+    - name: Linux | Download PR benchmark results
+      uses: actions/download-artifact@v3
+      with:
+        name: benchmark-results-ubuntu-latest
+        path: ./target/criterion
+
+    - name: Linux | Compare benchmark results
+      shell: bash
+      run: |
+        echo "## Benchmark Results" >> summary.md
+        echo "### Linux" >> summary.md
+        echo "\`\`\`" >> summary.md
+        critcmp main pr >> summary.md
+        echo "\`\`\`" >> summary.md
+        echo "" >> summary.md
+
+    - name: Linux | Cleanup benchmark results
+      run: rm -rf ./target/criterion
+
+    - name: Windows | Download PR benchmark results
+      uses: actions/download-artifact@v3
+      with:
+        name: benchmark-results-windows-latest
+        path: ./target/criterion
+
+    - name: Windows | Compare benchmark results
+      shell: bash
+      run: |
+        echo "### Windows" >> summary.md
+        echo "\`\`\`" >> summary.md
+        critcmp main pr >> summary.md
+        echo "\`\`\`" >> summary.md
+        echo "" >> summary.md
+        cat summary.md > $GITHUB_STEP_SUMMARY
+
+    - name: Find Comment
+      # Check if the event is not triggered by a fork
+      if: github.event.pull_request.head.repo.full_name == github.repository
+      uses: peter-evans/find-comment@v2
+      id: fc
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        comment-author: 'github-actions[bot]'
+        body-includes: Benchmark Results
+
+    - name: Create or update comment
+      # Check if the event is not triggered by a fork
+      if: github.event.pull_request.head.repo.full_name == github.repository
+      uses: peter-evans/create-or-update-comment@v2
+      with:
+        issue-number: ${{ github.event.pull_request.number }}
+        edit-mode: replace
+        comment-id: ${{ steps.fc.outputs.comment-id }}
+        body-file: summary.md
