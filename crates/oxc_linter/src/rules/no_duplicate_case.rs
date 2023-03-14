@@ -52,7 +52,7 @@ impl Rule for NoDuplicateCase {
             for case in ss.cases.iter() {
                 if let Some(test) = case.test.as_ref() {
                     let hash = calculate_hash(test);
-                    if let Some(_) = map.insert(hash, case.span) {
+                    if map.insert(hash, case.span).is_some() {
                         ctx.diagnostic(NoDuplicateCaseDiagnostic(case.span));
                     }
                 }
