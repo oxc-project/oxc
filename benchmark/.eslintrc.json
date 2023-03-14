@@ -5,6 +5,9 @@
         "sourceType": "module"
     },
     "rules": {
-        "no-debugger": "error"
+        "no-debugger": "error",
+        "for-direction": "error",
+        "no-constant-binary-expression": "error",
+        "no-self-compare": "error"
     }
 }

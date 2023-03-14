@@ -75,7 +75,9 @@ Checked 73660 files in 7415ms using 12 cores.
 Found 470 errors.
 ```
 
-On my Intel i7 6-core, the linter is around 80 times faster than ESLint.
+On my Intel i7 6-core, the linter is around 84 times faster than ESLint.
+But we'll get slightly slower as we add more features.
+
 See [benchmark](./benchmark/) for details.
 
 ### Try it out yourself!
