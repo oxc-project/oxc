@@ -1,4 +1,4 @@
-use oxc_ast::{ast::BindingPatternKind, AstKind, Span};
+use oxc_ast::{AstKind, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
