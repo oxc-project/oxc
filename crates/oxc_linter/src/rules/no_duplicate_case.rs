@@ -1,11 +1,10 @@
-use std::collections::HashSet;
-
 use oxc_ast::{AstKind, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use rustc_hash::FxHashMap;
 
 use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
 
@@ -48,14 +47,13 @@ declare_oxc_lint!(
 impl Rule for NoDuplicateCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::SwitchStatement(ss) = node.get().kind() {
-            let mut set = HashSet::new();
+            let mut map = FxHashMap::default();
+            map.reserve(ss.cases.len());
             for case in ss.cases.iter() {
                 if let Some(test) = case.test.as_ref() {
                     let hash = calculate_hash(test);
-                    if set.contains(&hash) {
+                    if let Some(_) = map.insert(hash, case.span) {
                         ctx.diagnostic(NoDuplicateCaseDiagnostic(case.span));
-                    } else {
-                        set.insert(hash);
                     }
                 }
             }
