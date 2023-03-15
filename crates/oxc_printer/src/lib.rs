@@ -8,7 +8,7 @@ mod gen;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
-use crate::gen::Gen;
+pub use crate::gen::Gen;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PrinterOptions {
@@ -65,6 +65,12 @@ impl Printer {
     #[must_use]
     pub fn build(mut self, program: &Program<'_>) -> String {
         program.gen(&mut self);
+        self.into_code()
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn into_code(self) -> String {
         unsafe { String::from_utf8_unchecked(self.code) }
     }
 
