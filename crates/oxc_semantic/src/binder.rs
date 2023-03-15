@@ -182,3 +182,17 @@ impl<'a> Binder for CatchClause<'a> {
         }
     }
 }
+
+impl<'a> Binder for ModuleDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        for ident in self.bound_names() {
+            builder.declare_symbol(
+                &ident.name,
+                ident.span,
+                builder.scope.current_scope_id,
+                SymbolFlags::empty(),
+                SymbolFlags::empty(),
+            );
+        }
+    }
+}

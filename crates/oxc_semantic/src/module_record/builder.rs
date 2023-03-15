@@ -11,7 +11,15 @@ pub struct ModuleRecordBuilder {
 
 impl ModuleRecordBuilder {
     #[must_use]
-    pub fn build(mut self) -> ModuleRecord {
+    pub fn build(mut self, program: &Program) -> ModuleRecord {
+        // This avoids additional checks on TypeScript `TsModuleBlock` which
+        // also has `ModuleDeclaration`s.
+        for stmt in &program.body {
+            if let Statement::ModuleDeclaration(module_decl) = stmt {
+                self.visit_module_declaration(module_decl);
+            }
+        }
+
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resovling export entries.
         self.resolve_export_entries();

@@ -65,9 +65,12 @@ impl<'a> SemanticBuilder<'a> {
 
     #[must_use]
     pub fn build(mut self, program: &'a Program<'a>, trivias: Rc<Trivias>) -> ScopeBuilderReturn {
-        // AST pass
+        // First AST pass
         self.visit_program(program);
-        let module_record = self.module_record_builder.build();
+
+        // Second partial AST pass on top level import / export statements
+        let module_record = self.module_record_builder.build(program);
+
         let semantic = Semantic {
             source_type: self.source_type,
             nodes: self.nodes,
@@ -180,6 +183,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 impl<'a> SemanticBuilder<'a> {
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         match kind {
+            AstKind::ModuleDeclaration(decl) => {
+                decl.bind(self);
+            }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
             }
@@ -207,9 +213,6 @@ impl<'a> SemanticBuilder<'a> {
                 if directive.directive == "use strict" {
                     self.scope.current_scope_mut().strict_mode = true;
                 }
-            }
-            AstKind::ModuleDeclaration(decl) => {
-                self.module_record_builder.visit_module_declaration(decl);
             }
             _ => {}
         }

@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2050/2071 (98.99%)
 Positive Passed: 2050/2071 (98.99%)
-Negative Passed: 1321/1502 (87.95%)
+Negative Passed: 1335/1502 (88.88%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -13,22 +13,9 @@ Expect Syntax Error: "annex-b/disabled/3.5-for-in-initializer/input.js"
 Expect Syntax Error: "annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-if/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-loop/input.js"
-Expect Syntax Error: "core/scope/undecl-export-as-default/input.js"
-Expect Syntax Error: "core/scope/undecl-export-as/input.js"
-Expect Syntax Error: "core/scope/undecl-export-block/input.js"
-Expect Syntax Error: "core/scope/undecl-export-builtin-as/input.js"
-Expect Syntax Error: "core/scope/undecl-export-builtin/input.js"
-Expect Syntax Error: "core/scope/undecl-export/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
 Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
 Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-export-default-and-export-as-default/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-export-default/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-class-declaration/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-destructuring-assignment/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-function-declaration/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export-variable-declaration/input.js"
-Expect Syntax Error: "es2015/modules/duplicate-named-export/input.js"
 Expect Syntax Error: "es2015/object/disallow-duplicate-method-params/input.js"
 Expect Syntax Error: "es2015/uncategorised/.191/input.js"
 Expect Syntax Error: "es2015/uncategorised/.335/input.js"
@@ -43,7 +30,6 @@ Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-nested/input.
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest/input.js"
 Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
-Expect Syntax Error: "esprima/es2015-export-declaration/invalid-export-named-default/input.js"
 Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/.invalid_function_wait/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0005/input.js"
@@ -1125,6 +1111,38 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
+  × Export 'encrypt' is not defined
+   ╭─[core/scope/undecl-export-as-default/input.js:1:1]
+ 1 │ export { encrypt as default };
+   ·          ───────
+   ╰────
+
+  × Export 'encrypt' is not defined
+   ╭─[core/scope/undecl-export-as/input.js:1:1]
+ 1 │ export { encrypt as decrypt };
+   ·          ───────
+ 2 │ function decrypt() {}
+   ╰────
+
+  × Export 'encrypt' is not defined
+   ╭─[core/scope/undecl-export-block/input.js:3:1]
+ 3 │ }
+ 4 │ export { encrypt }
+   ·          ───────
+   ╰────
+
+  × Export 'Object' is not defined
+   ╭─[core/scope/undecl-export-builtin-as/input.js:1:1]
+ 1 │ export { Object as Obj };
+   ·          ──────
+   ╰────
+
+  × Export 'Object' is not defined
+   ╭─[core/scope/undecl-export-builtin/input.js:1:1]
+ 1 │ export { Object };
+   ·          ──────
+   ╰────
+
   × Invalid function declaration
    ╭─[core/scope/undecl-export-if/input.js:1:1]
  1 │ export { encrypt };
@@ -1132,6 +1150,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·           ─────────────────────
    ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Export 'encrypt' is not defined
+   ╭─[core/scope/undecl-export/input.js:1:1]
+ 1 │ export { encrypt };
+   ·          ───────
+   ╰────
 
   × A 'get' accessor must not have any formal parameters.
    ╭─[core/uncategorised/.542/input.js:1:1]
@@ -3036,6 +3060,63 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
+  × Export 'foo' is not defined
+   ╭─[es2015/modules/duplicate-export-default-and-export-as-default/input.js:1:1]
+ 1 │ export default function() {};
+ 2 │ export { foo as default };
+   ·          ───
+   ╰────
+
+  × Duplicated export 'default'
+   ╭─[es2015/modules/duplicate-export-default-and-export-as-default/input.js:1:1]
+ 1 │ export default function() {};
+   ·        ───┬───
+   ·           ╰── Export has already been declared here
+ 2 │ export { foo as default };
+   ·                 ───┬───
+   ·                    ╰── It cannot be redeclared here
+   ╰────
+
+  × Duplicated export 'default'
+   ╭─[es2015/modules/duplicate-export-default/input.js:1:1]
+ 1 │ export default {};
+   ·        ───┬───
+   ·           ╰── Export has already been declared here
+ 2 │ export default function() {};
+   ·        ───┬───
+   ·           ╰── It cannot be redeclared here
+   ╰────
+
+  × Duplicated export 'Foo'
+   ╭─[es2015/modules/duplicate-named-export-class-declaration/input.js:1:1]
+ 1 │ export { Foo };
+   ·          ─┬─
+   ·           ╰── Export has already been declared here
+ 2 │ export class Foo {};
+   ·              ─┬─
+   ·               ╰── It cannot be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring-assignment/input.js:1:1]
+ 1 │ export { foo };
+   ·          ─┬─
+   ·           ╰── Export has already been declared here
+ 2 │ export const { foo = 1 } = bar;
+   ·                ─┬─
+   ·                 ╰── It cannot be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring10/input.js:1:1]
+ 1 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── Export has already been declared here
+ 2 │ export const { a: [{foo}] } = bar;
+   ·                     ─┬─
+   ·                      ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring10/input.js:1:1]
  1 │ export function foo() {};
@@ -3044,6 +3125,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const { a: [{foo}] } = bar;
    ·                     ─┬─
    ·                      ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo4'
+   ╭─[es2015/modules/duplicate-named-export-destructuring11/input.js:1:1]
+ 1 │ export function foo4() {};
+   ·                 ──┬─
+   ·                   ╰── Export has already been declared here
+ 2 │ export const [{ a: [{ foo }], b: { foo2: [{ foo3: foo4 }] } }] = bar;
+   ·                                                   ──┬─
+   ·                                                     ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo4` has already been declared
@@ -3056,6 +3147,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                                                     ╰── It can not be redeclared here
    ╰────
 
+  × Duplicated export 'foo4'
+   ╭─[es2015/modules/duplicate-named-export-destructuring12/input.js:1:1]
+ 1 │ export function foo4() {};
+   ·                 ──┬─
+   ·                   ╰── Export has already been declared here
+ 2 │ export const { a: [{ foo }], b: { foo2: [{ foo3: foo4 }] } } = bar;
+   ·                                                  ──┬─
+   ·                                                    ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `foo4` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring12/input.js:1:1]
  1 │ export function foo4() {};
@@ -3064,6 +3165,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const { a: [{ foo }], b: { foo2: [{ foo3: foo4 }] } } = bar;
    ·                                                  ──┬─
    ·                                                    ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo4'
+   ╭─[es2015/modules/duplicate-named-export-destructuring13/input.js:1:1]
+ 1 │ export function foo4() {};
+   ·                 ──┬─
+   ·                   ╰── Export has already been declared here
+ 2 │ export const { a: [{ foo4: foo }], b, c: { foo2: [{ foo3: foo4 }] } } = bar;
+   ·                                                           ──┬─
+   ·                                                             ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo4` has already been declared
@@ -3076,6 +3187,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                                                             ╰── It can not be redeclared here
    ╰────
 
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring14/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const { foo2: foo } = bar;
+   ·                      ─┬─
+   ·                       ╰── It cannot be redeclared here
+ 3 │ 
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring14/input.js:1:1]
  1 │ export const foo = 1;
@@ -3084,6 +3206,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const { foo2: foo } = bar;
    ·                      ─┬─
    ·                       ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Duplicated export 'foo2'
+   ╭─[es2015/modules/duplicate-named-export-destructuring15/input.js:1:1]
+ 1 │ export const { foo: foo2 } = bar;
+   ·                     ──┬─
+   ·                       ╰── Export has already been declared here
+ 2 │ export const foo2 = 1;
+   ·              ──┬─
+   ·                ╰── It cannot be redeclared here
  3 │ 
    ╰────
 
@@ -3098,6 +3231,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ 
    ╰────
 
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring16/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const [bar, ...foo] = baz;
+   ·                       ─┬─
+   ·                        ╰── It cannot be redeclared here
+ 3 │ 
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring16/input.js:1:1]
  1 │ export const foo = 1;
@@ -3106,6 +3250,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const [bar, ...foo] = baz;
    ·                       ─┬─
    ·                        ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Duplicated export 'bar'
+   ╭─[es2015/modules/duplicate-named-export-destructuring17/input.js:1:1]
+ 1 │ export const [foo, ...bar] = baz;
+   ·                       ─┬─
+   ·                        ╰── Export has already been declared here
+ 2 │ export const bar = 1;
+   ·              ─┬─
+   ·               ╰── It cannot be redeclared here
  3 │ 
    ╰────
 
@@ -3120,6 +3275,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ 
    ╰────
 
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring18/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const [bar, [baz, ...foo]] = qux;
+   ·                             ─┬─
+   ·                              ╰── It cannot be redeclared here
+ 3 │ 
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring18/input.js:1:1]
  1 │ export const foo = 1;
@@ -3128,6 +3294,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const [bar, [baz, ...foo]] = qux;
    ·                             ─┬─
    ·                              ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring19/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const { bar: [baz, ...foo] } = qux;
+   ·                              ─┬─
+   ·                               ╰── It cannot be redeclared here
  3 │ 
    ╰────
 
@@ -3142,6 +3319,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ 
    ╰────
 
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring2/input.js:1:1]
+ 1 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── Export has already been declared here
+ 2 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring2/input.js:1:1]
  1 │ export function foo() {};
@@ -3150,6 +3337,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const { foo } = bar;
    ·                ─┬─
    ·                 ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring3/input.js:1:1]
+ 1 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── Export has already been declared here
+ 2 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo` has already been declared
@@ -3162,6 +3359,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                  ╰── It can not be redeclared here
    ╰────
 
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring4/input.js:1:1]
+ 1 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── Export has already been declared here
+ 2 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring4/input.js:1:1]
  1 │ export function foo() {};
@@ -3170,6 +3377,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const [foo] = bar;
    ·               ─┬─
    ·                ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring5/input.js:1:1]
+ 1 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── Export has already been declared here
+ 2 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo` has already been declared
@@ -3182,6 +3399,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                  ╰── It can not be redeclared here
    ╰────
 
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring6/input.js:1:1]
+ 1 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── Export has already been declared here
+ 2 │ export const [foo] = bar2;
+   ·               ─┬─
+   ·                ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring6/input.js:1:1]
  1 │ export const { foo } = bar;
@@ -3190,6 +3417,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const [foo] = bar2;
    ·               ─┬─
    ·                ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring7/input.js:1:1]
+ 1 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── Export has already been declared here
+ 2 │ export const { foo } = bar2;
+   ·                ─┬─
+   ·                 ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo` has already been declared
@@ -3202,6 +3439,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                 ╰── It can not be redeclared here
    ╰────
 
+  × Duplicated export 'Foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring8/input.js:1:1]
+ 1 │ export class Foo {};
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const { Foo } = bar;
+   ·                ─┬─
+   ·                 ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `Foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring8/input.js:1:1]
  1 │ export class Foo {};
@@ -3212,6 +3459,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                 ╰── It can not be redeclared here
    ╰────
 
+  × Duplicated export 'Foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring9/input.js:1:1]
+ 1 │ export class Foo {};
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const [Foo] = bar;
+   ·               ─┬─
+   ·                ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `Foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring9/input.js:1:1]
  1 │ export class Foo {};
@@ -3220,6 +3477,50 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const [Foo] = bar;
    ·               ─┬─
    ·                ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-function-declaration/input.js:1:1]
+ 1 │ export { foo };
+   ·          ─┬─
+   ·           ╰── Export has already been declared here
+ 2 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── It cannot be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-variable-declaration/input.js:1:1]
+ 1 │ export { foo };
+   ·          ─┬─
+   ·           ╰── Export has already been declared here
+ 2 │ export const foo = bar;
+   ·              ─┬─
+   ·               ╰── It cannot be redeclared here
+   ╰────
+
+  × Export 'foo' is not defined
+   ╭─[es2015/modules/duplicate-named-export/input.js:1:1]
+ 1 │ export { foo };
+   ·          ───
+ 2 │ export { bar as foo };
+   ╰────
+
+  × Export 'bar' is not defined
+   ╭─[es2015/modules/duplicate-named-export/input.js:1:1]
+ 1 │ export { foo };
+ 2 │ export { bar as foo };
+   ·          ───
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export/input.js:1:1]
+ 1 │ export { foo };
+   ·          ─┬─
+   ·           ╰── Export has already been declared here
+ 2 │ export { bar as foo };
+   ·                 ─┬─
+   ·                  ╰── It cannot be redeclared here
    ╰────
 
   × Unexpected token
@@ -3255,6 +3556,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/modules/import-invalid-keyword/input.js:1:1]
  1 │ import { debugger } from "foo";
    ·          ────────
+   ╰────
+
+  × Export 'X' is not defined
+   ╭─[es2015/modules/invalid-escape-export-as/input.js:1:1]
+ 1 │ export { X \u0061s Y }
+   ·          ─
    ╰────
 
   × Keywords cannot contain escape characters
@@ -5252,6 +5559,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
+  × Duplicated export 'foo'
+   ╭─[es2018/object-rest-spread/11/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const { bar, ...foo } = baz;
+   ·                        ─┬─
+   ·                         ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2018/object-rest-spread/11/input.js:1:1]
  1 │ export const foo = 1;
@@ -5260,6 +5577,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const { bar, ...foo } = baz;
    ·                        ─┬─
    ·                         ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'bar'
+   ╭─[es2018/object-rest-spread/12/input.js:1:1]
+ 1 │ export const { foo, ...bar } = baz;
+   ·                        ─┬─
+   ·                         ╰── Export has already been declared here
+ 2 │ export const bar = 1;
+   ·              ─┬─
+   ·               ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `bar` has already been declared
@@ -5272,6 +5599,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·               ╰── It can not be redeclared here
    ╰────
 
+  × Duplicated export 'foo'
+   ╭─[es2018/object-rest-spread/13/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const { bar: { baz, ...foo } } = qux;
+   ·                               ─┬─
+   ·                                ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2018/object-rest-spread/13/input.js:1:1]
  1 │ export const foo = 1;
@@ -5282,6 +5619,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                                ╰── It can not be redeclared here
    ╰────
 
+  × Duplicated export 'foo'
+   ╭─[es2018/object-rest-spread/14/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const [bar, { baz, ...foo }] = qux;
+   ·                              ─┬─
+   ·                               ╰── It cannot be redeclared here
+   ╰────
+
   × Identifier `foo` has already been declared
    ╭─[es2018/object-rest-spread/14/input.js:1:1]
  1 │ export const foo = 1;
@@ -5290,6 +5637,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const [bar, { baz, ...foo }] = qux;
    ·                              ─┬─
    ·                               ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2018/object-rest-spread/15/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const [bar, [{ baz, ...foo }]] = qux;
+   ·                               ─┬─
+   ·                                ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo` has already been declared
@@ -7282,6 +7639,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
+
+  × Export 'default' is not defined
+   ╭─[esprima/es2015-export-declaration/invalid-export-named-default/input.js:1:1]
+ 1 │ export {default}
+   ·         ───────
+   ╰────
 
   × for-of loop variable declaration may not have an initializer
    ╭─[esprima/es2015-for-of/invalid-const-init/input.js:1:1]
