@@ -1,6 +1,6 @@
 Babel Summary:
-AST Parsed     : 2048/2069 (98.99%)
-Positive Passed: 2048/2069 (98.99%)
+AST Parsed     : 2050/2071 (98.99%)
+Positive Passed: 2050/2071 (98.99%)
 Negative Passed: 1321/1502 (87.95%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
