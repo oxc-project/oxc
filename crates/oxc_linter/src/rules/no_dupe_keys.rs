@@ -77,7 +77,7 @@ fn test() {
         ("var x = { a: 1, b: { a: 2 } };", None),
         ("var x = ({ null: 1, [/(?<zero>0)/]: 2 })", None),
         ("var {a, a} = obj", None),
-        // Our parser doesn't allow the '0' prefixed octal literals.
+        // Syntax:error: the '0' prefixed octal literals is not allowed.
         // ("var x = { 012: 1, 12: 2 };", None),
         ("var x = { 1_0: 1, 1: 2 };", None),
     ];
