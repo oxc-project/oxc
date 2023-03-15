@@ -44,19 +44,13 @@ impl Rule for NoDupeKeys {
         if let AstKind::ObjectExpression(obj_expr) = node.get().kind() {
             let mut map = FxHashMap::default();
             for prop in obj_expr.properties.iter() {
-                if let ObjectProperty::Property(prop) = prop && let Some(key_name) = prop.key.static_name().as_ref() {
+                if let ObjectProperty::Property(prop) = prop 
+                    && let Some(key_name) = prop.key.static_name().as_ref() {
                     let hash = calculate_hash(key_name);
-                    if map.contains_key(&hash) {
-                        let (kind, span) = map.get(&hash).unwrap();
-                        if kind == &PropertyKind::Init {
-                            ctx.diagnostic(NoDupeKeysDiagnostic(*span, prop.key.span()));
-                        } else if prop.kind == PropertyKind::Init {
-                            ctx.diagnostic(NoDupeKeysDiagnostic(*span, prop.key.span()));
-                            map.insert(hash, (prop.kind, prop.key.span()));
+                    if let Some((prev_kind, prev_span)) = map.insert(hash, (prop.kind, prop.key.span())) {
+                        if prev_kind == PropertyKind::Init || prop.kind == PropertyKind::Init || prev_kind == prop.kind {
+                            ctx.diagnostic(NoDupeKeysDiagnostic(prev_span, prop.key.span()));
                         }
-                    } else {
-                        map.insert(hash, (prop.kind, prop.key.span()));
-
                     }
                 }
             }
@@ -83,6 +77,7 @@ fn test() {
         ("var x = { a: 1, b: { a: 2 } };", None),
         ("var x = ({ null: 1, [/(?<zero>0)/]: 2 })", None),
         ("var {a, a} = obj", None),
+        // Our parser doesn't allow the '0' prefixed octal literals.
         // ("var x = { 012: 1, 12: 2 };", None),
         ("var x = { 1_0: 1, 1: 2 };", None),
     ];
