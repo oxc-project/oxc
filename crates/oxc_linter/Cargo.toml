@@ -26,5 +26,6 @@ num-traits = "0.2.15"
 [dev_dependencies]
 oxc_allocator = { path = "../oxc_allocator" }
 oxc_parser = { path = "../oxc_parser" }
-insta = { version = "1.14.0", features = ["glob"] }
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
+
+insta = { version = "1.28.0", features = ["glob"] }
