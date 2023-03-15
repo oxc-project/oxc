@@ -1,14 +1,7 @@
 Test262 Summary:
 AST Parsed     : 44005/44024 (99.96%)
 Positive Passed: 44005/44024 (99.96%)
-Negative Passed: 3908/3915 (99.82%)
-Expect Syntax Error: "language/module-code/early-dup-export-as-star-as.js"
-Expect Syntax Error: "language/module-code/early-dup-export-dflt-id.js"
-Expect Syntax Error: "language/module-code/early-dup-export-id-as.js"
-Expect Syntax Error: "language/module-code/early-dup-export-id.js"
-Expect Syntax Error: "language/module-code/early-dup-export-star-as-dflt.js"
-Expect Syntax Error: "language/module-code/early-export-global.js"
-Expect Syntax Error: "language/module-code/early-export-unresolvable.js"
+Negative Passed: 3915/3915 (100.00%)
 Expect to Parse: "language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js"
 
   × Identifier `f` has already been declared
@@ -20473,6 +20466,28 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
  25 │ };
     ╰────
 
+  × Duplicated export 'z'
+    ╭─[language/module-code/early-dup-export-as-star-as.js:17:1]
+ 17 │ var x;
+ 18 │ export { x as z };
+    ·               ┬
+    ·               ╰── Export has already been declared here
+ 19 │ export * as z from './early-dup-export-as-star-as.js';
+    ·             ┬
+    ·             ╰── It cannot be redeclared here
+    ╰────
+
+  × Duplicated export 'f'
+    ╭─[language/module-code/early-dup-export-decl.js:16:1]
+ 16 │ 
+ 17 │ export function f() {}
+    ·                 ┬
+    ·                 ╰── Export has already been declared here
+ 18 │ export function *f() {}
+    ·                  ┬
+    ·                  ╰── It cannot be redeclared here
+    ╰────
+
   × Identifier `f` has already been declared
     ╭─[language/module-code/early-dup-export-decl.js:16:1]
  16 │ 
@@ -20484,12 +20499,56 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·                  ╰── It can not be redeclared here
     ╰────
 
+  × Duplicated export 'default'
+    ╭─[language/module-code/early-dup-export-dflt-id.js:17:1]
+ 17 │ var x, y;
+ 18 │ export default x;
+    ·        ───┬───
+    ·           ╰── Export has already been declared here
+ 19 │ export { y as default };
+    ·               ───┬───
+    ·                  ╰── It cannot be redeclared here
+    ╰────
+
   × Unexpected token
     ╭─[language/module-code/early-dup-export-dflt.js:15:1]
  15 │ 
  16 │ export default var x = null;
     ·                ───
  17 │ export default var x = null;
+    ╰────
+
+  × Duplicated export 'z'
+    ╭─[language/module-code/early-dup-export-id-as.js:17:1]
+ 17 │ var x, y;
+ 18 │ export { x as z };
+    ·               ┬
+    ·               ╰── Export has already been declared here
+ 19 │ export { y as z };
+    ·               ┬
+    ·               ╰── It cannot be redeclared here
+    ╰────
+
+  × Duplicated export 'x'
+    ╭─[language/module-code/early-dup-export-id.js:16:1]
+ 16 │ var x;
+ 17 │ export { x };
+    ·          ┬
+    ·          ╰── Export has already been declared here
+ 18 │ export { x };
+    ·          ┬
+    ·          ╰── It cannot be redeclared here
+    ╰────
+
+  × Duplicated export 'default'
+    ╭─[language/module-code/early-dup-export-star-as-dflt.js:17:1]
+ 17 │ var x;
+ 18 │ export default x;
+    ·        ───┬───
+    ·           ╰── Export has already been declared here
+ 19 │ export * as default from './early-dup-export-start-as-dflt.js';
+    ·             ───┬───
+    ·                ╰── It cannot be redeclared here
     ╰────
 
   × Identifier `label` has already been declared
@@ -20559,6 +20618,25 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·          ╰── It can not be redeclared here
     ╰────
 
+  × Export 'Number' is not defined
+    ╭─[language/module-code/early-export-global.js:18:1]
+ 18 │ 
+ 19 │ export { Number };
+    ·          ──────
+    ╰────
+
+  × Duplicated export '\ud83c'
+    ╭─[language/module-code/early-export-ill-formed-string.js:20:1]
+ 20 │ // 🌙 is '\uD83C\uDF19'
+ 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
+    ·                 ────┬───
+    ·                     ╰── Export has already been declared here
+ 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
+    ·         ────┬───
+    ·             ╰── It cannot be redeclared here
+ 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
+    ╰────
+
   × An export name cannot include a unicode lone surrogate
     ╭─[language/module-code/early-export-ill-formed-string.js:20:1]
  20 │ // 🌙 is '\uD83C\uDF19'
@@ -20584,6 +20662,13 @@ Expect to Parse: "language/statements/function/S14_A5_T2.js"
     ·         ────┬───
     ·             ╰── An export name cannot include a unicode lone surrogate
  24 │ 
+    ╰────
+
+  × Export 'unresolvable' is not defined
+    ╭─[language/module-code/early-export-unresolvable.js:16:1]
+ 16 │ 
+ 17 │ export { unresolvable };
+    ·          ────────────
     ╰────
 
   × Cannot assign to 'arguments' in strict mode

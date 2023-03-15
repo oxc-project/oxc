@@ -1,6 +1,7 @@
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
     ast::*,
+    module_record::ExportLocalName,
     syntax_directed_operations::{BoundNames, IsSimpleParameterList, PropName},
     AstKind, Atom, GetSpan, ModuleKind, Span,
 };
@@ -17,12 +18,12 @@ use crate::{ast_util::STRICT_MODE_NAMES, context::LintContext, rule::Rule, AstNo
 pub struct EarlyErrorJavaScript;
 
 impl Rule for EarlyErrorJavaScript {
-    #[allow(clippy::single_match)]
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let kind = node.get().kind();
         check_function_declaration(kind, node, ctx);
 
         match kind {
+            AstKind::Program(_) => check_program(node, ctx),
             AstKind::BindingIdentifier(ident) => {
                 check_identifier(&ident.name, ident.span, node, ctx);
                 check_binding_identifier(ident, node, ctx);
@@ -72,6 +73,62 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::YieldExpression(expr) => check_yield_expression(expr, node, ctx),
             _ => {}
         }
+    }
+}
+
+fn check_program(node: &AstNode, ctx: &LintContext) {
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Export '{0}' is not defined")]
+    #[diagnostic()]
+    struct UndefinedExport(Atom, #[label] Span);
+
+    #[derive(Debug, Error, Diagnostic)]
+    #[error("Duplicated export '{0}'")]
+    #[diagnostic()]
+    struct DuplicateExport(
+        Atom,
+        #[label("Export has already been declared here")] Span,
+        #[label("It cannot be redeclared here")] Span,
+    );
+
+    // Skip checkking for exports in TypeScript for now
+    if ctx.source_type().is_typescript() {
+        return;
+    }
+
+    let scope = ctx.scope(node);
+    let module_record = ctx.semantic().module_record();
+
+    // It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
+    // does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
+    module_record
+        .local_export_entries
+        .iter()
+        .filter_map(|export_entry| match &export_entry.local_name {
+            ExportLocalName::Name(name_span) => Some(name_span),
+            _ => None,
+        })
+        .filter(|name_span| scope.get_variable_symbol_id(name_span.name()).is_none())
+        .for_each(|name_span| {
+            ctx.diagnostic(UndefinedExport(name_span.name().clone(), name_span.span()));
+        });
+
+    // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
+    for name_span in &module_record.exported_bindings_duplicated {
+        let old_span = module_record.exported_bindings.get(name_span.name()).unwrap();
+        ctx.diagnostic(DuplicateExport(name_span.name().clone(), name_span.span(), *old_span));
+    }
+
+    for span in &module_record.export_default_duplicated {
+        let old_span = module_record.export_default.unwrap();
+        ctx.diagnostic(DuplicateExport("default".into(), *span, old_span));
+    }
+
+    // `export default x;`
+    // `export { y as default };`
+    if let Some(span) = module_record.exported_bindings.get("default")
+        && let Some(default_span) = &module_record.export_default {
+            ctx.diagnostic(DuplicateExport("default".into(), *default_span, *span));
     }
 }
 
