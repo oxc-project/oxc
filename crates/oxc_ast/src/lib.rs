@@ -15,6 +15,7 @@ pub mod span;
 pub mod syntax_directed_operations;
 pub mod trivia;
 pub mod visit;
+pub mod visit_mut;
 
 pub use ast_kind::AstKind;
 pub use num_bigint::BigUint;
