@@ -10,6 +10,7 @@ use oxc_diagnostics::{Error, Redeclaration};
 
 use crate::{
     binder::Binder,
+    module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
     scope::{ScopeBuilder, ScopeId},
     symbol::{Reference, ReferenceFlag, SymbolFlags, SymbolId, SymbolTable},
@@ -30,6 +31,7 @@ pub struct SemanticBuilder<'a> {
     pub nodes: AstNodes<'a>,
     pub scope: ScopeBuilder,
     pub symbols: SymbolTable,
+    module_record_builder: ModuleRecordBuilder,
 }
 
 pub struct ScopeBuilderReturn<'a> {
@@ -53,6 +55,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes,
             scope,
             symbols: SymbolTable::default(),
+            module_record_builder: ModuleRecordBuilder::default(),
         }
     }
 
@@ -64,11 +67,13 @@ impl<'a> SemanticBuilder<'a> {
     pub fn build(mut self, program: &'a Program<'a>, trivias: Rc<Trivias>) -> ScopeBuilderReturn {
         // AST pass
         self.visit_program(program);
+        let module_record = self.module_record_builder.build();
         let semantic = Semantic {
             source_type: self.source_type,
             nodes: self.nodes,
             scopes: self.scope.scopes,
             trivias,
+            module_record,
         };
         ScopeBuilderReturn { semantic, errors: self.errors }
     }
@@ -202,6 +207,9 @@ impl<'a> SemanticBuilder<'a> {
                 if directive.directive == "use strict" {
                     self.scope.current_scope_mut().strict_mode = true;
                 }
+            }
+            AstKind::ModuleDeclaration(decl) => {
+                self.module_record_builder.visit_module_declaration(decl);
             }
             _ => {}
         }

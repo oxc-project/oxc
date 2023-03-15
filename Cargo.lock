@@ -843,6 +843,7 @@ dependencies = [
  "num-bigint",
  "ordered-float",
  "oxc_allocator",
+ "rustc-hash",
  "ryu-js",
  "serde",
  "serde_json",
@@ -983,8 +984,10 @@ version = "0.0.0"
 dependencies = [
  "bitflags",
  "indextree",
+ "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_parser",
  "rustc-hash",
 ]
 
