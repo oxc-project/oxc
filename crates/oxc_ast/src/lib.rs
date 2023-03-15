@@ -10,6 +10,7 @@ pub mod ast;
 pub mod ast_builder;
 pub mod ast_kind;
 pub mod context;
+pub mod module_record;
 pub mod source_type;
 pub mod span;
 pub mod syntax_directed_operations;

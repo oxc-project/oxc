@@ -3,6 +3,7 @@
 
 mod binder;
 mod builder;
+mod module_record;
 mod node;
 mod scope;
 mod symbol;
@@ -11,7 +12,7 @@ use std::rc::Rc;
 
 pub use builder::SemanticBuilder;
 pub use node::{AstNode, AstNodes, SemanticNode};
-use oxc_ast::{SourceType, Trivias};
+use oxc_ast::{module_record::ModuleRecord, SourceType, Trivias};
 pub use scope::{Scope, ScopeFlags, ScopeTree};
 
 pub struct Semantic<'a> {
@@ -22,6 +23,8 @@ pub struct Semantic<'a> {
     scopes: ScopeTree,
 
     trivias: Rc<Trivias>,
+
+    module_record: ModuleRecord,
 }
 
 impl<'a> Semantic<'a> {
@@ -43,5 +46,10 @@ impl<'a> Semantic<'a> {
     #[must_use]
     pub fn trivias(&self) -> &Trivias {
         &self.trivias
+    }
+
+    #[must_use]
+    pub fn module_record(&self) -> &ModuleRecord {
+        &self.module_record
     }
 }
