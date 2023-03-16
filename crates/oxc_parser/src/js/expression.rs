@@ -147,6 +147,10 @@ impl<'a> Parser<'a> {
     fn parse_primary_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
 
+        if self.at(Kind::At) {
+            self.eat_decorators()?;
+        }
+
         // AsyncFunctionExpression
         // AsyncGeneratorExpression
         if self.at_function_with_async() {

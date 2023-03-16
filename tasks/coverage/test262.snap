@@ -1,6 +1,6 @@
 Test262 Summary:
-AST Parsed     : 44005/44024 (99.96%)
-Positive Passed: 44005/44024 (99.96%)
+AST Parsed     : 44015/44024 (99.98%)
+Positive Passed: 44015/44024 (99.98%)
 Negative Passed: 3915/3915 (100.00%)
 Expect to Parse: "language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js"
 
@@ -32,68 +32,8 @@ Expect to Parse: "language/expressions/class/decorator/syntax/class-valid/decora
     ╭─[language/expressions/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js:43:1]
  43 │   static {
  44 │     var C = @#$
-    ·             ─
+    ·              ──
  45 │     @#_
-    ╰────
-Expect to Parse: "language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js"
-
-  × Unexpected token
-    ╭─[language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js:43:1]
- 43 │ 
- 44 │ var C = @yield() class {};
-    ·         ─
-    ╰────
-Expect to Parse: "language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js"
-
-  × Unexpected token
-    ╭─[language/expressions/class/decorator/syntax/valid/decorator-call-expr-identifier-reference.js:50:1]
- 50 │ 
- 51 │ var C = @$()
-    ·         ─
- 52 │ @_()
-    ╰────
-Expect to Parse: "language/expressions/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js"
-
-  × Unexpected token
-    ╭─[language/expressions/class/decorator/syntax/valid/decorator-member-expr-decorator-member-expr.js:42:1]
- 42 │ 
- 43 │ var C = @ns.$
-    ·         ─
- 44 │ @ns._
-    ╰────
-Expect to Parse: "language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js"
-
-  × Unexpected token
-    ╭─[language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js:32:1]
- 32 │ 
- 33 │ var C = @yield class {};
-    ·         ─
-    ╰────
-Expect to Parse: "language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js"
-
-  × Unexpected token
-    ╭─[language/expressions/class/decorator/syntax/valid/decorator-member-expr-identifier-reference.js:39:1]
- 39 │ 
- 40 │ var C = @$
-    ·         ─
- 41 │ @_
-    ╰────
-Expect to Parse: "language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js"
-
-  × Unexpected token
-    ╭─[language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js:50:1]
- 50 │ 
- 51 │ var C = @(yield) class {};
-    ·         ─
-    ╰────
-Expect to Parse: "language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js"
-
-  × Unexpected token
-    ╭─[language/expressions/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference.js:52:1]
- 52 │ 
- 53 │ var C = @($)
-    ·         ─
- 54 │ @(_)
     ╰────
 Expect to Parse: "language/global-code/decl-func-dup.js"
 
@@ -114,30 +54,6 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  45 │     @#$
     ·      ──
  46 │     @#_
-    ╰────
-Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js"
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/decorator/syntax/valid/decorator-call-expr-identifier-reference-yield.js:44:1]
- 44 │ 
- 45 │ @yield() class C {}
-    ·  ─────
-    ╰────
-Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js"
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/decorator/syntax/valid/decorator-member-expr-identifier-reference-yield.js:33:1]
- 33 │ 
- 34 │ @yield class C {}
-    ·  ─────
-    ╰────
-Expect to Parse: "language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js"
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/decorator/syntax/valid/decorator-parenthesized-expr-identifier-reference-yield.js:51:1]
- 51 │ 
- 52 │ @(yield) class C {}
-    ·   ─────
     ╰────
 Expect to Parse: "language/statements/function/S13_A6_T1.js"
 
