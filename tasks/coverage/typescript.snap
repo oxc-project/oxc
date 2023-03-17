@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2330/2340 (99.57%)
 Positive Passed: 2323/2340 (99.27%)
-Negative Passed: 680/2532 (26.86%)
+Negative Passed: 682/2532 (26.94%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -270,8 +270,6 @@ Expect Syntax Error: "decorators/class/constructor/decoratorOnClassConstructor1.
 Expect Syntax Error: "decorators/class/decoratorChecksFunctionBodies.ts"
 Expect Syntax Error: "decorators/class/decoratorOnClass8.ts"
 Expect Syntax Error: "decorators/class/method/decoratorOnClassMethod10.ts"
-Expect Syntax Error: "decorators/class/method/decoratorOnClassMethod11.ts"
-Expect Syntax Error: "decorators/class/method/decoratorOnClassMethod12.ts"
 Expect Syntax Error: "decorators/class/method/decoratorOnClassMethod6.ts"
 Expect Syntax Error: "decorators/class/method/decoratorOnClassMethod8.ts"
 Expect Syntax Error: "decorators/class/method/decoratorOnClassMethodOverload1.ts"
@@ -4177,6 +4175,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                        ┬
    ·                        ╰── Expect `,` here, but found `@`
  7 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[decorators/class/method/decoratorOnClassMethod11.ts:6:1]
+ 6 │ 
+ 7 │         @this.decorator
+   ·          ────
+ 8 │         method() { }
+   ╰────
+
+  × Unexpected token
+   ╭─[decorators/class/method/decoratorOnClassMethod12.ts:7:1]
+ 7 │     class C extends S {
+ 8 │         @super.decorator
+   ·          ─────
+ 9 │         method() { }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
