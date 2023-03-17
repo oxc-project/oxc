@@ -63,7 +63,7 @@ impl Tester {
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
         let trivias = Rc::new(ret.trivias);
-        let semantic_ret = SemanticBuilder::new(source_type).build(program, trivias);
+        let semantic_ret = SemanticBuilder::new(source_type).build(program, &trivias);
         assert!(semantic_ret.errors.is_empty(), "{:?}", &semantic_ret.errors);
         let rule = RULES
             .iter()

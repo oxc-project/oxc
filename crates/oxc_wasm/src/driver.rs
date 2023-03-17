@@ -33,7 +33,7 @@ impl Driver {
         let program = self.allocator.alloc(ret.program);
 
         let diagnostics = Diagnostics::default();
-        let semantic_ret = SemanticBuilder::new(source_type).build(program, Rc::new(ret.trivias));
+        let semantic_ret = SemanticBuilder::new(source_type).build(program, &Rc::new(ret.trivias));
         let mut diagnostics = diagnostics.into_inner();
 
         let source = Arc::new(NamedSource::new(path, source_text.to_string()));
@@ -43,7 +43,7 @@ impl Driver {
                 .with_fix(false)
                 .run(&Rc::new(semantic_ret.semantic), source_text)
                 .into_iter()
-                .map(|m| m.error.with_source_code(source.clone()))
+                .map(|m| m.error.with_source_code(Arc::clone(&source)))
                 .chain(ret.errors)
                 .chain(semantic_ret.errors),
         );

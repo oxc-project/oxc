@@ -23,8 +23,8 @@ pub struct LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(source_text: &'a str, semantic: Rc<Semantic<'a>>, fix: bool) -> Self {
-        Self { source_text, semantic, diagnostics: RefCell::new(vec![]), fix }
+    pub fn new(source_text: &'a str, semantic: &Rc<Semantic<'a>>, fix: bool) -> Self {
+        Self { source_text, semantic: Rc::clone(semantic), diagnostics: RefCell::new(vec![]), fix }
     }
 
     #[must_use]

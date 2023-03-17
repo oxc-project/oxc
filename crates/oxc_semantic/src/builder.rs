@@ -34,7 +34,7 @@ pub struct SemanticBuilder<'a> {
     module_record_builder: ModuleRecordBuilder,
 }
 
-pub struct ScopeBuilderReturn<'a> {
+pub struct SemanticBuilderReturn<'a> {
     pub semantic: Semantic<'a>,
     pub errors: Vec<Error>,
 }
@@ -64,7 +64,11 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[must_use]
-    pub fn build(mut self, program: &'a Program<'a>, trivias: Rc<Trivias>) -> ScopeBuilderReturn {
+    pub fn build(
+        mut self,
+        program: &'a Program<'a>,
+        trivias: &Rc<Trivias>,
+    ) -> SemanticBuilderReturn<'a> {
         // First AST pass
         self.visit_program(program);
 
@@ -75,10 +79,10 @@ impl<'a> SemanticBuilder<'a> {
             source_type: self.source_type,
             nodes: self.nodes,
             scopes: self.scope.scopes,
-            trivias,
+            trivias: Rc::clone(trivias),
             module_record,
         };
-        ScopeBuilderReturn { semantic, errors: self.errors }
+        SemanticBuilderReturn { semantic, errors: self.errors }
     }
 
     /// Push a Syntax Error

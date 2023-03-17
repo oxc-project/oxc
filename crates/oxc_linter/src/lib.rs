@@ -84,7 +84,7 @@ impl Linter {
 
     #[must_use]
     pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, source_text: &'a str) -> Vec<Message<'a>> {
-        let ctx = LintContext::new(source_text, semantic.clone(), self.fix);
+        let ctx = LintContext::new(source_text, semantic, self.fix);
 
         for node in semantic.nodes().iter() {
             self.early_error_javascript.run(node, &ctx);
@@ -103,7 +103,7 @@ impl Linter {
         source_text: &'a str,
         fix: bool,
     ) -> Vec<Message<'a>> {
-        let ctx = LintContext::new(source_text, semantic.clone(), fix);
+        let ctx = LintContext::new(source_text, semantic, fix);
         for node in semantic.nodes().iter() {
             self.early_error_javascript.run(node, &ctx);
         }

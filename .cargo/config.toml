@@ -23,14 +23,20 @@ rustflags = [
     "-Wclippy::pedantic",
     "-Wclippy::nursery",
 
+    # restriction
+
     "-Wclippy::dbg_macro",
+
+    # I like the explicitness of this rule as it removes confusion around `clone`.
+    # This increases readability, avoids `clone` mindlessly and heap allocating on accident.
+    "-Wclippy::clone_on_ref_ptr",
 
     # pedantic
 
     # This rule is too pedantic, I don't want to force this because naming things are hard.
     "-Aclippy::module_name_repetitions",
 
-    # nursery rules
+    # nursery
 
     # `const` functions do not make sense for our project because this is not a `const` library.
     # This rule also confuses new comers and forces them to add `const` blindlessly without any reason.
