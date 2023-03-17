@@ -145,7 +145,7 @@ impl Cli {
         let semantic_ret = SemanticBuilder::new(source_type).build(program, trivias);
 
         if !semantic_ret.errors.is_empty() {
-            return Some(Self::wrap_diagnostics(path, &source_text, ret.errors));
+            return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));
         };
 
         let result = Linter::new().run(&Rc::new(semantic_ret.semantic), &source_text, fix);
