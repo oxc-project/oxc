@@ -26,10 +26,28 @@ rustflags = [
     # restriction
 
     "-Wclippy::dbg_macro",
+    "-Wclippy::todo",
+    "-Wclippy::unimplemented",
 
     # I like the explicitness of this rule as it removes confusion around `clone`.
     # This increases readability, avoids `clone` mindlessly and heap allocating on accident.
     "-Wclippy::clone_on_ref_ptr",
+
+    # These two are mutually exclusive, I like `mod.rs` files for better fuzzy searches on module entries.
+    "-Wclippy::self_named_module_files", # "-Wclippy::mod_module_files",
+
+    "-Wclippy::empty_drop",
+    "-Wclippy::empty_structs_with_brackets",
+    "-Wclippy::exit",
+    "-Wclippy::filetype_is_file",
+    "-Wclippy::get_unwrap",
+    "-Wclippy::impl_trait_in_params",
+    "-Wclippy::rc_buffer",
+    "-Wclippy::rc_mutex",
+    "-Wclippy::rest_pat_in_fully_bound_structs",
+    "-Wclippy::same_name_method",
+    "-Wclippy::unnecessary_safety_comment",
+    # TODO "-Wclippy::undocumented_unsafe_blocks",
 
     # pedantic
 

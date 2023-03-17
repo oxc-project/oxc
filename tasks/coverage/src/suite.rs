@@ -71,7 +71,7 @@ pub trait Suite<T: Case> {
         let paths = WalkDir::new(test_root)
             .into_iter()
             .filter_map(Result::ok)
-            .filter(|e| e.file_type().is_file())
+            .filter(|e| !e.file_type().is_dir())
             .map(|e| e.path().to_owned())
             .filter(|path| !self.skip_test_path(path))
             .filter(|path| filter.map_or(true, |query| path.to_string_lossy().contains(query)))

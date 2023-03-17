@@ -132,7 +132,7 @@ impl Test262Case {
         self.result = result;
     }
 
-    fn should_fail(meta: &MetaData) -> bool {
+    fn compute_should_fail(meta: &MetaData) -> bool {
         meta.negative.as_ref().filter(|n| n.phase == Phase::Parse).is_some()
     }
 }
@@ -140,7 +140,7 @@ impl Test262Case {
 impl Case for Test262Case {
     fn new(path: PathBuf, code: String) -> Self {
         let meta = Self::read_metadata(&code).expect("read test262 yaml meta");
-        let should_fail = Self::should_fail(&meta);
+        let should_fail = Self::compute_should_fail(&meta);
         Self { path, code, meta, should_fail, result: TestResult::ToBeRun }
     }
 

@@ -115,8 +115,8 @@ fn check_program(node: &AstNode, ctx: &LintContext) {
 
     // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
     for name_span in &module_record.exported_bindings_duplicated {
-        let old_span = module_record.exported_bindings.get(name_span.name()).unwrap();
-        ctx.diagnostic(DuplicateExport(name_span.name().clone(), name_span.span(), *old_span));
+        let old_span = module_record.exported_bindings[name_span.name()];
+        ctx.diagnostic(DuplicateExport(name_span.name().clone(), name_span.span(), old_span));
     }
 
     for span in &module_record.export_default_duplicated {

@@ -174,7 +174,7 @@ impl Serialize for RegExpFlags {
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-pub struct EmptyObject {}
+pub struct EmptyObject;
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
 #[serde(tag = "type", rename = "Literal")]

@@ -31,7 +31,7 @@ impl Walk {
 
     fn is_wanted_entry(dir_entry: &DirEntry) -> bool {
         let Some(file_type) = dir_entry.file_type() else { return false };
-        if !file_type.is_file() {
+        if file_type.is_dir() {
             return false;
         }
         let Some(file_name) = dir_entry.path().file_name() else { return false };
