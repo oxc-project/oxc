@@ -1,5 +1,5 @@
 Babel Summary:
-AST Parsed     : 2054/2071 (99.18%)
+AST Parsed     : 2064/2071 (99.66%)
 Positive Passed: 2054/2071 (99.18%)
 Negative Passed: 1333/1502 (88.75%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"

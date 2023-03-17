@@ -1,5 +1,5 @@
 TypeScript Summary:
-AST Parsed     : 2323/2340 (99.27%)
+AST Parsed     : 2330/2340 (99.57%)
 Positive Passed: 2323/2340 (99.27%)
 Negative Passed: 680/2532 (26.86%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"

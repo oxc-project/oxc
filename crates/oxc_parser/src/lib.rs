@@ -24,11 +24,15 @@ use crate::{
     state::ParserState,
 };
 
+/// The parser always return a valid AST.
+/// When `panicked = true`, then program will always be empty.
+/// When `errors.len() > 0`, then program may or may not be empty due to error recovery.
 #[derive(Debug)]
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<Error>,
     pub trivias: Trivias,
+    pub panicked: bool,
 }
 
 pub struct Parser<'a> {
@@ -88,8 +92,8 @@ impl<'a> Parser<'a> {
     /// Recoverable errors are stored inside `errors`.
     #[must_use]
     pub fn parse(mut self) -> ParserReturn<'a> {
-        let program = match self.parse_program() {
-            Ok(program) => program,
+        let (program, panicked) = match self.parse_program() {
+            Ok(program) => (program, false),
             Err(error) => {
                 self.error(self.flow_error().unwrap_or(error));
                 let program = self.ast.program(
@@ -98,12 +102,12 @@ impl<'a> Parser<'a> {
                     self.ast.new_vec(),
                     self.source_type,
                 );
-                program
+                (program, true)
             }
         };
         let errors = self.errors.borrow_mut().drain(..).collect();
         let trivias = self.lexer.trivia_builder.build();
-        ParserReturn { program, errors, trivias }
+        ParserReturn { program, errors, trivias, panicked }
     }
 
     #[allow(clippy::cast_possible_truncation)]

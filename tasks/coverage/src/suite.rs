@@ -27,9 +27,9 @@ pub enum TestResult {
     ToBeRun,
     Passed,
     IncorrectlyPassed,
-    ParseError(String),
     Mismatch(String, String),
-    CorrectError(String),
+    ParseError(String, /* panicked */ bool),
+    CorrectError(String, /* panicked */ bool),
 }
 
 #[allow(unused)]
@@ -207,17 +207,17 @@ pub trait Suite<T: Case> {
         let mut tests = self
             .get_test_cases()
             .iter()
-            .filter(|case| matches!(case.test_result(), TestResult::CorrectError(_)))
+            .filter(|case| matches!(case.test_result(), TestResult::CorrectError(_, _)))
             .collect::<Vec<_>>();
 
-        tests.sort_by_key(|case| case.path().to_string_lossy().to_string());
+        tests.sort_by_key(|case| case.path().to_string_lossy());
 
         let args = AppArgs { detail: true, ..AppArgs::default() };
         self.print_coverage(name, &args, report, &mut file)?;
 
         let mut out = String::new();
         for case in &tests {
-            if let TestResult::CorrectError(error) = &case.test_result() {
+            if let TestResult::CorrectError(error, _) = &case.test_result() {
                 out.push_str(error);
             }
         }
@@ -247,16 +247,18 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn test_passed(&self) -> bool {
         let result = self.test_result();
         assert!(!matches!(result, TestResult::ToBeRun), "test should be run");
-        matches!(result, TestResult::Passed | TestResult::CorrectError(_))
+        matches!(result, TestResult::Passed | TestResult::CorrectError(_, _))
     }
 
     fn test_parsed(&self) -> bool {
         let result = self.test_result();
         assert!(!matches!(result, TestResult::ToBeRun), "test should be run");
-        matches!(
-            result,
-            TestResult::Passed | TestResult::CorrectError(_) | TestResult::IncorrectlyPassed
-        )
+        match result {
+            TestResult::ParseError(_, panicked) | TestResult::CorrectError(_, panicked) => {
+                !panicked
+            }
+            _ => true,
+        }
     }
 
     /// Run a single test case, this is responsible for saving the test result
@@ -278,6 +280,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             .chain(parser_ret.errors.into_iter())
             .chain(semantic_ret.errors.into_iter())
             .collect::<Vec<_>>();
+
         let result = if errors.is_empty() {
             Ok(String::new())
         } else {
@@ -292,14 +295,11 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             }
             Err(output)
         };
-        self.parser_return_to_test_result(result)
-    }
 
-    fn parser_return_to_test_result(&self, result: Result<String, String>) -> TestResult {
         let should_fail = self.should_fail();
         match result {
-            Err(err) if should_fail => TestResult::CorrectError(err),
-            Err(err) if !should_fail => TestResult::ParseError(err),
+            Err(err) if should_fail => TestResult::CorrectError(err, parser_ret.panicked),
+            Err(err) if !should_fail => TestResult::ParseError(err, parser_ret.panicked),
             Ok(_) if should_fail => TestResult::IncorrectlyPassed,
             Ok(_) if !should_fail => TestResult::Passed,
             _ => unreachable!(),
@@ -308,7 +308,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
     fn print<W: Write>(&self, args: &AppArgs, writer: &mut W) -> std::io::Result<()> {
         match self.test_result() {
-            TestResult::ParseError(error) => {
+            TestResult::ParseError(error, _) => {
                 writer.write_all(format!("Expect to Parse: {:?}\n", self.path()).as_bytes())?;
                 writer.write_all(error.as_bytes())?;
             }
