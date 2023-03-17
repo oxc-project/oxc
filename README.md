@@ -92,20 +92,26 @@ All feedbacks are welcome.
 
 ## Parser Conformance
 
-The `cargo coverage` command currently reports the following summary
+The `cargo coverage` command reports the following conformance summary
 
 ```
 Test262 Summary:
-AST Parsed     : 43934/43934 (100.00%)
+AST Parsed     : 44000/44000 (100.00%)
+Positive Passed: 44000/44000 (100.00%)
+Negative Passed: 3915/3915 (100.00%)
 
 Babel Summary:
-AST Parsed     : 2045/2057 (99.42%)
+AST Parsed     : 2064/2071 (99.66%)
+Positive Passed: 2054/2071 (99.18%)
+Negative Passed: 1333/1502 (88.75%)
 
 TypeScript Summary:
-AST Parsed     : 4291/4861 (88.27%)
+AST Parsed     : 2330/2340 (99.57%)
+Positive Passed: 2323/2340 (99.27%)
+Negative Passed: 680/2532 (26.86%)
 ```
 
-(The parser is failing some of the TypeScript recoverable parser tests.)
+Conformance for Test262 is now complete.
 
 ## Learning Resources
 
