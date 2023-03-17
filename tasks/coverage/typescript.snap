@@ -1,7 +1,7 @@
 TypeScript Summary:
-AST Parsed     : 2305/2338 (98.59%)
-Positive Passed: 2305/2338 (98.59%)
-Negative Passed: 683/2532 (26.97%)
+AST Parsed     : 2323/2340 (99.27%)
+Positive Passed: 2323/2340 (99.27%)
+Negative Passed: 681/2532 (26.90%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -282,6 +282,7 @@ Expect Syntax Error: "decorators/class/property/decoratorOnClassProperty7.ts"
 Expect Syntax Error: "decorators/decoratorCallGeneric.ts"
 Expect Syntax Error: "decorators/invalid/decoratorOnEnum.ts"
 Expect Syntax Error: "decorators/invalid/decoratorOnFunctionDeclaration.ts"
+Expect Syntax Error: "decorators/invalid/decoratorOnFunctionExpression.ts"
 Expect Syntax Error: "decorators/invalid/decoratorOnFunctionParameter.ts"
 Expect Syntax Error: "decorators/invalid/decoratorOnImportEquals1.ts"
 Expect Syntax Error: "decorators/invalid/decoratorOnInterface.ts"
@@ -651,6 +652,7 @@ Expect Syntax Error: "esDecorators/classDeclaration/fields/esDecorators-classDec
 Expect Syntax Error: "esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticAmbient.ts"
 Expect Syntax Error: "esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts"
 Expect Syntax Error: "esDecorators/esDecorators-arguments.ts"
+Expect Syntax Error: "esDecorators/esDecorators-emitDecoratorMetadata.ts"
 Expect Syntax Error: "expressions/arrayLiterals/arrayLiterals.ts"
 Expect Syntax Error: "expressions/arrayLiterals/arrayLiterals3.ts"
 Expect Syntax Error: "expressions/asOperator/asOperator2.ts"
@@ -1918,150 +1920,6 @@ Expect to Parse: "es6/for-ofStatements/for-of53.ts"
    ·         ╰── It can not be redeclared here
  4 │ }
    ╰────
-Expect to Parse: "esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.1.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.1.ts:12:1]
- 12 │ 
- 13 │ (@dec
-    ·  ─
- 14 │ class C extends Base {
-    ╰────
-Expect to Parse: "esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.2.ts"
-
-  × Unexpected token
-   ╭─[esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.2.ts:7:1]
- 7 │ // class expression in extends should not get an assigned name
- 8 │ (@dec
-   ·  ─
- 9 │ class C1 extends class { } {
-   ╰────
-Expect to Parse: "esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.3.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.3.ts:12:1]
- 12 │ 
- 13 │ (@dec
-    ·  ─
- 14 │ class C extends Base {
-    ╰────
-Expect to Parse: "esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.4.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.4.ts:12:1]
- 12 │ 
- 13 │ (@dec
-    ·  ─
- 14 │ class C extends Base {
-    ╰────
-Expect to Parse: "esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.5.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.5.ts:12:1]
- 12 │ 
- 13 │ (@dec
-    ·  ─
- 14 │ class C1 extends Base {
-    ╰────
-Expect to Parse: "esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.6.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/classSuper/esDecorators-classExpression-classSuper.6.ts:12:1]
- 12 │ // none of the following should result in caching `super`
- 13 │ (@dec
-    ·  ─
- 14 │ class C extends Base {
-    ╰────
-Expect to Parse: "esDecorators/classExpression/esDecorators-classExpression-commentPreservation.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/esDecorators-classExpression-commentPreservation.ts:10:1]
- 10 │ /*2*/
- 11 │ @dec
-    · ─
- 12 │ /*3*/
-    ╰────
-Expect to Parse: "esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.1.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.1.ts:10:1]
- 10 │ 
- 11 │ x = @dec class { };
-    ·     ─
- 12 │ x = class { @dec y: any; };
-    ╰────
-Expect to Parse: "esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.10.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.10.ts:9:1]
-  9 │ 
- 10 │ { class C { static x = @dec class {}; } }
-    ·                        ─
- 11 │ { class C { static "x" = @dec class {}; } }
-    ╰────
-Expect to Parse: "esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.11.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.11.ts:8:1]
-  8 │ 
-  9 │ (@dec class {});
-    ·  ─
- 10 │ (class { @dec y: any });
-    ╰────
-Expect to Parse: "esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.2.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.2.ts:10:1]
- 10 │ 
- 11 │ ({ x: @dec class { } });
-    ·       ─
- 12 │ ({ x: class { @dec y: any; } });
-    ╰────
-Expect to Parse: "esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.3.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.3.ts:8:1]
-  8 │ 
-  9 │ { let x = @dec class { }; }
-    ·           ─
- 10 │ { let x = class { @dec y: any; }; }
-    ╰────
-Expect to Parse: "esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.4.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.4.ts:8:1]
-  8 │ 
-  9 │ { const [x = @dec class { }] = obj; }
-    ·              ─
- 10 │ { const [x = class { @dec y: any; }] = obj; }
-    ╰────
-Expect to Parse: "esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.5.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.5.ts:8:1]
-  8 │ 
-  9 │ ({ x = @dec class { } } = obj);
-    ·        ─
- 10 │ ({ x = class { @dec y: any; } } = obj);
-    ╰────
-Expect to Parse: "esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.6.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.6.ts:8:1]
-  8 │ 
-  9 │ ({ y: x = @dec class { } } = obj);
-    ·           ─
- 10 │ ({ y: x = class { @dec y: any; } } = obj);
-    ╰────
-Expect to Parse: "esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.7.ts"
-
-  × Unexpected token
-    ╭─[esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.7.ts:8:1]
-  8 │ 
-  9 │ [x = @dec class { }] = obj;
-    ·      ─
- 10 │ [x = class { @dec y: any; }] = obj;
-    ╰────
 Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_contextualTyping1.ts"
 
   × Automatic Semicolon Insertion
@@ -4409,7 +4267,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[decorators/invalid/decoratorOnArrowFunction.ts:2:1]
  2 │ 
  3 │ var F = @dec () => {
-   ·         ─
+   ·                 ──
  4 │ }
    ╰────
 
@@ -4419,14 +4277,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │     @dec A
    ·     ─
  5 │ }
-   ╰────
-
-  × Unexpected token
-   ╭─[decorators/invalid/decoratorOnFunctionExpression.ts:2:1]
- 2 │ 
- 3 │ var F = @dec function () {
-   ·         ─
- 4 │ }
    ╰────
 
   × Unexpected token
@@ -7653,14 +7503,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·           ─
  3 │ }
    ╰────
-
-  × Unexpected token
-    ╭─[esDecorators/esDecorators-emitDecoratorMetadata.ts:30:1]
- 30 │ 
- 31 │ (@dec class C {
-    ·  ─
- 32 │     constructor(x: number) {}
-    ╰────
 
   × Invalid assignment
    ╭─[expressions/assignmentOperator/assignmentLHSIsValue.ts:5:1]

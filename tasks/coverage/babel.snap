@@ -1,6 +1,6 @@
 Babel Summary:
-AST Parsed     : 2050/2071 (98.99%)
-Positive Passed: 2050/2071 (98.99%)
+AST Parsed     : 2052/2071 (99.08%)
+Positive Passed: 2052/2071 (99.08%)
 Negative Passed: 1335/1502 (88.88%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -348,20 +348,6 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
    ·                               ───┬───
    ·                                  ╰── Expect `,` here, but found `extends`
-   ╰────
-Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/decorator-call-expression/input.ts"
-
-  × Unexpected token
-   ╭─[typescript/type-arguments-bit-shift-left-like-babel-7/decorator-call-expression/input.ts:1:1]
- 1 │ (@f<<T>(v: T) => void>() class {});
-   ·  ─
-   ╰────
-Expect to Parse: "typescript/type-arguments-bit-shift-left-like/decorator-call-expression/input.ts"
-
-  × Unexpected token
-   ╭─[typescript/type-arguments-bit-shift-left-like/decorator-call-expression/input.ts:1:1]
- 1 │ (@f<<T>(v: T) => void>() class {});
-   ·  ─
    ╰────
 Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
 

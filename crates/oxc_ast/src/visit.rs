@@ -356,11 +356,14 @@ pub trait Visit<'a>: Sized {
     }
 
     fn visit_class(&mut self, class: &'a Class<'a>) {
-        let kind = AstKind::Class(class);
-        self.enter_node(kind);
+        // Class level decorators are transpiled as functions outside of the class taking the class
+        // itself as argument. They should be visited before class is entered. E.g., they inherit
+        // strict mode from the enclosing scope rather than from class.
         for decorator in &class.decorators {
             self.visit_decorator(decorator);
         }
+        let kind = AstKind::Class(class);
+        self.enter_node(kind);
         if let Some(id) = &class.id {
             self.visit_binding_identifier(id);
         }
