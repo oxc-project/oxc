@@ -120,39 +120,39 @@ mod test {
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("End")]
-    struct InsertAtEnd();
+    struct InsertAtEnd;
     const INSERT_AT_END: Fix =
         Fix { span: Span { start: 19, end: 19 }, content: Cow::Borrowed("// end") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("Start")]
-    struct InsertAtStart();
+    struct InsertAtStart;
     const INSERT_AT_START: Fix =
         Fix { span: Span { start: 0, end: 0 }, content: Cow::Borrowed("// start") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("Multiply")]
-    struct InsertAtMiddle();
+    struct InsertAtMiddle;
     const INSERT_AT_MIDDLE: Fix =
         Fix { span: Span { start: 13, end: 13 }, content: Cow::Borrowed("5 *") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("foo")]
-    struct ReplaceId();
+    struct ReplaceId;
     const REPLACE_ID: Fix = Fix { span: Span { start: 4, end: 10 }, content: Cow::Borrowed("foo") };
     #[derive(Debug, Error, Diagnostic)]
     #[error("let")]
-    struct ReplaceVar();
+    struct ReplaceVar;
     const REPLACE_VAR: Fix = Fix { span: Span { start: 0, end: 3 }, content: Cow::Borrowed("let") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("5")]
-    struct ReplaceNum();
+    struct ReplaceNum;
     const REPLACE_NUM: Fix = Fix { span: Span { start: 13, end: 14 }, content: Cow::Borrowed("5") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("removestart")]
-    struct RemoveStart();
+    struct RemoveStart;
     const REMOVE_START: Fix = Fix::delete(Span { start: 0, end: 4 });
 
     #[derive(Debug, Error, Diagnostic)]
@@ -162,12 +162,12 @@ mod test {
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("removeend")]
-    struct RemoveEnd();
+    struct RemoveEnd;
     const REMOVE_END: Fix = Fix::delete(Span { start: 14, end: 18 });
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("reversed range")]
-    struct ReverseRange();
+    struct ReverseRange;
     const REVERSE_RANGE: Fix = Fix { span: Span { start: 3, end: 0 }, content: Cow::Borrowed(" ") };
 
     #[derive(Debug, Error, Diagnostic)]
@@ -192,21 +192,21 @@ mod test {
 
     #[test]
     fn insert_at_the_end() {
-        let result = get_fix_result(vec![create_message(InsertAtEnd(), Some(INSERT_AT_END))]);
+        let result = get_fix_result(vec![create_message(InsertAtEnd, Some(INSERT_AT_END))]);
         assert_eq!(result.fixed_code, TEST_CODE.to_string() + INSERT_AT_END.content.as_ref());
         assert_eq!(result.messages.len(), 0);
     }
 
     #[test]
     fn insert_at_the_start() {
-        let result = get_fix_result(vec![create_message(InsertAtStart(), Some(INSERT_AT_START))]);
+        let result = get_fix_result(vec![create_message(InsertAtStart, Some(INSERT_AT_START))]);
         assert_eq!(result.fixed_code, INSERT_AT_START.content.to_string() + TEST_CODE);
         assert_eq!(result.messages.len(), 0);
     }
 
     #[test]
     fn insert_at_the_middle() {
-        let result = get_fix_result(vec![create_message(InsertAtMiddle(), Some(INSERT_AT_MIDDLE))]);
+        let result = get_fix_result(vec![create_message(InsertAtMiddle, Some(INSERT_AT_MIDDLE))]);
         assert_eq!(
             result.fixed_code,
             TEST_CODE.replace("6 *", &format!("{}{}", INSERT_AT_MIDDLE.content, "6 *"))
@@ -217,9 +217,9 @@ mod test {
     #[test]
     fn insert_at_the_start_middle_end() {
         let messages = vec![
-            create_message(InsertAtMiddle(), Some(INSERT_AT_MIDDLE)),
-            create_message(InsertAtStart(), Some(INSERT_AT_START)),
-            create_message(InsertAtEnd(), Some(INSERT_AT_END)),
+            create_message(InsertAtMiddle, Some(INSERT_AT_MIDDLE)),
+            create_message(InsertAtStart, Some(INSERT_AT_START)),
+            create_message(InsertAtEnd, Some(INSERT_AT_END)),
         ];
         let result = get_fix_result(messages);
         assert_eq!(
@@ -236,13 +236,13 @@ mod test {
 
     #[test]
     fn ignore_reverse_range() {
-        let result = get_fix_result(vec![create_message(ReverseRange(), Some(REVERSE_RANGE))]);
+        let result = get_fix_result(vec![create_message(ReverseRange, Some(REVERSE_RANGE))]);
         assert_eq!(result.fixed_code, TEST_CODE);
     }
 
     #[test]
     fn replace_at_the_start() {
-        let result = get_fix_result(vec![create_message(ReplaceVar(), Some(REPLACE_VAR))]);
+        let result = get_fix_result(vec![create_message(ReplaceVar, Some(REPLACE_VAR))]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("var", "let"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -250,7 +250,7 @@ mod test {
 
     #[test]
     fn replace_at_the_middle() {
-        let result = get_fix_result(vec![create_message(ReplaceId(), Some(REPLACE_ID))]);
+        let result = get_fix_result(vec![create_message(ReplaceId, Some(REPLACE_ID))]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -258,7 +258,7 @@ mod test {
 
     #[test]
     fn replace_at_the_end() {
-        let result = get_fix_result(vec![create_message(ReplaceNum(), Some(REPLACE_NUM))]);
+        let result = get_fix_result(vec![create_message(ReplaceNum, Some(REPLACE_NUM))]);
         assert_eq!(result.fixed_code, TEST_CODE.replace('6', "5"));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -267,9 +267,9 @@ mod test {
     #[test]
     fn replace_at_the_start_middle_end() {
         let messages = vec![
-            create_message(ReplaceId(), Some(REPLACE_ID)),
-            create_message(ReplaceVar(), Some(REPLACE_VAR)),
-            create_message(ReplaceNum(), Some(REPLACE_NUM)),
+            create_message(ReplaceId, Some(REPLACE_ID)),
+            create_message(ReplaceVar, Some(REPLACE_VAR)),
+            create_message(ReplaceNum, Some(REPLACE_NUM)),
         ];
         let result = get_fix_result(messages);
         assert_eq!(result.fixed_code, "let foo = 5 * 7;");
@@ -279,7 +279,7 @@ mod test {
 
     #[test]
     fn remove_at_the_start() {
-        let result = get_fix_result(vec![create_message(RemoveStart(), Some(REMOVE_START))]);
+        let result = get_fix_result(vec![create_message(RemoveStart, Some(REMOVE_START))]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("var ", ""));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -298,7 +298,7 @@ mod test {
 
     #[test]
     fn remove_at_the_end() {
-        let result = get_fix_result(vec![create_message(RemoveEnd(), Some(REMOVE_END))]);
+        let result = get_fix_result(vec![create_message(RemoveEnd, Some(REMOVE_END))]);
         assert_eq!(result.fixed_code, TEST_CODE.replace(" * 7", ""));
         assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
@@ -307,9 +307,9 @@ mod test {
     #[test]
     fn replace_at_start_remove_at_middle_insert_at_end() {
         let result = get_fix_result(vec![
-            create_message(InsertAtEnd(), Some(INSERT_AT_END)),
-            create_message(RemoveEnd(), Some(REMOVE_END)),
-            create_message(ReplaceVar(), Some(REPLACE_VAR)),
+            create_message(InsertAtEnd, Some(INSERT_AT_END)),
+            create_message(RemoveEnd, Some(REMOVE_END)),
+            create_message(ReplaceVar, Some(REPLACE_VAR)),
         ]);
         assert_eq!(result.fixed_code, "let answer = 6;// end");
         assert_eq!(result.messages.len(), 0);
@@ -320,7 +320,7 @@ mod test {
     fn apply_one_fix_when_spans_overlap() {
         let result = get_fix_result(vec![
             create_message(RemoveMiddle(Span::default()), Some(REMOVE_MIDDLE)),
-            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(ReplaceId, Some(REPLACE_ID)),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
         assert_eq!(result.messages.len(), 1);
@@ -331,8 +331,8 @@ mod test {
     #[test]
     fn apply_one_fix_when_the_start_the_same_as_the_previous_end() {
         let result = get_fix_result(vec![
-            create_message(RemoveStart(), Some(REMOVE_START)),
-            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(RemoveStart, Some(REMOVE_START)),
+            create_message(ReplaceId, Some(REPLACE_ID)),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("var ", ""));
         assert_eq!(result.messages.len(), 1);
@@ -344,7 +344,7 @@ mod test {
     fn apply_one_fix_when_range_overlap_and_one_message_has_no_fix() {
         let result = get_fix_result(vec![
             create_message(RemoveMiddle(Span::default()), Some(REMOVE_MIDDLE)),
-            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(ReplaceId, Some(REPLACE_ID)),
             create_message(NoFix(Span::default()), None),
         ]);
         assert_eq!(result.fixed_code, TEST_CODE.replace("answer", "foo"));
@@ -358,10 +358,10 @@ mod test {
     fn apply_same_fix_when_span_overlap_regardless_of_order() {
         let result1 = get_fix_result(vec![
             create_message(RemoveMiddle(Span::default()), Some(REMOVE_MIDDLE)),
-            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(ReplaceId, Some(REPLACE_ID)),
         ]);
         let result2 = get_fix_result(vec![
-            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(ReplaceId, Some(REPLACE_ID)),
             create_message(RemoveMiddle(Span::default()), Some(REMOVE_MIDDLE)),
         ]);
         assert_eq!(result1.fixed_code, result2.fixed_code);
@@ -379,7 +379,7 @@ mod test {
     #[test]
     fn sort_no_fix_messages_correctly() {
         let result = get_fix_result(vec![
-            create_message(ReplaceId(), Some(REPLACE_ID)),
+            create_message(ReplaceId, Some(REPLACE_ID)),
             Message::new(NoFix2(Span { start: 1, end: 7 }).into(), None),
             Message::new(NoFix1(Span { start: 1, end: 3 }).into(), None),
         ]);

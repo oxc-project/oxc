@@ -2,7 +2,7 @@ use oxc_linter::rule::RuleCategory;
 use oxc_linter::rule::RuleMeta;
 use oxc_macros::declare_oxc_lint_test;
 
-struct TestRule {}
+struct TestRule;
 
 declare_oxc_lint_test!(
     /// Dummy description
