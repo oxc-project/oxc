@@ -165,6 +165,8 @@ impl Case for Test262Case {
             "regexp-unicode-property-escapes",
             // Stage 3 `https://github.com/tc39/proposal-json-modules`
             "json-modules",
+            // Stage 3 `https://github.com/tc39/proposal-decorators`
+            "decorators",
         ]
         .iter()
         .any(|feature| self.meta.features.iter().any(|f| **f == **feature))
