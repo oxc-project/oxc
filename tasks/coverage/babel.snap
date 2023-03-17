@@ -1,7 +1,7 @@
 Babel Summary:
-AST Parsed     : 2052/2071 (99.08%)
-Positive Passed: 2052/2071 (99.08%)
-Negative Passed: 1335/1502 (88.88%)
+AST Parsed     : 2054/2071 (99.18%)
+Positive Passed: 2054/2071 (99.18%)
+Negative Passed: 1333/1502 (88.75%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -13,6 +13,8 @@ Expect Syntax Error: "annex-b/disabled/3.5-for-in-initializer/input.js"
 Expect Syntax Error: "annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-if/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-loop/input.js"
+Expect Syntax Error: "core/scope/dupl-bind-catch-func/input.js"
+Expect Syntax Error: "core/scope/dupl-bind-func-var-sloppy/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
 Expect Syntax Error: "es2015/destructuring/error-operator-for-default/input.js"
 Expect Syntax Error: "es2015/for-of/invalid-let-as-identifier/input.js"
@@ -218,28 +220,6 @@ Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
-Expect to Parse: "core/scope/dupl-bind-func-var/input.js"
-
-  × Identifier `foo` has already been declared
-   ╭─[core/scope/dupl-bind-func-var/input.js:1:1]
- 1 │ function foo() {}
-   ·          ─┬─
-   ·           ╰── `foo` has already been declared here
- 2 │ var foo = 1;
-   ·     ─┬─
-   ·      ╰── It can not be redeclared here
-   ╰────
-Expect to Parse: "core/scope/dupl-bind-gen-gen-script/input.js"
-
-  × Identifier `foo` has already been declared
-   ╭─[core/scope/dupl-bind-gen-gen-script/input.js:1:1]
- 1 │ function *foo() {};
-   ·           ─┬─
-   ·            ╰── `foo` has already been declared here
- 2 │ function *foo() {};
-   ·           ─┬─
-   ·            ╰── It can not be redeclared here
-   ╰────
 Expect to Parse: "core/uncategorised/327/input.js"
 
   × TS1108: A 'return' statement can only be used within a function body
@@ -905,18 +885,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Identifier `foo` has already been declared
-   ╭─[core/scope/dupl-bind-catch-func/input.js:1:1]
- 1 │ try {
- 2 │ } catch (foo) {
-   ·          ─┬─
-   ·           ╰── `foo` has already been declared here
- 3 │   function foo() {}
-   ·            ─┬─
-   ·             ╰── It can not be redeclared here
- 4 │ }
-   ╰────
-
-  × Identifier `foo` has already been declared
    ╭─[core/scope/dupl-bind-catch-let/input.js:1:1]
  1 │ try {
  2 │ } catch (foo) {
@@ -1044,18 +1012,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ function foo() {}
    ·          ─┬─
    ·           ╰── It can not be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[core/scope/dupl-bind-func-var-sloppy/input.js:1:1]
- 1 │ {
- 2 │   function foo() {}
-   ·            ─┬─
-   ·             ╰── `foo` has already been declared here
- 3 │   var foo = 1;
-   ·       ─┬─
-   ·        ╰── It can not be redeclared here
- 4 │ }
    ╰────
 
   × Identifier `f` has already been declared

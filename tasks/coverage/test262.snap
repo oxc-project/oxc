@@ -1,31 +1,7 @@
 Test262 Summary:
-AST Parsed     : 44015/44024 (99.98%)
-Positive Passed: 44015/44024 (99.98%)
+AST Parsed     : 44022/44024 (100.00%)
+Positive Passed: 44022/44024 (100.00%)
 Negative Passed: 3915/3915 (100.00%)
-Expect to Parse: "language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js"
-
-  × Identifier `f` has already been declared
-    ╭─[language/block-scope/syntax/redeclaration-global/allowed-to-redeclare-function-declaration-with-var.js:8:1]
-  8 │ ---*/
-  9 │ function f() {} var f;
-    ·          ┬          ┬
-    ·          │          ╰── It can not be redeclared here
-    ·          ╰── `f` has already been declared here
- 10 │ 
-    ╰────
-Expect to Parse: "language/destructuring/binding/syntax/recursive-array-and-object-patterns.js"
-
-  × Identifier `fn4` has already been declared
-    ╭─[language/destructuring/binding/syntax/recursive-array-and-object-patterns.js:22:1]
- 22 │ 
- 23 │ function fn4([], [[]], [[[[[[[[[x]]]]]]]]]) {}
-    ·          ─┬─
-    ·           ╰── `fn4` has already been declared here
- 24 │ 
- 25 │ function fn4([[x, y, ...z]]) {}
-    ·          ─┬─
-    ·           ╰── It can not be redeclared here
-    ╰────
 Expect to Parse: "language/expressions/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js"
 
   × Unexpected token
@@ -35,17 +11,6 @@ Expect to Parse: "language/expressions/class/decorator/syntax/class-valid/decora
     ·              ──
  45 │     @#_
     ╰────
-Expect to Parse: "language/global-code/decl-func-dup.js"
-
-  × Identifier `f` has already been declared
-    ╭─[language/global-code/decl-func-dup.js:8:1]
-  8 │ ---*/
-  9 │ function f() { return 1; } function f() { return 2; }
-    ·          ┬                          ┬
-    ·          │                          ╰── It can not be redeclared here
-    ·          ╰── `f` has already been declared here
- 10 │ 
-    ╰────
 Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js"
 
   × Unexpected token
@@ -54,83 +19,6 @@ Expect to Parse: "language/statements/class/decorator/syntax/class-valid/decorat
  45 │     @#$
     ·      ──
  46 │     @#_
-    ╰────
-Expect to Parse: "language/statements/function/S13_A6_T1.js"
-
-  × Identifier `__func` has already been declared
-    ╭─[language/statements/function/S13_A6_T1.js:11:1]
- 11 │ 
- 12 │ function __func(){return 1};
-    ·          ───┬──
-    ·             ╰── `__func` has already been declared here
- 13 │  
- 14 │ var __store__func = __func;
- 15 │  
- 16 │ var __1 = __func();
- 17 │  
- 18 │  function __func(){return 'A'};
-    ·           ───┬──
-    ·              ╰── It can not be redeclared here
- 19 │  
-    ╰────
-Expect to Parse: "language/statements/function/S13_A6_T2.js"
-
-  × Identifier `__func` has already been declared
-    ╭─[language/statements/function/S13_A6_T2.js:24:1]
- 24 │ 
- 25 │ function __func(){return "FIRST";};
-    ·          ───┬──
-    ·             ╰── `__func` has already been declared here
- 26 │ 
- 27 │ //////////////////////////////////////////////////////////////////////////////
- 28 │ //CHECK#2
- 29 │ __result = __func();
- 30 │ if (__result !== "SECOND") {
- 31 │     throw new Test262Error('#2: __result === "SECOND". Actual: __result ==='+__result);
- 32 │ }
- 33 │ //
- 34 │ //////////////////////////////////////////////////////////////////////////////
- 35 │ 
- 36 │ function __func(){return "SECOND";};
-    ·          ───┬──
-    ·             ╰── It can not be redeclared here
-    ╰────
-Expect to Parse: "language/statements/function/S14_A5_T1.js"
-
-  × Identifier `__func` has already been declared
-    ╭─[language/statements/function/S14_A5_T1.js:21:1]
- 21 │ 
- 22 │ function __func(){return "ascii"};
-    ·          ───┬──
-    ·             ╰── `__func` has already been declared here
- 23 │ function \u005f\u005f\u0066\u0075\u006e\u0063(){return "unicode"};//__func in unicode
-    ·          ──────────────────┬─────────────────
-    ·                            ╰── It can not be redeclared here
- 24 │ function __\u0066\u0075\u006e\u0063(){return "both"};//__func in unicode
-    ╰────
-
-  × Identifier `__func` has already been declared
-    ╭─[language/statements/function/S14_A5_T1.js:21:1]
- 21 │ 
- 22 │ function __func(){return "ascii"};
-    ·          ───┬──
-    ·             ╰── `__func` has already been declared here
- 23 │ function \u005f\u005f\u0066\u0075\u006e\u0063(){return "unicode"};//__func in unicode
- 24 │ function __\u0066\u0075\u006e\u0063(){return "both"};//__func in unicode
-    ·          ─────────────┬────────────
-    ·                       ╰── It can not be redeclared here
-    ╰────
-Expect to Parse: "language/statements/function/S14_A5_T2.js"
-
-  × Identifier `__func` has already been declared
-    ╭─[language/statements/function/S14_A5_T2.js:21:1]
- 21 │ 
- 22 │ function __func(){return "ascii"};
-    ·          ───┬──
-    ·             ╰── `__func` has already been declared here
- 23 │ function \u005f\u005f\u0066\u0075\u006e\u0063(){return "unicode"};//__func in unicode
-    ·          ──────────────────┬─────────────────
-    ·                            ╰── It can not be redeclared here
     ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
