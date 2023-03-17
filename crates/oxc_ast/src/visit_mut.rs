@@ -1192,7 +1192,6 @@ pub trait VisitMut<'a, 'b>: Sized {
         }
     }
 
-    #[allow(clippy::single_match)]
     fn visit_ts_signature(&mut self, signature: &'b mut TSSignature<'a>) {
         match signature {
             TSSignature::TSPropertySignature(sig) => self.visit_ts_property_signature(sig),

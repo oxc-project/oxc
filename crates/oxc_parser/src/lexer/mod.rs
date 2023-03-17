@@ -529,7 +529,7 @@ impl<'a> Lexer<'a> {
             return Kind::Eof;
         }
 
-        self.trivia_builder.add_single_line_comment(self.current.token.start, self.offset());
+        self.trivia_builder.add_multi_line_comment(self.current.token.start, self.offset());
         Kind::MultiLineComment
     }
 

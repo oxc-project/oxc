@@ -32,7 +32,6 @@ pub enum TestResult {
     CorrectError(String, /* panicked */ bool),
 }
 
-#[allow(unused)]
 pub struct CoverageReport<'a, T> {
     failed_positives: Vec<&'a T>,
     failed_negatives: Vec<&'a T>,

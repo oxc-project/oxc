@@ -62,25 +62,21 @@ impl Symbol {
     }
 
     #[must_use]
-    #[allow(unused)]
     pub fn id(&self) -> SymbolId {
         self.id
     }
 
     #[must_use]
-    #[allow(unused)]
     pub fn name(&self) -> &Atom {
         &self.name
     }
 
     #[must_use]
-    #[allow(unused)]
     pub fn span(&self) -> Span {
         self.span
     }
 
     #[must_use]
-    #[allow(unused)]
     pub fn flags(&self) -> SymbolFlags {
         self.flags
     }

@@ -33,13 +33,11 @@ impl Deref for SymbolTable {
 
 impl SymbolTable {
     #[must_use]
-    #[allow(unused)]
     pub fn symbols(&self) -> &Vec<Symbol> {
         &self.symbols
     }
 
     #[must_use]
-    #[allow(unused)]
     pub fn get(&self, id: SymbolId) -> Option<&Symbol> {
         self.symbols.get(id.index0())
     }

@@ -1531,7 +1531,6 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    #[allow(clippy::single_match)]
     fn visit_ts_signature(&mut self, signature: &'a TSSignature<'a>) {
         match &signature {
             TSSignature::TSPropertySignature(sig) => self.visit_ts_property_signature(sig),
