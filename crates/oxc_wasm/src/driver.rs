@@ -40,7 +40,8 @@ impl Driver {
 
         diagnostics.extend(
             Linter::from_json_str(eslintrc)
-                .run(&Rc::new(semantic_ret.semantic), source_text, false)
+                .with_fix(false)
+                .run(&Rc::new(semantic_ret.semantic), source_text)
                 .into_iter()
                 .map(|m| m.error.with_source_code(source.clone()))
                 .chain(ret.errors)

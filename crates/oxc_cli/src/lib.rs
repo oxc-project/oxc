@@ -16,7 +16,7 @@ use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::{Error, MinifiedFileError, Severity};
-use oxc_linter::Linter;
+use oxc_linter::{Fixer, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 
@@ -148,22 +148,18 @@ impl Cli {
             return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));
         };
 
-        let result = Linter::new().run(&Rc::new(semantic_ret.semantic), &source_text, fix);
+        let result = Linter::new().with_fix(fix).run(&Rc::new(semantic_ret.semantic), &source_text);
 
         if result.is_empty() {
             return None;
         }
 
-        // if fix {
-        // let fix_result = Fixer::new(&source_text, result).fix();
-        // fs::write(path, fix_result.fixed_code.as_bytes())
-        // .unwrap_or_else(|_| panic!("{path:?} not found"));
-        // return fix_result
-        // .messages
-        // .into_iter()
-        // .map(|m| m.error.with_source_code(source.clone()))
-        // .collect();
-        // }
+        if fix {
+            let fix_result = Fixer::new(&source_text, result).fix();
+            fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+            let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
+            return Some(Self::wrap_diagnostics(path, &source_text, errors));
+        }
 
         let errors = result.into_iter().map(|diagnostic| diagnostic.error).collect();
         Some(Self::wrap_diagnostics(path, &source_text, errors))

@@ -19,6 +19,7 @@ impl<'a> Fix<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct FixResult<'a> {
     pub fixed: bool,
     pub fixed_code: Cow<'a, str>,

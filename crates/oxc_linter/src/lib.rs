@@ -27,6 +27,8 @@ pub struct Linter {
     rules: Vec<RuleEnum>,
 
     early_error_javascript: EarlyErrorJavaScript,
+
+    fix: bool,
 }
 
 impl Linter {
@@ -49,7 +51,13 @@ impl Linter {
 
     #[must_use]
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
-        Self { rules, early_error_javascript: EarlyErrorJavaScript }
+        Self { rules, early_error_javascript: EarlyErrorJavaScript, fix: false }
+    }
+
+    #[must_use]
+    pub fn with_fix(mut self, yes: bool) -> Self {
+        self.fix = yes;
+        self
     }
 
     #[must_use]
@@ -75,13 +83,8 @@ impl Linter {
     }
 
     #[must_use]
-    pub fn run<'a>(
-        &self,
-        semantic: &Rc<Semantic<'a>>,
-        source_text: &'a str,
-        fix: bool,
-    ) -> Vec<Message<'a>> {
-        let ctx = LintContext::new(source_text, semantic.clone(), fix);
+    pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, source_text: &'a str) -> Vec<Message<'a>> {
+        let ctx = LintContext::new(source_text, semantic.clone(), self.fix);
 
         for node in semantic.nodes().iter() {
             self.early_error_javascript.run(node, &ctx);

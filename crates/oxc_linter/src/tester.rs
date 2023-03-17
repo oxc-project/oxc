@@ -70,8 +70,9 @@ impl Tester {
             .find(|rule| rule.name() == self.rule_name)
             .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name));
         let rule = rule.read_json(config);
-        let result =
-            Linter::from_rules(vec![rule]).run(&Rc::new(semantic_ret.semantic), source_text, false);
+        let result = Linter::from_rules(vec![rule])
+            .with_fix(false)
+            .run(&Rc::new(semantic_ret.semantic), source_text);
         if result.is_empty() {
             return true;
         }
