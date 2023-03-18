@@ -10,8 +10,16 @@ pub struct Walk {
 }
 
 impl Walk {
-    pub fn new<P: AsRef<Path>>(path: P, options: &LintOptions) -> Self {
-        let mut inner = WalkBuilder::new(path);
+    #[must_use]
+    pub fn new(options: &LintOptions) -> Self {
+        let mut inner = WalkBuilder::new(&options.paths[0]);
+
+        if let Some(paths) = options.paths.get(1..) {
+            for path in paths {
+                inner.add(path);
+            }
+        }
+
         if !options.no_ignore {
             inner.add_custom_ignore_filename(&options.ignore_path);
         }

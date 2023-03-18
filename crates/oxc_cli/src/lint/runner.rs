@@ -65,12 +65,10 @@ impl LintRunner {
         let fix = options.fix;
         rayon::join(
             move || {
-                options.paths.iter().flat_map(|path| Walk::new(path, options).iter()).for_each(
-                    |path| {
-                        *number_of_files += 1;
-                        tx_path.send(path).unwrap();
-                    },
-                )
+                Walk::new(options).iter().for_each(|path| {
+                    *number_of_files += 1;
+                    tx_path.send(path).unwrap();
+                });
             },
             move || {
                 while let Ok(path) = rx_path.recv() {
