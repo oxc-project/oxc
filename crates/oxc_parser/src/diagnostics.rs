@@ -68,12 +68,6 @@ pub struct RegExpFlagTwice(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("The 'u' and 'v' regular expression flags cannot be enabled at the same time")]
-pub struct RegExpFlagUAndV(
-    #[label("The 'u' and 'v' regular expression flags cannot be enabled at the same time")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("Unexpected end of file")]
 pub struct UnexpectedEnd(#[label("Unexpected end of file")] pub Span);
 
@@ -106,110 +100,11 @@ pub struct LegacyOctal(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Decimals with leading zeros are not allowed in strict mode")]
-#[diagnostic(help("remove the leading zero"))]
-pub struct LeadingZeroDecimal(
-    #[label("Decimals with leading zeros are not allowed in strict mode")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("Line terminator not permitted before arrow")]
 #[diagnostic()]
 pub struct LineterminatorBeforeArrow(
     #[label("Line terminator not permitted before arrow")] pub Span,
 );
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected new.target expression")]
-#[diagnostic(help(
-    "new.target is only allowed in constructors and functions invoked using thew `new` operator"
-))]
-pub struct NewTarget(#[label("new.target expression is not allowed here")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("The only valid meta property for new is new.target")]
-#[diagnostic()]
-pub struct NewTargetProperty(
-    #[label("The only valid meta property for new is new.target")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected import.meta expression")]
-#[diagnostic(help("import.meta is only allowed in module code"))]
-pub struct ImportMeta(#[label("import.meta expression is not allowed here")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("The only valid meta property for import is import.meta")]
-#[diagnostic()]
-pub struct ImportMetaProperty(
-    #[label("The only valid meta property for import is import.meta")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Illegal break statement")]
-#[diagnostic(help(
-    "A `break` statement can only be used within an enclosing iteration or switch statement."
-))]
-pub struct InvalidBreak(#[label("break statement is not allowed here")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Illegal continue statement: no surrounding iteration statement")]
-#[diagnostic(help(
-    "A `continue` statement can only be used within an enclosing `for`, `while` or `do while` "
-))]
-pub struct InvalidContinue(#[label("continue statement is not allowed here")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "A `{0}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."
-)]
-#[diagnostic()]
-pub struct InvalidLabelNonIteration(
-    &'static str,
-    #[label("This is an non-iteration statement")] pub Span,
-    #[label("for this label")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Use of undefined label")]
-#[diagnostic()]
-pub struct InvalidLabelTarget(#[label("This label is used, but not defined")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Jump target cannot cross function boundary.")]
-#[diagnostic()]
-pub struct InvalidLabelJumpTarget(#[label("Jump target cannot cross function boundary.")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected '{0}' strict mode")]
-#[diagnostic()]
-pub struct UnexpectedIdentifierAssign(
-    Atom,
-    #[label("Cannot assign to '{0}' in strict mode")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Invalid left-hand side in assignment")]
-#[diagnostic()]
-pub struct UnexpectedLhsAssign(#[label("Invalid left-hand side in assignment")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("The keyword '{0}' is reserved")]
-#[diagnostic()]
-pub struct ReservedKeyword(Atom, #[label("{0} is reserved")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("{0} is disallowed as a lexically bound name")]
-#[diagnostic()]
-pub struct DisallowedLexicalName(
-    pub Atom,
-    #[label("{0} is disallowed as a lexically bound name")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("`let` cannot be declared as a variable name inside of a `{0}` declaration")]
-#[diagnostic()]
-pub struct InvalidLetDeclaration(String, #[label("Rename the let identifier here")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Missing initializer in destructuring declaration")]
@@ -224,32 +119,11 @@ pub struct InvalidDestrucuringDeclaration(
 pub struct MissinginitializerInConst(#[label("const declaration need an initializer")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Functions cannot be labelled")]
-#[diagnostic(help("This is not allowed in strict mode starting with ECMAScript 2015."))]
-pub struct FunctionsCannotBeLabelled(#[label("Functions cannot be labelled")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Cannot use {0} outside a method")]
-pub struct MethodCode(&'static str, #[label("Cannot use {0} outside a method")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Cannot use {0} outside a module")]
-#[diagnostic()]
-pub struct ModuleCode(&'static str, #[label("Cannot use {0} outside a module")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("Lexical declaration cannot appear in a single-statement context")]
 #[diagnostic(help("Wrap this declaration in a block statement"))]
 pub struct LexicalDeclarationSingleStatement(
     #[label("Lexical declaration is not allowed here")] pub Span,
 );
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Invalid function declaration")]
-#[diagnostic(help(
-    "In strict mode code, functions can only be declared at top level or inside a block"
-))]
-pub struct FunctionDeclarationStrict(#[label("function declaration is not allowed here")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Async functions can only be declared at the top level or inside a block")]
@@ -263,15 +137,6 @@ pub struct AsyncFunctionDeclaration(
 #[diagnostic()]
 pub struct GeneratorFunctionDeclaration(
     #[label("Generators can only be declared at the top level or inside a block")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Invalid function declaration")]
-#[diagnostic(help(
-    "In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement"
-))]
-pub struct FunctionDeclarationNonStrict(
-    #[label("function declaration is not allowed here")] pub Span,
 );
 
 #[derive(Debug, Error, Diagnostic)]
@@ -314,16 +179,6 @@ pub struct RestElementTrailingComma(
 pub struct InvalidRestArgument(#[label("Invalid rest argument")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Invalid parenthesized parameter")]
-#[diagnostic(help("remove the parentheses"))]
-pub struct InvalidParenthesizedParameter(#[label("Invliad parenthesized parameter")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Invalid parenthesized pattern")]
-#[diagnostic()]
-pub struct InvalidParenthesizedPattern(#[label("Invliad parenthesized pattern")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("Invalid assignment")]
 #[diagnostic()]
 pub struct InvalidAssignment(#[label("Cannot assign to this expression")] pub Span);
@@ -355,50 +210,10 @@ pub struct ForAwait(
 pub struct NewDynamicImport(#[label("Cannot use new with dynamic import")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("'{0}' declaration can only be used at the top level of a module")]
-#[diagnostic()]
-pub struct TopLevel(
-    &'static str,
-    #[label("'{0}' declaration can only appear at the top level")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Duplicated export '{0}'")]
-#[diagnostic()]
-pub struct DuplicateExport(
-    Atom,
-    #[label("Export has already been declared here")] pub Span,
-    #[label("It cannot be redeclared here")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected private field")]
-#[diagnostic(help(
-    "Private names are only allowed in property accesses (`obj.#field`) or in `in` expressions (`#field in obj`)."
-))]
-pub struct UnexpectedPrivateIdentifier(#[label("Unexpected private field")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("Classes can't have an element named '#constructor'")]
 #[diagnostic()]
 pub struct PrivateNameConstructor(
     #[label("Classes can't have an element named '#constructor'")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Private field '{0}' must be declared in an enclosing class")]
-#[diagnostic()]
-pub struct PrivateFieldUndeclared(
-    Atom,
-    #[label("Private field '{0}' must be declared in an enclosing class")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected private identifier")]
-#[diagnostic()]
-pub struct PrivateNotInClass(
-    Atom,
-    #[label("Private identifier '#{0}' is not allowed outside class bodies")] pub Span,
 );
 
 #[derive(Debug, Error, Diagnostic)]
@@ -439,14 +254,6 @@ pub struct ConstructorGenerator(#[label("Constructor can't be a generator")] pub
 pub struct FieldConstructor(#[label("Classes can't have a field named 'constructor'")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Multiple constructor implementations are not allowed.")]
-#[diagnostic()]
-pub struct DuplicateConstructor(
-    #[label("constructor has already been declared here")] pub Span,
-    #[label("it cannot be redeclared here")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("An export name cannot include a unicode lone surrogate")]
 #[diagnostic()]
 pub struct ExportLoneSurrogate(
@@ -468,38 +275,9 @@ pub struct ExportNamedString(
 pub struct TemplateLiteral(#[label("Bad escape sequence in untagged template literal")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Delete of an unqualified identifier in strict mode.")]
-#[diagnostic()]
-pub struct DeleteOfUnqualified(
-    #[label("Delete of an unqualified identifier in strict mode")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("'with' statements are not allowed")]
-#[diagnostic()]
-pub struct WithStatement(#[label("'with' statements are not allowed")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Private fields can not be deleted")]
-#[diagnostic()]
-pub struct DeletePrivateField(#[label("Private fields can not be deleted")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("Empty parenthesized expression")]
 #[diagnostic()]
 pub struct EmptyParenthesizedExpression(#[label("Expected an expression here")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Undefined export")]
-#[diagnostic()]
-pub struct UndefinedExport(Atom, #[label("Export '{0}' is not defined")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Logical expressions and coalesce expressions cannot be mixed")]
-#[diagnostic(help("Wrap either expression by parentheses"))]
-pub struct MixedCoalesce(
-    #[label("Logical expressions and coalesce expressions cannot be mixed")] pub Span,
-);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("'Unexpected `{0}`")]
@@ -510,63 +288,12 @@ pub struct UnexpectedKeyword(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("{0} loop variable declaration may not have an initializer")]
-#[diagnostic()]
-pub struct UnexpectedInitializerInForLoopHead(
-    &'static str,
-    #[label("{0} loop variable declaration may not have an initializer")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Only a single declaration is allowed in a `for...{0}` statement")]
-#[diagnostic()]
-pub struct MultipleDeclarationInForLoopHead(
-    &'static str,
-    #[label("Only a single declaration is allowed in a `for...{0}` statement")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("Illegal newline after {0}")]
 #[diagnostic()]
 pub struct IllegalNewline(
     pub &'static str,
     #[label("{0} starts here")] pub Span,
     #[label("A newline is not expected here")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Duplicate parameter name not allowed in this context")]
-#[diagnostic()]
-pub struct DuplicateParameter(
-    #[label("Duplicate parameter name not allowed in this context")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Illegal 'use strict' directive in function with non-simple parameter list")]
-#[diagnostic()]
-pub struct IllegalUseStrict(
-    #[label("Illegal 'use strict' directive in function with non-simple parameter list")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("'arguments' is not allowed in {0}")]
-#[diagnostic()]
-pub struct UnexpectedArguments(
-    &'static str,
-    #[label("'arguments' is not allowed in {0}")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected {0} expression")]
-#[diagnostic()]
-pub struct UnexpectedExpression(&'static str, #[label("Unexpected {0} expression")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected exponentiation expression")]
-#[diagnostic(help("Wrap {0} expression in parentheses to enforce operator precedence"))]
-pub struct UnexpectedExponential(
-    &'static str,
-    #[label("Unexpected exponentiation expression")] pub Span,
 );
 
 #[derive(Debug, Error, Diagnostic)]
@@ -596,64 +323,11 @@ pub struct SetterParametersRestPattern(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("{0} expression not allowed in formal parameter")]
-#[diagnostic()]
-pub struct AwaitOrYieldInParameter(
-    &'static str,
-    #[label("{0} expression not allowed in formal parameter")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Invalid assignment in object literal")]
-#[diagnostic(help(
-    "Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern."
-))]
-pub struct CoverInitializedNameError(#[label("Assignment is not allowed here")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "Super calls are not permitted outside constructors or in nested functions inside constructors.
-"
-)]
-#[diagnostic()]
-pub struct UnexpectedSuperCall(
-    #[label(
-        "Super calls are not permitted outside constructors or in nested functions inside constructors."
-    )]
-    pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "'super' can only be referenced in members of derived classes or object literal expressions.
-"
-)]
-#[diagnostic()]
-pub struct UnexpectedSuperReference(
-    #[label("'super' can only be referenced in members of derived classes or object literal expressions.
-")]
-    pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("'super' can only be used with function calls or in property accesses")]
 #[diagnostic(help("replace with `super()` or `super.prop` or `super[prop]`"))]
 pub struct UnexpectedSuper(
     #[label("'super' can only be used with function calls or in property accesses ")] pub Span,
 );
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("'super' can only be referenced in a derived class.")]
-#[diagnostic(help("either remove this super, or extend the class"))]
-pub struct SuperWithoutDerivedClass(
-    #[label("'super' can only be referenced in a derived class.")] pub Span,
-    #[label("class does not have `extends`")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Private fields cannot be accessed on super")]
-#[diagnostic()]
-pub struct SuperPrivate(#[label("Private fields cannot be accessed on super")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Expected function name")]
@@ -666,34 +340,6 @@ pub struct ExpectFunctionName(#[label("Function name is required here")] pub Spa
 pub struct ExpectCatchFinally(#[label("Expected `catch` or `finally` here")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Cannot assign to '{0}' because it is a {1}")]
-#[diagnostic()]
-pub struct CannotAssignTo(
-    Atom,
-    &'static str,
-    #[label("Cannot assign to '{0}' because this is a {1}")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("A rest parameter cannot have an initializer")]
-#[diagnostic()]
-pub struct ARestParameterCannotHaveAnInitializer(
-    #[label("A rest parameter cannot have an initializer")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("TS1015: Parameter cannot have question mark and initializer")]
-#[diagnostic()]
-pub struct ParameterCannotHaveQuestionMarkAndInitializer(
-    #[label("Parameter cannot have question mark and initializer")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("TS1047: A rest parameter cannot be optional")]
-#[diagnostic()]
-pub struct ARestParameterCannotBeOptional(#[label("A rest parameter cannot be optional")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("TS1095: A 'set' accessor cannot have a return type annotation")]
 #[diagnostic()]
 pub struct ASetAccessorCannotHaveAReturnTypeAnnotation(
@@ -701,48 +347,10 @@ pub struct ASetAccessorCannotHaveAReturnTypeAnnotation(
 );
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("TS1098: Type parameter list cannot be empty")]
-#[diagnostic()]
-pub struct TypeParameterListCannotBeEmpty(#[label("Type parameter list cannot be empty")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("TS1099: Type argument list cannot be empty")]
-#[diagnostic()]
-pub struct TypeArgumentListCannotBeEmpty(#[label("Type argument list cannot be empty")] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("TS1108: A 'return' statement can only be used within a function body")]
 #[diagnostic()]
 pub struct ReturnStatementOnlyInFunctionBody(
     #[label("A 'return' statement can only be used within a function body.")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("TS1164: Computed property names are not allowed in enums")]
-#[diagnostic()]
-pub struct ComputedPropertyNamesAreNotAllowedInEnums(
-    #[label("Computed property names are not allowed in enums")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("TS1313: The body of an 'if' statement cannot be the empty statement")]
-#[diagnostic()]
-pub struct TheBodyOfAnIfStatementCannotBeTheEmptyStatement(
-    #[label("The body of an 'if' statement cannot be the empty statement")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("TS1317: A parameter property cannot be declared using a rest parameter")]
-#[diagnostic()]
-pub struct AParameterPropertyCannotBeDeclaredUsingARestParameter(
-    #[label("A parameter property cannot be declared using a rest parameter")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("TS2452: An enum member cannot have a numeric name")]
-#[diagnostic()]
-pub struct AnEnumMemberCannotHaveANumericName(
-    #[label("An enum member cannot have a numeric name")] pub Span,
 );
 
 #[derive(Debug, Error, Diagnostic)]
