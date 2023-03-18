@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use ignore::{DirEntry, WalkBuilder};
+use ignore::{overrides::OverrideBuilder, DirEntry, WalkBuilder};
 use oxc_ast::VALID_EXTENSIONS;
 
 use crate::LintOptions;
@@ -10,6 +10,7 @@ pub struct Walk {
 }
 
 impl Walk {
+    /// # Panics
     #[must_use]
     pub fn new(options: &LintOptions) -> Self {
         let mut inner = WalkBuilder::new(&options.paths[0]);
@@ -22,6 +23,16 @@ impl Walk {
 
         if !options.no_ignore {
             inner.add_custom_ignore_filename(&options.ignore_path);
+
+            if !options.ignore_pattern.is_empty() {
+                let mut override_builder = OverrideBuilder::new(Path::new("/"));
+                for pattern in &options.ignore_pattern {
+                    // TODO: check this command arg parser
+                    override_builder.add(pattern).unwrap();
+                }
+                let r#override = override_builder.build().unwrap();
+                inner.overrides(r#override);
+            }
         }
         // Turning off `follow_links` because:
         // * following symlinks is a really slow syscall
