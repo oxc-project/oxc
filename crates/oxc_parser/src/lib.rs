@@ -57,7 +57,7 @@ pub struct Parser<'a> {
     /// Parser state
     state: ParserState<'a>,
 
-    /// Parsing context saved into every AST span
+    /// Parsing context
     ctx: Context,
 
     /// Ast builder for creating AST spans

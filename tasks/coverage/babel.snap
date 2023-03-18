@@ -225,16 +225,14 @@ Expect to Parse: "core/uncategorised/327/input.js"
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[core/uncategorised/327/input.js:1:1]
  1 │ return {} / 2
-   · ───┬──
-   ·    ╰── A 'return' statement can only be used within a function body.
+   · ──────
    ╰────
 Expect to Parse: "core/uncategorised/328/input.js"
 
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[core/uncategorised/328/input.js:1:1]
  1 │ return
-   · ───┬──
-   ·    ╰── A 'return' statement can only be used within a function body.
+   · ──────
  2 │ {}
    ╰────
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
@@ -248,11 +246,10 @@ Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
    ╰────
 Expect to Parse: "typescript/cast/satisfies/input.ts"
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/satisfies/input.ts:1:1]
  1 │ x satisfies T;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
  2 │ x < y satisfies boolean; // (x < y) satisfies boolean;
    ╰────
   help: Try insert a semicolon here
@@ -274,24 +271,21 @@ Expect to Parse: "typescript/declare/function-rest-trailing-comma/input.ts"
   × Rest element must be last element
    ╭─[typescript/declare/function-rest-trailing-comma/input.ts:1:1]
  1 │ declare function foo(...args: any[], )
-   ·                      ───────┬──────
-   ·                             ╰── Rest element must be last element
+   ·                      ──────────────
    ╰────
 Expect to Parse: "typescript/dts/no-initializer/input.ts"
 
   × Missing initializer in const declaration
    ╭─[typescript/dts/no-initializer/input.ts:1:1]
  1 │ const x: number;
-   ·       ┬
-   ·       ╰── const declaration need an initializer
+   ·       ─
    ╰────
 Expect to Parse: "typescript/dts/valid-trailing-comma-for-rest/input.ts"
 
   × Rest element must be last element
    ╭─[typescript/dts/valid-trailing-comma-for-rest/input.ts:1:1]
  1 │ function foo(...args: any[], );
-   ·              ───────┬──────
-   ·                     ╰── Rest element must be last element
+   ·              ──────────────
    ╰────
 Expect to Parse: "typescript/interface/get-set-properties/input.ts"
 
@@ -309,8 +303,7 @@ Expect to Parse: "typescript/module-namespace/body-nested-declare/input.ts"
    ╭─[typescript/module-namespace/body-nested-declare/input.ts:2:1]
  2 │     namespace B {
  3 │         const x: number;
-   ·               ┬
-   ·               ╰── const declaration need an initializer
+   ·               ─
  4 │     }
    ╰────
 Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
@@ -373,60 +366,52 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  4 │   a++
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-assignment-pattern-1/input.js:1:1]
  1 │ (a = 1) = t
-   ·  ──┬──
-   ·    ╰── Cannot assign to this expression
+   ·  ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-assignment-pattern-2/input.js:1:1]
  1 │ [(a = 1)] = t
-   ·   ──┬──
-   ·     ╰── Cannot assign to this expression
+   ·   ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-assignment-pattern-3/input.js:1:1]
  1 │ [({ a: [b = 2]})] = t
-   ·  ───────┬───────
-   ·         ╰── Cannot assign to this expression
+   ·  ───────────────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-assignment-pattern-4/input.js:1:1]
  1 │ [{b: [([a = 1])]}] = t 
-   ·       ────┬────
-   ·           ╰── Cannot assign to this expression
+   ·       ─────────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-assignment-pattern-5/input.js:1:1]
  1 │ [([x])] = t;
-   ·  ──┬──
-   ·    ╰── Cannot assign to this expression
+   ·  ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-assignment-pattern-6/input.js:1:1]
  1 │ (a += 1) = t
-   ·  ───┬──
-   ·     ╰── Cannot assign to this expression
+   ·  ──────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-assignment-pattern-7/input.js:1:1]
  1 │ (a -= 1) = t
-   ·  ───┬──
-   ·     ╰── Cannot assign to this expression
+   ·  ──────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-assignment-pattern-8/input.js:1:1]
  1 │ (b = (a -= 1)) = t
-   ·  ──────┬─────
-   ·        ╰── Cannot assign to this expression
+   ·  ────────────
    ╰────
 
   × Invalid function declaration
@@ -436,18 +421,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-left-hand-side-in-postfix-operation/input.js:1:1]
  1 │ a++ = t
-   · ─┬─
-   ·  ╰── Cannot assign to this expression
+   · ───
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/categorized/invalid-left-hand-side-in-prefix-operation/input.js:1:1]
  1 │ ++a = t
-   · ─┬─
-   ·  ╰── Cannot assign to this expression
+   · ───
    ╰────
 
   × Unexpected token
@@ -458,68 +441,59 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern-2/input.js:1:1]
  1 │ [{b: [([a = 1])]}] = t
-   ·       ────┬────
-   ·           ╰── Cannot assign to this expression
+   ·       ─────────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern-3/input.js:1:1]
  1 │ [({ a: [b = 2]})] = t
-   ·  ───────┬───────
-   ·         ╰── Cannot assign to this expression
+   ·  ───────────────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern-4/input.js:1:1]
  1 │ [(a = 1)] = t
-   ·   ──┬──
-   ·     ╰── Cannot assign to this expression
+   ·   ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern-5/input.js:1:1]
  1 │ (a = 1) = t
-   ·  ──┬──
-   ·    ╰── Cannot assign to this expression
+   ·  ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern-6/input.js:1:1]
  1 │ ([a]) = []
-   · ──┬──
-   ·   ╰── Cannot assign to this expression
+   · ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern/input.js:1:1]
  1 │ ({x}) = {x: 1};
-   · ──┬──
-   ·   ╰── Cannot assign to this expression
+   · ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/invalid-parenthesized-left-hand-side/input.js:1:1]
  1 │ (!a) += 1
-   ·  ─┬
-   ·   ╰── Cannot assign to this expression
+   ·  ──
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/create-parenthesized-expressions/invalid-pattern-in-rest-binding/input.js:1:1]
  1 │ ([...(a)]) => {}
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
    ╰────
   help: Try insert a semicolon here
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/valid-parenthesized-assignment-array-pattern-3/input.js:1:1]
  1 │ [([x])] = t;
-   ·  ──┬──
-   ·    ╰── Cannot assign to this expression
+   ·  ─────
    ╰────
 
   × Unexpected token
@@ -706,15 +680,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Bad escape sequence in untagged template literal
    ╭─[core/escape-template/non-octal-eight/input.js:1:1]
  1 │ `\8`;
-   ·  ─┬
-   ·   ╰── Bad escape sequence in untagged template literal
+   ·  ──
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[core/escape-template/non-octal-nine/input.js:1:1]
  1 │ `\9`;
-   ·  ─┬
-   ·   ╰── Bad escape sequence in untagged template literal
+   ·  ──
    ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -761,15 +733,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[core/object/invalid-escape-get/input.js:1:1]
  1 │ ({ ge\u0074 x() {} })
-   ·    ────┬───
-   ·        ╰── keyword cannot contain escape characters
+   ·    ────────
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
    ╭─[core/object/invalid-setter/input.js:1:1]
  1 │ ({ set x(){} })
-   ·         ─┬
-   ·          ╰── A 'set' accessor must have exactly one parameter.
+   ·         ──
    ╰────
 
   × Expect token
@@ -812,11 +782,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: remove the leading zero
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/regression/octal-float-fail/input.js:1:1]
  1 │ 07.5
    ·   ▲
-   ·   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -1102,29 +1071,25 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × A 'get' accessor must not have any formal parameters.
    ╭─[core/uncategorised/.542/input.js:1:1]
  1 │ ({ get prop(x) {} })
-   ·            ─┬─
-   ·             ╰── A 'get' accessor must not have any formal parameters.
+   ·            ───
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
    ╭─[core/uncategorised/.543/input.js:1:1]
  1 │ ({ set prop() {} })
-   ·            ─┬
-   ·             ╰── A 'set' accessor must have exactly one parameter.
+   ·            ──
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
    ╭─[core/uncategorised/.544/input.js:1:1]
  1 │ ({ set prop(x, y) {} })
-   ·            ───┬──
-   ·               ╰── A 'set' accessor must have exactly one parameter.
+   ·            ──────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/108/input.js:1:1]
  1 │ var x = /[P QR]/\u0067
    ·                 ▲
-   ·                 ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -1145,21 +1110,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[core/uncategorised/347/input.js:1:1]
  1 │ 3ea
    ·   ▲
-   ·   ╰── Invalid Character `a`
    ╰────
 
   × Invalid characters after number
    ╭─[core/uncategorised/347/input.js:1:1]
  1 │ 3ea
-   ·   ┬
-   ·   ╰── Invalid characters after number
+   ·   ─
    ╰────
 
   × Invalid characters after number
    ╭─[core/uncategorised/348/input.js:1:1]
  1 │ 3in []
-   ·  ─┬
-   ·   ╰── Invalid characters after number
+   ·  ──
    ╰────
 
   × Unexpected end of file
@@ -1167,11 +1129,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ 3e
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[core/uncategorised/349/input.js:1:1]
  1 │ 3e
-   · ─┬
-   ·  ╰── invalid float
+   · ──
    ╰────
 
   × Unexpected end of file
@@ -1179,11 +1140,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ 3e+
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[core/uncategorised/350/input.js:1:1]
  1 │ 3e+
-   · ─┬─
-   ·  ╰── invalid float
+   · ───
    ╰────
 
   × Unexpected end of file
@@ -1191,25 +1151,22 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ 3e-
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[core/uncategorised/351/input.js:1:1]
  1 │ 3e-
-   · ─┬─
-   ·  ╰── invalid float
+   · ───
    ╰────
 
   × Invalid characters after number
    ╭─[core/uncategorised/352/input.js:1:1]
  1 │ 3x
-   ·  ┬
-   ·  ╰── Invalid characters after number
+   ·  ─
    ╰────
 
   × Invalid characters after number
    ╭─[core/uncategorised/353/input.js:1:1]
  1 │ 3x0
-   ·  ┬
-   ·  ╰── Invalid characters after number
+   ·  ─
    ╰────
 
   × Unexpected end of file
@@ -1220,29 +1177,25 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid characters after number
    ╭─[core/uncategorised/357/input.js:1:1]
  1 │ 01a
-   ·   ┬
-   ·   ╰── Invalid characters after number
+   ·   ─
    ╰────
 
   × Invalid characters after number
    ╭─[core/uncategorised/358/input.js:1:1]
  1 │ 3in[]
-   ·  ─┬
-   ·   ╰── Invalid characters after number
+   ·  ──
    ╰────
 
   × Invalid characters after number
    ╭─[core/uncategorised/359/input.js:1:1]
  1 │ 0x3in[]
-   ·    ─┬
-   ·     ╰── Invalid characters after number
+   ·    ──
    ╰────
 
   × Unterminated string
    ╭─[core/uncategorised/360/input.js:1:1]
  1 │ "Hello
-   · ───┬───
-   ·    ╰── Unterminated string
+   · ───────
  2 │ World"
    ╰────
 
@@ -1259,79 +1212,68 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unterminated regular expression
    ╭─[core/uncategorised/364/input.js:1:1]
  1 │ /
-   · ┬
-   · ╰── Unterminated regular expression
+   · ─
    ╰────
 
   × Unterminated regular expression
    ╭─[core/uncategorised/365/input.js:1:1]
  1 │ /test
-   · ──┬──
-   ·   ╰── Unterminated regular expression
+   · ─────
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[core/uncategorised/366/input.js:1:1]
  1 │ var x = /[a-z]/\ux
-   ·                 ┬
-   ·                 ╰── Invalid Unicode escape sequence
+   ·                 ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/366/input.js:1:1]
  1 │ var x = /[a-z]/\ux
    ·                ▲
-   ·                ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/uncategorised/367/input.js:1:1]
  1 │ 3 = 4
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/uncategorised/368/input.js:1:1]
  1 │ func() = 4
-   · ───┬──
-   ·    ╰── Cannot assign to this expression
+   · ──────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/uncategorised/369/input.js:1:1]
  1 │ (1 + 1) = 10
-   ·  ──┬──
-   ·    ╰── Cannot assign to this expression
+   ·  ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/uncategorised/370/input.js:1:1]
  1 │ 1++
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/uncategorised/371/input.js:1:1]
  1 │ 1--
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/uncategorised/372/input.js:1:1]
  1 │ ++1
-   ·   ┬
-   ·   ╰── Cannot assign to this expression
+   ·   ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/uncategorised/373/input.js:1:1]
  1 │ --1
-   ·   ┬
-   ·   ╰── Cannot assign to this expression
+   ·   ─
    ╰────
 
   × Unexpected token
@@ -1376,16 +1318,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unterminated regular expression
    ╭─[core/uncategorised/380/input.js:1:1]
  1 │ var x = /
-   ·         ─┬
-   ·          ╰── Unterminated regular expression
+   ·         ──
  2 │ /
    ╰────
 
   × Unterminated string
    ╭─[core/uncategorised/381/input.js:1:1]
  1 │ var x = "
-   ·         ─┬
-   ·          ╰── Unterminated string
+   ·         ──
    ╰────
 
   × Unexpected token
@@ -1394,18 +1334,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ──
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/uncategorised/383/input.js:1:1]
  1 │ i + 2 = 42
-   · ──┬──
-   ·   ╰── Cannot assign to this expression
+   · ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[core/uncategorised/384/input.js:1:1]
  1 │ +i = 42
-   · ─┬
-   ·  ╰── Cannot assign to this expression
+   · ──
    ╰────
 
   × Expect token
@@ -1430,19 +1368,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/388/input.js:1:1]
  1 │ { set 1 }
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/389/input.js:1:1]
  1 │ { get 2 }
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
    ╰────
   help: Try insert a semicolon here
 
@@ -1488,8 +1424,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Rest element must be last element
    ╭─[core/uncategorised/396/input.js:1:1]
  1 │ function t(...rest, b) { }
-   ·            ───┬───
-   ·               ╰── Rest element must be last element
+   ·            ───────
    ╰────
 
   × Unexpected token
@@ -1544,11 +1479,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·           ╰── Expect `(` here, but found `if`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/405/input.js:1:1]
  1 │ a b;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
@@ -1559,19 +1493,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·   ╰── Expect `(` here, but found `.`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/407/input.js:1:1]
  1 │ a if;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/408/input.js:1:1]
  1 │ a class;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
@@ -1682,8 +1614,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Character `‿`
    ╭─[core/uncategorised/426/input.js:1:1]
  1 │ ‿ = 10
-   · ┬
-   · ╰── Invalid Character `‿`
+   · ─
    ╰────
 
   × Identifier `default` has already been declared
@@ -1703,45 +1634,39 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unterminated multiline comment
    ╭─[core/uncategorised/429/input.js:1:1]
  1 │ /*
-   · ─┬
-   ·  ╰── Unterminated multiline comment
+   · ──
    ╰────
 
   × Unterminated multiline comment
    ╭─[core/uncategorised/430/input.js:1:1]
  1 │ ╭─▶ /*
  2 │ │   
- 3 │ ├─▶ 
-   · ╰──── Unterminated multiline comment
+ 3 │ ╰─▶ 
    ╰────
 
   × Unterminated multiline comment
    ╭─[core/uncategorised/431/input.js:1:1]
  1 │ /**
-   · ─┬─
-   ·  ╰── Unterminated multiline comment
+   · ───
    ╰────
 
   × Unterminated multiline comment
    ╭─[core/uncategorised/432/input.js:1:1]
  1 │ ╭─▶ /*
  2 │ │   
- 3 │ ├─▶ *
-   · ╰──── Unterminated multiline comment
+ 3 │ ╰─▶ *
    ╰────
 
   × Unterminated multiline comment
    ╭─[core/uncategorised/433/input.js:1:1]
  1 │ /*hello
-   · ───┬───
-   ·    ╰── Unterminated multiline comment
+   · ───────
    ╰────
 
   × Unterminated multiline comment
    ╭─[core/uncategorised/434/input.js:1:1]
  1 │ /*hello  *
-   · ─────┬────
-   ·      ╰── Unterminated multiline comment
+   · ──────────
    ╰────
 
   × Unexpected token
@@ -1786,8 +1711,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unterminated regular expression
    ╭─[core/uncategorised/441/input.js:1:1]
  1 │ /a\
-   · ──┬─
-   ·   ╰── Unterminated regular expression
+   · ────
  2 │ /
    ╰────
 
@@ -1821,8 +1745,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Unicode escape sequence
    ╭─[core/uncategorised/446/input.js:1:1]
  1 │ \\
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Character `\`
@@ -1833,8 +1756,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Unicode escape sequence
    ╭─[core/uncategorised/448/input.js:1:1]
  1 │ \x
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Character ` `
@@ -1845,50 +1767,43 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Character `‌`
    ╭─[core/uncategorised/450/input.js:1:1]
  1 │ ‌ = []
-   · ┬
-   · ╰── Invalid Character `‌`
+   · ─
    ╰────
 
   × Invalid Character `‍`
    ╭─[core/uncategorised/451/input.js:1:1]
  1 │ ‍ = []
-   · ┬
-   · ╰── Invalid Character `‍`
+   · ─
    ╰────
 
   × Unterminated string
    ╭─[core/uncategorised/452/input.js:1:1]
  1 │ "\
-   · ─┬
-   ·  ╰── Unterminated string
+   · ──
    ╰────
 
   × Unterminated string
    ╭─[core/uncategorised/452/input.js:1:1]
  1 │ "\
-   · ─┬
-   ·  ╰── Unterminated string
+   · ──
    ╰────
 
   × Invalid escape sequence
    ╭─[core/uncategorised/453/input.js:1:1]
  1 │ "\u
-   ·  ─┬
-   ·   ╰── Invalid escape sequence
+   ·  ──
    ╰────
 
   × Unterminated string
    ╭─[core/uncategorised/453/input.js:1:1]
  1 │ "\u
-   · ─┬─
-   ·  ╰── Unterminated string
+   · ───
    ╰────
 
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[core/uncategorised/454/input.js:1:1]
  1 │ return
-   · ───┬──
-   ·    ╰── A 'return' statement can only be used within a function body.
+   · ──────
    ╰────
 
   × Illegal break statement
@@ -2321,8 +2236,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Missing initializer in const declaration
    ╭─[core/uncategorised/536/input.js:1:1]
  1 │ const a;
-   ·       ┬
-   ·       ╰── const declaration need an initializer
+   ·       ─
    ╰────
 
   × The keyword 'public' is reserved
@@ -2364,8 +2278,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[core/uncategorised/555/input.js:2:1]
  2 │     first,
  3 │     ...second,
-   ·     ────┬────
-   ·         ╰── Rest element must be last element
+   ·     ─────────
  4 │     third,
    ╰────
 
@@ -2373,98 +2286,85 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/array-rest-spread/comma-after-rest/input.js:1:1]
  1 │ [...a,] = [];
    ·      ▲
-   ·      ╰── Unexpected trailing comma after rest element
    ╰────
 
   × Unexpected trailing comma after rest element
    ╭─[es2015/array-rest-spread/comma-after-spread-for-in/input.js:1:1]
  1 │ for ([...a,] in []);
    ·           ▲
-   ·           ╰── Unexpected trailing comma after rest element
    ╰────
 
   × Unexpected trailing comma after rest element
    ╭─[es2015/array-rest-spread/comma-after-spread-nested/input.js:1:1]
  1 │ [[...a,]] = [];
    ·       ▲
-   ·       ╰── Unexpected trailing comma after rest element
    ╰────
 
   × Spread must be last element
    ╭─[es2015/array-rest-spread/invalid-location/input.js:1:1]
  1 │ [...a, b] = c
-   ·  ──┬─
-   ·    ╰── Spread must be last element
+   ·  ────
    ╰────
 
   × Rest element must be last element
    ╭─[es2015/arrow-functions/comma-after-rest-param/input.js:1:1]
  1 │ (...rest,) => {}
-   ·  ───┬───
-   ·     ╰── Rest element must be last element
+   ·  ───────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-2/input.js:1:1]
  1 │ (a, (b)) => 42
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-array-pattern-2/input.js:1:1]
  1 │ ([ [(a)] = [] ] = []) => {}
-   ·                      ┬
-   ·                      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                      ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-array-pattern-3/input.js:1:1]
  1 │ ([(a) = [] ] = []) => {}
-   ·                   ┬
-   ·                   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                   ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-array-pattern/input.js:1:1]
  1 │ ([(a)]) => {}
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-object-pattern-member/input.js:1:1]
  1 │ ({ a: (foo.qux) } = {}) => {}
-   ·                        ┬
-   ·                        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                        ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-object-pattern/input.js:1:1]
  1 │ ({ a: (foo) } = {}) => {}
-   ·                    ┬
-   ·                    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                    ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens/input.js:1:1]
  1 │ var foo = ((foo)) => {};
-   ·                  ┬
-   ·                  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                  ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/invalid-arrow-before-in/input.js:1:1]
  1 │ () => {} in x
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
@@ -2472,24 +2372,21 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/arrow-functions/invalid-rest-in-params/input.js:2:1]
  2 │     first,
  3 │     ...second,
-   ·     ────┬────
-   ·         ╰── Rest element must be last element
+   ·     ─────────
  4 │     third
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/no-binary-left/input.js:1:1]
  1 │ () => {} || true
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/no-callee/input.js:1:1]
  1 │ () => {}()
    ·         ▲
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -2499,11 +2396,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ───────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/no-ternary-test/input.js:1:1]
  1 │ () => {} ? 1 : 2;
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
@@ -2516,42 +2412,38 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/class-methods/disallow-computed-async-identifier/input.js:1:1]
  1 │ class A {
  2 │   [async] a() {}
-   ·          ┬
-   ·          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·          ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/class-methods/disallow-computed-async-string/input.js:1:1]
  1 │ class A {
  2 │   ["async"] a() {}
-   ·            ┬
-   ·            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·            ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/class-methods/disallow-computed-get-identifier/input.js:1:1]
  1 │ class A {
  2 │   [get] a() {}
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/class-methods/disallow-computed-get-string/input.js:1:1]
  1 │ class A {
  2 │   ["get"] a() {}
-   ·          ┬
-   ·          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·          ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2566,22 +2458,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/class-methods/disallow-literal-async/input.js:1:1]
  1 │ class A {
  2 │   "async" a() {}
-   ·          ┬
-   ·          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·          ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/class-methods/disallow-literal-get/input.js:1:1]
  1 │ class A {
  2 │   "get" a() {}
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2590,8 +2480,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/class-methods/disallow-static-generator-prototype/input.js:1:1]
  1 │ class A {
  2 │   static *prototype() {}
-   ·           ────┬────
-   ·               ╰── Classes may not have a static property named prototype
+   ·           ─────────
  3 │ }
    ╰────
 
@@ -2599,8 +2488,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/class-methods/disallow-static-prototype/input.js:1:1]
  1 │ class A {
  2 │   static prototype() {}
-   ·          ────┬────
-   ·              ╰── Classes may not have a static property named prototype
+   ·          ─────────
  3 │ }
    ╰────
 
@@ -2608,8 +2496,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/class-methods/getter-signature/input.js:1:1]
  1 │ class A {
  2 │   get prop (arg) {}
-   ·            ──┬──
-   ·              ╰── A 'get' accessor must not have any formal parameters.
+   ·            ─────
  3 │ }
    ╰────
 
@@ -2617,8 +2504,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/class-methods/malformed-super-expression/input.js:2:1]
  2 │   x () {
  3 │     super - 1;
-   ·     ──┬──
-   ·       ╰── 'super' can only be used with function calls or in property accesses 
+   ·     ─────
  4 │   }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
@@ -2634,22 +2520,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[es2015/class/invalid-escape-get/input.js:1:1]
  1 │ class X { ge\u0074 x() {} }
-   ·           ────┬───
-   ·               ╰── keyword cannot contain escape characters
+   ·           ────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2015/class/invalid-escape-set/input.js:1:1]
  1 │ class X { se\u0074 x(value) {} }
-   ·           ────┬───
-   ·               ╰── keyword cannot contain escape characters
+   ·           ────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2015/class/invalid-escape-static/input.js:1:1]
  1 │ class X { st\u0061tic y() {} }
-   ·           ─────┬─────
-   ·                ╰── keyword cannot contain escape characters
+   ·           ───────────
    ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -2685,18 +2568,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·            ╰── Expect `,` here, but found `(`
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es2015/destructuring/parenthesized-lhs-array/input.js:1:1]
  1 │ ([a]) = 2;
-   · ──┬──
-   ·   ╰── Cannot assign to this expression
+   · ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es2015/destructuring/parenthesized-lhs-object/input.js:1:1]
  1 │ ({a}) = 2;
-   · ──┬──
-   ·   ╰── Cannot assign to this expression
+   · ─────
    ╰────
 
   × Identifier `__proto__` has already been declared
@@ -2779,8 +2660,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[es2015/for-of/invalid-escape-of/input.js:1:1]
  1 │ for (x \u006ff y) {}
-   ·        ───┬───
-   ·           ╰── keyword cannot contain escape characters
+   ·        ───────
    ╰────
 
   × Expect token
@@ -2793,15 +2673,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[es2015/generators/invalid-escape-yield/input.js:1:1]
  1 │ (function* () { y\u0069eld; })
-   ·                 ─────┬────
-   ·                      ╰── keyword cannot contain escape characters
+   ·                 ──────────
    ╰────
 
   × Generators can only be declared at the top level or inside a block
    ╭─[es2015/generators/invalid-hanging/input.js:1:1]
  1 │ if (1) function *foo() {}
-   ·        ───────┬───────
-   ·               ╰── Generators can only be declared at the top level or inside a block
+   ·        ───────────────
    ╰────
 
   × Invalid function declaration
@@ -2814,8 +2692,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Generators can only be declared at the top level or inside a block
    ╭─[es2015/generators/invalid-sloppy-function/input.js:1:1]
  1 │ while (1) function *foo() {}
-   ·           ───────┬───────
-   ·                  ╰── Generators can only be declared at the top level or inside a block
+   ·           ───────────────
    ╰────
 
   × Unexpected token
@@ -2835,8 +2712,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[es2015/identifiers/invalid-escape-seq-if/input.js:1:1]
  1 │ \u0069\u{66} (true) {}
-   · ──────┬─────
-   ·       ╰── keyword cannot contain escape characters
+   · ────────────
    ╰────
 
   × Unexpected token
@@ -2849,30 +2725,26 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[es2015/identifiers/invalid-escape-seq-null/input.js:1:1]
  1 │ nul\u{6c}
-   · ────┬────
-   ·     ╰── keyword cannot contain escape characters
+   · ─────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2015/identifiers/invalid-escape-seq-true/input.js:1:1]
  1 │ \u0074rue
-   · ────┬────
-   ·     ╰── keyword cannot contain escape characters
+   · ─────────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/let/invalid-escape/input.js:1:1]
  1 │ le\u0074 x = 5
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
   × Lexical declaration cannot appear in a single-statement context
    ╭─[es2015/let/let-array-with-newline/input.js:1:1]
  1 │ ╭─▶ do let
- 2 │ ├─▶ [x] = 0
-   · ╰──── Lexical declaration is not allowed here
+ 2 │ ╰─▶ [x] = 0
  3 │     while (false);
    ╰────
   help: Wrap this declaration in a block statement
@@ -2984,15 +2856,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[es2015/meta-properties/new-target-invalid-escaped-new/input.js:1:1]
  1 │ function f() { n\u0065w.target; }
-   ·                ────┬───
-   ·                    ╰── keyword cannot contain escape characters
+   ·                ────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2015/meta-properties/new-target-invalid-escaped-target/input.js:1:1]
  1 │ function f() { new.ta\u0072get; }
-   ·                    ─────┬─────
-   ·                         ╰── keyword cannot contain escape characters
+   ·                    ───────────
    ╰────
 
   × Unexpected new.target expression
@@ -3472,11 +3342,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │     return `<div class="bar">Hola</div>`;
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/modules/export-default-variable-declaration2/input.js:1:1]
  1 │ export default let Foo = () => {
-   ·                   ┬
-   ·                   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                   ─
  2 │     return `<div class="bar">Hola</div>`;
    ╰────
   help: Try insert a semicolon here
@@ -3509,15 +3378,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[es2015/modules/invalid-escape-export-as/input.js:1:1]
  1 │ export { X \u0061s Y }
-   ·            ───┬───
-   ·               ╰── keyword cannot contain escape characters
+   ·            ───────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2015/modules/invalid-escape-import-from/input.js:1:1]
  1 │ import X fro\u006d 'x'
-   ·          ────┬────
-   ·              ╰── keyword cannot contain escape characters
+   ·          ─────────
    ╰────
 
   × Unexpected token
@@ -3580,7 +3447,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/regex/duplicate-flags/input.js:1:1]
  1 │ /./gii;
    ·       ▲
-   ·       ╰── Flag i is mentioned twice in regular expression literal
    ╰────
 
   × The keyword 'implements' is reserved
@@ -3613,30 +3479,27 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid class declaration
    ╭─[es2015/statements/label-invalid-class/input.js:1:1]
  1 │ foo: class X {}
-   ·      ────┬───
-   ·          ╰── Classes can only be declared at top level or inside a block
+   ·      ────────
    ╰────
+  help: Classes can only be declared at top level or inside a block
 
   × Lexical declaration cannot appear in a single-statement context
    ╭─[es2015/statements/label-invalid-const/input.js:1:1]
  1 │ foo: const bar = null;
-   ·      ────────┬────────
-   ·              ╰── Lexical declaration is not allowed here
+   ·      ─────────────────
    ╰────
   help: Wrap this declaration in a block statement
 
   × Async functions can only be declared at the top level or inside a block
    ╭─[es2015/statements/label-invalid-func-async/input.js:1:1]
  1 │ foo: async function bar() {}
-   ·      ──────────┬─────────
-   ·                ╰── Async functions can only be declared at the top level or inside a block
+   ·      ────────────────────
    ╰────
 
   × Generators can only be declared at the top level or inside a block
    ╭─[es2015/statements/label-invalid-func-generator/input.js:1:1]
  1 │ foo: function* bar() {}
-   ·      ───────┬───────
-   ·             ╰── Generators can only be declared at the top level or inside a block
+   ·      ───────────────
    ╰────
 
   × Invalid function declaration
@@ -3646,19 +3509,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/statements/label-invalid-let/input.js:1:1]
  1 │ foo: let bar;
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
   × Bad escape sequence in untagged template literal
    ╭─[es2015/template/error-after-newline/input.js:1:1]
  1 │ ╭─▶ `
- 2 │ ├─▶ \u{12_34}
-   · ╰──── Bad escape sequence in untagged template literal
+ 2 │ ╰─▶ \u{12_34}
  3 │     `;
    ╰────
 
@@ -3671,15 +3532,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × A 'get' accessor must not have any formal parameters.
    ╭─[es2015/uncategorised/.345/input.js:1:1]
  1 │ class A { get prop(x) {} }
-   ·                   ─┬─
-   ·                    ╰── A 'get' accessor must not have any formal parameters.
+   ·                   ───
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
    ╭─[es2015/uncategorised/.346/input.js:1:1]
  1 │ class A { set prop() {} }
-   ·                   ─┬
-   ·                    ╰── A 'set' accessor must have exactly one parameter.
+   ·                   ──
    ╰────
 
   × for-of loop variable declaration may not have an initializer
@@ -3707,15 +3566,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Constructor can't have get/set modifier
    ╭─[es2015/uncategorised/126/input.js:1:1]
  1 │ class A { get constructor() {} }
-   ·               ─────┬─────
-   ·                    ╰── Constructor can't have get/set modifier
+   ·               ───────────
    ╰────
 
   × Constructor can't be a generator
    ╭─[es2015/uncategorised/127/input.js:1:1]
  1 │ class A { *constructor() {} }
-   ·            ─────┬─────
-   ·                 ╰── Constructor can't be a generator
+   ·            ───────────
    ╰────
 
   × Unexpected token
@@ -3740,22 +3597,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid characters after number
    ╭─[es2015/uncategorised/199/input.js:1:1]
  1 │ 0o1a
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `9`
    ╭─[es2015/uncategorised/200/input.js:1:1]
  1 │ 0o9
    ·   ▲
-   ·   ╰── Invalid Character `9`
    ╰────
 
   × Invalid characters after number
    ╭─[es2015/uncategorised/201/input.js:1:1]
  1 │ 0o18
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Unexpected end of file
@@ -3766,22 +3620,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid characters after number
    ╭─[es2015/uncategorised/203/input.js:1:1]
  1 │ 0O1a
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `9`
    ╭─[es2015/uncategorised/204/input.js:1:1]
  1 │ 0O9
    ·   ▲
-   ·   ╰── Invalid Character `9`
    ╰────
 
   × Invalid characters after number
    ╭─[es2015/uncategorised/205/input.js:1:1]
  1 │ 0O18
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Unexpected end of file
@@ -3792,29 +3643,25 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid characters after number
    ╭─[es2015/uncategorised/207/input.js:1:1]
  1 │ 0b1a
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `9`
    ╭─[es2015/uncategorised/208/input.js:1:1]
  1 │ 0b9
    ·   ▲
-   ·   ╰── Invalid Character `9`
    ╰────
 
   × Invalid characters after number
    ╭─[es2015/uncategorised/209/input.js:1:1]
  1 │ 0b18
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid characters after number
    ╭─[es2015/uncategorised/210/input.js:1:1]
  1 │ 0b12
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Unexpected end of file
@@ -3825,95 +3672,82 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid characters after number
    ╭─[es2015/uncategorised/212/input.js:1:1]
  1 │ 0B1a
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `9`
    ╭─[es2015/uncategorised/213/input.js:1:1]
  1 │ 0B9
    ·   ▲
-   ·   ╰── Invalid Character `9`
    ╰────
 
   × Invalid characters after number
    ╭─[es2015/uncategorised/214/input.js:1:1]
  1 │ 0B18
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid characters after number
    ╭─[es2015/uncategorised/215/input.js:1:1]
  1 │ 0B12
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid escape sequence
    ╭─[es2015/uncategorised/216/input.js:1:1]
  1 │ "\u{110000}"
-   ·  ────┬────
-   ·      ╰── Invalid escape sequence
+   ·  ─────────
    ╰────
 
   × Invalid escape sequence
    ╭─[es2015/uncategorised/217/input.js:1:1]
  1 │ "\u{}"
-   ·  ─┬─
-   ·   ╰── Invalid escape sequence
+   ·  ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es2015/uncategorised/218/input.js:1:1]
  1 │ "\u{FFFF"
-   ·  ───┬───
-   ·     ╰── Invalid escape sequence
+   ·  ───────
    ╰────
 
   × Invalid escape sequence
    ╭─[es2015/uncategorised/219/input.js:1:1]
  1 │ "\u{FFZ}"
-   ·  ──┬──
-   ·    ╰── Invalid escape sequence
+   ·  ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es2015/uncategorised/221/input.js:1:1]
  1 │ [2] = 42
-   ·  ┬
-   ·  ╰── Cannot assign to this expression
+   ·  ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es2015/uncategorised/222/input.js:1:1]
  1 │ ({ obj:20 } = 42)
-   ·        ─┬
-   ·         ╰── Cannot assign to this expression
+   ·        ──
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es2015/uncategorised/223/input.js:1:1]
  1 │ ({ get x() {} } = 0)
-   ·         ──┬──
-   ·           ╰── Cannot assign to this expression
+   ·         ─────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/224/input.js:1:1]
  1 │ x 
  2 │  is y
-   ·    ┬
-   ·    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·    ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/225/input.js:1:1]
  1 │ x 
  2 │  isnt y
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
    ╰────
   help: Try insert a semicolon here
 
@@ -4061,22 +3895,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/uncategorised/250/input.js:1:1]
  1 │ () <= 42
    ·  ▲
-   ·  ╰── Expected an expression here
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/251/input.js:1:1]
  1 │ (10) => 00
-   ·     ┬
-   ·     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·     ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/252/input.js:1:1]
  1 │ (10, 20) => 00
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
@@ -4104,8 +3935,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unterminated string
    ╭─[es2015/uncategorised/264/input.js:1:1]
  1 │ `test
-   · ──┬──
-   ·   ╰── Unterminated string
+   · ─────
    ╰────
 
   × Expect token
@@ -4155,8 +3985,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Rest element must be last element
    ╭─[es2015/uncategorised/277/input.js:1:1]
  1 │ function f(a, ...b, c) { }
-   ·               ──┬─
-   ·                 ╰── Rest element must be last element
+   ·               ────
    ╰────
 
   × Unexpected token
@@ -4184,15 +4013,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Rest element must be last element
    ╭─[es2015/uncategorised/283/input.js:1:1]
  1 │ (...a, b) => {}
-   ·  ──┬─
-   ·    ╰── Rest element must be last element
+   ·  ────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/284/input.js:1:1]
  1 │ ([ 5 ]) => {}
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
    ╰────
   help: Try insert a semicolon here
 
@@ -4217,8 +4044,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Bad escape sequence in untagged template literal
    ╭─[es2015/uncategorised/290/input.js:1:1]
  1 │ "use strict"; `${test}\02`;
-   ·                       ─┬─
-   ·                        ╰── Bad escape sequence in untagged template literal
+   ·                       ───
    ╰────
 
   × Cannot use import statement outside a module
@@ -4258,72 +4084,64 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/298/input.js:1:1]
  1 │ ({ get test() { } }) => 42
-   ·                     ┬
-   ·                     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                     ─
    ╰────
   help: Try insert a semicolon here
 
   × Missing initializer in destructuring declaration
    ╭─[es2015/uncategorised/324/input.js:1:1]
  1 │ let [x]
-   ·     ─┬─
-   ·      ╰── Missing initializer in destructuring declaration
+   ·     ───
    ╰────
 
   × Missing initializer in destructuring declaration
    ╭─[es2015/uncategorised/325/input.js:1:1]
  1 │ var [x]
-   ·     ─┬─
-   ·      ╰── Missing initializer in destructuring declaration
+   ·     ───
    ╰────
 
   × Invalid Character `𖫵`
    ╭─[es2015/uncategorised/326/input.js:1:1]
  1 │ var _𖫵 = 11;
-   ·      ┬
-   ·      ╰── Invalid Character `𖫵`
+   ·      ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/326/input.js:1:1]
  1 │ var _𖫵 = 11;
    ·      ▲
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
   × Invalid Character `𫠞`
    ╭─[es2015/uncategorised/327/input.js:1:1]
  1 │ var 𫠞_ = 12;
-   ·     ─┬
-   ·      ╰── Invalid Character `𫠞`
+   ·     ──
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/328/input.js:1:1]
  1 │ if (1) let x = 10;
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
    ╰────
   help: Try insert a semicolon here
 
   × Lexical declaration cannot appear in a single-statement context
    ╭─[es2015/uncategorised/329/input.js:1:1]
  1 │ for (;;) const x = 10;
-   ·          ──────┬──────
-   ·                ╰── Lexical declaration is not allowed here
+   ·          ─────────────
    ╰────
   help: Wrap this declaration in a block statement
 
   × Invalid class declaration
    ╭─[es2015/uncategorised/331/input.js:1:1]
  1 │ if (1) ; else class Cls {}
-   ·               ─────┬────
-   ·                    ╰── Classes can only be declared at top level or inside a block
+   ·               ──────────
    ╰────
+  help: Classes can only be declared at top level or inside a block
 
   × Cannot assign to 'eval' in strict mode
    ╭─[es2015/uncategorised/332/input.js:1:1]
@@ -4340,8 +4158,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Bad escape sequence in untagged template literal
    ╭─[es2015/uncategorised/339/input.js:1:1]
  1 │ `\07`
-   ·  ─┬─
-   ·   ╰── Bad escape sequence in untagged template literal
+   ·  ───
    ╰────
 
   × Unexpected token
@@ -4372,16 +4189,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × 'super' can only be used with function calls or in property accesses
    ╭─[es2015/uncategorised/344/input.js:1:1]
  1 │ super
-   · ──┬──
-   ·   ╰── 'super' can only be used with function calls or in property accesses 
+   · ─────
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
 
   × A 'set' accessor must have exactly one parameter.
    ╭─[es2015/uncategorised/347/input.js:1:1]
  1 │ class A { set prop(x, y) {} }
-   ·                   ───┬──
-   ·                      ╰── A 'set' accessor must have exactly one parameter.
+   ·                   ──────
    ╰────
 
   × Identifier `__proto__` has already been declared
@@ -4458,11 +4273,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/37/input.js:1:1]
  1 │ ([a.a]) => 42
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
    ╰────
   help: Try insert a semicolon here
 
@@ -4538,7 +4352,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2015/uncategorised/38/input.js:1:1]
  1 │ console.log(typeof () => {});
    ·                     ▲
-   ·                     ╰── Expected an expression here
    ╰────
 
   × Expect token
@@ -4563,8 +4376,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Expected function name
    ╭─[es2015/uncategorised/388/input.js:1:1]
  1 │ export function() {};
-   ·                ┬
-   ·                ╰── Function name is required here
+   ·                ─
    ╰────
   help: Function name is required in function declaration or named export
 
@@ -4587,11 +4399,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                  ╰── Expect `,` here, but found `:`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/395/input.js:1:1]
  1 │ ([a.a]) => 42
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
    ╰────
   help: Try insert a semicolon here
 
@@ -4745,12 +4556,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/yield/parameter-name-arrow-inside-generator-2/input.js:1:1]
  1 │ function* fn() {
  2 │   (yield fn) => {};
-   ·             ┬
-   ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·             ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -4902,19 +4712,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ };
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2016/simple-parameter-list/async-arrow-function-after-binary-operator/input.js:1:1]
  1 │ 3 + async() => 2
-   ·            ┬
-   ·            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·            ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2016/simple-parameter-list/async-arrow-function-after-unary-operator/input.js:1:1]
  1 │ delete async () => 3;
-   ·                ┬
-   ·                ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                ─
    ╰────
   help: Try insert a semicolon here
 
@@ -4990,59 +4798,52 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-array-pattern-nested-2/input.js:1:1]
  1 │ async ([(a) = []] = []) => {}
-   ·                        ┬
-   ·                        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                        ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-array-pattern-nested/input.js:1:1]
  1 │ async ([ [(a)] = [] ] = []) => {};
-   ·                            ┬
-   ·                            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                            ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-binding-identifier/input.js:1:1]
  1 │ var foo = async ((foo)) => {};
-   ·                        ┬
-   ·                        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                        ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-binding-member-expression/input.js:1:1]
  1 │ async ([(a.b) = []] = []) => {}
-   ·                          ┬
-   ·                          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                          ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-binding-pattern/input.js:1:1]
  1 │ var foo = async ([(foo)]) => {};
-   ·                          ┬
-   ·                          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                          ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-rest-array/input.js:1:1]
  1 │ var foo = async ([...(foo)]) => {};
-   ·                             ┬
-   ·                             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                             ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-rest-object/input.js:1:1]
  1 │ var foo = async ({...(foo)}) => {};
-   ·                             ┬
-   ·                             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                             ─
    ╰────
   help: Try insert a semicolon here
 
@@ -5068,12 +4869,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ╰── Expect `,` here, but found `?`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/10/input.js:1:1]
  1 │ var x = async
  2 │ (x) => x + 1;
-   ·    ┬
-   ·    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·    ─
    ╰────
   help: Try insert a semicolon here
 
@@ -5113,11 +4913,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·           ╰── Expect `(` here, but found `:`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/6/input.js:1:1]
  1 │ async () => {}()
    ·               ▲
-   ·               ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -5141,11 +4940,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ─────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/async-function-and-non-bmp-character/input.js:1:1]
  1 │ async function𝐬 f() {}
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
    ╰────
   help: Try insert a semicolon here
 
@@ -5233,20 +5031,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ─────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/export-invalid/input.js:1:1]
  1 │ export default async functionX () {}
-   ·                     ┬
-   ·                     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                     ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/invalid-await-with-object-exp-in-function/input.js:1:1]
  1 │ function foo() {
  2 │   await { foo };
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -5254,29 +5050,25 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-async-class-method/input.js:1:1]
  1 │ class X { \u0061sync x() { await x } }
-   ·           ─────┬────
-   ·                ╰── keyword cannot contain escape characters
+   ·           ──────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-async-obj-method/input.js:1:1]
  1 │ ({ \u0061sync x() { await x } })
-   ·    ─────┬────
-   ·         ╰── keyword cannot contain escape characters
+   ·    ──────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-async-static-class-method/input.js:1:1]
  1 │ class X { static \u0061sync x() { await x } }
-   ·                  ─────┬────
-   ·                       ╰── keyword cannot contain escape characters
+   ·                  ──────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-await/input.js:1:1]
  1 │ (async function() { aw\u0061it x })
-   ·                     ─────┬────
-   ·                          ╰── keyword cannot contain escape characters
+   ·                     ──────────
    ╰────
 
   × Cannot use export statement outside a module
@@ -5288,15 +5080,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-export-async-function/input.js:1:1]
  1 │ export \u0061sync function y() { await x }
-   ·        ─────┬────
-   ·             ╰── keyword cannot contain escape characters
+   ·        ──────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-export-dflt-async-function/input.js:1:1]
  1 │ export default \u0061sync function y() { await x }
-   ·                ─────┬────
-   ·                     ╰── keyword cannot contain escape characters
+   ·                ──────────
    ╰────
 
   × Expect token
@@ -5306,33 +5096,29 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·             ╰── Expect `,` here, but found `Identifier`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/invalid-escape-sequence-arrow/input.js:1:1]
  1 │ \u0061sync x => { await x }
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
    ╰────
   help: Try insert a semicolon here
 
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-sequence-function-list/input.js:1:1]
  1 │ (\u0061sync function() { await x })
-   ·  ─────┬────
-   ·       ╰── keyword cannot contain escape characters
+   ·  ──────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-sequence-function/input.js:1:1]
  1 │ \u0061sync function() { await x }
-   · ─────┬────
-   ·      ╰── keyword cannot contain escape characters
+   · ──────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-for-await-expression-init/input.js:1:1]
  1 │ for (await o\u0066 [0];;);
-   ·            ───┬───
-   ·               ╰── keyword cannot contain escape characters
+   ·            ───────
    ╰────
 
   × Expect token
@@ -5352,8 +5138,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Async functions can only be declared at the top level or inside a block
    ╭─[es2017/async-functions/invalid-generator-inside-loop/input.js:1:1]
  1 │ while (1) async function *foo(){}
-   ·           ──────────┬──────────
-   ·                     ╰── Async functions can only be declared at the top level or inside a block
+   ·           ─────────────────────
    ╰────
 
   × Invalid function declaration
@@ -5366,47 +5151,41 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Async functions can only be declared at the top level or inside a block
    ╭─[es2017/async-functions/invalid-inside-loop/input.js:1:1]
  1 │ while (1) async function foo(){}
-   ·           ──────────┬─────────
-   ·                     ╰── Async functions can only be declared at the top level or inside a block
+   ·           ────────────────────
    ╰────
 
   × Line terminator not permitted before arrow
    ╭─[es2017/async-functions/invalid-newline-after-params/input.js:1:1]
  1 │ async (x)
  2 │ => {}
-   · ─┬
-   ·  ╰── Line terminator not permitted before arrow
+   · ──
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/invalid-parens-async-arrow/input.js:1:1]
  1 │ (async)(a) => {}
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/invalid-parens-async-func/input.js:1:1]
  1 │ (async) function x (a) {}
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:1]
  1 │ async ({ x = [ await ], y = { await } }) => {}
-   ·                                         ┬
-   ·                                         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                                         ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/newline-before-arrow/input.js:1:1]
  1 │ async x
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
  2 │ => x
    ╰────
   help: Try insert a semicolon here
@@ -5415,16 +5194,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2017/async-functions/no-constructor/input.js:1:1]
  1 │ class A {
  2 │   async constructor() {}
-   ·         ─────┬─────
-   ·              ╰── Constructor can't be an async method
+   ·         ───────────
  3 │ }
    ╰────
 
   × Rest element must be last element
    ╭─[es2017/async-functions/params-invalid-rest-trailing-comma/input.js:1:1]
  1 │ async (...a,) => {};
-   ·        ──┬─
-   ·          ╰── Rest element must be last element
+   ·        ────
    ╰────
 
   × Unexpected token
@@ -5452,8 +5229,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2018/async-generators/for-await-async-of-arrow-semicolon/input.js:1:1]
  1 │ async function f() {
  2 │   for await (async of => {};;);
-   ·   ──────────────┬─────────────
-   ·                 ╰── await can only be used in conjunction with `for...of` statements
+   ·   ────────────────────────────
  3 │ }
    ╰────
 
@@ -5469,8 +5245,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2018/async-generators/for-await-no-in/input.js:1:1]
  1 │ async function f() {
  2 │   for await (let x in y);
-   ·   ───────────┬──────────
-   ·              ╰── await can only be used in conjunction with `for...of` statements
+   ·   ──────────────────────
  3 │ }
    ╰────
 
@@ -5478,8 +5253,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2018/async-generators/for-await-no-semi-1/input.js:1:1]
  1 │ async function f() {
  2 │   for await (;false;);
-   ·   ─────────┬─────────
-   ·            ╰── await can only be used in conjunction with `for...of` statements
+   ·   ───────────────────
  3 │ }
    ╰────
 
@@ -5487,8 +5261,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2018/async-generators/for-await-no-semi-2/input.js:1:1]
  1 │ async function f() {
  2 │   for await (let i = 0;false;);
-   ·   ──────────────┬─────────────
-   ·                 ╰── await can only be used in conjunction with `for...of` statements
+   ·   ────────────────────────────
  3 │ }
    ╰────
 
@@ -5496,8 +5269,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2018/async-generators/for-await-no-semi-3/input.js:1:1]
  1 │ async function f() {
  2 │   for await (x = 0;false;);
-   ·   ────────────┬───────────
-   ·               ╰── await can only be used in conjunction with `for...of` statements
+   ·   ────────────────────────
  3 │ }
    ╰────
 
@@ -5604,128 +5376,111 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid rest argument
    ╭─[es2018/object-rest-spread/16/input.js:1:1]
  1 │ var {...{z}} = { z: 1};
-   ·      ───┬──
-   ·         ╰── Invalid rest argument
+   ·      ──────
    ╰────
   help: Expected identifier in rest argument
 
   × Invalid rest argument
    ╭─[es2018/object-rest-spread/17/input.js:1:1]
  1 │ var { ...{ x = 5 } } = {x : 1};
-   ·       ──────┬─────
-   ·             ╰── Invalid rest argument
+   ·       ────────────
    ╰────
   help: Expected identifier in rest argument
 
   × Invalid rest argument
    ╭─[es2018/object-rest-spread/19/input.js:1:1]
  1 │ function test({...{}}) {}
-   ·                ──┬──
-   ·                  ╰── Invalid rest argument
+   ·                ─────
    ╰────
   help: Expected identifier in rest argument
 
   × Invalid rest argument
    ╭─[es2018/object-rest-spread/20/input.js:1:1]
  1 │ function test({...{a}}) {}
-   ·                ───┬──
-   ·                   ╰── Invalid rest argument
+   ·                ──────
    ╰────
   help: Expected identifier in rest argument
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es2018/object-rest-spread/21/input.js:1:1]
  1 │ ({...x = 1} = {})
-   ·      ──┬──
-   ·        ╰── Cannot assign to this expression
+   ·      ─────
    ╰────
 
   × Invalid rest argument
    ╭─[es2018/object-rest-spread/22/input.js:1:1]
  1 │ var {...x = 1} = {}
-   ·      ────┬───
-   ·          ╰── Invalid rest argument
+   ·      ────────
    ╰────
   help: Expected identifier in rest argument
 
   × Invalid rest argument
    ╭─[es2018/object-rest-spread/23/input.js:1:1]
  1 │ function test({...x = 1}) {}
-   ·                ────┬───
-   ·                    ╰── Invalid rest argument
+   ·                ────────
    ╰────
   help: Expected identifier in rest argument
 
   × Invalid rest argument
    ╭─[es2018/object-rest-spread/25/input.js:1:1]
  1 │ var {...[]} = {}
-   ·      ──┬──
-   ·        ╰── Invalid rest argument
+   ·      ─────
    ╰────
   help: Expected identifier in rest argument
 
   × Invalid rest argument
    ╭─[es2018/object-rest-spread/26/input.js:1:1]
  1 │ function test({...[]}) {}
-   ·                ──┬──
-   ·                  ╰── Invalid rest argument
+   ·                ─────
    ╰────
   help: Expected identifier in rest argument
 
   × Rest element must be last element
    ╭─[es2018/object-rest-spread/7/input.js:1:1]
  1 │ let { ...x, y, z } = obj;
-   ·       ──┬─
-   ·         ╰── Rest element must be last element
+   ·       ────
    ╰────
 
   × Rest element must be last element
    ╭─[es2018/object-rest-spread/8/input.js:1:1]
  1 │ let { x, y, ...z, } = obj;
-   ·             ──┬─
-   ·               ╰── Rest element must be last element
+   ·             ────
    ╰────
 
   × Rest element must be last element
    ╭─[es2018/object-rest-spread/9/input.js:1:1]
  1 │ let { x, ...y, ...z } = obj;
-   ·          ──┬─
-   ·            ╰── Rest element must be last element
+   ·          ────
    ╰────
 
   × Spread must be last element
    ╭─[es2018/object-rest-spread/expression-rest-not-last-invalid/input.js:1:1]
  1 │ ({...rest, b} = {})
-   ·   ───┬───
-   ·      ╰── Spread must be last element
+   ·   ───────
    ╰────
 
   × Invalid characters after number
    ╭─[es2020/bigint/invalid-decimal/input.js:1:1]
  1 │ 1.0n
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid characters after number
    ╭─[es2020/bigint/invalid-e/input.js:1:1]
  1 │ 2e9n
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid characters after number
    ╭─[es2020/bigint/invalid-non-octal-decimal-int/input.js:1:1]
  1 │ 089n
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid characters after number
    ╭─[es2020/bigint/invalid-octal-legacy/input.js:1:1]
  1 │ 016432n
-   ·       ┬
-   ·       ╰── Invalid characters after number
+   ·       ─
    ╰────
 
   × The only valid meta property for import is import.meta
@@ -5745,8 +5500,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Cannot use new with dynamic import
    ╭─[es2020/dynamic-import/invalid-new/input.js:1:1]
  1 │ new import("foo");
-   ·     ──────┬──────
-   ·           ╰── Cannot use new with dynamic import
+   ·     ─────────────
    ╰────
 
   × Expect token
@@ -5775,11 +5529,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ──────────────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es2020/import-meta/not-assignable/input.js:1:1]
  1 │ import.meta = true;
-   · ─────┬─────
-   ·      ╰── Cannot assign to this expression
+   · ───────────
    ╰────
 
   × Logical expressions and coalesce expressions cannot be mixed
@@ -5813,15 +5566,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Optional chaining cannot appear in the callee of new expressions
    ╭─[es2020/optional-chaining/class-contructor-call/input.js:1:1]
  1 │ new C?.b.d()
-   · ──────┬─────
-   ·       ╰── Optional chaining cannot appear in the callee of new expressions
+   · ────────────
    ╰────
 
   × Optional chaining cannot appear in the callee of new expressions
    ╭─[es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:1:1]
  1 │ new foo?.bar();
-   · ───────┬──────
-   ·        ╰── Optional chaining cannot appear in the callee of new expressions
+   · ──────────────
  2 │ new foo.bar?.();
    ╰────
 
@@ -5829,8 +5580,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:1:1]
  1 │ new foo?.bar();
  2 │ new foo.bar?.();
-   · ─────┬─────
-   ·      ╰── Optional chaining cannot appear in the callee of new expressions
+   · ───────────
  3 │ new foo?.[0];
    ╰────
 
@@ -5838,16 +5588,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-createParenthesizedExpressions-false/input.js:2:1]
  2 │ new foo.bar?.();
  3 │ new foo?.[0];
-   · ──────┬─────
-   ·       ╰── Optional chaining cannot appear in the callee of new expressions
+   · ────────────
  4 │ 
    ╰────
 
   × Optional chaining cannot appear in the callee of new expressions
    ╭─[es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:1:1]
  1 │ new foo?.bar();
-   · ───────┬──────
-   ·        ╰── Optional chaining cannot appear in the callee of new expressions
+   · ──────────────
  2 │ new foo.bar?.();
    ╰────
 
@@ -5855,8 +5603,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:1:1]
  1 │ new foo?.bar();
  2 │ new foo.bar?.();
-   · ─────┬─────
-   ·      ╰── Optional chaining cannot appear in the callee of new expressions
+   · ───────────
  3 │ new foo?.[0];
    ╰────
 
@@ -5864,16 +5611,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-createParenthesizedExpressions-true/input.js:2:1]
  2 │ new foo.bar?.();
  3 │ new foo?.[0];
-   · ──────┬─────
-   ·       ╰── Optional chaining cannot appear in the callee of new expressions
+   · ────────────
  4 │ 
    ╰────
 
   × Optional chaining cannot appear in the callee of new expressions
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:1:1]
  1 │ new foo?.bar();
-   · ───────┬──────
-   ·        ╰── Optional chaining cannot appear in the callee of new expressions
+   · ──────────────
  2 │ new foo.bar?.();
    ╰────
 
@@ -5881,8 +5626,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:1:1]
  1 │ new foo?.bar();
  2 │ new foo.bar?.();
-   · ─────┬─────
-   ·      ╰── Optional chaining cannot appear in the callee of new expressions
+   · ───────────
  3 │ new foo?.bar!()
    ╰────
 
@@ -5890,8 +5634,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:2:1]
  2 │ new foo.bar?.();
  3 │ new foo?.bar!()
-   · ───────┬───────
-   ·        ╰── Optional chaining cannot appear in the callee of new expressions
+   · ───────────────
  4 │ new foo?.[0];
    ╰────
 
@@ -5899,8 +5642,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:3:1]
  3 │ new foo?.bar!()
  4 │ new foo?.[0];
-   · ──────┬─────
-   ·       ╰── Optional chaining cannot appear in the callee of new expressions
+   · ────────────
  5 │ new foo?.bar![0];
    ╰────
 
@@ -5908,16 +5650,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-false/input.ts:4:1]
  4 │ new foo?.[0];
  5 │ new foo?.bar![0];
-   · ────────┬───────
-   ·         ╰── Optional chaining cannot appear in the callee of new expressions
+   · ────────────────
  6 │ 
    ╰────
 
   × Optional chaining cannot appear in the callee of new expressions
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:1:1]
  1 │ new foo?.bar();
-   · ───────┬──────
-   ·        ╰── Optional chaining cannot appear in the callee of new expressions
+   · ──────────────
  2 │ new foo.bar?.();
    ╰────
 
@@ -5925,8 +5665,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:1:1]
  1 │ new foo?.bar();
  2 │ new foo.bar?.();
-   · ─────┬─────
-   ·      ╰── Optional chaining cannot appear in the callee of new expressions
+   · ───────────
  3 │ new foo?.bar!()
    ╰────
 
@@ -5934,8 +5673,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:2:1]
  2 │ new foo.bar?.();
  3 │ new foo?.bar!()
-   · ───────┬───────
-   ·        ╰── Optional chaining cannot appear in the callee of new expressions
+   · ───────────────
  4 │ new foo?.[0];
    ╰────
 
@@ -5943,8 +5681,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:3:1]
  3 │ new foo?.bar!()
  4 │ new foo?.[0];
-   · ──────┬─────
-   ·       ╰── Optional chaining cannot appear in the callee of new expressions
+   · ────────────
  5 │ new foo?.bar![0];
    ╰────
 
@@ -5952,24 +5689,21 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/new-ts-createParenthesizedExpressions-true copy/input.ts:4:1]
  4 │ new foo?.[0];
  5 │ new foo?.bar![0];
-   · ────────┬───────
-   ·         ╰── Optional chaining cannot appear in the callee of new expressions
+   · ────────────────
  6 │ 
    ╰────
 
   × Optional chaining cannot appear in the callee of new expressions
    ╭─[es2020/optional-chaining/optional-constructor/input.js:1:1]
  1 │ new a?.();
-   · ──┬──
-   ·   ╰── Optional chaining cannot appear in the callee of new expressions
+   · ─────
    ╰────
 
   × 'super' can only be used with function calls or in property accesses
    ╭─[es2020/optional-chaining/optional-super-property-class/input.js:2:1]
  2 │     b(){
  3 │         return super?.b;
-   ·                ──┬──
-   ·                  ╰── 'super' can only be used with function calls or in property accesses 
+   ·                ─────
  4 │     }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
@@ -5978,8 +5712,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/optional-super-property/input.js:2:1]
  2 │     b(){
  3 │         return super?.c;
-   ·                ──┬──
-   ·                  ╰── 'super' can only be used with function calls or in property accesses 
+   ·                ─────
  4 │     }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
@@ -5987,8 +5720,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Tagged template expressions are not permitted in an optional chain
    ╭─[es2020/optional-chaining/optional-tagged-template-literals/input.js:1:1]
  1 │ a?.b`foo`
-   ·     ──┬──
-   ·       ╰── Tagged template expressions are not permitted in an optional chain
+   ·     ─────
    ╰────
 
   × Unexpected token
@@ -6001,8 +5733,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/for-async-of/forbidden-equals/input.js:2:1]
  2 │ // and finds "=" instead of "=>".
  3 │ for (async of = x);
-   ·      ──┬──
-   ·        ╰── The left-hand side of a `for...of` statement may not be `async`
+   ·      ─────
    ╰────
 
   × Unexpected token
@@ -6015,8 +5746,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × The left-hand side of a `for...of` statement may not be `async`
    ╭─[es2021/for-async-of/forbidden/input.js:1:1]
  1 │ for (async of x);
-   ·      ──┬──
-   ·        ╰── The left-hand side of a `for...of` statement may not be `async`
+   ·      ─────
  2 │ 
    ╰────
 
@@ -6024,8 +5754,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/for-async-of/forbidden/input.js:3:1]
  3 │ async () => {
  4 │   for (async of x);
-   ·        ──┬──
-   ·          ╰── The left-hand side of a `for...of` statement may not be `async`
+   ·        ─────
  5 │ }
    ╰────
 
@@ -6034,8 +5763,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/numeric-separator/invalid-0/input.js:1:1]
  1 │ 1_
    ·   ▲
-   ·   ╰── Invalid Character `
-`
    ╰────
 
   × Invalid Character `
@@ -6043,8 +5770,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/numeric-separator/invalid-1/input.js:1:1]
  1 │ 1_1_
    ·     ▲
-   ·     ╰── Invalid Character `
-`
    ╰────
 
   × Invalid Character `
@@ -6052,106 +5777,90 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/numeric-separator/invalid-10/input.js:1:1]
  1 │ 0x1_1_
    ·       ▲
-   ·       ╰── Invalid Character `
-`
    ╰────
 
   × Invalid Character `)`
    ╭─[es2021/numeric-separator/invalid-100/input.js:1:1]
  1 │ (1_)
    ·    ▲
-   ·    ╰── Invalid Character `)`
    ╰────
 
   × Invalid Character `)`
    ╭─[es2021/numeric-separator/invalid-101/input.js:1:1]
  1 │ (1_1_)
    ·      ▲
-   ·      ╰── Invalid Character `)`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-102/input.js:1:1]
  1 │ (1_1__)
    ·      ▲
-   ·      ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-102/input.js:1:1]
  1 │ (1_1__)
-   ·      ┬
-   ·      ╰── Invalid characters after number
+   ·      ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-103/input.js:1:1]
  1 │ (1__1)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-103/input.js:1:1]
  1 │ (1__1)
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `.`
    ╭─[es2021/numeric-separator/invalid-104/input.js:1:1]
  1 │ (1_1_.1_1)
    ·      ▲
-   ·      ╰── Invalid Character `.`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-105/input.js:1:1]
  1 │ (1_1._1_1)
-   ·      ┬
-   ·      ╰── Invalid characters after number
+   ·      ─
    ╰────
 
   × Invalid Character `e`
    ╭─[es2021/numeric-separator/invalid-106/input.js:1:1]
  1 │ (1_1.1_e1)
    ·        ▲
-   ·        ╰── Invalid Character `e`
    ╰────
 
   × Invalid Character `E`
    ╭─[es2021/numeric-separator/invalid-107/input.js:1:1]
  1 │ (1_1.1_E1)
    ·        ▲
-   ·        ╰── Invalid Character `E`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-108/input.js:1:1]
  1 │ (1_1.1e_1)
    ·        ▲
-   ·        ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-108/input.js:1:1]
  1 │ (1_1.1e_1)
-   ·        ┬
-   ·        ╰── Invalid characters after number
+   ·        ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-109/input.js:1:1]
  1 │ (1_1.1E_1)
    ·        ▲
-   ·        ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-109/input.js:1:1]
  1 │ (1_1.1E_1)
-   ·        ┬
-   ·        ╰── Invalid characters after number
+   ·        ─
    ╰────
 
   × Invalid Character `
@@ -6159,379 +5868,324 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/numeric-separator/invalid-11/input.js:1:1]
  1 │ 0xa_1_
    ·       ▲
-   ·       ╰── Invalid Character `
-`
    ╰────
 
   × Invalid Character `)`
    ╭─[es2021/numeric-separator/invalid-110/input.js:1:1]
  1 │ (0x1_1_)
    ·        ▲
-   ·        ╰── Invalid Character `)`
    ╰────
 
   × Invalid Character `)`
    ╭─[es2021/numeric-separator/invalid-111/input.js:1:1]
  1 │ (0xa_1_)
    ·        ▲
-   ·        ╰── Invalid Character `)`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-112/input.js:1:1]
  1 │ (0x_a_1)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-113/input.js:1:1]
  1 │ (0x__1_1_)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-114/input.js:1:1]
  1 │ (0x_1__1)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-115/input.js:1:1]
  1 │ (0x_1_1_)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-116/input.js:1:1]
  1 │ (0o_1_1)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-117/input.js:1:1]
  1 │ (0o_11)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-118/input.js:1:1]
  1 │ (0o_01_1_)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-119/input.js:1:1]
  1 │ (0b_0_1_1)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-12/input.js:1:1]
  1 │ 0x_a_1
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-120/input.js:1:1]
  1 │ (0b_01_1_)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `)`
    ╭─[es2021/numeric-separator/invalid-121/input.js:1:1]
  1 │ (0b01_1_)
    ·         ▲
-   ·         ╰── Invalid Character `)`
    ╰────
 
   × Invalid Character `)`
    ╭─[es2021/numeric-separator/invalid-122/input.js:1:1]
  1 │ (0o1_1_)
    ·        ▲
-   ·        ╰── Invalid Character `)`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-123/input.js:1:1]
  1 │ (0o_1_1_)
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `}`
    ╭─[es2021/numeric-separator/invalid-124/input.js:1:1]
  1 │ {1_}
    ·    ▲
-   ·    ╰── Invalid Character `}`
    ╰────
 
   × Invalid Character `}`
    ╭─[es2021/numeric-separator/invalid-125/input.js:1:1]
  1 │ {1_1_}
    ·      ▲
-   ·      ╰── Invalid Character `}`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-126/input.js:1:1]
  1 │ {1_1__}
    ·      ▲
-   ·      ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-126/input.js:1:1]
  1 │ {1_1__}
-   ·      ┬
-   ·      ╰── Invalid characters after number
+   ·      ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-127/input.js:1:1]
  1 │ {1__1}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-127/input.js:1:1]
  1 │ {1__1}
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `.`
    ╭─[es2021/numeric-separator/invalid-128/input.js:1:1]
  1 │ {1_1_.1_1}
    ·      ▲
-   ·      ╰── Invalid Character `.`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-129/input.js:1:1]
  1 │ {1_1._1_1}
-   ·      ┬
-   ·      ╰── Invalid characters after number
+   ·      ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-13/input.js:1:1]
  1 │ 0x__1_1_
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `e`
    ╭─[es2021/numeric-separator/invalid-130/input.js:1:1]
  1 │ {1_1.1_e1}
    ·        ▲
-   ·        ╰── Invalid Character `e`
    ╰────
 
   × Invalid Character `E`
    ╭─[es2021/numeric-separator/invalid-131/input.js:1:1]
  1 │ {1_1.1_E1}
    ·        ▲
-   ·        ╰── Invalid Character `E`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-132/input.js:1:1]
  1 │ {1_1.1e_1}
    ·        ▲
-   ·        ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-132/input.js:1:1]
  1 │ {1_1.1e_1}
-   ·        ┬
-   ·        ╰── Invalid characters after number
+   ·        ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-133/input.js:1:1]
  1 │ {1_1.1E_1}
    ·        ▲
-   ·        ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-133/input.js:1:1]
  1 │ {1_1.1E_1}
-   ·        ┬
-   ·        ╰── Invalid characters after number
+   ·        ─
    ╰────
 
   × Invalid Character `}`
    ╭─[es2021/numeric-separator/invalid-134/input.js:1:1]
  1 │ {0x1_1_}
    ·        ▲
-   ·        ╰── Invalid Character `}`
    ╰────
 
   × Invalid Character `}`
    ╭─[es2021/numeric-separator/invalid-135/input.js:1:1]
  1 │ {0xa_1_}
    ·        ▲
-   ·        ╰── Invalid Character `}`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-136/input.js:1:1]
  1 │ {0x_a_1}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-137/input.js:1:1]
  1 │ {0x__1_1_}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-138/input.js:1:1]
  1 │ {0x_1__1}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-139/input.js:1:1]
  1 │ {0x_1_1_}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-14/input.js:1:1]
  1 │ 0x_1__1
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-140/input.js:1:1]
  1 │ {0o_1_1}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-141/input.js:1:1]
  1 │ {0o_11}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-142/input.js:1:1]
  1 │ {0o_01_1_}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-143/input.js:1:1]
  1 │ {0b_0_1_1}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-144/input.js:1:1]
  1 │ {0b_01_1_}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `}`
    ╭─[es2021/numeric-separator/invalid-145/input.js:1:1]
  1 │ {0b01_1_}
    ·         ▲
-   ·         ╰── Invalid Character `}`
    ╰────
 
   × Invalid Character `}`
    ╭─[es2021/numeric-separator/invalid-146/input.js:1:1]
  1 │ {0o1_1_}
    ·        ▲
-   ·        ╰── Invalid Character `}`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-147/input.js:1:1]
  1 │ {0o_1_1_}
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-15/input.js:1:1]
  1 │ 0x_1_1_
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-16/input.js:1:1]
  1 │ 0o_1_1
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-17/input.js:1:1]
  1 │ 0o_11
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-18/input.js:1:1]
  1 │ 0o_01_1_
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-19/input.js:1:1]
  1 │ 0b_0_1_1
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-2/input.js:1:1]
  1 │ 1_1__
    ·     ▲
-   ·     ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-2/input.js:1:1]
  1 │ 1_1__
-   ·     ┬
-   ·     ╰── Invalid characters after number
+   ·     ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-20/input.js:1:1]
  1 │ 0b_01_1_
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `
@@ -6539,8 +6193,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/numeric-separator/invalid-21/input.js:1:1]
  1 │ 0b01_1_
    ·        ▲
-   ·        ╰── Invalid Character `
-`
    ╰────
 
   × Invalid Character `
@@ -6548,15 +6200,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/numeric-separator/invalid-22/input.js:1:1]
  1 │ 0o1_1_
    ·       ▲
-   ·       ╰── Invalid Character `
-`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-23/input.js:1:1]
  1 │ 0o_1_1_
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Unexpected token
@@ -6569,721 +6218,618 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/numeric-separator/invalid-25/input.js:1:1]
  1 │ 0o01_8
    ·      ▲
-   ·      ╰── Invalid Character `8`
    ╰────
 
   × Invalid Character `2`
    ╭─[es2021/numeric-separator/invalid-26/input.js:1:1]
  1 │ 0b2_1
    ·   ▲
-   ·   ╰── Invalid Character `2`
    ╰────
 
   × Invalid Character `Z`
    ╭─[es2021/numeric-separator/invalid-27/input.js:1:1]
  1 │ 0xZ_1
    ·   ▲
-   ·   ╰── Invalid Character `Z`
    ╰────
 
   × Invalid Character `;`
    ╭─[es2021/numeric-separator/invalid-28/input.js:1:1]
  1 │ 1_;
    ·   ▲
-   ·   ╰── Invalid Character `;`
    ╰────
 
   × Invalid Character `;`
    ╭─[es2021/numeric-separator/invalid-29/input.js:1:1]
  1 │ 1_1_;
    ·     ▲
-   ·     ╰── Invalid Character `;`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-3/input.js:1:1]
  1 │ 1__1
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-3/input.js:1:1]
  1 │ 1__1
-   ·   ┬
-   ·   ╰── Invalid characters after number
+   ·   ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-30/input.js:1:1]
  1 │ 1_1__;
    ·     ▲
-   ·     ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-30/input.js:1:1]
  1 │ 1_1__;
-   ·     ┬
-   ·     ╰── Invalid characters after number
+   ·     ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-31/input.js:1:1]
  1 │ 1__1;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-31/input.js:1:1]
  1 │ 1__1;
-   ·   ┬
-   ·   ╰── Invalid characters after number
+   ·   ─
    ╰────
 
   × Invalid Character `.`
    ╭─[es2021/numeric-separator/invalid-32/input.js:1:1]
  1 │ 1_1_.1_1;
    ·     ▲
-   ·     ╰── Invalid Character `.`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-33/input.js:1:1]
  1 │ 1_1._1_1;
-   ·     ┬
-   ·     ╰── Invalid characters after number
+   ·     ─
    ╰────
 
   × Invalid Character `e`
    ╭─[es2021/numeric-separator/invalid-34/input.js:1:1]
  1 │ 1_1.1_e1;
    ·       ▲
-   ·       ╰── Invalid Character `e`
    ╰────
 
   × Invalid Character `E`
    ╭─[es2021/numeric-separator/invalid-35/input.js:1:1]
  1 │ 1_1.1_E1;
    ·       ▲
-   ·       ╰── Invalid Character `E`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-36/input.js:1:1]
  1 │ 1_1.1e_1;
    ·       ▲
-   ·       ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-36/input.js:1:1]
  1 │ 1_1.1e_1;
-   ·       ┬
-   ·       ╰── Invalid characters after number
+   ·       ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-37/input.js:1:1]
  1 │ 1_1.1E_1;
    ·       ▲
-   ·       ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-37/input.js:1:1]
  1 │ 1_1.1E_1;
-   ·       ┬
-   ·       ╰── Invalid characters after number
+   ·       ─
    ╰────
 
   × Invalid Character `;`
    ╭─[es2021/numeric-separator/invalid-38/input.js:1:1]
  1 │ 0x1_1_;
    ·       ▲
-   ·       ╰── Invalid Character `;`
    ╰────
 
   × Invalid Character `;`
    ╭─[es2021/numeric-separator/invalid-39/input.js:1:1]
  1 │ 0xa_1_;
    ·       ▲
-   ·       ╰── Invalid Character `;`
    ╰────
 
   × Invalid Character `.`
    ╭─[es2021/numeric-separator/invalid-4/input.js:1:1]
  1 │ 1_1_.1_1
    ·     ▲
-   ·     ╰── Invalid Character `.`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-40/input.js:1:1]
  1 │ 0x_a_1;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-41/input.js:1:1]
  1 │ 0x__1_1_;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-42/input.js:1:1]
  1 │ 0x_1__1;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-43/input.js:1:1]
  1 │ 0x_1_1_;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-44/input.js:1:1]
  1 │ 0o_1_1;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-45/input.js:1:1]
  1 │ 0o_11;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-46/input.js:1:1]
  1 │ 0o_01_1_;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-47/input.js:1:1]
  1 │ 0b_0_1_1;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-48/input.js:1:1]
  1 │ 0b_01_1_;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `;`
    ╭─[es2021/numeric-separator/invalid-49/input.js:1:1]
  1 │ 0b01_1_;
    ·        ▲
-   ·        ╰── Invalid Character `;`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-5/input.js:1:1]
  1 │ 1_1._1_1
-   ·     ┬
-   ·     ╰── Invalid characters after number
+   ·     ─
    ╰────
 
   × Invalid Character `;`
    ╭─[es2021/numeric-separator/invalid-50/input.js:1:1]
  1 │ 0o1_1_;
    ·       ▲
-   ·       ╰── Invalid Character `;`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-51/input.js:1:1]
  1 │ 0o_1_1_;
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `,`
    ╭─[es2021/numeric-separator/invalid-52/input.js:1:1]
  1 │ 1_, 0
    ·   ▲
-   ·   ╰── Invalid Character `,`
    ╰────
 
   × Invalid Character `,`
    ╭─[es2021/numeric-separator/invalid-53/input.js:1:1]
  1 │ 1_1_, 0
    ·     ▲
-   ·     ╰── Invalid Character `,`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-54/input.js:1:1]
  1 │ 1_1__, 0
    ·     ▲
-   ·     ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-54/input.js:1:1]
  1 │ 1_1__, 0
-   ·     ┬
-   ·     ╰── Invalid characters after number
+   ·     ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-55/input.js:1:1]
  1 │ 1__1, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-55/input.js:1:1]
  1 │ 1__1, 0
-   ·   ┬
-   ·   ╰── Invalid characters after number
+   ·   ─
    ╰────
 
   × Invalid Character `.`
    ╭─[es2021/numeric-separator/invalid-56/input.js:1:1]
  1 │ 1_1_.1_1, 0
    ·     ▲
-   ·     ╰── Invalid Character `.`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-57/input.js:1:1]
  1 │ 1_1._1_1, 0
-   ·     ┬
-   ·     ╰── Invalid characters after number
+   ·     ─
    ╰────
 
   × Invalid Character `e`
    ╭─[es2021/numeric-separator/invalid-58/input.js:1:1]
  1 │ 1_1.1_e1, 0
    ·       ▲
-   ·       ╰── Invalid Character `e`
    ╰────
 
   × Invalid Character `E`
    ╭─[es2021/numeric-separator/invalid-59/input.js:1:1]
  1 │ 1_1.1_E1, 0
    ·       ▲
-   ·       ╰── Invalid Character `E`
    ╰────
 
   × Invalid Character `e`
    ╭─[es2021/numeric-separator/invalid-6/input.js:1:1]
  1 │ 1_1.1_e1
    ·       ▲
-   ·       ╰── Invalid Character `e`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-60/input.js:1:1]
  1 │ 1_1.1e_1, 0
    ·       ▲
-   ·       ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-60/input.js:1:1]
  1 │ 1_1.1e_1, 0
-   ·       ┬
-   ·       ╰── Invalid characters after number
+   ·       ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-61/input.js:1:1]
  1 │ 1_1.1E_1, 0
    ·       ▲
-   ·       ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-61/input.js:1:1]
  1 │ 1_1.1E_1, 0
-   ·       ┬
-   ·       ╰── Invalid characters after number
+   ·       ─
    ╰────
 
   × Invalid Character `,`
    ╭─[es2021/numeric-separator/invalid-62/input.js:1:1]
  1 │ 0x1_1_, 0
    ·       ▲
-   ·       ╰── Invalid Character `,`
    ╰────
 
   × Invalid Character `,`
    ╭─[es2021/numeric-separator/invalid-63/input.js:1:1]
  1 │ 0xa_1_, 0
    ·       ▲
-   ·       ╰── Invalid Character `,`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-64/input.js:1:1]
  1 │ 0x_a_1, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-65/input.js:1:1]
  1 │ 0x__1_1_, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-66/input.js:1:1]
  1 │ 0x_1__1, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-67/input.js:1:1]
  1 │ 0x_1_1_, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-68/input.js:1:1]
  1 │ 0o_1_1, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-69/input.js:1:1]
  1 │ 0o_11, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `E`
    ╭─[es2021/numeric-separator/invalid-7/input.js:1:1]
  1 │ 1_1.1_E1
    ·       ▲
-   ·       ╰── Invalid Character `E`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-70/input.js:1:1]
  1 │ 0o_01_1_, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-71/input.js:1:1]
  1 │ 0b_0_1_1, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-72/input.js:1:1]
  1 │ 0b_01_1_, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `,`
    ╭─[es2021/numeric-separator/invalid-73/input.js:1:1]
  1 │ 0b01_1_, 0
    ·        ▲
-   ·        ╰── Invalid Character `,`
    ╰────
 
   × Invalid Character `,`
    ╭─[es2021/numeric-separator/invalid-74/input.js:1:1]
  1 │ 0o1_1_, 0
    ·       ▲
-   ·       ╰── Invalid Character `,`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-75/input.js:1:1]
  1 │ 0o_1_1_, 0
    ·   ▲
-   ·   ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `]`
    ╭─[es2021/numeric-separator/invalid-76/input.js:1:1]
  1 │ [1_]
    ·    ▲
-   ·    ╰── Invalid Character `]`
    ╰────
 
   × Invalid Character `]`
    ╭─[es2021/numeric-separator/invalid-77/input.js:1:1]
  1 │ [1_1_]
    ·      ▲
-   ·      ╰── Invalid Character `]`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-78/input.js:1:1]
  1 │ [1_1__]
    ·      ▲
-   ·      ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-78/input.js:1:1]
  1 │ [1_1__]
-   ·      ┬
-   ·      ╰── Invalid characters after number
+   ·      ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-79/input.js:1:1]
  1 │ [1__1]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-79/input.js:1:1]
  1 │ [1__1]
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-8/input.js:1:1]
  1 │ 1_1.1e_1
    ·       ▲
-   ·       ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-8/input.js:1:1]
  1 │ 1_1.1e_1
-   ·       ┬
-   ·       ╰── Invalid characters after number
+   ·       ─
    ╰────
 
   × Invalid Character `.`
    ╭─[es2021/numeric-separator/invalid-80/input.js:1:1]
  1 │ [1_1_.1_1]
    ·      ▲
-   ·      ╰── Invalid Character `.`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-81/input.js:1:1]
  1 │ [1_1._1_1]
-   ·      ┬
-   ·      ╰── Invalid characters after number
+   ·      ─
    ╰────
 
   × Invalid Character `e`
    ╭─[es2021/numeric-separator/invalid-82/input.js:1:1]
  1 │ [1_1.1_e1]
    ·        ▲
-   ·        ╰── Invalid Character `e`
    ╰────
 
   × Invalid Character `E`
    ╭─[es2021/numeric-separator/invalid-83/input.js:1:1]
  1 │ [1_1.1_E1]
    ·        ▲
-   ·        ╰── Invalid Character `E`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-84/input.js:1:1]
  1 │ [1_1.1e_1]
    ·        ▲
-   ·        ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-84/input.js:1:1]
  1 │ [1_1.1e_1]
-   ·        ┬
-   ·        ╰── Invalid characters after number
+   ·        ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-85/input.js:1:1]
  1 │ [1_1.1E_1]
    ·        ▲
-   ·        ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-85/input.js:1:1]
  1 │ [1_1.1E_1]
-   ·        ┬
-   ·        ╰── Invalid characters after number
+   ·        ─
    ╰────
 
   × Invalid Character `]`
    ╭─[es2021/numeric-separator/invalid-86/input.js:1:1]
  1 │ [0x1_1_]
    ·        ▲
-   ·        ╰── Invalid Character `]`
    ╰────
 
   × Invalid Character `]`
    ╭─[es2021/numeric-separator/invalid-87/input.js:1:1]
  1 │ [0xa_1_]
    ·        ▲
-   ·        ╰── Invalid Character `]`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-88/input.js:1:1]
  1 │ [0x_a_1]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-89/input.js:1:1]
  1 │ [0x__1_1_]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-9/input.js:1:1]
  1 │ 1_1.1E_1
    ·       ▲
-   ·       ╰── Invalid Character `_`
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-9/input.js:1:1]
  1 │ 1_1.1E_1
-   ·       ┬
-   ·       ╰── Invalid characters after number
+   ·       ─
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-90/input.js:1:1]
  1 │ [0x_1__1]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-91/input.js:1:1]
  1 │ [0x_1_1_]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-92/input.js:1:1]
  1 │ [0o_1_1]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-93/input.js:1:1]
  1 │ [0o_11]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-94/input.js:1:1]
  1 │ [0o_01_1_]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-95/input.js:1:1]
  1 │ [0b_0_1_1]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-96/input.js:1:1]
  1 │ [0b_01_1_]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid Character `]`
    ╭─[es2021/numeric-separator/invalid-97/input.js:1:1]
  1 │ [0b01_1_]
    ·         ▲
-   ·         ╰── Invalid Character `]`
    ╰────
 
   × Invalid Character `]`
    ╭─[es2021/numeric-separator/invalid-98/input.js:1:1]
  1 │ [0o1_1_]
    ·        ▲
-   ·        ╰── Invalid Character `]`
    ╰────
 
   × Invalid Character `_`
    ╭─[es2021/numeric-separator/invalid-99/input.js:1:1]
  1 │ [0o_1_1_]
    ·    ▲
-   ·    ╰── Invalid Character `_`
    ╰────
 
   × Invalid escape sequence
    ╭─[es2021/numeric-separator/invalid-hex/input.js:1:1]
  1 │ "\x1_0";
-   ·  ─┬─
-   ·   ╰── Invalid escape sequence
+   ·  ───
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-leading-zero/input.js:1:1]
  1 │ 0_8
-   ·  ┬
-   ·  ╰── Invalid characters after number
+   ·  ─
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-legacy-octal-literal/input.js:1:1]
  1 │ 00_0
-   ·   ┬
-   ·   ╰── Invalid characters after number
+   ·   ─
    ╰────
 
   × Invalid characters after number
    ╭─[es2021/numeric-separator/invalid-non-octal-decimal-int/input.js:1:1]
  1 │ 08_0n
-   ·   ┬
-   ·   ╰── Invalid characters after number
+   ·   ─
    ╰────
 
   × Invalid escape sequence
    ╭─[es2021/numeric-separator/invalid-unicode-2/input.js:1:1]
  1 │ "\u12_34"
-   ·  ──┬─
-   ·    ╰── Invalid escape sequence
+   ·  ────
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[es2021/numeric-separator/invalid-unicode-3/input.js:1:1]
  1 │ \u{_0061};
-   ·  ─┬
-   ·   ╰── Invalid Unicode escape sequence
+   ·  ──
    ╰────
 
   × Unexpected token
@@ -7295,8 +6841,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Unicode escape sequence
    ╭─[es2021/numeric-separator/invalid-unicode-4/input.js:1:1]
  1 │ \u{00__61};
-   ·  ──┬─
-   ·    ╰── Invalid Unicode escape sequence
+   ·  ────
    ╰────
 
   × Unexpected token
@@ -7308,22 +6853,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Unicode escape sequence
    ╭─[es2021/numeric-separator/invalid-unicode-5/input.js:1:1]
  1 │ \u_0061;
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[es2021/numeric-separator/invalid-unicode-6/input.js:1:1]
  1 │ \u00__61;
-   ·  ─┬─
-   ·   ╰── Invalid Unicode escape sequence
+   ·  ───
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[es2021/numeric-separator/invalid-unicode-7/input.js:1:1]
  1 │ \u{0061_};
-   ·  ───┬──
-   ·     ╰── Invalid Unicode escape sequence
+   ·  ──────
    ╰────
 
   × Unexpected token
@@ -7335,15 +6877,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid escape sequence
    ╭─[es2021/numeric-separator/invalid-unicode/input.js:1:1]
  1 │ "\u{1F_639}"
-   ·  ──┬──
-   ·    ╰── Invalid escape sequence
+   ·  ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es2021/numeric-separator/template-with-invalid-numeric-separator-in-code-point/input.js:1:1]
  1 │ `abc\u{1000_0000}`;
-   ·  ────────┬───────
-   ·          ╰── Bad escape sequence in untagged template literal
+   ·  ────────────────
    ╰────
 
   × Identifier `x` has already been declared
@@ -7357,8 +6897,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected trailing comma after rest element
    ╭─[esprima/es2015-array-binding-pattern/.invalid-elision-after-rest/input.js:1:1]
  1 │ ([a,...b,])=>0;
-   ·         ┬
-   ·         ╰── Unexpected trailing comma after rest element
+   ·         ─
    ╰────
 
   × Identifier `b` has already been declared
@@ -7413,8 +6952,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Rest element must be last element
    ╭─[esprima/es2015-arrow-function/arrow-with-multiple-rest/input.js:1:1]
  1 │ (...a, ...b) => 0
-   ·  ──┬─
-   ·    ╰── Rest element must be last element
+   ·  ────
    ╰────
 
   × Identifier `a` has already been declared
@@ -7437,8 +6975,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/es2015-arrow-function/invalid-line-terminator-arrow/input.js:1:1]
  1 │ ()
  2 │ => 42
-   · ─┬
-   ·  ╰── Line terminator not permitted before arrow
+   · ──
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -7447,11 +6984,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-arrow-function/non-arrow-param-followed-by-arrow/input.js:1:1]
  1 │ ((a)) => 0
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
    ╰────
   help: Try insert a semicolon here
 
@@ -7461,27 +6997,24 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ───
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-arrow-function/object-binding-pattern-invalid-member-expr/input.js:1:1]
  1 │ ({a:b[0]})=>0
    ·           ▲
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-arrow-function/object-binding-pattern-invalid-method-in-pattern/input.js:1:1]
  1 │ ({get a(){}}) => 0;
-   ·              ┬
-   ·              ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·              ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-arrow-function/object-binding-pattern-invalid-nested-param/input.js:1:1]
  1 │ ([[[[[[[[[[[[[[[[[[[[{a:b[0]}]]]]]]]]]]]]]]]]]]]])=>0;
    ·                                                   ▲
-   ·                                                   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -7511,25 +7044,22 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·            ────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/es2015-destructuring-assignment-object-pattern/invalid-lhs-01/input.js:1:1]
  1 │ ({a:this}=0)
-   ·     ──┬─
-   ·       ╰── Cannot assign to this expression
+   ·     ────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/es2015-destructuring-assignment-object-pattern/invalid-lhs-02/input.js:1:1]
  1 │ ({a: this} = 0);
-   ·      ──┬─
-   ·        ╰── Cannot assign to this expression
+   ·      ────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/es2015-destructuring-assignment-object-pattern/invalid-pattern-with-method/input.js:1:1]
  1 │ ({a(){}}=0)
-   ·    ──┬─
-   ·      ╰── Cannot assign to this expression
+   ·    ────
    ╰────
 
   × Invalid assignment in object literal
@@ -7539,11 +7069,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/es2015-destructuring-assignment/invalid-group-assignment/input.js:1:1]
  1 │ (a,b)=(c,d);
-   ·  ─┬─
-   ·   ╰── Cannot assign to this expression
+   ·  ───
    ╰────
 
   × Expect token
@@ -7566,19 +7095,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-export-declaration/invalid-export-default-token/input.js:1:1]
  1 │ export {default} +
-   ·                 ┬
-   ·                 ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                 ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-export-declaration/invalid-export-default/input.js:1:1]
  1 │ export default from "foo"
-   ·                    ┬
-   ·                    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                    ─
    ╰────
   help: Try insert a semicolon here
 
@@ -7724,23 +7251,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Unicode escape sequence
    ╭─[esprima/es2015-identifier/.invalid_lone_surrogate/input.js:1:1]
  1 │ \uD800!
-   ·  ──┬──
-   ·    ╰── Invalid Unicode escape sequence
+   ·  ─────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-identifier/.invalid_lone_surrogate/input.js:1:1]
  1 │ \uD800!
    ·       ▲
-   ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
   × Invalid Unicode escape sequence
    ╭─[esprima/es2015-identifier/invalid_escaped_surrogate_pairs/input.js:1:1]
  1 │ var \uD83B\uDE00
-   ·      ─────┬─────
-   ·           ╰── Invalid Unicode escape sequence
+   ·      ───────────
    ╰────
 
   × Cannot use export statement outside a module
@@ -7752,8 +7276,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Character `🀒`
    ╭─[esprima/es2015-identifier/invalid_id_smp/input.js:1:1]
  1 │ var 🀒
-   ·     ┬
-   ·     ╰── Invalid Character `🀒`
+   ·     ─
    ╰────
 
   × Cannot use export statement outside a module
@@ -7810,11 +7333,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ╰── Expect `from` here, but found `EOF`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-import-declaration/invalid-import-module-specifier/input.js:1:1]
  1 │ export {foo} from bar
-   ·                  ┬
-   ·                  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                  ─
    ╰────
   help: Try insert a semicolon here
 
@@ -7862,8 +7384,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Missing initializer in destructuring declaration
    ╭─[esprima/es2015-lexical-declaration/invalid_complex_binding_without_init/input.js:1:1]
  1 │ let []
-   ·     ─┬
-   ·      ╰── Missing initializer in destructuring declaration
+   ·     ──
    ╰────
 
   × for-in loop variable declaration may not have an initializer
@@ -7985,8 +7506,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/es2015-super-property/.invalid_super_access/input.js:2:1]
  2 │     constructor() {
  3 │         (super)();
-   ·          ──┬──
-   ·            ╰── 'super' can only be used with function calls or in property accesses 
+   ·          ─────
  4 │     }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
@@ -8004,8 +7524,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/es2015-super-property/.invalid_super_id/input.js:1:1]
  1 │ class A {
  2 │     foo() { new super + 3 }
-   ·                 ──┬──
-   ·                   ╰── 'super' can only be used with function calls or in property accesses 
+   ·                 ─────
  3 │ }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
@@ -8020,15 +7539,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Bad escape sequence in untagged template literal
    ╭─[esprima/es2015-template-literals/.octal-literal/input.js:1:1]
  1 │ `\00`;
-   ·  ─┬─
-   ·   ╰── Bad escape sequence in untagged template literal
+   ·  ───
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[esprima/es2015-template-literals/.strict-octal-literal/input.js:1:1]
  1 │ 'use strict'; `\00`;
-   ·                ─┬─
-   ·                 ╰── Bad escape sequence in untagged template literal
+   ·                ───
    ╰────
 
   × Expect token
@@ -8041,8 +7558,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Bad escape sequence in untagged template literal
    ╭─[esprima/es2015-template-literals/invalid-escape/input.js:1:1]
  1 │ `\1`;
-   ·  ─┬
-   ·   ╰── Bad escape sequence in untagged template literal
+   ·  ──
    ╰────
 
   × Unexpected token
@@ -8061,8 +7577,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unterminated string
    ╭─[esprima/es2015-template-literals/unclosed/input.js:1:1]
  1 │ `test
-   · ───┬──
-   ·    ╰── Unterminated string
+   · ──────
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
@@ -8263,63 +7778,54 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/expression-primary-array/migrated_0012/input.js:1:1]
  1 │ \u2163\u2161\u200A
    ·                   ▲
-   ·                   ╰── Invalid Character ` `
    ╰────
 
   × Invalid escape sequence
    ╭─[esprima/invalid-syntax/GH-1106-00/input.js:1:1]
  1 │ "\x";
-   ·  ─┬
-   ·   ╰── Invalid escape sequence
+   ·  ──
    ╰────
 
   × Invalid escape sequence
    ╭─[esprima/invalid-syntax/GH-1106-01/input.js:1:1]
  1 │ "\x0";
-   ·  ─┬─
-   ·   ╰── Invalid escape sequence
+   ·  ───
    ╰────
 
   × Invalid escape sequence
    ╭─[esprima/invalid-syntax/GH-1106-02/input.js:1:1]
  1 │ "\xx";
-   ·  ─┬
-   ·   ╰── Invalid escape sequence
+   ·  ──
    ╰────
 
   × Invalid escape sequence
    ╭─[esprima/invalid-syntax/GH-1106-03/input.js:1:1]
  1 │ "\u";
-   ·  ─┬
-   ·   ╰── Invalid escape sequence
+   ·  ──
    ╰────
 
   × Invalid escape sequence
    ╭─[esprima/invalid-syntax/GH-1106-04/input.js:1:1]
  1 │ "\u0";
-   ·  ─┬─
-   ·   ╰── Invalid escape sequence
+   ·  ───
    ╰────
 
   × Invalid escape sequence
    ╭─[esprima/invalid-syntax/GH-1106-05/input.js:1:1]
  1 │ "\ux";
-   ·  ─┬
-   ·   ╰── Invalid escape sequence
+   ·  ──
    ╰────
 
   × Invalid escape sequence
    ╭─[esprima/invalid-syntax/GH-1106-06/input.js:1:1]
  1 │ "\u00";
-   ·  ──┬─
-   ·    ╰── Invalid escape sequence
+   ·  ────
    ╰────
 
   × Invalid escape sequence
    ╭─[esprima/invalid-syntax/GH-1106-07/input.js:1:1]
  1 │ "\u000";
-   ·  ──┬──
-   ·    ╰── Invalid escape sequence
+   ·  ─────
    ╰────
 
   × Expect token
@@ -8339,21 +7845,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0002/input.js:1:1]
  1 │ 3ea
    ·   ▲
-   ·   ╰── Invalid Character `a`
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0002/input.js:1:1]
  1 │ 3ea
-   ·   ┬
-   ·   ╰── Invalid characters after number
+   ·   ─
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0003/input.js:1:1]
  1 │ 3in []
-   ·  ─┬
-   ·   ╰── Invalid characters after number
+   ·  ──
    ╰────
 
   × Invalid Character `
@@ -8361,15 +7864,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0004/input.js:1:1]
  1 │ 3e
    ·   ▲
-   ·   ╰── Invalid Character `
-`
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[esprima/invalid-syntax/migrated_0004/input.js:1:1]
  1 │ 3e
-   · ─┬
-   ·  ╰── invalid float
+   · ──
    ╰────
 
   × Invalid Character `
@@ -8377,15 +7877,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0005/input.js:1:1]
  1 │ 3e+
    ·    ▲
-   ·    ╰── Invalid Character `
-`
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[esprima/invalid-syntax/migrated_0005/input.js:1:1]
  1 │ 3e+
-   · ─┬─
-   ·  ╰── invalid float
+   · ───
    ╰────
 
   × Invalid Character `
@@ -8393,29 +7890,24 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0006/input.js:1:1]
  1 │ 3e-
    ·    ▲
-   ·    ╰── Invalid Character `
-`
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[esprima/invalid-syntax/migrated_0006/input.js:1:1]
  1 │ 3e-
-   · ─┬─
-   ·  ╰── invalid float
+   · ───
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0007/input.js:1:1]
  1 │ 3x
-   ·  ┬
-   ·  ╰── Invalid characters after number
+   ·  ─
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0008/input.js:1:1]
  1 │ 3x0
-   ·  ┬
-   ·  ╰── Invalid characters after number
+   ·  ─
    ╰────
 
   × Invalid Character `
@@ -8423,22 +7915,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0009/input.js:1:1]
  1 │ 0x
    ·   ▲
-   ·   ╰── Invalid Character `
-`
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0010/input.js:1:1]
  1 │ 01a
-   ·   ┬
-   ·   ╰── Invalid characters after number
+   ·   ─
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0011/input.js:1:1]
  1 │ 0o1a
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `
@@ -8446,8 +7934,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0012/input.js:1:1]
  1 │ 0o
    ·   ▲
-   ·   ╰── Invalid Character `
-`
    ╰────
 
   × Invalid Character `
@@ -8455,29 +7941,24 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0013/input.js:1:1]
  1 │ 0O
    ·   ▲
-   ·   ╰── Invalid Character `
-`
    ╰────
 
   × Invalid Character `9`
    ╭─[esprima/invalid-syntax/migrated_0014/input.js:1:1]
  1 │ 0o9
    ·   ▲
-   ·   ╰── Invalid Character `9`
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0015/input.js:1:1]
  1 │ 0o18
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0016/input.js:1:1]
  1 │ 0O1a
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `
@@ -8485,36 +7966,30 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0017/input.js:1:1]
  1 │ 0b
    ·   ▲
-   ·   ╰── Invalid Character `
-`
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0018/input.js:1:1]
  1 │ 0b1a
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `9`
    ╭─[esprima/invalid-syntax/migrated_0019/input.js:1:1]
  1 │ 0b9
    ·   ▲
-   ·   ╰── Invalid Character `9`
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0020/input.js:1:1]
  1 │ 0b18
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0021/input.js:1:1]
  1 │ 0b12
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `
@@ -8522,217 +7997,186 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0022/input.js:1:1]
  1 │ 0B
    ·   ▲
-   ·   ╰── Invalid Character `
-`
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0023/input.js:1:1]
  1 │ 0B1a
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `9`
    ╭─[esprima/invalid-syntax/migrated_0024/input.js:1:1]
  1 │ 0B9
    ·   ▲
-   ·   ╰── Invalid Character `9`
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0025/input.js:1:1]
  1 │ 0B18
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0026/input.js:1:1]
  1 │ 0B12
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid Character `9`
    ╭─[esprima/invalid-syntax/migrated_0027/input.js:1:1]
  1 │ 0O9
    ·   ▲
-   ·   ╰── Invalid Character `9`
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0028/input.js:1:1]
  1 │ 0O18
-   ·    ┬
-   ·    ╰── Invalid characters after number
+   ·    ─
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0029/input.js:1:1]
  1 │ 3in[]
-   ·  ─┬
-   ·   ╰── Invalid characters after number
+   ·  ──
    ╰────
 
   × Invalid characters after number
    ╭─[esprima/invalid-syntax/migrated_0030/input.js:1:1]
  1 │ 0x3in[]
-   ·    ─┬
-   ·     ╰── Invalid characters after number
+   ·    ──
    ╰────
 
   × Unterminated string
    ╭─[esprima/invalid-syntax/migrated_0031/input.js:1:1]
  1 │ "Hello
-   · ───┬───
-   ·    ╰── Unterminated string
+   · ───────
  2 │ World"
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0032/input.js:1:1]
  1 │ x\
-   ·   ┬
-   ·   ╰── Invalid Unicode escape sequence
+   ·   ─
    ╰────
 
   × Invalid Character `\`
    ╭─[esprima/invalid-syntax/migrated_0033/input.js:1:1]
  1 │ x\u005c
    ·        ▲
-   ·        ╰── Invalid Character `\`
    ╰────
 
   × Invalid Character `*`
    ╭─[esprima/invalid-syntax/migrated_0034/input.js:1:1]
  1 │ x\u002a
    ·        ▲
-   ·        ╰── Invalid Character `*`
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0036/input.js:1:1]
  1 │ a\u
-   ·   ┬
-   ·   ╰── Invalid Unicode escape sequence
+   ·   ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0037/input.js:1:1]
  1 │ \ua
-   ·  ─┬
-   ·   ╰── Invalid Unicode escape sequence
+   ·  ──
    ╰────
 
   × Unterminated regular expression
    ╭─[esprima/invalid-syntax/migrated_0038/input.js:1:1]
  1 │ /
-   · ─┬
-   ·  ╰── Unterminated regular expression
+   · ──
    ╰────
 
   × Unterminated regular expression
    ╭─[esprima/invalid-syntax/migrated_0039/input.js:1:1]
  1 │ /test
-   · ───┬──
-   ·    ╰── Unterminated regular expression
+   · ──────
    ╰────
 
   × Unterminated regular expression
    ╭─[esprima/invalid-syntax/migrated_0040/input.js:1:1]
  1 │ /test
-   · ───┬──
-   ·    ╰── Unterminated regular expression
+   · ──────
  2 │ /
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0041/input.js:1:1]
  1 │ var x = /[a-z]/\ux
-   ·                 ┬
-   ·                 ╰── Invalid Unicode escape sequence
+   ·                 ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0041/input.js:1:1]
  1 │ var x = /[a-z]/\ux
    ·                ▲
-   ·                ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0042/input.js:1:1]
  1 │ var x = /[a-z\n]/\ux
-   ·                   ┬
-   ·                   ╰── Invalid Unicode escape sequence
+   ·                   ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0042/input.js:1:1]
  1 │ var x = /[a-z\n]/\ux
    ·                  ▲
-   ·                  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0043/input.js:1:1]
  1 │ var x = /[a-z]/\\ux
-   ·                 ┬
-   ·                 ╰── Invalid Unicode escape sequence
+   ·                 ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0043/input.js:1:1]
  1 │ var x = /[a-z]/\\ux
    ·                ▲
-   ·                ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0044/input.js:1:1]
  1 │ var x = /[P QR]/\\u0067
-   ·                  ┬
-   ·                  ╰── Invalid Unicode escape sequence
+   ·                  ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0044/input.js:1:1]
  1 │ var x = /[P QR]/\\u0067
    ·                 ▲
-   ·                 ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/invalid-syntax/migrated_0045/input.js:1:1]
  1 │ 3 = 4
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/invalid-syntax/migrated_0046/input.js:1:1]
  1 │ func() = 4
-   · ───┬──
-   ·    ╰── Cannot assign to this expression
+   · ──────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/invalid-syntax/migrated_0047/input.js:1:1]
  1 │ (1 + 1) = 10
-   ·  ──┬──
-   ·    ╰── Cannot assign to this expression
+   ·  ─────
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0048/input.js:1:1]
  1 │ \u{110000}
-   ·  ────┬───
-   ·      ╰── Invalid Unicode escape sequence
+   ·  ────────
    ╰────
 
   × Unexpected token
@@ -8744,8 +8188,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0049/input.js:1:1]
  1 │ \u{}
-   ·  ─┬
-   ·   ╰── Invalid Unicode escape sequence
+   ·  ──
    ╰────
 
   × Unexpected token
@@ -8757,15 +8200,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0050/input.js:1:1]
  1 │ \u{FFFF
-   ·  ───┬──
-   ·     ╰── Invalid Unicode escape sequence
+   ·  ──────
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0051/input.js:1:1]
  1 │ \u{FFZ}
-   ·  ──┬─
-   ·    ╰── Invalid Unicode escape sequence
+   ·  ────
    ╰────
 
   × Unexpected token
@@ -8774,32 +8215,28 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/invalid-syntax/migrated_0052/input.js:1:1]
  1 │ 1++
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/invalid-syntax/migrated_0053/input.js:1:1]
  1 │ 1--
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/invalid-syntax/migrated_0054/input.js:1:1]
  1 │ ++1
-   ·   ┬
-   ·   ╰── Cannot assign to this expression
+   ·   ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/invalid-syntax/migrated_0055/input.js:1:1]
  1 │ --1
-   ·   ┬
-   ·   ╰── Cannot assign to this expression
+   ·   ─
    ╰────
 
   × Unexpected token
@@ -8844,16 +8281,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unterminated regular expression
    ╭─[esprima/invalid-syntax/migrated_0062/input.js:1:1]
  1 │ var x = /
-   ·         ─┬
-   ·          ╰── Unterminated regular expression
+   ·         ──
  2 │ /
    ╰────
 
   × Unterminated string
    ╭─[esprima/invalid-syntax/migrated_0063/input.js:1:1]
  1 │ var x = "
-   ·         ─┬
-   ·          ╰── Unterminated string
+   ·         ──
    ╰────
 
   × Unexpected token
@@ -8866,29 +8301,25 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0065/input.js:1:1]
  1 │ i #= 42
    ·    ▲
-   ·    ╰── Invalid Character `=`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0065/input.js:1:1]
  1 │ i #= 42
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/invalid-syntax/migrated_0066/input.js:1:1]
  1 │ i + 2 = 42
-   · ──┬──
-   ·   ╰── Cannot assign to this expression
+   · ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[esprima/invalid-syntax/migrated_0067/input.js:1:1]
  1 │ +i = 42
-   · ─┬
-   ·  ╰── Cannot assign to this expression
+   · ──
    ╰────
 
   × Expect token
@@ -8912,19 +8343,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0071/input.js:1:1]
  1 │ { set 1 }
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0072/input.js:1:1]
  1 │ { get 2 }
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
    ╰────
   help: Try insert a semicolon here
 
@@ -8943,8 +8372,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × A 'set' accessor must have exactly one parameter.
    ╭─[esprima/invalid-syntax/migrated_0075/input.js:1:1]
  1 │ ({ set s() { } })
-   ·         ─┬
-   ·          ╰── A 'set' accessor must have exactly one parameter.
+   ·         ──
    ╰────
 
   × Expect token
@@ -9059,14 +8487,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0095/input.js:1:1]
  1 │ () <= 42
    ·  ▲
-   ·  ╰── Expected an expression here
    ╰────
 
   × Empty parenthesized expression
    ╭─[esprima/invalid-syntax/migrated_0096/input.js:1:1]
  1 │ () ? 42
    ·  ▲
-   ·  ╰── Expected an expression here
    ╰────
 
   × Expect token
@@ -9080,22 +8506,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0097/input.js:1:1]
  1 │ () + 42
    ·  ▲
-   ·  ╰── Expected an expression here
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0098/input.js:1:1]
  1 │ (10) => 00
-   ·     ┬
-   ·     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·     ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0099/input.js:1:1]
  1 │ (10, 20) => 00
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
@@ -9124,11 +8547,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·          ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0112/input.js:1:1]
  1 │ a b;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
@@ -9139,19 +8561,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·   ╰── Expect `(` here, but found `.`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0114/input.js:1:1]
  1 │ a if;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0115/input.js:1:1]
  1 │ a enum;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
@@ -9277,8 +8697,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Missing catch or finally clause
    ╭─[esprima/invalid-syntax/migrated_0133/input.js:1:1]
  1 │ try { }
-   ·        ┬
-   ·        ╰── Expected `catch` or `finally` here
+   ·        ─
    ╰────
 
   × Unexpected token
@@ -9304,43 +8723,37 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0137/input.js:1:1]
  1 │ \u203F = 10
    ·       ▲
-   ·       ╰── Invalid Character `‿`
    ╰────
 
   × Missing initializer in const declaration
    ╭─[esprima/invalid-syntax/migrated_0138/input.js:1:1]
  1 │ const x = 12, y;
-   ·               ┬
-   ·               ╰── const declaration need an initializer
+   ·               ─
    ╰────
 
   × Missing initializer in const declaration
    ╭─[esprima/invalid-syntax/migrated_0139/input.js:1:1]
  1 │ const x, y = 12;
-   ·       ┬
-   ·       ╰── const declaration need an initializer
+   ·       ─
    ╰────
 
   × Missing initializer in const declaration
    ╭─[esprima/invalid-syntax/migrated_0140/input.js:1:1]
  1 │ const x;
-   ·       ┬
-   ·       ╰── const declaration need an initializer
+   ·       ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0141/input.js:1:1]
  1 │ if(true) let a = 1;
-   ·             ┬
-   ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·             ─
    ╰────
   help: Try insert a semicolon here
 
   × Lexical declaration cannot appear in a single-statement context
    ╭─[esprima/invalid-syntax/migrated_0142/input.js:1:1]
  1 │ if(true) const a = 1;
-   ·          ──────┬─────
-   ·                ╰── Lexical declaration is not allowed here
+   ·          ────────────
    ╰────
   help: Wrap this declaration in a block statement
 
@@ -9361,44 +8774,38 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unterminated multiline comment
    ╭─[esprima/invalid-syntax/migrated_0145/input.js:1:1]
  1 │ /*
-   · ─┬─
-   ·  ╰── Unterminated multiline comment
+   · ───
    ╰────
 
   × Unterminated multiline comment
    ╭─[esprima/invalid-syntax/migrated_0146/input.js:1:1]
  1 │ /*
-   · ─┬─
-   ·  ╰── Unterminated multiline comment
+   · ───
    ╰────
 
   × Unterminated multiline comment
    ╭─[esprima/invalid-syntax/migrated_0147/input.js:1:1]
  1 │ /**
-   · ──┬─
-   ·   ╰── Unterminated multiline comment
+   · ────
    ╰────
 
   × Unterminated multiline comment
    ╭─[esprima/invalid-syntax/migrated_0148/input.js:1:1]
  1 │ ╭─▶ /*
  2 │ │   
- 3 │ ├─▶ *
-   · ╰──── Unterminated multiline comment
+ 3 │ ╰─▶ *
    ╰────
 
   × Unterminated multiline comment
    ╭─[esprima/invalid-syntax/migrated_0149/input.js:1:1]
  1 │ /*hello
-   · ────┬───
-   ·     ╰── Unterminated multiline comment
+   · ────────
    ╰────
 
   × Unterminated multiline comment
    ╭─[esprima/invalid-syntax/migrated_0150/input.js:1:1]
  1 │ /*hello  *
-   · ─────┬─────
-   ·      ╰── Unterminated multiline comment
+   · ───────────
    ╰────
 
   × Unexpected token
@@ -9441,8 +8848,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unterminated regular expression
    ╭─[esprima/invalid-syntax/migrated_0157/input.js:1:1]
  1 │ /a\
-   · ──┬─
-   ·   ╰── Unterminated regular expression
+   · ────
  2 │ /
    ╰────
 
@@ -9476,64 +8882,55 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0162/input.js:1:1]
  1 │ \
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Character `\`
    ╭─[esprima/invalid-syntax/migrated_0163/input.js:1:1]
  1 │ \u005c
    ·       ▲
-   ·       ╰── Invalid Character `\`
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/invalid-syntax/migrated_0164/input.js:1:1]
  1 │ \x
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Character ` `
    ╭─[esprima/invalid-syntax/migrated_0165/input.js:1:1]
  1 │ \u0000
    ·       ▲
-   ·       ╰── Invalid Character ` `
    ╰────
 
   × Invalid Character `‌`
    ╭─[esprima/invalid-syntax/migrated_0166/input.js:1:1]
  1 │ \u200C = []
    ·       ▲
-   ·       ╰── Invalid Character `‌`
    ╰────
 
   × Invalid Character `‍`
    ╭─[esprima/invalid-syntax/migrated_0167/input.js:1:1]
  1 │ \u200D = []
    ·       ▲
-   ·       ╰── Invalid Character `‍`
    ╰────
 
   × Unterminated string
    ╭─[esprima/invalid-syntax/migrated_0168/input.js:1:1]
  1 │ "\
-   · ─┬─
-   ·  ╰── Unterminated string
+   · ───
    ╰────
 
   × Invalid escape sequence
    ╭─[esprima/invalid-syntax/migrated_0169/input.js:1:1]
  1 │ "\u
-   ·  ─┬
-   ·   ╰── Invalid escape sequence
+   ·  ──
    ╰────
 
   × Unterminated string
    ╭─[esprima/invalid-syntax/migrated_0169/input.js:1:1]
  1 │ "\u
-   · ──┬─
-   ·   ╰── Unterminated string
+   · ────
    ╰────
 
   × Unexpected token
@@ -9545,8 +8942,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[esprima/invalid-syntax/migrated_0171/input.js:1:1]
  1 │ return
-   · ───┬──
-   ·    ╰── A 'return' statement can only be used within a function body.
+   · ──────
    ╰────
 
   × Illegal break statement
@@ -10076,19 +9472,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ╰── Expect `}` here, but found `EOF`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0257/input.js:1:1]
  1 │ 'use strict'; a package
-   ·                ┬
-   ·                ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                ─
    ╰────
   help: Try insert a semicolon here
 
   × Rest element must be last element
    ╭─[esprima/invalid-syntax/migrated_0258/input.js:1:1]
  1 │ function f(a, ...b, c){}
-   ·               ──┬─
-   ·                 ╰── Rest element must be last element
+   ·               ────
    ╰────
 
   × A rest parameter cannot have an initializer
@@ -10146,11 +9540,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ╰── Expect `{` here, but found `;`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0268/input.js:1:1]
  1 │ class A {a:0}
    ·           ▲
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -10163,29 +9556,25 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Classes may not have a static property named prototype
    ╭─[esprima/invalid-syntax/migrated_0270/input.js:1:1]
  1 │ class A {static prototype(){}}
-   ·                 ────┬────
-   ·                     ╰── Classes may not have a static property named prototype
+   ·                 ─────────
    ╰────
 
   × Classes may not have a static property named prototype
    ╭─[esprima/invalid-syntax/migrated_0271/input.js:1:1]
  1 │ class A {static "prototype"(){}}
-   ·                 ─────┬─────
-   ·                      ╰── Classes may not have a static property named prototype
+   ·                 ───────────
    ╰────
 
   × Constructor can't have get/set modifier
    ╭─[esprima/invalid-syntax/migrated_0272/input.js:1:1]
  1 │ class A {get constructor(){}}
-   ·              ─────┬─────
-   ·                   ╰── Constructor can't have get/set modifier
+   ·              ───────────
    ╰────
 
   × Constructor can't have get/set modifier
    ╭─[esprima/invalid-syntax/migrated_0273/input.js:1:1]
  1 │ class A {set constructor(m){}}
-   ·              ─────┬─────
-   ·                   ╰── Constructor can't have get/set modifier
+   ·              ───────────
    ╰────
 
   × Multiple constructor implementations are not allowed.
@@ -10196,19 +9585,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·               ╰── constructor has already been declared here
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0275/input.js:1:1]
  1 │ class A {a static(){}}
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0276/input.js:1:1]
  1 │ class A {static static static(){}}
-   ·                       ┬
-   ·                       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                       ─
    ╰────
   help: Try insert a semicolon here
 
@@ -10227,50 +9614,43 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × A 'set' accessor function argument must not be a rest parameter
    ╭─[esprima/rest-parameter/invalid-setter-rest/input.js:1:1]
  1 │ x = { set f(...y) {} }
-   ·             ──┬─
-   ·               ╰── A 'set' accessor function argument must not be a rest parameter
+   ·             ────
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/statement-expression/migrated_0002/input.js:1:1]
  1 │ \\u0061
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/statement-expression/migrated_0003/input.js:1:1]
  1 │ a\\u0061
-   ·   ┬
-   ·   ╰── Invalid Unicode escape sequence
+   ·   ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/statement-expression/migrated_0004/input.js:1:1]
  1 │ \\u0061a
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[esprima/statement-expression/migrated_0005/input.js:1:1]
  1 │ \\u0061a 
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Missing initializer in destructuring declaration
    ╭─[esprima/statement-variable/complex-pattern-requires-init/input.js:1:1]
  1 │ var []
-   ·     ─┬
-   ·      ╰── Missing initializer in destructuring declaration
+   ·     ──
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
  1 │ `\1`;
-   ·  ─┬
-   ·   ╰── Bad escape sequence in untagged template literal
+   ·  ──
  2 │ `\1${x}\2${y}\3`;
    ╰────
 
@@ -10278,31 +9658,27 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
-   ·  ─┬
-   ·   ╰── Bad escape sequence in untagged template literal
+   ·  ──
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
-   ·        ─┬
-   ·         ╰── Bad escape sequence in untagged template literal
+   ·        ──
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
-   ·              ─┬
-   ·               ╰── Bad escape sequence in untagged template literal
+   ·              ──
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
-   ·  ──┬──
-   ·    ╰── Bad escape sequence in untagged template literal
+   ·  ─────
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ╰────
 
@@ -10310,31 +9686,27 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
-   ·  ──┬──
-   ·    ╰── Bad escape sequence in untagged template literal
+   ·  ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
-   ·           ──┬──
-   ·             ╰── Bad escape sequence in untagged template literal
+   ·           ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
-   ·                    ──┬──
-   ·                      ╰── Bad escape sequence in untagged template literal
+   ·                    ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string/invalid-octal/input.js:1:1]
  1 │ `\1`;
-   ·  ─┬
-   ·   ╰── Bad escape sequence in untagged template literal
+   ·  ──
  2 │ `\1${x}\2${y}\3`;
    ╰────
 
@@ -10342,31 +9714,27 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[tokens/template-string/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
-   ·  ─┬
-   ·   ╰── Bad escape sequence in untagged template literal
+   ·  ──
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
-   ·        ─┬
-   ·         ╰── Bad escape sequence in untagged template literal
+   ·        ──
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
-   ·              ─┬
-   ·               ╰── Bad escape sequence in untagged template literal
+   ·              ──
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
-   ·  ──┬──
-   ·    ╰── Bad escape sequence in untagged template literal
+   ·  ─────
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ╰────
 
@@ -10374,24 +9742,21 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
-   ·  ──┬──
-   ·    ╰── Bad escape sequence in untagged template literal
+   ·  ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
-   ·           ──┬──
-   ·             ╰── Bad escape sequence in untagged template literal
+   ·           ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
-   ·                    ──┬──
-   ·                      ╰── Bad escape sequence in untagged template literal
+   ·                    ─────
    ╰────
 
   × Expect token
@@ -10401,11 +9766,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                            ╰── Expect `:` here, but found `;`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/arrow-function/async-arrow-function-after-binary-operator/input.ts:1:1]
  1 │ 4 + async<number>() => 2 
-   ·                    ┬
-   ·                    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                    ─
    ╰────
   help: Try insert a semicolon here
 
@@ -10419,15 +9783,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[typescript/assert-predicate/invalid-escaped-asserts-keyword/input.ts:1:1]
  1 │ declare function assertIsString(value: unknown): \u{61}sserts value;
-   ·                                                  ──────┬─────
-   ·                                                        ╰── keyword cannot contain escape characters
+   ·                                                  ────────────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[typescript/assign/parenthesized-object-assign/input.ts:1:1]
  1 │ ({}) = x
-   · ──┬─
-   ·   ╰── Cannot assign to this expression
+   · ────
    ╰────
 
   × Expect token
@@ -10437,35 +9799,31 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·         ╰── Expect `=>` here, but found `EOF`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/arrow-async-parameter-as/input.ts:1:1]
  1 │ async (a as T) => {};
-   ·               ┬
-   ·               ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·               ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/arrow-async-parameter-assertion/input.ts:1:1]
  1 │ async (<T> a) => {};
-   ·              ┬
-   ·              ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·              ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/arrow-parameter-as/input.ts:1:1]
  1 │ (a as T) => {};
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/arrow-parameter-assertion/input.ts:1:1]
  1 │ (<T> a) => {};
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
    ╰────
   help: Try insert a semicolon here
 
@@ -10477,11 +9835,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ (a:b,c:d);
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/null-assertion-invalid-arrow-param/input.ts:1:1]
  1 │ (a!) => b;
-   ·     ┬
-   ·     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·     ─
  2 │ (a! = b) => c;
    ╰────
   help: Try insert a semicolon here
@@ -10494,19 +9851,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ func<T>(a: T);
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/satisfies-const-error/input.ts:1:1]
  1 │ x satisfies const
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/class/declare-new-line-abstract/input.ts:1:1]
  1 │ declare abstract
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  2 │ class A {}
    ╰────
   help: Try insert a semicolon here
@@ -10557,12 +9912,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │   }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/class/optional-async-error/input.js:2:1]
  2 │ class A extends B {
  3 │     async? method(val: string): Promise<void>;
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
  4 │ }
    ╰────
   help: Try insert a semicolon here
@@ -10578,23 +9932,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Missing initializer in const declaration
    ╭─[typescript/const/no-initializer/input.ts:1:1]
  1 │ const x: number;
-   ·       ┬
-   ·       ╰── const declaration need an initializer
+   ·       ─
    ╰────
 
   × Missing initializer in const declaration
    ╭─[typescript/const/reserved-word/input.ts:1:1]
  1 │ const b: const;
-   ·       ┬
-   ·       ╰── const declaration need an initializer
+   ·       ─
    ╰────
 
   × Missing initializer in destructuring declaration
    ╭─[typescript/declare/destructure-new-line/input.ts:1:1]
  1 │ declare
  2 │ const { x, y }: { x: number, y: number };
-   ·       ────┬───
-   ·           ╰── Missing initializer in destructuring declaration
+   ·       ────────
    ╰────
 
   × Unexpected exponentiation expression
@@ -10617,11 +9968,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ───
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/interface/declare-new-line/input.ts:1:1]
  1 │ declare interface
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  2 │ I
    ╰────
   help: Try insert a semicolon here
@@ -10636,8 +9986,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[typescript/interface/get-set-invalid-parameters-babel-7/input.ts:1:1]
  1 │ interface Foo {
  2 │   get foo(param): string;
-   ·          ───┬───
-   ·             ╰── A 'get' accessor must not have any formal parameters.
+   ·          ───────
  3 │   set foo();
    ╰────
 
@@ -10645,8 +9994,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[typescript/interface/get-set-invalid-parameters-babel-7/input.ts:2:1]
  2 │   get foo(param): string;
  3 │   set foo();
-   ·          ─┬
-   ·           ╰── A 'set' accessor must have exactly one parameter.
+   ·          ──
  4 │ }
    ╰────
 
@@ -10654,8 +10002,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[typescript/interface/get-set-invalid-parameters/input.ts:1:1]
  1 │ interface Foo {
  2 │   get foo(param): string;
-   ·          ───┬───
-   ·             ╰── A 'get' accessor must not have any formal parameters.
+   ·          ───────
  3 │   set foo();
    ╰────
 
@@ -10663,8 +10010,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[typescript/interface/get-set-invalid-parameters/input.ts:2:1]
  2 │   get foo(param): string;
  3 │   set foo();
-   ·          ─┬
-   ·           ╰── A 'set' accessor must have exactly one parameter.
+   ·          ──
  4 │ }
    ╰────
 
@@ -10672,8 +10018,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[typescript/interface/get-set-invalid-return-types-babel-7/input.ts:1:1]
  1 │ interface Foo {
  2 │   set foo(param): string;
-   ·                 ────┬───
-   ·                     ╰── A 'set' accessor cannot have a return type annotation
+   ·                 ────────
  3 │ }
    ╰────
 
@@ -10681,8 +10026,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[typescript/interface/get-set-invalid-return-types/input.ts:1:1]
  1 │ interface Foo {
  2 │   set foo(param): string;
-   ·                 ────┬───
-   ·                     ╰── A 'set' accessor cannot have a return type annotation
+   ·                 ────────
  3 │ }
    ╰────
 
@@ -10690,8 +10034,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[typescript/interface/get-set-invalid-this-parameters-babel-7/input.ts:2:1]
  2 │   get bar(this: Foo);
  3 │   set bar(this: Foo);
-   ·          ─────┬─────
-   ·               ╰── A 'set' accessor must have exactly one parameter.
+   ·          ───────────
  4 │ }
    ╰────
 
@@ -10699,8 +10042,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[typescript/interface/get-set-invalid-this-parameters/input.ts:2:1]
  2 │   get bar(this: Foo);
  3 │   set bar(this: Foo);
-   ·          ─────┬─────
-   ·               ╰── A 'set' accessor must have exactly one parameter.
+   ·          ───────────
  4 │ }
    ╰────
 
@@ -10722,21 +10064,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │   set bar<T>(v);
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/interface/invalid-abstract-interface/input.ts:1:1]
  1 │ abstract interface
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
  2 │ Foo {}
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/interface/new-line-error/input.ts:1:1]
  1 │ interface
  2 │ F {}
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
@@ -10747,41 +10087,37 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ F
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/module-namespace/module-declare-new-line/input.ts:5:1]
  5 │ 
  6 │ declare module
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  7 │ 'bar'
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/module-namespace/module-new-line-error/input.ts:1:1]
  1 │ module
  2 │ Foo {}
-   ·    ┬
-   ·    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·    ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/module-namespace/namespace-declare-new-line/input.ts:5:1]
  5 │ 
  6 │ declare namespace
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  7 │ barbar
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/module-namespace/namespace-new-line-error/input.ts:1:1]
  1 │ namespace
  2 │ Foo {}
-   ·    ┬
-   ·    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·    ─
    ╰────
   help: Try insert a semicolon here
 
@@ -10803,72 +10139,65 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ╰── It can not be redeclared here
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-private-02/input.ts:1:1]
  1 │ class Foo {
  2 │   static private {}
-   ·                 ┬
-   ·                 ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                 ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-protected-02/input.ts:1:1]
  1 │ class Foo {
  2 │   static protected {}
-   ·                   ┬
-   ·                   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                   ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-public-02/input.ts:1:1]
  1 │ class Foo {
  2 │   static public {}
-   ·                ┬
-   ·                ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/static-blocks/invalid-static-block-with-modifier-abstract-02/input.ts:1:1]
  1 │ class Foo {
  2 │   static abstract {}
-   ·                  ┬
-   ·                  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                  ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/static-blocks/invalid-static-block-with-modifier-override-02/input.ts:1:1]
  1 │ class Foo {
  2 │   static override {}
-   ·                  ┬
-   ·                  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                  ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/static-blocks/invalid-static-blocks-with-modifer-declare-02/input.ts:1:1]
  1 │ class Foo {
  2 │   static declare {}
-   ·                 ┬
-   ·                 ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                 ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-02/input.ts:1:1]
  1 │ class Foo {
  2 │   static readonly {}
-   ·                  ┬
-   ·                  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                  ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -10889,11 +10218,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  4 │   );
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/type-alias/declare-new-line/input.ts:1:1]
  1 │ declare type
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  2 │ T = number
    ╰────
   help: Try insert a semicolon here
@@ -10914,15 +10242,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[typescript/type-only-import-export-specifiers/expport-invalid-escaped-type-only/input.ts:1:1]
  1 │ export { typ\u0065 as } from "x";
-   ·          ────┬────
-   ·              ╰── keyword cannot contain escape characters
+   ·          ─────────
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[typescript/type-only-import-export-specifiers/import-invalid-escaped-type-only/input.ts:1:1]
  1 │ import { typ\u0065 as } from "x";
-   ·          ────┬────
-   ·              ╰── keyword cannot contain escape characters
+   ·          ─────────
    ╰────
 
   × Unexpected token
@@ -10992,8 +10318,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Keywords cannot contain escape characters
    ╭─[typescript/types/import-type-escaped-error/input.ts:1:1]
  1 │ import typ\u{65} typescript from "typescript";
-   ·        ────┬────
-   ·            ╰── keyword cannot contain escape characters
+   ·        ─────────
    ╰────
 
   × Unexpected token

@@ -1869,23 +1869,21 @@ Expect to Parse: "async/es6/asyncWithVarShadowing_es6.ts"
      ╰────
 Expect to Parse: "classes/propertyMemberDeclarations/autoAccessor4.ts"
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[classes/propertyMemberDeclarations/autoAccessor4.ts:4:1]
  4 │ class C1 {
  5 │     accessor 0: any;
-   ·             ┬
-   ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·             ─
  6 │     accessor 1 = 1;
    ╰────
   help: Try insert a semicolon here
 Expect to Parse: "classes/propertyMemberDeclarations/autoAccessorAllowedModifiers.ts"
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[classes/propertyMemberDeclarations/autoAccessorAllowedModifiers.ts:15:1]
  15 │     accessor "k": any;
  16 │     accessor 108: any;
-    ·             ┬
-    ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·             ─
  17 │     accessor ["m"]: any;
     ╰────
   help: Try insert a semicolon here
@@ -1895,8 +1893,7 @@ Expect to Parse: "classes/propertyMemberDeclarations/staticPropertyNameConflicts
     ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflictsInAmbientContext.ts:26:1]
  26 │ declare class StaticPrototype {
  27 │     static prototype: number; // ok
-    ·            ────┬────
-    ·                ╰── Classes may not have a static property named prototype
+    ·            ─────────
  28 │     prototype: string; // ok
     ╰────
 
@@ -1904,8 +1901,7 @@ Expect to Parse: "classes/propertyMemberDeclarations/staticPropertyNameConflicts
     ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflictsInAmbientContext.ts:31:1]
  31 │ declare class StaticPrototypeFn {
  32 │     static prototype: any; // ok
-    ·            ────┬────
-    ·                ╰── Classes may not have a static property named prototype
+    ·            ─────────
  33 │     prototype(): any; // ok
     ╰────
 Expect to Parse: "es6/for-ofStatements/for-of53.ts"
@@ -1923,42 +1919,38 @@ Expect to Parse: "es6/for-ofStatements/for-of53.ts"
    ╰────
 Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_contextualTyping1.ts"
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeSatisfaction/typeSatisfaction_contextualTyping1.ts:5:1]
  5 │     isOdd: n => n % 2 === 1
  6 │ } satisfies Predicates;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_ensureInterfaceImpl.ts"
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[expressions/typeSatisfaction/typeSatisfaction_ensureInterfaceImpl.ts:10:1]
  10 │     stop() { }
  11 │ } satisfies Movable & Record<string, unknown>;
-    ·  ┬
-    ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·  ─
     ╰────
   help: Try insert a semicolon here
 Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance1.ts"
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance1.ts:24:1]
  24 │     s: "false"
  25 │ } satisfies Facts;
-    ·  ┬
-    ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·  ─
     ╰────
   help: Try insert a semicolon here
 Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance2.ts"
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance2.ts:24:1]
  24 │     s: "false"
  25 │ } satisfies Facts;
-    ·  ┬
-    ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·  ─
     ╰────
   help: Try insert a semicolon here
 Expect to Parse: "externalModules/topLevelAwait.2.ts"
@@ -2069,12 +2061,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[async/es2017/asyncArrowFunction/asyncArrowFunction6_es2017.ts:3:1]
  3 │ 
  4 │ var foo = async (a = await): Promise<void> => {
    ·                            ▲
-   ·                            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  5 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2103,12 +2094,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ }
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[async/es2017/await_unaryExpression_es2017_3.ts:3:1]
  3 │ async function bar1() {
  4 │     ++await 42; // Error
-   ·       ────┬───
-   ·           ╰── Cannot assign to this expression
+   ·       ────────
  5 │ }
    ╰────
 
@@ -2167,12 +2157,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[async/es5/asyncArrowFunction/asyncArrowFunction6_es5.ts:4:1]
  4 │ 
  5 │ var foo = async (a = await): Promise<void> => {
    ·                            ▲
-   ·                            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  6 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2205,8 +2194,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[async/es5/asyncConstructor_es5.ts:4:1]
  4 │ class C {
  5 │   async constructor() {
-   ·         ─────┬─────
-   ·              ╰── Constructor can't be an async method
+   ·         ───────────
  6 │   }
    ╰────
 
@@ -2283,12 +2271,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[async/es6/asyncArrowFunction/asyncArrowFunction6_es6.ts:3:1]
  3 │ 
  4 │ var foo = async (a = await): Promise<void> => {
    ·                            ▲
-   ·                            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  5 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2321,8 +2308,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[async/es6/asyncConstructor_es6.ts:3:1]
  3 │ class C {  
  4 │   async constructor() {    
-   ·         ─────┬─────
-   ·              ╰── Constructor can't be an async method
+   ·         ───────────
  5 │   }
    ╰────
 
@@ -2344,12 +2330,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │   }
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[async/es6/await_unaryExpression_es6_3.ts:3:1]
  3 │ async function bar1() {
  4 │     ++await 42; // Error
-   ·       ────┬───
-   ·           ╰── Cannot assign to this expression
+   ·       ────────
  5 │ }
    ╰────
 
@@ -2523,12 +2508,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  10 │ }
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[classes/classDeclarations/classBody/classBodyWithStatements.ts:1:1]
  1 │ class C {
  2 │     var x = 1;
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2699,8 +2683,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[classes/classStaticBlock/classStaticBlock7.ts:4:1]
  4 │         yield 1;
  5 │         return 1;
-   ·         ───┬──
-   ·            ╰── A 'return' statement can only be used within a function body.
+   ·         ──────
  6 │     }
    ╰────
 
@@ -2716,8 +2699,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[classes/classStaticBlock/classStaticBlock7.ts:35:1]
  35 │         static {
  36 │             return 1;
-    ·             ───┬──
-    ·                ╰── A 'return' statement can only be used within a function body.
+    ·             ──────
  37 │ 
     ╰────
 
@@ -2779,12 +2761,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  9 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[classes/constructorDeclarations/superCalls/derivedClassSuperCallsInNonConstructorMembers.ts:7:1]
  7 │ class Derived extends Base {
  8 │     a: super();
    ·             ▲
-   ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  9 │     b() {
    ╰────
   help: Try insert a semicolon here
@@ -2824,12 +2805,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[classes/members/accessibility/privateInstanceMemberAccessibility.ts:11:1]
  11 │ 
  12 │     a: this.foo; // error
     ·            ▲
-    ·            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  13 │ }
     ╰────
   help: Try insert a semicolon here
@@ -2959,8 +2939,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[classes/members/privateNames/privateNameConstructorReserved.ts:3:1]
  3 │ class A {
  4 │     #constructor() {}      // Error: `#constructor` is a reserved word.
-   ·     ──────┬─────
-   ·           ╰── Classes can't have an element named '#constructor'
+   ·     ────────────
  5 │ }
    ╰────
 
@@ -3705,7 +3684,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ 
  3 │ #
    ·  ▲
-   ·  ╰── Invalid Character ``
  4 │ 
    ╰────
 
@@ -3726,12 +3704,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  30 │ 
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[classes/members/privateNames/privateNameInInExpressionTransform.ts:30:1]
  30 │     invalidLHS(v: any) {
  31 │         'prop' in v = 10;
-    ·         ─────┬─────
-    ·              ╰── Cannot assign to this expression
+    ·         ───────────
  32 │         #field in v = 10;
     ╰────
 
@@ -4042,32 +4019,29 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │                         // because static and instance private names
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[classes/nestedClassDeclaration.ts:4:1]
  4 │     x: string;
  5 │     class C2 {
-   ·          ┬
-   ·          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·          ─
  6 │     }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[classes/propertyMemberDeclarations/autoAccessor11.ts:13:1]
  13 │ 
  14 │     accessor accessor
-    ·             ┬
-    ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·             ─
  15 │     d;
     ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:4:1]
  4 │ abstract class C1 {
  5 │     accessor accessor a: any;
-   ·             ┬
-   ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·             ─
  6 │     readonly accessor b: any;
    ╰────
   help: Try insert a semicolon here
@@ -4076,8 +4050,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[classes/propertyMemberDeclarations/propertyNamedConstructor.ts:1:1]
  1 │ class X1 {
  2 │   "constructor" = 3; // Error
-   ·   ──────┬──────
-   ·         ╰── Classes can't have a field named 'constructor'
+   ·   ─────────────
  3 │ }
    ╰────
 
@@ -4085,8 +4058,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[classes/propertyMemberDeclarations/propertyNamedPrototype.ts:2:1]
  2 │     prototype: number; // ok
  3 │     static prototype: C; // error
-   ·            ────┬────
-   ·                ╰── Classes may not have a static property named prototype
+   ·            ─────────
  4 │ }
    ╰────
 
@@ -4094,8 +4066,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:25:1]
  25 │ class StaticPrototype {
  26 │     static prototype: number; // error
-    ·            ────┬────
-    ·                ╰── Classes may not have a static property named prototype
+    ·            ─────────
  27 │     prototype: string; // ok
     ╰────
 
@@ -4103,8 +4074,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:30:1]
  30 │ class StaticPrototypeFn {
  31 │     static prototype() {} // error
-    ·            ────┬────
-    ·                ╰── Classes may not have a static property named prototype
+    ·            ─────────
  32 │     prototype() {} // ok
     ╰────
 
@@ -4112,8 +4082,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:84:1]
  84 │ var StaticPrototype_Anonymous = class {
  85 │     static prototype: number; // error
-    ·            ────┬────
-    ·                ╰── Classes may not have a static property named prototype
+    ·            ─────────
  86 │     prototype: string; // ok
     ╰────
 
@@ -4121,8 +4090,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:89:1]
  89 │ var StaticPrototypeFn_Anonymous = class {
  90 │     static prototype() {} // error
-    ·            ────┬────
-    ·                ╰── Classes may not have a static property named prototype
+    ·            ─────────
  91 │     prototype() {} // ok
     ╰────
 
@@ -4130,8 +4098,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
      ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:151:1]
  151 │     export default class StaticPrototype {
  152 │         static prototype: number; // error
-     ·                ────┬────
-     ·                    ╰── Classes may not have a static property named prototype
+     ·                ─────────
  153 │         prototype: string; // ok
      ╰────
 
@@ -4139,8 +4106,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
      ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:158:1]
  158 │     export default class StaticPrototypeFn {
  159 │         static prototype() {} // error
-     ·                ────┬────
-     ·                    ╰── Classes may not have a static property named prototype
+     ·                ─────────
  160 │         prototype() {} // ok
      ╰────
 
@@ -4186,22 +4152,20 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ 
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[decorators/class/accessor/decoratorOnClassAccessor3.ts:5:1]
  5 │ class C {
  6 │     public @dec get accessor() { return 1; }
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
  7 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[decorators/class/accessor/decoratorOnClassAccessor6.ts:5:1]
  5 │ class C {
  6 │     public @dec set accessor(value: number) { }
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
  7 │ }
    ╰────
   help: Try insert a semicolon here
@@ -4215,22 +4179,20 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  7 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[decorators/class/method/decoratorOnClassMethod17.ts:6:1]
  6 │ class Foo {
  7 │     private prop @decorator
-   ·                 ┬
-   ·                 ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                 ─
  8 │     foo() {
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[decorators/class/method/decoratorOnClassMethod3.ts:5:1]
  5 │ class C {
  6 │     public @dec method() {}
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
  7 │ }
    ╰────
   help: Try insert a semicolon here
@@ -4244,22 +4206,20 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  9 │   }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[decorators/class/property/decoratorOnClassProperty3.ts:5:1]
  5 │ class C {
  6 │     public @dec prop;
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
  7 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[decorators/decoratorMetadata-jsdoc.ts:8:1]
   8 │     @decorator()
   9 │     a?: string?;
     ·               ▲
-    ·               ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  10 │     @decorator()
     ╰────
   help: Try insert a semicolon here
@@ -4309,8 +4269,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es2018/invalidTaggedTemplateEscapeSequences.ts:9:1]
   9 │ const x = tag`\u{hello} ${ 100 } \xtraordinary ${ 200 } wonderful ${ 300 } \uworld`;
  10 │ const y = `\u{hello} ${ 100 } \xtraordinary ${ 200 } wonderful ${ 300 } \uworld`; // should error with NoSubstitutionTemplate
-    ·            ─────┬────
-    ·                 ╰── Bad escape sequence in untagged template literal
+    ·            ──────────
  11 │ const z = tag`\u{hello} \xtraordinary wonderful \uworld` // should work with Tagged NoSubstitutionTemplate
     ╰────
 
@@ -4318,8 +4277,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es2018/invalidTaggedTemplateEscapeSequences.ts:9:1]
   9 │ const x = tag`\u{hello} ${ 100 } \xtraordinary ${ 200 } wonderful ${ 300 } \uworld`;
  10 │ const y = `\u{hello} ${ 100 } \xtraordinary ${ 200 } wonderful ${ 300 } \uworld`; // should error with NoSubstitutionTemplate
-    ·                              ───────┬───────
-    ·                                     ╰── Bad escape sequence in untagged template literal
+    ·                              ───────────────
  11 │ const z = tag`\u{hello} \xtraordinary wonderful \uworld` // should work with Tagged NoSubstitutionTemplate
     ╰────
 
@@ -4327,8 +4285,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es2018/invalidTaggedTemplateEscapeSequences.ts:9:1]
   9 │ const x = tag`\u{hello} ${ 100 } \xtraordinary ${ 200 } wonderful ${ 300 } \uworld`;
  10 │ const y = `\u{hello} ${ 100 } \xtraordinary ${ 200 } wonderful ${ 300 } \uworld`; // should error with NoSubstitutionTemplate
-    ·                                                                        ────┬───
-    ·                                                                            ╰── Bad escape sequence in untagged template literal
+    ·                                                                        ────────
  11 │ const z = tag`\u{hello} \xtraordinary wonderful \uworld` // should work with Tagged NoSubstitutionTemplate
     ╰────
 
@@ -4336,8 +4293,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:1:1]
  1 │ var f1 = ()
  2 │     => { }
-   ·     ─┬
-   ·      ╰── Line terminator not permitted before arrow
+   ·     ──
  3 │ var f2 = (x: string, y: string) /*
    ╰────
 
@@ -4345,8 +4301,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:3:1]
  3 │ var f2 = (x: string, y: string) /*
  4 │   */  => { }
-   ·       ─┬
-   ·        ╰── Line terminator not permitted before arrow
+   ·       ──
  5 │ var f3 = (x: string, y: number, ...rest)
    ╰────
 
@@ -4354,8 +4309,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:5:1]
  5 │ var f3 = (x: string, y: number, ...rest)
  6 │     => { }
-   ·     ─┬
-   ·      ╰── Line terminator not permitted before arrow
+   ·     ──
  7 │ var f4 = (x: string, y: number, ...rest) /*
    ╰────
 
@@ -4363,8 +4317,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:7:1]
  7 │ var f4 = (x: string, y: number, ...rest) /*
  8 │   */  => { }
-   ·       ─┬
-   ·        ╰── Line terminator not permitted before arrow
+   ·       ──
  9 │ var f5 = (...rest)
    ╰────
 
@@ -4372,8 +4325,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:9:1]
   9 │ var f5 = (...rest)
  10 │     => { }
-    ·     ─┬
-    ·      ╰── Line terminator not permitted before arrow
+    ·     ──
  11 │ var f6 = (...rest) /*
     ╰────
 
@@ -4381,8 +4333,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:11:1]
  11 │ var f6 = (...rest) /*
  12 │   */  => { }
-    ·       ─┬
-    ·        ╰── Line terminator not permitted before arrow
+    ·       ──
  13 │ var f7 = (x: string, y: number, z = 10)
     ╰────
 
@@ -4390,8 +4341,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:13:1]
  13 │ var f7 = (x: string, y: number, z = 10)
  14 │     => { }
-    ·     ─┬
-    ·      ╰── Line terminator not permitted before arrow
+    ·     ──
  15 │ var f8 = (x: string, y: number, z = 10) /*
     ╰────
 
@@ -4399,8 +4349,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:15:1]
  15 │ var f8 = (x: string, y: number, z = 10) /*
  16 │   */  => { }
-    ·       ─┬
-    ·        ╰── Line terminator not permitted before arrow
+    ·       ──
  17 │ var f9 = (a: number): number
     ╰────
 
@@ -4408,8 +4357,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:17:1]
  17 │ var f9 = (a: number): number
  18 │     => a;
-    ·     ─┬
-    ·      ╰── Line terminator not permitted before arrow
+    ·     ──
  19 │ var f10 = (a: number) :
     ╰────
 
@@ -4417,8 +4365,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:20:1]
  20 │   number
  21 │     => a
-    ·     ─┬
-    ·      ╰── Line terminator not permitted before arrow
+    ·     ──
  22 │ var f11 = (a: number): number /*
     ╰────
 
@@ -4426,8 +4373,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:22:1]
  22 │ var f11 = (a: number): number /*
  23 │     */ => a;
-    ·        ─┬
-    ·         ╰── Line terminator not permitted before arrow
+    ·        ──
  24 │ var f12 = (a: number) :
     ╰────
 
@@ -4435,8 +4381,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:25:1]
  25 │   number /*
  26 │     */ => a
-    ·        ─┬
-    ·         ╰── Line terminator not permitted before arrow
+    ·        ──
  27 │ 
     ╰────
 
@@ -4444,8 +4389,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:51:1]
  51 │ foo(()
  52 │     => true);
-    ·     ─┬
-    ·      ╰── Line terminator not permitted before arrow
+    ·     ──
  53 │ foo(()
     ╰────
 
@@ -4453,8 +4397,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:53:1]
  53 │ foo(()
  54 │     => { return false; });
-    ·     ─┬
-    ·      ╰── Line terminator not permitted before arrow
+    ·     ──
  55 │ 
     ╰────
 
@@ -4462,8 +4405,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:58:1]
  58 │         constructor(x: number, thing = ()
  59 │             => 100) {
-    ·             ─┬
-    ·              ╰── Line terminator not permitted before arrow
+    ·             ──
  60 │         }
     ╰────
 
@@ -4471,8 +4413,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:62:1]
  62 │         public m = ()
  63 │             => 2 * 2 * 2
-    ·             ─┬
-    ·              ╰── Line terminator not permitted before arrow
+    ·             ──
  64 │     }
     ╰────
 
@@ -4480,8 +4421,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/arrowFunction/disallowLineTerminatorBeforeArrow.ts:67:1]
  67 │         claw = (()
  68 │             => 10)()
-    ·             ─┬
-    ·              ╰── Line terminator not permitted before arrow
+    ·             ──
  69 │     }
     ╰────
 
@@ -4513,8 +4453,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/binaryAndOctalIntegerLiteral/binaryIntegerLiteralError.ts:1:1]
  1 │ // error
  2 │ var bin1 = 0B1102110;
-   ·                 ┬
-   ·                 ╰── Invalid characters after number
+   ·                 ─
  3 │ var bin1 = 0b11023410;
    ╰────
 
@@ -4523,7 +4462,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  1 │ // Error
  2 │ var binary = 0b21010;
    ·                ▲
-   ·                ╰── Invalid Character `2`
  3 │ var binary1 = 0B21010;
    ╰────
 
@@ -4531,8 +4469,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/binaryAndOctalIntegerLiteral/octalIntegerLiteralError.ts:1:1]
  1 │ // error
  2 │ var oct1 = 0O13334823;
-   ·                   ┬
-   ·                   ╰── Invalid characters after number
+   ·                   ─
  3 │ var oct2 = 0o34318592;
    ╰────
 
@@ -4611,8 +4548,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/computedProperties/computedPropertyNames49_ES5.ts:9:1]
   9 │     },
  10 │     set [1 + 1]() {
-    ·                ─┬
-    ·                 ╰── A 'set' accessor must have exactly one parameter.
+    ·                ──
  11 │         // just throw
     ╰────
 
@@ -4620,8 +4556,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/computedProperties/computedPropertyNames49_ES6.ts:10:1]
  10 │     },
  11 │     set [1 + 1]() {
-    ·                ─┬
-    ·                 ╰── A 'set' accessor must have exactly one parameter.
+    ·                ──
  12 │         // just throw
     ╰────
 
@@ -4629,8 +4564,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/computedProperties/computedPropertyNames50_ES5.ts:11:1]
  11 │     },
  12 │     set [1 + 1]() {
-    ·                ─┬
-    ·                 ╰── A 'set' accessor must have exactly one parameter.
+    ·                ──
  13 │         // just throw
     ╰────
 
@@ -4638,16 +4572,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/computedProperties/computedPropertyNames50_ES6.ts:12:1]
  12 │     },
  13 │     set [1 + 1]() {
-    ·                ─┬
-    ·                 ╰── A 'set' accessor must have exactly one parameter.
+    ·                ──
  14 │         // just throw
     ╰────
 
   × Missing initializer in destructuring declaration
    ╭─[es6/destructuring/declarationWithNoInitializer.ts:1:1]
  1 │ var [a, b];          // Error, no initializer
-   ·     ───┬──
-   ·        ╰── Missing initializer in destructuring declaration
+   ·     ──────
  2 │ var {c, d};          // Error, no initializer
    ╰────
 
@@ -4655,8 +4587,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/declarationWithNoInitializer.ts:1:1]
  1 │ var [a, b];          // Error, no initializer
  2 │ var {c, d};          // Error, no initializer
-   ·     ───┬──
-   ·        ╰── Missing initializer in destructuring declaration
+   ·     ──────
    ╰────
 
   × Expect token
@@ -4797,8 +4728,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5.ts:4:1]
  4 │ (function () {
  5 │     var {};
-   ·         ─┬
-   ·          ╰── Missing initializer in destructuring declaration
+   ·         ──
  6 │     let {};
    ╰────
 
@@ -4806,8 +4736,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5.ts:5:1]
  5 │     var {};
  6 │     let {};
-   ·         ─┬
-   ·          ╰── Missing initializer in destructuring declaration
+   ·         ──
  7 │     const {};
    ╰────
 
@@ -4815,8 +4744,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5.ts:6:1]
  6 │     let {};
  7 │     const {};
-   ·           ─┬
-   ·            ╰── Missing initializer in destructuring declaration
+   ·           ──
  8 │ 
    ╰────
 
@@ -4824,8 +4752,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5.ts:8:1]
   8 │ 
   9 │     var [];
-    ·         ─┬
-    ·          ╰── Missing initializer in destructuring declaration
+    ·         ──
  10 │     let [];
     ╰────
 
@@ -4833,8 +4760,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5.ts:9:1]
   9 │     var [];
  10 │     let [];
-    ·         ─┬
-    ·          ╰── Missing initializer in destructuring declaration
+    ·         ──
  11 │     const [];
     ╰────
 
@@ -4842,8 +4768,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5.ts:10:1]
  10 │     let [];
  11 │     const [];
-    ·           ─┬
-    ·            ╰── Missing initializer in destructuring declaration
+    ·           ──
  12 │ })();
     ╰────
 
@@ -4851,8 +4776,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5iterable.ts:5:1]
  5 │ (function () {
  6 │     var {};
-   ·         ─┬
-   ·          ╰── Missing initializer in destructuring declaration
+   ·         ──
  7 │     let {};
    ╰────
 
@@ -4860,8 +4784,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5iterable.ts:6:1]
  6 │     var {};
  7 │     let {};
-   ·         ─┬
-   ·          ╰── Missing initializer in destructuring declaration
+   ·         ──
  8 │     const {};
    ╰────
 
@@ -4869,8 +4792,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5iterable.ts:7:1]
  7 │     let {};
  8 │     const {};
-   ·           ─┬
-   ·            ╰── Missing initializer in destructuring declaration
+   ·           ──
  9 │ 
    ╰────
 
@@ -4878,8 +4800,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5iterable.ts:9:1]
   9 │ 
  10 │     var [];
-    ·         ─┬
-    ·          ╰── Missing initializer in destructuring declaration
+    ·         ──
  11 │     let [];
     ╰────
 
@@ -4887,8 +4808,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5iterable.ts:10:1]
  10 │     var [];
  11 │     let [];
-    ·         ─┬
-    ·          ╰── Missing initializer in destructuring declaration
+    ·         ──
  12 │     const [];
     ╰────
 
@@ -4896,8 +4816,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES5iterable.ts:11:1]
  11 │     let [];
  12 │     const [];
-    ·           ─┬
-    ·            ╰── Missing initializer in destructuring declaration
+    ·           ──
  13 │ })();
     ╰────
 
@@ -4905,8 +4824,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES6.ts:4:1]
  4 │ (function () {
  5 │     var {};
-   ·         ─┬
-   ·          ╰── Missing initializer in destructuring declaration
+   ·         ──
  6 │     let {};
    ╰────
 
@@ -4914,8 +4832,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES6.ts:5:1]
  5 │     var {};
  6 │     let {};
-   ·         ─┬
-   ·          ╰── Missing initializer in destructuring declaration
+   ·         ──
  7 │     const {};
    ╰────
 
@@ -4923,8 +4840,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES6.ts:6:1]
  6 │     let {};
  7 │     const {};
-   ·           ─┬
-   ·            ╰── Missing initializer in destructuring declaration
+   ·           ──
  8 │ 
    ╰────
 
@@ -4932,8 +4848,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES6.ts:8:1]
   8 │ 
   9 │     var [];
-    ·         ─┬
-    ·          ╰── Missing initializer in destructuring declaration
+    ·         ──
  10 │     let [];
     ╰────
 
@@ -4941,8 +4856,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES6.ts:9:1]
   9 │     var [];
  10 │     let [];
-    ·         ─┬
-    ·          ╰── Missing initializer in destructuring declaration
+    ·         ──
  11 │     const [];
     ╰────
 
@@ -4950,8 +4864,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/destructuring/emptyVariableDeclarationBindingPatterns02_ES6.ts:10:1]
  10 │     let [];
  11 │     const [];
-    ·           ─┬
-    ·            ╰── Missing initializer in destructuring declaration
+    ·           ──
  12 │ })();
     ╰────
 
@@ -4992,20 +4905,18 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·      ────────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es6/destructuring/restElementWithInitializer2.ts:2:1]
  2 │ var x: number[];
  3 │ [...x = a] = a;  // Error, rest element cannot have initializer
-   ·     ──┬──
-   ·       ╰── Cannot assign to this expression
+   ·     ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es6/destructuring/restPropertyWithBindingPattern.ts:1:1]
  1 │ ({...{}} = {});
  2 │ ({...({})} = {});
-   ·      ──┬─
-   ·        ╰── Cannot assign to this expression
+   ·      ────
  3 │ ({...[]} = {});
    ╰────
 
@@ -5013,8 +4924,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/for-ofStatements/for-of2.ts:1:1]
  1 │ //@target: ES6
  2 │ const v;
-   ·       ┬
-   ·       ╰── const declaration need an initializer
+   ·       ─
  3 │ for (v of []) { }
    ╰────
 
@@ -5149,8 +5059,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/memberFunctionDeclarations/MemberFunctionDeclaration8_es6.ts:4:1]
  4 │     // Make sure we don't think of *bar as the start of a generator method.
  5 │     if (a) ¬ * bar;
-   ·            ┬
-   ·            ╰── Invalid Character `¬`
+   ·            ─
  6 │     return bar;
    ╰────
 
@@ -5339,8 +5248,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es6/templates/taggedTemplatesWithTypeArguments2.ts:39:1]
  39 │     constructor() {
  40 │         super<number, string, T> `hello world`;
-    ·         ──┬──
-    ·           ╰── 'super' can only be used with function calls or in property accesses 
+    ·         ─────
  41 │     }
     ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
@@ -5360,21 +5268,19 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ function f(x: string);
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es6/templates/templateStringInModuleName.ts:1:1]
  1 │ declare module `M1` {
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  2 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es6/templates/templateStringInModuleNameES6.ts:1:1]
  1 │ // @target: ES6
  2 │ declare module `M1` {
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -5431,80 +5337,70 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/templates/templateStringUnterminated1.ts:1:1]
  1 │ 
  2 │ `
-   · ┬
-   · ╰── Unterminated string
+   · ─
    ╰────
 
   × Unterminated string
    ╭─[es6/templates/templateStringUnterminated1_ES6.ts:1:1]
  1 │ // @target: ES6
  2 │ `
-   · ┬
-   · ╰── Unterminated string
+   · ─
    ╰────
 
   × Unterminated string
    ╭─[es6/templates/templateStringUnterminated2.ts:1:1]
  1 │ 
  2 │ `\`
-   · ─┬─
-   ·  ╰── Unterminated string
+   · ───
    ╰────
 
   × Unterminated string
    ╭─[es6/templates/templateStringUnterminated2_ES6.ts:1:1]
  1 │ // @target: ES6
  2 │ `\`
-   · ─┬─
-   ·  ╰── Unterminated string
+   · ───
    ╰────
 
   × Unterminated string
    ╭─[es6/templates/templateStringUnterminated3.ts:1:1]
  1 │ 
  2 │ `\\
-   · ─┬─
-   ·  ╰── Unterminated string
+   · ───
    ╰────
 
   × Unterminated string
    ╭─[es6/templates/templateStringUnterminated3_ES6.ts:1:1]
  1 │ // @target: ES6
  2 │ `\\
-   · ─┬─
-   ·  ╰── Unterminated string
+   · ───
    ╰────
 
   × Unterminated string
    ╭─[es6/templates/templateStringUnterminated4.ts:1:1]
  1 │ 
  2 │ `\\\`
-   · ──┬──
-   ·   ╰── Unterminated string
+   · ─────
    ╰────
 
   × Unterminated string
    ╭─[es6/templates/templateStringUnterminated4_ES6.ts:1:1]
  1 │ // @target: ES6
  2 │ `\\\`
-   · ──┬──
-   ·   ╰── Unterminated string
+   · ─────
    ╰────
 
   × Unterminated string
    ╭─[es6/templates/templateStringUnterminated5.ts:1:1]
  1 │ 
  2 │ `\\\\\`
-   · ───┬───
-   ·    ╰── Unterminated string
+   · ───────
    ╰────
 
   × Unterminated string
    ╭─[es6/templates/templateStringUnterminated5_ES6.ts:1:1]
  1 │ // @target: ES6
  2 │ `\\\\\`
-   · ───┬───
-   ·    ╰── Unterminated string
+   · ───────
    ╰────
 
   × Expect token
@@ -5519,288 +5415,252 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings07_ES5.ts:4:1]
  4 │ //  1. Assert: 0 ≤ cp ≤ 0x10FFFF.
  5 │ var x = "\u{110000}";
-   ·          ────┬────
-   ·              ╰── Invalid escape sequence
+   ·          ─────────
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings07_ES6.ts:4:1]
  4 │ //  1. Assert: 0 ≤ cp ≤ 0x10FFFF.
  5 │ var x = "\u{110000}";
-   ·          ────┬────
-   ·              ╰── Invalid escape sequence
+   ·          ─────────
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings12_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{FFFFFFFF}";
-   ·          ────┬────
-   ·              ╰── Invalid escape sequence
+   ·          ─────────
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings12_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{FFFFFFFF}";
-   ·          ────┬────
-   ·              ╰── Invalid escape sequence
+   ·          ─────────
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings14_ES5.ts:3:1]
  3 │ // Shouldn't work, negatives are not allowed.
  4 │ var x = "\u{-DDDD}";
-   ·          ─┬─
-   ·           ╰── Invalid escape sequence
+   ·          ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings14_ES6.ts:3:1]
  3 │ // Shouldn't work, negatives are not allowed.
  4 │ var x = "\u{-DDDD}";
-   ·          ─┬─
-   ·           ╰── Invalid escape sequence
+   ·          ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings17_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{r}\u{n}\u{t}";
-   ·          ─┬─
-   ·           ╰── Invalid escape sequence
+   ·          ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings17_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{r}\u{n}\u{t}";
-   ·               ─┬─
-   ·                ╰── Invalid escape sequence
+   ·               ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings17_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{r}\u{n}\u{t}";
-   ·                    ─┬─
-   ·                     ╰── Invalid escape sequence
+   ·                    ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings17_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{r}\u{n}\u{t}";
-   ·          ─┬─
-   ·           ╰── Invalid escape sequence
+   ·          ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings17_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{r}\u{n}\u{t}";
-   ·               ─┬─
-   ·                ╰── Invalid escape sequence
+   ·               ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings17_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{r}\u{n}\u{t}";
-   ·                    ─┬─
-   ·                     ╰── Invalid escape sequence
+   ·                    ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings19_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{}";
-   ·          ─┬─
-   ·           ╰── Invalid escape sequence
+   ·          ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings19_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{}";
-   ·          ─┬─
-   ·           ╰── Invalid escape sequence
+   ·          ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings20_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{";
-   ·          ─┬─
-   ·           ╰── Invalid escape sequence
+   ·          ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings20_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{";
-   ·          ─┬─
-   ·           ╰── Invalid escape sequence
+   ·          ───
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings21_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{67";
-   ·          ──┬──
-   ·            ╰── Invalid escape sequence
+   ·          ─────
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings21_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{67";
-   ·          ──┬──
-   ·            ╰── Invalid escape sequence
+   ·          ─────
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings22_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{00000000000067";
-   ·          ────────┬────────
-   ·                  ╰── Invalid escape sequence
+   ·          ─────────────────
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings22_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{00000000000067";
-   ·          ────────┬────────
-   ·                  ╰── Invalid escape sequence
+   ·          ─────────────────
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings24_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{00000000000067
-   ·          ────────┬────────
-   ·                  ╰── Invalid escape sequence
+   ·          ─────────────────
    ╰────
 
   × Unterminated string
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings24_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{00000000000067
-   ·         ─────────┬─────────
-   ·                  ╰── Unterminated string
+   ·         ───────────────────
    ╰────
 
   × Invalid escape sequence
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings24_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{00000000000067
-   ·          ────────┬────────
-   ·                  ╰── Invalid escape sequence
+   ·          ─────────────────
    ╰────
 
   × Unterminated string
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings24_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{00000000000067
-   ·         ─────────┬─────────
-   ·                  ╰── Unterminated string
+   ·         ───────────────────
    ╰────
 
   × Unterminated string
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings25_ES5.ts:2:1]
  2 │ 
  3 │ var x = "\u{00000000000067}
-   ·         ──────────┬─────────
-   ·                   ╰── Unterminated string
+   ·         ────────────────────
    ╰────
 
   × Unterminated string
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings25_ES6.ts:2:1]
  2 │ 
  3 │ var x = "\u{00000000000067}
-   ·         ──────────┬─────────
-   ·                   ╰── Unterminated string
+   ·         ────────────────────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates07_ES5.ts:4:1]
  4 │ //  1. Assert: 0 ≤ cp ≤ 0x10FFFF.
  5 │ var x = `\u{110000}`;
-   ·          ─────┬────
-   ·               ╰── Bad escape sequence in untagged template literal
+   ·          ──────────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates07_ES6.ts:4:1]
  4 │ //  1. Assert: 0 ≤ cp ≤ 0x10FFFF.
  5 │ var x = `\u{110000}`;
-   ·          ─────┬────
-   ·               ╰── Bad escape sequence in untagged template literal
+   ·          ──────────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates12_ES5.ts:2:1]
  2 │ 
  3 │ var x = `\u{FFFFFFFF}`;
-   ·          ──────┬─────
-   ·                ╰── Bad escape sequence in untagged template literal
+   ·          ────────────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates12_ES6.ts:2:1]
  2 │ 
  3 │ var x = `\u{FFFFFFFF}`;
-   ·          ──────┬─────
-   ·                ╰── Bad escape sequence in untagged template literal
+   ·          ────────────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates14_ES5.ts:3:1]
  3 │ // Shouldn't work, negatives are not allowed.
  4 │ var x = `\u{-DDDD}`;
-   ·          ────┬────
-   ·              ╰── Bad escape sequence in untagged template literal
+   ·          ─────────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates14_ES6.ts:3:1]
  3 │ // Shouldn't work, negatives are not allowed.
  4 │ var x = `\u{-DDDD}`;
-   ·          ────┬────
-   ·              ╰── Bad escape sequence in untagged template literal
+   ·          ─────────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates17_ES5.ts:2:1]
  2 │ 
  3 │ var x = `\u{r}\u{n}\u{t}`;
-   ·          ───────┬───────
-   ·                 ╰── Bad escape sequence in untagged template literal
+   ·          ───────────────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates17_ES6.ts:2:1]
  2 │ 
  3 │ var x = `\u{r}\u{n}\u{t}`;
-   ·          ───────┬───────
-   ·                 ╰── Bad escape sequence in untagged template literal
+   ·          ───────────────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates19_ES5.ts:2:1]
  2 │ 
  3 │ var x = `\u{}`;
-   ·          ──┬─
-   ·            ╰── Bad escape sequence in untagged template literal
+   ·          ────
    ╰────
 
   × Bad escape sequence in untagged template literal
    ╭─[es6/unicodeExtendedEscapes/unicodeExtendedEscapesInTemplates19_ES6.ts:2:1]
  2 │ 
  3 │ var x = `\u{}`;
-   ·          ──┬─
-   ·            ╰── Bad escape sequence in untagged template literal
+   ·          ────
    ╰────
 
   × Unexpected token
@@ -5828,16 +5688,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es6/variableDeclarations/VariableDeclaration2_es6.ts:1:1]
  1 │ // @target:es6
  2 │ const a
-   ·       ┬
-   ·       ╰── const declaration need an initializer
+   ·       ─
    ╰────
 
   × Missing initializer in const declaration
    ╭─[es6/variableDeclarations/VariableDeclaration4_es6.ts:1:1]
  1 │ // @target:es6
  2 │ const a: number
-   ·       ┬
-   ·       ╰── const declaration need an initializer
+   ·       ─
    ╰────
 
   × Unexpected token
@@ -5929,12 +5787,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                             ─────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[es7/exponentiationOperator/compoundExponentiationAssignmentLHSIsValue.ts:7:1]
  7 │     constructor() {
  8 │         this **= value;
-   ·         ──┬─
-   ·           ╰── Cannot assign to this expression
+   ·         ────
  9 │     }
    ╰────
 
@@ -7456,8 +7313,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Unexpected trailing comma after rest element
    ╭─[es7/trailingCommasInBindingPatterns.ts:1:1]
  1 │ const [...a,] = [];
-   ·            ┬
-   ·            ╰── Unexpected trailing comma after rest element
+   ·            ─
  2 │ const {...b,} = {};
    ╰────
 
@@ -7465,8 +7321,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es7/trailingCommasInBindingPatterns.ts:1:1]
  1 │ const [...a,] = [];
  2 │ const {...b,} = {};
-   ·        ──┬─
-   ·          ╰── Rest element must be last element
+   ·        ────
  3 │ let c, d;
    ╰────
 
@@ -7475,7 +7330,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ let c, d;
  4 │ ([...c,] = []);
    ·       ▲
-   ·       ╰── Unexpected trailing comma after rest element
  5 │ ({...d,} = {});
    ╰────
 
@@ -7483,8 +7337,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es7/trailingCommasInFunctionParametersAndArguments.ts:6:1]
  6 │ 
  7 │ function f2(...args,) {}
-   ·             ───┬───
-   ·                ╰── Rest element must be last element
+   ·             ───────
  8 │ 
    ╰────
 
@@ -7492,8 +7345,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[es7/trailingCommasInFunctionParametersAndArguments.ts:9:1]
   9 │ // Allowed for ambient declarations
  10 │ declare function f25(...args,): void;
-    ·                      ───┬───
-    ·                         ╰── Rest element must be last element
+    ·                      ───────
  11 │ 
     ╰────
 
@@ -7505,21 +7357,19 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ }
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[expressions/assignmentOperator/assignmentLHSIsValue.ts:5:1]
  5 │ class C {
  6 │     constructor() { this = value; }
-   ·                     ──┬─
-   ·                       ╰── Cannot assign to this expression
+   ·                     ────
  7 │     foo() { this = value; }
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/assignmentOperator/compoundAssignmentLHSIsValue.ts:8:1]
   8 │     constructor() {
   9 │         this *= value;
-    ·         ──┬─
-    ·           ╰── Cannot assign to this expression
+    ·         ────
  10 │         this += value;
     ╰────
 
@@ -7547,12 +7397,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  45 │         var p = () => this;
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[expressions/newOperator/newOperatorErrorCases.ts:26:1]
  26 │ // Construct expression with no parentheses for construct signature with > 0 parameters
  27 │ var b = new C0 32, ''; // Parse error
-    ·               ┬
-    ·               ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·               ─
  28 │ 
     ╰────
   help: Try insert a semicolon here
@@ -7601,30 +7450,27 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  53 │ }
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/operators/incrementAndDecrement.ts:8:1]
   8 │ // Assign to expression++
   9 │ x++ = 4; // Error
-    · ─┬─
-    ·  ╰── Cannot assign to this expression
+    · ───
  10 │ 
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[expressions/optionalChaining/elementAccessChain/elementAccessChain.3.ts:4:1]
  4 │ 
  5 │ obj?.["a"]++;
-   · ─────┬────
-   ·      ╰── Cannot assign to this expression
+   · ──────────
  6 │ obj?.a["b"]++;
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[expressions/optionalChaining/propertyAccessChain/propertyAccessChain.3.ts:4:1]
  4 │ 
  5 │ obj?.a++;
-   · ───┬──
-   ·    ╰── Cannot assign to this expression
+   · ──────
  6 │ obj?.a.b++;
    ╰────
 
@@ -7632,8 +7478,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[expressions/optionalChaining/taggedTemplateChain/taggedTemplateChain.ts:1:1]
  1 │ declare let a: any;
  2 │ a?.`b`;
-   ·    ─┬─
-   ·     ╰── Tagged template expressions are not permitted in an optional chain
+   ·    ───
  3 │ 
    ╰────
 
@@ -7641,8 +7486,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[expressions/optionalChaining/taggedTemplateChain/taggedTemplateChain.ts:3:1]
  3 │ 
  4 │ a?.`b${1}c`;
-   ·    ────┬───
-   ·        ╰── Tagged template expressions are not permitted in an optional chain
+   ·    ────────
    ╰────
 
   × 'super' can only be referenced in a derived class.
@@ -7805,8 +7649,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[expressions/superCalls/errorSuperCalls.ts:45:1]
  45 │     constructor() {
  46 │         super<string>();
-    ·         ──┬──
-    ·           ╰── 'super' can only be used with function calls or in property accesses 
+    ·         ─────
  47 │         super();
     ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
@@ -7836,238 +7679,213 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  45 │     str = numOrStr; // Error, no narrowing occurred
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[expressions/typeGuards/typeGuardFunctionErrors.ts:17:1]
  17 │ 
  18 │ function hasTypeGuardTypeInsideTypeGuardType(x): x is x is A {
-    ·                                                        ┬
-    ·                                                        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·                                                        ─
  19 │     return true;
     ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeGuards/typeGuardOfFormThisMember.ts:5:1]
  5 │     export class FileSystemObject {
  6 │         isFSO: this is FileSystemObject;
-   ·                    ┬
-   ·                    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                    ─
  7 │         get isFile(): this is File {
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:5:1]
  5 │     export class FileSystemObject {
  6 │         isFSO: this is FileSystemObject;
-   ·                    ┬
-   ·                    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                    ─
  7 │         get isFile(): this is File {
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeGuards/typePredicateOnVariableDeclaration01.ts:2:1]
  2 │ 
  3 │ var x: this is string;
-   ·            ┬
-   ·            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·            ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeGuards/typePredicateOnVariableDeclaration02.ts:2:1]
  2 │ 
  3 │ var y: z is number;
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[expressions/typeSatisfaction/typeSatisfaction.ts:10:1]
  10 │ 
  11 │ const t1 = { a: 1 } satisfies I1; // Ok
-    ·                    ┬
-    ·                    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·                    ─
  12 │ const t2 = { a: 1, b: 1 } satisfies I1; // Error
     ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeSatisfaction/typeSatisfaction_contextualTyping2.ts:5:1]
  5 │     g(s) { }
  6 │ } satisfies { g(s: string): void } & Record<string, unknown>;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
  7 │ 
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeSatisfaction/typeSatisfaction_js.ts:4:1]
  4 │ 
  5 │ var v = undefined satisfies 1;
-   ·                  ┬
-   ·                  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                  ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeSatisfaction/typeSatisfaction_optionalMemberConformance.ts:2:1]
  2 │ // Undesirable behavior today with type annotation
  3 │ const a = { x: 10 } satisfies Partial<Point2d>;
-   ·                    ┬
-   ·                    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                    ─
  4 │ // Should OK
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeSatisfaction/typeSatisfaction_propNameConstraining.ts:6:1]
  6 │     x: 8 // Should error, 'x' isn't in 'Keys'
  7 │ } satisfies Partial<Record<Keys, unknown>>;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
  8 │ 
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeSatisfaction/typeSatisfaction_propertyNameFulfillment.ts:6:1]
  6 │     x: 8 // Should error, 'x' isn't in 'Keys'
  7 │ } satisfies Record<Keys, unknown>;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
  8 │ 
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance3.ts:7:1]
  7 │     blue: { r: 0, g: 0, b: 255 },
  8 │ } satisfies Record<string, Color>;
-   ·  ┬
-   ·  ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·  ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/typeSatisfaction/typeSatisfaction_vacuousIntersectionOfContextualTypes.ts:1:1]
  1 │ const a: "baz" = "foo" satisfies "foo" | "bar";
-   ·                       ┬
-   ·                       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                       ─
  2 │ const b: { xyz: "baz" } = { xyz: "foo" } satisfies { xyz: "foo" | "bar" };
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorInvalidOperations.ts:4:1]
  4 │ // operand before ~
  5 │ var a = q~;  //expect error
    ·          ▲
-   ·          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  6 │ 
    ╰────
   help: Try insert a semicolon here
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/decrementOperator/decrementOperatorWithAnyOtherTypeInvalidOperations.ts:36:1]
  36 │ // any type literal
  37 │ var ResultIsNumber11 = --{};
-    ·                          ─┬
-    ·                           ╰── Cannot assign to this expression
+    ·                          ──
  38 │ var ResultIsNumber12 = --null;
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/decrementOperator/decrementOperatorWithEnumTypeInvalidOperations.ts:13:1]
  13 │ // enum type expressions
  14 │ var ResultIsNumber5 = --(ENUM["A"] + ENUM.B);
-    ·                          ─────────┬────────
-    ·                                   ╰── Cannot assign to this expression
+    ·                          ──────────────────
  15 │ var ResultIsNumber6 = (ENUM.A + ENUM["B"])--;
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/decrementOperator/decrementOperatorWithNumberTypeInvalidOperations.ts:21:1]
  21 │ // number type literal
  22 │ var ResultIsNumber3 = --1;
-    ·                         ┬
-    ·                         ╰── Cannot assign to this expression
+    ·                         ─
  23 │ var ResultIsNumber4 = --{ x: 1, y: 2};
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/decrementOperator/decrementOperatorWithUnsupportedBooleanType.ts:21:1]
  21 │ // boolean type literal
  22 │ var ResultIsNumber3 = --true;
-    ·                         ──┬─
-    ·                           ╰── Cannot assign to this expression
+    ·                         ────
  23 │ var ResultIsNumber4 = --{ x: true, y: false };
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/decrementOperator/decrementOperatorWithUnsupportedStringType.ts:24:1]
  24 │ // string type literal
  25 │ var ResultIsNumber5 = --"";
-    ·                         ─┬
-    ·                          ╰── Cannot assign to this expression
+    ·                         ──
  26 │ var ResultIsNumber6 = --{ x: "", y: "" };
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/unaryOperators/deleteOperator/deleteOperatorInvalidOperations.ts:4:1]
  4 │ // operand before delete operator
  5 │ var BOOLEAN1 = ANY delete ;     //expect error
-   ·                   ┬
-   ·                   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                   ─
  6 │ 
    ╰────
   help: Try insert a semicolon here
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/incrementOperator/incrementOperatorWithAnyOtherTypeInvalidOperations.ts:36:1]
  36 │ // any type literal
  37 │ var ResultIsNumber11 = ++{};
-    ·                          ─┬
-    ·                           ╰── Cannot assign to this expression
+    ·                          ──
  38 │ var ResultIsNumber12 = ++null;
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/incrementOperator/incrementOperatorWithEnumTypeInvalidOperations.ts:13:1]
  13 │ // enum type expressions
  14 │ var ResultIsNumber5 = ++(ENUM[1] + ENUM[2]);
-    ·                          ────────┬────────
-    ·                                  ╰── Cannot assign to this expression
+    ·                          ─────────────────
  15 │ var ResultIsNumber6 = (ENUM[1] + ENUM[2])++;
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/incrementOperator/incrementOperatorWithNumberTypeInvalidOperations.ts:21:1]
  21 │ // number type literal
  22 │ var ResultIsNumber3 = ++1;
-    ·                         ┬
-    ·                         ╰── Cannot assign to this expression
+    ·                         ─
  23 │ var ResultIsNumber4 = ++{ x: 1, y: 2};
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/incrementOperator/incrementOperatorWithUnsupportedBooleanType.ts:21:1]
  21 │ // boolean type literal
  22 │ var ResultIsNumber3 = ++true;
-    ·                         ──┬─
-    ·                           ╰── Cannot assign to this expression
+    ·                         ────
  23 │ var ResultIsNumber4 = ++{ x: true, y: false };
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[expressions/unaryOperators/incrementOperator/incrementOperatorWithUnsupportedStringType.ts:24:1]
  24 │ // string type literal
  25 │ var ResultIsNumber5 = ++"";
-    ·                         ─┬
-    ·                          ╰── Cannot assign to this expression
+    ·                         ──
  26 │ var ResultIsNumber6 = ++{ x: "", y: "" };
     ╰────
 
@@ -8094,22 +7912,20 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ 
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/unaryOperators/typeofOperator/typeofOperatorInvalidOperations.ts:3:1]
  3 │ // opreand before typeof
  4 │ var ANY = ANY typeof ;    //expect error
-   ·              ┬
-   ·              ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·              ─
  5 │ 
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[expressions/unaryOperators/voidOperator/voidOperatorInvalidOperations.ts:3:1]
  3 │ // operand before void
  4 │ var ANY = ANY void ;    //expect error
-   ·              ┬
-   ·              ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·              ─
  5 │ 
    ╰────
   help: Try insert a semicolon here
@@ -8272,8 +8088,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[functions/functionOverloadErrorsSyntax.ts:8:1]
   8 │ //Function overload signature with rest param followed by non-optional parameter
   9 │ function fn5(x: string, ...y: any[], z: string);
-    ·                         ─────┬─────
-    ·                              ╰── Rest element must be last element
+    ·                         ───────────
  10 │ function fn5() { }
     ╰────
 
@@ -8371,12 +8186,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  11 │ I           // This should be the identifier 'I'
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:4:1]
  4 │ interface boolean { }
  5 │ interface void {}
-   ·          ┬
-   ·          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·          ─
  6 │ interface unknown {}
    ╰────
   help: Try insert a semicolon here
@@ -8488,13 +8302,13 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  42 │ 
     ╰────
 
-  × TS18007: JSX expressions may not use the comma operator. Did you mean to write an array?
+  × TS18007: JSX expressions may not use the comma operator.
     ╭─[jsx/jsxParsingError1.tsx:13:1]
  13 │ const class2 = "bar";
  14 │ const elem = <div className={class1, class2}/>;
-    ·                              ───────┬──────
-    ·                                     ╰── JSX expressions may not use the comma operator. Did you mean to write an array?
+    ·                              ──────────────
     ╰────
+  help: Did you mean to write an array?
 
   × Unexpected token
     ╭─[jsx/jsxUnclosedParserRecovery.ts:14:1]
@@ -8508,8 +8322,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[jsx/tsxAttributeInvalidNames.tsx:11:1]
  11 │ // Invalid names
  12 │ <test1 32data={32} />;
-    ·          ──┬─
-    ·            ╰── Invalid characters after number
+    ·          ────
  13 │ <test2 -data={32} />;
     ╰────
 
@@ -8517,8 +8330,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[jsx/tsxAttributeInvalidNames.tsx:11:1]
  11 │ // Invalid names
  12 │ <test1 32data={32} />;
-    ·          ──┬─
-    ·            ╰── Invalid characters after number
+    ·          ────
  13 │ <test2 -data={32} />;
     ╰────
 
@@ -8570,24 +8382,21 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/Accessors/parserAccessors7.ts:1:1]
  1 │ // @target: es5
  2 │ var v = { get foo(v: number) { } };
-   ·                  ─────┬─────
-   ·                       ╰── A 'get' accessor must not have any formal parameters.
+   ·                  ───────────
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
    ╭─[parser/ecmascript5/Accessors/parserAccessors8.ts:1:1]
  1 │ // @target: es5
  2 │ var v = { set foo() { } }
-   ·                  ─┬
-   ·                   ╰── A 'set' accessor must have exactly one parameter.
+   ·                  ──
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
    ╭─[parser/ecmascript5/Accessors/parserAccessors9.ts:1:1]
  1 │ // @target: es5
  2 │ var v = { set foo(a, b) { } }
-   ·                  ───┬──
-   ·                     ╰── A 'set' accessor must have exactly one parameter.
+   ·                  ──────
    ╰────
 
   × Expect token
@@ -8597,11 +8406,10 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                 ╰── Expect `,` here, but found `Identifier`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression2.ts:1:1]
  1 │ a = () => { } || a
-   ·              ┬
-   ·              ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·              ─
    ╰────
   help: Try insert a semicolon here
 
@@ -8612,12 +8420,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                 ╰── Expect `,` here, but found `||`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration3.ts:1:1]
  1 │ class C {
  2 │   export constructor() { }
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -8626,8 +8433,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration8.ts:2:1]
  2 │   // Not a constructor
  3 │   public constructor;
-   ·          ─────┬─────
-   ·               ╰── Classes can't have a field named 'constructor'
+   ·          ───────────
  4 │ }
    ╰────
 
@@ -8738,11 +8544,10 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │    
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/ArrowFunctions/ArrowFunction3.ts:1:1]
  1 │ var v = (a): => {
    ·            ▲
-   ·            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  2 │    
    ╰────
   help: Try insert a semicolon here
@@ -8754,11 +8559,10 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │    
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/ArrowFunctions/parserX_ArrowFunction3.ts:1:1]
  1 │ var v = (a): => {
    ·            ▲
-   ·            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  2 │    
    ╰────
   help: Try insert a semicolon here
@@ -8775,37 +8579,33 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block2.ts:1:1]
  1 │ function f() {
  2 │     ¬
-   ·     ┬
-   ·     ╰── Invalid Character `¬`
+   ·     ─
  3 │     return;
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block3.ts:3:1]
  3 │ 
  4 │     private b(): boolean {
-   ·            ┬
-   ·            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·            ─
  5 │     }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement1.ts:4:1]
  4 │ // this as a source unit element.
  5 │ class D {
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
  6 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement2.ts:3:1]
  3 │ 
  4 │   enum E {
-   ·       ┬
-   ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·       ─
  5 │   }
    ╰────
   help: Try insert a semicolon here
@@ -8814,8 +8614,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement3.ts:1:1]
  1 │ module M {
  2 │    ¬
-   ·    ┬
-   ·    ╰── Invalid Character `¬`
+   ·    ─
  3 │    class C {
    ╰────
 
@@ -8823,7 +8622,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/ErrorRecovery/Expressions/parserErrorRecovery_Expression1.ts:1:1]
  1 │ var v = ()({});
    ·          ▲
-   ·          ╰── Expected an expression here
    ╰────
 
   × Expect token
@@ -8906,32 +8704,29 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │   f2() {
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/IfStatements/parserErrorRecoveryIfStatement5.ts:4:1]
  4 │   }
  5 │   f2() {
-   ·       ┬
-   ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·       ─
  6 │   }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/IfStatements/parserErrorRecoveryIfStatement6.ts:4:1]
  4 │   }
  5 │   public f2() {
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
  6 │   }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[parser/ecmascript5/ErrorRecovery/IncompleteMemberVariables/parserErrorRecovery_IncompleteMemberVariable2.ts:11:1]
  11 │ 
  12 │         public con:C "hello";
-    ·                     ┬
-    ·                     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·                     ─
  13 │         // Constructor
     ╰────
   help: Try insert a semicolon here
@@ -8945,8 +8740,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[parser/ecmascript5/ErrorRecovery/ModuleElements/parserErrorRecovery_ModuleElement1.ts:1:1]
  1 │ return foo;
-   · ───┬──
-   ·    ╰── A 'return' statement can only be used within a function body.
+   · ──────
  2 │ }
    ╰────
 
@@ -9022,8 +8816,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Invalid Character `¬`
    ╭─[parser/ecmascript5/ErrorRecovery/ParameterLists/parserErrorRecovery_ParameterList4.ts:1:1]
  1 │ function f(a,¬) {
-   ·              ┬
-   ·              ╰── Invalid Character `¬`
+   ·              ─
  2 │ }
    ╰────
 
@@ -9061,15 +8854,13 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/ErrorRecovery/TypeArgumentLists/TypeArgumentList1.ts:1:1]
  1 │ Foo<A,B,\ C>(4, 5, 6);
-   ·          ┬
-   ·          ╰── Invalid Unicode escape sequence
+   ·          ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/ErrorRecovery/TypeArgumentLists/parserX_TypeArgumentList1.ts:1:1]
  1 │ Foo<A,B,\ C>(4, 5, 6);
-   ·          ┬
-   ·          ╰── Invalid Unicode escape sequence
+   ·          ─
    ╰────
 
   × Unexpected token
@@ -9091,7 +8882,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  1 │ function getObj() {
  2 │    ().toString();
    ·     ▲
-   ·     ╰── Expected an expression here
  3 │ }
    ╰────
 
@@ -9109,29 +8899,26 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·              ╰── Expect `,` here, but found `=>`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/parserErrantAccessibilityModifierInModule1.ts:2:1]
  2 │     var x=10;  // variable local to this module body
  3 │     private y=x;  // property visible only in module
-   ·            ┬
-   ·            ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·            ─
  4 │     export var z=y;  // property visible to any code
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/parserErrantEqualsGreaterThanAfterFunction1.ts:1:1]
  1 │ function f() => 4;
-   ·             ┬
-   ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·             ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/parserErrantEqualsGreaterThanAfterFunction2.ts:1:1]
  1 │ function f(p: A) => p;
-   ·                 ┬
-   ·                 ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                 ─
    ╰────
   help: Try insert a semicolon here
 
@@ -9139,16 +8926,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[parser/ecmascript5/ErrorRecovery/parserErrantSemicolonInClass1.ts:14:1]
  14 │     }
  15 │     public set d() {
-    ·                 ─┬
-    ·                  ╰── A 'set' accessor must have exactly one parameter.
+    ·                 ──
  16 │     }
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/parserFuzz1.ts:1:1]
  1 │ cla <ss {
-   ·        ┬
-   ·        ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·        ─
  2 │   _ static try
    ╰────
   help: Try insert a semicolon here
@@ -9161,28 +8946,25 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │             return this.doWhile((item, i) => filter(item, i) ? test(item, index++) : true);
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/parserPublicBreak1.ts:1:1]
  1 │ public break;
-   ·       ┬
-   ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·       ─
    ╰────
   help: Try insert a semicolon here
 
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts:1:1]
  1 │ return {
-   · ───┬──
-   ·    ╰── A 'return' statement can only be used within a function body.
+   · ──────
  2 │ 
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/parserUnfinishedTypeNameBeforeKeyword1.ts:1:1]
  1 │ var x: TypeModule1.
  2 │ module TypeModule2 {
-   ·       ┬
-   ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·       ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -9195,12 +8977,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·                                                     ╰── Expect `>` here, but found `EOF`
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/ErrorRecovery/parserUnterminatedGeneric2.ts:1:1]
  1 │ declare module ng {
  2 │     interfaceICompiledExpression {
-   ·                                 ┬
-   ·                                 ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                                 ─
  3 │         (context: any, locals?: any): any;
    ╰────
   help: Try insert a semicolon here
@@ -9223,35 +9004,31 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·         ──
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Expressions/parserAssignmentExpression1.ts:1:1]
  1 │ (foo()) = bar;
-   ·  ──┬──
-   ·    ╰── Cannot assign to this expression
+   ·  ─────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/Expressions/parserMemberAccessAfterPostfixExpression1.ts:1:1]
  1 │ // @lib: es5
  2 │ a--.toString()
    ·    ▲
-   ·    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/Expressions/parserPostfixPostfixExpression1.ts:1:1]
  1 │ a++ ++;
-   ·    ┬
-   ·    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·    ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/Expressions/parserPostfixUnaryExpression1.ts:1:1]
  1 │ foo ++ ++;
-   ·       ┬
-   ·       ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·       ─
    ╰────
   help: Try insert a semicolon here
 
@@ -9261,46 +9038,40 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·     ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Expressions/parserUnaryExpression1.ts:1:1]
  1 │ ++this;
-   ·   ──┬─
-   ·     ╰── Cannot assign to this expression
+   ·   ────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Expressions/parserUnaryExpression2.ts:1:1]
  1 │ ++function(e) { }
-   ·   ───────┬───────
-   ·          ╰── Cannot assign to this expression
+   ·   ───────────────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Expressions/parserUnaryExpression3.ts:1:1]
  1 │ ++[0];
-   ·   ─┬─
-   ·    ╰── Cannot assign to this expression
+   ·   ───
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Expressions/parserUnaryExpression4.ts:1:1]
  1 │ ++{};
-   ·   ─┬
-   ·    ╰── Cannot assign to this expression
+   ·   ──
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Expressions/parserUnaryExpression5.ts:1:1]
  1 │ ++ delete foo.bar
-   ·    ───────┬──────
-   ·           ╰── Cannot assign to this expression
+   ·    ──────────────
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Expressions/parserUnaryExpression7.ts:1:1]
  1 │ ++ new Foo();
-   ·    ────┬────
-   ·        ╰── Cannot assign to this expression
+   ·    ─────────
    ╰────
 
   × Unexpected token
@@ -9311,11 +9082,10 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │     private prevConfig: SeedCoords[][];
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity11.ts:1:1]
  1 │ 1 >>= 2;
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
    ╰────
 
   × Unexpected token
@@ -9337,19 +9107,17 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    · ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity15.ts:1:1]
  1 │ 1 
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
  2 │ // before
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity16.ts:1:1]
  1 │ 1 >>>= 2;
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
    ╰────
 
   × Unexpected token
@@ -9377,11 +9145,10 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·     ─
    ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
    ╭─[parser/ecmascript5/Generics/parserGreaterThanTokenAmbiguity20.ts:1:1]
  1 │ 1
-   · ┬
-   · ╰── Cannot assign to this expression
+   · ─
  2 │ // Before
    ╰────
 
@@ -9417,12 +9184,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    · ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:1:1]
  1 │ class C {
  2 │    export [x: string]: string;
-   ·          ┬
-   ·          ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·          ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -9498,12 +9264,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts:2:1]
  2 │ class C {
  3 │     export get Foo() { }
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
  4 │ }
    ╰────
   help: Try insert a semicolon here
@@ -9512,8 +9277,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration12.ts:2:1]
  2 │ class C {
  3 │    get Foo(a: number) { }
-   ·           ─────┬─────
-   ·                ╰── A 'get' accessor must not have any formal parameters.
+   ·           ───────────
  4 │ }
    ╰────
 
@@ -9521,8 +9285,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration13.ts:2:1]
  2 │ class C {
  3 │    set Foo() { }
-   ·           ─┬
-   ·            ╰── A 'set' accessor must have exactly one parameter.
+   ·           ──
  4 │ }
    ╰────
 
@@ -9530,8 +9293,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration14.ts:2:1]
  2 │ class C {
  3 │    set Foo(a: number, b: number) { }
-   ·           ───────────┬──────────
-   ·                      ╰── A 'set' accessor must have exactly one parameter.
+   ·           ──────────────────────
  4 │ }
    ╰────
 
@@ -9539,27 +9301,24 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration18.ts:2:1]
  2 │ class C {
  3 │    set Foo(...a) { }
-   ·            ──┬─
-   ·              ╰── A 'set' accessor function argument must not be a rest parameter
+   ·            ────
  4 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration4.ts:1:1]
  1 │ class C {
  2 │     export Foo() { }
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration4.ts:1:1]
  1 │ class C {
  2 │   export Foo;
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -9573,8 +9332,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Unterminated regular expression
    ╭─[parser/ecmascript5/MissingTokens/parserMissingToken2.ts:1:1]
  1 │ / b;
-   · ──┬─
-   ·   ╰── Unterminated regular expression
+   · ────
    ╰────
 
   × Expect token
@@ -9598,8 +9356,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/ParameterLists/parserParameterList1.ts:1:1]
  1 │ class C {
  2 │    F(...A, B) { }
-   ·      ──┬─
-   ·        ╰── Rest element must be last element
+   ·      ────
  3 │ }
    ╰────
 
@@ -9628,12 +9385,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │   }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
       ╭─[parser/ecmascript5/RealWorld/parserharness.ts:1430:1]
  1430 │         // Regex for parsing options in the format "@Alpha: Value of any sort"
  1431 │         private optionRegex = /^[\/]{2}\s*@(\w+):\s*(\S*)/gm;  // multiple matches on multiple lines
-      ·                ┬
-      ·                ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+      ·                ─
  1432 │ 
       ╰────
   help: Try insert a semicolon here
@@ -9678,27 +9434,24 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ 
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/RegressionTests/parser512325.ts:1:1]
  1 │ var tt = (a, (b, c)) => a+b+c;
-   ·                     ┬
-   ·                     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·                     ─
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/RegressionTests/parser519458.ts:1:1]
  1 │ import rect = module("rect"); var bar = new rect.Rect();
    ·                     ▲
-   ·                     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/RegressionTests/parser521128.ts:1:1]
  1 │ module.module { }
-   ·              ┬
-   ·              ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·              ─
    ╰────
   help: Try insert a semicolon here
 
@@ -9706,15 +9459,13 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/RegressionTests/parser566700.ts:1:1]
  1 │ var v = ()({});
    ·          ▲
-   ·          ╰── Expected an expression here
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/RegressionTests/parser585151.ts:1:1]
  1 │ class Foo2 {
  2 │   var icecream = "chocolate";
-   ·      ┬
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·      ─
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -9735,49 +9486,43 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/RegressionTests/parser645086_1.ts:1:1]
  1 │ var v = /[]/]/
    ·             ▲
-   ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/RegressionTests/parser645086_2.ts:1:1]
  1 │ var v = /[^]/]/
    ·              ▲
-   ·              ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[parser/ecmascript5/RegularExpressions/parserRegularExpression1.ts:1:1]
  1 │ return /(#?-?\d*\.\d\w*%?)|(@?#?[\w-?]+%?)/g;
-   · ───┬──
-   ·    ╰── A 'return' statement can only be used within a function body.
+   · ──────
    ╰────
 
   × Unexpected flag a in regular expression literal
    ╭─[parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:1]
  1 │ if (1) /regexp/a.foo();
    ·                 ▲
-   ·                 ╰── Unexpected flag a in regular expression literal
    ╰────
 
   × Unterminated regular expression
    ╭─[parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity4.ts:1:1]
  1 │ foo(/notregexp);
-   ·     ──────┬─────
-   ·           ╰── Unterminated regular expression
+   ·     ────────────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity7.ts:1:1]
  1 │ (a/8
  2 │  ){}
    ·   ▲
-   ·   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -9789,8 +9534,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens10.ts:1:1]
  1 │ \
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
  2 │ \
  3 │ /*existing trivia*/ ;
    ╰────
@@ -9799,44 +9543,38 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens10.ts:1:1]
  1 │ \
  2 │ \
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
  3 │ /*existing trivia*/ ;
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens11.ts:1:1]
  1 │ ; \ \ \ 
-   ·    ┬
-   ·    ╰── Invalid Unicode escape sequence
+   ·    ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens11.ts:1:1]
  1 │ ; \ \ \ 
-   ·      ┬
-   ·      ╰── Invalid Unicode escape sequence
+   ·      ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens11.ts:1:1]
  1 │ ; \ \ \ 
-   ·        ┬
-   ·        ╰── Invalid Unicode escape sequence
+   ·        ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens12.ts:1:1]
  1 │ \ \ \
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens12.ts:1:1]
  1 │ \ \ \
-   ·    ┬
-   ·    ╰── Invalid Unicode escape sequence
+   ·    ─
    ╰────
 
   × Invalid Unicode escape sequence
@@ -9847,23 +9585,20 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens13.ts:1:1]
  1 │ /regexp/ \ ;
-   ·           ┬
-   ·           ╰── Invalid Unicode escape sequence
+   ·           ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens13.ts:1:1]
  1 │ /regexp/ \ ;
-   ·         ┬
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·         ─
    ╰────
   help: Try insert a semicolon here
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens14.ts:1:1]
  1 │ \
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
  2 │ /*existing trivia*/ 
  3 │ \
    ╰────
@@ -9872,8 +9607,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens14.ts:2:1]
  2 │ /*existing trivia*/ 
  3 │ \
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
  4 │ ;
    ╰────
 
@@ -9881,8 +9615,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens15.ts:1:1]
  1 │ /*existing trivia*/
  2 │ \
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
  3 │ \
  4 │ ;
    ╰────
@@ -9891,16 +9624,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens15.ts:2:1]
  2 │ \
  3 │ \
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
  4 │ ;
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens16.ts:1:1]
  1 │ foo(): Bar { }
    ·      ▲
-   ·      ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  2 │ function Foo      () ¬   { }
    ╰────
   help: Try insert a semicolon here
@@ -9932,22 +9663,19 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens19.ts:1:1]
  1 │ \ declare var v;
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens19.ts:1:1]
  1 │ \ declare var v;
-   · ────┬────
-   ·     ╰── keyword cannot contain escape characters
+   · ─────────
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens2.ts:1:1]
  1 │ \\
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Unicode escape sequence
@@ -9965,8 +9693,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens3.ts:1:1]
  1 │ \ ; \
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Unicode escape sequence
@@ -9977,8 +9704,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens4.ts:1:1]
  1 │ \  /regexp/;
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Unexpected token
@@ -9990,8 +9716,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens5.ts:1:1]
  1 │ \ /*foo*/ ;
-   ·  ┬
-   ·  ╰── Invalid Unicode escape sequence
+   ·  ─
    ╰────
 
   × Invalid Unicode escape sequence
@@ -10002,24 +9727,21 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens7.ts:1:1]
  1 │ /*foo*/ \ /*bar*/
-   ·          ┬
-   ·          ╰── Invalid Unicode escape sequence
+   ·          ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens8.ts:1:1]
  1 │ ;
  2 │ /*foo*/ \ /*bar*/
-   ·          ┬
-   ·          ╰── Invalid Unicode escape sequence
+   ·          ─
    ╰────
 
   × Invalid Unicode escape sequence
    ╭─[parser/ecmascript5/SkippedTokens/parserSkippedTokens9.ts:1:1]
  1 │ ; // existing trivia
  2 │ /*foo*/ \ /*bar*/
-   ·          ┬
-   ·          ╰── Invalid Unicode escape sequence
+   ·          ─
    ╰────
 
   × Illegal break statement
@@ -10133,16 +9855,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement1.ts:1:1]
  1 │ return;
-   · ───┬──
-   ·    ╰── A 'return' statement can only be used within a function body.
+   · ──────
    ╰────
 
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement2.ts:1:1]
  1 │ {
  2 │    return;
-   ·    ───┬──
-   ·       ╰── A 'return' statement can only be used within a function body.
+   ·    ──────
  3 │ }
    ╰────
 
@@ -10267,8 +9987,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[parser/ecmascript5/Statements/parserReturnStatement1.d.ts:1:1]
  1 │ return;
-   · ───┬──
-   ·    ╰── A 'return' statement can only be used within a function body.
+   · ──────
    ╰────
 
   × 'with' statements are not allowed
@@ -10289,8 +10008,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/Statements/parserWithStatement2.ts:1:1]
  1 │ with (1)
  2 │   return;
-   ·   ───┬──
-   ·      ╰── A 'return' statement can only be used within a function body.
+   ·   ──────
    ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -10418,8 +10136,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:2:1]
  2 │   M() {
  3 │     super<T>(0);
-   ·     ──┬──
-   ·       ╰── 'super' can only be used with function calls or in property accesses 
+   ·     ─────
  4 │   }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
@@ -10484,16 +10201,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/parserKeywordsAsIdentifierName2.ts:1:1]
  1 │ // 'public' should be marked unusable, should complain on trailing /*
  2 │ a.public /*
-   ·          ─┬
-   ·           ╰── Unterminated multiline comment
+   ·          ──
    ╰────
 
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[parser/ecmascript5/parserNotRegex1.ts:2:1]
  2 │   {
  3 │     return true;
-   ·     ───┬──
-   ·        ╰── A 'return' statement can only be used within a function body.
+   ·     ──────
  4 │   }
    ╰────
 
@@ -10557,21 +10272,19 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  17 │       result += 2;
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[parser/ecmascript5/parserS7.9_A5.7_T1.ts:15:1]
  15 │     x
  16 │ ╭─▶ ++
  17 │ │   ++
- 18 │ ├─▶ y
-    · ╰──── Cannot assign to this expression
+ 18 │ ╰─▶ y
  19 │     
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript5/parservoidInQualifiedName1.ts:1:1]
  1 │ var v : void.x;
    ·             ▲
-   ·             ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -10582,12 +10295,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·               ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName27.ts:4:1]
  4 │     [e]: number = 0
  5 │     [e2]: number
    ·         ▲
-   ·         ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  6 │ }
    ╰────
   help: Try insert a semicolon here
@@ -10601,12 +10313,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ }
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName33.ts:4:1]
  4 │     [e] = 0
  5 │     [e2]() { }
-   ·           ┬
-   ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·           ─
  6 │ }
    ╰────
   help: Try insert a semicolon here
@@ -10672,8 +10383,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript6/Iterators/parserForOfStatement22.ts:3:1]
  3 │ var async;
  4 │ for (async of [1, 2]) {}
-   ·      ──┬──
-   ·        ╰── The left-hand side of a `for...of` statement may not be `async`
+   ·      ─────
    ╰────
 
   × Only a single declaration is allowed in a `for...of` statement
@@ -10767,8 +10477,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[salsa/constructorNameInAccessor.ts:2:1]
  2 │ class C1 {
  3 │     get constructor() { return }
-   ·         ─────┬─────
-   ·              ╰── Constructor can't have get/set modifier
+   ·         ───────────
  4 │     set constructor(value) {}
    ╰────
 
@@ -10776,8 +10485,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[salsa/constructorNameInAccessor.ts:3:1]
  3 │     get constructor() { return }
  4 │     set constructor(value) {}
-   ·         ─────┬─────
-   ·              ╰── Constructor can't have get/set modifier
+   ·         ───────────
  5 │ }
    ╰────
 
@@ -10785,8 +10493,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[salsa/constructorNameInGenerator.ts:2:1]
  2 │ class C2 {
  3 │     *constructor() {}
-   ·      ─────┬─────
-   ·           ╰── Constructor can't be a generator
+   ·      ───────────
  4 │ }
    ╰────
 
@@ -10875,8 +10582,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[salsa/plainJSBinderErrors.ts:15:1]
  15 │ class C {
  16 │     #constructor = 5
-    ·     ──────┬─────
-    ·           ╰── Classes can't have an element named '#constructor'
+    ·     ────────────
  17 │     deleted() {
     ╰────
 
@@ -10928,11 +10634,10 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·       ─────────
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[scanner/ecmascript3/scannerES3NumericLiteral3.ts:1:1]
  1 │ 01.0
    ·   ▲
-   ·   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -10941,11 +10646,10 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  1 │ 1e
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[scanner/ecmascript3/scannerES3NumericLiteral4.ts:1:1]
  1 │ 1e
-   · ─┬
-   ·  ╰── invalid float
+   · ──
    ╰────
 
   × Unexpected end of file
@@ -10953,11 +10657,10 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  1 │ 1e+
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[scanner/ecmascript3/scannerES3NumericLiteral6.ts:1:1]
  1 │ 1e+
-   · ─┬─
-   ·  ╰── invalid float
+   · ───
    ╰────
 
   × The keyword 'public' is reserved
@@ -10967,12 +10670,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ·     ──────
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[scanner/ecmascript5/scannerNumericLiteral3.ts:1:1]
  1 │ // @target: ES5
  2 │ 01.0
    ·   ▲
-   ·   ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
@@ -10982,12 +10684,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ 1e
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[scanner/ecmascript5/scannerNumericLiteral4.ts:1:1]
  1 │ // @target: ES5
  2 │ 1e
-   · ─┬
-   ·  ╰── invalid float
+   · ──
    ╰────
 
   × Unexpected end of file
@@ -10996,20 +10697,18 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ 1e+
    ╰────
 
-  × Invalid Number
+  × Invalid Number invalid float
    ╭─[scanner/ecmascript5/scannerNumericLiteral6.ts:1:1]
  1 │ // @target: ES5
  2 │ 1e+
-   · ─┬─
-   ·  ╰── invalid float
+   · ───
    ╰────
 
   × Unterminated multiline comment
     ╭─[scanner/ecmascript5/scannerS7.4_A2_T2.ts:11:1]
  11 │     
  12 │ ╭─▶ /*CHECK#1/
- 13 │ ├─▶ 
-    · ╰──── Unterminated multiline comment
+ 13 │ ╰─▶ 
     ╰────
 
   × Invalid Character `
@@ -11018,8 +10717,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  12 │ //CHECK#1
  13 │ 0x
     ·   ▲
-    ·   ╰── Invalid Character `
-`
  14 │ 
     ╰────
 
@@ -11027,8 +10724,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[scanner/ecmascript5/scannerS7.8.4_A7.1_T4.ts:12:1]
  12 │ //CHECK#
  13 │ "\u000G"
-    ·  ──┬──
-    ·    ╰── Invalid escape sequence
+    ·  ─────
  14 │ 
     ╰────
 
@@ -11036,31 +10732,27 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[scanner/ecmascript5/scannerStringLiterals.ts:9:1]
   9 │ "
  10 │ "Should error because of newline.
-    · ─────────────────┬────────────────
-    ·                  ╰── Unterminated string
+    · ──────────────────────────────────
  11 │ "Should error because of end of file.
     ╰────
 
   × Invalid Character ` `
    ╭─[scanner/ecmascript5/scannerUnexpectedNullCharacter1.ts:1:1]
  1 │ foo + bar;
-   ·    ┬
-   ·    ╰── Invalid Character ` `
+   ·    ─
    ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[scanner/ecmascript5/scannerUnexpectedNullCharacter1.ts:1:1]
  1 │ foo + bar;
    ·    ▲
-   ·    ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
    ╰────
   help: Try insert a semicolon here
 
   × Keywords cannot contain escape characters
    ╭─[scanner/ecmascript5/scannerUnicodeEscapeInKeyword1.ts:1:1]
  1 │ \u0076ar x = "hello";
-   · ────┬───
-   ·     ╰── keyword cannot contain escape characters
+   · ────────
    ╰────
 
   × Illegal break statement
@@ -11434,8 +11126,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/for-ofStatements/ES5For-of20.ts:3:1]
  3 │     for (let v of [v]) {
  4 │         const v;
-   ·               ┬
-   ·               ╰── const declaration need an initializer
+   ·               ─
  5 │     }
    ╰────
 
@@ -11443,8 +11134,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/labeledStatements/labeledStatementWithLabel.ts:3:1]
  3 │ label: function fn() { }
  4 │ label: function* gen() { }
-   ·        ───────┬───────
-   ·               ╰── Generators can only be declared at the top level or inside a block
+   ·        ───────────────
  5 │ label: async function gen1() { }
    ╰────
 
@@ -11452,8 +11142,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/labeledStatements/labeledStatementWithLabel.ts:4:1]
  4 │ label: function* gen() { }
  5 │ label: async function gen1() { }
-   ·        ──────────┬──────────
-   ·                  ╰── Async functions can only be declared at the top level or inside a block
+   ·        ─────────────────────
  6 │ label: enum E {}
    ╰────
 
@@ -11461,17 +11150,16 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/labeledStatements/labeledStatementWithLabel.ts:7:1]
  7 │ label: interface I {}
  8 │ label: class C { }
-   ·        ────┬───
-   ·            ╰── Classes can only be declared at top level or inside a block
+   ·        ────────
  9 │ label: var a = 1;
    ╰────
+  help: Classes can only be declared at top level or inside a block
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[statements/labeledStatements/labeledStatementWithLabel.ts:9:1]
   9 │ label: var a = 1;
  10 │ label: let b = 1;
-    ·           ┬
-    ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·           ─
  11 │ label: const c = 1;
     ╰────
   help: Try insert a semicolon here
@@ -11480,8 +11168,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/labeledStatements/labeledStatementWithLabel_es2015.ts:3:1]
  3 │ label: function fn() { }
  4 │ label: function* gen() { }
-   ·        ───────┬───────
-   ·               ╰── Generators can only be declared at the top level or inside a block
+   ·        ───────────────
  5 │ label: async function gen1() { }
    ╰────
 
@@ -11489,8 +11176,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/labeledStatements/labeledStatementWithLabel_es2015.ts:4:1]
  4 │ label: function* gen() { }
  5 │ label: async function gen1() { }
-   ·        ──────────┬──────────
-   ·                  ╰── Async functions can only be declared at the top level or inside a block
+   ·        ─────────────────────
  6 │ label: enum E {}
    ╰────
 
@@ -11498,17 +11184,16 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/labeledStatements/labeledStatementWithLabel_es2015.ts:7:1]
  7 │ label: interface I {}
  8 │ label: class C { }
-   ·        ────┬───
-   ·            ╰── Classes can only be declared at top level or inside a block
+   ·        ────────
  9 │ label: var a = 1;
    ╰────
+  help: Classes can only be declared at top level or inside a block
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[statements/labeledStatements/labeledStatementWithLabel_es2015.ts:9:1]
   9 │ label: var a = 1;
  10 │ label: let b = 1;
-    ·           ┬
-    ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·           ─
  11 │ label: const c = 1;
     ╰────
   help: Try insert a semicolon here
@@ -11517,8 +11202,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/labeledStatements/labeledStatementWithLabel_strict.ts:3:1]
  3 │ label: function fn() { }
  4 │ label: function* gen() { }
-   ·        ───────┬───────
-   ·               ╰── Generators can only be declared at the top level or inside a block
+   ·        ───────────────
  5 │ label: async function gen1() { }
    ╰────
 
@@ -11526,8 +11210,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/labeledStatements/labeledStatementWithLabel_strict.ts:4:1]
  4 │ label: function* gen() { }
  5 │ label: async function gen1() { }
-   ·        ──────────┬──────────
-   ·                  ╰── Async functions can only be declared at the top level or inside a block
+   ·        ─────────────────────
  6 │ label: enum E {}
    ╰────
 
@@ -11535,17 +11218,16 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[statements/labeledStatements/labeledStatementWithLabel_strict.ts:7:1]
  7 │ label: interface I {}
  8 │ label: class C { }
-   ·        ────┬───
-   ·            ╰── Classes can only be declared at top level or inside a block
+   ·        ────────
  9 │ label: var a = 1;
    ╰────
+  help: Classes can only be declared at top level or inside a block
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[statements/labeledStatements/labeledStatementWithLabel_strict.ts:9:1]
   9 │ label: var a = 1;
  10 │ label: let b = 1;
-    ·           ┬
-    ·           ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+    ·           ─
  11 │ label: const c = 1;
     ╰────
   help: Try insert a semicolon here
@@ -11750,12 +11432,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  38 │ }
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[types/objectTypeLiteral/callSignatures/callSignaturesWithParameterInitializers2.ts:19:1]
  19 │ var b = {
  20 │     foo(x = 1), // error
     ·               ▲
-    ·               ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
  21 │     foo(x = 1) { }, // error
     ╰────
   help: Try insert a semicolon here
@@ -11764,8 +11445,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:4:1]
  4 │ var f = function foo(...x) { }
  5 │ var f2 = (...x, ...y) => { }
-   ·           ──┬─
-   ·             ╰── Rest element must be last element
+   ·           ────
  6 │ 
    ╰────
 
@@ -11773,8 +11453,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:12:1]
  12 │     (...x);
  13 │     foo(...x, ...y);
-    ·         ──┬─
-    ·           ╰── Rest element must be last element
+    ·         ────
  14 │ }
     ╰────
 
@@ -11782,8 +11461,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:22:1]
  22 │     foo(...x) { },
  23 │     a: function foo(...x, ...y) { },
-    ·                     ──┬─
-    ·                       ╰── Rest element must be last element
+    ·                     ────
  24 │     b: (...x) => { }
     ╰────
 
@@ -11791,8 +11469,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:4:1]
  4 │ var f = function foo(...x: number) { }
  5 │ var f2 = (...x: Date, ...y: boolean) => { }
-   ·           ─────┬────
-   ·                ╰── Rest element must be last element
+   ·           ──────────
  6 │ 
    ╰────
 
@@ -11800,8 +11477,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:12:1]
  12 │     (...x: string);
  13 │     foo(...x: number, ...y: number);
-    ·         ──────┬─────
-    ·               ╰── Rest element must be last element
+    ·         ────────────
  14 │ }
     ╰────
 
@@ -11809,8 +11485,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:22:1]
  22 │     foo(...x: string) { },
  23 │     a: function foo(...x: number, ...y: Date) { },
-    ·                     ──────┬─────
-    ·                           ╰── Rest element must be last element
+    ·                     ────────────
  24 │     b: (...x: string) => { }
     ╰────
 
@@ -11818,8 +11493,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:8:1]
   8 │ var f = function foo(...x: MyThing) { }
   9 │ var f2 = (...x: MyThing, ...y: MyThing) => { }
-    ·           ──────┬──────
-    ·                 ╰── Rest element must be last element
+    ·           ─────────────
  10 │ 
     ╰────
 
@@ -11827,8 +11501,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:16:1]
  16 │     (...x: MyThing);
  17 │     foo(...x: MyThing, ...y: MyThing);
-    ·         ──────┬──────
-    ·               ╰── Rest element must be last element
+    ·         ─────────────
  18 │ }
     ╰────
 
@@ -11836,8 +11509,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:26:1]
  26 │     foo(...x: MyThing) { },
  27 │     a: function foo(...x: MyThing, ...y: MyThing) { },
-    ·                     ──────┬──────
-    ·                           ╰── Rest element must be last element
+    ·                     ─────────────
  28 │     b: (...x: MyThing) => { }
     ╰────
 
@@ -11845,8 +11517,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:35:1]
  35 │ var f3 = function foo(...x: MyThing2<string>) { }
  36 │ var f4 = (...x: MyThing2<string>, ...y: MyThing2<string>) => { }
-    ·           ───────────┬──────────
-    ·                      ╰── Rest element must be last element
+    ·           ──────────────────────
  37 │ 
     ╰────
 
@@ -11854,8 +11525,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:43:1]
  43 │     (...x: MyThing2<string>);
  44 │     foo(...x: MyThing2<string>, ...y: MyThing2<string>);
-    ·         ───────────┬──────────
-    ·                    ╰── Rest element must be last element
+    ·         ──────────────────────
  45 │ }
     ╰────
 
@@ -11863,8 +11533,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:53:1]
  53 │     foo(...x: MyThing2<string>) { },
  54 │     a: function foo(...x: MyThing2<string>, ...y: MyThing2<string>) { },
-    ·                     ───────────┬──────────
-    ·                                ╰── Rest element must be last element
+    ·                     ──────────────────────
  55 │     b: (...x: MyThing2<string>) => { }
     ╰────
 
@@ -11872,8 +11541,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:4:1]
  4 │ var f = function foo(...x: number[]) { }
  5 │ var f2 = (...x: number[], ...y: number[]) => { }
-   ·           ───────┬──────
-   ·                  ╰── Rest element must be last element
+   ·           ──────────────
  6 │ 
    ╰────
 
@@ -11881,8 +11549,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:12:1]
  12 │     (...x: number[]);
  13 │     foo(...x: number[], ...y: number[]);
-    ·         ───────┬──────
-    ·                ╰── Rest element must be last element
+    ·         ──────────────
  14 │ }
     ╰────
 
@@ -11890,8 +11557,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:22:1]
  22 │     foo(...x: number[]) { },
  23 │     a: function foo(...x: number[], ...y: number[]) { },
-    ·                     ───────┬──────
-    ·                            ╰── Rest element must be last element
+    ·                     ──────────────
  24 │     b: (...x: number[]) => { }
     ╰────
 
@@ -11899,8 +11565,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:31:1]
  31 │ var f3 = function foo(...x: Array<string>) { }
  32 │ var f4 = (...x: Array<string>, ...y: Array<string>) => { }
-    ·           ─────────┬─────────
-    ·                    ╰── Rest element must be last element
+    ·           ───────────────────
  33 │ 
     ╰────
 
@@ -11908,8 +11573,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:39:1]
  39 │     (...x: Array<string>);
  40 │     foo(...x: Array<string>, ...y: Array<string>);
-    ·         ─────────┬─────────
-    ·                  ╰── Rest element must be last element
+    ·         ───────────────────
  41 │ }
     ╰────
 
@@ -11917,8 +11581,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:49:1]
  49 │     foo(...x: Array<string>) { },
  50 │     a: function foo(...x: Array<string>, ...y: Array<string>) { },
-    ·                     ─────────┬─────────
-    ·                              ╰── Rest element must be last element
+    ·                     ───────────────────
  51 │     b: (...x: Array<string>) => { }
     ╰────
 
@@ -11961,8 +11624,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[types/rest/objectRestNegative.ts:2:1]
  2 │ let o = { a: 1, b: 'no' };
  3 │ var { ...mustBeLast, a } = o;
-   ·       ──────┬──────
-   ·             ╰── Rest element must be last element
+   ·       ─────────────
  4 │ 
    ╰────
 
@@ -11970,24 +11632,21 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ╭─[types/rest/objectRestNegative.ts:9:1]
   9 │ 
  10 │ function stillMustBeLast({ ...mustBeLast, a }: { a: number, b: string }): void {
-    ·                            ──────┬──────
-    ·                                  ╰── Rest element must be last element
+    ·                            ─────────────
  11 │ }
     ╰────
 
-  × Invalid assignment
+  × Cannot assign to this expression
     ╭─[types/rest/objectRestNegative.ts:17:1]
  17 │ let rest: { b: string }
  18 │ ({a, ...rest.b + rest.b} = o);
-    ·         ───────┬───────
-    ·                ╰── Cannot assign to this expression
+    ·         ───────────────
     ╰────
 
   × Rest element must be last element
    ╭─[types/rest/objectRestPropertyMustBeLast.ts:1:1]
  1 │ var {...a, x } = { x: 1 };    // Error, rest must be last property
-   ·      ──┬─
-   ·        ╰── Rest element must be last element
+   ·      ────
  2 │ ({...a, x } = { x: 1 });      // Error, rest must be last property
    ╰────
 
@@ -11995,16 +11654,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[types/rest/objectRestPropertyMustBeLast.ts:1:1]
  1 │ var {...a, x } = { x: 1 };    // Error, rest must be last property
  2 │ ({...a, x } = { x: 1 });      // Error, rest must be last property
-   ·   ──┬─
-   ·     ╰── Spread must be last element
+   ·   ────
  3 │ 
    ╰────
 
   × Rest element must be last element
    ╭─[types/rest/restElementMustBeLast.ts:1:1]
  1 │ var [...a, x] = [1, 2, 3];  // Error, rest must be last element
-   ·      ──┬─
-   ·        ╰── Rest element must be last element
+   ·      ────
  2 │ [...a, x] = [1, 2, 3];      // Error, rest must be last element
    ╰────
 
@@ -12012,8 +11669,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[types/rest/restElementMustBeLast.ts:1:1]
  1 │ var [...a, x] = [1, 2, 3];  // Error, rest must be last element
  2 │ [...a, x] = [1, 2, 3];      // Error, rest must be last element
-   ·  ──┬─
-   ·    ╰── Spread must be last element
+   ·  ────
    ╰────
 
   × Expect token
@@ -12066,12 +11722,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  14 │ type T10 = [string, ...[...string[]]];
     ╰────
 
-  × Automatic Semicolon Insertion
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[types/typeAliases/reservedNamesInAliases.ts:5:1]
  5 │ type string = I;
  6 │ type void = I;
-   ·     ┬
-   ·     ╰── Expected a semicolon or an implicit semicolon after a statement, but found none
+   ·     ─
  7 │ type object = I;
    ╰────
   help: Try insert a semicolon here

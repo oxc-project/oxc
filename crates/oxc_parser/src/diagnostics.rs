@@ -25,119 +25,96 @@ pub struct ExpectToken(
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid escape sequence")]
-pub struct InvalidEscapeSequence(#[label("Invalid escape sequence")] pub Span);
+pub struct InvalidEscapeSequence(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Invalid escape sequence")]
-pub struct NonOctalDecimalEscapeSequence(
-    #[label("\\8 and \\9 are not allowed in strict mode")] pub Span,
-);
+#[error("\\8 and \\9 are not allowed in strict mode")]
+pub struct NonOctalDecimalEscapeSequence(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid Unicode escape sequence")]
-pub struct UnicodeEscapeSequence(#[label("Invalid Unicode escape sequence")] pub Span);
+pub struct UnicodeEscapeSequence(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid Character `{0}`")]
-pub struct InvalidCharacter(pub char, #[label("Invalid Character `{0}`")] pub Span);
+pub struct InvalidCharacter(pub char, #[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid characters after number")]
-pub struct InvalidNumberEnd(#[label("Invalid characters after number")] pub Span);
+pub struct InvalidNumberEnd(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Unterminated multiline comment")]
-pub struct UnterminatedMultiLineComment(#[label("Unterminated multiline comment")] pub Span);
+pub struct UnterminatedMultiLineComment(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Unterminated string")]
-pub struct UnterminatedString(#[label("Unterminated string")] pub Span);
+pub struct UnterminatedString(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Unexpected flag {0} in regular expression literal")]
-pub struct RegExpFlag(
-    pub char,
-    #[label("Unexpected flag {0} in regular expression literal")] pub Span,
-);
+pub struct RegExpFlag(pub char, #[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Flag {0} is mentioned twice in regular expression literal")]
-pub struct RegExpFlagTwice(
-    pub char,
-    #[label("Flag {0} is mentioned twice in regular expression literal")] pub Span,
-);
+pub struct RegExpFlagTwice(pub char, #[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Unexpected end of file")]
-pub struct UnexpectedEnd(#[label("Unexpected end of file")] pub Span);
+pub struct UnexpectedEnd(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Unterminated regular expression")]
-pub struct UnterminatedRegExp(#[label("Unterminated regular expression")] pub Span);
+pub struct UnterminatedRegExp(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Invalid Number")]
-pub struct InvalidNumber(pub &'static str, #[label("{0}")] pub Span);
+#[error("Invalid Number {0}")]
+pub struct InvalidNumber(pub &'static str, #[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Keywords cannot contain escape characters")]
 #[diagnostic()]
-pub struct EscapedKeyword(#[label("keyword cannot contain escape characters")] pub Span);
+pub struct EscapedKeyword(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Automatic Semicolon Insertion")]
+#[error("Expected a semicolon or an implicit semicolon after a statement, but found none")]
 #[diagnostic(help("Try insert a semicolon here"))]
-pub struct AutoSemicolonInsertion(
-    #[label("Expected a semicolon or an implicit semicolon after a statement, but found none")]
-    pub Span,
-);
+pub struct AutoSemicolonInsertion(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Octal literals are not allowed in strict mode")]
+#[error("'0'-prefixed octal literals and octal escape sequences are deprecated")]
 #[diagnostic(help("for octal literals use the '0o' prefix instead"))]
-pub struct LegacyOctal(
-    #[label("'0'-prefixed octal literals and octal escape sequences are deprecated")] pub Span,
-);
+pub struct LegacyOctal(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Line terminator not permitted before arrow")]
 #[diagnostic()]
-pub struct LineterminatorBeforeArrow(
-    #[label("Line terminator not permitted before arrow")] pub Span,
-);
+pub struct LineterminatorBeforeArrow(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Missing initializer in destructuring declaration")]
 #[diagnostic()]
-pub struct InvalidDestrucuringDeclaration(
-    #[label("Missing initializer in destructuring declaration")] pub Span,
-);
+pub struct InvalidDestrucuringDeclaration(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Missing initializer in const declaration")]
 #[diagnostic()]
-pub struct MissinginitializerInConst(#[label("const declaration need an initializer")] pub Span);
+pub struct MissinginitializerInConst(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Lexical declaration cannot appear in a single-statement context")]
 #[diagnostic(help("Wrap this declaration in a block statement"))]
-pub struct LexicalDeclarationSingleStatement(
-    #[label("Lexical declaration is not allowed here")] pub Span,
-);
+pub struct LexicalDeclarationSingleStatement(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Async functions can only be declared at the top level or inside a block")]
 #[diagnostic()]
-pub struct AsyncFunctionDeclaration(
-    #[label("Async functions can only be declared at the top level or inside a block")] pub Span,
-);
+pub struct AsyncFunctionDeclaration(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Generators can only be declared at the top level or inside a block")]
 #[diagnostic()]
-pub struct GeneratorFunctionDeclaration(
-    #[label("Generators can only be declared at the top level or inside a block")] pub Span,
-);
+pub struct GeneratorFunctionDeclaration(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("`await` is only allowed within async functions and at the top levels of modules")]
@@ -151,87 +128,73 @@ pub struct YieldExpression(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid class declaration")]
-#[diagnostic()]
-pub struct ClassDeclaration(
-    #[label("Classes can only be declared at top level or inside a block")] pub Span,
-);
+#[diagnostic(help("Classes can only be declared at top level or inside a block"))]
+pub struct ClassDeclaration(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Rest element must be last element")]
 #[diagnostic()]
-pub struct RestElement(#[label("Rest element must be last element")] pub Span);
+pub struct RestElement(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Spread must be last element")]
 #[diagnostic()]
-pub struct SpreadLastElement(#[label("Spread must be last element")] pub Span);
+pub struct SpreadLastElement(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Unexpected trailing comma after rest element")]
 #[diagnostic()]
-pub struct RestElementTrailingComma(
-    #[label("Unexpected trailing comma after rest element")] pub Span,
-);
+pub struct RestElementTrailingComma(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid rest argument")]
 #[diagnostic(help("Expected identifier in rest argument"))]
-pub struct InvalidRestArgument(#[label("Invalid rest argument")] pub Span);
+pub struct InvalidRestArgument(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Invalid assignment")]
+#[error("Cannot assign to this expression")]
 #[diagnostic()]
-pub struct InvalidAssignment(#[label("Cannot assign to this expression")] pub Span);
+pub struct InvalidAssignment(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Optional chaining cannot appear in the callee of new expressions")]
 #[diagnostic()]
-pub struct NewOptionalChain(
-    #[label("Optional chaining cannot appear in the callee of new expressions")] pub Span,
-);
+pub struct NewOptionalChain(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("The left-hand side of a `for...of` statement may not be `async`")]
 #[diagnostic()]
-pub struct ForLoopAsyncOf(
-    #[label("The left-hand side of a `for...of` statement may not be `async`")] pub Span,
-);
+pub struct ForLoopAsyncOf(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("await can only be used in conjunction with `for...of` statements")]
 #[diagnostic()]
-pub struct ForAwait(
-    #[label("await can only be used in conjunction with `for...of` statements")] pub Span,
-);
+pub struct ForAwait(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Cannot use new with dynamic import")]
 #[diagnostic()]
-pub struct NewDynamicImport(#[label("Cannot use new with dynamic import")] pub Span);
+pub struct NewDynamicImport(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Classes can't have an element named '#constructor'")]
 #[diagnostic()]
-pub struct PrivateNameConstructor(
-    #[label("Classes can't have an element named '#constructor'")] pub Span,
-);
+pub struct PrivateNameConstructor(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Classes may not have a static property named prototype")]
 #[diagnostic()]
-pub struct StaticPrototype(
-    #[label("Classes may not have a static property named prototype")] pub Span,
-);
+pub struct StaticPrototype(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Constructor can't have get/set modifier")]
 #[diagnostic()]
-pub struct ConstructorGetterSetter(#[label("Constructor can't have get/set modifier")] pub Span);
+pub struct ConstructorGetterSetter(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Constructor can't be an async method")]
 #[diagnostic()]
-pub struct ConstructorAsync(#[label("Constructor can't be an async method")] pub Span);
+pub struct ConstructorAsync(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Cannot use `{0}` as an identifier in an async context")]
@@ -246,46 +209,37 @@ pub struct IdentifierGenerator(pub &'static str, #[label] pub Span);
 #[derive(Debug, Error, Diagnostic)]
 #[error("Constructor can't be a generator")]
 #[diagnostic()]
-pub struct ConstructorGenerator(#[label("Constructor can't be a generator")] pub Span);
+pub struct ConstructorGenerator(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Classes can't have a field named 'constructor'")]
 #[diagnostic()]
-pub struct FieldConstructor(#[label("Classes can't have a field named 'constructor'")] pub Span);
+pub struct FieldConstructor(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("An export name cannot include a unicode lone surrogate")]
 #[diagnostic()]
-pub struct ExportLoneSurrogate(
-    #[label("An export name cannot include a unicode lone surrogate")] pub Span,
-);
+pub struct ExportLoneSurrogate(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("A string literal cannot be used as an exported binding without `from`")]
 #[diagnostic(help("Did you mean `export {{ '{0}' as '{1}' }} from 'some-module'`?"))]
-pub struct ExportNamedString(
-    pub Atom,
-    pub Atom,
-    #[label("A string literal cannot be used as an exported binding without `from`")] pub Span,
-);
+pub struct ExportNamedString(pub Atom, pub Atom, #[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Bad escape sequence in untagged template literal")]
 #[diagnostic()]
-pub struct TemplateLiteral(#[label("Bad escape sequence in untagged template literal")] pub Span);
+pub struct TemplateLiteral(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Empty parenthesized expression")]
 #[diagnostic()]
-pub struct EmptyParenthesizedExpression(#[label("Expected an expression here")] pub Span);
+pub struct EmptyParenthesizedExpression(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("'Unexpected `{0}`")]
+#[error("'{0}' keyword is unexpected here")]
 #[diagnostic()]
-pub struct UnexpectedKeyword(
-    pub &'static str,
-    #[label("'{0}' keyword is unexpected here")] pub Span,
-);
+pub struct UnexpectedKeyword(pub &'static str, #[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Illegal newline after {0}")]
@@ -299,64 +253,49 @@ pub struct IllegalNewline(
 #[derive(Debug, Error, Diagnostic)]
 #[error("Tagged template expressions are not permitted in an optional chain")]
 #[diagnostic()]
-pub struct OptionalChainTaggedTemplate(
-    #[label("Tagged template expressions are not permitted in an optional chain")] pub Span,
-);
+pub struct OptionalChainTaggedTemplate(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("A 'get' accessor must not have any formal parameters.")]
 #[diagnostic()]
-pub struct GetterParameters(
-    #[label("A 'get' accessor must not have any formal parameters.")] pub Span,
-);
+pub struct GetterParameters(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("A 'set' accessor must have exactly one parameter.")]
 #[diagnostic()]
-pub struct SetterParameters(#[label("A 'set' accessor must have exactly one parameter.")] pub Span);
+pub struct SetterParameters(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("A 'set' accessor function argument must not be a rest parameter")]
 #[diagnostic()]
-pub struct SetterParametersRestPattern(
-    #[label("A 'set' accessor function argument must not be a rest parameter")] pub Span,
-);
+pub struct SetterParametersRestPattern(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("'super' can only be used with function calls or in property accesses")]
 #[diagnostic(help("replace with `super()` or `super.prop` or `super[prop]`"))]
-pub struct UnexpectedSuper(
-    #[label("'super' can only be used with function calls or in property accesses ")] pub Span,
-);
+pub struct UnexpectedSuper(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Expected function name")]
 #[diagnostic(help("Function name is required in function declaration or named export"))]
-pub struct ExpectFunctionName(#[label("Function name is required here")] pub Span);
+pub struct ExpectFunctionName(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Missing catch or finally clause")]
 #[diagnostic()]
-pub struct ExpectCatchFinally(#[label("Expected `catch` or `finally` here")] pub Span);
+pub struct ExpectCatchFinally(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("TS1095: A 'set' accessor cannot have a return type annotation")]
 #[diagnostic()]
-pub struct ASetAccessorCannotHaveAReturnTypeAnnotation(
-    #[label("A 'set' accessor cannot have a return type annotation")] pub Span,
-);
+pub struct ASetAccessorCannotHaveAReturnTypeAnnotation(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("TS1108: A 'return' statement can only be used within a function body")]
 #[diagnostic()]
-pub struct ReturnStatementOnlyInFunctionBody(
-    #[label("A 'return' statement can only be used within a function body.")] pub Span,
-);
+pub struct ReturnStatementOnlyInFunctionBody(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("TS18007: JSX expressions may not use the comma operator. Did you mean to write an array?")]
-#[diagnostic()]
-pub struct JSXExpressionsMayNotUseTheCommaOperator(
-    #[label("JSX expressions may not use the comma operator. Did you mean to write an array?")]
-    pub Span,
-);
+#[error("TS18007: JSX expressions may not use the comma operator.")]
+#[diagnostic(help("Did you mean to write an array?"))]
+pub struct JSXExpressionsMayNotUseTheCommaOperator(#[label] pub Span);
