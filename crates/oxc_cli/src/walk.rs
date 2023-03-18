@@ -3,14 +3,14 @@ use std::path::Path;
 use ignore::{DirEntry, WalkBuilder};
 use oxc_ast::VALID_EXTENSIONS;
 
-use crate::CliOptions;
+use crate::LintOptions;
 
 pub struct Walk {
     inner: ignore::Walk,
 }
 
 impl Walk {
-    pub fn new<P: AsRef<Path>>(path: P, options: &CliOptions) -> Self {
+    pub fn new<P: AsRef<Path>>(path: P, options: &LintOptions) -> Self {
         let mut inner = WalkBuilder::new(path);
         if !options.no_ignore {
             inner.add_custom_ignore_filename(&options.ignore_path);

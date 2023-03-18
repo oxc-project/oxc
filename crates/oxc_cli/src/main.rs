@@ -8,7 +8,7 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use oxc_cli::{command, Cli, CliOptions, CliRunResult};
+use oxc_cli::{command, CliRunResult, LintOptions, LintRunner};
 use oxc_diagnostics::miette;
 
 fn main() -> CliRunResult {
@@ -17,20 +17,16 @@ fn main() -> CliRunResult {
     miette::set_hook(Box::new(|_| Box::new(miette::MietteHandlerOpts::new().tab_width(4).build())))
         .unwrap();
 
-    if let Some((subcommand, matches)) = command().get_matches().subcommand() {
-        let cli_options = CliOptions::try_from(matches);
-        if let Ok(cli_options) = cli_options {
-            // if cli_options.fix {
-            //   Git::new().verify()?;
-            // }
+    let matches = command().get_matches();
+    let Some((subcommand, matches)) = matches.subcommand() else {
+        return CliRunResult::None
+    };
 
-            let cli = Cli::new(cli_options);
-
-            if subcommand == "lint" {
-                return cli.lint();
-            }
-            return CliRunResult::None;
+    match subcommand {
+        "lint" => {
+            let options = LintOptions::from(matches);
+            LintRunner::new(options).run()
         }
+        _ => CliRunResult::None,
     }
-    CliRunResult::None
 }
