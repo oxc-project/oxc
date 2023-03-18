@@ -20,7 +20,7 @@ use oxc_linter::{Fixer, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 
-pub use crate::{command::Command, options::CliOptions, result::CliRunResult, walk::Walk};
+pub use crate::{command::command, options::CliOptions, result::CliRunResult, walk::Walk};
 
 pub struct Cli {
     pub cli_options: CliOptions,

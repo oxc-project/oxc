@@ -1,32 +1,19 @@
-use clap::{builder::ValueParser, Arg, ArgAction, Command as ClapCommand};
+use clap::{builder::ValueParser, Arg, ArgAction, Command};
 
-#[derive(Debug)]
-pub struct Command {
-    inner: ClapCommand,
+#[must_use]
+pub fn command() -> Command {
+    Command::new("oxc")
+        .bin_name("oxc")
+        .version("alpha")
+        .author("Boshen")
+        .about("The JavaScript Oxidation Compiler")
+        .subcommand_required(true)
+        .arg_required_else_help(true)
+        .subcommand(lint_subcommand())
 }
 
-impl Default for Command {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Command {
-    #[must_use]
-    pub fn new() -> Self {
-        let inner = ClapCommand::new("oxc")
-            .bin_name("oxc")
-            .version("alpha")
-            .author("Boshen")
-            .about("The JavaScript Oxidation Compiler")
-            .subcommand_required(true)
-            .arg_required_else_help(true)
-            .subcommand(Self::lint_subcommand());
-        Self { inner }
-    }
-
-    fn lint_subcommand() -> ClapCommand {
-        ClapCommand::new("lint")
+fn lint_subcommand() -> Command {
+    Command::new("lint")
             .alias("check")
             .about("Lint this repository.")
             .arg_required_else_help(true)
@@ -79,13 +66,6 @@ impl Command {
                     .help("File or Directory paths to scan. Directories are scanned recursively.")
                     .value_parser(ValueParser::path_buf()),
             )
-    }
-
-    #[must_use]
-    #[allow(clippy::missing_const_for_fn)]
-    pub fn build(self) -> ClapCommand {
-        self.inner
-    }
 }
 
 #[cfg(test)]
@@ -94,18 +74,30 @@ mod test {
 
     use clap::ArgMatches;
 
-    use super::Command;
+    use super::command;
+
+    #[test]
+    fn verify_command() {
+        command().debug_assert();
+    }
 
     fn get_lint_matches(arg: &str) -> ArgMatches {
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches = command().try_get_matches_from(arg.split(' ')).unwrap();
         let matches = matches.subcommand_matches("lint");
         assert!(matches.is_some());
         matches.unwrap().clone()
     }
 
     #[test]
-    fn verify_command() {
-        Command::new().build().debug_assert();
+    fn test_lint_default() {
+        let matches = get_lint_matches("oxc lint .");
+        assert_eq!(matches.get_one::<PathBuf>("path"), Some(&PathBuf::from(".")));
+        assert_eq!(matches.get_flag("fix"), false);
+        assert_eq!(matches.get_flag("quiet"), false);
+        assert_eq!(matches.get_one::<String>("ignore-path"), None);
+        assert_eq!(matches.get_flag("no-ignore"), false);
+        assert_eq!(matches.get_one::<String>("ignore-pattern"), None);
+        assert_eq!(matches.get_one::<usize>("max-warnings"), None);
     }
 
     #[test]
@@ -124,71 +116,49 @@ mod test {
     }
 
     #[test]
-    fn test_check_path() {
+    fn test_lint_check_path() {
         let matches = get_lint_matches("oxc check /path/to/dir");
         assert_eq!(matches.get_one::<PathBuf>("path"), Some(&PathBuf::from("/path/to/dir")));
     }
 
     #[test]
-    fn test_quiet_true() {
+    fn test_lint_quiet_true() {
         let matches = get_lint_matches("oxc lint foo.js --quiet");
         assert!(matches.get_flag("quiet"));
     }
 
     #[test]
-    fn test_quiet_false() {
-        let matches = get_lint_matches("oxc lint foo.js");
-        assert!(!matches.get_flag("quiet"));
-    }
-
-    #[test]
-    fn test_fix_true() {
+    fn test_lint_fix_true() {
         let matches = get_lint_matches("oxc lint foo.js --fix");
         assert!(matches.get_flag("fix"));
     }
 
     #[test]
-    fn test_fix_false() {
-        let matches = get_lint_matches("oxc lint foo.js");
-        assert!(!matches.get_flag("fix"));
+    fn test_lint_max_warnings() {
+        let matches = get_lint_matches("oxc lint --max-warnings 10 foo.js");
+        assert_eq!(matches.get_one::<usize>("max-warnings"), Some(&10));
     }
 
     #[test]
-    fn test_max_warnings_none() {
-        let arg = "oxc lint foo.js";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint");
-        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), None);
-    }
-
-    #[test]
-    fn test_max_warnings_some() {
-        let arg = "oxc lint --max-warnings 10 foo.js";
-        let matches = Command::new().build().try_get_matches_from(arg.split(' ')).unwrap();
-        let matches = matches.subcommand_matches("lint");
-        assert_eq!(matches.unwrap().get_one::<usize>("max-warnings"), Some(&10));
-    }
-
-    #[test]
-    fn test_ignore_path() {
+    fn test_lint_ignore_path() {
         let matches = get_lint_matches("oxc lint --ignore-path .gitignore foo.js");
         assert_eq!(matches.get_one::<String>("ignore-path"), Some(&".gitignore".to_string()));
     }
 
     #[test]
-    fn test_no_ignore() {
+    fn test_lint_no_ignore() {
         let matches = get_lint_matches("oxc lint --no-ignore foo.js");
         assert!(matches.get_flag("no-ignore"));
     }
 
     #[test]
-    fn test_single_ignore_pattern() {
+    fn test_lint_single_ignore_pattern() {
         let matches = get_lint_matches("oxc lint --ignore-pattern \"./test\" foo.js");
         assert_eq!(matches.get_one::<String>("ignore-pattern"), Some(&"\"./test\"".to_string()));
     }
 
     #[test]
-    fn test_multiple_ignore_pattern() {
+    fn test_lint_multiple_ignore_pattern() {
         let matches = get_lint_matches(
             "oxc lint --ignore-pattern \"./test\" --ignore-pattern \"bar.js\" foo.js",
         );
@@ -197,7 +167,6 @@ mod test {
         for pattern in ignore_pattern {
             compare.push(pattern);
         }
-
         assert_eq!(compare, vec!["\"./test\"", "\"bar.js\""]);
     }
 }
