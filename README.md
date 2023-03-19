@@ -113,13 +113,13 @@ Negative Passed: 680/2532 (26.86%)
 
 Conformance for Test262 is now complete.
 
-Only unstable stage 3 `jon-modules` and stage 3 `decorators` tests are skipped.
+Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 
 ## Learning Resources
 
 * My [small tutorial on how to write a JavaScript Parser in Rust](https://boshen.github.io/javascript-parser-in-rust/)
 * [Crafting Interpreters](https://craftinginterpreters.com)
-* [Create an issue and nsert your inspirational learning resources here]
+* [Create an issue and insert your inspirational learning resources here]
 
 ## Credits
 
