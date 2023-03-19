@@ -299,3 +299,10 @@ pub struct ReturnStatementOnlyInFunctionBody(#[label] pub Span);
 #[error("TS18007: JSX expressions may not use the comma operator.")]
 #[diagnostic(help("Did you mean to write an array?"))]
 pub struct JSXExpressionsMayNotUseTheCommaOperator(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Leading decorators must be attached to a class declaration")]
+#[diagnostic()]
+pub struct BadLeadingDecorator(
+    #[label("Leading decorators must be attached to a class declaration")] pub Span,
+);

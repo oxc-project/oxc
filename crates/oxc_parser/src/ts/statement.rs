@@ -1,9 +1,5 @@
 use oxc_allocator::Box;
-use oxc_ast::{
-    ast::*,
-    context::{Context, StatementContext},
-    Span,
-};
+use oxc_ast::{ast::*, context::StatementContext, Span};
 use oxc_diagnostics::Result;
 
 use super::{
@@ -483,26 +479,14 @@ impl<'a> Parser<'a> {
             return Ok(());
         }
 
-        let in_decorator = self.ctx.has_decorator();
-        self.ctx = self.ctx.and_decorator(true);
-
         let mut decorators = self.ast.new_vec();
         while self.at(Kind::At) {
             let decorator = self.parse_decorator()?;
             decorators.push(decorator);
         }
 
-        self.ctx = self.ctx.and_decorator(in_decorator);
-
         self.state.decorators = decorators;
         Ok(())
-    }
-
-    fn parse_decorator(&mut self) -> Result<Decorator<'a>> {
-        let span = self.start_span();
-        self.bump_any(); // bump @
-        let expr = self.with_context(Context::Decorator, Self::parse_lhs_expression)?;
-        Ok(self.ast.decorator(self.end_span(span), expr))
     }
 
     pub fn eat_modifiers_before_declaration(&mut self) -> (ModifierFlags, Modifiers<'a>) {

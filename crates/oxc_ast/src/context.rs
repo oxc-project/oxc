@@ -44,10 +44,6 @@ bitflags! {
         ///   * ambient variable declaration => `declare var $: any`
         ///   * ambient class declaration => `declare class C { foo(); } , etc..`
         const Ambient = 1 << 5;
-
-        /// Decorator context does not parse computed member expressions, e.g.
-        /// `class C { @dec() ["method"]() {} }`
-        const Decorator = 1 << 6;
     }
 }
 
@@ -92,12 +88,6 @@ impl Context {
     #[inline]
     pub fn has_ambient(self) -> bool {
         self.contains(Self::Ambient)
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn has_decorator(self) -> bool {
-        self.contains(Self::Decorator)
     }
 
     #[must_use]
@@ -152,12 +142,6 @@ impl Context {
     #[inline]
     pub fn and_ambient(self, include: bool) -> Self {
         self.and(Self::Ambient, include)
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn and_decorator(self, include: bool) -> Self {
-        self.and(Self::Decorator, include)
     }
 
     #[must_use]

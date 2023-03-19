@@ -28,22 +28,12 @@ impl<'a> Parser<'a> {
     pub fn parse_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
 
-        // clear the decorator context when parsing Expression, as it should be unambiguous when parsing a decorator
-        let save_decorator_context = self.ctx.has_decorator();
-        if save_decorator_context {
-            self.ctx = self.ctx.and_decorator(false);
-        }
-
         let lhs = self.parse_assignment_expression_base()?;
         if !self.at(Kind::Comma) {
             return Ok(lhs);
         }
 
         let expr = self.parse_sequence_expression(span, lhs)?;
-
-        if save_decorator_context {
-            self.ctx = self.ctx.and_decorator(true);
-        }
 
         Ok(expr)
     }
@@ -485,6 +475,20 @@ impl<'a> Parser<'a> {
             .and_then(|lhs| self.parse_member_expression_rhs(span, lhs, in_optional_chain))
     }
 
+    /// `DecoratorMemberExpression`[Yield, Await]:
+    ///   [ `IdentifierReference`[?Yield, ?Await] ]
+    ///   [ `DecoratorMemberExpression`[?Yield, ?Await] . `IdentifierName` ]
+    ///   [ `DecoratorMemberExpression`[?Yield, ?Await] . `PrivateIdentifier` ]
+    fn parse_decorator_member_expression(&mut self) -> Result<Expression<'a>> {
+        let lhs_span = self.start_span();
+        let lhs = self.parse_identifier_reference()?;
+        let mut lhs = self.ast.identifier_expression(lhs);
+        while self.at(Kind::Dot) {
+            lhs = self.parse_static_member_expression(lhs_span, lhs, false)?;
+        }
+        Ok(lhs)
+    }
+
     /// Section 13.3 Super Call
     fn parse_super(&mut self) -> Expression<'a> {
         let span = self.start_span();
@@ -514,11 +518,7 @@ impl<'a> Parser<'a> {
         let mut lhs = lhs;
         while !self.at(Kind::Eof) {
             lhs = match self.cur_kind() {
-                // Decorator context does not parse computed member expressions, e.g.
-                // `class C { @dec() ["method"]() {} }`
-                Kind::LBrack if !self.ctx.has_decorator() => {
-                    self.parse_computed_member_expression(lhs_span, lhs, false)?
-                }
+                Kind::LBrack => self.parse_computed_member_expression(lhs_span, lhs, false)?,
                 Kind::Dot => self.parse_static_member_expression(lhs_span, lhs, false)?,
                 Kind::QuestionDot => {
                     *in_optional_chain = true;
@@ -705,6 +705,49 @@ impl<'a> Parser<'a> {
         }
 
         Ok(lhs)
+    }
+
+    /// `DecoratorCallExpression`[Yield, Await] :
+    ///   `DecoratorMemberExpression`[?Yield, ?Await] `Arguments`[?Yield, ?Await]
+    /// This is different from `CallExpression` in that it only has one level. `@a()()` is not valid Decorator.
+    fn parse_decorator_call_expression(
+        &mut self,
+        lhs_span: Span,
+        lhs: Expression<'a>, /* `DecoratorMemberExpression` */
+    ) -> Result<Expression<'a>> {
+        let mut type_arguments = None;
+        if matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) && self.ts_enabled() {
+            let result = self.try_parse(|p| {
+                let arguments = p.parse_ts_type_arguments()?;
+                if p.at(Kind::RAngle) {
+                    // a<b>>c is not (a<b>)>c, but a<(b>>c)
+                    return p.unexpected();
+                }
+
+                // a<b>c is (a<b)>c
+                if !p.at(Kind::LParen)
+                    && !p.at(Kind::NoSubstitutionTemplate)
+                    && !p.at(Kind::TemplateHead)
+                    && p.cur_kind().is_at_expression()
+                    && !p.cur_token().is_on_new_line
+                {
+                    return p.unexpected();
+                }
+
+                type_arguments = arguments;
+
+                Ok(())
+            });
+            if result.is_err() {
+                return Ok(lhs);
+            }
+        }
+
+        if self.at(Kind::LParen) {
+            self.parse_call_arguments(lhs_span, lhs, false, type_arguments.take())
+        } else {
+            Ok(lhs)
+        }
     }
 
     fn parse_call_arguments(
@@ -1010,6 +1053,22 @@ impl<'a> Parser<'a> {
         let argument = self.parse_unary_expression_base(lhs_span)?;
         self.ctx = self.ctx.and_await(has_await);
         Ok(self.ast.await_expression(self.end_span(span), argument))
+    }
+
+    /// `Decorator`[Yield, Await]:
+    ///   [ `DecoratorMemberExpression`[?Yield, ?Await] ]
+    ///   [ ( `Expression`[+In, ?Yield, ?Await] ) ]
+    ///   [ `DecoratorCallExpression` ]
+    pub fn parse_decorator(&mut self) -> Result<Decorator<'a>> {
+        let span = self.start_span();
+        self.bump_any(); // bump @
+        let expr = if self.cur_kind() == Kind::LParen {
+            self.parse_paren_expression()?
+        } else {
+            let lhs = self.parse_decorator_member_expression()?;
+            self.parse_decorator_call_expression(span, lhs)?
+        };
+        Ok(self.ast.decorator(self.end_span(span), expr))
     }
 
     fn is_await_expression(&mut self) -> bool {

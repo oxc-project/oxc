@@ -58,20 +58,9 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
 
-        // We may be in a [Decorator] context when parsing a function expression or
-        // arrow function. The body of the function is not in [Decorator] context.
-        let save_decorator_context = self.ctx.has_decorator();
-        if save_decorator_context {
-            self.ctx = self.ctx.and_decorator(false);
-        }
-
         let (directives, statements) = self.with_context(Context::Return, |p| {
             p.parse_directives_and_statements(/* is_top_level */ false)
         })?;
-
-        if save_decorator_context {
-            self.ctx = self.ctx.and_decorator(true);
-        }
 
         self.expect(Kind::RCurly)?;
         Ok(self.ast.function_body(self.end_span(span), directives, statements))
@@ -207,15 +196,10 @@ impl<'a> Parser<'a> {
         let func_kind = FunctionKind::Expression;
         self.expect(Kind::Function)?;
 
-        let save_decorator_context = self.ctx.has_decorator();
-        self.ctx = self.ctx.and_decorator(false);
-
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator);
         let function =
             self.parse_function(span, id, r#async, generator, func_kind, Modifiers::empty())?;
-
-        self.ctx = self.ctx.and_decorator(save_decorator_context);
 
         Ok(self.ast.function_expression(function))
     }
