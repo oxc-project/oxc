@@ -133,8 +133,7 @@ impl LintRunner {
         let allocator = Allocator::default();
         let source_type =
             SourceType::from_path(path).unwrap_or_else(|_| panic!("incorrect {path:?}"));
-        let parser_source_text = source_text.clone();
-        let ret = Parser::new(&allocator, &parser_source_text, source_type).parse();
+        let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
         if !ret.errors.is_empty() {
             return Some(Self::wrap_diagnostics(path, &source_text, ret.errors));
