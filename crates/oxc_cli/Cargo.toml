@@ -24,7 +24,6 @@ oxc_semantic = { path  = "../oxc_semantic" }
 oxc_linter = { path  = "../oxc_linter" }
 
 clap = { workspace = true }
-glob = { workspace = true }
 rayon = { workspace = true }
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
 
