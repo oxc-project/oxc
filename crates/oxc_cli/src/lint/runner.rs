@@ -3,7 +3,10 @@ use std::{
     io::{BufWriter, Write},
     path::{Path, PathBuf},
     rc::Rc,
-    sync::{mpsc, Arc},
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        mpsc, Arc,
+    },
 };
 
 use miette::NamedSource;
@@ -34,18 +37,15 @@ impl LintRunner {
     pub fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
 
-        let mut number_of_files = 0;
-        let mut number_of_warnings = 0;
-        let mut number_of_diagnostics = 0;
-
+        let number_of_files = Arc::new(AtomicUsize::new(0));
         let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
 
-        self.process_paths(&mut number_of_files, tx_error);
-        self.process_diagnostics(&mut number_of_warnings, &mut number_of_diagnostics, &rx_error);
+        self.process_paths(&number_of_files, tx_error);
+        let (number_of_warnings, number_of_diagnostics) = self.process_diagnostics(&rx_error);
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
-            number_of_files,
+            number_of_files: number_of_files.load(Ordering::Relaxed),
             number_of_diagnostics,
             number_of_warnings,
             max_warnings_exceeded: self
@@ -57,46 +57,49 @@ impl LintRunner {
 
     fn process_paths(
         &self,
-        number_of_files: &mut usize,
+        number_of_files: &Arc<AtomicUsize>,
         tx_error: mpsc::Sender<(PathBuf, Vec<Error>)>,
     ) {
         let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
-        let options = &self.options;
-        let fix = options.fix;
-        rayon::join(
-            move || {
-                Walk::new(options).iter().for_each(|path| {
-                    *number_of_files += 1;
-                    tx_path.send(path).unwrap();
+
+        let walk = Walk::new(&self.options);
+        let number_of_files = Arc::clone(number_of_files);
+        rayon::spawn(move || {
+            let mut count = 0;
+            walk.iter().for_each(|path| {
+                count += 1;
+                tx_path.send(path).unwrap();
+            });
+            number_of_files.store(count, Ordering::Relaxed);
+        });
+
+        let fix = self.options.fix;
+        rayon::spawn(move || {
+            while let Ok(path) = rx_path.recv() {
+                let tx_error = tx_error.clone();
+                rayon::spawn(move || {
+                    if let Some(diagnostics) = Self::lint_path(&path, fix) {
+                        tx_error.send(diagnostics).unwrap();
+                    }
+                    drop(tx_error);
                 });
-            },
-            move || {
-                while let Ok(path) = rx_path.recv() {
-                    let tx_error = tx_error.clone();
-                    rayon::spawn(move || {
-                        if let Some(diagnostics) = Self::lint_path(&path, fix) {
-                            tx_error.send(diagnostics).unwrap();
-                        }
-                        drop(tx_error);
-                    });
-                }
-            },
-        );
+            }
+        });
     }
 
     fn process_diagnostics(
         &self,
-        number_of_warnings: &mut usize,
-        number_of_diagnostics: &mut usize,
         rx_error: &mpsc::Receiver<(PathBuf, Vec<Error>)>,
-    ) {
+    ) -> (usize, usize) {
+        let mut number_of_warnings = 0;
+        let mut number_of_diagnostics = 0;
         let mut buf_writer = BufWriter::new(std::io::stdout());
 
         while let Ok((path, diagnostics)) = rx_error.recv() {
-            *number_of_diagnostics += diagnostics.len();
+            number_of_diagnostics += diagnostics.len();
             for diagnostic in diagnostics {
                 if diagnostic.severity() == Some(Severity::Warning) {
-                    *number_of_warnings += 1;
+                    number_of_warnings += 1;
                     // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
                     // Note that it does not disable ALL diagnostics, only Warning diagnostics
                     if self.options.quiet {
@@ -104,7 +107,7 @@ impl LintRunner {
                     }
 
                     if let Some(max_warnings) = self.options.max_warnings {
-                        if *number_of_warnings > max_warnings {
+                        if number_of_warnings > max_warnings {
                             continue;
                         }
                     }
@@ -122,6 +125,7 @@ impl LintRunner {
         }
 
         buf_writer.flush().unwrap();
+        (number_of_warnings, number_of_diagnostics)
     }
 
     fn lint_path(path: &Path, fix: bool) -> Option<(PathBuf, Vec<Error>)> {

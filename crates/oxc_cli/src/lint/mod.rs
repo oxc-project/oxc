@@ -6,6 +6,7 @@ use clap::ArgMatches;
 
 pub use self::{command::lint_command, runner::LintRunner};
 
+#[derive(Debug)]
 pub struct LintOptions {
     pub paths: Vec<PathBuf>,
     pub fix: bool,
