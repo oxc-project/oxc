@@ -1,0 +1,31 @@
+[package]
+name = "oxc_transforms_jsx"
+authors.workspace = true
+description.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+oxc_ast = { path = "../oxc_ast" }
+oxc_allocator = { path = "../oxc_allocator" }
+oxc_diagnostics = { path = "../oxc_diagnostics" }
+oxc_macros = { path = "../oxc_macros" }
+oxc_semantic = { path = "../oxc_semantic" }
+oxc_printer = { path = "../oxc_printer" }
+
+lazy_static = { workspace = true }
+serde_json = { workspace = true }
+indextree = { workspace = true }
+phf = { version = "0.11", features = ["macros"] }
+rustc-hash = { workspace = true }
+num-traits = "0.2.15"
+
+[dev_dependencies]
+oxc_parser = { path = "../oxc_parser" }
+miette = { workspace = true, features = ["fancy-no-backtrace"] }
+
+insta = { version = "1.28.0", features = ["glob"] }

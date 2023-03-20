@@ -1003,6 +1003,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_transforms_jsx"
+version = "0.0.0"
+dependencies = [
+ "indextree",
+ "insta",
+ "lazy_static",
+ "miette",
+ "num-traits",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_macros",
+ "oxc_parser",
+ "oxc_printer",
+ "oxc_semantic",
+ "phf",
+ "rustc-hash",
+ "serde_json",
+]
+
+[[package]]
 name = "oxc_wasm"
 version = "0.0.0"
 dependencies = [
