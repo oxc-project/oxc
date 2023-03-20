@@ -12,6 +12,7 @@ oxc_macros::declare_all_lint_rules! {
     no_array_constructor,
     no_async_promise_executor,
     no_caller,
+    no_dupe_class_members,
     no_empty,
     no_empty_pattern,
     no_self_compare,
