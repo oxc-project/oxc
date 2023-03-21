@@ -1497,6 +1497,19 @@ impl<'a> ClassElement<'a> {
             Self::TSAbstractPropertyDefinition(_def) => None,
         }
     }
+
+    #[must_use]
+    pub fn is_ts_empty_body_function(&self) -> bool {
+        match self {
+            Self::PropertyDefinition(_)
+            | Self::StaticBlock(_)
+            | Self::AccessorProperty(_)
+            | Self::TSAbstractPropertyDefinition(_)
+            | Self::TSIndexSignature(_) => false,
+            Self::MethodDefinition(method) => method.value.body.is_none(),
+            Self::TSAbstractMethodDefinition(_) => true,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, PartialEq, Hash)]

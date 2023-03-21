@@ -58,13 +58,9 @@ impl Rule for NoDupeClassMembers {
         let num_element = class.body.body.len();
         let mut property_table = PropertyTable::with_capacity(num_element);
         for element in &class.body.body {
-            if ctx.source_type().is_typescript() {
+            if ctx.source_type().is_typescript() && element.is_ts_empty_body_function() {
                 // Skip functions with no function bodies, which are Typescript's overload signatures
-                if let ClassElement::MethodDefinition(method) = element {
-                    if method.value.body.is_none() {
-                        continue;
-                    }
-                }
+                continue;
             }
 
             if let Some(dup_span) = property_table.insert(element) {
@@ -165,6 +161,13 @@ fn test() {
           foo(a: string): string;
           foo(a: number): number;
           foo(a: any): any {}
+        }",
+            None,
+        ),
+        (
+            "abstract class X {
+          abstract foo(): number;
+          abstract foo(): string;
         }",
             None,
         ),
