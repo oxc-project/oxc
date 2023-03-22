@@ -1,6 +1,6 @@
 //! AST builder for creating AST spans
 
-#![allow(clippy::unused_self, clippy::missing_const_for_fn, clippy::too_many_arguments)]
+#![allow(clippy::unused_self, clippy::too_many_arguments)]
 
 use oxc_allocator::{Allocator, Box, String, Vec};
 
