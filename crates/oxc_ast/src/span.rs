@@ -1,4 +1,7 @@
-use std::hash::{Hash, Hasher};
+use std::{
+    hash::{Hash, Hasher},
+    num::NonZeroU16,
+};
 
 use miette::{SourceOffset, SourceSpan};
 use serde::Serialize;
@@ -14,13 +17,15 @@ use crate::ast::*;
 pub struct Span {
     pub start: u32,
     pub end: u32,
+    pub leading_comments_offset: Option<NonZeroU16>,
+    pub trailing_comments_offset: Option<NonZeroU16>,
 }
 
 impl Span {
     #[must_use]
     #[inline]
     pub fn new(start: u32, end: u32) -> Self {
-        Self { start, end }
+        Self { start, end, leading_comments_offset: None, trailing_comments_offset: None }
     }
 
     #[must_use]
