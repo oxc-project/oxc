@@ -5,7 +5,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolFlags;
+use oxc_semantic::Symbol;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -39,25 +39,20 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstAssign {
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        ctx.symbols()
-            .iter()
-            .filter(|symbol| symbol.flags().contains(SymbolFlags::ConstVariable))
-            .for_each(|symbol| {
-                symbol.for_each_reference(|reference_id| {
-                    let node_id = NodeId::from(reference_id);
-                    let node = &ctx.nodes()[node_id];
-                    if let Some(reference) = ctx.get_reference(node) {
-                        if reference.is_write() {
-                            ctx.diagnostic(NoConstAssignDiagnostic(
-                                symbol.name().clone(),
-                                symbol.span(),
-                                reference.span,
-                            ));
-                        }
-                    }
-                });
+    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
+        if symbol.is_const() {
+            symbol.for_each_reference(|reference_id| {
+                let node_id = NodeId::from(reference_id);
+                let node = &ctx.nodes()[node_id];
+                if let Some(reference) = ctx.get_reference(node) && reference.is_write() {
+                    ctx.diagnostic(NoConstAssignDiagnostic(
+                        symbol.name().clone(),
+                        symbol.span(),
+                        reference.span,
+                    ));
+                }
             });
+        }
     }
 }
 

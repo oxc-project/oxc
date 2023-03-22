@@ -88,15 +88,17 @@ impl Linter {
     pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, source_text: &'a str) -> Vec<Message<'a>> {
         let mut ctx = LintContext::new(source_text, semantic, self.fix);
 
-        for rule in &self.rules {
-            rule.run_once(&ctx);
-        }
-
         for node in semantic.nodes().iter() {
             self.early_error_javascript.run(node, &ctx);
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
                 rule.run(node, &ctx);
+            }
+        }
+
+        for symbol in semantic.symbols().iter() {
+            for rule in &self.rules {
+                rule.run_on_symbol(symbol, &ctx);
             }
         }
 

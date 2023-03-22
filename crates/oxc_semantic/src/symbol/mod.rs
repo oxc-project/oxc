@@ -87,6 +87,17 @@ impl Symbol {
         self.flags
     }
 
+    #[must_use]
+    pub fn is_const(&self) -> bool {
+        self.flags.contains(SymbolFlags::ConstVariable)
+    }
+
+    #[must_use]
+    pub fn is_let(&self) -> bool {
+        self.flags.contains(SymbolFlags::BlockScopedVariable)
+            && !self.flags.contains(SymbolFlags::ConstVariable)
+    }
+
     pub fn add_references(&self, new_references: &[Reference]) {
         self.references.borrow_mut().extend(new_references.iter().map(|r| r.ast_node_id));
     }
