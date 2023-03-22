@@ -79,6 +79,7 @@ impl<'a> SemanticBuilder<'a> {
             source_type: self.source_type,
             nodes: self.nodes,
             scopes: self.scope.scopes,
+            symbols: self.symbols,
             trivias: Rc::clone(trivias),
             module_record,
         };

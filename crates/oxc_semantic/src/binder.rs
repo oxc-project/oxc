@@ -18,7 +18,11 @@ impl<'a> Binder for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let current_scope_id = builder.scope.current_scope_id;
         let (includes, excludes) = match self.kind {
-            VariableDeclarationKind::Const | VariableDeclarationKind::Let => {
+            VariableDeclarationKind::Const => (
+                SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
+                SymbolFlags::BlockScopedVariableExcludes,
+            ),
+            VariableDeclarationKind::Let => {
                 (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
             }
             VariableDeclarationKind::Var => {
