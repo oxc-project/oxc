@@ -11,9 +11,7 @@
 [npm-badge]: https://img.shields.io/npm/v/oxidation-compiler/latest?color=brightgreen
 [npm-url]: https://www.npmjs.com/package/oxidation-compiler/v/latest
 
-The Oxidation Compiler is building a set of tools for the JavaScript / TypeScript language.
-
-These tools include:
+The Oxidation Compiler is currently creating a suite of tools for the JavaScript/TypeScript language, which comprises:
 
 * Parser - Done
 * Linter - Work in progress
@@ -23,7 +21,7 @@ These tools include:
 
 ## Goals
 
-The goal of this project is to:
+The primary objectives for this project include:
 
 * Create a *really* fast native program by using the Rust programming language
 * Provide the basic building blocks for creating your own tools by having good API designs
@@ -33,11 +31,12 @@ The goal of this project is to:
 
 ## Contributing
 
-This project is an invitation for you to come and learn Rust with us.
+This project is an invitation for you to come and learn Rust with us,
+We welcome and appreciate all contributions to this project.
 
-Contributions are welcome and highly appreciated. To get started, check out [CONTRIBUTING.md](./CONTRIBUTING.md).
+To get started, check out [CONTRIBUTING.md](./CONTRIBUTING.md).
 
-If you do not have the time to contribute code, you can still participate by:
+If you are unable to contribute code,, you can still participate by:
 
 * star and watch this project
 * join us on [Discord](https://discord.gg/9uXCAwqQZW)
@@ -46,7 +45,7 @@ If you do not have the time to contribute code, you can still participate by:
 
 ## Milestone
 
-Oxc has a fully working parser and a prototype for the linter right now.
+As of now, Oxc has a fully working parser and a prototype for the linter.
 
 The current objectives are:
 
@@ -82,7 +81,7 @@ See [benchmark](./benchmark/) for details.
 
 ### Try it out yourself!
 
-The linter is already usable and it can potentially catch a few mistakes for you:
+The linter is currently usable and it can potentially catch a few mistakes for you:
 
 ```
 npx oxidation-compiler@latest lint path
@@ -123,7 +122,7 @@ Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 
 ## Credits
 
-This project is incubated from the help of these great mentors and their projects:
+This project was incubated with the assistance of these exceptional mentors and their projects:
 
 * [Rome Tools](https://rome.tools) - [@MichaReiser](https://github.com/MichaReiser), [@ematipico](https://github.com/ematipico)
 * [Ruff](https://beta.ruff.rs) - [@charliermarsh](https://github.com/charliermarsh)
