@@ -19,9 +19,10 @@ oxc_printer = { path = "../oxc_printer" }
 lazy_static = { workspace = true }
 serde_json = { workspace = true }
 indextree = { workspace = true }
-phf = { version = "0.11", features = ["macros"] }
 rustc-hash = { workspace = true }
+phf = { version = "0.11", features = ["macros"] }
 num-traits = "0.2.15"
+rust-lapper = "1.1.0"
 
 [dev_dependencies]
 oxc_allocator = { path = "../oxc_allocator" }

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_ast::Span;
-use oxc_diagnostics::{miette::LabeledSpan, Error};
+use oxc_diagnostics::Error;
 
 #[derive(Debug, Default)]
 pub struct Fix<'a> {
@@ -29,14 +29,34 @@ pub struct FixResult<'a> {
 #[derive(Debug)]
 pub struct Message<'a> {
     pub error: Error,
+    start: u32,
+    end: u32,
     fix: Option<Fix<'a>>,
     fixed: bool,
 }
 
 impl<'a> Message<'a> {
+    #[allow(clippy::cast_possible_truncation)] // for `as u32`
     #[must_use]
     pub fn new(error: Error, fix: Option<Fix<'a>>) -> Self {
-        Self { error, fix, fixed: false }
+        let labels = error.labels().map_or(vec![], Iterator::collect);
+        let start =
+            labels.iter().min_by_key(|span| span.offset()).map_or(0, |span| span.offset() as u32);
+        let end = labels
+            .iter()
+            .max_by_key(|span| span.offset() + span.len())
+            .map_or(0, |span| (span.offset() + span.len()) as u32);
+        Self { error, start, end, fix, fixed: false }
+    }
+
+    #[must_use]
+    pub fn start(&self) -> u32 {
+        self.start
+    }
+
+    #[must_use]
+    pub fn end(&self) -> u32 {
+        self.end
     }
 }
 
@@ -92,16 +112,7 @@ impl<'a> Fixer<'a> {
         output.push_str(&source_text[offset..]);
 
         let mut messages = self.messages.into_iter().filter(|m| !m.fixed).collect::<Vec<_>>();
-        messages.sort_by_cached_key(|m| {
-            let span = m
-                .error
-                .labels()
-                .expect("should specify a span for a rule")
-                .min_by_key(LabeledSpan::offset)
-                .expect("should contain at least one span");
-            (span.offset(), span.len())
-        });
-
+        messages.sort_by_key(|m| (m.start, m.end));
         return FixResult { fixed, fixed_code: Cow::Owned(output), messages };
     }
 }

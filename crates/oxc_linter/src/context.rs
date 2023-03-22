@@ -7,6 +7,7 @@ use oxc_printer::{Printer, PrinterOptions};
 use oxc_semantic::{AstNodes, Scope, ScopeTree, Semantic, SemanticNode};
 
 use crate::{
+    disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message},
     AstNode,
 };
@@ -18,13 +19,26 @@ pub struct LintContext<'a> {
 
     diagnostics: RefCell<Vec<Message<'a>>>,
 
+    disable_directives: DisableDirectives<'a>,
+
     /// Whether or not to apply code fixes during linting.
     fix: bool,
+
+    current_rule_name: &'static str,
 }
 
 impl<'a> LintContext<'a> {
     pub fn new(source_text: &'a str, semantic: &Rc<Semantic<'a>>, fix: bool) -> Self {
-        Self { source_text, semantic: Rc::clone(semantic), diagnostics: RefCell::new(vec![]), fix }
+        let disable_directives =
+            DisableDirectivesBuilder::new(source_text, semantic.trivias()).build();
+        Self {
+            source_text,
+            semantic: Rc::clone(semantic),
+            diagnostics: RefCell::new(vec![]),
+            disable_directives,
+            fix,
+            current_rule_name: "",
+        }
     }
 
     #[must_use]
@@ -42,14 +56,24 @@ impl<'a> LintContext<'a> {
         self.semantic().source_type()
     }
 
+    pub fn with_rule_name(&mut self, name: &'static str) {
+        self.current_rule_name = name;
+    }
+
     /* Diagnostics */
 
     pub fn into_message(self) -> Vec<Message<'a>> {
         self.diagnostics.into_inner()
     }
 
+    fn add_diagnostic(&self, message: Message<'a>) {
+        if !self.disable_directives.contains(self.current_rule_name, message.start()) {
+            self.diagnostics.borrow_mut().push(message);
+        }
+    }
+
     pub fn diagnostic<T: Into<Error>>(&self, diagnostic: T) {
-        self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), None));
+        self.add_diagnostic(Message::new(diagnostic.into(), None));
     }
 
     pub fn diagnostic_with_fix<T, F>(&self, diagnostic: T, fix: F)
@@ -58,7 +82,7 @@ impl<'a> LintContext<'a> {
         F: FnOnce() -> Fix<'a>,
     {
         if self.fix {
-            self.diagnostics.borrow_mut().push(Message::new(diagnostic.into(), Some(fix())));
+            self.add_diagnostic(Message::new(diagnostic.into(), Some(fix())));
         } else {
             self.diagnostic(diagnostic);
         }

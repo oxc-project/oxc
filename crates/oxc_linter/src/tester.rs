@@ -27,9 +27,23 @@ impl Tester {
         Self { rule_name, expect_pass, expect_fail, snapshot: String::new() }
     }
 
-    pub fn test_and_snapshot(&mut self) {
+    pub fn new_without_config<S: Into<String>>(
+        rule_name: &'static str,
+        expect_pass: Vec<S>,
+        expect_fail: Vec<S>,
+    ) -> Self {
+        let expect_pass = expect_pass.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
+        let expect_fail = expect_fail.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
+        Self { rule_name, expect_pass, expect_fail, snapshot: String::new() }
+    }
+
+    pub fn test(&mut self) {
         self.test_pass();
         self.test_fail();
+    }
+
+    pub fn test_and_snapshot(&mut self) {
+        self.test();
         self.snapshot();
     }
 

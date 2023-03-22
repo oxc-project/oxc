@@ -6,6 +6,7 @@ mod tester;
 
 mod ast_util;
 mod context;
+mod disable_directives;
 mod fixer;
 mod globals;
 pub mod rule;
@@ -85,11 +86,12 @@ impl Linter {
 
     #[must_use]
     pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, source_text: &'a str) -> Vec<Message<'a>> {
-        let ctx = LintContext::new(source_text, semantic, self.fix);
+        let mut ctx = LintContext::new(source_text, semantic, self.fix);
 
         for node in semantic.nodes().iter() {
             self.early_error_javascript.run(node, &ctx);
             for rule in &self.rules {
+                ctx.with_rule_name(rule.name());
                 rule.run(node, &ctx);
             }
         }
