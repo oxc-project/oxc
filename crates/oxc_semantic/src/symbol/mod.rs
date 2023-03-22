@@ -5,6 +5,8 @@ mod id;
 mod reference;
 mod table;
 
+use std::cell::RefCell;
+
 use bitflags::bitflags;
 use oxc_ast::{Atom, Span};
 
@@ -13,6 +15,7 @@ pub use self::{
     reference::{Reference, ReferenceFlag},
     table::SymbolTable,
 };
+use crate::node::AstNodeId;
 
 #[derive(Debug)]
 pub struct Symbol {
@@ -20,13 +23,14 @@ pub struct Symbol {
     name: Atom,
     span: Span,
     flags: SymbolFlags,
+    references: RefCell<Vec<AstNodeId>>,
 }
 
 #[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
 #[test]
 fn symbol_size() {
     use std::mem::size_of;
-    assert_eq!(size_of::<Symbol>(), 48);
+    assert_eq!(size_of::<Symbol>(), 80);
 }
 
 bitflags! {
@@ -60,7 +64,7 @@ bitflags! {
 impl Symbol {
     #[must_use]
     pub fn new(id: SymbolId, name: Atom, span: Span, flags: SymbolFlags) -> Self {
-        Self { id, name, span, flags }
+        Self { id, name, span, flags, references: RefCell::new(Vec::default()) }
     }
 
     #[must_use]
@@ -81,5 +85,15 @@ impl Symbol {
     #[must_use]
     pub fn flags(&self) -> SymbolFlags {
         self.flags
+    }
+
+    pub fn add_references(&self, new_references: &[Reference]) {
+        self.references.borrow_mut().extend(new_references.iter().map(|r| r.ast_node_id));
+    }
+
+    pub fn for_each_reference(&self, mut callback: impl FnMut(AstNodeId)) {
+        self.references.borrow().iter().for_each(|reference| {
+            callback(*reference);
+        });
     }
 }

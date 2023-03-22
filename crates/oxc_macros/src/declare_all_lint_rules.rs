@@ -117,6 +117,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                     #(Self::#struct_names(rule) => rule.run(node, ctx)),*
                 }
             }
+
+            pub fn run_once<'a>(&self, ctx: &LintContext<'a>) {
+              match self {
+                #(Self::#struct_names(rule) => rule.run_once(ctx)),*
+              }
+            }
         }
 
         lazy_static::lazy_static! {

@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, Atom, SourceType};
 
 use super::{Scope, ScopeFlags, ScopeId, ScopeTree};
-use crate::symbol::Reference;
+use crate::{symbol::Reference, SymbolTable};
 
 #[derive(Debug)]
 pub struct ScopeBuilder {
@@ -54,6 +54,22 @@ impl ScopeBuilder {
     pub fn leave(&mut self) {
         if let Some(parent_id) = self.scopes[self.current_scope_id.indextree_id()].parent() {
             self.current_scope_id = parent_id.into();
+        }
+    }
+
+    pub fn resolve_reference(&mut self, symbol_table: &SymbolTable) {
+        let current_scope = self.current_scope();
+        for (variable, reference) in &current_scope.unresolved_references {
+            let scope_chain = self.scopes.ancestors(self.current_scope_id);
+            for scope in scope_chain {
+                let scope = &self.scopes[scope];
+                if let Some(symbol_id) = scope.get().get_variable_symbol_id(variable) {
+                    reference.iter().for_each(|r| r.resolve_to(symbol_id));
+                    let symbol = symbol_table.get(symbol_id).unwrap();
+                    symbol.add_references(reference);
+                    break;
+                }
+            }
         }
     }
 

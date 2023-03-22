@@ -1,4 +1,5 @@
-use oxc_ast::{AstKind, Atom, Span};
+use indextree::NodeId;
+use oxc_ast::{Atom, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -6,7 +7,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolFlags;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-const-assign): Unexpected re-assignment of const variable {0}")]
@@ -38,30 +39,25 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstAssign {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::IdentifierReference(id) = node.get().kind() else { return; };
-        let reference = ctx.get_reference(node).unwrap();
-        if !reference.is_write() {
-            return;
-        }
-
-        let variable = id.name.clone();
-        let span = id.span;
-
-        let scope_tree = ctx.scopes();
-        let scope_chain = ctx.scope_ancestors(node);
-        for scope in scope_chain {
-            let scope = &scope_tree[scope];
-            if let Some(symbol) = scope.get().get_variable_symbol_id(&variable) {
-                if let Some(symbol) = ctx.symbols().get(symbol) {
-                    // Now we find the declared symbol of the assigned variable. Check if it is constant.
-                    if symbol.flags().contains(SymbolFlags::ConstVariable) {
-                        ctx.diagnostic(NoConstAssignDiagnostic(variable, symbol.span(), span));
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        ctx.symbols()
+            .iter()
+            .filter(|symbol| symbol.flags().contains(SymbolFlags::ConstVariable))
+            .for_each(|symbol| {
+                symbol.for_each_reference(|reference_id| {
+                    let node_id = NodeId::from(reference_id);
+                    let node = &ctx.nodes()[node_id];
+                    if let Some(reference) = ctx.get_reference(node) {
+                        if reference.is_write() {
+                            ctx.diagnostic(NoConstAssignDiagnostic(
+                                symbol.name().clone(),
+                                symbol.span(),
+                                reference.span,
+                            ));
+                        }
                     }
-                    break;
-                }
-            }
-        }
+                });
+            });
     }
 }
 
@@ -82,6 +78,7 @@ fn test() {
         ("function foo(x) { x = 1; }", None),
         ("class X {} X = 1;", None),
         ("try {} catch (x) { x = 1; }", None),
+        ("const a = 1; { let a = 2; { a += 1; } }", None),
     ];
 
     let fail = vec![

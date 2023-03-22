@@ -1,5 +1,7 @@
 #![allow(non_upper_case_globals)]
 
+use std::cell::RefCell;
+
 use bitflags::bitflags;
 use oxc_ast::Span;
 
@@ -11,7 +13,7 @@ pub struct Reference {
     pub ast_node_id: AstNodeId,
     pub span: Span,
 
-    pub resolved_symbol_id: Option<SymbolId>,
+    pub resolved_symbol_id: RefCell<Option<SymbolId>>,
 
     flag: ReferenceFlag,
 }
@@ -27,8 +29,8 @@ bitflags! {
 
 impl Reference {
     #[must_use]
-    pub const fn new(ast_node_id: AstNodeId, span: Span, flag: ReferenceFlag) -> Self {
-        Self { ast_node_id, span, resolved_symbol_id: None, flag }
+    pub fn new(ast_node_id: AstNodeId, span: Span, flag: ReferenceFlag) -> Self {
+        Self { ast_node_id, span, resolved_symbol_id: RefCell::new(None), flag }
     }
 
     #[must_use]
@@ -44,5 +46,9 @@ impl Reference {
     #[must_use]
     pub const fn is_read_write(&self) -> bool {
         self.flag.intersects(ReferenceFlag::ReadWrite)
+    }
+
+    pub fn resolve_to(&self, symbol: SymbolId) {
+        *self.resolved_symbol_id.borrow_mut() = Some(symbol);
     }
 }
