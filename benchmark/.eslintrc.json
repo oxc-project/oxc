@@ -8,6 +8,27 @@
         "no-debugger": "error",
         "for-direction": "error",
         "no-constant-binary-expression": "error",
-        "no-self-compare": "error"
+        "no-self-compare": "error",
+        "constructor-super": "error",
+        "eqeqeq": "error",
+        "for-direction": "error",
+        "no-debugger": "error",
+        "no-dupe-keys": "error",
+        "no-duplicate-case": "error",
+        "no-array-constructor": "error",
+        "no-async-promise-executor": "error",
+        "no-caller": "error",
+        "no-const-assign": "error",
+        "no-dupe-class-members": "error",
+        "no-empty": "error",
+        "no-empty-pattern": "error",
+        "no-new-symbol": "error",
+        "no-self-compare": "error",
+        "no-mixed-operators": "error",
+        "no-constant-binary-expression": "error",
+        "no-compare-neg-zero": "error",
+        "no-unsafe-negation": "error",
+        "use-isnan": "error",
+        "valid-typeof": "error"
     }
 }
