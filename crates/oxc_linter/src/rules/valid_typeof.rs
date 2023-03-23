@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{BinaryExpression, BinaryOperator, Expression, UnaryExpression, UnaryOperator},
+    ast::{Expression, UnaryOperator},
     AstKind, GetSpan, Span,
 };
 use oxc_diagnostics::{
@@ -7,6 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use phf::{phf_map, Map};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
@@ -49,81 +50,69 @@ declare_oxc_lint!(
 );
 
 fn is_typeof_expr(expr: &Expression) -> bool {
-    if let Expression::UnaryExpression(unary) = expr && matches!(**unary, UnaryExpression { operator: UnaryOperator::Typeof, .. }){
+    if let Expression::UnaryExpression(unary) = expr && unary.operator == UnaryOperator::Typeof {
         true
     } else {
         false
     }
 }
-
+const VALID_TYPE: Map<&'static str, bool> = phf_map! {
+    "symbol" => false,
+    "undefined" => false,
+    "object" => false,
+    "boolean" => false,
+    "number" => false,
+    "string" => false,
+    "function" => false,
+    "bigint" => false,
+};
 impl Rule for ValidTypeof {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::UnaryExpression(
-            unary @ UnaryExpression { operator: UnaryOperator::Typeof, .. },
-        ) = node.get().kind()
+        if let AstKind::UnaryExpression(unary) = node.get().kind() 
+            && unary.operator == UnaryOperator::Typeof 
+            && let AstKind::BinaryExpression(binary) = ctx.parent_kind(node) 
+            && binary.operator.is_equality() 
         {
-            if let AstKind::BinaryExpression(BinaryExpression {
-                span: _,
-                left,
-                operator:
-                    BinaryOperator::Equality
-                    | BinaryOperator::Inequality
-                    | BinaryOperator::StrictEquality
-                    | BinaryOperator::StrictInequality,
-                right,
-            }) = ctx.parent_kind(node)
+            let (sibling,sibling_id) = if let Expression::UnaryExpression(left) = &binary.left && **left== *unary{
+                (&binary.right, node.next_sibling().unwrap())
+            } else {
+                (&binary.left, node.previous_sibling().unwrap())
+            };
+
+            if let Expression::StringLiteral(lit) = sibling {
+                if !VALID_TYPE.contains_key(lit.value.as_str()) {
+                    ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
+                }
+                return;
+            }
+            if let Expression::TemplateLiteral(template) = sibling && template.expressions.is_empty() {
+                if let Some(value) = template.quasi() && !VALID_TYPE.contains_key(value.as_str()) {
+                    ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
+                }
+                return;
+            }
+
+            if sibling.is_undefined()
+                && ctx.symbols().get_resolved_reference(sibling_id.into()).is_none()
             {
-                let valid_type = [
-                    "symbol",
-                    "undefined",
-                    "object",
-                    "boolean",
-                    "number",
-                    "string",
-                    "function",
-                    "bigint",
-                ];
-                let (sibling,sibling_id) = if let Expression::UnaryExpression(left_unary) = left && **left_unary== *unary{
-                    (right, node.next_sibling().unwrap())
-                } else {
-                    (left, node.previous_sibling().unwrap())
-                };
-
-                if let Expression::StringLiteral(lit) = sibling {
-                    if !valid_type.contains(&lit.value.as_str()) {
-                        ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
-                    }
-                    return;
-                }
-                if let Expression::TemplateLiteral(template) = sibling && template.expressions.is_empty() {
-                    if let Some(value) = template.quasi() && !valid_type.contains(&value.as_str()) {
-                        ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
-                    }
-                    return;
-                }
-
-                if sibling.is_undefined()
-                    && ctx.symbols().get_resolved_reference(sibling_id.into()).is_none()
-                {
-                    ctx.diagnostic_with_fix(
-                        if self.require_string_literals {
-                            ValidTypeofDiagnostic::NotString(
-                                Some("Use `\"undefined\"` instead of `undefined`."),
-                                sibling.span(),
-                            )
-                        } else {
-                            ValidTypeofDiagnostic::InvalidValue(
-                                Some("Use `\"undefined\"` instead of `undefined`."),
-                                sibling.span(),
-                            )
-                        },
-                        || Fix::new("\"undefined\"", sibling.span()),
-                    );
-                    return;
-                }
-                if self.require_string_literals && !is_typeof_expr(sibling) {
-                    ctx.diagnostic(ValidTypeofDiagnostic::NotString(None, sibling.span()));
-                }
+                ctx.diagnostic_with_fix(
+                    if self.require_string_literals {
+                        ValidTypeofDiagnostic::NotString(
+                            Some("Use `\"undefined\"` instead of `undefined`."),
+                            sibling.span(),
+                        )
+                    } else {
+                        ValidTypeofDiagnostic::InvalidValue(
+                            Some("Use `\"undefined\"` instead of `undefined`."),
+                            sibling.span(),
+                        )
+                    },
+                    || Fix::new("\"undefined\"", sibling.span()),
+                );
+                return;
+            }
+            if self.require_string_literals && !is_typeof_expr(sibling) {
+                ctx.diagnostic(ValidTypeofDiagnostic::NotString(None, sibling.span()));
             }
         }
     }
