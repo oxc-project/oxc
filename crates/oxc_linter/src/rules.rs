@@ -24,4 +24,5 @@ oxc_macros::declare_all_lint_rules! {
     no_unsafe_negation,
     deepscan::uninvoked_array_callback,
     use_isnan,
+    valid_typeof
 }
