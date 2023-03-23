@@ -132,54 +132,51 @@ mod test {
     #[derive(Debug, Error, Diagnostic)]
     #[error("End")]
     struct InsertAtEnd;
-    const INSERT_AT_END: Fix =
-        Fix { span: Span { start: 19, end: 19 }, content: Cow::Borrowed("// end") };
+    const INSERT_AT_END: Fix = Fix { span: Span::new(19, 19), content: Cow::Borrowed("// end") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("Start")]
     struct InsertAtStart;
-    const INSERT_AT_START: Fix =
-        Fix { span: Span { start: 0, end: 0 }, content: Cow::Borrowed("// start") };
+    const INSERT_AT_START: Fix = Fix { span: Span::new(0, 0), content: Cow::Borrowed("// start") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("Multiply")]
     struct InsertAtMiddle;
-    const INSERT_AT_MIDDLE: Fix =
-        Fix { span: Span { start: 13, end: 13 }, content: Cow::Borrowed("5 *") };
+    const INSERT_AT_MIDDLE: Fix = Fix { span: Span::new(13, 13), content: Cow::Borrowed("5 *") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("foo")]
     struct ReplaceId;
-    const REPLACE_ID: Fix = Fix { span: Span { start: 4, end: 10 }, content: Cow::Borrowed("foo") };
+    const REPLACE_ID: Fix = Fix { span: Span::new(4, 10), content: Cow::Borrowed("foo") };
     #[derive(Debug, Error, Diagnostic)]
     #[error("let")]
     struct ReplaceVar;
-    const REPLACE_VAR: Fix = Fix { span: Span { start: 0, end: 3 }, content: Cow::Borrowed("let") };
+    const REPLACE_VAR: Fix = Fix { span: Span::new(0, 3), content: Cow::Borrowed("let") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("5")]
     struct ReplaceNum;
-    const REPLACE_NUM: Fix = Fix { span: Span { start: 13, end: 14 }, content: Cow::Borrowed("5") };
+    const REPLACE_NUM: Fix = Fix { span: Span::new(13, 14), content: Cow::Borrowed("5") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("removestart")]
     struct RemoveStart;
-    const REMOVE_START: Fix = Fix::delete(Span { start: 0, end: 4 });
+    const REMOVE_START: Fix = Fix::delete(Span::new(0, 4));
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("removemiddle")]
     struct RemoveMiddle(#[label] pub Span);
-    const REMOVE_MIDDLE: Fix = Fix::delete(Span { start: 5, end: 10 });
+    const REMOVE_MIDDLE: Fix = Fix::delete(Span::new(5, 10));
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("removeend")]
     struct RemoveEnd;
-    const REMOVE_END: Fix = Fix::delete(Span { start: 14, end: 18 });
+    const REMOVE_END: Fix = Fix::delete(Span::new(14, 18));
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("reversed range")]
     struct ReverseRange;
-    const REVERSE_RANGE: Fix = Fix { span: Span { start: 3, end: 0 }, content: Cow::Borrowed(" ") };
+    const REVERSE_RANGE: Fix = Fix { span: Span::new(3, 0), content: Cow::Borrowed(" ") };
 
     #[derive(Debug, Error, Diagnostic)]
     #[error("nofix")]

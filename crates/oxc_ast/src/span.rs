@@ -19,7 +19,7 @@ pub struct Span {
 impl Span {
     #[must_use]
     #[inline]
-    pub fn new(start: u32, end: u32) -> Self {
+    pub const fn new(start: u32, end: u32) -> Self {
         Self { start, end }
     }
 
