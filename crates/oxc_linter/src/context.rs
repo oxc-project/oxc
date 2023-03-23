@@ -4,7 +4,7 @@ use indextree::{Ancestors, NodeId};
 use oxc_ast::{ast::IdentifierReference, AstKind, SourceType};
 use oxc_diagnostics::Error;
 use oxc_printer::{Printer, PrinterOptions};
-use oxc_semantic::{AstNodes, Scope, ScopeTree, Semantic, SemanticNode};
+use oxc_semantic::{AstNodes, Scope, ScopeTree, Semantic, SemanticNode, SymbolTable};
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -131,6 +131,11 @@ impl<'a> LintContext<'a> {
     #[must_use]
     pub fn scope_ancestors(&self, node: &AstNode) -> Ancestors<'_, Scope> {
         self.semantic().scopes().ancestors(node.get().scope_id())
+    }
+
+    #[must_use]
+    pub fn symbols(&self) -> &SymbolTable {
+        self.semantic().symbols()
     }
 
     #[must_use]

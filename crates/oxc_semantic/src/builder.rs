@@ -79,6 +79,7 @@ impl<'a> SemanticBuilder<'a> {
             source_type: self.source_type,
             nodes: self.nodes,
             scopes: self.scope.scopes,
+            symbols: self.symbols,
             trivias: Rc::clone(trivias),
             module_record,
         };
@@ -123,6 +124,7 @@ impl<'a> SemanticBuilder<'a> {
         if ScopeBuilder::scope_flags_from_ast_kind(kind).is_some()
             || matches!(kind, AstKind::Program(_))
         {
+            self.scope.resolve_reference(&mut self.symbols);
             self.scope.leave();
         }
     }

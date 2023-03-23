@@ -14,6 +14,7 @@ pub use builder::SemanticBuilder;
 pub use node::{AstNode, AstNodes, SemanticNode};
 use oxc_ast::{module_record::ModuleRecord, SourceType, Trivias};
 pub use scope::{Scope, ScopeFlags, ScopeTree};
+pub use symbol::{Reference, ResolvedReference, Symbol, SymbolFlags, SymbolTable};
 
 pub struct Semantic<'a> {
     source_type: SourceType,
@@ -21,6 +22,8 @@ pub struct Semantic<'a> {
     nodes: AstNodes<'a>,
 
     scopes: ScopeTree,
+
+    symbols: SymbolTable,
 
     trivias: Rc<Trivias>,
 
@@ -51,5 +54,10 @@ impl<'a> Semantic<'a> {
     #[must_use]
     pub fn module_record(&self) -> &ModuleRecord {
         &self.module_record
+    }
+
+    #[must_use]
+    pub fn symbols(&self) -> &SymbolTable {
+        &self.symbols
     }
 }

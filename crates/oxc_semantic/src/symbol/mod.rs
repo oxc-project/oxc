@@ -10,9 +10,10 @@ use oxc_ast::{Atom, Span};
 
 pub use self::{
     id::SymbolId,
-    reference::{Reference, ReferenceFlag},
+    reference::{Reference, ReferenceFlag, ResolvedReference},
     table::SymbolTable,
 };
+use crate::node::AstNodeId;
 
 #[derive(Debug)]
 pub struct Symbol {
@@ -20,13 +21,14 @@ pub struct Symbol {
     name: Atom,
     span: Span,
     flags: SymbolFlags,
+    references: Vec<AstNodeId>,
 }
 
 #[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
 #[test]
 fn symbol_size() {
     use std::mem::size_of;
-    assert_eq!(size_of::<Symbol>(), 48);
+    assert_eq!(size_of::<Symbol>(), 72);
 }
 
 bitflags! {
@@ -37,6 +39,8 @@ bitflags! {
         const FunctionScopedVariable  = 1 << 0;
         /// A block-scoped variable (let or const)
         const BlockScopedVariable     = 1 << 1;
+        /// A const variable (const)
+        const ConstVariable           = 1 << 2;
         const Class                   = 1 << 5;
         const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
 
@@ -58,7 +62,7 @@ bitflags! {
 impl Symbol {
     #[must_use]
     pub fn new(id: SymbolId, name: Atom, span: Span, flags: SymbolFlags) -> Self {
-        Self { id, name, span, flags }
+        Self { id, name, span, flags, references: vec![] }
     }
 
     #[must_use]
@@ -79,5 +83,25 @@ impl Symbol {
     #[must_use]
     pub fn flags(&self) -> SymbolFlags {
         self.flags
+    }
+
+    #[must_use]
+    pub fn is_const(&self) -> bool {
+        self.flags.contains(SymbolFlags::ConstVariable)
+    }
+
+    #[must_use]
+    pub fn is_let(&self) -> bool {
+        self.flags.contains(SymbolFlags::BlockScopedVariable)
+            && !self.flags.contains(SymbolFlags::ConstVariable)
+    }
+
+    pub fn add_references(&mut self, new_references: &[Reference]) {
+        self.references.extend(new_references.iter().map(|r| r.ast_node_id));
+    }
+
+    #[must_use]
+    pub fn references(&self) -> &[AstNodeId] {
+        &self.references
     }
 }

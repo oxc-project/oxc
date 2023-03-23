@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use oxc_semantic::Symbol;
+
 use crate::{context::LintContext, AstNode};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -15,7 +17,9 @@ pub trait Rule: Sized + Default + Debug {
         Self::default()
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, _ctx: &LintContext<'a>);
+    fn run_on_symbol(&self, _symbol: &Symbol, _ctx: &LintContext<'_>) {}
+
+    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
 }
 
 pub trait RuleMeta {
