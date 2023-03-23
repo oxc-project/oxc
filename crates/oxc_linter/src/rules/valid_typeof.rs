@@ -8,8 +8,9 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_printer::Printer;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum ValidTypeofDiagnostic {
@@ -25,23 +26,10 @@ enum ValidTypeofDiagnostic {
 pub struct ValidTypeof {
     /// true requires typeof expressions to only be compared to string literals or other typeof expressions, and disallows comparisons to any other value.
     require_string_literals: bool,
-    valid_type: [&'static str; 8],
 }
 impl Default for ValidTypeof {
     fn default() -> Self {
-        Self {
-            require_string_literals: false,
-            valid_type: [
-                "symbol",
-                "undefined",
-                "object",
-                "boolean",
-                "number",
-                "string",
-                "function",
-                "bigint",
-            ],
-        }
+        Self { require_string_literals: false }
     }
 }
 declare_oxc_lint!(
@@ -70,25 +58,19 @@ fn is_typeof(node: &UnaryExpression) -> bool {
     node.operator == UnaryOperator::Typeof
 }
 fn is_typeof_expr(expr: &Expression) -> bool {
-    if let Expression::UnaryExpression(unary) = expr && is_typeof(unary){
-    true
-   }else{
-    false
-   }
-}
-fn build_err(sibling: &Expression, with_help: bool, is_not_string: bool) -> ValidTypeofDiagnostic {
-    let help = if with_help { Some("Use `\"undefined\"` instead of `undefined`.") } else { None };
-    if is_not_string {
-        ValidTypeofDiagnostic::NotString(help, sibling.span())
+    if let Expression::UnaryExpression(unary) = expr && matches!(**unary, UnaryExpression { operator: UnaryOperator::Typeof, .. }){
+        true
     } else {
-        ValidTypeofDiagnostic::InvalidValue(help, sibling.span())
+        false
     }
 }
 
 impl Rule for ValidTypeof {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.get().kind();
-        if let AstKind::UnaryExpression(unary) = kind && is_typeof(unary) {
+        if let AstKind::UnaryExpression(
+            unary @ UnaryExpression { operator: UnaryOperator::Typeof, .. },
+        ) = node.get().kind()
+        {
             if let AstKind::BinaryExpression(BinaryExpression {
                 span: _,
                 left,
@@ -98,31 +80,58 @@ impl Rule for ValidTypeof {
                     | BinaryOperator::StrictEquality
                     | BinaryOperator::StrictInequality,
                 right,
-            }) = ctx.parent_kind(node){
-                let sibling = if let Expression::UnaryExpression(left_unary) = left && **left_unary== *unary{
-                    right
+            }) = ctx.parent_kind(node)
+            {
+                let valid_type = [
+                    "symbol",
+                    "undefined",
+                    "object",
+                    "boolean",
+                    "number",
+                    "string",
+                    "function",
+                    "bigint",
+                ];
+                let (sibling,sibling_id) = if let Expression::UnaryExpression(left_unary) = left && **left_unary== *unary{
+                    (right, node.next_sibling().unwrap())
                 } else {
-                    left
+                    (left, node.previous_sibling().unwrap())
                 };
 
                 if let Expression::StringLiteral(lit) = sibling {
-                    if !self.valid_type.contains(&lit.value.as_str()) {
-                        ctx.diagnostic(build_err(sibling, false, false));
+                    if !valid_type.contains(&lit.value.as_str()) {
+                        ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
                     }
                     return;
                 }
                 if let Expression::TemplateLiteral(template) = sibling && template.expressions.is_empty() {
-                    if let Some(value) = template.quasi() && !self.valid_type.contains(&value.as_str()) {
-                        ctx.diagnostic(build_err(sibling,false,false));
+                    if let Some(value) = template.quasi() && !valid_type.contains(&value.as_str()) {
+                        ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
                     }
                     return;
                 }
-                if sibling.is_undefined() {
-                    ctx.diagnostic(build_err(sibling, true, self.require_string_literals));
+
+                if sibling.is_undefined()
+                    && ctx.symbols().get_resolved_reference(sibling_id.into()).is_none()
+                {
+                    ctx.diagnostic_with_fix(
+                        if self.require_string_literals {
+                            ValidTypeofDiagnostic::NotString(
+                                Some("Use `\"undefined\"` instead of `undefined`."),
+                                sibling.span(),
+                            )
+                        } else {
+                            ValidTypeofDiagnostic::InvalidValue(
+                                Some("Use `\"undefined\"` instead of `undefined`."),
+                                sibling.span(),
+                            )
+                        },
+                        || Fix::new("\"undefined\"", sibling.span()),
+                    );
                     return;
                 }
-                if self.require_string_literals && !is_typeof_expr(sibling){
-                    ctx.diagnostic(build_err(sibling,false,true));
+                if self.require_string_literals && !is_typeof_expr(sibling) {
+                    ctx.diagnostic(ValidTypeofDiagnostic::NotString(None, sibling.span()));
                 }
             }
         }
@@ -136,19 +145,7 @@ impl Rule for ValidTypeof {
                 .unwrap_or(false)
         });
 
-        Self {
-            require_string_literals,
-            valid_type: [
-                "symbol",
-                "undefined",
-                "object",
-                "boolean",
-                "number",
-                "string",
-                "function",
-                "bigint",
-            ],
-        }
+        Self { require_string_literals }
     }
 }
 
@@ -183,7 +180,7 @@ fn test() {
         ("typeof(foo) == 'string'", None),
         ("typeof(foo) != 'string'", None),
         ("var oddUse = typeof foo + 'thing'", None),
-        // ("function f(undefined) { typeof x === undefined }", None),
+        ("function f(undefined) { typeof x === undefined }", None),
         ("typeof foo === `str${somethingElse}`", None),
         ("typeof foo === 'number'", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("typeof foo === \"number\"", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
