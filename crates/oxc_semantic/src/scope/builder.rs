@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, Atom, SourceType};
+use oxc_ast::{ast::ClassType, AstKind, Atom, SourceType};
 use rustc_hash::FxHashMap;
 
 use super::{Scope, ScopeFlags, ScopeId, ScopeTree};
@@ -104,6 +104,11 @@ impl ScopeBuilder {
             AstKind::ArrowExpression(_) => Some(ScopeFlags::Function | ScopeFlags::Arrow),
             AstKind::StaticBlock(_) => Some(ScopeFlags::ClassStaticBlock),
             AstKind::TSModuleBlock(_) => Some(ScopeFlags::TsModuleBlock),
+            AstKind::Class(class) if matches!(class.r#type, ClassType::ClassExpression) => {
+                // Class expression creates a temporary scope with the class name as its only variable
+                // E.g., `let c = class A { foo() { console.log(A) } }`
+                Some(ScopeFlags::empty())
+            }
             AstKind::BlockStatement(_)
             | AstKind::CatchClause(_)
             | AstKind::ForStatement(_)

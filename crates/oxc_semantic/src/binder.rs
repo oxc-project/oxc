@@ -66,8 +66,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
 
 impl<'a> Binder for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        if let Some(ident) = &self.id
-            && self.r#type == ClassType::ClassDeclaration && !self.modifiers.contains(ModifierKind::Declare) {
+        if let Some(ident) = &self.id && !self.modifiers.contains(ModifierKind::Declare) {
             builder.declare_symbol(
                 &ident.name,
                 ident.span,
