@@ -124,7 +124,7 @@ impl<'a> SemanticBuilder<'a> {
         if ScopeBuilder::scope_flags_from_ast_kind(kind).is_some()
             || matches!(kind, AstKind::Program(_))
         {
-            self.scope.resolve_reference(&self.symbols);
+            self.scope.resolve_reference(&mut self.symbols);
             self.scope.leave();
         }
     }

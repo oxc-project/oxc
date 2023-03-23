@@ -1,7 +1,5 @@
 #![allow(non_upper_case_globals)]
 
-use std::cell::RefCell;
-
 use bitflags::bitflags;
 use oxc_ast::Span;
 
@@ -12,8 +10,6 @@ use crate::node::AstNodeId;
 pub struct Reference {
     pub ast_node_id: AstNodeId,
     pub span: Span,
-
-    pub resolved_symbol_id: RefCell<Option<SymbolId>>,
 
     flag: ReferenceFlag,
 }
@@ -30,7 +26,7 @@ bitflags! {
 impl Reference {
     #[must_use]
     pub fn new(ast_node_id: AstNodeId, span: Span, flag: ReferenceFlag) -> Self {
-        Self { ast_node_id, span, resolved_symbol_id: RefCell::new(None), flag }
+        Self { ast_node_id, span, flag }
     }
 
     #[must_use]
@@ -48,7 +44,42 @@ impl Reference {
         self.flag.intersects(ReferenceFlag::ReadWrite)
     }
 
-    pub fn resolve_to(&self, symbol: SymbolId) {
-        *self.resolved_symbol_id.borrow_mut() = Some(symbol);
+    #[must_use]
+    pub fn resolve_to(self, symbol: SymbolId) -> ResolvedReference {
+        ResolvedReference::new(self, symbol)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ResolvedReference {
+    pub reference: Reference,
+    // The Symbol the reference refers to.
+    pub resolved_symbol_id: SymbolId,
+}
+
+impl ResolvedReference {
+    #[must_use]
+    pub fn new(reference: Reference, resolved_symbol_id: SymbolId) -> Self {
+        Self { reference, resolved_symbol_id }
+    }
+
+    #[must_use]
+    pub const fn is_read(&self) -> bool {
+        self.reference.is_read()
+    }
+
+    #[must_use]
+    pub const fn is_write(&self) -> bool {
+        self.reference.is_write()
+    }
+
+    #[must_use]
+    pub const fn is_read_write(&self) -> bool {
+        self.reference.is_read_write()
+    }
+
+    #[must_use]
+    pub fn span(&self) -> Span {
+        self.reference.span
     }
 }

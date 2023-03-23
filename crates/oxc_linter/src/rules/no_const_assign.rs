@@ -1,4 +1,3 @@
-use indextree::NodeId;
 use oxc_ast::{Atom, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -41,17 +40,17 @@ declare_oxc_lint!(
 impl Rule for NoConstAssign {
     fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
         if symbol.is_const() {
-            symbol.for_each_reference(|reference_id| {
-                let node_id = NodeId::from(reference_id);
-                let node = &ctx.nodes()[node_id];
-                if let Some(reference) = ctx.get_reference(node) && reference.is_write() {
+            for reference_id in symbol.references() {
+                let reference =
+                    ctx.semantic().symbols().get_resolved_reference(*reference_id).unwrap();
+                if reference.is_write() {
                     ctx.diagnostic(NoConstAssignDiagnostic(
                         symbol.name().clone(),
                         symbol.span(),
-                        reference.span,
+                        reference.span(),
                     ));
                 }
-            });
+            }
         }
     }
 }

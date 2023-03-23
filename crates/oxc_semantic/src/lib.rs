@@ -14,7 +14,7 @@ pub use builder::SemanticBuilder;
 pub use node::{AstNode, AstNodes, SemanticNode};
 use oxc_ast::{module_record::ModuleRecord, SourceType, Trivias};
 pub use scope::{Scope, ScopeFlags, ScopeTree};
-pub use symbol::{Reference, Symbol, SymbolFlags, SymbolTable};
+pub use symbol::{Reference, ResolvedReference, Symbol, SymbolFlags, SymbolTable};
 
 pub struct Semantic<'a> {
     source_type: SourceType,
