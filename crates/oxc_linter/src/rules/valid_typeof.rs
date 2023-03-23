@@ -1,4 +1,3 @@
-use lazy_static::__Deref;
 use oxc_ast::{
     ast::{BinaryExpression, BinaryOperator, Expression, UnaryExpression, UnaryOperator},
     AstKind, GetSpan, Span,
@@ -8,7 +7,6 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_printer::Printer;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
@@ -22,15 +20,10 @@ enum ValidTypeofDiagnostic {
     InvalidValue(#[help] Option<&'static str>, #[label] Span),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ValidTypeof {
     /// true requires typeof expressions to only be compared to string literals or other typeof expressions, and disallows comparisons to any other value.
     require_string_literals: bool,
-}
-impl Default for ValidTypeof {
-    fn default() -> Self {
-        Self { require_string_literals: false }
-    }
 }
 declare_oxc_lint!(
     /// ### What it does
@@ -54,9 +47,7 @@ declare_oxc_lint!(
     ValidTypeof,
     nursery,
 );
-fn is_typeof(node: &UnaryExpression) -> bool {
-    node.operator == UnaryOperator::Typeof
-}
+
 fn is_typeof_expr(expr: &Expression) -> bool {
     if let Expression::UnaryExpression(unary) = expr && matches!(**unary, UnaryExpression { operator: UnaryOperator::Typeof, .. }){
         true
