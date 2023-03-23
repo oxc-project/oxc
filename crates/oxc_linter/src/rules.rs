@@ -16,6 +16,7 @@ oxc_macros::declare_all_lint_rules! {
     no_dupe_class_members,
     no_empty,
     no_empty_pattern,
+    no_new_symbol,
     no_self_compare,
     no_mixed_operators,
     no_constant_binary_expression,
