@@ -47,7 +47,7 @@ impl Rule for NoNewSymbol {
         {
             let start = expr.span.start;
             let end = start + 3;
-            ctx.diagnostic(NoNewSymbolDiagnostic(Span { start, end }));
+            ctx.diagnostic(NoNewSymbolDiagnostic(Span::new(start, end)));
         }
     }
 }
