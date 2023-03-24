@@ -96,6 +96,11 @@ impl Symbol {
             && !self.flags.contains(SymbolFlags::ConstVariable)
     }
 
+    #[must_use]
+    pub fn is_class(&self) -> bool {
+        self.flags.contains(SymbolFlags::Class)
+    }
+
     pub fn add_references(&mut self, new_references: &[Reference]) {
         self.references.extend(new_references.iter().map(|r| r.ast_node_id));
     }
