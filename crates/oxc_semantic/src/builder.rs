@@ -18,7 +18,11 @@ use crate::{
 };
 
 pub struct SemanticBuilder<'a> {
+    pub source_text: &'a str,
+
     pub source_type: SourceType,
+
+    trivias: Rc<Trivias>,
 
     /// Semantic early errors such as redeclaration errors.
     errors: Vec<Error>,
@@ -41,14 +45,16 @@ pub struct SemanticBuilderReturn<'a> {
 
 impl<'a> SemanticBuilder<'a> {
     #[must_use]
-    pub fn new(source_type: SourceType) -> Self {
+    pub fn new(source_text: &'a str, source_type: SourceType, trivias: &Rc<Trivias>) -> Self {
         let scope = ScopeBuilder::new(source_type);
         let mut nodes = AstNodes::default();
         let semantic_node =
             SemanticNode::new(AstKind::Root, scope.current_scope_id, NodeFlags::empty());
         let current_node_id = nodes.new_node(semantic_node).into();
         Self {
+            source_text,
             source_type,
+            trivias: Rc::clone(trivias),
             errors: vec![],
             current_node_id,
             current_node_flags: NodeFlags::empty(),
@@ -64,11 +70,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[must_use]
-    pub fn build(
-        mut self,
-        program: &'a Program<'a>,
-        trivias: &Rc<Trivias>,
-    ) -> SemanticBuilderReturn<'a> {
+    pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         // First AST pass
         self.visit_program(program);
 
@@ -76,11 +78,12 @@ impl<'a> SemanticBuilder<'a> {
         let module_record = self.module_record_builder.build(program);
 
         let semantic = Semantic {
+            source_text: self.source_text,
             source_type: self.source_type,
+            trivias: self.trivias,
             nodes: self.nodes,
             scopes: self.scope.scopes,
             symbols: self.symbols,
-            trivias: Rc::clone(trivias),
             module_record,
         };
         SemanticBuilderReturn { semantic, errors: self.errors }

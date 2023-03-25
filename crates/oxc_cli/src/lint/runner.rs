@@ -141,13 +141,13 @@ impl LintRunner {
 
         let program = allocator.alloc(ret.program);
         let trivias = Rc::new(ret.trivias);
-        let semantic_ret = SemanticBuilder::new(source_type).build(program, &trivias);
+        let semantic_ret = SemanticBuilder::new(&source_text, source_type, &trivias).build(program);
 
         if !semantic_ret.errors.is_empty() {
             return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));
         };
 
-        let result = Linter::new().with_fix(fix).run(&Rc::new(semantic_ret.semantic), &source_text);
+        let result = Linter::new().with_fix(fix).run(&Rc::new(semantic_ret.semantic));
 
         if result.is_empty() {
             return None;

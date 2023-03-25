@@ -77,16 +77,15 @@ impl Tester {
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
         let trivias = Rc::new(ret.trivias);
-        let semantic_ret = SemanticBuilder::new(source_type).build(program, &trivias);
+        let semantic_ret = SemanticBuilder::new(source_text, source_type, &trivias).build(program);
         assert!(semantic_ret.errors.is_empty(), "{:?}", &semantic_ret.errors);
         let rule = RULES
             .iter()
             .find(|rule| rule.name() == self.rule_name)
             .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name));
         let rule = rule.read_json(config);
-        let result = Linter::from_rules(vec![rule])
-            .with_fix(false)
-            .run(&Rc::new(semantic_ret.semantic), source_text);
+        let result =
+            Linter::from_rules(vec![rule]).with_fix(false).run(&Rc::new(semantic_ret.semantic));
         if result.is_empty() {
             return true;
         }

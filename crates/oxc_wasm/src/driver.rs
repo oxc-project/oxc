@@ -33,7 +33,8 @@ impl Driver {
         let program = self.allocator.alloc(ret.program);
 
         let diagnostics = Diagnostics::default();
-        let semantic_ret = SemanticBuilder::new(source_type).build(program, &Rc::new(ret.trivias));
+        let semantic_ret =
+            SemanticBuilder::new(source_text, source_type, &Rc::new(ret.trivias)).build(program);
         let mut diagnostics = diagnostics.into_inner();
 
         let source = Arc::new(NamedSource::new(path, source_text.to_string()));
@@ -41,7 +42,7 @@ impl Driver {
         diagnostics.extend(
             Linter::from_json_str(eslintrc)
                 .with_fix(false)
-                .run(&Rc::new(semantic_ret.semantic), source_text)
+                .run(&Rc::new(semantic_ret.semantic))
                 .into_iter()
                 .map(|m| m.error.with_source_code(Arc::clone(&source)))
                 .chain(ret.errors)

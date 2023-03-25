@@ -17,6 +17,8 @@ pub use scope::{Scope, ScopeFlags, ScopeTree};
 pub use symbol::{Reference, ResolvedReference, Symbol, SymbolFlags, SymbolTable};
 
 pub struct Semantic<'a> {
+    source_text: &'a str,
+
     source_type: SourceType,
 
     nodes: AstNodes<'a>,
@@ -31,6 +33,11 @@ pub struct Semantic<'a> {
 }
 
 impl<'a> Semantic<'a> {
+    #[must_use]
+    pub fn source_text(&self) -> &'a str {
+        self.source_text
+    }
+
     #[must_use]
     pub fn source_type(&self) -> &SourceType {
         &self.source_type

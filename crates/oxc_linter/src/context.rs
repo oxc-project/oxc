@@ -13,8 +13,6 @@ use crate::{
 };
 
 pub struct LintContext<'a> {
-    source_text: &'a str,
-
     semantic: Rc<Semantic<'a>>,
 
     diagnostics: RefCell<Vec<Message<'a>>>,
@@ -28,11 +26,10 @@ pub struct LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(source_text: &'a str, semantic: &Rc<Semantic<'a>>, fix: bool) -> Self {
+    pub fn new(semantic: &Rc<Semantic<'a>>, fix: bool) -> Self {
         let disable_directives =
-            DisableDirectivesBuilder::new(source_text, semantic.trivias()).build();
+            DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
-            source_text,
             semantic: Rc::clone(semantic),
             diagnostics: RefCell::new(vec![]),
             disable_directives,
@@ -48,7 +45,7 @@ impl<'a> LintContext<'a> {
 
     #[must_use]
     pub fn source_text(&self) -> &'a str {
-        self.source_text
+        self.semantic().source_text()
     }
 
     #[must_use]

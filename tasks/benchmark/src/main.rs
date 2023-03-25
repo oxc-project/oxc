@@ -97,8 +97,8 @@ fn bench_semantic(criterion: &mut Criterion, codes: &[Code]) {
                 let program = allocator.alloc(ret.program);
                 let trivias = Rc::new(ret.trivias);
                 b.iter(|| {
-                    let _semantic =
-                        SemanticBuilder::new(source_type).build(black_box(program), &trivias);
+                    let _semantic = SemanticBuilder::new(source_text, source_type, &trivias)
+                        .build(black_box(program));
                 });
             },
         );
