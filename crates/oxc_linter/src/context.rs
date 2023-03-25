@@ -4,7 +4,7 @@ use indextree::{Ancestors, NodeId};
 use oxc_ast::{ast::IdentifierReference, AstKind, SourceType};
 use oxc_diagnostics::Error;
 use oxc_printer::{Printer, PrinterOptions};
-use oxc_semantic::{AstNodes, Scope, ScopeTree, Semantic, SemanticNode, SymbolTable};
+use oxc_semantic::{AstNodes, JSDocComment, Scope, ScopeTree, Semantic, SemanticNode, SymbolTable};
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -149,5 +149,10 @@ impl<'a> LintContext<'a> {
     #[allow(clippy::unused_self)]
     pub fn printer(&self) -> Printer {
         Printer::new(0, PrinterOptions::default())
+    }
+
+    /* JsDoc */
+    pub fn jsdoc(&self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
+        self.semantic().jsdoc().get_by_node(node)
     }
 }

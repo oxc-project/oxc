@@ -5,6 +5,7 @@ mod binder;
 mod builder;
 mod checker;
 mod diagnostics;
+mod jsdoc;
 mod module_record;
 mod node;
 mod scope;
@@ -13,6 +14,7 @@ mod symbol;
 use std::rc::Rc;
 
 pub use builder::SemanticBuilder;
+pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
 use node::AstNodeId;
 pub use node::{AstNode, AstNodes, SemanticNode};
 use oxc_ast::{
@@ -37,6 +39,8 @@ pub struct Semantic<'a> {
     trivias: Rc<Trivias>,
 
     module_record: ModuleRecord,
+
+    jsdoc: JSDoc<'a>,
 }
 
 impl<'a> Semantic<'a> {
@@ -63,6 +67,11 @@ impl<'a> Semantic<'a> {
     #[must_use]
     pub fn trivias(&self) -> &Trivias {
         &self.trivias
+    }
+
+    #[must_use]
+    pub fn jsdoc(&self) -> &JSDoc<'a> {
+        &self.jsdoc
     }
 
     #[must_use]
