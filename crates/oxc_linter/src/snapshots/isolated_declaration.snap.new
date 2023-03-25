@@ -1,0 +1,13 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 67
+expression: isolated_declaration
+---
+
+  ⚠ 
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export function foo(a) { return a; }
+   ·                     ─
+   ╰────
+  help: 
+
