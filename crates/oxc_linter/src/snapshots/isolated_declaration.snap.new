@@ -11,3 +11,59 @@ expression: isolated_declaration
    ╰────
   help: 
 
+  ⚠ 
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export function foo(a) { return a; }
+   ·        ─────────────────────────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { public a; }
+   ·                  ─────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { foo() { return 0; } }
+   ·                     ────────────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export abstract class A { abstract foo() { return 0; } }
+   ·                                       ────────────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export abstract class A { abstract a; }
+   ·                           ───────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { get foo() { return 0; } }
+   ·                         ────────────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { set foo(val) { } }
+   ·                          ───
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { set foo(val) { } }
+   ·                         ─────────
+   ╰────
+  help: 
+

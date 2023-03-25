@@ -186,3 +186,19 @@ impl<'a, 'b> IsConstant<'a, 'b> for SpreadElement<'a> {
         self.argument.is_constant(in_boolean_position, ctx)
     }
 }
+
+pub trait IsPrivate {
+    fn is_private(&self) -> bool;
+}
+
+impl<'a> IsPrivate for MethodDefinition<'a> {
+    fn is_private(&self) -> bool {
+        self.accessibility.map_or(false, |accessibility| accessibility == TSAccessibility::Private)
+    }
+}
+
+impl<'a> IsPrivate for PropertyDefinition<'a> {
+    fn is_private(&self) -> bool {
+        self.accessibility.map_or(false, |accessibility| accessibility == TSAccessibility::Private)
+    }
+}
