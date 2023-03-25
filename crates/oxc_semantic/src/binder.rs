@@ -155,9 +155,7 @@ impl<'a> Binder for CatchClause<'a> {
             // unless CatchParameter is CatchParameter : BindingIdentifier
             if let BindingPatternKind::BindingIdentifier(ident) = &param.kind {
                 let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
-                // Overshadows declarations so redeclarator error is not reported here
-                let symbol_id = builder.symbols.create(ident.name.clone(), ident.span, includes);
-                builder.scope.current_scope_mut().variables.insert(ident.name.clone(), symbol_id);
+                builder.declare_shadow_symbol(&ident.name, ident.span, current_scope_id, includes);
             } else {
                 for ident in param.bound_names() {
                     builder.declare_symbol(

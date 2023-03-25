@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Class, ClassElement, Declaration, Function, ModuleDeclarationKind, PropertyDefinition},
+    ast::{Class, ClassElement, Function, PropertyDefinition},
     AstKind, Span,
 };
 use oxc_diagnostics::{
@@ -7,13 +7,22 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::Symbol;
 
-use crate::{ast_util::IsPrivate, context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::IsPrivate, context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("")]
-#[diagnostic(severity(warning), help(""))]
-struct IsolatedDeclarationDiagnostic(#[label] pub Span);
+enum IsolatedDeclarationDiagnostic {
+    #[error("isolated-declaration: Requires type annotation on non-private property definition")]
+    #[diagnostic(severity(warning))]
+    Property(#[label] Span),
+    #[error("isolated-declaration: Requires type annotation on parameters of non-private method")]
+    #[diagnostic(severity(warning))]
+    FunctionParam(#[label] Span),
+    #[error("isolated-declaration: Requires return type annotation of non-private method")]
+    #[diagnostic(severity(warning))]
+    FunctionReturnType(#[label] Span),
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct IsolatedDeclaration;
@@ -26,35 +35,40 @@ declare_oxc_lint!(
     /// The thread on isolated declaration is at `https://github.com/microsoft/TypeScript/issues/47947`
     ///
     /// ### Why is this bad?
-    ///
+    /// The restrictions allow .d.ts files to be generated based on one single .ts file, which improves the
+    /// efficiency and possible parallelism of the declaration emitting process. Furthermore, it prevents syntax
+    /// errors in one file from propagating to other dependent files.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```typescript
+    /// export class Test {
+    ///   x // error under isolated declarations
+    ///   private y = 0; // no error, private field types are not serialized in declarations
+    ///   #z = 1;// no error, fields is not present in declarations
+    ///   constructor(x: number) {
+    ///     this.x = 1;
+    ///   }
+    ///   get a() { // error under isolated declarations
+    ///     return 1;
+    ///   }
+    ///   set a(value) { // error under isolated declarations
+    ///     this.x = 1;
+    ///   }
+    /// }
     /// ```
     IsolatedDeclaration,
-    correctness
+    nursery,
 );
 
 impl Rule for IsolatedDeclaration {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ModuleDeclaration(module) = node.get().kind() else { return; };
-        match &module.kind {
-            ModuleDeclarationKind::ImportDeclaration(_) => todo!(),
-            ModuleDeclarationKind::ExportAllDeclaration(_) => todo!(),
-            ModuleDeclarationKind::ExportDefaultDeclaration(_) => todo!(),
-            ModuleDeclarationKind::ExportNamedDeclaration(decl) => {
-                if let Some(decl) = &decl.declaration {
-                    match decl {
-                        Declaration::FunctionDeclaration(function) => {
-                            Self::check_function(function, ctx)
-                        }
-                        Declaration::ClassDeclaration(class) => Self::check_class(class, ctx),
-                        _ => (),
-                    }
-                }
+    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
+        if symbol.is_export() {
+            let declaration = ctx.nodes()[symbol.declaration()];
+            match declaration.kind() {
+                AstKind::Class(class) => Self::check_class(class, ctx),
+                AstKind::Function(function) => Self::check_function(function, ctx),
+                _ => (),
             }
-            ModuleDeclarationKind::TSExportAssignment(_) => todo!(),
-            ModuleDeclarationKind::TSNamespaceExportDeclaration(_) => todo!(),
         }
     }
 }
@@ -67,17 +81,18 @@ impl IsolatedDeclaration {
         let parameters = &function.params.items;
         for param in parameters {
             if param.pattern.type_annotation.is_none() {
-                ctx.diagnostic(IsolatedDeclarationDiagnostic(param.span));
+                ctx.diagnostic(IsolatedDeclarationDiagnostic::FunctionParam(param.span));
             }
         }
         if function.return_type.is_none() {
-            ctx.diagnostic(IsolatedDeclarationDiagnostic(function.span));
+            ctx.diagnostic(IsolatedDeclarationDiagnostic::FunctionReturnType(function.span));
         }
     }
 
+    /// Checks that the property as a type annotation
     pub fn check_property_definition(property: &PropertyDefinition, ctx: &LintContext<'_>) {
         if property.type_annotation.is_none() {
-            ctx.diagnostic(IsolatedDeclarationDiagnostic(property.span));
+            ctx.diagnostic(IsolatedDeclarationDiagnostic::Property(property.span));
         }
     }
 
@@ -88,7 +103,6 @@ impl IsolatedDeclaration {
     pub fn check_class(class: &Class, ctx: &LintContext<'_>) {
         for element in &class.body.body {
             match element {
-                ClassElement::StaticBlock(_) => (),
                 ClassElement::MethodDefinition(method) => {
                     if !method.is_private() {
                         Self::check_function(&method.value, ctx);
@@ -96,17 +110,18 @@ impl IsolatedDeclaration {
                 }
                 ClassElement::PropertyDefinition(property) => {
                     if !property.is_private() && !property.key.is_private_identifier() {
-                        Self::check_property_definition(property, ctx)
+                        Self::check_property_definition(property, ctx);
                     }
                 }
-                ClassElement::AccessorProperty(_) => todo!(),
                 ClassElement::TSAbstractMethodDefinition(method) => {
                     Self::check_function(&method.method_definition.value, ctx);
                 }
                 ClassElement::TSAbstractPropertyDefinition(property) => {
                     Self::check_property_definition(&property.property_definition, ctx);
                 }
-                ClassElement::TSIndexSignature(_) => todo!(),
+                ClassElement::StaticBlock(_)
+                | ClassElement::AccessorProperty(_)
+                | ClassElement::TSIndexSignature(_) => (),
             }
         }
     }

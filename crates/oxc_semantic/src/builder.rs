@@ -30,6 +30,7 @@ pub struct SemanticBuilder<'a> {
     // states
     pub current_node_id: AstNodeId,
     pub current_node_flags: NodeFlags,
+    pub current_symbol_flags: SymbolFlags,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -58,6 +59,7 @@ impl<'a> SemanticBuilder<'a> {
             errors: vec![],
             current_node_id,
             current_node_flags: NodeFlags::empty(),
+            current_symbol_flags: SymbolFlags::empty(),
             nodes,
             scope,
             symbols: SymbolTable::default(),
@@ -147,7 +149,22 @@ impl<'a> SemanticBuilder<'a> {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, name, span, excludes) {
             return symbol_id;
         }
-        let symbol_id = self.symbols.create(name.clone(), span, includes);
+        let includes = includes | self.current_symbol_flags;
+        let symbol_id = self.symbols.create(self.current_node_id, name.clone(), span, includes);
+        self.scope.scopes[scope_id].variables.insert(name.clone(), symbol_id);
+        symbol_id
+    }
+
+    /// Declares a `Symbol` for the node, shadowing previous declarations in the same scope.
+    pub fn declare_shadow_symbol(
+        &mut self,
+        name: &Atom,
+        span: Span,
+        scope_id: ScopeId,
+        includes: SymbolFlags,
+    ) -> SymbolId {
+        let includes = includes | self.current_symbol_flags;
+        let symbol_id = self.symbols.create(self.current_node_id, name.clone(), span, includes);
         self.scope.scopes[scope_id].variables.insert(name.clone(), symbol_id);
         symbol_id
     }
@@ -193,6 +210,7 @@ impl<'a> SemanticBuilder<'a> {
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::ModuleDeclaration(decl) => {
+                self.current_symbol_flags |= Self::symbol_flag_from_module_declaration(decl);
                 decl.bind(self);
             }
             AstKind::VariableDeclarator(decl) => {
@@ -233,6 +251,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
             }
+            AstKind::ModuleDeclaration(decl) => {
+                self.current_symbol_flags -= Self::symbol_flag_from_module_declaration(decl);
+            }
             _ => {}
         }
     }
@@ -265,6 +286,14 @@ impl<'a> SemanticBuilder<'a> {
                     Reference::new(self.current_node_id, elem.span(), ReferenceFlag::Read);
                 self.scope.reference_identifier(&ident.name, reference);
             }
+        }
+    }
+
+    fn symbol_flag_from_module_declaration(module: &ModuleDeclaration) -> SymbolFlags {
+        if matches!(&module.kind, ModuleDeclarationKind::ImportDeclaration(_)) {
+            SymbolFlags::Import
+        } else {
+            SymbolFlags::Export
         }
     }
 }
