@@ -13,6 +13,7 @@ use oxc_ast::{
 };
 use oxc_parser::Parser;
 use serde::Serialize;
+use ureq::Response;
 
 mod json;
 mod template;
@@ -227,28 +228,40 @@ fn main() {
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
 
     let rule_test_path = format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js");
-    let body = ureq::get(&rule_test_path)
-        .call()
-        .expect("failed to fetch source")
-        .into_string()
-        .expect("failed to read response as string");
-    let allocator = Allocator::default();
-    let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
-    let ret = Parser::new(&allocator, &body, source_type).parse();
+    let body = ureq::get(&rule_test_path).call().map(Response::into_string);
+    let pass_cases;
+    let fail_cases;
+    let context = match body {
+        Ok(Ok(body)) => {
+            let allocator = Allocator::default();
+            let source_type = SourceType::from_path(rule_test_path).expect("incorrect {path:?}");
+            let ret = Parser::new(&allocator, &body, source_type).parse();
 
-    let program = allocator.alloc(ret.program);
+            let program = allocator.alloc(ret.program);
 
-    let mut state = State::new(&body);
-    state.visit_program(program);
+            let mut state = State::new(&body);
+            state.visit_program(program);
 
-    let pass_cases =
-        state.pass_cases().iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n");
-    let fail_cases =
-        state.fail_cases().iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n");
+            pass_cases =
+                state.pass_cases().iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n");
+            fail_cases =
+                state.fail_cases().iter().map(TestCase::to_code).collect::<Vec<_>>().join(",\n");
 
-    let context = Context::new(&upper_rule_name, &rule_name, &pass_cases, &fail_cases);
+            Context::new(&upper_rule_name, &rule_name, &pass_cases, &fail_cases)
+        }
+        Err(_err) => {
+            println!("Rule {rule_name} cannot be found in eslint, use empty template.");
+            Context::new(&upper_rule_name, &rule_name, "", "")
+        }
+        Ok(Err(err)) => {
+            println!("Failed to convert rule source code to string: {err}, use empty template");
+            Context::new(&upper_rule_name, &rule_name, "", "")
+        }
+    };
+
     let template = template::Template::with_context(&context);
-    if template.render().is_err() {
-        eprintln!("failed to render {} rule template", context.rule);
+    if let Err(err) = template.render() {
+        let rule_name = context.rule;
+        eprintln!("failed to render {rule_name} rule template: {err}");
     }
 }
