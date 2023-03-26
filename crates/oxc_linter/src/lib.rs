@@ -17,11 +17,13 @@ use std::{fs, rc::Rc};
 pub use fixer::{Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
-use rule::{Rule, RuleCategory};
 
 use crate::{
-    context::LintContext,
-    rules::{early_error::javascript::EarlyErrorJavaScript, RuleEnum, RULES},
+    context::LintContext, rule::Rule, rules::early_error::javascript::EarlyErrorJavaScript,
+};
+pub use crate::{
+    rule::RuleCategory,
+    rules::{RuleEnum, RULES},
 };
 
 #[derive(Debug)]

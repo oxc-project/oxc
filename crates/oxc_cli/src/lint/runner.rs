@@ -13,11 +13,12 @@ use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::{Error, MinifiedFileError, Severity};
-use oxc_linter::{Fixer, Linter};
+use oxc_linter::{Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use rustc_hash::FxHashSet;
 
-use super::LintOptions;
+use super::{AllowWarnDeny, LintOptions};
 use crate::{CliRunResult, Walk};
 
 pub struct LintRunner {
@@ -29,8 +30,54 @@ pub struct LintRunner {
 impl LintRunner {
     #[must_use]
     pub fn new(options: LintOptions) -> Self {
-        let linter = Linter::new().with_fix(options.fix);
+        let linter = Linter::from_rules(Self::derive_rules(&options)).with_fix(options.fix);
         Self { options, linter: Arc::new(linter) }
+    }
+
+    fn derive_rules(options: &LintOptions) -> Vec<RuleEnum> {
+        let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
+
+        for (allow_warn_deny, name_or_category) in &options.rules {
+            let maybe_category = RuleCategory::from(name_or_category.as_str());
+            match allow_warn_deny {
+                AllowWarnDeny::Deny => {
+                    match maybe_category {
+                        Some(category) => rules.extend(
+                            RULES.iter().filter(|rule| rule.category() == category).cloned(),
+                        ),
+                        None => {
+                            if name_or_category == "all" {
+                                rules.extend(RULES.iter().cloned());
+                            } else {
+                                rules.extend(
+                                    RULES
+                                        .iter()
+                                        .filter(|rule| rule.name() == name_or_category)
+                                        .cloned(),
+                                );
+                            }
+                        }
+                    };
+                }
+                AllowWarnDeny::Allow => {
+                    match maybe_category {
+                        Some(category) => rules.retain(|rule| rule.category() != category),
+                        None => {
+                            if name_or_category == "all" {
+                                rules.drain();
+                            } else {
+                                rules.retain(|rule| rule.name() == name_or_category);
+                            }
+                        }
+                    };
+                }
+            }
+        }
+
+        let mut rules = rules.into_iter().collect::<Vec<_>>();
+        // for stable diagnostics output ordering
+        rules.sort_unstable_by_key(|rule| rule.name());
+        rules
     }
 
     /// # Panics

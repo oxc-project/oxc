@@ -877,6 +877,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "rayon",
+ "rustc-hash",
 ]
 
 [[package]]

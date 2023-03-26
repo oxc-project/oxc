@@ -126,6 +126,32 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             }
         }
 
+        impl std::hash::Hash for RuleEnum {
+            fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+                self.name().hash(state);
+            }
+        }
+
+        impl PartialEq for RuleEnum {
+            fn eq(&self, other: &Self) -> bool {
+                self.name() == other.name()
+            }
+        }
+
+        impl Eq for RuleEnum {}
+
+        impl Ord for RuleEnum {
+            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+                self.name().cmp(&other.name())
+            }
+        }
+
+        impl PartialOrd for RuleEnum {
+            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+                Some(self.cmp(&other))
+            }
+        }
+
         lazy_static::lazy_static! {
             pub static ref RULES: Vec<RuleEnum> = vec![
                 #(RuleEnum::#struct_names(#struct_names::default())),*
