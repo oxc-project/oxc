@@ -5,6 +5,16 @@ pub fn lint_command() -> Command {
             .alias("check")
             .about("Lint this repository.")
             .arg_required_else_help(true)
+            .after_help(
+                "To allow or deny a rule, multiple -A <NAME> or -D <NAME>.
+For example: -D correctness -A no-debugger.
+
+The categories are:
+  * correctness - code that is outright wrong or useless
+  * nursery     - new lints that are still under development
+  * all         - all the categories listed above
+
+The default category is -D correctness.")
             .arg(
                 Arg::new("path")
                     .value_name("PATH")
@@ -12,6 +22,22 @@ pub fn lint_command() -> Command {
                     .required(true)
                     .value_parser(ValueParser::path_buf())
                     .help("File or Directory paths to scan. Directories are scanned recursively.")
+            )
+            .arg(
+                Arg::new("allow")
+                .long("allow")
+                .short('A')
+                .required(false)
+                .action(ArgAction::Append)
+                .help("Allow a rule or a category")
+            )
+            .arg(
+                Arg::new("deny")
+                .long("deny")
+                .short('D')
+                .required(false)
+                .action(ArgAction::Append)
+                .help("Deny a rule or a category")
             )
             .arg(
                 Arg::new("fix")

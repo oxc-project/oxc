@@ -17,11 +17,13 @@ use std::{fs, rc::Rc};
 pub use fixer::{Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
-use rule::{Rule, RuleCategory};
 
 use crate::{
-    context::LintContext,
-    rules::{early_error::javascript::EarlyErrorJavaScript, RuleEnum, RULES},
+    context::LintContext, rule::Rule, rules::early_error::javascript::EarlyErrorJavaScript,
+};
+pub use crate::{
+    rule::RuleCategory,
+    rules::{RuleEnum, RULES},
 };
 
 #[derive(Debug)]
@@ -37,23 +39,27 @@ impl Linter {
     #[must_use]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        // let rules_config = Self::read_rules_configuration();
-        // let rules = rules_config.map_or_else(
-        // || RULES.to_vec(),
-        // |rules_config| {
         let rules = RULES
             .iter()
             .cloned()
             .filter(|rule| rule.category() == RuleCategory::Correctness)
             .collect::<Vec<_>>();
-        // },
-        // );
         Self::from_rules(rules)
     }
 
     #[must_use]
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
         Self { rules, early_error_javascript: EarlyErrorJavaScript, fix: false }
+    }
+
+    #[must_use]
+    pub fn has_fix(&self) -> bool {
+        self.fix
+    }
+
+    #[must_use]
+    pub fn number_of_rules(&self) -> usize {
+        self.rules.len()
     }
 
     #[must_use]

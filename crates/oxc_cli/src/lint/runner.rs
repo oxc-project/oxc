@@ -13,21 +13,71 @@ use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::{Error, MinifiedFileError, Severity};
-use oxc_linter::{Fixer, Linter};
+use oxc_linter::{Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use rustc_hash::FxHashSet;
 
-use super::LintOptions;
+use super::{AllowWarnDeny, LintOptions};
 use crate::{CliRunResult, Walk};
 
 pub struct LintRunner {
     options: LintOptions,
+
+    linter: Arc<Linter>,
 }
 
 impl LintRunner {
     #[must_use]
     pub fn new(options: LintOptions) -> Self {
-        Self { options }
+        let linter = Linter::from_rules(Self::derive_rules(&options)).with_fix(options.fix);
+        Self { options, linter: Arc::new(linter) }
+    }
+
+    fn derive_rules(options: &LintOptions) -> Vec<RuleEnum> {
+        let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
+
+        for (allow_warn_deny, name_or_category) in &options.rules {
+            let maybe_category = RuleCategory::from(name_or_category.as_str());
+            match allow_warn_deny {
+                AllowWarnDeny::Deny => {
+                    match maybe_category {
+                        Some(category) => rules.extend(
+                            RULES.iter().filter(|rule| rule.category() == category).cloned(),
+                        ),
+                        None => {
+                            if name_or_category == "all" {
+                                rules.extend(RULES.iter().cloned());
+                            } else {
+                                rules.extend(
+                                    RULES
+                                        .iter()
+                                        .filter(|rule| rule.name() == name_or_category)
+                                        .cloned(),
+                                );
+                            }
+                        }
+                    };
+                }
+                AllowWarnDeny::Allow => {
+                    match maybe_category {
+                        Some(category) => rules.retain(|rule| rule.category() != category),
+                        None => {
+                            if name_or_category == "all" {
+                                rules.drain();
+                            } else {
+                                rules.retain(|rule| rule.name() == name_or_category);
+                            }
+                        }
+                    };
+                }
+            }
+        }
+
+        let mut rules = rules.into_iter().collect::<Vec<_>>();
+        // for stable diagnostics output ordering
+        rules.sort_unstable_by_key(|rule| rule.name());
+        rules
     }
 
     /// # Panics
@@ -45,6 +95,7 @@ impl LintRunner {
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
+            number_of_rules: self.linter.number_of_rules(),
             number_of_files: number_of_files.load(Ordering::Relaxed),
             number_of_diagnostics,
             number_of_warnings,
@@ -73,12 +124,13 @@ impl LintRunner {
             number_of_files.store(count, Ordering::Relaxed);
         });
 
-        let fix = self.options.fix;
+        let linter = Arc::clone(&self.linter);
         rayon::spawn(move || {
             while let Ok(path) = rx_path.recv() {
                 let tx_error = tx_error.clone();
+                let linter = Arc::clone(&linter);
                 rayon::spawn(move || {
-                    if let Some(diagnostics) = Self::lint_path(&path, fix) {
+                    if let Some(diagnostics) = Self::lint_path(&linter, &path) {
                         tx_error.send(diagnostics).unwrap();
                     }
                     drop(tx_error);
@@ -128,7 +180,7 @@ impl LintRunner {
         (number_of_warnings, number_of_diagnostics)
     }
 
-    fn lint_path(path: &Path, fix: bool) -> Option<(PathBuf, Vec<Error>)> {
+    fn lint_path(linter: &Linter, path: &Path) -> Option<(PathBuf, Vec<Error>)> {
         let source_text = fs::read_to_string(path).unwrap_or_else(|_| panic!("{path:?} not found"));
         let allocator = Allocator::default();
         let source_type =
@@ -147,13 +199,13 @@ impl LintRunner {
             return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));
         };
 
-        let result = Linter::new().with_fix(fix).run(&Rc::new(semantic_ret.semantic));
+        let result = linter.run(&Rc::new(semantic_ret.semantic));
 
         if result.is_empty() {
             return None;
         }
 
-        if fix {
+        if linter.has_fix() {
             let fix_result = Fixer::new(&source_text, result).fix();
             fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
             let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
