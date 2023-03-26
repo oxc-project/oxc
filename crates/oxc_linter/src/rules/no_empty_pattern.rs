@@ -9,7 +9,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-empty-pattern): Disallow empty destructuring patterns")]
-#[diagnostic()]
+#[diagnostic(severity(warning))]
 struct NoEmptyPatternDiagnostic(&'static str, #[label("Empty {0} binding pattern")] pub Span);
 
 #[derive(Debug, Default, Clone)]

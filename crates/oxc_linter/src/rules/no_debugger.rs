@@ -9,7 +9,7 @@ use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-debugger): `debugger` statement is not allowed")]
-#[diagnostic()]
+#[diagnostic(severity(warning))]
 struct NoDebuggerDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
