@@ -23,7 +23,7 @@ pub struct Symbol {
     name: Atom,
     span: Span,
     flags: SymbolFlags,
-    /// Pointers to the AST Node that references this symbol
+    /// Pointers to the AST Nodes that reference this symbol
     references: Vec<AstNodeId>,
 }
 
@@ -31,7 +31,7 @@ pub struct Symbol {
 #[test]
 fn symbol_size() {
     use std::mem::size_of;
-    assert_eq!(size_of::<Symbol>(), 72);
+    assert_eq!(size_of::<Symbol>(), 88);
 }
 
 bitflags! {
