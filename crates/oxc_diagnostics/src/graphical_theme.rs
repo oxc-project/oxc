@@ -92,7 +92,7 @@ impl ThemeStyles {
     pub fn rgb() -> Self {
         Self {
             error: style().fg_rgb::<225, 80, 80>().bold(), // CHANGED: <255, 30, 30>
-            warning: style().fg_rgb::<244, 191, 117>(),
+            warning: style().fg_rgb::<244, 191, 117>().bold(),
             advice: style().fg_rgb::<106, 159, 181>(),
             help: style().fg_rgb::<106, 159, 181>(),
             link: style().fg_rgb::<92, 157, 255>().bold(),

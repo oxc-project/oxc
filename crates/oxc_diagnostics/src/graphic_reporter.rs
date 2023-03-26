@@ -91,7 +91,7 @@ impl GraphicalReportHandler {
     /// Whether to include [`Diagnostic::url()`] in the output.
     ///
     /// Disabling this is not recommended, but can be useful for more easily
-    /// reproducable tests, as `url(docsrs)` links are version-dependent.
+    /// reproducible tests, as `url(docsrs)` links are version-dependent.
     pub fn with_urls(mut self, urls: bool) -> Self {
         self.links = match (self.links, urls) {
             (_, false) => LinkStyle::None,
