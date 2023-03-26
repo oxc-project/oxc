@@ -1,5 +1,7 @@
 use oxc_ast::{
-    ast::{Class, ClassElement, Function, PropertyDefinition},
+    ast::{
+        BindingPatternKind, Class, ClassElement, Function, MethodDefinitionKind, PropertyDefinition,
+    },
     AstKind, GetSpan, Span,
 };
 use oxc_diagnostics::{
@@ -63,7 +65,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for IsolatedDeclaration {
-    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
+    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext) {
         if symbol.is_export() {
             let declaration = ctx.nodes()[symbol.declaration()];
             match declaration.kind() {
@@ -79,13 +81,30 @@ impl IsolatedDeclaration {
     /// Checks that:
     /// 1. all the parameters of the function has type annotation
     /// 2. return type of the function has type annotation
-    pub fn check_function(function: &Function, ctx: &LintContext<'_>) {
+    fn check_function(function: &Function, ctx: &LintContext) {
+        Self::check_function_params(function, ctx);
+        Self::check_function_return(function, ctx);
+    }
+
+    fn check_function_params(function: &Function, ctx: &LintContext) {
         let parameters = &function.params.items;
         for param in parameters {
-            if param.pattern.type_annotation.is_none() {
-                ctx.diagnostic(IsolatedDeclarationDiagnostic::FunctionParam(param.span));
+            let span = match &param.pattern.kind {
+                BindingPatternKind::AssignmentPattern(pat) => {
+                    pat.left.type_annotation.is_none().then(|| pat.left.span())
+                }
+                BindingPatternKind::RestElement(elem) => {
+                    elem.argument.type_annotation.is_none().then(|| elem.argument.span())
+                }
+                _ => param.pattern.type_annotation.is_none().then_some(param.span),
+            };
+            if let Some(span) = span {
+                ctx.diagnostic(IsolatedDeclarationDiagnostic::FunctionParam(span));
             }
         }
+    }
+
+    fn check_function_return(function: &Function, ctx: &LintContext) {
         if function.return_type.is_none() {
             let start = function.params.span.end;
             let span = Span::new(start, start + 1);
@@ -94,7 +113,7 @@ impl IsolatedDeclaration {
     }
 
     /// Checks that the property as a type annotation
-    pub fn check_property_definition(property: &PropertyDefinition, ctx: &LintContext<'_>) {
+    fn check_property_definition(property: &PropertyDefinition, ctx: &LintContext) {
         if property.type_annotation.is_none() {
             ctx.diagnostic(IsolatedDeclarationDiagnostic::Property(property.key.span()));
         }
@@ -104,12 +123,19 @@ impl IsolatedDeclaration {
     /// 1. All the non private methods are valid by `Self::check_function`
     /// 2. All the non private class fields have a type annotation
     /// 3. All the non private variables have a type annotation
-    pub fn check_class(class: &Class, ctx: &LintContext<'_>) {
+    fn check_class(class: &Class, ctx: &LintContext) {
         for element in &class.body.body {
             match element {
                 ClassElement::MethodDefinition(method) => {
                     if !method.is_private() {
-                        Self::check_function(&method.value, ctx);
+                        match method.kind {
+                            MethodDefinitionKind::Constructor | MethodDefinitionKind::Set => {
+                                Self::check_function_params(&method.value, ctx);
+                            }
+                            MethodDefinitionKind::Method | MethodDefinitionKind::Get => {
+                                Self::check_function(&method.value, ctx);
+                            }
+                        }
                     }
                 }
                 ClassElement::PropertyDefinition(property) => {
@@ -143,6 +169,8 @@ fn test() {
         ("export class A { foo(): number { return 0; } }", None),
         ("export class A { private foo() { return 0; } }", None),
         ("export class A { public foo(a: number): number { return a; } }", None),
+        ("export class A { public foo(a: number = 1): number { return a; } }", None),
+        ("export class A { public constructor() {  } }", None),
     ];
 
     let fail = vec![
@@ -152,6 +180,7 @@ fn test() {
         ("export abstract class A { abstract foo() { return 0; } }", None),
         ("export abstract class A { abstract a; }", None),
         ("export class A { get foo() { return 0; } }", None),
+        ("export class A { public foo(a = 1): number { return a; } }", None),
         ("export class A { set foo(val) { } }", None),
     ];
 

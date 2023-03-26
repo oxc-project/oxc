@@ -47,13 +47,13 @@ expression: isolated_declaration
 
   ⚠ isolated-declaration: Requires type annotation on export parameters
    ╭─[isolated_declaration.tsx:1:1]
- 1 │ export class A { set foo(val) { } }
-   ·                          ───
+ 1 │ export class A { public foo(a = 1): number { return a; } }
+   ·                             ─
    ╰────
 
-  ⚠ isolated-declaration: Requires return type annotation on exported functions
+  ⚠ isolated-declaration: Requires type annotation on export parameters
    ╭─[isolated_declaration.tsx:1:1]
  1 │ export class A { set foo(val) { } }
-   ·                              ─
+   ·                          ───
    ╰────
 
