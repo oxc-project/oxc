@@ -47,9 +47,15 @@ impl SymbolTable {
     }
 
     #[must_use]
-    pub fn create(&mut self, name: Atom, span: Span, flags: SymbolFlags) -> SymbolId {
+    pub fn create(
+        &mut self,
+        declaration: AstNodeId,
+        name: Atom,
+        span: Span,
+        flags: SymbolFlags,
+    ) -> SymbolId {
         let symbol_id = SymbolId::new(self.symbols.len() + 1);
-        let symbol = Symbol::new(symbol_id, name, span, flags);
+        let symbol = Symbol::new(symbol_id, declaration, name, span, flags);
         self.symbols.push(symbol);
         symbol_id
     }

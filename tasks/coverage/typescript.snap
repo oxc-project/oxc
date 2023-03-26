@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2330/2340 (99.57%)
 Positive Passed: 2323/2340 (99.27%)
-Negative Passed: 683/2533 (26.96%)
+Negative Passed: 682/2532 (26.94%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -741,6 +741,7 @@ Expect Syntax Error: "expressions/optionalChaining/optionalChainingInParameterBi
 Expect Syntax Error: "expressions/optionalChaining/optionalChainingInParameterInitializer.2.ts"
 Expect Syntax Error: "expressions/optionalChaining/privateIdentifierChain/privateIdentifierChain.1.ts"
 Expect Syntax Error: "expressions/propertyAccess/propertyAccess.ts"
+Expect Syntax Error: "expressions/propertyAccess/propertyAccessNumericLiterals.ts"
 Expect Syntax Error: "expressions/propertyAccess/propertyAccessStringIndexSignature.ts"
 Expect Syntax Error: "expressions/propertyAccess/propertyAccessStringIndexSignatureNoImplicitAny.ts"
 Expect Syntax Error: "expressions/propertyAccess/propertyAccessWidening.ts"
@@ -1672,7 +1673,6 @@ Expect Syntax Error: "types/thisType/typeRelationships.ts"
 Expect Syntax Error: "types/thisType/unionThisTypeInFunctions.ts"
 Expect Syntax Error: "types/tuple/arityAndOrderCompatibility01.ts"
 Expect Syntax Error: "types/tuple/castingTuple.ts"
-Expect Syntax Error: "types/tuple/contextualTypeTupleEnd.ts"
 Expect Syntax Error: "types/tuple/contextualTypeWithTuple.ts"
 Expect Syntax Error: "types/tuple/emptyTuples/emptyTuplesTypeAssertion01.ts"
 Expect Syntax Error: "types/tuple/emptyTuples/emptyTuplesTypeAssertion02.ts"
@@ -7503,14 +7503,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·    ────────
    ╰────
 
-  × Invalid characters after number
-   ╭─[expressions/propertyAccess/propertyAccessNumericLiterals.ts:7:1]
- 7 │ 08.8e5.toString();
- 8 │ 0_8.8e5.toString();
-   ·  ─
- 9 │ 8.8e5.toString();
-   ╰────
-
   × 'super' can only be referenced in a derived class.
     ╭─[expressions/superCalls/errorSuperCalls.ts:1:1]
   1 │     //super call in class constructor with no base type
@@ -10559,9 +10551,18 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  28 │     }
     ╰────
 
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[salsa/plainJSBinderErrors.ts:29:1]
+ 29 │     withOctal() {
+ 30 │         const redundant = 010
+    ·                           ───
+ 31 │         with (redundant) {
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
   × 'with' statements are not allowed
     ╭─[salsa/plainJSBinderErrors.ts:30:1]
- 30 │         const redundant = 0o10
+ 30 │         const redundant = 010
  31 │         with (redundant) {
     ·         ────
  32 │             return toFixed()

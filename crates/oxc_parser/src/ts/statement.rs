@@ -395,8 +395,12 @@ impl<'a> Parser<'a> {
                     self.parse_ts_declare_function(start_span, modifiers)
                         .map(Declaration::FunctionDeclaration)
                 } else if self.ts_enabled() {
-                    self.parse_ts_function_impl(start_span, FunctionKind::TSDeclaration, modifiers)
-                        .map(Declaration::FunctionDeclaration)
+                    self.parse_ts_function_impl(
+                        start_span,
+                        FunctionKind::Declaration { single_statement: true },
+                        modifiers,
+                    )
+                    .map(Declaration::FunctionDeclaration)
                 } else {
                     self.parse_function_impl(FunctionKind::Declaration { single_statement: true })
                         .map(Declaration::FunctionDeclaration)

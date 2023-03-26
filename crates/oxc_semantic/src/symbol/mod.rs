@@ -18,9 +18,12 @@ use crate::node::AstNodeId;
 #[derive(Debug)]
 pub struct Symbol {
     id: SymbolId,
+    /// Pointer to the AST Node where this symbol is declared
+    declaration: AstNodeId,
     name: Atom,
     span: Span,
     flags: SymbolFlags,
+    /// Pointers to the AST Nodes that reference this symbol
     references: Vec<AstNodeId>,
 }
 
@@ -28,7 +31,7 @@ pub struct Symbol {
 #[test]
 fn symbol_size() {
     use std::mem::size_of;
-    assert_eq!(size_of::<Symbol>(), 72);
+    assert_eq!(size_of::<Symbol>(), 88);
 }
 
 bitflags! {
@@ -41,6 +44,10 @@ bitflags! {
         const BlockScopedVariable     = 1 << 1;
         /// A const variable (const)
         const ConstVariable           = 1 << 2;
+        /// Is this symbol inside an import declaration
+        const Import                  = 1 << 3;
+        /// Is this symbol inside an export declaration
+        const Export                  = 1 << 4;
         const Class                   = 1 << 5;
         const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
 
@@ -61,8 +68,14 @@ bitflags! {
 
 impl Symbol {
     #[must_use]
-    pub fn new(id: SymbolId, name: Atom, span: Span, flags: SymbolFlags) -> Self {
-        Self { id, name, span, flags, references: vec![] }
+    pub fn new(
+        id: SymbolId,
+        declaration: AstNodeId,
+        name: Atom,
+        span: Span,
+        flags: SymbolFlags,
+    ) -> Self {
+        Self { id, declaration, name, span, flags, references: vec![] }
     }
 
     #[must_use]
@@ -101,6 +114,11 @@ impl Symbol {
         self.flags.contains(SymbolFlags::Class)
     }
 
+    #[must_use]
+    pub fn is_export(&self) -> bool {
+        self.flags.contains(SymbolFlags::Export)
+    }
+
     pub fn add_references(&mut self, new_references: &[Reference]) {
         self.references.extend(new_references.iter().map(|r| r.ast_node_id));
     }
@@ -108,5 +126,10 @@ impl Symbol {
     #[must_use]
     pub fn references(&self) -> &[AstNodeId] {
         &self.references
+    }
+
+    #[must_use]
+    pub fn declaration(&self) -> AstNodeId {
+        self.declaration
     }
 }

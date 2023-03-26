@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: isolated_declaration
+---
+
+  ⚠ isolated-declaration: Requires type annotation on parameters of non-private method
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export function foo(a) { return a; }
+   ·                     ─
+   ╰────
+
+  ⚠ isolated-declaration: Requires return type annotation of non-private method
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export function foo(a) { return a; }
+   ·        ─────────────────────────────
+   ╰────
+
+  ⚠ isolated-declaration: Requires type annotation on non-private property definition
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { public a; }
+   ·                  ─────────
+   ╰────
+
+  ⚠ isolated-declaration: Requires return type annotation of non-private method
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { foo() { return 0; } }
+   ·                     ────────────────
+   ╰────
+
+  ⚠ isolated-declaration: Requires return type annotation of non-private method
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export abstract class A { abstract foo() { return 0; } }
+   ·                                       ────────────────
+   ╰────
+
+  ⚠ isolated-declaration: Requires type annotation on non-private property definition
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export abstract class A { abstract a; }
+   ·                           ───────────
+   ╰────
+
+  ⚠ isolated-declaration: Requires return type annotation of non-private method
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { get foo() { return 0; } }
+   ·                         ────────────────
+   ╰────
+
+  ⚠ isolated-declaration: Requires type annotation on parameters of non-private method
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { set foo(val) { } }
+   ·                          ───
+   ╰────
+
+  ⚠ isolated-declaration: Requires return type annotation of non-private method
+   ╭─[isolated_declaration.tsx:1:1]
+ 1 │ export class A { set foo(val) { } }
+   ·                         ─────────
+   ╰────
+
