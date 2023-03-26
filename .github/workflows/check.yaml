@@ -76,14 +76,10 @@ jobs:
       - name: Install toolchain
         run: rustup show
 
-      - name: Install cargo-binstall
-        uses: taiki-e/install-action@cargo-binstall
-
-      - name: Install udeps
-        run: cargo binstall cargo-udeps -y
-
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
+      - name: Install cargo-udeps
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-udeps
 
       - name: Run udeps
         run: cargo udeps
@@ -108,7 +104,7 @@ jobs:
       - name: Cache
         uses: Swatinem/rust-cache@v2
         with:
-          shared-key: test
+          shared-key: check
 
       - name: Run tests on ${{ matrix.os }}
         run: cargo test --workspace
@@ -127,6 +123,8 @@ jobs:
 
       - name: Cache
         uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: check
 
       - name: Build Doc
         run: |
