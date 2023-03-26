@@ -1,6 +1,6 @@
 use oxc_ast::{
     ast::{Class, ClassElement, Function, PropertyDefinition},
-    AstKind, Span,
+    AstKind, GetSpan, Span,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -13,13 +13,15 @@ use crate::{ast_util::IsPrivate, context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 enum IsolatedDeclarationDiagnostic {
-    #[error("isolated-declaration: Requires type annotation on non-private property definition")]
+    #[error("isolated-declaration: Requires type annotation on exported properties")]
     #[diagnostic(severity(warning))]
     Property(#[label] Span),
-    #[error("isolated-declaration: Requires type annotation on parameters of non-private method")]
+
+    #[error("isolated-declaration: Requires type annotation on export parameters")]
     #[diagnostic(severity(warning))]
     FunctionParam(#[label] Span),
-    #[error("isolated-declaration: Requires return type annotation of non-private method")]
+
+    #[error("isolated-declaration: Requires return type annotation on exported functions")]
     #[diagnostic(severity(warning))]
     FunctionReturnType(#[label] Span),
 }
@@ -85,14 +87,16 @@ impl IsolatedDeclaration {
             }
         }
         if function.return_type.is_none() {
-            ctx.diagnostic(IsolatedDeclarationDiagnostic::FunctionReturnType(function.span));
+            let start = function.params.span.end;
+            let span = Span::new(start, start + 1);
+            ctx.diagnostic(IsolatedDeclarationDiagnostic::FunctionReturnType(span));
         }
     }
 
     /// Checks that the property as a type annotation
     pub fn check_property_definition(property: &PropertyDefinition, ctx: &LintContext<'_>) {
         if property.type_annotation.is_none() {
-            ctx.diagnostic(IsolatedDeclarationDiagnostic::Property(property.span));
+            ctx.diagnostic(IsolatedDeclarationDiagnostic::Property(property.key.span()));
         }
     }
 
