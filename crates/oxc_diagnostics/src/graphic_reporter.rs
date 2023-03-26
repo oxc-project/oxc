@@ -53,12 +53,12 @@ impl GraphicalReportHandler {
     pub fn new() -> Self {
         Self {
             links: LinkStyle::Link,
-            termwidth: 600, // Changed: origin: 200
+            termwidth: 400, // Changed: origin: 200
             theme: GraphicalTheme::default(),
             footer: None,
             context_lines: 1,
             tab_width: 4,
-            with_cause_chain: true,
+            with_cause_chain: false,
         }
     }
 
