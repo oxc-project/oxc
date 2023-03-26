@@ -2,6 +2,7 @@
 //! Exports `thiserror` and `miette`
 
 mod graphic_reporter;
+mod graphical_theme;
 
 use std::{cell::RefCell, ops::Deref, path::PathBuf, rc::Rc};
 

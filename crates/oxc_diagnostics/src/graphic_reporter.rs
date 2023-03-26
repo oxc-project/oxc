@@ -3,18 +3,18 @@
 #![allow(clippy::nursery)]
 #![allow(dead_code)]
 
-/**
- * origin file: https://github.com/zkat/miette/blob/78fe18e6990feacc8bdaeeb10e1439a12c111e6e/src/handlers/graphical.rs
- */
+/// origin file: https://github.com/zkat/miette/blob/78fe18e6990feacc8bdaeeb10e1439a12c111e6e/src/handlers/graphical.rs
 use std::fmt::{self, Write};
 
 // use miette::diagnostic_chain::DiagnosticChain;
 use miette::{
-    Diagnostic, GraphicalTheme, LabeledSpan, MietteError, ReportHandler, Severity, SourceCode,
-    SourceSpan, SpanContents,
+    Diagnostic, LabeledSpan, MietteError, ReportHandler, Severity, SourceCode, SourceSpan,
+    SpanContents,
 };
 use owo_colors::{OwoColorize, Style};
 use unicode_width::UnicodeWidthChar;
+
+use crate::graphical_theme::GraphicalTheme;
 
 /**
 A [`ReportHandler`] that displays a given [`Report`](crate::Report) in a
@@ -43,6 +43,9 @@ pub(crate) enum LinkStyle {
     Link,
     Text,
 }
+fn style() -> Style {
+    Style::new()
+}
 
 impl GraphicalReportHandler {
     /// Create a new `GraphicalReportHandler` with the default
@@ -50,21 +53,8 @@ impl GraphicalReportHandler {
     pub fn new() -> Self {
         Self {
             links: LinkStyle::Link,
-            termwidth: 200,
+            termwidth: 600, // Changed: origin: 200
             theme: GraphicalTheme::default(),
-            footer: None,
-            context_lines: 1,
-            tab_width: 4,
-            with_cause_chain: true,
-        }
-    }
-
-    ///Create a new `GraphicalReportHandler` with a given [`GraphicalTheme`].
-    pub fn new_themed(theme: GraphicalTheme) -> Self {
-        Self {
-            links: LinkStyle::Link,
-            termwidth: 200,
-            theme,
             footer: None,
             context_lines: 1,
             tab_width: 4,
@@ -214,7 +204,9 @@ impl GraphicalReportHandler {
             .initial_indent(&initial_indent)
             .subsequent_indent(&rest_indent);
 
-        writeln!(f, "{}", textwrap::fill(&diagnostic.to_string(), opts))?;
+        let title = format!("{}", diagnostic.to_string().style(severity_style));
+        let title = textwrap::fill(&title, opts);
+        writeln!(f, "{}", title)?;
 
         // CHANGED: REMOVED
         // if !self.with_cause_chain {
@@ -361,10 +353,10 @@ impl GraphicalReportHandler {
         Ok(())
     }
 
-    fn render_context<'a>(
+    fn render_context(
         &self,
         f: &mut impl fmt::Write,
-        source: &'a dyn SourceCode,
+        source: &dyn SourceCode,
         context: &LabeledSpan,
         labels: &[LabeledSpan],
     ) -> fmt::Result {

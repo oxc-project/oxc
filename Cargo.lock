@@ -910,6 +910,7 @@ dependencies = [
 name = "oxc_diagnostics"
 version = "0.0.0"
 dependencies = [
+ "is-terminal",
  "miette",
  "owo-colors",
  "oxc_ast",
