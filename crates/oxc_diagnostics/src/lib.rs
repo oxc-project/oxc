@@ -1,8 +1,11 @@
 //! Diagnostics Wrapper
 //! Exports `thiserror` and `miette`
 
+mod graphic_reporter;
+
 use std::{cell::RefCell, ops::Deref, path::PathBuf, rc::Rc};
 
+pub use graphic_reporter::GraphicalReportHandler;
 pub use miette;
 use miette::Diagnostic;
 use oxc_ast::{Atom, Span};

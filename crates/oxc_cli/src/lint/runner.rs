@@ -12,7 +12,7 @@ use std::{
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
-use oxc_diagnostics::{Error, MinifiedFileError, Severity};
+use oxc_diagnostics::{Error, GraphicalReportHandler, MinifiedFileError, Severity};
 use oxc_linter::{Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -146,9 +146,11 @@ impl LintRunner {
         let mut number_of_warnings = 0;
         let mut number_of_diagnostics = 0;
         let mut buf_writer = BufWriter::new(std::io::stdout());
+        let handler = GraphicalReportHandler::new();
 
         while let Ok((path, diagnostics)) = rx_error.recv() {
             number_of_diagnostics += diagnostics.len();
+            let mut output = String::new();
             for diagnostic in diagnostics {
                 if diagnostic.severity() == Some(Severity::Warning) {
                     number_of_warnings += 1;
@@ -165,15 +167,18 @@ impl LintRunner {
                     }
                 }
 
-                let output = format!("{diagnostic:?}");
+                let mut err = String::new();
+                handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
                 // Skip large output and print only once
-                if output.lines().any(|line| line.len() >= 400) {
+                if err.lines().any(|line| line.len() >= 400) {
                     let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
-                    buf_writer.write_all(format!("{minified_diagnostic:?}").as_bytes()).unwrap();
+                    err = format!("{minified_diagnostic:?}");
+                    output = err;
                     break;
                 }
-                buf_writer.write_all(output.as_bytes()).unwrap();
+                output.push_str(&err);
             }
+            buf_writer.write_all(output.as_bytes()).unwrap();
         }
 
         buf_writer.flush().unwrap();
