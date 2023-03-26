@@ -3,63 +3,63 @@ source: crates/oxc_linter/src/tester.rs
 expression: no_empty_pattern
 ---
 
-  × eslint(no-empty-pattern): Disallow empty destructuring patterns
+  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ var {} = foo
    ·     ─┬
    ·      ╰── Empty object binding pattern
    ╰────
 
-  × eslint(no-empty-pattern): Disallow empty destructuring patterns
+  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ var [] = foo
    ·     ─┬
    ·      ╰── Empty array binding pattern
    ╰────
 
-  × eslint(no-empty-pattern): Disallow empty destructuring patterns
+  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ var {a: {}} = foo
    ·         ─┬
    ·          ╰── Empty object binding pattern
    ╰────
 
-  × eslint(no-empty-pattern): Disallow empty destructuring patterns
+  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ var {a, b: {}} = foo
    ·            ─┬
    ·             ╰── Empty object binding pattern
    ╰────
 
-  × eslint(no-empty-pattern): Disallow empty destructuring patterns
+  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ var {a: []} = foo
    ·         ─┬
    ·          ╰── Empty array binding pattern
    ╰────
 
-  × eslint(no-empty-pattern): Disallow empty destructuring patterns
+  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ function foo({}) {}
    ·              ─┬
    ·               ╰── Empty object binding pattern
    ╰────
 
-  × eslint(no-empty-pattern): Disallow empty destructuring patterns
+  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ function foo([]) {}
    ·              ─┬
    ·               ╰── Empty array binding pattern
    ╰────
 
-  × eslint(no-empty-pattern): Disallow empty destructuring patterns
+  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ function foo({a: {}}) {}
    ·                  ─┬
    ·                   ╰── Empty object binding pattern
    ╰────
 
-  × eslint(no-empty-pattern): Disallow empty destructuring patterns
+  ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ function foo({a: []}) {}
    ·                  ─┬
