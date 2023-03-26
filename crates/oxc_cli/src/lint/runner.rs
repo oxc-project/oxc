@@ -95,6 +95,7 @@ impl LintRunner {
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
+            number_of_rules: self.linter.number_of_rules(),
             number_of_files: number_of_files.load(Ordering::Relaxed),
             number_of_diagnostics,
             number_of_warnings,

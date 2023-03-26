@@ -10,11 +10,12 @@ pub enum CliRunResult {
         paths: Vec<PathBuf>,
     },
     LintResult {
+        duration: std::time::Duration,
+        number_of_rules: usize,
         number_of_files: usize,
         number_of_warnings: usize,
         number_of_diagnostics: usize,
         max_warnings_exceeded: bool,
-        duration: std::time::Duration,
     },
 }
 
@@ -27,15 +28,18 @@ impl Termination for CliRunResult {
                 ExitCode::from(1)
             }
             Self::LintResult {
+                duration,
+                number_of_rules,
                 number_of_files,
                 number_of_warnings,
                 number_of_diagnostics,
                 max_warnings_exceeded,
-                duration,
             } => {
                 let ms = duration.as_millis();
                 let cpus = num_cpus::get();
-                println!("Checked {number_of_files} files in {ms}ms using {cpus} cores.");
+                println!(
+                    "Finished in {ms}ms on {number_of_files} files with {number_of_rules} rules using {cpus} cores."
+                );
 
                 if max_warnings_exceeded {
                     println!("Exceeded maximum number of warnings. Found {number_of_warnings}.");

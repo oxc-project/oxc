@@ -58,6 +58,11 @@ impl Linter {
     }
 
     #[must_use]
+    pub fn number_of_rules(&self) -> usize {
+        self.rules.len()
+    }
+
+    #[must_use]
     pub fn with_fix(mut self, yes: bool) -> Self {
         self.fix = yes;
         self
