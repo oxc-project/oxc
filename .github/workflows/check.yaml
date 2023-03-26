@@ -30,7 +30,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install toolchain
+      - name: Install Toolchain
         run: rustup show
 
       - name: Run rustfmt
@@ -43,7 +43,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install toolchain
+      - name: Install Toolchain
         run: rustup show
 
       - name: Cache
@@ -73,7 +73,7 @@ jobs:
       - name: Checkout PR Branch
         uses: actions/checkout@v3
 
-      - name: Install toolchain
+      - name: Install Toolchain
         run: rustup show
 
       - name: Install cargo-udeps
@@ -98,8 +98,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install toolchain
+      - name: Install Toolchain
         run: rustup show
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
 
       - name: Cache
         uses: Swatinem/rust-cache@v2
@@ -107,7 +112,7 @@ jobs:
           shared-key: check
 
       - name: Run tests on ${{ matrix.os }}
-        run: cargo test --workspace
+        run: cargo nextest run
 
   documentation:
     if: github.ref == 'refs/heads/main'
