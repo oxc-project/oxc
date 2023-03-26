@@ -37,23 +37,22 @@ impl Linter {
     #[must_use]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
-        // let rules_config = Self::read_rules_configuration();
-        // let rules = rules_config.map_or_else(
-        // || RULES.to_vec(),
-        // |rules_config| {
         let rules = RULES
             .iter()
             .cloned()
             .filter(|rule| rule.category() == RuleCategory::Correctness)
             .collect::<Vec<_>>();
-        // },
-        // );
         Self::from_rules(rules)
     }
 
     #[must_use]
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
         Self { rules, early_error_javascript: EarlyErrorJavaScript, fix: false }
+    }
+
+    #[must_use]
+    pub fn has_fix(&self) -> bool {
+        self.fix
     }
 
     #[must_use]
