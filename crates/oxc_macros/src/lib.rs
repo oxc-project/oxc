@@ -1,3 +1,5 @@
+#![feature(iter_intersperse)]
+
 use syn::parse_macro_input;
 
 mod declare_all_lint_rules;

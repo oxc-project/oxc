@@ -1,35 +1,61 @@
+use std::collections::HashMap;
+use std::iter::{self, Peekable, Rev};
+
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
-use syn::Result;
+use syn::punctuated::Iter;
+use syn::{PathSegment, Result};
 
+#[derive(Clone)]
 pub struct LintRuleMeta {
     name: syn::Ident,
     path: syn::Path,
 }
 
 impl LintRuleMeta {
-    pub fn mod_stmt(&self) -> TokenStream {
-        let mut segments = self.path.segments.iter().rev().peekable();
-        let first = &segments.next().unwrap().ident;
-        let mut stmts = quote! {mod #first;};
-        if segments.peek().is_some() {
-            stmts = quote! {pub #stmts};
-        }
+    pub fn mod_stmt(path_and_modules: (&String, &Vec<LintRuleMeta>)) -> TokenStream {
+        let (_, rule_meta_list) = path_and_modules;
 
-        while let Some(segment) = segments.next() {
-            let ident = &segment.ident;
+        let mut stmts = TokenStream::new();
+        let mut segments_opt: Option<Peekable<Rev<syn::punctuated::Iter<'_, PathSegment>>>> = None;
+
+        // Modules are under the same path. List them all first.
+        for rule_meta in rule_meta_list {
+            let mut segments = rule_meta.path.segments.iter().rev().peekable();
+            let first = &segments.next().unwrap().ident;
+            let mut stmt = quote! {mod #first;};
+            if segments.peek().is_some() {
+                stmt = quote! {pub #stmt};
+            }
 
             stmts = quote! {
-                mod #ident { #stmts }
+                #stmts
+                #stmt
             };
 
-            if segments.peek().is_some() {
-                stmts = quote! {
-                    pub #stmts
-                };
+            segments_opt = Some(segments);
+        }
+
+        // Add path module declarations as needed
+        match segments_opt {
+            Some(mut segments) => {
+                while let Some(segment) = segments.next() {
+                    let ident = &segment.ident;
+
+                    stmts = quote! {
+                        mod #ident { #stmts }
+                    };
+
+                    if segments.peek().is_some() {
+                        stmts = quote! {
+                            pub #stmts
+                        };
+                    }
+                }
             }
+            None => {}
         }
 
         stmts
@@ -58,24 +84,42 @@ impl Parse for LintRuleMeta {
 
 pub struct AllLintRulesMeta {
     rules: Vec<LintRuleMeta>,
+    path_to_modules: HashMap<String, Vec<LintRuleMeta>>,
 }
 
 impl Parse for AllLintRulesMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
-        let rules = input
+        let rules: Vec<LintRuleMeta> = input
             .parse_terminated::<LintRuleMeta, syn::Token![,]>(LintRuleMeta::parse)?
             .into_iter()
             .collect();
 
-        Ok(Self { rules })
+        // Group by first ident of path
+        let mut path_to_modules: HashMap<String, Vec<LintRuleMeta>> = HashMap::new();
+        for rule in &rules {
+            // Should try to upstream a hash for path/segments or implement something, rather than do this hot garbage
+            let key = rule
+                .path
+                .segments
+                .iter()
+                .rev()
+                .skip(1)
+                .map(|seg| seg.ident.to_string())
+                .intersperse("::".to_string())
+                .collect::<String>();
+
+            path_to_modules.entry(key).or_insert_with(Vec::new).push(rule.clone());
+        }
+
+        Ok(Self { rules, path_to_modules })
     }
 }
 
 #[allow(clippy::cognitive_complexity)]
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
-    let AllLintRulesMeta { rules } = metadata;
+    let AllLintRulesMeta { rules, path_to_modules } = metadata;
 
-    let mod_stmts = rules.iter().map(LintRuleMeta::mod_stmt);
+    let mod_stmts = path_to_modules.iter().map(LintRuleMeta::mod_stmt);
     let use_stmts = rules.iter().map(LintRuleMeta::use_stmt);
     let struct_names = rules.iter().map(|rule| &rule.name).collect::<Vec<_>>();
 
