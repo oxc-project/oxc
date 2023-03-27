@@ -2,12 +2,15 @@
 
 [![Discord chat][discord-badge]][discord-url]
 [![MIT licensed][mit-badge]][mit-url]
+[![CI on main][ci-badge]][ci-url]
 [![npm version][npm-badge]][npm-url]
 
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
 [mit-url]: LICENSE
+[ci-badge]: https://github.com/Boshen/oxc/actions/workflows/check.yaml/badge.svg?branch=main
+[ci-url]: https://github.com/Boshen/oxc/actions/workflows/check.yaml?query=branch=main
 [npm-badge]: https://img.shields.io/npm/v/oxidation-compiler/latest?color=brightgreen
 [npm-url]: https://www.npmjs.com/package/oxidation-compiler/v/latest
 
