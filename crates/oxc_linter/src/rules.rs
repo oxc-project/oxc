@@ -14,6 +14,7 @@ oxc_macros::declare_all_lint_rules! {
     no_caller,
     no_class_assign,
     no_const_assign,
+    no_function_assign,
     no_dupe_class_members,
     no_empty,
     no_empty_pattern,

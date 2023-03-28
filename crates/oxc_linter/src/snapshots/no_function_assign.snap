@@ -1,0 +1,61 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_function_assign
+---
+
+  ⚠ eslint(no-function-assign): 'foo' is a function.
+   ╭─[no_function_assign.tsx:1:1]
+ 1 │ function foo() {}; foo = bar;
+   ·          ─┬─       ─┬─
+   ·           │         ╰── foo is re-assigned here
+   ·           ╰── function foo is declared here
+   ╰────
+
+  ⚠ eslint(no-function-assign): 'foo' is a function.
+   ╭─[no_function_assign.tsx:1:1]
+ 1 │ function foo() { foo = bar; }
+   ·          ─┬─     ─┬─
+   ·           │       ╰── foo is re-assigned here
+   ·           ╰── function foo is declared here
+   ╰────
+
+  ⚠ eslint(no-function-assign): 'foo' is a function.
+   ╭─[no_function_assign.tsx:1:1]
+ 1 │ foo = bar; function foo() { };
+   · ─┬─                 ─┬─
+   ·  │                   ╰── function foo is declared here
+   ·  ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-function-assign): 'foo' is a function.
+   ╭─[no_function_assign.tsx:1:1]
+ 1 │ [foo] = bar; function foo() { };
+   ·  ─┬─                  ─┬─
+   ·   │                    ╰── function foo is declared here
+   ·   ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-function-assign): 'foo' is a function.
+   ╭─[no_function_assign.tsx:1:1]
+ 1 │ ({x: foo = 0} = bar); function foo() { };
+   ·      ─┬─                       ─┬─
+   ·       │                         ╰── function foo is declared here
+   ·       ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-function-assign): 'foo' is a function.
+   ╭─[no_function_assign.tsx:1:1]
+ 1 │ function foo() { [foo] = bar; }
+   ·          ─┬─      ─┬─
+   ·           │        ╰── foo is re-assigned here
+   ·           ╰── function foo is declared here
+   ╰────
+
+  ⚠ eslint(no-function-assign): 'foo' is a function.
+   ╭─[no_function_assign.tsx:1:1]
+ 1 │ (function() { ({x: foo = 0} = bar); function foo() { }; })();
+   ·                    ─┬─                       ─┬─
+   ·                     │                         ╰── function foo is declared here
+   ·                     ╰── foo is re-assigned here
+   ╰────
+

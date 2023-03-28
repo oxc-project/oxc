@@ -122,7 +122,7 @@ impl<'a> Binder for Function<'a> {
                     includes,
                     excludes,
                 );
-            };
+            }
         }
     }
 }
