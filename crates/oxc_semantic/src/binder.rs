@@ -116,6 +116,7 @@ impl<'a> Binder for Function<'a> {
                             SymbolFlags::FunctionScopedVariableExcludes,
                         )
                     };
+
                 builder.declare_symbol(
                     &ident.name,
                     ident.span,
