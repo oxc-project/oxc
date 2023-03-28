@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 67
 expression: no_function_assign
 ---
 
@@ -9,7 +8,7 @@ expression: no_function_assign
  1 │ function foo() {}; foo = bar;
    ·          ─┬─       ─┬─
    ·           │         ╰── foo is re-assigned here
-   ·           ╰── foo is declared here as function
+   ·           ╰── function foo is declared here
    ╰────
 
   ⚠ eslint(no-function-assign): 'foo' is a function.
@@ -17,14 +16,14 @@ expression: no_function_assign
  1 │ function foo() { foo = bar; }
    ·          ─┬─     ─┬─
    ·           │       ╰── foo is re-assigned here
-   ·           ╰── foo is declared here as function
+   ·           ╰── function foo is declared here
    ╰────
 
   ⚠ eslint(no-function-assign): 'foo' is a function.
    ╭─[no_function_assign.tsx:1:1]
  1 │ foo = bar; function foo() { };
    · ─┬─                 ─┬─
-   ·  │                   ╰── foo is declared here as function
+   ·  │                   ╰── function foo is declared here
    ·  ╰── foo is re-assigned here
    ╰────
 
@@ -32,7 +31,7 @@ expression: no_function_assign
    ╭─[no_function_assign.tsx:1:1]
  1 │ [foo] = bar; function foo() { };
    ·  ─┬─                  ─┬─
-   ·   │                    ╰── foo is declared here as function
+   ·   │                    ╰── function foo is declared here
    ·   ╰── foo is re-assigned here
    ╰────
 
@@ -40,7 +39,7 @@ expression: no_function_assign
    ╭─[no_function_assign.tsx:1:1]
  1 │ ({x: foo = 0} = bar); function foo() { };
    ·      ─┬─                       ─┬─
-   ·       │                         ╰── foo is declared here as function
+   ·       │                         ╰── function foo is declared here
    ·       ╰── foo is re-assigned here
    ╰────
 
@@ -49,14 +48,22 @@ expression: no_function_assign
  1 │ function foo() { [foo] = bar; }
    ·          ─┬─      ─┬─
    ·           │        ╰── foo is re-assigned here
-   ·           ╰── foo is declared here as function
+   ·           ╰── function foo is declared here
    ╰────
 
   ⚠ eslint(no-function-assign): 'foo' is a function.
    ╭─[no_function_assign.tsx:1:1]
  1 │ (function() { ({x: foo = 0} = bar); function foo() { }; })();
    ·                    ─┬─                       ─┬─
-   ·                     │                         ╰── foo is declared here as function
+   ·                     │                         ╰── function foo is declared here
    ·                     ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-function-assign): 'foo' is a function.
+   ╭─[no_function_assign.tsx:1:1]
+ 1 │ var a = function foo() { foo = 123; };
+   ·                  ─┬─     ─┬─
+   ·                   │       ╰── foo is re-assigned here
+   ·                   ╰── function foo is declared here
    ╰────
 

@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Function, AstKind, Atom, Span};
+use oxc_ast::{AstKind, Atom, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
@@ -13,7 +13,7 @@ use crate::{context::LintContext, rule::Rule};
 #[diagnostic(severity(warning))]
 struct NoFunctionAssignDiagnostic(
     Atom,
-    #[label("{0} is declared here as function")] pub Span,
+    #[label("function {0} is declared here")] pub Span,
     #[label("{0} is re-assigned here")] pub Span,
 );
 
@@ -39,9 +39,7 @@ declare_oxc_lint!(
 
 impl Rule for NoFunctionAssign {
     fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
-        dbg!(ctx.kind(symbol.declaration().into()));
-        if let AstKind::Function(func) = ctx.kind(symbol.declaration().into()) {
-            dbg!(symbol.references());
+        if let AstKind::Function(_) = ctx.kind(symbol.declaration().into()) {
             for reference_id in symbol.references() {
                 let reference =
                     ctx.semantic().symbols().get_resolved_reference(*reference_id).unwrap();
