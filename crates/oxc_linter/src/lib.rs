@@ -93,9 +93,12 @@ impl Linter {
     #[must_use]
     pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>) -> Vec<Message<'a>> {
         let mut ctx = LintContext::new(semantic, self.fix);
+        let is_check_early_error = !semantic.source_type().is_typescript_definition();
 
         for node in semantic.nodes().iter() {
-            self.early_error_javascript.run(node, &ctx);
+            if is_check_early_error {
+                self.early_error_javascript.run(node, &ctx);
+            }
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
                 rule.run(node, &ctx);
