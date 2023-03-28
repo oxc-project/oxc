@@ -96,9 +96,7 @@ impl<'a> Binder for Function<'a> {
             if !scope.strict_mode && matches!(builder.parent_kind(), AstKind::IfStatement(_)) {
                 // Do not declare in if single statements,
                 // if (false) function f() {} else function g() { }
-            } else if self.r#type == FunctionType::FunctionDeclaration
-                || self.r#type == FunctionType::FunctionExpression
-            {
+            } else if self.r#type == FunctionType::FunctionDeclaration {
                 // The visitor is already inside the function scope,
                 // retrieve the parent scope for the function id to bind to.
                 let parent_scope_id =
@@ -124,7 +122,7 @@ impl<'a> Binder for Function<'a> {
                     includes,
                     excludes,
                 );
-            };
+            }
         }
     }
 }
