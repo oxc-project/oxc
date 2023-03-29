@@ -1,24 +1,44 @@
 use oxc_ast::ast::{BlockStatement, Statement, SwitchCase};
 
-/// Lattice structure describe the behavior of a statement with respect to
-/// returning from the function
+/// `StatementReturnStatus` describes whether the CFG corresponding to
+/// the statement is termitated by return statement in all/some/nome of
+/// its exit blocks.
+///
+/// For example, an "if" statement is terminated by explicit return if and only if either:
+/// 1. the test is always true and the consequent is terminated by explicit return
+/// 2. the test is always false and the alternate is terminated by explicit return
+/// 3. both the consequent and the alternate is terminated by explicit return
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum StatementReturnLattice {
-    // Always return
+pub enum StatementReturnStatus {
+    /// Only explicit return on all paths
     AlwaysExplicit,
+    /// Only implicit return on all paths
     AlwaysImplicit,
+    /// Explicit or implicit return on all paths (no un-returned paths)
     AlwaysMixed,
 
-    // Return on some paths
+    /// Only explicit return on some paths
     SomeExplicit,
+    /// Only implicit return on some paths
     SomeImplicit,
+    /// Explicit and implicit return on some paths
     SomeMixed,
 
-    // Return on no path
+    /// No return on all paths
     NotReturn,
 }
 
-impl StatementReturnLattice {
+impl StatementReturnStatus {
+    /// Join the status of two branches. Similar to a logical *and* operation.
+    ///
+    /// E.g.,
+    /// if (test) {
+    ///   return a // `AlwaysExplicit`
+    /// } else {
+    ///   var a = 0; // `NotReturn`
+    /// }
+    ///
+    /// will produce `SomeExplicit` for the whole if statement
     pub fn join(self, rhs: Self) -> Self {
         let must_return = self.must_return() && rhs.must_return();
         let explicit = self.may_return_explicit() || rhs.may_return_explicit();
@@ -27,6 +47,18 @@ impl StatementReturnLattice {
         Self::create(must_return, explicit, implicit)
     }
 
+    /// Union the status of two sequential statements. Similar to a logical *or* operation.
+    ///
+    /// E.g.,
+    /// {
+    ///   if (test) {
+    ///     return a;
+    ///   } // `SomeExplicit`
+    ///
+    ///   return // `AlwaysImplicit`
+    /// }
+    ///
+    /// will produce `AlwaysMixed` for the block statement.
     pub fn union(self, rhs: Self) -> Self {
         let must_return = self.must_return() || rhs.must_return();
         let explicit = self.may_return_explicit() || rhs.may_return_explicit();
@@ -69,13 +101,13 @@ impl StatementReturnLattice {
 
 /// Return checkers runs a Control Flow-like Analysis on a statement to see if it
 /// always returns on all paths of execution.
-pub fn check_statement(statement: &Statement) -> StatementReturnLattice {
+pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
     match statement {
         Statement::ReturnStatement(ret) => {
             if ret.argument.is_some() {
-                StatementReturnLattice::AlwaysExplicit
+                StatementReturnStatus::AlwaysExplicit
             } else {
-                StatementReturnLattice::AlwaysImplicit
+                StatementReturnStatus::AlwaysImplicit
             }
         }
 
@@ -83,7 +115,7 @@ pub fn check_statement(statement: &Statement) -> StatementReturnLattice {
             let test = &stmt.test;
             let left = check_statement(&stmt.consequent);
             let right =
-                stmt.alternate.as_ref().map_or(StatementReturnLattice::NotReturn, check_statement);
+                stmt.alternate.as_ref().map_or(StatementReturnStatus::NotReturn, check_statement);
 
             test.get_boolean_value()
                 .map_or_else(|| left.join(right), |val| if val { left } else { right })
@@ -93,10 +125,10 @@ pub fn check_statement(statement: &Statement) -> StatementReturnLattice {
             let test = &stmt.test;
             let inner_return = check_statement(&stmt.body);
             if let Some(val) = test.get_boolean_value() && val {
-                    inner_return
-                } else {
-                    inner_return.join(StatementReturnLattice::NotReturn)
-                }
+                inner_return
+            } else {
+                inner_return.join(StatementReturnStatus::NotReturn)
+            }
         }
 
         // do while loop always executes at least once
@@ -106,24 +138,24 @@ pub fn check_statement(statement: &Statement) -> StatementReturnLattice {
         // 1. Every branch that eventually breaks out of the switch breaks via return
         // 2. There is a default case that returns
         Statement::SwitchStatement(stmt) => {
-            let mut case_lattices = vec![];
-            let mut default_case_lattice = StatementReturnLattice::NotReturn;
+            let mut case_statuses = vec![];
+            let mut default_case_status = StatementReturnStatus::NotReturn;
 
-            let mut fallthrough_lattice = StatementReturnLattice::NotReturn;
+            let mut current_case_status = StatementReturnStatus::NotReturn;
             for case in &stmt.cases {
-                let branch_terminated = check_switch_case(case, &mut fallthrough_lattice);
+                let branch_terminated = check_switch_case(case, &mut current_case_status);
 
                 if case.is_default_case() {
-                    default_case_lattice = fallthrough_lattice;
+                    default_case_status = current_case_status;
                     // Cases below the default case are not considered.
                     break;
                 } else if branch_terminated {
-                    case_lattices.push(fallthrough_lattice);
-                    fallthrough_lattice = StatementReturnLattice::NotReturn;
+                    case_statuses.push(current_case_status);
+                    current_case_status = StatementReturnStatus::NotReturn;
                 } // Falls through to next case, accumulating lattice
             }
 
-            case_lattices.iter().fold(default_case_lattice, |accum, &lattice| accum.join(lattice))
+            case_statuses.iter().fold(default_case_status, |accum, &lattice| accum.join(lattice))
         }
 
         Statement::BlockStatement(stmt) => check_block_statement(stmt),
@@ -143,7 +175,7 @@ pub fn check_statement(statement: &Statement) -> StatementReturnLattice {
             lattice
         }
 
-        _ => StatementReturnLattice::NotReturn,
+        _ => StatementReturnStatus::NotReturn,
     }
 }
 
@@ -154,7 +186,7 @@ pub fn check_statement(statement: &Statement) -> StatementReturnLattice {
 /// 4. might not return and fall through
 pub fn check_switch_case(
     case: &SwitchCase,
-    accum: &mut StatementReturnLattice, /* Lattice accumulated from previous branches */
+    accum: &mut StatementReturnStatus, /* Lattice accumulated from previous branches */
 ) -> bool {
     for s in &case.consequent {
         // This case is over
@@ -174,8 +206,8 @@ pub fn check_switch_case(
     false
 }
 
-pub fn check_block_statement(block: &BlockStatement) -> StatementReturnLattice {
-    let mut all_statements_lattice = StatementReturnLattice::NotReturn;
+pub fn check_block_statement(block: &BlockStatement) -> StatementReturnStatus {
+    let mut all_statements_lattice = StatementReturnStatus::NotReturn;
 
     for s in &block.body {
         // The only case where we can see break is if the block is inside a loop,
@@ -205,7 +237,7 @@ mod tests {
 
     use super::*;
 
-    fn parse_statement_and_test(source: &'static str, expected: StatementReturnLattice) {
+    fn parse_statement_and_test(source: &'static str, expected: StatementReturnStatus) {
         let source_type = SourceType::default();
         let alloc = Allocator::default();
         let parser = Parser::new(&alloc, source, source_type);
@@ -223,7 +255,7 @@ mod tests {
         test_match_expected(first_statement, expected);
     }
 
-    fn test_match_expected(statement: &Statement, expected: StatementReturnLattice) {
+    fn test_match_expected(statement: &Statement, expected: StatementReturnStatus) {
         let actual = check_statement(statement);
 
         assert_eq!(expected, actual);
@@ -247,7 +279,7 @@ mod tests {
       }
     }
   "#;
-        parse_statement_and_test(always_explicit, StatementReturnLattice::AlwaysExplicit);
+        parse_statement_and_test(always_explicit, StatementReturnStatus::AlwaysExplicit);
     }
 
     #[test]
@@ -267,7 +299,7 @@ mod tests {
       }
     }
     "#;
-        parse_statement_and_test(always_implicit, StatementReturnLattice::AlwaysImplicit);
+        parse_statement_and_test(always_implicit, StatementReturnStatus::AlwaysImplicit);
     }
 
     #[test]
@@ -287,7 +319,7 @@ mod tests {
           }
         }
         "#;
-        parse_statement_and_test(always_mixed, StatementReturnLattice::AlwaysMixed);
+        parse_statement_and_test(always_mixed, StatementReturnStatus::AlwaysMixed);
     }
 
     #[test]
@@ -303,7 +335,7 @@ mod tests {
       }
     "#;
 
-        parse_statement_and_test(source, StatementReturnLattice::SomeMixed);
+        parse_statement_and_test(source, StatementReturnStatus::SomeMixed);
     }
 
     #[test]
@@ -317,7 +349,7 @@ mod tests {
       }
     "#;
 
-        parse_statement_and_test(source, StatementReturnLattice::SomeExplicit);
+        parse_statement_and_test(source, StatementReturnStatus::SomeExplicit);
     }
 
     #[test]
@@ -331,7 +363,7 @@ mod tests {
         }
       }
     "#;
-        parse_statement_and_test(always_true, StatementReturnLattice::AlwaysExplicit);
+        parse_statement_and_test(always_true, StatementReturnStatus::AlwaysExplicit);
     }
 
     #[test]
@@ -345,7 +377,7 @@ mod tests {
           }
         }
       "#;
-        parse_statement_and_test(always_false, StatementReturnLattice::AlwaysExplicit);
+        parse_statement_and_test(always_false, StatementReturnStatus::AlwaysExplicit);
     }
 
     #[test]
@@ -359,7 +391,7 @@ mod tests {
           }
         }
       "#;
-        parse_statement_and_test(non_static, StatementReturnLattice::SomeExplicit);
+        parse_statement_and_test(non_static, StatementReturnStatus::SomeExplicit);
     }
 
     #[test]
@@ -379,7 +411,7 @@ mod tests {
         }
       "#;
 
-        parse_statement_and_test(source, StatementReturnLattice::SomeMixed);
+        parse_statement_and_test(source, StatementReturnStatus::SomeMixed);
     }
 
     #[test]
@@ -391,6 +423,6 @@ mod tests {
           }
         }
       ";
-        parse_statement_and_test(source, StatementReturnLattice::AlwaysImplicit);
+        parse_statement_and_test(source, StatementReturnStatus::AlwaysImplicit);
     }
 }

@@ -10,9 +10,10 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
+use phf::phf_set;
 use serde_json::Value;
 
-use self::return_checker::{check_statement, StatementReturnLattice};
+use self::return_checker::check_statement;
 use crate::{
     ast_util::{get_enclosing_function, is_nth_argument, outermost_paren},
     context::LintContext,
@@ -206,12 +207,11 @@ pub fn get_array_method_name<'a>(
                 }
 
                 // "methods",
-                for method in TARGET_METHODS {
-                    if let Some(called_method) = callee.static_property_name() && method == called_method {
-                        // Check that current node is parent's first argument
-                        if call.arguments.len() == 1 && is_nth_argument(call, current_node_arg, 0) {
-                          return Some(method);
-                        }
+                let Some(method) = callee.static_property_name() else { return None; };
+                if let Some(&array_method) = TARGET_METHODS.get_key(method) {
+                    // Check that current node is parent's first argument
+                    if call.arguments.len() == 1 && is_nth_argument(call, current_node_arg, 0) {
+                        return Some(array_method);
                     }
                 }
 
@@ -225,7 +225,7 @@ pub fn get_array_method_name<'a>(
     None
 }
 
-const TARGET_METHODS: [&str; 14] = [
+const TARGET_METHODS: phf::Set<&'static str> = phf_set! {
     "every",
     "filter",
     "find",
@@ -240,7 +240,7 @@ const TARGET_METHODS: [&str; 14] = [
     "some",
     "sort",
     "toSorted",
-];
+};
 
 fn full_array_method_name(array_method: &'static str) -> Atom {
     match array_method {
@@ -284,28 +284,16 @@ impl<'a> Visit<'a> for FunctionReturnVisitor {
         }
 
         for stmt in &body.statements {
-            let stmt_return_lattice = check_statement(stmt);
-            let flag = match stmt_return_lattice {
-                StatementReturnLattice::AlwaysExplicit => {
-                    FunctionReturnFlags::HAS_EXPLICIT | FunctionReturnFlags::MUST_RETURN
-                }
-                StatementReturnLattice::AlwaysImplicit => {
-                    FunctionReturnFlags::HAS_IMPLICIT | FunctionReturnFlags::MUST_RETURN
-                }
-                StatementReturnLattice::AlwaysMixed => {
-                    FunctionReturnFlags::HAS_IMPLICIT
-                        | FunctionReturnFlags::HAS_EXPLICIT
-                        | FunctionReturnFlags::MUST_RETURN
-                }
-                StatementReturnLattice::SomeExplicit => FunctionReturnFlags::HAS_EXPLICIT,
-                StatementReturnLattice::SomeImplicit => FunctionReturnFlags::HAS_IMPLICIT,
-                StatementReturnLattice::SomeMixed => {
-                    FunctionReturnFlags::HAS_EXPLICIT | FunctionReturnFlags::HAS_IMPLICIT
-                }
-                StatementReturnLattice::NotReturn => FunctionReturnFlags::empty(),
-            };
-
-            self.flags |= flag;
+            let stmt_return_status = check_statement(stmt);
+            if stmt_return_status.must_return() {
+                self.flags |= FunctionReturnFlags::MUST_RETURN;
+            }
+            if stmt_return_status.may_return_explicit() {
+                self.flags |= FunctionReturnFlags::HAS_EXPLICIT;
+            }
+            if stmt_return_status.may_return_implicit() {
+                self.flags |= FunctionReturnFlags::HAS_IMPLICIT;
+            }
         }
     }
 }
