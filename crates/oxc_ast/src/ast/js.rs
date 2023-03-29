@@ -1115,6 +1115,13 @@ pub struct SwitchCase<'a> {
     pub consequent: Vec<'a, Statement<'a>>,
 }
 
+impl<'a> SwitchCase<'a> {
+    #[must_use]
+    pub fn is_default_case(&self) -> bool {
+        self.test.is_none()
+    }
+}
+
 /// Section 14.13 Labelled Statement
 #[derive(Debug, Serialize, PartialEq, Hash)]
 #[serde(tag = "type")]
@@ -1358,6 +1365,15 @@ pub struct ArrowExpression<'a> {
 
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+}
+
+impl<'a> ArrowExpression<'a> {
+    /// Is of form () => x without curly braces.
+    #[inline]
+    #[must_use]
+    pub fn is_single_expression(&self) -> bool {
+        self.expression
+    }
 }
 
 /// Section 15.5 Generator Function Definitions
