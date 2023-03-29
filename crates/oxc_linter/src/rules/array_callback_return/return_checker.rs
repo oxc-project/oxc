@@ -165,14 +165,14 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
         Statement::WithStatement(stmt) => check_statement(&stmt.body),
 
         Statement::TryStatement(stmt) => {
-            let mut lattice = check_block_statement(&stmt.block);
+            let mut status = check_block_statement(&stmt.block);
             if let Some(catch) = &stmt.handler {
-                lattice = lattice.join(check_block_statement(&catch.body));
+                status = status.join(check_block_statement(&catch.body));
             }
             if let Some(finally) = &stmt.finalizer {
-                lattice = lattice.union(check_block_statement(finally));
+                status = status.union(check_block_statement(finally));
             }
-            lattice
+            status
         }
 
         _ => StatementReturnStatus::NotReturn,
@@ -194,8 +194,8 @@ pub fn check_switch_case(
             return true;
         }
 
-        let lattice = check_statement(s);
-        *accum = accum.union(lattice);
+        let status = check_statement(s);
+        *accum = accum.union(status);
 
         if accum.must_return() {
             return true;
@@ -207,7 +207,7 @@ pub fn check_switch_case(
 }
 
 pub fn check_block_statement(block: &BlockStatement) -> StatementReturnStatus {
-    let mut all_statements_lattice = StatementReturnStatus::NotReturn;
+    let mut all_statements_status = StatementReturnStatus::NotReturn;
 
     for s in &block.body {
         // The only case where we can see break is if the block is inside a loop,
@@ -216,14 +216,14 @@ pub fn check_block_statement(block: &BlockStatement) -> StatementReturnStatus {
             break;
         }
 
-        let lattice = check_statement(s);
-        all_statements_lattice = all_statements_lattice.union(lattice);
-        if all_statements_lattice.must_return() {
+        let current_stmt_status = check_statement(s);
+        all_statements_status = all_statements_status.union(current_stmt_status);
+        if all_statements_status.must_return() {
             break;
         }
     }
 
-    all_statements_lattice
+    all_statements_status
 }
 
 #[cfg(test)]
