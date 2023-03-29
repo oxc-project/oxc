@@ -205,6 +205,8 @@ impl<'a> IsPrivate for PropertyDefinition<'a> {
     }
 }
 
+/// Return the innermost `Function` or `ArrowExpression` Node
+/// enclosing the specified node
 pub fn get_enclosing_function<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
