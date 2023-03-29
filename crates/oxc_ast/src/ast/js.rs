@@ -1115,6 +1115,13 @@ pub struct SwitchCase<'a> {
     pub consequent: Vec<'a, Statement<'a>>,
 }
 
+impl<'a> SwitchCase<'a> {
+    #[must_use]
+    pub fn is_default_case(&self) -> bool {
+        self.test.is_none()
+    }
+}
+
 /// Section 14.13 Labelled Statement
 #[derive(Debug, Serialize, PartialEq, Hash)]
 #[serde(tag = "type")]
@@ -1335,6 +1342,7 @@ impl<'a> FormalParameters<'a> {
 #[derive(Debug, PartialEq, Hash)]
 pub struct FunctionBody<'a> {
     pub span: Span,
+    pub is_single_expression: bool,
     pub directives: Vec<'a, Directive<'a>>,
     pub statements: Vec<'a, Statement<'a>>,
 }

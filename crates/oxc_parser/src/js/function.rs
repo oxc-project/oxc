@@ -63,7 +63,7 @@ impl<'a> Parser<'a> {
         })?;
 
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.function_body(self.end_span(span), directives, statements))
+        Ok(self.ast.function_body(self.end_span(span), false, directives, statements))
     }
 
     pub fn parse_formal_parameters(
@@ -240,7 +240,12 @@ impl<'a> Parser<'a> {
             let expr = self.parse_assignment_expression_base()?;
             let span = expr.span();
             let expr_stmt = self.ast.expression_statement(span, expr);
-            self.ast.function_body(span, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
+            self.ast.function_body(
+                span,
+                true,
+                self.ast.new_vec(),
+                self.ast.new_vec_single(expr_stmt),
+            )
         } else {
             self.parse_function_body()?
         };
@@ -482,7 +487,12 @@ impl<'a> Parser<'a> {
             let expr = self.parse_assignment_expression_base()?;
             let span = expr.span();
             let expr_stmt = self.ast.expression_statement(span, expr);
-            self.ast.function_body(span, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
+            self.ast.function_body(
+                span,
+                true,
+                self.ast.new_vec(),
+                self.ast.new_vec_single(expr_stmt),
+            )
         } else {
             self.parse_function_body()?
         };

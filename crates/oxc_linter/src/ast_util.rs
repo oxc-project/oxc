@@ -1,5 +1,7 @@
 use std::hash::{Hash, Hasher};
 
+use oxc_ast::{AstKind, GetSpan};
+use oxc_semantic::AstNode;
 use rustc_hash::FxHasher;
 
 pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
@@ -201,4 +203,43 @@ impl<'a> IsPrivate for PropertyDefinition<'a> {
     fn is_private(&self) -> bool {
         self.accessibility.map_or(false, |accessibility| accessibility == TSAccessibility::Private)
     }
+}
+
+pub fn get_enclosing_function<'a, 'b>(
+    node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a>,
+) -> Option<&'b AstNode<'a>> {
+    let mut current_node = node;
+    loop {
+        if matches!(current_node.get().kind(), AstKind::Root) {
+            return None;
+        }
+        if matches!(current_node.get().kind(), AstKind::Function(_) | AstKind::ArrowExpression(_)) {
+            return Some(current_node);
+        }
+        current_node = ctx.parent_node(current_node).unwrap();
+    }
+}
+
+pub fn is_nth_argument<'a>(call: &CallExpression<'a>, arg: &Argument<'a>, n: usize) -> bool {
+    let nth = &call.arguments[n];
+    nth.span() == arg.span()
+}
+
+/// Jump to the outer most of chained parentheses if any
+pub fn outermost_paren<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> &'b AstNode<'a> {
+    let mut node = node;
+
+    loop {
+        if let Some(parent) = ctx.parent_node(node) {
+            if let AstKind::ParenthesizedExpression(_) = parent.get().kind() {
+                node = parent;
+                continue;
+            }
+        }
+
+        break;
+    }
+
+    node
 }
