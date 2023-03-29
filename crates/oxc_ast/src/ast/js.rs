@@ -1342,7 +1342,6 @@ impl<'a> FormalParameters<'a> {
 #[derive(Debug, PartialEq, Hash)]
 pub struct FunctionBody<'a> {
     pub span: Span,
-    pub is_single_expression: bool,
     pub directives: Vec<'a, Directive<'a>>,
     pub statements: Vec<'a, Statement<'a>>,
 }
@@ -1366,6 +1365,15 @@ pub struct ArrowExpression<'a> {
 
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+}
+
+impl<'a> ArrowExpression<'a> {
+    /// Is of form () => x without curly braces.
+    #[inline]
+    #[must_use]
+    pub fn is_single_expression(&self) -> bool {
+        self.expression
+    }
 }
 
 /// Section 15.5 Generator Function Definitions

@@ -82,11 +82,15 @@ impl Rule for ArrayCallbackReturn {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_body, is_async, is_generator) = match node.get().kind() {
-            AstKind::ArrowExpression(arrow) => (&arrow.body, arrow.r#async, arrow.generator),
+        let (function_body, always_explicit_return) = match node.get().kind() {
+            // Async, generator, and single expression arrow functions
+            // always have explicit return value
+            AstKind::ArrowExpression(arrow) => {
+                (&arrow.body, arrow.r#async || arrow.generator || arrow.is_single_expression())
+            }
             AstKind::Function(function) => {
                 if let Some(body) = &function.body {
-                    (body, function.r#async, function.generator)
+                    (body, function.r#async || function.generator)
                 } else {
                     return;
                 }
@@ -96,8 +100,7 @@ impl Rule for ArrayCallbackReturn {
 
         // Filter on target methods on Arrays
         if let Some(array_method) = get_array_method_name(node, ctx) {
-            // Async and generator functions always have explicit return value
-            let function_return_flags = if is_async || is_generator {
+            let function_return_flags = if always_explicit_return {
                 FunctionReturnFlags::HAS_EXPLICIT | FunctionReturnFlags::MUST_RETURN
             } else {
                 let visitor = FunctionReturnVisitor::new();
@@ -277,12 +280,6 @@ impl FunctionReturnVisitor {
 
 impl<'a> Visit<'a> for FunctionReturnVisitor {
     fn visit_function_body(&mut self, body: &'a FunctionBody<'a>) {
-        // () => <expression>
-        if body.is_single_expression {
-            self.flags = FunctionReturnFlags::HAS_EXPLICIT | FunctionReturnFlags::MUST_RETURN;
-            return;
-        }
-
         for stmt in &body.statements {
             let stmt_return_status = check_statement(stmt);
             if stmt_return_status.must_return() {

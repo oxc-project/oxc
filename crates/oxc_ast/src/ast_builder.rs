@@ -734,11 +734,10 @@ impl<'a> AstBuilder<'a> {
     pub fn function_body(
         &self,
         span: Span,
-        is_single_expression: bool,
         directives: Vec<'a, Directive>,
         statements: Vec<'a, Statement<'a>>,
     ) -> Box<'a, FunctionBody<'a>> {
-        self.alloc(FunctionBody { span, is_single_expression, directives, statements })
+        self.alloc(FunctionBody { span, directives, statements })
     }
 
     /* ---------- Class ---------- */
