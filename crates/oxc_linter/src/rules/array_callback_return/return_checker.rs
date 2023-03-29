@@ -1,4 +1,4 @@
-use oxc_ast::ast::{BlockStatement, Statement, SwitchCase};
+use oxc_ast::ast::{BlockStatement, FunctionBody, Statement, SwitchCase};
 
 /// `StatementReturnStatus` describes whether the CFG corresponding to
 /// the statement is termitated by return statement in all/some/nome of
@@ -97,6 +97,22 @@ impl StatementReturnStatus {
             Self::AlwaysImplicit | Self::AlwaysMixed | Self::SomeImplicit | Self::SomeMixed
         )
     }
+}
+
+pub fn check_function_body(function: &FunctionBody) -> StatementReturnStatus {
+    // function body can be viewed as a block statement, but we don't
+    // short-circuit to catch all the possible returns.
+    // E.g.
+    // foo.map(() => {
+    //  return 1;
+    //  return; // Error
+    // })
+    let mut status = StatementReturnStatus::NotReturn;
+    for stmt in &function.statements {
+        status = status.union(check_statement(stmt));
+    }
+
+    status
 }
 
 /// Return checkers runs a Control Flow-like Analysis on a statement to see if it

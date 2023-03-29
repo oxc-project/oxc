@@ -1,8 +1,7 @@
 mod return_checker;
 
 use oxc_ast::{
-    ast::{ChainElement, Expression, FunctionBody},
-    visit::Visit,
+    ast::{ChainElement, Expression},
     AstKind, Atom, GetSpan, Span,
 };
 use oxc_diagnostics::{
@@ -13,7 +12,7 @@ use oxc_macros::declare_oxc_lint;
 use phf::phf_set;
 use serde_json::Value;
 
-use self::return_checker::check_statement;
+use self::return_checker::{check_function_body, StatementReturnStatus};
 use crate::{
     ast_util::{get_enclosing_function, is_nth_argument, outermost_paren},
     context::LintContext,
@@ -100,17 +99,16 @@ impl Rule for ArrayCallbackReturn {
 
         // Filter on target methods on Arrays
         if let Some(array_method) = get_array_method_name(node, ctx) {
-            let function_return_flags = if always_explicit_return {
-                FunctionReturnFlags::HAS_EXPLICIT | FunctionReturnFlags::MUST_RETURN
+            let return_status = if always_explicit_return {
+                StatementReturnStatus::AlwaysExplicit
             } else {
-                let visitor = FunctionReturnVisitor::new();
-                visitor.check_function_body(function_body)
+                check_function_body(function_body)
             };
 
             match (array_method, self.check_for_each, self.allow_implicit_return) {
                 ("forEach", false, _) => (),
                 ("forEach", true, _) => {
-                    if function_return_flags.contains(FunctionReturnFlags::HAS_EXPLICIT) {
+                    if return_status.may_return_explicit() {
                         ctx.diagnostic(ArrayCallbackReturnDiagnostic::ExpectNoReturn(
                             full_array_method_name(array_method),
                             function_body.span,
@@ -118,7 +116,7 @@ impl Rule for ArrayCallbackReturn {
                     }
                 }
                 (_, _, true) => {
-                    if !function_return_flags.contains(FunctionReturnFlags::MUST_RETURN) {
+                    if !return_status.must_return() {
                         ctx.diagnostic(ArrayCallbackReturnDiagnostic::ExpectReturn(
                             full_array_method_name(array_method),
                             function_body.span,
@@ -126,9 +124,7 @@ impl Rule for ArrayCallbackReturn {
                     }
                 }
                 (_, _, false) => {
-                    if !function_return_flags.contains(FunctionReturnFlags::MUST_RETURN)
-                        || function_return_flags.contains(FunctionReturnFlags::HAS_IMPLICIT)
-                    {
+                    if !return_status.must_return() || return_status.may_return_implicit() {
                         ctx.diagnostic(ArrayCallbackReturnDiagnostic::ExpectReturn(
                             full_array_method_name(array_method),
                             function_body.span,
@@ -249,49 +245,6 @@ fn full_array_method_name(array_method: &'static str) -> Atom {
     match array_method {
         "from" => Atom::from("Array.form"),
         s => Atom::from(format!("Array.prototype.{s}")),
-    }
-}
-
-bitflags::bitflags! {
-  pub struct FunctionReturnFlags: u8 {
-    const HAS_IMPLICIT   = 1 << 0;
-    const HAS_EXPLICIT   = 1 << 1;
-    const MUST_RETURN    = 1 << 2;
-  }
-}
-
-pub struct FunctionReturnVisitor {
-    flags: FunctionReturnFlags,
-}
-
-impl FunctionReturnVisitor {
-    pub fn new() -> Self {
-        Self { flags: FunctionReturnFlags::empty() }
-    }
-
-    pub fn check_function_body<'a>(
-        mut self,
-        function: &'a FunctionBody<'a>,
-    ) -> FunctionReturnFlags {
-        self.visit_function_body(function);
-        self.flags
-    }
-}
-
-impl<'a> Visit<'a> for FunctionReturnVisitor {
-    fn visit_function_body(&mut self, body: &'a FunctionBody<'a>) {
-        for stmt in &body.statements {
-            let stmt_return_status = check_statement(stmt);
-            if stmt_return_status.must_return() {
-                self.flags |= FunctionReturnFlags::MUST_RETURN;
-            }
-            if stmt_return_status.may_return_explicit() {
-                self.flags |= FunctionReturnFlags::HAS_EXPLICIT;
-            }
-            if stmt_return_status.may_return_implicit() {
-                self.flags |= FunctionReturnFlags::HAS_IMPLICIT;
-            }
-        }
     }
 }
 
