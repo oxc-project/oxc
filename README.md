@@ -9,8 +9,8 @@
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
 [mit-url]: LICENSE
-[ci-badge]: https://github.com/Boshen/oxc/actions/workflows/check.yaml/badge.svg?branch=main
-[ci-url]: https://github.com/Boshen/oxc/actions/workflows/check.yaml?query=branch=main
+[ci-badge]: https://github.com/Boshen/oxc/actions/workflows/check.yml/badge.svg?branch=main
+[ci-url]: https://github.com/Boshen/oxc/actions/workflows/check.yml?query=branch=main
 [npm-badge]: https://img.shields.io/npm/v/oxidation-compiler/latest?color=brightgreen
 [npm-url]: https://www.npmjs.com/package/oxidation-compiler/v/latest
 
