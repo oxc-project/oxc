@@ -111,7 +111,10 @@ jobs:
         with:
           shared-key: check
 
-      - name: Run tests on ${{ matrix.os }}
+      - name: Build tests
+        run: cargo nextest run --no-run --locked
+
+      - name: Run tests
         run: cargo nextest run
 
   documentation:
