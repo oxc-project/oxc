@@ -10,7 +10,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-oxc_ast = { path = "../oxc_ast" }
+oxc_ast = { workspace = true }
 
 thiserror = { workspace = true }
 miette = { workspace = true }

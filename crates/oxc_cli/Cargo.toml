@@ -17,12 +17,12 @@ jemallocator = { workspace = true }
 mimalloc = { workspace = true }
 
 [dependencies]
-oxc_diagnostics = { path = "../oxc_diagnostics" }
-oxc_allocator = { path = "../oxc_allocator" }
-oxc_ast = { path  = "../oxc_ast" }
-oxc_parser = { path  = "../oxc_parser" }
-oxc_semantic = { path  = "../oxc_semantic" }
-oxc_linter = { path  = "../oxc_linter" }
+oxc_diagnostics = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_linter = { workspace = true }
 
 clap = { workspace = true }
 rayon = { workspace = true }

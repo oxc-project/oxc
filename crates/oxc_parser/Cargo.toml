@@ -10,9 +10,9 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-oxc_allocator = { path = "../oxc_allocator" }
-oxc_ast = { path = "../oxc_ast" }
-oxc_diagnostics = { path = "../oxc_diagnostics" }
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_diagnostics = { workspace = true }
 
 bitflags = { workspace = true }
 rustc-hash = { workspace = true }
@@ -22,5 +22,5 @@ num-bigint = "0.4.3"
 
 [dev-dependencies]
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
-oxc_ast = { path = "../oxc_ast", features = ["serde_json"] }
+oxc_ast = { workspace = true }
 serde_json = { workspace = true }

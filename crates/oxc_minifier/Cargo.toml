@@ -11,11 +11,11 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-oxc_allocator = { path = "../oxc_allocator" }
-oxc_ast = { path = "../oxc_ast" }
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
 
 [dev-dependencies]
-oxc_parser = { path = "../oxc_parser" }
-oxc_printer = { path = "../oxc_printer" }
+oxc_parser = { workspace = true }
+oxc_printer = { workspace = true }
 
 walkdir = "2.3.3"

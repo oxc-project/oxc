@@ -10,7 +10,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-oxc_allocator = { path = "../oxc_allocator" }
+oxc_allocator = { workspace = true }
 
 bitflags = { workspace = true }
 compact_str = { workspace = true, features = ["serde"] }

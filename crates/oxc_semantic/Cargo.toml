@@ -10,13 +10,13 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-oxc_ast = { path = "../oxc_ast" }
-oxc_diagnostics = { path = "../oxc_diagnostics" }
+oxc_ast = { workspace = true }
+oxc_diagnostics = { workspace = true }
 
 indextree = { workspace = true }
 bitflags = { workspace = true }
 rustc-hash = { workspace = true }
 
 [dev_dependencies]
-oxc_parser = { path = "../oxc_parser" }
-oxc_allocator = { path = "../oxc_allocator" }
+oxc_parser = { workspace = true }
+oxc_allocator = { workspace = true }
