@@ -1,6 +1,6 @@
-# Run `cargo-unused-features` for finding out unused features
+# Run `cargo-llvm-lines` for finding out bloat generic functions
 
-name: Cargo Unused Features
+name: Cargo LLVM Lines
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ env:
 
 jobs:
   bloat:
-    name: Cargo Unused Features
+    name: Cargo LLVM Lines
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,10 +23,10 @@ jobs:
       - name: Install toolchain
         run: rustup show
 
-      - name: Install cargo-unused-features
+      - name: Install cargo-llvm-lines
         uses: taiki-e/install-action@v2
         with:
-          tool: cargo-unused-features
+          tool: cargo-llvm-lines
 
       - name: Run
-        run: unused-features analyze
+        run: cargo llvm-lines -p oxc_parser | head -20 > $GITHUB_STEP_SUMMARY
