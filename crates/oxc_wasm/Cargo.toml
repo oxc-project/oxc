@@ -1,10 +1,10 @@
 [package]
 name = "oxc_wasm"
+version = "0.0.0"
 publish = false
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true
-version.workspace = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]

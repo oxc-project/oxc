@@ -6,14 +6,13 @@ members = [
 ]
 
 [workspace.package]
-authors = ["Boshen <boshenc@gmail.com>"]
-description = "The JavaScript Oxidation Compiler"
+authors = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
+description = "Oxc is a JavaScript / TypeScript parser with full Test262 conformance."
 edition = "2021"
 homepage = "https://github.com/Boshen/oxc"
-keywords = ["JavaScript", "TypeScript", "compiler", "parser"]
+keywords = ["JavaScript", "TypeScript", "parser"]
 license = "MIT"
 repository = "https://github.com/Boshen/oxc"
-version = "0.0.0"
 
 [workspace.dependencies]
 jemallocator = "0.5.0"
@@ -32,6 +31,9 @@ indextree = "4.6.0"
 glob = "0.3.1"
 lazy_static = "1.4.0"
 
+[workspace.metadata.workspaces]
+independent = true
+allow_branch = "main"
 
 [profile.release]
 # Configurations explicitly listed here for clarity.
