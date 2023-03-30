@@ -5,6 +5,10 @@ name: Cargo Bloat
 on:
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_QUIET: true
 
@@ -20,7 +24,9 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Install cargo-bloat
-        run: cargo install cargo-bloat --no-default-features
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-bloat
 
       - name: Run
         run: |

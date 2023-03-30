@@ -81,11 +81,10 @@ jobs:
     - name: Install Rust toolchain
       run: rustup show
 
-    - name: Install cargo-binstall
-      uses: taiki-e/install-action@cargo-binstall
-
     - name: Install critcmp
-      run: cargo binstall critcmp -y
+      uses: taiki-e/install-action@v2
+      with:
+        tool: critcmp
 
     - name: Linux | Download PR benchmark results
       uses: actions/download-artifact@v3
