@@ -1,5 +1,6 @@
 [package]
 name = "oxc_wasm"
+publish = false
 authors.workspace = true
 edition.workspace = true
 keywords.workspace = true

@@ -1,5 +1,6 @@
 [package]
 name = "oxc_macros"
+publish = false
 authors.workspace = true
 description.workspace = true
 edition.workspace = true

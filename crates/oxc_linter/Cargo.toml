@@ -1,5 +1,6 @@
 [package]
 name = "oxc_linter"
+publish = false
 authors.workspace = true
 description.workspace = true
 edition.workspace = true
