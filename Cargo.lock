@@ -821,7 +821,7 @@ checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
 name = "oxc_allocator"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "bumpalo",
  "serde",
@@ -829,7 +829,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "bitflags",
  "compact_str",
@@ -908,7 +908,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "is-terminal",
  "miette",
@@ -966,7 +966,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "bitflags",
  "miette",
@@ -981,7 +981,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_printer"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "miette",
  "oxc_allocator",
@@ -991,7 +991,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "bitflags",
  "indextree",
@@ -1207,7 +1207,7 @@ dependencies = [
 
 [[package]]
 name = "rulegen"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "convert_case",
  "handlebars",
