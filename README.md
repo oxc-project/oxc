@@ -5,6 +5,8 @@
 [![npm version][npm-badge]][npm-url]
 [![Crates.io][crates-badge]][crates-url]
 [![Docs.rs][docs-badge]][docs-url]
+
+[![Code Size][code-size-badge]][code-size-url]
 [![MIT licensed][mit-badge]][mit-url]
 
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
@@ -19,6 +21,8 @@
 [crates-url]: https://crates.io/crates/oxc_parser
 [docs-badge]: https://docs.rs/oxc_parser/badge.svg
 [docs-url]: https://docs.rs/oxc_parser
+[code-size-badge]: https://img.shields.io/github/languages/code-size/Boshen/oxc
+[code-size-url]: https://github.com/Boshen/oxc
 
 The Oxidation Compiler is currently creating a suite of tools for the JavaScript/TypeScript language, which comprises:
 
