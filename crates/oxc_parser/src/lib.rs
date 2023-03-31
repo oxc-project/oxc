@@ -15,6 +15,8 @@ mod ts;
 mod diagnostics;
 mod lexer;
 
+use std::rc::Rc;
+
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span, Trivias};
 use oxc_diagnostics::{Diagnostics, Error, Result};
@@ -31,7 +33,7 @@ use crate::{
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<Error>,
-    pub trivias: Trivias,
+    pub trivias: Rc<Trivias>,
     pub panicked: bool,
 }
 

@@ -8,10 +8,8 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use std::{
-    hint::black_box, // See: `https://rust-lang.github.io/rfcs/2360-bench-black-box.html`
-    rc::Rc,
-};
+// See: `https://rust-lang.github.io/rfcs/2360-bench-black-box.html`
+use std::hint::black_box;
 
 use criterion::{BenchmarkId, Criterion, Throughput};
 use oxc_allocator::Allocator;
@@ -95,9 +93,8 @@ fn bench_semantic(criterion: &mut Criterion, codes: &[Code]) {
                 let source_type = SourceType::from_path(&code.file_name).unwrap();
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(ret.program);
-                let trivias = Rc::new(ret.trivias);
                 b.iter(|| {
-                    let _semantic = SemanticBuilder::new(source_text, source_type, &trivias)
+                    let _semantic = SemanticBuilder::new(source_text, source_type, &ret.trivias)
                         .build(black_box(program));
                 });
             },

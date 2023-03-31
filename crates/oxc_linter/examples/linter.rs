@@ -1,6 +1,6 @@
 //! The simplest linter
 
-use std::{env, path::Path, rc::Rc};
+use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstKind, SourceType, Span};
@@ -31,8 +31,7 @@ fn main() {
     }
 
     let program = allocator.alloc(ret.program);
-    let trivias = Rc::new(ret.trivias);
-    let semantic_ret = SemanticBuilder::new(&source_text, source_type, &trivias).build(program);
+    let semantic_ret = SemanticBuilder::new(&source_text, source_type, &ret.trivias).build(program);
 
     let mut errors: Vec<oxc_diagnostics::Error> = vec![];
 
