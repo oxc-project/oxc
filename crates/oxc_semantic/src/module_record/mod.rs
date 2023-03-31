@@ -16,8 +16,8 @@ mod module_record_tests {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let trivias = std::rc::Rc::new(ret.trivias);
-        let semantic_ret = SemanticBuilder::new(source_text, source_type, &trivias).build(program);
+        let semantic_ret =
+            SemanticBuilder::new(source_text, source_type, &ret.trivias).build(program);
         semantic_ret.semantic.module_record
     }
 

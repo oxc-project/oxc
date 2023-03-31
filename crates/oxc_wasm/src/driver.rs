@@ -34,7 +34,7 @@ impl Driver {
 
         let diagnostics = Diagnostics::default();
         let semantic_ret =
-            SemanticBuilder::new(source_text, source_type, &Rc::new(ret.trivias)).build(program);
+            SemanticBuilder::new(source_text, source_type, &ret.trivias).build(program);
         let mut diagnostics = diagnostics.into_inner();
 
         let source = Arc::new(NamedSource::new(path, source_text.to_string()));
