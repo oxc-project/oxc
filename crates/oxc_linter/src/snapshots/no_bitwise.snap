@@ -8,76 +8,89 @@ expression: no_bitwise
  1 │ a ^ b
    · ─────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of "|"
    ╭─[no_bitwise.tsx:1:1]
  1 │ a | b
    · ─────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of "&"
    ╭─[no_bitwise.tsx:1:1]
  1 │ a & b
    · ─────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of "<<"
    ╭─[no_bitwise.tsx:1:1]
  1 │ a << b
    · ──────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of ">>"
    ╭─[no_bitwise.tsx:1:1]
  1 │ a >> b
    · ──────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of ">>>"
    ╭─[no_bitwise.tsx:1:1]
  1 │ a >>> b
    · ───────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of "~"
    ╭─[no_bitwise.tsx:1:1]
  1 │ ~a
    · ──
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of "^="
    ╭─[no_bitwise.tsx:1:1]
  1 │ a ^= b
    · ──────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of "|="
    ╭─[no_bitwise.tsx:1:1]
  1 │ a |= b
    · ──────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of "&="
    ╭─[no_bitwise.tsx:1:1]
  1 │ a &= b
    · ──────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of "<<="
    ╭─[no_bitwise.tsx:1:1]
  1 │ a <<= b
    · ───────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of ">>="
    ╭─[no_bitwise.tsx:1:1]
  1 │ a >>= b
    · ───────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
   ⚠ eslint(no-bitwise): Unexpected use of ">>>="
    ╭─[no_bitwise.tsx:1:1]
  1 │ a >>>= b
    · ────────
    ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
 
