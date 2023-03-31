@@ -46,7 +46,10 @@ impl Rule for NoBitwise {
                 .and_then(|v| v.get("allow"))
                 .and_then(serde_json::Value::as_array)
                 .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(|s| s.to_string()).collect()
+                    v.iter()
+                        .filter_map(serde_json::Value::as_str)
+                        .map(ToString::to_string)
+                        .collect()
                 })
                 .unwrap_or_default(),
             int32_hint: obj
@@ -88,7 +91,7 @@ impl Rule for NoBitwise {
                     ctx.diagnostic(NoBitwiseDiagnostic(op, assign_expr.span));
                 }
             }
-            _ => return,
+            _ => {}
         }
     }
 }
