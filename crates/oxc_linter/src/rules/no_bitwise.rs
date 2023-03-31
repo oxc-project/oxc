@@ -9,7 +9,10 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-bitwise): Unexpected use of {0:?}")]
-#[diagnostic(severity(warning))]
+#[diagnostic(
+    severity(warning),
+    help("bitwise operators are not allowed, maybe you mistyped `&&` or `||`")
+)]
 struct NoBitwiseDiagnostic(&'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -34,7 +37,7 @@ declare_oxc_lint!(
     /// var x = y | z;
     /// ```
     NoBitwise,
-    correctness
+    nursery
 );
 
 impl Rule for NoBitwise {
