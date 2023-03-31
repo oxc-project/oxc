@@ -14,8 +14,8 @@
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
 [mit-url]: LICENSE
-[ci-badge]: https://github.com/Boshen/oxc/actions/workflows/check.yml/badge.svg?event=push&branch=main
-[ci-url]: https://github.com/Boshen/oxc/actions/workflows/check.yml?query=event%3Apush+branch%3Amain
+[ci-badge]: https://github.com/Boshen/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
+[ci-url]: https://github.com/Boshen/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 [npm-badge]: https://img.shields.io/npm/v/oxidation-compiler/latest?color=brightgreen
 [npm-url]: https://www.npmjs.com/package/oxidation-compiler/v/latest
 [crates-badge]: https://img.shields.io/crates/v/oxc_parser.svg
