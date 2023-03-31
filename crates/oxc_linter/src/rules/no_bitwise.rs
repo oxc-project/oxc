@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, Span};
+use oxc_ast::{ast::BinaryOperator, AstKind, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -110,13 +110,7 @@ fn is_int32_hint(int32_hint: bool, node: &AstNode) -> bool {
 
     match node.get().kind() {
         AstKind::BinaryExpression(bin_expr) => {
-            bin_expr.operator.as_str() == "|" && bin_expr.right.is_number_0()
-        }
-        AstKind::UnaryExpression(unary_expr) => {
-            unary_expr.operator.as_str() == "|" && unary_expr.argument.is_number_0()
-        }
-        AstKind::AssignmentExpression(assign_expr) => {
-            assign_expr.operator.as_str() == "|" && assign_expr.right.is_number_0()
+            bin_expr.operator == BinaryOperator::BitwiseOR && bin_expr.right.is_number_0()
         }
         _ => false,
     }
