@@ -132,6 +132,12 @@ impl<'a> Expression<'a> {
         matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void)
     }
 
+    /// Determines whether the given expr is a `0`
+    #[must_use]
+    pub fn is_number_0(&self) -> bool {
+        matches!(self, Self::NumberLiteral(lit) if lit.value == 0.0)
+    }
+
     /// Determines whether the given expr evaluate to `undefined`
     #[must_use]
     pub fn evaluate_to_undefined(&self) -> bool {
