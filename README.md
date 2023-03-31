@@ -1,26 +1,32 @@
 # The JavaScript Oxidation Compiler (oxc)
 
 [![Discord chat][discord-badge]][discord-url]
-[![MIT licensed][mit-badge]][mit-url]
-[![CI on main][ci-badge]][ci-url]
+[![Build Status][ci-badge]][ci-url]
 [![npm version][npm-badge]][npm-url]
+[![Crates.io][crates-badge]][crates-url]
+[![Docs.rs][docs-badge]][docs-url]
+[![MIT licensed][mit-badge]][mit-url]
 
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
 [mit-url]: LICENSE
-[ci-badge]: https://github.com/Boshen/oxc/actions/workflows/check.yml/badge.svg?branch=main
-[ci-url]: https://github.com/Boshen/oxc/actions/workflows/check.yml?query=branch=main
+[ci-badge]: https://github.com/Boshen/oxc/actions/workflows/check.yml/badge.svg?event=push&branch=main
+[ci-url]: https://github.com/Boshen/oxc/actions/workflows/check.yml?query=event%3Apush+branch%3Amain
 [npm-badge]: https://img.shields.io/npm/v/oxidation-compiler/latest?color=brightgreen
 [npm-url]: https://www.npmjs.com/package/oxidation-compiler/v/latest
+[crates-badge]: https://img.shields.io/crates/v/oxc_parser.svg
+[crates-url]: https://crates.io/crates/oxc_parser
+[docs-badge]: https://docs.rs/oxc_parser/badge.svg
+[docs-url]: https://docs.rs/oxc_parser
 
 The Oxidation Compiler is currently creating a suite of tools for the JavaScript/TypeScript language, which comprises:
 
-* Parser - Done
-* Linter - Work in progress
+* [Parser](./crates/oxc_parser) - Done
+* [Linter](./crates/oxc_linter) - Work in progress
 * Formatter
 * Transpiler
-* Minifier
+* [Minifier](./crates/oxc_minifier) - Draft
 
 ## Goals
 
