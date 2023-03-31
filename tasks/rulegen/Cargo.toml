@@ -5,11 +5,12 @@ edition = "2021"
 publish = false
 
 [dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_parser = { workspace = true }
+
 convert_case = "0.6.0"
 handlebars = "4.3.6"
-oxc_allocator = { path = "../../crates/oxc_allocator" }
-oxc_ast = { path = "../../crates/oxc_ast" }
-oxc_parser = { path = "../../crates/oxc_parser" }
 serde = { workspace = true, features = ["derive"] }
 regex = "1.7.1"
 lazy_static = "1.4.0"

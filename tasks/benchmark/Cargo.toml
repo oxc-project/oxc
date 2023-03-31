@@ -17,10 +17,10 @@ jemallocator = { workspace = true }
 mimalloc = { workspace = true }
 
 [dependencies]
-oxc_ast = { path = "../../crates/oxc_ast" }
-oxc_allocator = { path = "../../crates/oxc_allocator" }
-oxc_parser = { path = "../../crates/oxc_parser" }
-oxc_semantic = { path  = "../../crates/oxc_semantic" }
+oxc_ast = {  workspace = true  }
+oxc_allocator = {  workspace = true  }
+oxc_parser = {  workspace = true  }
+oxc_semantic = {  workspace = true  }
 
 pico-args = "0.5.0"
 criterion = { version = "0.4.0", default-features = false }
