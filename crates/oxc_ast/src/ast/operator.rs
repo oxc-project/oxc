@@ -98,7 +98,15 @@ impl AssignmentOperator {
 
     #[must_use]
     pub fn is_bitwise(self) -> bool {
-        matches!(self, Self::BitwiseOR | Self::BitwiseXOR | Self::BitwiseAnd)
+        matches!(
+            self,
+            Self::BitwiseOR
+                | Self::BitwiseXOR
+                | Self::BitwiseAnd
+                | Self::ShiftLeft
+                | Self::ShiftRight
+                | Self::ShiftRightZeroFill
+        )
     }
 
     #[must_use]
