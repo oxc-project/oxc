@@ -5,7 +5,10 @@
 use std::rc::Rc;
 
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, visit::Visit, AstKind, Atom, GetSpan, SourceType, Span, Trivias};
+use oxc_ast::{
+    ast::*, module_record::ModuleRecord, visit::Visit, AstKind, Atom, GetSpan, SourceType, Span,
+    Trivias,
+};
 use oxc_diagnostics::{Error, Redeclaration};
 
 use crate::{
@@ -36,6 +39,8 @@ pub struct SemanticBuilder<'a> {
     pub nodes: AstNodes<'a>,
     pub scope: ScopeBuilder,
     pub symbols: SymbolTable,
+
+    with_module_record_builder: bool,
     module_record_builder: ModuleRecordBuilder,
 }
 
@@ -63,12 +68,15 @@ impl<'a> SemanticBuilder<'a> {
             nodes,
             scope,
             symbols: SymbolTable::default(),
+            with_module_record_builder: false,
             module_record_builder: ModuleRecordBuilder::default(),
         }
     }
 
-    pub fn consume_errors(&mut self) -> Vec<Error> {
-        std::mem::take(&mut self.errors)
+    #[must_use]
+    pub fn with_module_record_builder(mut self, yes: bool) -> Self {
+        self.with_module_record_builder = yes;
+        self
     }
 
     #[must_use]
@@ -77,7 +85,11 @@ impl<'a> SemanticBuilder<'a> {
         self.visit_program(program);
 
         // Second partial AST pass on top level import / export statements
-        let module_record = self.module_record_builder.build(program);
+        let module_record = if self.with_module_record_builder {
+            self.module_record_builder.build(program)
+        } else {
+            ModuleRecord::default()
+        };
 
         let semantic = Semantic {
             source_text: self.source_text,

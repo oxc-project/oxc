@@ -269,8 +269,9 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let source_text = self.code();
         let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
         let program = allocator.alloc(parser_ret.program);
-        let semantic_ret =
-            SemanticBuilder::new(source_text, source_type, &parser_ret.trivias).build(program);
+        let semantic_ret = SemanticBuilder::new(source_text, source_type, &parser_ret.trivias)
+            .with_module_record_builder(true)
+            .build(program);
         let result = Linter::new().run_early_error(&Rc::new(semantic_ret.semantic), false);
         let errors = result
             .into_iter()
