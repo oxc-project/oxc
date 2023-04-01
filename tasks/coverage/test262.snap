@@ -79,12 +79,12 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9.2_A1_T3.js:16:1]
  16 │ for( a ; b
  17 │ )
     · ┬
-    · ╰── Expect `;` here, but found `)`
+    · ╰── `;` expected
     ╰────
 
   × Unexpected token
@@ -101,12 +101,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·    ─
     ╰────
 
-  × Expect token
+  × Expected `,` but found `;`
     ╭─[language/asi/S7.9_A10_T4.js:15:1]
  15 │ //CHECK#1
  16 │ ({};) * 1
     ·    ┬
-    ·    ╰── Expect `,` here, but found `;`
+    ·    ╰── `,` expected
     ╰────
 
   × Unexpected token
@@ -173,93 +173,93 @@ Negative Passed: 3915/3915 (100.00%)
  25 │ ╰─▶ y
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T1.js:19:1]
  19 │ for(;
  20 │ ) {
     · ┬
-    · ╰── Expect `;` here, but found `)`
+    · ╰── `;` expected
  21 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T10.js:20:1]
  20 │     false
  21 │ ;) {
     ·  ┬
-    ·  ╰── Expect `;` here, but found `)`
+    ·  ╰── `;` expected
  22 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T2.js:20:1]
  20 │     ;
  21 │ ) {
     · ┬
-    · ╰── Expect `;` here, but found `)`
+    · ╰── `;` expected
  22 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T3.js:19:1]
  19 │ for(
  20 │ ;) {
     ·  ┬
-    ·  ╰── Expect `;` here, but found `)`
+    ·  ╰── `;` expected
  21 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T4.js:20:1]
  20 │ 
  21 │ ;) {
     ·  ┬
-    ·  ╰── Expect `;` here, but found `)`
+    ·  ╰── `;` expected
  22 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T5.js:19:1]
  19 │ for(false;false
  20 │ ) {
     · ┬
-    · ╰── Expect `;` here, but found `)`
+    · ╰── `;` expected
  21 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T6.js:20:1]
  20 │ false
  21 │ ) {
     · ┬
-    · ╰── Expect `;` here, but found `)`
+    · ╰── `;` expected
  22 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T7.js:20:1]
  20 │     ;
  21 │ ) {
     · ┬
-    · ╰── Expect `;` here, but found `)`
+    · ╰── `;` expected
  22 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T8.js:20:1]
  20 │     ;false
  21 │ ) {
     · ┬
-    · ╰── Expect `;` here, but found `)`
+    · ╰── `;` expected
  22 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.2_T9.js:19:1]
  19 │ for(
  20 │ ;false) {
     ·       ┬
-    ·       ╰── Expect `;` here, but found `)`
+    ·       ╰── `;` expected
  21 │   break;
     ╰────
 
@@ -287,48 +287,48 @@ Negative Passed: 3915/3915 (100.00%)
  23 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.3_T4.js:20:1]
  20 │     false
  21 │ ) {
     · ┬
-    · ╰── Expect `;` here, but found `)`
+    · ╰── `;` expected
  22 │   break;
     ╰────
 
-  × Expect token
+  × Expected `;` but found `false`
     ╭─[language/asi/S7.9_A6.3_T5.js:19:1]
  19 │ for(false
  20 │     false
     ·     ──┬──
-    ·       ╰── Expect `;` here, but found `false`
+    ·       ╰── `;` expected
  21 │ ) {
     ╰────
 
-  × Expect token
+  × Expected `;` but found `false`
     ╭─[language/asi/S7.9_A6.3_T6.js:20:1]
  20 │     false
  21 │     false
     ·     ──┬──
-    ·       ╰── Expect `;` here, but found `false`
+    ·       ╰── `;` expected
  22 │ ) {
     ╰────
 
-  × Expect token
+  × Expected `;` but found `false`
     ╭─[language/asi/S7.9_A6.3_T7.js:20:1]
  20 │     false
  21 │     false
     ·     ──┬──
-    ·       ╰── Expect `;` here, but found `false`
+    ·       ╰── `;` expected
  22 │     false
     ╰────
 
-  × Expect token
+  × Expected `)` but found `;`
     ╭─[language/asi/S7.9_A6.4_T1.js:17:1]
  17 │ //CHECK#1
  18 │ for(false;false;false;) {
     ·                      ┬
-    ·                      ╰── Expect `)` here, but found `;`
+    ·                      ╰── `)` expected
  19 │   break;
     ╰────
 
@@ -341,25 +341,21 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Unexpected token
-    ╭─[language/asi/S7.9_A9_T6.js:16:1]
- 16 │ do
+    ╭─[language/asi/S7.9_A9_T6.js:17:1]
  17 │ while (false)
-    ·              ▲
     ╰────
 
   × Unexpected token
-    ╭─[language/asi/S7.9_A9_T7.js:17:1]
- 17 │ 
+    ╭─[language/asi/S7.9_A9_T7.js:18:1]
  18 │ while (false)
-    ·              ▲
     ╰────
 
-  × Expect token
+  × Expected `while` but found `;`
     ╭─[language/asi/S7.9_A9_T8.js:15:1]
  15 │ //CHECK#1
  16 │ do {};
     ·      ┬
-    ·      ╰── Expect `while` here, but found `;`
+    ·      ╰── `while` expected
  17 │ while (false)
     ╰────
 
@@ -1325,12 +1321,12 @@ Negative Passed: 3915/3915 (100.00%)
  2 │ 
    ╰────
 
-  × Expect token
+  × Expected `in` but found `throw`
     ╭─[language/comments/hashbang/escaped-bang-041.js:19:1]
  19 │ 
  20 │ throw "Test262: This statement should not be evaluated.";
     · ──┬──
-    ·   ╰── Expect `in` here, but found `throw`
+    ·   ╰── `in` expected
     ╰────
 
   × Invalid Character `!`
@@ -1340,12 +1336,12 @@ Negative Passed: 3915/3915 (100.00%)
  2 │ 
    ╰────
 
-  × Expect token
+  × Expected `in` but found `throw`
     ╭─[language/comments/hashbang/escaped-bang-u0021.js:19:1]
  19 │ 
  20 │ throw "Test262: This statement should not be evaluated.";
     · ──┬──
-    ·   ╰── Expect `in` here, but found `throw`
+    ·   ╰── `in` expected
     ╰────
 
   × Invalid Character `!`
@@ -1355,12 +1351,12 @@ Negative Passed: 3915/3915 (100.00%)
  2 │ 
    ╰────
 
-  × Expect token
+  × Expected `in` but found `throw`
     ╭─[language/comments/hashbang/escaped-bang-u21.js:19:1]
  19 │ 
  20 │ throw "Test262: This statement should not be evaluated.";
     · ──┬──
-    ·   ╰── Expect `in` here, but found `throw`
+    ·   ╰── `in` expected
     ╰────
 
   × Invalid Unicode escape sequence
@@ -1370,12 +1366,12 @@ Negative Passed: 3915/3915 (100.00%)
  2 │ 
    ╰────
 
-  × Expect token
+  × Expected `in` but found `throw`
     ╭─[language/comments/hashbang/escaped-bang-x21.js:19:1]
  19 │ 
  20 │ throw "Test262: This statement should not be evaluated.";
     · ──┬──
-    ·   ╰── Expect `in` here, but found `throw`
+    ·   ╰── `in` expected
     ╰────
 
   × Invalid Unicode escape sequence
@@ -1456,7 +1452,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/comments/hashbang/function-body.js:18:1]
  18 │ 
  19 │ function fn() {#!
-    ·                 ▲
+    ·                 ─
  20 │ }
     ╰────
 
@@ -1473,7 +1469,7 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-directive-prologue-sc.js:1:1]
  1 │ "use strict";
  2 │ #!
-   ·  ▲
+   ·  ─
  3 │ 
    ╰────
 
@@ -1481,14 +1477,14 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-directive-prologue.js:1:1]
  1 │ "use strict"
  2 │ #!
-   ·  ▲
+   ·  ─
  3 │ 
    ╰────
 
   × Invalid Character `!`
    ╭─[language/comments/hashbang/preceding-empty-statement.js:1:1]
  1 │ ;#!
-   ·   ▲
+   ·   ─
  2 │ 
    ╰────
 
@@ -1496,7 +1492,7 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-hashbang.js:1:1]
  1 │ #!
  2 │ #!
-   ·  ▲
+   ·  ─
  3 │ 
    ╰────
 
@@ -1504,7 +1500,7 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-line-comment.js:1:1]
  1 │ //
  2 │ #!
-   ·  ▲
+   ·  ─
  3 │ 
    ╰────
 
@@ -1512,14 +1508,14 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-multi-line-comment.js:1:1]
  1 │ /*
  2 │ */#!
-   ·    ▲
+   ·    ─
  3 │ 
    ╰────
 
   × Invalid Character `!`
    ╭─[language/comments/hashbang/preceding-whitespace.js:1:1]
  1 │  #!
-   ·   ▲
+   ·   ─
  2 │ 
    ╰────
 
@@ -1527,7 +1523,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/comments/hashbang/statement-block.js:19:1]
  19 │ {
  20 │   #!
-    ·    ▲
+    ·    ─
  21 │ }
     ╰────
 
@@ -9683,21 +9679,21 @@ Negative Passed: 3915/3915 (100.00%)
  24 │   
     ╰────
 
-  × Expect token
+  × Expected `{` but found `=>`
     ╭─[language/expressions/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
  22 │ 
  23 │ var C = class extends () => {} {
     ·                          ─┬
-    ·                           ╰── Expect `{` here, but found `=>`
+    ·                           ╰── `{` expected
  24 │   
     ╰────
 
-  × Expect token
+  × Expected `{` but found `=>`
     ╭─[language/expressions/class/elements/syntax/early-errors/class-heritage-array-literal-async-arrow-heritage.js:22:1]
  22 │ 
  23 │ var C = class extends async () => {} {
     ·                                ─┬
-    ·                                 ╰── Expect `{` here, but found `=>`
+    ·                                 ╰── `{` expected
  24 │   
     ╰────
 
@@ -11055,12 +11051,12 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `{` but found `=>`
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-array-literal.js:35:1]
  35 │ 
  36 │ var C = class extends (o) => [o.#foo]
     ·                           ─┬
-    ·                            ╰── Expect `{` here, but found `=>`
+    ·                            ╰── `{` expected
  37 │ {
     ╰────
 
@@ -11096,12 +11092,12 @@ Negative Passed: 3915/3915 (100.00%)
  37 │ {
     ╰────
 
-  × Expect token
+  × Expected `{` but found `=>`
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-obj-literal.js:35:1]
  35 │ 
  36 │ var C = class extends (o) => {x: o.#foo}
     ·                           ─┬
-    ·                            ╰── Expect `{` here, but found `=>`
+    ·                            ╰── `{` expected
  37 │ {
     ╰────
 
@@ -11313,7 +11309,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-error.js:34:1]
  34 │ var C = class {
  35 │   # x
-    ·    ▲
+    ·    ─
  36 │ };
     ╰────
 
@@ -11353,7 +11349,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:27:1]
  27 │ var C = class {
  28 │   get # m() {}
-    ·        ▲
+    ·        ─
  29 │ };
     ╰────
 
@@ -11370,7 +11366,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:27:1]
  27 │ var C = class {
  28 │   set # m(_) {}
-    ·        ▲
+    ·        ─
  29 │ };
     ╰────
 
@@ -11387,7 +11383,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:27:1]
  27 │ var C = class {
  28 │   async * # m() {}
-    ·            ▲
+    ·            ─
  29 │ };
     ╰────
 
@@ -11395,7 +11391,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:27:1]
  27 │ var C = class {
  28 │   async # m() {}
-    ·          ▲
+    ·          ─
  29 │ };
     ╰────
 
@@ -11412,7 +11408,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:36:1]
  36 │   m() {
  37 │     this.f().# x;
-    ·               ▲
+    ·               ─
  38 │   }
     ╰────
 
@@ -11420,7 +11416,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field-init.js:27:1]
  27 │ var C = class {
  28 │   # x = 1;
-    ·    ▲
+    ·    ─
  29 │ };
     ╰────
 
@@ -11428,7 +11424,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js:27:1]
  27 │ var C = class {
  28 │   # x;
-    ·    ▲
+    ·    ─
  29 │ };
     ╰────
 
@@ -11436,7 +11432,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-gen-meth.js:27:1]
  27 │ var C = class {
  28 │   * # m() {}
-    ·      ▲
+    ·      ─
  29 │ };
     ╰────
 
@@ -11444,7 +11440,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-member-expr.js:31:1]
  31 │   m() {
  32 │     this.# x;
-    ·           ▲
+    ·           ─
  33 │   }
     ╰────
 
@@ -11452,7 +11448,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:27:1]
  27 │ var C = class {
  28 │   # m() {}
-    ·    ▲
+    ·    ─
  29 │ };
     ╰────
 
@@ -11460,7 +11456,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:27:1]
  27 │ var C = class {
  28 │   static get # m() {}
-    ·               ▲
+    ·               ─
  29 │ };
     ╰────
 
@@ -11477,7 +11473,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:27:1]
  27 │ var C = class {
  28 │   static set # m(_) {}
-    ·               ▲
+    ·               ─
  29 │ };
     ╰────
 
@@ -11494,7 +11490,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:27:1]
  27 │ var C = class {
  28 │   static async * # m() {}
-    ·                   ▲
+    ·                   ─
  29 │ };
     ╰────
 
@@ -11502,7 +11498,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:27:1]
  27 │ var C = class {
  28 │   static async # m() {}
-    ·                 ▲
+    ·                 ─
  29 │ };
     ╰────
 
@@ -11519,7 +11515,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:27:1]
  27 │ var C = class {
  28 │   static # x = 1;
-    ·           ▲
+    ·           ─
  29 │ };
     ╰────
 
@@ -11536,7 +11532,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:27:1]
  27 │ var C = class {
  28 │   static # x;
-    ·           ▲
+    ·           ─
  29 │ };
     ╰────
 
@@ -11553,7 +11549,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:27:1]
  27 │ var C = class {
  28 │   static * # m() {}
-    ·             ▲
+    ·             ─
  29 │ };
     ╰────
 
@@ -11561,7 +11557,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:27:1]
  27 │ var C = class {
  28 │   static # m() {}
-    ·           ▲
+    ·           ─
  29 │ };
     ╰────
 
@@ -13143,12 +13139,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·                      ───
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-arrow-assignment-expression-not-extensible-args.js:37:1]
  37 │ 
  38 │ let f = () => import('./empty_FIXTURE.js', {}, '');
     ·                                                ─┬
-    ·                                                 ╰── Expect `)` here, but found `string`
+    ·                                                 ╰── `)` expected
     ╰────
 
   × Cannot use new with dynamic import
@@ -13167,12 +13163,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ };
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-arrow-not-extensible-args.js:38:1]
  38 │ let f = () => {
  39 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  40 │ };
     ╰────
 
@@ -13200,12 +13196,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ });
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-await-not-extensible-args.js:38:1]
  38 │ (async () => {
  39 │   await import('./empty_FIXTURE.js', {}, '')
     ·                                          ─┬
-    ·                                           ╰── Expect `)` here, but found `string`
+    ·                                           ╰── `)` expected
  40 │ });
     ╰────
 
@@ -13231,12 +13227,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·                           ───
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-async-arrow-function-return-await-not-extensible-args.js:37:1]
  37 │ 
  38 │ (async () => await import('./empty_FIXTURE.js', {}, ''))
     ·                                                     ─┬
-    ·                                                      ╰── Expect `)` here, but found `string`
+    ·                                                      ╰── `)` expected
     ╰────
 
   × Unexpected token
@@ -13271,12 +13267,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ }
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-async-function-await-not-extensible-args.js:38:1]
  38 │ async function f() {
  39 │   await import('./empty_FIXTURE.js', {}, '');
     ·                                          ─┬
-    ·                                           ╰── Expect `)` here, but found `string`
+    ·                                           ╰── `)` expected
  40 │ }
     ╰────
 
@@ -13296,12 +13292,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ }
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-async-function-not-extensible-args.js:38:1]
  38 │ async function f() {
  39 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  40 │ }
     ╰────
 
@@ -13329,12 +13325,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ }
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-async-function-return-await-not-extensible-args.js:38:1]
  38 │ async function f() {
  39 │   return await import('./empty_FIXTURE.js', {}, '');
     ·                                                 ─┬
-    ·                                                  ╰── Expect `)` here, but found `string`
+    ·                                                  ╰── `)` expected
  40 │ }
     ╰────
 
@@ -13362,12 +13358,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ }
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-async-gen-await-not-extensible-args.js:38:1]
  38 │ async function * f() {
  39 │   await import('./empty_FIXTURE.js', {}, '')
     ·                                          ─┬
-    ·                                           ╰── Expect `)` here, but found `string`
+    ·                                           ╰── `)` expected
  40 │ }
     ╰────
 
@@ -13403,12 +13399,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ };
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-block-labeled-not-extensible-args.js:38:1]
  38 │ label: {
  39 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  40 │ };
     ╰────
 
@@ -13428,12 +13424,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ };
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-block-not-extensible-args.js:38:1]
  38 │ {
  39 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  40 │ };
     ╰────
 
@@ -13461,12 +13457,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ } while (false);
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-do-while-not-extensible-args.js:38:1]
  38 │ do {
  39 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  40 │ } while (false);
     ╰────
 
@@ -13500,12 +13496,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·               ───
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-else-braceless-not-extensible-args.js:39:1]
  39 │ 
  40 │ } else import('./empty_FIXTURE.js', {}, '');
     ·                                         ─┬
-    ·                                          ╰── Expect `)` here, but found `string`
+    ·                                          ╰── `)` expected
     ╰────
 
   × Cannot use new with dynamic import
@@ -13524,12 +13520,12 @@ Negative Passed: 3915/3915 (100.00%)
  45 │ }
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-else-not-extensible-args.js:40:1]
  40 │ } else {
  41 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  42 │ }
     ╰────
 
@@ -13557,12 +13553,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ }
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-function-not-extensible-args.js:38:1]
  38 │ function fn() {
  39 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  40 │ }
     ╰────
 
@@ -13590,12 +13586,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ }
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-function-return-not-extensible-args.js:38:1]
  38 │ function fn() {
  39 │   return import('./empty_FIXTURE.js', {}, '');
     ·                                           ─┬
-    ·                                            ╰── Expect `)` here, but found `string`
+    ·                                            ╰── `)` expected
  40 │ }
     ╰────
 
@@ -13629,12 +13625,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·                  ───
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-if-braceless-not-extensible-args.js:37:1]
  37 │ 
  38 │ if (true) import('./empty_FIXTURE.js', {}, '');
     ·                                            ─┬
-    ·                                             ╰── Expect `)` here, but found `string`
+    ·                                             ╰── `)` expected
     ╰────
 
   × Cannot use new with dynamic import
@@ -13653,12 +13649,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ }
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-if-not-extensible-args.js:38:1]
  38 │ if (true) {
  39 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  40 │ }
     ╰────
 
@@ -13686,12 +13682,12 @@ Negative Passed: 3915/3915 (100.00%)
  45 │ };
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-while-not-extensible-args.js:40:1]
  40 │   x++;
  41 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  42 │ };
     ╰────
 
@@ -13725,12 +13721,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·              ───
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-with-expression-not-extensible-args.js:37:1]
  37 │ 
  38 │ with (import('./empty_FIXTURE.js', {}, '')) {}
     ·                                        ─┬
-    ·                                         ╰── Expect `)` here, but found `string`
+    ·                                         ╰── `)` expected
     ╰────
 
   × Cannot use new with dynamic import
@@ -13749,12 +13745,12 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ }
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/nested-with-not-extensible-args.js:38:1]
  38 │ with ({}) {
  39 │   import('./empty_FIXTURE.js', {}, '');
     ·                                    ─┬
-    ·                                     ╰── Expect `)` here, but found `string`
+    ·                                     ╰── `)` expected
  40 │ }
     ╰────
 
@@ -13780,12 +13776,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·        ───
     ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
     ╭─[language/expressions/dynamic-import/syntax/invalid/top-level-not-extensible-args.js:27:1]
  27 │ 
  28 │ import('./empty_FIXTURE.js', {}, '');
     ·                                  ─┬
-    ·                                   ╰── Expect `)` here, but found `string`
+    ·                                   ╰── `)` expected
     ╰────
 
   × Unexpected exponentiation expression
@@ -15683,12 +15679,12 @@ Negative Passed: 3915/3915 (100.00%)
  18 │ })
     ╰────
 
-  × Expect token
+  × Expected `,` but found `Identifier`
     ╭─[language/expressions/object/method-definition/early-errors-object-method-async-lineterminator.js:20:1]
  20 │   async
  21 │   foo() { }
     ·   ─┬─
-    ·    ╰── Expect `,` here, but found `Identifier`
+    ·    ╰── `,` expected
  22 │ })
     ╰────
 
@@ -15735,12 +15731,12 @@ Negative Passed: 3915/3915 (100.00%)
  18 │ })
     ╰────
 
-  × Expect token
+  × Expected `(` but found `Identifier`
     ╭─[language/expressions/object/method-definition/early-errors-object-method-formals-body-duplicate.js:16:1]
  16 │ ({
  17 │   async function foo(bar) { let bar; }
     ·                  ─┬─
-    ·                   ╰── Expect `(` here, but found `Identifier`
+    ·                   ╰── `(` expected
  18 │ })
     ╰────
 
@@ -16281,20 +16277,20 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `(` but found `}`
     ╭─[language/expressions/object/prop-def-invalid-async-prefix.js:34:1]
  34 │ 
  35 │ ({async async});
     ·              ┬
-    ·              ╰── Expect `(` here, but found `}`
+    ·              ╰── `(` expected
     ╰────
 
-  × Expect token
+  × Expected `(` but found `}`
     ╭─[language/expressions/object/prop-def-invalid-star-prefix.js:20:1]
  20 │ 
  21 │ ({* foo});
     ·        ┬
-    ·        ╰── Expect `(` here, but found `}`
+    ·        ╰── `(` expected
     ╰────
 
   × The keyword 'public' is reserved
@@ -18030,28 +18026,28 @@ Negative Passed: 3915/3915 (100.00%)
     · ───────
     ╰────
 
-  × Expect token
+  × Expected `(` but found `=`
     ╭─[language/keywords/ident-ref-for.js:19:1]
  19 │ 
  20 │ for = 1;
     ·     ┬
-    ·     ╰── Expect `(` here, but found `=`
+    ·     ╰── `(` expected
     ╰────
 
-  × Expect token
+  × Expected `(` but found `=`
     ╭─[language/keywords/ident-ref-function.js:19:1]
  19 │ 
  20 │ function = 1;
     ·          ┬
-    ·          ╰── Expect `(` here, but found `=`
+    ·          ╰── `(` expected
     ╰────
 
-  × Expect token
+  × Expected `(` but found `=`
     ╭─[language/keywords/ident-ref-if.js:19:1]
  19 │ 
  20 │ if = 1;
     ·    ┬
-    ·    ╰── Expect `(` here, but found `=`
+    ·    ╰── `(` expected
     ╰────
 
   × Unexpected token
@@ -18082,12 +18078,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·        ─
     ╰────
 
-  × Expect token
+  × Expected `(` but found `=`
     ╭─[language/keywords/ident-ref-switch.js:19:1]
  19 │ 
  20 │ switch = 1;
     ·        ┬
-    ·        ╰── Expect `(` here, but found `=`
+    ·        ╰── `(` expected
     ╰────
 
   × Unexpected token
@@ -18104,12 +18100,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·       ─
     ╰────
 
-  × Expect token
+  × Expected `{` but found `=`
     ╭─[language/keywords/ident-ref-try.js:19:1]
  19 │ 
  20 │ try = 1;
     ·     ┬
-    ·     ╰── Expect `{` here, but found `=`
+    ·     ╰── `{` expected
     ╰────
 
   × Unexpected token
@@ -18133,20 +18129,20 @@ Negative Passed: 3915/3915 (100.00%)
     ·      ─
     ╰────
 
-  × Expect token
+  × Expected `(` but found `=`
     ╭─[language/keywords/ident-ref-while.js:19:1]
  19 │ 
  20 │ while = 1;
     ·       ┬
-    ·       ╰── Expect `(` here, but found `=`
+    ·       ╰── `(` expected
     ╰────
 
-  × Expect token
+  × Expected `(` but found `=`
     ╭─[language/keywords/ident-ref-with.js:19:1]
  19 │ 
  20 │ with = 1;
     ·      ┬
-    ·      ╰── Expect `(` here, but found `=`
+    ·      ╰── `(` expected
     ╰────
 
   × Unterminated string
@@ -21523,53 +21519,53 @@ Negative Passed: 3915/3915 (100.00%)
     ·       ───────
     ╰────
 
-  × Expect token
+  × Expected `(` but found `{`
     ╭─[language/statements/block/12.1-4.js:13:1]
  13 │ 
  14 │ if{};else{}
     ·   ┬
-    ·   ╰── Expect `(` here, but found `{`
+    ·   ╰── `(` expected
     ╰────
 
-  × Expect token
+  × Expected `(` but found `{`
     ╭─[language/statements/block/12.1-5.js:13:1]
  13 │ 
  14 │ if{};else if{}
     ·   ┬
-    ·   ╰── Expect `(` here, but found `{`
+    ·   ╰── `(` expected
     ╰────
 
-  × Expect token
+  × Expected `(` but found `{`
     ╭─[language/statements/block/12.1-6.js:15:1]
  15 │ 
  16 │ if{};else if{};else{}
     ·   ┬
-    ·   ╰── Expect `(` here, but found `{`
+    ·   ╰── `(` expected
     ╰────
 
-  × Expect token
+  × Expected `while` but found `;`
     ╭─[language/statements/block/12.1-7.js:13:1]
  13 │ 
  14 │ do{};while()
     ·     ┬
-    ·     ╰── Expect `while` here, but found `;`
+    ·     ╰── `while` expected
     ╰────
 
-  × Expect token
+  × Expected `,` but found `;`
     ╭─[language/statements/block/S12.1_A4_T1.js:18:1]
  18 │ //CHECK#1
  19 │ y={__func;}();
     ·          ┬
-    ·          ╰── Expect `,` here, but found `;`
+    ·          ╰── `,` expected
  20 │ //
     ╰────
 
-  × Expect token
+  × Expected `,` but found `;`
     ╭─[language/statements/block/S12.1_A4_T2.js:18:1]
  18 │ //CHECK#1
  19 │ y={x;};
     ·     ┬
-    ·     ╰── Expect `,` here, but found `;`
+    ·     ╰── `,` expected
  20 │ //
     ╰────
 
@@ -22532,12 +22528,12 @@ Negative Passed: 3915/3915 (100.00%)
  16 │ }
     ╰────
 
-  × Expect token
+  × Expected `(` but found `Identifier`
     ╭─[language/statements/class/definition/early-errors-class-method-formals-body-duplicate.js:16:1]
  16 │ class Foo {
  17 │   async function foo(bar) { let bar; }
     ·                  ─┬─
-    ·                   ╰── Expect `(` here, but found `Identifier`
+    ·                   ╰── `(` expected
  18 │ }
     ╰────
 
@@ -25089,21 +25085,21 @@ Negative Passed: 3915/3915 (100.00%)
  24 │   
     ╰────
 
-  × Expect token
+  × Expected `{` but found `=>`
     ╭─[language/statements/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
  22 │ 
  23 │ class C extends () => {} {
     ·                    ─┬
-    ·                     ╰── Expect `{` here, but found `=>`
+    ·                     ╰── `{` expected
  24 │   
     ╰────
 
-  × Expect token
+  × Expected `{` but found `=>`
     ╭─[language/statements/class/elements/syntax/early-errors/class-heritage-array-literal-async-arrow-heritage.js:22:1]
  22 │ 
  23 │ class C extends async () => {} {
     ·                          ─┬
-    ·                           ╰── Expect `{` here, but found `=>`
+    ·                           ╰── `{` expected
  24 │   
     ╰────
 
@@ -26461,12 +26457,12 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `{` but found `=>`
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-array-literal.js:35:1]
  35 │ 
  36 │ class C extends (o) => [o.#foo]
     ·                     ─┬
-    ·                      ╰── Expect `{` here, but found `=>`
+    ·                      ╰── `{` expected
  37 │ {
     ╰────
 
@@ -26502,12 +26498,12 @@ Negative Passed: 3915/3915 (100.00%)
  37 │ {
     ╰────
 
-  × Expect token
+  × Expected `{` but found `=>`
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-obj-literal.js:35:1]
  35 │ 
  36 │ class C extends (o) => {x: o.#foo}
     ·                     ─┬
-    ·                      ╰── Expect `{` here, but found `=>`
+    ·                      ╰── `{` expected
  37 │ {
     ╰────
 
@@ -26719,7 +26715,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-error.js:34:1]
  34 │ class C {
  35 │   # x
-    ·    ▲
+    ·    ─
  36 │ }
     ╰────
 
@@ -26759,7 +26755,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:27:1]
  27 │ class C {
  28 │   get # m() {}
-    ·        ▲
+    ·        ─
  29 │ }
     ╰────
 
@@ -26776,7 +26772,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:27:1]
  27 │ class C {
  28 │   set # m(_) {}
-    ·        ▲
+    ·        ─
  29 │ }
     ╰────
 
@@ -26793,7 +26789,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:27:1]
  27 │ class C {
  28 │   async * # m() {}
-    ·            ▲
+    ·            ─
  29 │ }
     ╰────
 
@@ -26801,7 +26797,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:27:1]
  27 │ class C {
  28 │   async # m() {}
-    ·          ▲
+    ·          ─
  29 │ }
     ╰────
 
@@ -26818,7 +26814,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:36:1]
  36 │   m() {
  37 │     this.f().# x;
-    ·               ▲
+    ·               ─
  38 │   }
     ╰────
 
@@ -26826,7 +26822,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field-init.js:27:1]
  27 │ class C {
  28 │   # x = 1;
-    ·    ▲
+    ·    ─
  29 │ }
     ╰────
 
@@ -26834,7 +26830,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js:27:1]
  27 │ class C {
  28 │   # x;
-    ·    ▲
+    ·    ─
  29 │ }
     ╰────
 
@@ -26842,7 +26838,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-gen-meth.js:27:1]
  27 │ class C {
  28 │   * # m() {}
-    ·      ▲
+    ·      ─
  29 │ }
     ╰────
 
@@ -26850,7 +26846,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-member-expr.js:31:1]
  31 │   m() {
  32 │     this.# x;
-    ·           ▲
+    ·           ─
  33 │   }
     ╰────
 
@@ -26858,7 +26854,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:27:1]
  27 │ class C {
  28 │   # m() {}
-    ·    ▲
+    ·    ─
  29 │ }
     ╰────
 
@@ -26866,7 +26862,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:27:1]
  27 │ class C {
  28 │   static get # m() {}
-    ·               ▲
+    ·               ─
  29 │ }
     ╰────
 
@@ -26883,7 +26879,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:27:1]
  27 │ class C {
  28 │   static set # m(_) {}
-    ·               ▲
+    ·               ─
  29 │ }
     ╰────
 
@@ -26900,7 +26896,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:27:1]
  27 │ class C {
  28 │   static async * # m() {}
-    ·                   ▲
+    ·                   ─
  29 │ }
     ╰────
 
@@ -26908,7 +26904,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:27:1]
  27 │ class C {
  28 │   static async # m() {}
-    ·                 ▲
+    ·                 ─
  29 │ }
     ╰────
 
@@ -26925,7 +26921,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:27:1]
  27 │ class C {
  28 │   static # x = 1;
-    ·           ▲
+    ·           ─
  29 │ }
     ╰────
 
@@ -26942,7 +26938,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:27:1]
  27 │ class C {
  28 │   static # x;
-    ·           ▲
+    ·           ─
  29 │ }
     ╰────
 
@@ -26959,7 +26955,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:27:1]
  27 │ class C {
  28 │   static * # m() {}
-    ·             ▲
+    ·             ─
  29 │ }
     ╰────
 
@@ -26967,7 +26963,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:27:1]
  27 │ class C {
  28 │   static # m() {}
-    ·           ▲
+    ·           ─
  29 │ }
     ╰────
 
@@ -28644,12 +28640,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·  ────────
     ╰────
 
-  × Expect token
+  × Expected `while` but found `var`
     ╭─[language/statements/do-while/S12.6.1_A12.js:16:1]
  16 │ //CHECK#1
  17 │ do var x=1; var y =2; while (0);
     ·             ─┬─
-    ·              ╰── Expect `while` here, but found `var`
+    ·              ╰── `while` expected
  18 │ //
     ╰────
 
@@ -28661,57 +28657,57 @@ Negative Passed: 3915/3915 (100.00%)
  20 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `decimal`
     ╭─[language/statements/do-while/S12.6.1_A6_T1.js:16:1]
  16 │ //CHECK#1
  17 │ do break; while 1;
     ·                 ┬
-    ·                 ╰── Expect `(` here, but found `decimal`
+    ·                 ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `decimal`
     ╭─[language/statements/do-while/S12.6.1_A6_T2.js:16:1]
  16 │ //CHECK#1
  17 │ do break; while 0;
     ·                 ┬
-    ·                 ╰── Expect `(` here, but found `decimal`
+    ·                 ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `true`
     ╭─[language/statements/do-while/S12.6.1_A6_T3.js:16:1]
  16 │ //CHECK#1
  17 │ do break; while true;
     ·                 ──┬─
-    ·                   ╰── Expect `(` here, but found `true`
+    ·                   ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `false`
     ╭─[language/statements/do-while/S12.6.1_A6_T4.js:16:1]
  16 │ //CHECK#1
  17 │ do break; while false;
     ·                 ──┬──
-    ·                   ╰── Expect `(` here, but found `false`
+    ·                   ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `string`
     ╭─[language/statements/do-while/S12.6.1_A6_T5.js:16:1]
  16 │ //CHECK#1
  17 │ do break; while '';
     ·                 ─┬
-    ·                  ╰── Expect `(` here, but found `string`
+    ·                  ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `string`
     ╭─[language/statements/do-while/S12.6.1_A6_T6.js:16:1]
  16 │ //CHECK#1
  17 │ do break; while 'hood';
     ·                 ───┬──
-    ·                    ╰── Expect `(` here, but found `string`
+    ·                    ╰── `(` expected
  18 │ //
     ╰────
 
@@ -29538,12 +29534,12 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Expect token
+  × Expected `,` but found `;`
     ╭─[language/statements/for-in/S12.6.4_A15.js:18:1]
  18 │ //CHECK#
  19 │ for(x in {__arr;}){
     ·                ┬
-    ·                ╰── Expect `,` here, but found `;`
+    ·                ╰── `,` expected
  20 │    break ;
     ╰────
 
@@ -30597,20 +30593,20 @@ Negative Passed: 3915/3915 (100.00%)
     ·      ───────────
     ╰────
 
-  × Expect token
+  × Expected `)` but found `,`
     ╭─[language/statements/for-of/head-decl-no-expr.js:16:1]
  16 │ 
  17 │ for (let x of [], []) {}
     ·                 ┬
-    ·                 ╰── Expect `)` here, but found `,`
+    ·                 ╰── `)` expected
     ╰────
 
-  × Expect token
+  × Expected `)` but found `,`
     ╭─[language/statements/for-of/head-expr-no-expr.js:17:1]
  17 │ var x;
  18 │ for (x of [], []) {}
     ·             ┬
-    ·             ╰── Expect `)` here, but found `,`
+    ·             ╰── `)` expected
     ╰────
 
   × Identifier `x` has already been declared
@@ -30676,12 +30672,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·      ──────────
     ╰────
 
-  × Expect token
+  × Expected `;` but found `[`
     ╭─[language/statements/for-of/head-lhs-let.js:24:1]
  24 │ 
  25 │ for ( let of [] ) ;
     ·              ┬
-    ·              ╰── Expect `;` here, but found `[`
+    ·              ╰── `;` expected
     ╰────
 
   × Unexpected token
@@ -30698,12 +30694,12 @@ Negative Passed: 3915/3915 (100.00%)
     ·      ─────────
     ╰────
 
-  × Expect token
+  × Expected `)` but found `,`
     ╭─[language/statements/for-of/head-var-no-expr.js:16:1]
  16 │ 
  17 │ for (var x of [], []) {}
     ·                 ┬
-    ·                 ╰── Expect `)` here, but found `,`
+    ·                 ╰── `)` expected
     ╰────
 
   × Invalid function declaration
@@ -30782,21 +30778,21 @@ Negative Passed: 3915/3915 (100.00%)
  25 │         __str+=""+index+index_n;
     ╰────
 
-  × Expect token
+  × Expected `)` but found `;`
     ╭─[language/statements/for/S12.6.3_A4.1.js:21:1]
  21 │ //CHECK#1
  22 │ for (var a in arr;1;){
     ·                  ┬
-    ·                  ╰── Expect `)` here, but found `;`
+    ·                  ╰── `)` expected
  23 │     break;
     ╰────
 
-  × Expect token
+  × Expected `)` but found `;`
     ╭─[language/statements/for/S12.6.3_A4_T1.js:21:1]
  21 │ //CHECK#1
  22 │ for (a in arr;1;){
     ·              ┬
-    ·              ╰── Expect `)` here, but found `;`
+    ·              ╰── `)` expected
  23 │     break;
     ╰────
 
@@ -30808,57 +30804,57 @@ Negative Passed: 3915/3915 (100.00%)
  23 │     break;
     ╰────
 
-  × Expect token
+  × Expected `)` but found `;`
     ╭─[language/statements/for/S12.6.3_A7.1_T1.js:20:1]
  20 │ //CHECK#1
  21 │ for(var index=0; index<10; index++; index--);
     ·                                   ┬
-    ·                                   ╰── Expect `)` here, but found `;`
+    ·                                   ╰── `)` expected
  22 │ //
     ╰────
 
-  × Expect token
+  × Expected `)` but found `;`
     ╭─[language/statements/for/S12.6.3_A7.1_T2.js:20:1]
  20 │ //CHECK#1
  21 │ for(var index=0; index<10; index+=4; index++; index--) ;
     ·                                    ┬
-    ·                                    ╰── Expect `)` here, but found `;`
+    ·                                    ╰── `)` expected
  22 │ //
     ╰────
 
-  × Expect token
+  × Expected `)` but found `;`
     ╭─[language/statements/for/S12.6.3_A7_T1.js:20:1]
  20 │ //CHECK#1
  21 │ for(index=0; index<10; index++; index--) ;
     ·                               ┬
-    ·                               ╰── Expect `)` here, but found `;`
+    ·                               ╰── `)` expected
  22 │ //
     ╰────
 
-  × Expect token
+  × Expected `)` but found `;`
     ╭─[language/statements/for/S12.6.3_A7_T2.js:20:1]
  20 │ //CHECK#1
  21 │ for(index=0; index<10; index+=4; index++; index--) ;
     ·                                ┬
-    ·                                ╰── Expect `)` here, but found `;`
+    ·                                ╰── `)` expected
  22 │ //
     ╰────
 
-  × Expect token
+  × Expected `,` but found `++`
     ╭─[language/statements/for/S12.6.3_A8.1_T1.js:20:1]
  20 │ //CHECK#1
  21 │ for(var index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
     ·                                   ─┬
-    ·                                    ╰── Expect `,` here, but found `++`
+    ·                                    ╰── `,` expected
  22 │ //
     ╰────
 
-  × Expect token
+  × Expected `;` but found `++`
     ╭─[language/statements/for/S12.6.3_A8.1_T2.js:20:1]
  20 │ //CHECK#1
  21 │ for(var index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
     ·                        ─┬
-    ·                         ╰── Expect `;` here, but found `++`
+    ·                         ╰── `;` expected
  22 │ //
     ╰────
 
@@ -30870,30 +30866,30 @@ Negative Passed: 3915/3915 (100.00%)
  22 │ //
     ╰────
 
-  × Expect token
+  × Expected `,` but found `++`
     ╭─[language/statements/for/S12.6.3_A8_T1.js:20:1]
  20 │ //CHECK#1
  21 │ for(index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
     ·                               ─┬
-    ·                                ╰── Expect `,` here, but found `++`
+    ·                                ╰── `,` expected
  22 │ //
     ╰────
 
-  × Expect token
+  × Expected `;` but found `++`
     ╭─[language/statements/for/S12.6.3_A8_T2.js:20:1]
  20 │ //CHECK#1
  21 │ for(index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
     ·                    ─┬
-    ·                     ╰── Expect `;` here, but found `++`
+    ·                     ╰── `;` expected
  22 │ //
     ╰────
 
-  × Expect token
+  × Expected `,` but found `;`
     ╭─[language/statements/for/S12.6.3_A8_T3.js:20:1]
  20 │ //CHECK#1
  21 │ for({index=0; index+=1;} index++<=10; index*2;) {   arr.add(""+index);};
     ·             ┬
-    ·             ╰── Expect `,` here, but found `;`
+    ·             ╰── `,` expected
  22 │ //
     ╰────
 
@@ -31457,20 +31453,20 @@ Negative Passed: 3915/3915 (100.00%)
  24 │     }
     ╰────
 
-  × Expect token
+  × Expected `(` but found `,`
     ╭─[language/statements/function/invalid-2-names.js:15:1]
  15 │ 
  16 │ function x, y() {}
     ·           ┬
-    ·           ╰── Expect `(` here, but found `,`
+    ·           ╰── `(` expected
     ╰────
 
-  × Expect token
+  × Expected `(` but found `,`
     ╭─[language/statements/function/invalid-3-names.js:15:1]
  15 │ 
  16 │ function x,y,z(){}
     ·           ┬
-    ·           ╰── Expect `(` here, but found `,`
+    ·           ╰── `(` expected
     ╰────
 
   × Unterminated regular expression
@@ -31491,23 +31487,23 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/function/invalid-function-body-3.js:16:1]
  16 │ 
  17 │ function __func(){# ABC}
-    ·                    ▲
+    ·                    ─
     ╰────
 
-  × Expect token
+  × Expected `(` but found `.`
     ╭─[language/statements/function/invalid-name-dot.js:15:1]
  15 │ 
  16 │ function obj.tt() {}
     ·             ┬
-    ·             ╰── Expect `(` here, but found `.`
+    ·             ╰── `(` expected
     ╰────
 
-  × Expect token
+  × Expected `(` but found `.`
     ╭─[language/statements/function/invalid-name-two-dots.js:15:1]
  15 │ 
  16 │ function obj.tt.ss() {}
     ·             ┬
-    ·             ╰── Expect `(` here, but found `.`
+    ·             ╰── `(` expected
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -32007,21 +32003,21 @@ Negative Passed: 3915/3915 (100.00%)
  18 │   {
     ╰────
 
-  × Expect token
+  × Expected `(` but found `true`
     ╭─[language/statements/if/S12.5_A6_T1.js:16:1]
  16 │ //CHECK#1
  17 │ if true;
     ·    ──┬─
-    ·      ╰── Expect `(` here, but found `true`
+    ·      ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `false`
     ╭─[language/statements/if/S12.5_A6_T2.js:16:1]
  16 │ //CHECK#2
  17 │ if false;
     ·    ──┬──
-    ·      ╰── Expect `(` here, but found `false`
+    ·      ╰── `(` expected
  18 │ //
     ╰────
 
@@ -32968,21 +32964,21 @@ Negative Passed: 3915/3915 (100.00%)
  19 │     case 0:
     ╰────
 
-  × Expect token
+  × Expected `(` but found `{`
     ╭─[language/statements/switch/S12.11_A3_T2.js:17:1]
  17 │ 
  18 │   switch {
     ·          ┬
-    ·          ╰── Expect `(` here, but found `{`
+    ·          ╰── `(` expected
  19 │     case 0:
     ╰────
 
-  × Expect token
+  × Expected `{` but found `;`
     ╭─[language/statements/switch/S12.11_A3_T3.js:14:1]
  14 │ 
  15 │ switch(value);
     ·              ┬
-    ·              ╰── Expect `{` here, but found `;`
+    ·              ╰── `{` expected
     ╰────
 
   × Unexpected token
@@ -33568,12 +33564,9 @@ Negative Passed: 3915/3915 (100.00%)
     ·                          ╰── `f` has already been declared here
     ╰────
 
-  × Expect token
-    ╭─[language/statements/try/S12.14_A16_T1.js:17:1]
- 17 │ // CHECK#1
+  × Expected `{` but found `EOF`
+    ╭─[language/statements/try/S12.14_A16_T1.js:18:1]
  18 │ try
-    ·    ▲
-    ·    ╰── Expect `{` here, but found `EOF`
     ╰────
 
   × Unexpected token
@@ -33616,21 +33609,21 @@ Negative Passed: 3915/3915 (100.00%)
  24 │ {
     ╰────
 
-  × Expect token
+  × Expected `{` but found `(`
     ╭─[language/statements/try/S12.14_A16_T14.js:17:1]
  17 │ // CHECK#1
  18 │ try(e1){
     ·    ┬
-    ·    ╰── Expect `{` here, but found `(`
+    ·    ╰── `{` expected
  19 │ }
     ╰────
 
-  × Expect token
+  × Expected `{` but found `(`
     ╭─[language/statements/try/S12.14_A16_T15.js:21:1]
  21 │ }
  22 │ finally(e){}
     ·        ┬
-    ·        ╰── Expect `{` here, but found `(`
+    ·        ╰── `{` expected
     ╰────
 
   × Unexpected token
@@ -34207,57 +34200,57 @@ Negative Passed: 3915/3915 (100.00%)
  18 │    break ;
     ╰────
 
-  × Expect token
+  × Expected `(` but found `decimal`
     ╭─[language/statements/while/S12.6.2_A6_T1.js:16:1]
  16 │ //CHECK#1
  17 │ while 1 break;
     ·       ┬
-    ·       ╰── Expect `(` here, but found `decimal`
+    ·       ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `decimal`
     ╭─[language/statements/while/S12.6.2_A6_T2.js:16:1]
  16 │ //CHECK#1
  17 │ while 0 break;
     ·       ┬
-    ·       ╰── Expect `(` here, but found `decimal`
+    ·       ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `true`
     ╭─[language/statements/while/S12.6.2_A6_T3.js:16:1]
  16 │ //CHECK#1
  17 │ while true break;
     ·       ──┬─
-    ·         ╰── Expect `(` here, but found `true`
+    ·         ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `false`
     ╭─[language/statements/while/S12.6.2_A6_T4.js:16:1]
  16 │ //CHECK#1
  17 │ while false break;
     ·       ──┬──
-    ·         ╰── Expect `(` here, but found `false`
+    ·         ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `string`
     ╭─[language/statements/while/S12.6.2_A6_T5.js:16:1]
  16 │ //CHECK#1
  17 │ while '' break;
     ·       ─┬
-    ·        ╰── Expect `(` here, but found `string`
+    ·        ╰── `(` expected
  18 │ //
     ╰────
 
-  × Expect token
+  × Expected `(` but found `string`
     ╭─[language/statements/while/S12.6.2_A6_T6.js:16:1]
  16 │ //CHECK#1
  17 │ while 'hood' break;
     ·       ───┬──
-    ·          ╰── Expect `(` here, but found `string`
+    ·          ╰── `(` expected
  18 │ //
     ╰────
 

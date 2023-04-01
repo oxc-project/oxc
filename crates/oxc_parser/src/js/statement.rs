@@ -297,7 +297,7 @@ impl<'a> Parser<'a> {
             .then(|| self.parse_expression())
             .transpose()
             .map_err(|_| {
-                let range = self.current_range();
+                let range = self.cur_token().span();
                 diagnostics::ExpectToken(Kind::Semicolon.to_str(), self.cur_kind().to_str(), range)
             })?;
         self.expect(Kind::Semicolon)?;
