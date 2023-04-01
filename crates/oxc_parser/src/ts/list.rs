@@ -114,7 +114,7 @@ pub struct TSInterfaceOrObjectBodyList<'a> {
 }
 
 impl<'a> TSInterfaceOrObjectBodyList<'a> {
-    pub fn new(p: &Parser<'a>) -> Self {
+    pub(crate) fn new(p: &Parser<'a>) -> Self {
         Self { body: p.ast.new_vec() }
     }
 }

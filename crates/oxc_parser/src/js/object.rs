@@ -11,7 +11,7 @@ impl<'a> Parser<'a> {
     ///     { }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
-    pub fn parse_object_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_object_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
 
         let has_in = self.ctx.has_in();
@@ -27,7 +27,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `PropertyDefinition`[Yield, Await]
-    pub fn parse_property_definition(&mut self) -> Result<Box<'a, Property<'a>>> {
+    pub(crate) fn parse_property_definition(&mut self) -> Result<Box<'a, Property<'a>>> {
         let peek_kind = self.peek_kind();
         let class_element_name = peek_kind.is_class_element_name_start();
         match self.cur_kind() {
@@ -48,7 +48,7 @@ impl<'a> Parser<'a> {
             // IdentifierReference
             kind if kind.is_identifier_reference(false, false)
                 // test Kind::Dot to ignore ({ foo.bar: baz })
-                // see https://stackoverflow.com/questions/30285947/syntaxerror-unexpected-token
+                // see <https://stackoverflow.com/questions/30285947/syntaxerror-unexpected-token>
                 && !matches!(
                     peek_kind,
                     Kind::LParen | Kind::Colon | Kind::LAngle | Kind::ShiftLeft | Kind::Dot
@@ -84,7 +84,7 @@ impl<'a> Parser<'a> {
 
     /// `PropertyDefinition`[Yield, Await] :
     ///   ... `AssignmentExpression`[+In, ?Yield, ?Await]
-    pub fn parse_spread_element(&mut self) -> Result<Box<'a, SpreadElement<'a>>> {
+    pub(crate) fn parse_spread_element(&mut self) -> Result<Box<'a, SpreadElement<'a>>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_base()?;
@@ -152,7 +152,7 @@ impl<'a> Parser<'a> {
     /// `PropertyName`[Yield, Await] :
     ///    `LiteralPropertyName`
     ///    `ComputedPropertyName`[?Yield, ?Await]
-    pub fn parse_property_name(&mut self) -> Result<(PropertyKey<'a>, bool)> {
+    pub(crate) fn parse_property_name(&mut self) -> Result<(PropertyKey<'a>, bool)> {
         let mut computed = false;
         let key = match self.cur_kind() {
             Kind::Str => self.parse_literal_expression().map(PropertyKey::Expression)?,
@@ -173,7 +173,7 @@ impl<'a> Parser<'a> {
     }
 
     /// `ComputedPropertyName`[Yield, Await] : [ `AssignmentExpression`[+In, ?Yield, ?Await] ]
-    pub fn parse_computed_property_name(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_computed_property_name(&mut self) -> Result<Expression<'a>> {
         self.bump_any(); // advance `[`
 
         let has_in = self.ctx.has_in();

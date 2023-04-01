@@ -9,7 +9,7 @@ use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser};
 impl<'a> Parser<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
     /// `ImportCall` : import ( `AssignmentExpression` )
-    pub fn parse_import_expression(&mut self, span: Span) -> Result<Expression<'a>> {
+    pub(crate) fn parse_import_expression(&mut self, span: Span) -> Result<Expression<'a>> {
         self.bump_any(); // advance '('
 
         let has_in = self.ctx.has_in();
@@ -29,7 +29,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Section 16.2.2 Import Declaration
-    pub fn parse_import_declaration(&mut self) -> Result<Statement<'a>> {
+    pub(crate) fn parse_import_declaration(&mut self) -> Result<Statement<'a>> {
         let span = self.start_span();
 
         self.bump_any(); // advance `import`
@@ -69,8 +69,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.module_declaration(span, kind))
     }
 
-    // Full Syntax:
-    // `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax`
+    // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
     fn parse_import_declaration_specifiers(
         &mut self,
     ) -> Result<Vec<'a, ImportDeclarationSpecifier>> {
@@ -134,8 +133,7 @@ impl<'a> Parser<'a> {
         Ok(specifiers)
     }
 
-    // import assertion
-    // https://tc39.es/proposal-import-assertions
+    /// [Import assertion](https://tc39.es/proposal-import-assertions)
     fn parse_import_attributes(&mut self) -> Result<Option<Vec<'a, ImportAttribute>>> {
         if !self.at(Kind::Assert) || self.cur_token().is_on_new_line {
             return Ok(None);
@@ -150,7 +148,7 @@ impl<'a> Parser<'a> {
         Ok(Some(entries))
     }
 
-    pub fn parse_ts_export_assignment_declaration(
+    pub(crate) fn parse_ts_export_assignment_declaration(
         &mut self,
     ) -> Result<Box<'a, TSExportAssignment<'a>>> {
         let span = self.start_span();
@@ -162,7 +160,9 @@ impl<'a> Parser<'a> {
         Ok(self.ast.alloc(TSExportAssignment { span: self.end_span(span), expression }))
     }
 
-    pub fn parse_ts_export_namespace(&mut self) -> Result<Box<'a, TSNamespaceExportDeclaration>> {
+    pub(crate) fn parse_ts_export_namespace(
+        &mut self,
+    ) -> Result<Box<'a, TSNamespaceExportDeclaration>> {
         let span = self.start_span();
         self.expect(Kind::As)?;
         self.expect(Kind::Namespace)?;
@@ -173,9 +173,8 @@ impl<'a> Parser<'a> {
         Ok(self.ast.alloc(TSNamespaceExportDeclaration { span: self.end_span(span), id }))
     }
 
-    /// Exports
-    /// `https://tc39.es/ecma262/#sec-exports`
-    pub fn parse_export_declaration(&mut self) -> Result<Statement<'a>> {
+    /// [Exports](https://tc39.es/ecma262/#sec-exports)
+    pub(crate) fn parse_export_declaration(&mut self) -> Result<Statement<'a>> {
         let start_span = self.start_span();
         self.bump_any(); // advance `export`
 
@@ -256,7 +255,7 @@ impl<'a> Parser<'a> {
     fn parse_export_named_declaration(&mut self) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
         let start_span = self.start_span();
         // For tc39/proposal-decorators
-        // For more information, please refer to https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport
+        // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
         let modifiers = if self.ts_enabled() {
             self.eat_modifiers_before_declaration().1
@@ -277,7 +276,7 @@ impl<'a> Parser<'a> {
         let exported = self.parse_keyword_identifier(Kind::Default);
         let start_span = self.start_span();
         // For tc39/proposal-decorators
-        // For more information, please refer to https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport
+        // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
         let declaration = match self.cur_kind() {
             Kind::Class => self
@@ -336,7 +335,7 @@ impl<'a> Parser<'a> {
     // ImportSpecifier :
     //   ImportedBinding
     //   ModuleExportName as ImportedBinding
-    pub fn parse_import_specifier(&mut self) -> Result<ImportSpecifier> {
+    pub(crate) fn parse_import_specifier(&mut self) -> Result<ImportSpecifier> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
@@ -373,7 +372,7 @@ impl<'a> Parser<'a> {
     // ModuleExportName :
     //   IdentifierName
     //   StringLiteral
-    pub fn parse_module_export_name(&mut self) -> Result<ModuleExportName> {
+    pub(crate) fn parse_module_export_name(&mut self) -> Result<ModuleExportName> {
         match self.cur_kind() {
             Kind::Str => {
                 let literal = self.parse_literal_string()?;

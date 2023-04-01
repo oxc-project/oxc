@@ -1,4 +1,27 @@
-//! Recursive Descent Parser for ECMAScript and TypeScript
+//! Oxc Parser for JavaScript and TypeScript
+//!
+//! # Parser Conformance
+//! The parser parses all of Test262 and most of Babel and TypeScript parser conformance tests.
+//!
+//! See [oxc coverage](https://github.com/Boshen/oxc/tree/main/tasks/coverage) for details
+//! ```
+//! Test262 Summary:
+//! AST Parsed     : 44000/44000 (100.00%)
+//!
+//! Babel Summary:
+//! AST Parsed     : 2064/2071 (99.66%)
+//!
+//! TypeScript Summary:
+//! AST Parsed     : 2330/2340 (99.57%)
+//! ```
+//!
+//! ## Example
+//! <https://github.com/Boshen/oxc/blob/main/crates/oxc_parser/examples/parser.rs>
+//!
+//! ```rust
+#![doc = include_str!("../examples/parser.rs")]
+//! ```
+//!
 
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
 #![feature(portable_simd)]
@@ -28,6 +51,8 @@ use crate::{
     state::ParserState,
 };
 
+/// Return value of parser
+///
 /// The parser always return a valid AST.
 /// When `panicked = true`, then program will always be empty.
 /// When `errors.len() > 0`, then program may or may not be empty due to error recovery.
@@ -39,6 +64,9 @@ pub struct ParserReturn<'a> {
     pub panicked: bool,
 }
 
+/// Recursive Descent Parser for ECMAScript and TypeScript
+///
+/// See [`Parser::parse`] for entry function.
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
 
@@ -46,7 +74,7 @@ pub struct Parser<'a> {
     source_type: SourceType,
 
     /// Source Code
-    source: &'a str,
+    source_text: &'a str,
 
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
@@ -69,12 +97,13 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
+    /// Create a new parser
     #[must_use]
-    pub fn new(allocator: &'a Allocator, source: &'a str, source_type: SourceType) -> Self {
+    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
         Self {
-            lexer: Lexer::new(allocator, source, source_type),
+            lexer: Lexer::new(allocator, source_text, source_type),
             source_type,
-            source,
+            source_text,
             errors: vec![],
             token: Token::default(),
             prev_token_end: 0,
@@ -85,12 +114,17 @@ impl<'a> Parser<'a> {
     }
 
     #[must_use]
+    /// Allow return outside of function
+    ///
+    /// By default, a return statement at the top level raises an error.
+    /// Set this to true to accept such code.
     pub fn allow_return_outside_function(mut self, allow: bool) -> Self {
         self.ctx = self.ctx.and_return(allow);
         self
     }
 
-    /// Parser main entry point
+    /// Main entry point
+    ///
     /// Returns an empty `Program` on unrecoverable error,
     /// Recoverable errors are stored inside `errors`.
     #[must_use]
@@ -121,12 +155,12 @@ impl<'a> Parser<'a> {
         let (directives, statements) =
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
-        let span = Span::new(0, self.source.len() as u32);
+        let span = Span::new(0, self.source_text.len() as u32);
         Ok(self.ast.program(span, directives, statements, self.source_type))
     }
 
     #[must_use]
-    pub fn default_context(source_type: SourceType) -> Context {
+    fn default_context(source_type: SourceType) -> Context {
         let ctx = Context::default().and_ambient(source_type.is_typescript_definition());
         match source_type.module_kind() {
             ModuleKind::Script => ctx,
@@ -139,7 +173,8 @@ impl<'a> Parser<'a> {
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
     fn flow_error(&self) -> Option<Error> {
         if self.source_type.is_javascript()
-            && (self.source.starts_with("// @flow") || self.source.starts_with("/* @flow */"))
+            && (self.source_text.starts_with("// @flow")
+                || self.source_text.starts_with("/* @flow */"))
         {
             return Some(diagnostics::Flow(Span::new(0, 8)).into());
         }
