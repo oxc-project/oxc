@@ -8,10 +8,7 @@ use std::{
 use bitflags::bitflags;
 use num_bigint::BigUint;
 use ordered_float::NotNan;
-use serde::{
-    ser::{SerializeStruct, Serializer},
-    Serialize,
-};
+use serde::{ser::Serializer, Serialize};
 
 use crate::{Atom, Span};
 
@@ -44,20 +41,6 @@ impl Hash for NullLiteral {
 impl PartialEq for NullLiteral {
     fn eq(&self, _other: &Self) -> bool {
         true
-    }
-}
-
-impl Serialize for NullLiteral {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("NullLiteral", 4)?;
-        state.serialize_field("type", &"Literal")?;
-        state.serialize_field("start", &self.span.start)?;
-        state.serialize_field("end", &self.span.end)?;
-        state.serialize_field("value", &())?;
-        state.end()
     }
 }
 
