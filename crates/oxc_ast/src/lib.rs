@@ -11,7 +11,6 @@ mod serialize;
 pub mod ast;
 mod ast_builder;
 mod ast_kind;
-pub mod context;
 pub mod module_record;
 mod source_type;
 mod span;

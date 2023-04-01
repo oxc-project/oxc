@@ -1,16 +1,18 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, context::StatementContext, Span};
+use oxc_ast::{ast::*, Span};
 use oxc_diagnostics::Result;
 
 use super::{
     list::{TSEnumMemberList, TSInterfaceOrObjectBodyList},
     types::ModifierFlags,
 };
-use crate::js::declaration::{VariableDeclarationContext, VariableDeclarationParent};
-use crate::js::function::FunctionKind;
-use crate::lexer::Kind;
-use crate::list::{NormalList, SeparatedList};
-use crate::Parser;
+use crate::{
+    js::declaration::{VariableDeclarationContext, VariableDeclarationParent},
+    js::function::FunctionKind,
+    lexer::Kind,
+    list::{NormalList, SeparatedList},
+    Parser, StatementContext,
+};
 
 impl<'a> Parser<'a> {
     /** ------------------- Enum ------------------ */

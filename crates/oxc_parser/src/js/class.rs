@@ -1,9 +1,9 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, context::StatementContext, syntax_directed_operations::PropName, Span};
+use oxc_ast::{ast::*, syntax_directed_operations::PropName, Span};
 use oxc_diagnostics::Result;
 
 use super::list::ClassElements;
-use crate::{diagnostics, lexer::Kind, list::NormalList, Parser};
+use crate::{diagnostics, lexer::Kind, list::NormalList, Parser, StatementContext};
 
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;

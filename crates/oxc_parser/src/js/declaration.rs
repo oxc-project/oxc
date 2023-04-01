@@ -1,8 +1,8 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, context::StatementContext, GetSpan, Span};
+use oxc_ast::{ast::*, GetSpan, Span};
 use oxc_diagnostics::Result;
 
-use crate::{diagnostics, lexer::Kind, Parser};
+use crate::{diagnostics, lexer::Kind, Parser, StatementContext};
 
 #[derive(Clone, Debug, Copy, Eq, PartialEq)]
 pub enum VariableDeclarationParent {

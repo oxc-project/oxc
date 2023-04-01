@@ -1,10 +1,10 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, context::Context, Span};
+use oxc_ast::{ast::*, Span};
 use oxc_diagnostics::Result;
 
 use super::function::FunctionKind;
 use super::list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList};
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser};
 
 impl<'a> Parser<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)

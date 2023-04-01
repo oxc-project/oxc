@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, context::Context};
+use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 
 use super::list::{
@@ -11,7 +11,7 @@ use crate::{
     js::list::{ArrayPatternList, ObjectPatternProperties},
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    Parser,
+    Context, Parser,
 };
 
 bitflags! {
