@@ -144,7 +144,7 @@ impl<'a> Parser<'a> {
         if self.cur_kind() == Kind::Undetermined {
             return Err(self.errors.borrow_mut().pop().unwrap());
         }
-        Err(diagnostics::UnexpectedToken(self.current_range()).into())
+        Err(diagnostics::UnexpectedToken(self.cur_token().span()).into())
     }
 
     /// Push a Syntax Error

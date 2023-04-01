@@ -15,13 +15,9 @@ pub struct Flow(#[label] pub Span);
 pub struct UnexpectedToken(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Expect token")]
+#[error("Expected `{0}` but found `{1}`")]
 #[diagnostic()]
-pub struct ExpectToken(
-    pub &'static str,
-    pub &'static str,
-    #[label("Expect `{0}` here, but found `{1}`")] pub Span,
-);
+pub struct ExpectToken(pub &'static str, pub &'static str, #[label("`{0}` expected")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Invalid escape sequence")]

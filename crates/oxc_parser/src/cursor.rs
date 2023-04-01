@@ -174,7 +174,7 @@ impl<'a> Parser<'a> {
     /// # Errors
     pub fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
-            let range = self.current_range();
+            let range = self.cur_token().span();
             return Err(
                 diagnostics::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into()
             );
@@ -188,21 +188,6 @@ impl<'a> Parser<'a> {
         self.expect_without_advance(kind)?;
         self.advance(kind);
         Ok(())
-    }
-
-    #[must_use]
-    pub fn current_range(&self) -> Span {
-        let cur_token = self.cur_token();
-        match self.cur_kind() {
-            Kind::Eof => {
-                if self.prev_token_end < cur_token.end {
-                    Span::new(self.prev_token_end, self.prev_token_end)
-                } else {
-                    Span::new(self.prev_token_end - 1, self.prev_token_end)
-                }
-            }
-            _ => cur_token.span(),
-        }
     }
 
     /// Expect the next next token to be a `JsxChild`, i.e. `<` or `{` or `JSXText`
