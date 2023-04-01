@@ -8,8 +8,10 @@
 //! * No other heap allocations are done expect the above two
 //! * SIMD is used for skipping whitespace and multiline comments
 //! * [oxc_ast::Span] offsets uses `u32` instead of `usize`
+//! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
+//! they are deligated to the [semantic analyzer](https://docs.rs/oxc_semantic)
 //!
-//! # Parser Conformance
+//! # Conformance
 //! The parser parses all of Test262 and most of Babel and TypeScript parser conformance tests.
 //!
 //! See [oxc coverage](https://github.com/Boshen/oxc/tree/main/tasks/coverage) for details
@@ -22,6 +24,14 @@
 //!
 //! TypeScript Summary:
 //! AST Parsed     : 2330/2340 (99.57%)
+//! ```
+//!
+//! # Usage
+//!
+//! The parser has a minimal API with three inputs and one return struct ([ParserReturn]).
+//!
+//! ```rust
+//! let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
 //! ```
 //!
 //! # Example
@@ -78,7 +88,7 @@ use crate::{
     state::ParserState,
 };
 
-/// Return value of parser
+/// Return value of parser consisting of AST, errors and comments
 ///
 /// The parser always return a valid AST.
 /// When `panicked = true`, then program will always be empty.
