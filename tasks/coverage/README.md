@@ -7,13 +7,7 @@ Note: tests against regexp are disabled for now.
 Clone the test files beforehand:
 
 ```bash
-git submodule update
-```
-
-For maintainers, update to the latest remote, run:
-
-```bash
-git submodule update --remote
+git submodule update --init
 ```
 
 ## Development
