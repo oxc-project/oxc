@@ -1,16 +1,18 @@
-//! Trivia (called that because it's trivial) represent the parts of the source text that are largely insignificant for normal understanding of the code.
-//! For example: whitespace, comments, and even conflict markers.
-
 use std::collections::BTreeMap;
 
 use crate::Span;
 
+/// Trivias such as comments
+///
+/// Trivia (called that because it's trivial) represent the parts of the source text that are largely insignificant for normal understanding of the code.
+/// For example: whitespace, comments, and even conflict markers.
 #[derive(Debug, Default)]
 pub struct Trivias {
     /// Keyed by span.start
     comments: BTreeMap<u32, Comment>,
 }
 
+/// Single or multi line comment
 #[derive(Debug, Clone, Copy)]
 #[allow(unused)]
 pub struct Comment {
@@ -31,18 +33,18 @@ impl Comment {
     }
 
     #[must_use]
-    pub fn end(&self) -> u32 {
+    pub fn end(self) -> u32 {
         self.end
     }
 
     #[must_use]
-    pub fn is_single_line(&self) -> bool {
-        self.kind == CommentKind::SingleLine
+    pub fn is_single_line(self) -> bool {
+        matches!(self.kind, CommentKind::SingleLine)
     }
 
     #[must_use]
-    pub fn is_multi_line(&self) -> bool {
-        self.kind == CommentKind::MultiLine
+    pub fn is_multi_line(self) -> bool {
+        matches!(self.kind, CommentKind::MultiLine)
     }
 }
 

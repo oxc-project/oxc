@@ -1,4 +1,4 @@
-//! ECMAScript Grammar Contexts: [In] [Yield] [Await]
+//! ECMAScript Grammar Contexts: `[In`] `[Yield]` `[Await]`
 #![allow(non_upper_case_globals)]
 
 use bitflags::bitflags;

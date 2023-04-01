@@ -346,7 +346,7 @@ impl<'a> PropertyKey<'a> {
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum PropertyValue<'a> {
-    // for AssignmentProperty in ObjectPattern https://github.com/oxc_ast/oxc_ast/blob/master/es2015.md#objectpattern
+    // For AssignmentProperty in ObjectPattern <https://github.com/estree/estree/blob/master/es2015.md#objectpattern>
     Pattern(BindingPattern<'a>),
     Expression(Expression<'a>),
 }
@@ -1325,11 +1325,11 @@ pub struct FormalParameter<'a> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FormalParameterKind {
-    /// https://tc39.es/ecma262/#prod-FormalParameters
+    /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter,
-    /// https://tc39.es/ecma262/#prod-UniqueFormalParameters
+    /// <https://tc39.es/ecma262/#prod-UniqueFormalParameters>
     UniqueFormalParameters,
-    /// https://tc39.es/ecma262/#prod-ArrowFormalParameters
+    /// <https://tc39.es/ecma262/#prod-ArrowFormalParameters>
     ArrowFormalParameters,
     /// Part of TypeScript type signatures
     Signature,
@@ -1789,8 +1789,8 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     }
 }
 
-// es2022: https://github.com/oxc_ast/oxc_ast/blob/master/es2022.md#modules
-// https://github.com/tc39/ecma262/pull/2154
+// es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
+// <https://github.com/tc39/ecma262/pull/2154>
 // support:
 //   import {"\0 any unicode" as foo} from "";
 //   export {foo as "\0 any unicode"};

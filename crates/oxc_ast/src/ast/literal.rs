@@ -197,7 +197,7 @@ impl<'a> NumberLiteral<'a> {
     }
 
     /// From [boa](https://github.com/boa-dev/boa/blob/52bc15bc2320cd6cbc661a138ae955ceb0c9597a/boa_engine/src/builtins/number/mod.rs#L417)
-    /// [spec]: `https://tc39.es/ecma262/#sec-number.prototype.toprecision`
+    /// [spec](https://tc39.es/ecma262/#sec-number.prototype.toprecision)
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
     #[must_use]
     pub fn to_precision(&self, precision: Option<usize>) -> Option<String> {
