@@ -1,6 +1,6 @@
 [package]
 name = "oxc_semantic"
-version = "0.0.1"
+version = "0.0.2"
 authors.workspace = true
 description.workspace = true
 edition.workspace = true
