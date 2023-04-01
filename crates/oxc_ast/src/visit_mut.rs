@@ -1,8 +1,4 @@
 //! AST `VisitMut` Pattern
-//!
-//! See:
-//! * [syn](https://docs.rs/syn/latest/syn/visit_mut/index.html)
-//! * [swc](https://rustdoc.swc.rs/swc_ecma_visit/trait.VisitMut.html)
 
 use oxc_allocator::Vec;
 

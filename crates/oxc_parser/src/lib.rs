@@ -1,5 +1,14 @@
 //! Oxc Parser for JavaScript and TypeScript
 //!
+//! # Performance
+//!
+//! The following optimization techniques are used:
+//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
+//! * Short strings are inlined by [CompactString](https://github.com/ParkMyCar/compact_str)
+//! * No other heap allocations are done expect the above two
+//! * SIMD is used for skipping whitespace and multiline comments
+//! * [oxc_ast::Span] offsets uses `u32` instead of `usize`
+//!
 //! # Parser Conformance
 //! The parser parses all of Test262 and most of Babel and TypeScript parser conformance tests.
 //!
@@ -15,13 +24,31 @@
 //! AST Parsed     : 2330/2340 (99.57%)
 //! ```
 //!
-//! ## Example
+//! # Example
 //! <https://github.com/Boshen/oxc/blob/main/crates/oxc_parser/examples/parser.rs>
 //!
 //! ```rust
 #![doc = include_str!("../examples/parser.rs")]
 //! ```
 //!
+//! # Visitor
+//!
+//! See [oxc_ast::visit::Visit] and [oxc_ast::visit_mut::VisitMut]
+//!
+//! # Visiting without a visitor
+//!
+//! For ad-hoc tasks, the semantic analyzer can be used to get a parent pointing tree with untyped nodes,
+//! the nodes can be iterated through a sequential loop.
+//!
+//! ```rust
+//! for node in semantic.nodes().iter() {
+//!     match node.get().kind() {
+//!         // check node
+//!     }
+//! }
+//! ```
+//!
+//! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
 #![feature(portable_simd)]
