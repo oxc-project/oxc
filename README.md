@@ -29,7 +29,7 @@
 
 The Oxidation Compiler is currently creating a suite of tools for the JavaScript/TypeScript language, which comprises:
 
-* [Parser](./crates/oxc_parser) - Done
+* [Parser](./crates/oxc_parser) - See [docs.rs/oxc_parser](https://docs.rs/oxc_parser)
 * [Linter](./crates/oxc_linter) - Work in progress
 * Formatter
 * Transpiler
