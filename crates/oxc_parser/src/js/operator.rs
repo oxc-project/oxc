@@ -2,8 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::lexer::Kind;
 
-/// Operator Precedence
-/// `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence#table`
+/// [Operator Precedence](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence#table)
 #[derive(Debug, Eq, Ord, PartialOrd, PartialEq, Copy, Clone)]
 #[repr(u8)]
 pub enum BindingPower {

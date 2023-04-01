@@ -69,7 +69,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn at_start_of_ts_declaration(&mut self) -> bool {
+    pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {
         self.lookahead(Self::at_start_of_ts_declaration_worker)
     }
 }

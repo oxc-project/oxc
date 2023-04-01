@@ -264,8 +264,7 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
     }
 }
 
-/// Assert Entries
-/// `https://tc39.es/proposal-import-assertions`
+/// [Assert Entries](https://tc39.es/proposal-import-assertions)
 pub struct AssertEntries<'a> {
     pub elements: Vec<'a, ImportAttribute>,
     keys: FxHashMap<Atom, Span>,
@@ -367,12 +366,12 @@ pub struct PrivateBoundIdentifierMeta {
 pub struct ClassElements<'a> {
     pub elements: Vec<'a, ClassElement<'a>>,
 
-    /// https://tc39.es/ecma262/#sec-static-semantics-privateboundidentifiers
+    /// <https://tc39.es/ecma262/#sec-static-semantics-privateboundidentifiers>
     pub private_bound_identifiers: FxHashMap<Atom, PrivateBoundIdentifierMeta>,
 }
 
 impl<'a> ClassElements<'a> {
-    pub fn new(p: &mut Parser<'a>) -> Self {
+    pub(crate) fn new(p: &mut Parser<'a>) -> Self {
         Self { elements: p.ast.new_vec(), private_bound_identifiers: FxHashMap::default() }
     }
 
@@ -458,7 +457,7 @@ pub struct SwitchCases<'a> {
 }
 
 impl<'a> SwitchCases<'a> {
-    pub fn new(p: &mut Parser<'a>) -> Self {
+    pub(crate) fn new(p: &mut Parser<'a>) -> Self {
         Self { elements: p.ast.new_vec() }
     }
 }

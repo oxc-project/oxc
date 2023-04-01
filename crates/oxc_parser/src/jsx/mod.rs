@@ -12,7 +12,7 @@ use crate::Context;
 use crate::Parser;
 
 impl<'a> Parser<'a> {
-    pub fn parse_jsx_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_jsx_expression(&mut self) -> Result<Expression<'a>> {
         if self.peek_at(Kind::RAngle) {
             self.parse_jsx_fragment().map(Expression::JSXFragment)
         } else {

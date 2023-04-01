@@ -13,7 +13,7 @@ impl<'a> Parser<'a> {
     /// `BindingPattern`:
     ///     `ObjectBindingPattern`
     ///     `ArrayBindingPattern`
-    pub fn parse_binding_pattern(&mut self) -> Result<(BindingPattern<'a>, bool)> {
+    pub(crate) fn parse_binding_pattern(&mut self) -> Result<(BindingPattern<'a>, bool)> {
         let kind = match self.cur_kind() {
             Kind::LCurly => self.parse_object_binding_pattern(),
             Kind::LBrack => self.parse_array_binding_pattern(),
@@ -47,7 +47,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Section 14.3.3 Binding Rest Property
-    pub fn parse_rest_element(&mut self) -> Result<Box<'a, RestElement<'a>>> {
+    pub(crate) fn parse_rest_element(&mut self) -> Result<Box<'a, RestElement<'a>>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_binding_element()?;
@@ -67,15 +67,15 @@ impl<'a> Parser<'a> {
     /// `BindingElement`
     ///     `SingleNameBinding`
     ///     `BindingPattern` Initializer
-    pub fn parse_binding_element(&mut self) -> Result<BindingPattern<'a>> {
+    pub(crate) fn parse_binding_element(&mut self) -> Result<BindingPattern<'a>> {
         let span = self.start_span();
         let pattern = self.parse_binding_pattern()?.0;
         self.parse_initializer(span, pattern)
     }
 
     // object pattern property only has kind: init and method: false
-    // https://github.com/oxc_ast/oxc_ast/blob/master/es2015.md#objectpattern
-    pub fn parse_object_pattern_property(&mut self) -> Result<Property<'a>> {
+    // <https://github.com/oxc_ast/oxc_ast/blob/master/es2015.md#objectpattern
+    pub(crate) fn parse_object_pattern_property(&mut self) -> Result<Property<'a>> {
         let span = self.start_span();
 
         let mut shorthand = false;
