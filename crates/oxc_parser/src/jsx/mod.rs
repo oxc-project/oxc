@@ -173,7 +173,7 @@ impl<'a> Parser<'a> {
             return Ok(self.ast.jsx_member_expression(self.end_span(span), object, property));
         }
 
-        self.unexpected()
+        Err(self.unexpected())
     }
 
     /// `JSXChildren` :
@@ -218,7 +218,7 @@ impl<'a> Parser<'a> {
                 .map(Some),
             // text
             Kind::JSXText => Ok(Some(JSXChild::Text(self.parse_jsx_text()))),
-            _ => self.unexpected(),
+            _ => Err(self.unexpected()),
         }
     }
 
@@ -336,7 +336,7 @@ impl<'a> Parser<'a> {
                 let expr = self.parse_jsx_expression_container(false)?;
                 Ok(JSXAttributeValue::ExpressionContainer(expr))
             }
-            _ => self.unexpected(),
+            _ => Err(self.unexpected()),
         }
     }
 
@@ -347,7 +347,7 @@ impl<'a> Parser<'a> {
     fn parse_jsx_identifier(&mut self) -> Result<JSXIdentifier> {
         let span = self.start_span();
         if !self.at(Kind::Ident) && !self.cur_kind().is_all_keyword() {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
         // we are at a valid normal Ident or Keyword, let's keep on lexing for `-`
         self.re_lex_jsx_identifier();

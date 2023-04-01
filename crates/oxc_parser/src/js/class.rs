@@ -241,7 +241,7 @@ impl<'a> Parser<'a> {
                 kind if kind.is_class_element_name_start() => {
                     Some(self.parse_class_element_name()?)
                 }
-                _ => return self.unexpected(),
+                _ => return Err(self.unexpected()),
             }
         }
 

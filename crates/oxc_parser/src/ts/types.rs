@@ -511,7 +511,7 @@ impl<'a> Parser<'a> {
                 if p.cur_kind().can_follow_type_arguments_in_expr() {
                     Ok(params)
                 } else {
-                    p.unexpected()
+                    Err(p.unexpected())
                 }
             })
             .ok()
@@ -604,7 +604,7 @@ impl<'a> Parser<'a> {
         self.expect(Kind::LBrack)?;
         let type_parameter_span = self.start_span();
         if !self.cur_kind().is_identifier_name() {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
         let name = self.parse_binding_identifier()?;
         self.expect(Kind::In)?;
@@ -693,7 +693,7 @@ impl<'a> Parser<'a> {
                 Expression::RegExpLiteral(literal) => TSLiteral::RegExpLiteral(literal),
                 Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
                 Expression::TemplateLiteral(literal) => TSLiteral::TemplateLiteral(literal),
-                _ => return self.unexpected(),
+                _ => return Err(self.unexpected()),
             }
         };
 
@@ -825,7 +825,7 @@ impl<'a> Parser<'a> {
                 return Ok(Some(constraint));
             }
         }
-        self.unexpected()
+        Err(self.unexpected())
     }
 
     pub fn parse_ts_return_type_annotation(
@@ -1022,7 +1022,7 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         while self.is_nth_at_modifier(0, false) {
             if !self.eat(Kind::Readonly) {
-                self.unexpected()?;
+                return Err(self.unexpected());
             }
         }
 
@@ -1038,7 +1038,7 @@ impl<'a> Parser<'a> {
             self.bump(Kind::Semicolon);
             Ok(self.ast.ts_index_signature(self.end_span(span), parameters, type_annotation))
         } else {
-            self.unexpected()
+            Err(self.unexpected())
         }
     }
 
@@ -1048,7 +1048,7 @@ impl<'a> Parser<'a> {
         let type_annotation = self.parse_ts_type_annotation()?;
 
         if type_annotation.is_none() {
-            self.unexpected()?;
+            return Err(self.unexpected());
         }
 
         Ok(self.ast.alloc(TSIndexSignatureName {

@@ -94,7 +94,7 @@ impl<'a> Parser<'a> {
                 let left = self.ast.binding_pattern(identifier, None, false);
                 PropertyValue::Pattern(self.parse_initializer(span, left)?)
             } else {
-                return self.unexpected();
+                return Err(self.unexpected());
             }
         } else {
             // let { a: b } = c

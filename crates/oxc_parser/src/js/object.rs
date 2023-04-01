@@ -77,7 +77,7 @@ impl<'a> Parser<'a> {
                     ));
                 }
 
-                self.unexpected()
+                Err(self.unexpected())
             }
         }
     }

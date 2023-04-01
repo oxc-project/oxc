@@ -87,7 +87,7 @@ impl<'a> Parser<'a> {
                         let mut import_specifiers = self.parse_import_specifiers()?;
                         specifiers.append(&mut import_specifiers);
                     }
-                    _ => return self.unexpected(),
+                    _ => return Err(self.unexpected()),
                 }
             }
         // import * as name from "module-name";

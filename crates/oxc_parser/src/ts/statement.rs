@@ -86,7 +86,7 @@ impl<'a> Parser<'a> {
             let type_annotation = self.parse_ts_type()?;
             Ok((Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)), true))
         } else {
-            self.unexpected()
+            Err(self.unexpected())
         }
     }
 
@@ -406,7 +406,7 @@ impl<'a> Parser<'a> {
                         .map(Declaration::FunctionDeclaration)
                 }
             }
-            _ => self.unexpected(),
+            _ => Err(self.unexpected()),
         }
     }
 
