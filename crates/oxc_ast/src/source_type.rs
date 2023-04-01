@@ -4,6 +4,7 @@ use thiserror::Error;
 
 use crate::context::Context;
 
+/// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
@@ -12,7 +13,7 @@ pub struct SourceType {
     /// Script or Module, default Module
     module_kind: ModuleKind,
 
-    /// support JSX for JavaScript and TypeScript? default without JSX
+    /// Support JSX for JavaScript and TypeScript? default without JSX
     variant: LanguageVariant,
 
     /// Mark strict mode as always strict
@@ -20,18 +21,21 @@ pub struct SourceType {
     always_strict: bool,
 }
 
+/// JavaScript or TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Language {
     JavaScript,
     TypeScript { is_definition_file: bool },
 }
 
+/// Script or Module
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ModuleKind {
     Script,
     Module,
 }
 
+/// JSX for JavaScript and TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LanguageVariant {
     Standard,

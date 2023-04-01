@@ -1,4 +1,4 @@
-//! [Syntax-Directed Operations](https://tc39.es/ecma262/#sec-syntax-directed-operations)
+//! [ECMA262 Syntax-Directed Operations](https://tc39.es/ecma262/#sec-syntax-directed-operations)
 
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, Span};

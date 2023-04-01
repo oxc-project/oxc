@@ -1,5 +1,3 @@
-//! AST builder for creating AST spans
-
 #![allow(clippy::unused_self, clippy::too_many_arguments)]
 
 use oxc_allocator::{Allocator, Box, String, Vec};
@@ -7,6 +5,7 @@ use oxc_allocator::{Allocator, Box, String, Vec};
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, Atom, SourceType, Span};
 
+/// AST builder for creating AST spans
 pub struct AstBuilder<'a> {
     pub allocator: &'a Allocator,
 }

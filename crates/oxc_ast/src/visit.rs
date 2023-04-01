@@ -1,4 +1,5 @@
-//! AST Visitor Pattern.
+//! AST Visitor Pattern
+//!
 //! See:
 //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)

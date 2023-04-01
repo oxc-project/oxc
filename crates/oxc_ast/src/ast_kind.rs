@@ -1,6 +1,7 @@
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, Atom, GetSpan, Span};
 
+/// Untyped AST Node Kind
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AstKind<'a> {
     Root,

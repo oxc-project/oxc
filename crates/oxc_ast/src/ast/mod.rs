@@ -1,3 +1,5 @@
+//! AST Definitions
+
 mod js;
 mod jsdoc;
 mod jsx;
