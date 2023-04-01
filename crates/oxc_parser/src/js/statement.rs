@@ -417,7 +417,7 @@ impl<'a> Parser<'a> {
                 let expression = self.parse_expression()?;
                 Some(expression)
             }
-            _ => return self.unexpected(),
+            _ => return Err(self.unexpected()),
         };
         self.expect(Kind::Colon)?;
         let mut consequent = self.ast.new_vec();

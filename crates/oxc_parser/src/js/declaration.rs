@@ -51,7 +51,7 @@ impl<'a> Parser<'a> {
             Kind::Var => VariableDeclarationKind::Var,
             Kind::Const => VariableDeclarationKind::Const,
             Kind::Let => VariableDeclarationKind::Let,
-            _ => return self.unexpected(),
+            _ => return Err(self.unexpected()),
         };
         self.bump_any();
 

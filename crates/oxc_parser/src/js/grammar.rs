@@ -152,7 +152,7 @@ impl<'a> CoverGrammar<'a, Property<'a>> for AssignmentTargetProperty<'a> {
                 PropertyKey::Identifier(ident) => {
                     IdentifierReference { span: ident.span, name: ident.unbox().name }
                 }
-                _ => return p.unexpected(),
+                _ => return Err(p.unexpected()),
             };
             let init = match property.value {
                 PropertyValue::Expression(Expression::AssignmentExpression(assignment_expr)) => {

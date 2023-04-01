@@ -137,13 +137,13 @@ impl<'a> Parser<'a> {
     /// Return error info at current token
     /// # Panics
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
-    fn unexpected<T>(&mut self) -> Result<T> {
+    fn unexpected(&mut self) -> Error {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if self.cur_kind() == Kind::Undetermined {
-            return Err(self.lexer.errors.pop().unwrap());
+            return self.lexer.errors.pop().unwrap();
         }
-        Err(diagnostics::UnexpectedToken(self.cur_token().span()).into())
+        diagnostics::UnexpectedToken(self.cur_token().span()).into()
     }
 
     /// Push a Syntax Error

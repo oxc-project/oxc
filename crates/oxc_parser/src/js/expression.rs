@@ -47,7 +47,7 @@ impl<'a> Parser<'a> {
     pub fn parse_identifier_reference(&mut self) -> Result<IdentifierReference> {
         // allow `await` and `yield`, let semantic analysis report error
         if !self.cur_kind().is_identifier_reference(false, false) {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
@@ -57,7 +57,7 @@ impl<'a> Parser<'a> {
     /// `BindingIdentifier` : Identifier
     pub fn parse_binding_identifier(&mut self) -> Result<BindingIdentifier> {
         if !self.cur_kind().is_binding_identifier() {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
@@ -66,7 +66,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_label_identifier(&mut self) -> Result<LabelIdentifier> {
         if !self.cur_kind().is_label_identifier(self.ctx.has_yield(), self.ctx.has_await()) {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.check_identifier(span, &name);
@@ -75,7 +75,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_identifier_name(&mut self) -> Result<IdentifierName> {
         if !self.cur_kind().is_identifier_name() {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         Ok(IdentifierName { span, name })
@@ -174,7 +174,7 @@ impl<'a> Parser<'a> {
                 match self.cur_kind() {
                     Kind::Dot => self.parse_meta_property(span, identifier),
                     Kind::LParen => self.parse_import_expression(span),
-                    _ => self.unexpected(),
+                    _ => Err(self.unexpected()),
                 }
             }
             Kind::LParen => self.parse_parenthesized_expression(span),
@@ -243,7 +243,7 @@ impl<'a> Parser<'a> {
                         .map(|literal| self.ast.literal_number_expression(literal))
                 }
             }
-            _ => self.unexpected(),
+            _ => Err(self.unexpected()),
         }
     }
 
@@ -252,7 +252,7 @@ impl<'a> Parser<'a> {
         let value = match self.cur_kind() {
             Kind::True => true,
             Kind::False => false,
-            _ => return self.unexpected(),
+            _ => return Err(self.unexpected()),
         };
         self.bump_any();
         Ok(BooleanLiteral { span: self.end_span(span), value })
@@ -271,7 +271,7 @@ impl<'a> Parser<'a> {
             Kind::Binary => NumberBase::Binary,
             Kind::Octal => NumberBase::Octal,
             Kind::Hex => NumberBase::Hex,
-            _ => return self.unexpected(),
+            _ => return Err(self.unexpected()),
         };
         let value = self.cur_token().value.as_number();
         let raw = self.cur_src();
@@ -283,7 +283,7 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         let value = match self.cur_kind() {
             kind if kind.is_number() => self.cur_token().value.as_bigint(),
-            _ => return self.unexpected(),
+            _ => return Err(self.unexpected()),
         };
         self.bump_any();
         Ok(BigintLiteral { span: self.end_span(span), value })
@@ -293,7 +293,7 @@ impl<'a> Parser<'a> {
         let span = self.start_span();
         let r = match self.cur_kind() {
             Kind::RegExp => self.cur_token().value.as_regex(),
-            _ => return self.unexpected(),
+            _ => return Err(self.unexpected()),
         };
         let pattern = Atom::from(r.pattern);
         let flags = r.flags;
@@ -307,7 +307,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_literal_string(&mut self) -> Result<StringLiteral> {
         if !self.at(Kind::Str) {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
         let TokenValue::String(value) = std::mem::take(&mut self.token.value) else {
             unreachable!()
@@ -680,7 +680,7 @@ impl<'a> Parser<'a> {
                         let arguments = p.parse_ts_type_arguments()?;
                         if p.at(Kind::RAngle) {
                             // a<b>>c is not (a<b>)>c, but a<(b>>c)
-                            return p.unexpected();
+                            return Err(p.unexpected());
                         }
 
                         // a<b>c is (a<b)>c
@@ -690,7 +690,7 @@ impl<'a> Parser<'a> {
                             && p.cur_kind().is_at_expression()
                             && !p.cur_token().is_on_new_line
                         {
-                            return p.unexpected();
+                            return Err(p.unexpected());
                         }
 
                         type_arguments = arguments;
@@ -721,7 +721,7 @@ impl<'a> Parser<'a> {
                 let arguments = p.parse_ts_type_arguments()?;
                 if p.at(Kind::RAngle) {
                     // a<b>>c is not (a<b>)>c, but a<(b>>c)
-                    return p.unexpected();
+                    return Err(p.unexpected());
                 }
 
                 // a<b>c is (a<b)>c
@@ -731,7 +731,7 @@ impl<'a> Parser<'a> {
                     && p.cur_kind().is_at_expression()
                     && !p.cur_token().is_on_new_line
                 {
-                    return p.unexpected();
+                    return Err(p.unexpected());
                 }
 
                 type_arguments = arguments;

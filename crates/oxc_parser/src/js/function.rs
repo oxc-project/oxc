@@ -99,7 +99,7 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
         if !self.ts_enabled() && body.is_none() {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
 
         let function_type = if body.is_none() {
