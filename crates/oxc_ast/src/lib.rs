@@ -4,6 +4,7 @@
 #![feature(let_chains)]
 #![feature(is_some_and)]
 
+#[cfg(feature = "serde")]
 mod serialize;
 
 pub mod ast;

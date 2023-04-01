@@ -21,6 +21,6 @@ unicode-id-start = "1.1.0"
 num-bigint = "0.4.3"
 
 [dev-dependencies]
+oxc_ast = { workspace = true, features = ["serde"] }
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
-oxc_ast = { workspace = true }
 serde_json = { workspace = true }

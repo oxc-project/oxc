@@ -1,6 +1,7 @@
 use std::hash::{Hash, Hasher};
 
 use miette::{SourceOffset, SourceSpan};
+#[cfg(feature = "serde")]
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
@@ -10,7 +11,8 @@ use crate::ast::*;
 /// See the [`text-size`](https://docs.rs/text-size) crate for details.
 /// Utility methods can be copied from the `text-size` crate if they are needed.
 /// NOTE: `u32` is sufficient for "all" reasonable programs. Larger than u32 is a 4GB JS file.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, PartialOrd, Ord)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Span {
     pub start: u32,
     pub end: u32,
