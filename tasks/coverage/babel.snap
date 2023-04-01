@@ -8245,7 +8245,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Character `=`
    ╭─[esprima/invalid-syntax/migrated_0065/input.js:1:1]
  1 │ i #= 42
-   ·    ▲
+   ·    ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

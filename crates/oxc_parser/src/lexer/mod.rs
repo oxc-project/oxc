@@ -726,11 +726,15 @@ impl<'a> Lexer<'a> {
                 self.identifier_unicode_escape_sequence(&mut builder, true);
             }
             Some(c) => {
-                self.error(diagnostics::InvalidCharacter(c, Span::new(start, self.offset() - 1)));
+                #[allow(clippy::cast_possible_truncation)]
+                self.error(diagnostics::InvalidCharacter(
+                    c,
+                    Span::new(start, start + c.len_utf8() as u32),
+                ));
                 return Kind::Undetermined;
             }
             None => {
-                self.error(diagnostics::UnexpectedEnd(Span::new(start, self.offset() - 1)));
+                self.error(diagnostics::UnexpectedEnd(Span::new(start, start)));
                 return Kind::Undetermined;
             }
         }

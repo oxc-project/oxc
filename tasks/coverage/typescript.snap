@@ -3681,8 +3681,9 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[classes/members/privateNames/privateNameHashCharName.ts:2:1]
  2 │ 
  3 │ #
-   ·  ▲
+   ·  ─
  4 │ 
+ 5 │ class C {
    ╰────
 
   × Private field 'x' must be declared in an enclosing class

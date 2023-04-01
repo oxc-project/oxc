@@ -1452,7 +1452,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/comments/hashbang/function-body.js:18:1]
  18 │ 
  19 │ function fn() {#!
-    ·                 ▲
+    ·                 ─
  20 │ }
     ╰────
 
@@ -1469,7 +1469,7 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-directive-prologue-sc.js:1:1]
  1 │ "use strict";
  2 │ #!
-   ·  ▲
+   ·  ─
  3 │ 
    ╰────
 
@@ -1477,14 +1477,14 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-directive-prologue.js:1:1]
  1 │ "use strict"
  2 │ #!
-   ·  ▲
+   ·  ─
  3 │ 
    ╰────
 
   × Invalid Character `!`
    ╭─[language/comments/hashbang/preceding-empty-statement.js:1:1]
  1 │ ;#!
-   ·   ▲
+   ·   ─
  2 │ 
    ╰────
 
@@ -1492,7 +1492,7 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-hashbang.js:1:1]
  1 │ #!
  2 │ #!
-   ·  ▲
+   ·  ─
  3 │ 
    ╰────
 
@@ -1500,7 +1500,7 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-line-comment.js:1:1]
  1 │ //
  2 │ #!
-   ·  ▲
+   ·  ─
  3 │ 
    ╰────
 
@@ -1508,14 +1508,14 @@ Negative Passed: 3915/3915 (100.00%)
    ╭─[language/comments/hashbang/preceding-multi-line-comment.js:1:1]
  1 │ /*
  2 │ */#!
-   ·    ▲
+   ·    ─
  3 │ 
    ╰────
 
   × Invalid Character `!`
    ╭─[language/comments/hashbang/preceding-whitespace.js:1:1]
  1 │  #!
-   ·   ▲
+   ·   ─
  2 │ 
    ╰────
 
@@ -1523,7 +1523,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/comments/hashbang/statement-block.js:19:1]
  19 │ {
  20 │   #!
-    ·    ▲
+    ·    ─
  21 │ }
     ╰────
 
@@ -11309,7 +11309,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-error.js:34:1]
  34 │ var C = class {
  35 │   # x
-    ·    ▲
+    ·    ─
  36 │ };
     ╰────
 
@@ -11349,7 +11349,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:27:1]
  27 │ var C = class {
  28 │   get # m() {}
-    ·        ▲
+    ·        ─
  29 │ };
     ╰────
 
@@ -11366,7 +11366,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:27:1]
  27 │ var C = class {
  28 │   set # m(_) {}
-    ·        ▲
+    ·        ─
  29 │ };
     ╰────
 
@@ -11383,7 +11383,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:27:1]
  27 │ var C = class {
  28 │   async * # m() {}
-    ·            ▲
+    ·            ─
  29 │ };
     ╰────
 
@@ -11391,7 +11391,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:27:1]
  27 │ var C = class {
  28 │   async # m() {}
-    ·          ▲
+    ·          ─
  29 │ };
     ╰────
 
@@ -11408,7 +11408,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:36:1]
  36 │   m() {
  37 │     this.f().# x;
-    ·               ▲
+    ·               ─
  38 │   }
     ╰────
 
@@ -11416,7 +11416,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field-init.js:27:1]
  27 │ var C = class {
  28 │   # x = 1;
-    ·    ▲
+    ·    ─
  29 │ };
     ╰────
 
@@ -11424,7 +11424,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js:27:1]
  27 │ var C = class {
  28 │   # x;
-    ·    ▲
+    ·    ─
  29 │ };
     ╰────
 
@@ -11432,7 +11432,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-gen-meth.js:27:1]
  27 │ var C = class {
  28 │   * # m() {}
-    ·      ▲
+    ·      ─
  29 │ };
     ╰────
 
@@ -11440,7 +11440,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-member-expr.js:31:1]
  31 │   m() {
  32 │     this.# x;
-    ·           ▲
+    ·           ─
  33 │   }
     ╰────
 
@@ -11448,7 +11448,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:27:1]
  27 │ var C = class {
  28 │   # m() {}
-    ·    ▲
+    ·    ─
  29 │ };
     ╰────
 
@@ -11456,7 +11456,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:27:1]
  27 │ var C = class {
  28 │   static get # m() {}
-    ·               ▲
+    ·               ─
  29 │ };
     ╰────
 
@@ -11473,7 +11473,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:27:1]
  27 │ var C = class {
  28 │   static set # m(_) {}
-    ·               ▲
+    ·               ─
  29 │ };
     ╰────
 
@@ -11490,7 +11490,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:27:1]
  27 │ var C = class {
  28 │   static async * # m() {}
-    ·                   ▲
+    ·                   ─
  29 │ };
     ╰────
 
@@ -11498,7 +11498,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:27:1]
  27 │ var C = class {
  28 │   static async # m() {}
-    ·                 ▲
+    ·                 ─
  29 │ };
     ╰────
 
@@ -11515,7 +11515,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:27:1]
  27 │ var C = class {
  28 │   static # x = 1;
-    ·           ▲
+    ·           ─
  29 │ };
     ╰────
 
@@ -11532,7 +11532,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:27:1]
  27 │ var C = class {
  28 │   static # x;
-    ·           ▲
+    ·           ─
  29 │ };
     ╰────
 
@@ -11549,7 +11549,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:27:1]
  27 │ var C = class {
  28 │   static * # m() {}
-    ·             ▲
+    ·             ─
  29 │ };
     ╰────
 
@@ -11557,7 +11557,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:27:1]
  27 │ var C = class {
  28 │   static # m() {}
-    ·           ▲
+    ·           ─
  29 │ };
     ╰────
 
@@ -26715,7 +26715,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-error.js:34:1]
  34 │ class C {
  35 │   # x
-    ·    ▲
+    ·    ─
  36 │ }
     ╰────
 
@@ -26755,7 +26755,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:27:1]
  27 │ class C {
  28 │   get # m() {}
-    ·        ▲
+    ·        ─
  29 │ }
     ╰────
 
@@ -26772,7 +26772,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:27:1]
  27 │ class C {
  28 │   set # m(_) {}
-    ·        ▲
+    ·        ─
  29 │ }
     ╰────
 
@@ -26789,7 +26789,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-gen-meth.js:27:1]
  27 │ class C {
  28 │   async * # m() {}
-    ·            ▲
+    ·            ─
  29 │ }
     ╰────
 
@@ -26797,7 +26797,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:27:1]
  27 │ class C {
  28 │   async # m() {}
-    ·          ▲
+    ·          ─
  29 │ }
     ╰────
 
@@ -26814,7 +26814,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-call-expr.js:36:1]
  36 │   m() {
  37 │     this.f().# x;
-    ·               ▲
+    ·               ─
  38 │   }
     ╰────
 
@@ -26822,7 +26822,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field-init.js:27:1]
  27 │ class C {
  28 │   # x = 1;
-    ·    ▲
+    ·    ─
  29 │ }
     ╰────
 
@@ -26830,7 +26830,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-field.js:27:1]
  27 │ class C {
  28 │   # x;
-    ·    ▲
+    ·    ─
  29 │ }
     ╰────
 
@@ -26838,7 +26838,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-gen-meth.js:27:1]
  27 │ class C {
  28 │   * # m() {}
-    ·      ▲
+    ·      ─
  29 │ }
     ╰────
 
@@ -26846,7 +26846,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-member-expr.js:31:1]
  31 │   m() {
  32 │     this.# x;
-    ·           ▲
+    ·           ─
  33 │   }
     ╰────
 
@@ -26854,7 +26854,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-meth.case.js:27:1]
  27 │ class C {
  28 │   # m() {}
-    ·    ▲
+    ·    ─
  29 │ }
     ╰────
 
@@ -26862,7 +26862,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:27:1]
  27 │ class C {
  28 │   static get # m() {}
-    ·               ▲
+    ·               ─
  29 │ }
     ╰────
 
@@ -26879,7 +26879,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:27:1]
  27 │ class C {
  28 │   static set # m(_) {}
-    ·               ▲
+    ·               ─
  29 │ }
     ╰────
 
@@ -26896,7 +26896,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-gen-meth.js:27:1]
  27 │ class C {
  28 │   static async * # m() {}
-    ·                   ▲
+    ·                   ─
  29 │ }
     ╰────
 
@@ -26904,7 +26904,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:27:1]
  27 │ class C {
  28 │   static async # m() {}
-    ·                 ▲
+    ·                 ─
  29 │ }
     ╰────
 
@@ -26921,7 +26921,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:27:1]
  27 │ class C {
  28 │   static # x = 1;
-    ·           ▲
+    ·           ─
  29 │ }
     ╰────
 
@@ -26938,7 +26938,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:27:1]
  27 │ class C {
  28 │   static # x;
-    ·           ▲
+    ·           ─
  29 │ }
     ╰────
 
@@ -26955,7 +26955,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-gen-meth.js:27:1]
  27 │ class C {
  28 │   static * # m() {}
-    ·             ▲
+    ·             ─
  29 │ }
     ╰────
 
@@ -26963,7 +26963,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:27:1]
  27 │ class C {
  28 │   static # m() {}
-    ·           ▲
+    ·           ─
  29 │ }
     ╰────
 
@@ -31487,7 +31487,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/function/invalid-function-body-3.js:16:1]
  16 │ 
  17 │ function __func(){# ABC}
-    ·                    ▲
+    ·                    ─
     ╰────
 
   × Expected `(` but found `.`
