@@ -6,8 +6,8 @@ use serde::{
 
 use crate::{
     ast::{
-        ArrowExpression, Directive, FormalParameters, FunctionBody, MemberExpression, Program,
-        Statement,
+        ArrowExpression, Directive, FormalParameters, FunctionBody, MemberExpression, NullLiteral,
+        Program, Statement,
     },
     ModuleKind,
 };
@@ -89,6 +89,20 @@ impl<'a, 'b> Serialize for BlockWrapper<'a, 'b> {
             seq.serialize_element(e)?;
         }
         seq.end()
+    }
+}
+
+impl Serialize for NullLiteral {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("NullLiteral", 4)?;
+        state.serialize_field("type", &"Literal")?;
+        state.serialize_field("start", &self.span.start)?;
+        state.serialize_field("end", &self.span.end)?;
+        state.serialize_field("value", &())?;
+        state.end()
     }
 }
 

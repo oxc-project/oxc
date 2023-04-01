@@ -1,5 +1,5 @@
-#[cfg(feature = "tarpaulin")]
 #[test]
+#[cfg(tarpaulin)]
 fn test() {
     use oxc_coverage::{
         AppArgs, BabelCase, BabelSuite, PrinterTest262Case, Suite, Test262Case, Test262Suite,
