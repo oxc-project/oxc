@@ -108,3 +108,10 @@ expression: no_mixed_operators
    ╰────
   help: Use parentheses to clarify the intended order of operations.
 
+  ⚠ eslint(no-mixed-operators): Unexpected mix of in with ??
+   ╭─[no_mixed_operators.tsx:1:1]
+ 1 │ a in b ?? c
+   ·   ──   ──
+   ╰────
+  help: Use parentheses to clarify the intended order of operations.
+
