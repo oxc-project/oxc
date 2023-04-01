@@ -17,7 +17,7 @@ use std::{collections::VecDeque, str::Chars};
 
 use oxc_allocator::{Allocator, String};
 use oxc_ast::{ast::RegExpFlags, SourceType, Span};
-use oxc_diagnostics::{Diagnostics, Error};
+use oxc_diagnostics::Error;
 use simd::{SkipMultilineComment, SkipWhitespace};
 pub use token::{RegExp, Token, TokenValue};
 
@@ -60,7 +60,7 @@ pub struct Lexer<'a> {
 
     current: LexerCheckpoint<'a>,
 
-    errors: Diagnostics,
+    pub(crate) errors: Vec<Error>,
 
     lookahead: VecDeque<LexerCheckpoint<'a>>,
 
@@ -72,25 +72,19 @@ pub struct Lexer<'a> {
 #[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
     #[must_use]
-    pub fn new(
-        allocator: &'a Allocator,
-        source: &'a str,
-        errors: Diagnostics,
-        source_type: SourceType,
-    ) -> Self {
+    pub fn new(allocator: &'a Allocator, source: &'a str, source_type: SourceType) -> Self {
         let token = Token {
             // the first token is at the start of file, so is allows on a new line
             is_on_new_line: true,
             ..Token::default()
         };
-        let current =
-            LexerCheckpoint { chars: source.chars(), token, errors_pos: errors.borrow().len() };
+        let current = LexerCheckpoint { chars: source.chars(), token, errors_pos: 0 };
         Self {
             allocator,
             source,
             source_type,
             current,
-            errors,
+            errors: vec![],
             lookahead: VecDeque::with_capacity(4),
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
@@ -110,13 +104,13 @@ impl<'a> Lexer<'a> {
         LexerCheckpoint {
             chars: self.current.chars.clone(),
             token: self.current.token.clone(),
-            errors_pos: self.errors.borrow().len(),
+            errors_pos: self.errors.len(),
         }
     }
 
     /// Rewinds the lexer to the same state as when the passed in `checkpoint` was created.
     pub fn rewind(&mut self, checkpoint: LexerCheckpoint<'a>) {
-        self.errors.borrow_mut().truncate(checkpoint.errors_pos);
+        self.errors.truncate(checkpoint.errors_pos);
         self.current = checkpoint;
         self.lookahead.clear();
     }
@@ -147,7 +141,7 @@ impl<'a> Lexer<'a> {
             self.lookahead.push_back(LexerCheckpoint {
                 chars: self.current.chars.clone(),
                 token: peeked,
-                errors_pos: self.errors.borrow().len(),
+                errors_pos: self.errors.len(),
             });
         }
 
@@ -255,7 +249,7 @@ impl<'a> Lexer<'a> {
 
     // ---------- Private Methods ---------- //
     fn error<T: Into<Error>>(&mut self, error: T) {
-        self.errors.borrow_mut().push(error.into());
+        self.errors.push(error.into());
     }
 
     /// Get the length offset from the source, in UTF-8 bytes

@@ -19,7 +19,7 @@ use std::rc::Rc;
 
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span, Trivias};
-use oxc_diagnostics::{Diagnostics, Error, Result};
+use oxc_diagnostics::{Error, Result};
 
 use crate::{
     lexer::{Kind, Lexer, Token},
@@ -48,7 +48,7 @@ pub struct Parser<'a> {
 
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
-    errors: Diagnostics,
+    errors: Vec<Error>,
 
     /// The current parsing token
     token: Token<'a>,
@@ -69,12 +69,11 @@ pub struct Parser<'a> {
 impl<'a> Parser<'a> {
     #[must_use]
     pub fn new(allocator: &'a Allocator, source: &'a str, source_type: SourceType) -> Self {
-        let errors = Diagnostics::default();
         Self {
-            lexer: Lexer::new(allocator, source, errors.clone(), source_type),
+            lexer: Lexer::new(allocator, source, source_type),
             source_type,
             source,
-            errors,
+            errors: vec![],
             token: Token::default(),
             prev_token_end: 0,
             state: ParserState::new(allocator),
@@ -107,7 +106,7 @@ impl<'a> Parser<'a> {
                 (program, true)
             }
         };
-        let errors = self.errors.borrow_mut().drain(..).collect();
+        let errors = self.lexer.errors.into_iter().chain(self.errors).collect();
         let trivias = self.lexer.trivia_builder.build();
         ParserReturn { program, errors, trivias, panicked }
     }
@@ -138,18 +137,18 @@ impl<'a> Parser<'a> {
     /// Return error info at current token
     /// # Panics
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
-    fn unexpected<T>(&self) -> Result<T> {
+    fn unexpected<T>(&mut self) -> Result<T> {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if self.cur_kind() == Kind::Undetermined {
-            return Err(self.errors.borrow_mut().pop().unwrap());
+            return Err(self.lexer.errors.pop().unwrap());
         }
         Err(diagnostics::UnexpectedToken(self.cur_token().span()).into())
     }
 
     /// Push a Syntax Error
     fn error<T: Into<Error>>(&mut self, error: T) {
-        self.errors.borrow_mut().push(error.into());
+        self.errors.push(error.into());
     }
 
     #[must_use]
