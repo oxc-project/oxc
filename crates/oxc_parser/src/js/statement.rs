@@ -1,9 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{
-    ast::*,
-    context::{Context, StatementContext},
-    Span,
-};
+use oxc_ast::{ast::*, Span};
 use oxc_diagnostics::Result;
 
 use super::{
@@ -11,7 +7,12 @@ use super::{
     grammar::CoverGrammar,
     list::SwitchCases,
 };
-use crate::{diagnostics, lexer::Kind, list::NormalList, Parser};
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    list::NormalList,
+    Parser, {Context, StatementContext},
+};
 
 impl<'a> Parser<'a> {
     /// `https://tc39.es/ecma262/#prod-StatementList`

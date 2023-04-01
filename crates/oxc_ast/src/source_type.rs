@@ -2,8 +2,6 @@ use std::path::Path;
 
 use thiserror::Error;
 
-use crate::context::Context;
-
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SourceType {
@@ -62,16 +60,6 @@ impl Default for SourceType {
 pub const VALID_EXTENSIONS: [&str; 8] = ["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 impl SourceType {
-    #[must_use]
-    pub fn default_context(&self) -> Context {
-        let ctx = Context::default().and_ambient(self.is_typescript_definition());
-        match self.module_kind {
-            ModuleKind::Script => ctx,
-            // for [top-level-await](https://tc39.es/proposal-top-level-await/)
-            ModuleKind::Module => ctx.and_await(true),
-        }
-    }
-
     #[must_use]
     pub fn is_script(self) -> bool {
         self.module_kind == ModuleKind::Script

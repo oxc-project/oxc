@@ -1,13 +1,9 @@
 use oxc_allocator::Box;
-use oxc_ast::{
-    ast::*,
-    context::{Context, StatementContext},
-    AstBuilder, GetSpan, Span,
-};
+use oxc_ast::{ast::*, AstBuilder, GetSpan, Span};
 use oxc_diagnostics::Result;
 
 use super::list::FormalParameterList;
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser, StatementContext};
 
 type ArrowFunctionHead<'a> = (
     Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

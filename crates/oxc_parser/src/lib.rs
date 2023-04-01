@@ -4,6 +4,7 @@
 #![feature(portable_simd)]
 #![feature(slice_as_chunks)]
 
+mod context;
 mod cursor;
 mod list;
 mod state;
@@ -17,8 +18,9 @@ mod lexer;
 
 use std::rc::Rc;
 
+use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, context::Context, AstBuilder, SourceType, Span, Trivias};
+use oxc_ast::{ast::Program, AstBuilder, ModuleKind, SourceType, Span, Trivias};
 use oxc_diagnostics::{Error, Result};
 
 use crate::{
@@ -77,7 +79,7 @@ impl<'a> Parser<'a> {
             token: Token::default(),
             prev_token_end: 0,
             state: ParserState::new(allocator),
-            ctx: source_type.default_context(),
+            ctx: Self::default_context(source_type),
             ast: AstBuilder::new(allocator),
         }
     }
@@ -121,6 +123,16 @@ impl<'a> Parser<'a> {
 
         let span = Span::new(0, self.source.len() as u32);
         Ok(self.ast.program(span, directives, statements, self.source_type))
+    }
+
+    #[must_use]
+    pub fn default_context(source_type: SourceType) -> Context {
+        let ctx = Context::default().and_ambient(source_type.is_typescript_definition());
+        match source_type.module_kind() {
+            ModuleKind::Script => ctx,
+            // for [top-level-await](https://tc39.es/proposal-top-level-await/)
+            ModuleKind::Module => ctx.and_await(true),
+        }
     }
 
     /// Check for Flow declaration if the file cannot be parsed.
