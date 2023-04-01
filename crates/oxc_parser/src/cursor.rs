@@ -261,7 +261,7 @@ impl<'a> Parser<'a> {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token.clone(),
             prev_span_end: self.prev_token_end,
-            errors_pos: self.errors.borrow().len(),
+            errors_pos: self.errors.len(),
         }
     }
 
@@ -272,7 +272,7 @@ impl<'a> Parser<'a> {
         self.lexer.rewind(lexer);
         self.token = cur_token;
         self.prev_token_end = prev_span_end;
-        self.errors.borrow_mut().truncate(errors_lens);
+        self.errors.truncate(errors_lens);
     }
 
     /// # Errors
