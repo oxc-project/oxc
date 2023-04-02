@@ -1,7 +1,7 @@
 TypeScript Summary:
-AST Parsed     : 2336/2340 (99.83%)
-Positive Passed: 2330/2340 (99.57%)
-Negative Passed: 672/2532 (26.54%)
+AST Parsed     : 2337/2337 (100.00%)
+Positive Passed: 2331/2337 (99.74%)
+Negative Passed: 673/2535 (26.55%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -1012,6 +1012,8 @@ Expect Syntax Error: "jsx/checkJsxChildrenProperty7.tsx"
 Expect Syntax Error: "jsx/checkJsxGenericTagHasCorrectInferences.tsx"
 Expect Syntax Error: "jsx/jsxEsprimaFbTestSuite.tsx"
 Expect Syntax Error: "jsx/jsxSpreadOverwritesAttributeStrict.tsx"
+Expect Syntax Error: "jsx/jsxs/jsxJsxsCjsTransformCustomImport.tsx"
+Expect Syntax Error: "jsx/jsxs/jsxJsxsCjsTransformKeyPropCustomImport.tsx"
 Expect Syntax Error: "jsx/tsxAttributeErrors.tsx"
 Expect Syntax Error: "jsx/tsxAttributeResolution1.tsx"
 Expect Syntax Error: "jsx/tsxAttributeResolution15.tsx"
@@ -1926,45 +1928,6 @@ Expect to Parse: "externalModules/topLevelAwait.3.ts"
  7 │ declare const await: any;
  8 │ declare class C extends await {}
    ·                         ─────
-   ╰────
-Expect to Parse: "jsdoc/declarations/jsDeclarationsNonIdentifierInferredNames.ts"
-
-  × Unexpected token
-    ╭─[jsdoc/declarations/jsDeclarationsNonIdentifierInferredNames.ts:11:1]
- 11 │ export const ExampleFunctionalComponent = ({ "data-testid": dataTestId, [dynPropName]: dynProp }) => (
- 12 │     <>Hello</>
-    ·      ─
- 13 │ );
-    ╰────
-Expect to Parse: "jsx/jsxAttributeInitializer.ts"
-
-  × Expected `>` but found `Identifier`
-   ╭─[jsx/jsxAttributeInitializer.ts:5:1]
- 5 │ <div>
- 6 │     <div attr=<div /> />
-   ·          ──┬─
-   ·            ╰── `>` expected
- 7 │     <div attr=<div>foo</div> />
-   ╰────
-Expect to Parse: "jsx/tsxEmitSpreadAttribute.ts"
-
-  × Expected `>` but found `Identifier`
-   ╭─[jsx/tsxEmitSpreadAttribute.ts:7:1]
- 7 │ export function T1(a: any) {
- 8 │     return <div className={"T1"} { ...a }>T1</div>;
-   ·                 ────┬────
-   ·                     ╰── `>` expected
- 9 │ }
-   ╰────
-Expect to Parse: "jsx/tsxReactEmitSpreadAttribute.ts"
-
-  × Expected `>` but found `Identifier`
-   ╭─[jsx/tsxReactEmitSpreadAttribute.ts:6:1]
- 6 │ export function T1(a: any) {
- 7 │     return <div className={"T1"} { ...a }>T1</div>;
-   ·                 ────┬────
-   ·                     ╰── `>` expected
- 8 │ }
    ╰────
 Expect to Parse: "salsa/plainJSRedeclare3.ts"
 
@@ -8156,6 +8119,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  9 │ 
    ╰────
 
+  × Unexpected token
+    ╭─[jsx/jsxAttributeInitializer.ts:8:1]
+  8 │     <div attr=<><div>foo</div></> />
+  9 │     <div attr= />
+    ·                ─
+ 10 │ </div>
+    ╰────
+
   × TS18007: JSX expressions may not use the comma operator.
     ╭─[jsx/jsxParsingError1.tsx:13:1]
  13 │ const class2 = "bar";
@@ -8165,11 +8136,11 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   help: Did you mean to write an array?
 
   × Unexpected token
-    ╭─[jsx/jsxUnclosedParserRecovery.ts:14:1]
+    ╭─[jsx/jsxUnclosedParserRecovery.ts:13:1]
+ 13 │ var donkey = <div>
  14 │     <
+    ·     ─
  15 │ </div>;
-    ·  ─
- 16 │ function noName() { }
     ╰────
 
   × Invalid characters after number
