@@ -8550,7 +8550,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Missing catch or finally clause
    ╭─[esprima/invalid-syntax/migrated_0133/input.js:1:1]
  1 │ try { }
-   ·        ─
+   ·        ▲
    ╰────
 
   × Unexpected token

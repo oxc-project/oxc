@@ -456,8 +456,8 @@ impl<'a> Parser<'a> {
 
         let finalizer = self.eat(Kind::Finally).then(|| self.parse_block()).transpose()?;
 
-        let range = Span::new(self.prev_token_end, self.prev_token_end + 1);
         if handler.is_none() && finalizer.is_none() {
+            let range = Span::new(block.span.end, block.span.end);
             self.error(diagnostics::ExpectCatchFinally(range));
         }
 
