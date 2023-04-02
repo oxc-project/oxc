@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{AssignmentOperator, BinaryOperator, Expression, UnaryOperator},
+    ast::{AssignmentOperator, BinaryOperator, Expression, UnaryOperator, BinaryExpression},
     AstKind, Span,
 };
 use oxc_diagnostics::{
@@ -149,32 +149,37 @@ fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {
                 unary_expr.operator != UnaryOperator::Typeof
             }
         }
-        Expression::BinaryExpression(bin_expr) => {
-            is_numeric_expr(&bin_expr.left, false) && is_numeric_expr(&bin_expr.right, false)
-        }
+        Expression::BinaryExpression(binary_expr) => !is_string_concat(binary_expr),
         Expression::ParenthesizedExpression(paren_expr) => {
             is_numeric_expr(&paren_expr.expression, false)
         }
-        _ => expr.is_undefined(),
+        _ => {
+            if is_outer_most {
+                expr.is_undefined() 
+            } else {
+                !expr.is_string_literal() 
+            }
+        }
     }
 }
 
 fn contains_string_literal(expr: &Expression) -> bool {
     match expr {
         Expression::StringLiteral(_) => true,
-        Expression::UnaryExpression(unary_expr) => {
-            unary_expr.operator == UnaryOperator::Typeof
-        }
-        Expression::BinaryExpression(binary_expr) => {
-            binary_expr.operator == BinaryOperator::Addition && (
-                contains_string_literal(&binary_expr.left) || contains_string_literal(&binary_expr.right)
-            )
-        }
+        Expression::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::Typeof,
+        
+        Expression::BinaryExpression(binary_expr) => is_string_concat(binary_expr), 
         Expression::ParenthesizedExpression(paren_expr) => {
             contains_string_literal(&paren_expr.expression)
         }
         _ => false,
     }
+}
+
+fn is_string_concat(binary_expr: &BinaryExpression) -> bool {
+    binary_expr.operator == BinaryOperator::Addition && (
+        contains_string_literal(&binary_expr.left) || contains_string_literal(&binary_expr.right)
+    ) 
 }
 
 #[test]
@@ -185,29 +190,37 @@ fn test() {
         ("var a = obj && obj.a", None),
         ("var a = obj || obj.a", None),
         ("var a = obj1 & obj2.a", None),
+        ("var a = b | c", None),
         ("var a = options || {}", None),
         ("var a = options | 1", None),
-        ("var a = b | c", None),
         ("var a = options | undefined", None),
         ("var a = options | null", None),
         ("var a = options | ~{}", None),
+        ("var a = options | (1 + 2 + (3 + !''))", None),
+        ("var a = options | (1 + 2 + (3 + !4))", None),
+        ("var a = options | (1 + 2 + (3 + +false))", None),
+        ("var a = options | (1 + 2 + (3 * '4'))", None),
+        ("var a = options | (1 + 2 + (3 * ('4' + 5)))", None),
+        ("var a = options | (1 + 2 + (3 + 4))", None),
+        ("var a = options | (1 + {})", None),
         ("var a = 1 | {}", None),
         ("var a = 1 | ''", None),
         ("var a = 1 | true", None),
         ("var a = {} | 1", None),
         ("var a = '' | 1", None),
         ("var a = true | 1", None),
-        ("var a = options | (1 + 2 + (3 + 4))", None),
         ("var a = b | (1 + 2 + (3 + c))", None),
-        ("var a = options | (1 + 2 + (3 + !4))", None),
-        ("var a = options | (1 + 2 + (3 + !''))", None),
+        ("var a = 1 + '2' - 3", None),
+        ("var a = '1' + 2 - 3", None),
         ("input |= 1", None),
         ("input |= undefined", None),
         ("input |= null", None),
         ("input |= (1 + 1)", None),
         ("input |= (1 + true)", None),
-        ("input |= (1 + (3 * '1'))", None),
-        ("input |= (1 + (3 - '1'))", None),
+        ("input |= (1 + 2 * '3')", None),
+        ("input |= (1 + (2 + {}))", None),
+        ("input |= ('1' + 2 - 3)", None),
+        ("input |= (1 + '2' - 3)", None),
         ("input |= a", None),
         ("input |= ~{}", None),
         // TODO
@@ -225,6 +238,7 @@ fn test() {
         ("var a = options | false", None),
         ("var a = options | (1 + 2 + typeof {})", None),
         ("var a = options | (1 + 2 + (3 + ''))", None),
+        ("var a = options | (1 + 2 + (3 + '4'))", None),
         ("input |= ''", None),
         ("input |= (1 + '')", None),
         ("input |= (1 + (3 + '1'))", None),
