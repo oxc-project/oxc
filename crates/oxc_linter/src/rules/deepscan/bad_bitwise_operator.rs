@@ -71,23 +71,7 @@ impl Rule for BadBitwiseOperator {
             }
             AstKind::AssignmentExpression(assign_expr) => {
                 if assign_expr.operator == AssignmentOperator::BitwiseOR {
-                    let has_error = match &assign_expr.right {
-                        Expression::NumberLiteral(_)
-                        | Expression::NullLiteral(_)
-                        | Expression::Identifier(_) => false,
-                        Expression::UnaryExpression(expr) => {
-                            expr.operator == UnaryOperator::Typeof || expr.operator == UnaryOperator::LogicalNot 
-                        }
-                        Expression::BinaryExpression(expr) => {
-                            contains_string_literal(&expr.right)
-                        }
-                        Expression::ParenthesizedExpression(expr) => {
-                            contains_string_literal(&expr.expression)
-                        }
-                        expr => !expr.is_undefined(),
-                    };
-
-                    if has_error {
+                    if !is_numeric_expr(&assign_expr.right, true) {
                         ctx.diagnostic(BadBitwiseOrOperatorDiagnostic(assign_expr.span));
                     }
                 }
@@ -163,6 +147,12 @@ fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {
     }
 }
 
+fn is_string_concat(binary_expr: &BinaryExpression) -> bool {
+    binary_expr.operator == BinaryOperator::Addition && (
+        contains_string_literal(&binary_expr.left) || contains_string_literal(&binary_expr.right)
+    ) 
+}
+
 fn contains_string_literal(expr: &Expression) -> bool {
     match expr {
         Expression::StringLiteral(_) => true,
@@ -174,12 +164,6 @@ fn contains_string_literal(expr: &Expression) -> bool {
         }
         _ => false,
     }
-}
-
-fn is_string_concat(binary_expr: &BinaryExpression) -> bool {
-    binary_expr.operator == BinaryOperator::Addition && (
-        contains_string_literal(&binary_expr.left) || contains_string_literal(&binary_expr.right)
-    ) 
 }
 
 #[test]
