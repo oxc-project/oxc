@@ -1409,6 +1409,32 @@ impl<'a> AstBuilder<'a> {
 
     #[must_use]
     #[inline]
+    pub fn ts_as_expression(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+        type_annotation: TSType<'a>,
+    ) -> Expression<'a> {
+        Expression::TSAsExpression(self.alloc(TSAsExpression { span, expression, type_annotation }))
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn ts_satisfies_expression(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+        type_annotation: TSType<'a>,
+    ) -> Expression<'a> {
+        Expression::TSSatisfiesExpression(self.alloc(TSSatisfiesExpression {
+            span,
+            expression,
+            type_annotation,
+        }))
+    }
+
+    #[must_use]
+    #[inline]
     pub fn ts_non_null_expression(&self, span: Span, expression: Expression<'a>) -> Expression<'a> {
         Expression::TSNonNullExpression(self.alloc(TSNonNullExpression { span, expression }))
     }
@@ -1423,8 +1449,8 @@ impl<'a> AstBuilder<'a> {
     ) -> Expression<'a> {
         Expression::TSTypeAssertion(self.alloc(TSTypeAssertion {
             span,
-            type_annotation,
             expression,
+            type_annotation,
         }))
     }
 

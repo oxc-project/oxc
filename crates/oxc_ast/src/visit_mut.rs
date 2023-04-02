@@ -377,6 +377,7 @@ pub trait VisitMut<'a, 'b>: Sized {
             Expression::JSXFragment(elem) => self.visit_jsx_fragment(elem),
 
             Expression::TSAsExpression(expr) => self.visit_ts_as_expression(expr),
+            Expression::TSSatisfiesExpression(expr) => self.visit_ts_satisfies_expression(expr),
             Expression::TSNonNullExpression(expr) => self.visit_ts_non_null_expression(expr),
             Expression::TSTypeAssertion(expr) => self.visit_ts_type_assertion(expr),
             Expression::TSInstantiationExpression(expr) => {
@@ -597,6 +598,9 @@ pub trait VisitMut<'a, 'b>: Sized {
                 self.visit_member_expression(expr);
             }
             SimpleAssignmentTarget::TSAsExpression(expr) => {
+                self.visit_expression(&mut expr.expression);
+            }
+            SimpleAssignmentTarget::TSSatisfiesExpression(expr) => {
                 self.visit_expression(&mut expr.expression);
             }
             SimpleAssignmentTarget::TSNonNullExpression(expr) => {
@@ -1003,6 +1007,11 @@ pub trait VisitMut<'a, 'b>: Sized {
     }
 
     fn visit_ts_as_expression(&mut self, expr: &'b mut TSAsExpression<'a>) {
+        self.visit_expression(&mut expr.expression);
+        self.visit_ts_type(&mut expr.type_annotation);
+    }
+
+    fn visit_ts_satisfies_expression(&mut self, expr: &'b mut TSSatisfiesExpression<'a>) {
         self.visit_expression(&mut expr.expression);
         self.visit_ts_type(&mut expr.type_annotation);
     }

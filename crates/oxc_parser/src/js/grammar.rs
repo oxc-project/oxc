@@ -51,6 +51,9 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 }
             }
             Expression::TSAsExpression(expr) => Ok(SimpleAssignmentTarget::TSAsExpression(expr)),
+            Expression::TSSatisfiesExpression(expr) => {
+                Ok(SimpleAssignmentTarget::TSSatisfiesExpression(expr))
+            }
             Expression::TSNonNullExpression(expr) => {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(expr))
             }

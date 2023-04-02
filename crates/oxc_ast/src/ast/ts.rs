@@ -755,11 +755,20 @@ pub struct TSAsExpression<'a> {
 
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
+pub struct TSSatisfiesExpression<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub expression: Expression<'a>,
+    pub type_annotation: TSType<'a>,
+}
+
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeAssertion<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub type_annotation: TSType<'a>,
     pub expression: Expression<'a>,
+    pub type_annotation: TSType<'a>,
 }
 
 #[derive(Debug, PartialEq, Hash)]

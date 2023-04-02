@@ -1,7 +1,7 @@
 Babel Summary:
-AST Parsed     : 2064/2071 (99.66%)
-Positive Passed: 2054/2071 (99.18%)
-Negative Passed: 1333/1502 (88.75%)
+AST Parsed     : 2065/2071 (99.71%)
+Positive Passed: 2055/2071 (99.23%)
+Negative Passed: 1332/1502 (88.68%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -45,6 +45,7 @@ Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
 Expect Syntax Error: "typescript/arrow-function/async-rest-optional-parameter/input.ts"
 Expect Syntax Error: "typescript/cast/destructuring-assignent-rest-invalid/input.ts"
+Expect Syntax Error: "typescript/cast/satisfies-const-error/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-assert-and-assign/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-type-assertion-and-assign/input.ts"
 Expect Syntax Error: "typescript/class/abstract-method-in-non-abstract-class-1/input.ts"
@@ -241,15 +242,6 @@ Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
    ╭─[typescript/arrow-function/generic-tsx-babel-7/input.ts:2:1]
  2 │ <T>(a: T): T => a;
    ╰────
-Expect to Parse: "typescript/cast/satisfies/input.ts"
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/cast/satisfies/input.ts:1:1]
- 1 │ x satisfies T;
-   ·  ─
- 2 │ x < y satisfies boolean; // (x < y) satisfies boolean;
-   ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
 
   × Multiple constructor implementations are not allowed.
@@ -9763,13 +9755,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ╰── `,` expected
  2 │ func<T>(a: T);
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/cast/satisfies-const-error/input.ts:1:1]
- 1 │ x satisfies const
-   ·  ─
-   ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/class/declare-new-line-abstract/input.ts:1:1]
