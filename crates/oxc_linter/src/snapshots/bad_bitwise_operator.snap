@@ -10,3 +10,52 @@ expression: bad_bitwise_operator
    ╰────
   help: Bitwise operator '&' seems unintended. Did you mean logical operator '&&'?
 
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ var a = options | {}
+   ·         ────────────
+   ╰────
+  help: Bitwise operator '|' seems unintended. Did you mean logical operator '||'?
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ var a = options | ''
+   ·         ────────────
+   ╰────
+  help: Bitwise operator '|' seems unintended. Did you mean logical operator '||'?
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ var a = options | true
+   ·         ──────────────
+   ╰────
+  help: Bitwise operator '|' seems unintended. Did you mean logical operator '||'?
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ var a = options | false
+   ·         ───────────────
+   ╰────
+  help: Bitwise operator '|' seems unintended. Did you mean logical operator '||'?
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ var a = options | (1 + 2 + (3 + ''))
+   ·         ────────────────────────────
+   ╰────
+  help: Bitwise operator '|' seems unintended. Did you mean logical operator '||'?
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ a = input |= ''
+   ·     ───────────
+   ╰────
+  help: Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ a = input |= (1 + '')
+   ·     ─────────────────
+   ╰────
+  help: Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.
+
