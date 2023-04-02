@@ -336,6 +336,13 @@ impl<'a> Parser<'a> {
                 let expr = self.parse_jsx_expression_container(false)?;
                 Ok(JSXAttributeValue::ExpressionContainer(expr))
             }
+            Kind::LAngle => {
+                if self.peek_at(Kind::RAngle) {
+                    self.parse_jsx_fragment().map(JSXAttributeValue::Fragment)
+                } else {
+                    self.parse_jsx_element(false).map(JSXAttributeValue::Element)
+                }
+            }
             _ => Err(self.unexpected()),
         }
     }
