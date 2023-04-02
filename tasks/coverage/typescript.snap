@@ -1,7 +1,7 @@
 TypeScript Summary:
-AST Parsed     : 2330/2340 (99.57%)
-Positive Passed: 2323/2340 (99.27%)
-Negative Passed: 682/2532 (26.94%)
+AST Parsed     : 2332/2340 (99.66%)
+Positive Passed: 2325/2340 (99.36%)
+Negative Passed: 681/2532 (26.90%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -213,6 +213,7 @@ Expect Syntax Error: "classes/propertyMemberDeclarations/accessorsOverrideProper
 Expect Syntax Error: "classes/propertyMemberDeclarations/accessorsOverrideProperty6.ts"
 Expect Syntax Error: "classes/propertyMemberDeclarations/accessorsOverrideProperty7.ts"
 Expect Syntax Error: "classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationESNext.ts"
+Expect Syntax Error: "classes/propertyMemberDeclarations/autoAccessor11.ts"
 Expect Syntax Error: "classes/propertyMemberDeclarations/autoAccessor5.ts"
 Expect Syntax Error: "classes/propertyMemberDeclarations/autoAccessorExperimentalDecorators.ts"
 Expect Syntax Error: "classes/propertyMemberDeclarations/constructorParameterShadowsOuterScopes.ts"
@@ -1865,26 +1866,6 @@ Expect to Parse: "async/es6/asyncWithVarShadowing_es6.ts"
      ·             ╰── It can not be redeclared here
  134 │     }
      ╰────
-Expect to Parse: "classes/propertyMemberDeclarations/autoAccessor4.ts"
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[classes/propertyMemberDeclarations/autoAccessor4.ts:4:1]
- 4 │ class C1 {
- 5 │     accessor 0: any;
-   ·             ─
- 6 │     accessor 1 = 1;
-   ╰────
-  help: Try insert a semicolon here
-Expect to Parse: "classes/propertyMemberDeclarations/autoAccessorAllowedModifiers.ts"
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[classes/propertyMemberDeclarations/autoAccessorAllowedModifiers.ts:15:1]
- 15 │     accessor "k": any;
- 16 │     accessor 108: any;
-    ·             ─
- 17 │     accessor ["m"]: any;
-    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "classes/propertyMemberDeclarations/staticPropertyNameConflictsInAmbientContext.ts"
 
   × Classes may not have a static property named prototype
@@ -4027,23 +4008,13 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[classes/propertyMemberDeclarations/autoAccessor11.ts:13:1]
- 13 │ 
- 14 │     accessor accessor
-    ·             ─
- 15 │     d;
+  × Unexpected token
+    ╭─[classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:12:1]
+ 12 │     accessor static h: any;
+ 13 │     accessor i() {}
+    ·               ─
+ 14 │     accessor get j() { return false; }
     ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:4:1]
- 4 │ abstract class C1 {
- 5 │     accessor accessor a: any;
-   ·             ─
- 6 │     readonly accessor b: any;
-   ╰────
-  help: Try insert a semicolon here
 
   × Classes can't have a field named 'constructor'
    ╭─[classes/propertyMemberDeclarations/propertyNamedConstructor.ts:1:1]

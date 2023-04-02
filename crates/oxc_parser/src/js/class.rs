@@ -172,12 +172,7 @@ impl<'a> Parser<'a> {
 
         let modifier = self.parse_class_element_modifiers(false);
 
-        let accessor = matches!(
-            self.peek_kind(),
-            // js can use [prop] or "prop" to define a property,
-            // so we need to check `LBrack` and `Str`
-            Kind::Ident | Kind::PrivateIdentifier | Kind::LBrack | Kind::Str
-        ) && self.eat(Kind::Accessor);
+        let accessor = self.peek_kind().is_class_element_name_start() && self.eat(Kind::Accessor);
 
         let accessibility = modifier.accessibility();
 
