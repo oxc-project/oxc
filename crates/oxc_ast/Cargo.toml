@@ -23,7 +23,7 @@ serde_json = { workspace = true, optional = true }
 
 num-bigint = "0.4.3"
 ryu-js = "0.2.2"
-ordered-float = { version = "3.4.0" }
+ordered-float = { version = "3.6.0" }
 
 [features]
 default = []
