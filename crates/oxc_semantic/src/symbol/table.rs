@@ -1,16 +1,16 @@
 use std::ops::{Deref, Index, IndexMut};
 
 use oxc_ast::{Atom, Span};
-use rustc_hash::FxHashMap;
 
+use super::reference::ResolvedReferenceId;
 use super::{Symbol, SymbolFlags, SymbolId};
 use crate::node::AstNodeId;
-use crate::ResolvedReference;
+use crate::{Reference, ResolvedReference};
 
 #[derive(Debug, Default)]
 pub struct SymbolTable {
     symbols: Vec<Symbol>,
-    resolved_references: FxHashMap<AstNodeId, ResolvedReference>,
+    resolved_references: Vec<ResolvedReference>,
 }
 
 impl Index<SymbolId> for SymbolTable {
@@ -61,11 +61,15 @@ impl SymbolTable {
     }
 
     #[must_use]
-    pub fn get_resolved_reference(&self, id: AstNodeId) -> Option<&ResolvedReference> {
-        self.resolved_references.get(&id)
+    pub fn get_resolved_reference(&self, id: ResolvedReferenceId) -> Option<&ResolvedReference> {
+        self.resolved_references.get(id.index0())
     }
 
-    pub fn resolve_reference(&mut self, id: AstNodeId, reference: ResolvedReference) {
-        self.resolved_references.insert(id, reference);
+    /// Resolve `reference` to `symbol_id`
+    pub fn resolve_reference(&mut self, reference: Reference, symbol_id: SymbolId) {
+        let resolved_reference_id = ResolvedReferenceId::new(self.resolved_references.len() + 1);
+        let resolved_reference = reference.resolve_to(symbol_id);
+        self.resolved_references.push(resolved_reference);
+        self.symbols[symbol_id].add_reference(resolved_reference_id);
     }
 }

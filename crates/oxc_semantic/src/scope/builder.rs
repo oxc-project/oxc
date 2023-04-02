@@ -73,10 +73,8 @@ impl ScopeBuilder {
                 let scope = &self.scopes[scope];
                 if let Some(symbol_id) = scope.get().get_variable_symbol_id(&variable) {
                     // We have resolved this reference.
-                    let symbol = &mut symbol_table[symbol_id];
-                    symbol.add_references(&reference);
                     for r in reference {
-                        symbol_table.resolve_reference(r.ast_node_id, r.resolve_to(symbol_id));
+                        symbol_table.resolve_reference(r, symbol_id);
                     }
                     continue 'outer;
                 }

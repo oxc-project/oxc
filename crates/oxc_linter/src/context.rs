@@ -143,6 +143,13 @@ impl<'a> LintContext<'a> {
 
     /* Symbols */
 
+    pub fn is_unresolved_reference(&self, node_id: NodeId) -> bool {
+        let AstKind::IdentifierReference(id) = self.kind(node_id) else { return false; };
+        let reference_node = &self.nodes()[node_id];
+        let scope = self.scope(reference_node);
+        scope.unresolved_references.contains_key(&id.name)
+    }
+
     #[allow(clippy::unused_self)]
     pub fn is_reference_to_global_variable(&self, _ident: &IdentifierReference) -> bool {
         true

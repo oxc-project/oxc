@@ -1,5 +1,7 @@
 #![allow(non_upper_case_globals)]
 
+use std::num::NonZeroUsize;
+
 use bitflags::bitflags;
 use oxc_ast::Span;
 
@@ -81,5 +83,26 @@ impl ResolvedReference {
     #[must_use]
     pub fn span(&self) -> Span {
         self.reference.span
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ResolvedReferenceId(NonZeroUsize);
+
+impl Default for ResolvedReferenceId {
+    fn default() -> Self {
+        Self::new(1)
+    }
+}
+
+impl ResolvedReferenceId {
+    #[must_use]
+    pub fn new(n: usize) -> Self {
+        unsafe { Self(NonZeroUsize::new_unchecked(n)) }
+    }
+
+    #[must_use]
+    pub(crate) fn index0(self) -> usize {
+        self.0.get() - 1
     }
 }
