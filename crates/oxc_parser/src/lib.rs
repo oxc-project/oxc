@@ -270,4 +270,19 @@ mod test {
         assert!(ret.program.is_empty());
         assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
     }
+
+    #[test]
+    fn fuzzer() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+
+        let tests = [
+            "1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>",
+        ];
+
+        for source in tests {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(!ret.errors.is_empty());
+        }
+    }
 }

@@ -9,6 +9,10 @@ keywords.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[lib]
+# We don't use doc tests because it's too slow
+doctest = false
+
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }

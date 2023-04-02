@@ -507,7 +507,8 @@ impl<'a> Parser<'a> {
             p.re_lex_ts_l_angle();
 
             let params = TSTypeArgumentList::parse(p)?.params;
-            if p.cur_kind().can_follow_type_arguments_in_expr() {
+            let token = p.cur_token();
+            if token.is_on_new_line || token.kind.can_follow_type_arguments_in_expr() {
                 Ok(params)
             } else {
                 Err(p.unexpected())
