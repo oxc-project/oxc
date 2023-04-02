@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use oxc_ast::SourceType;
 use serde::{de::DeserializeOwned, Deserialize};
+use serde_json::Value;
 
 use crate::project_root;
 use crate::suite::{Case, Suite, TestResult};
@@ -21,7 +22,7 @@ pub struct BabelOptions {
     pub source_type: Option<String>,
     pub throws: Option<String>,
     #[serde(default)]
-    pub plugins: Vec<serde_json::Value>, // Can be a string or an array
+    pub plugins: Vec<Value>, // Can be a string or an array
     #[serde(default)]
     pub allow_return_outside_function: bool,
     #[serde(default)]
@@ -161,7 +162,28 @@ impl BabelCase {
 
     fn is_typescript(&self) -> bool {
         self.options.as_ref().is_some_and(|option| {
-            option.plugins.iter().any(|v| v.as_str().is_some_and(|v| v == "typescript"))
+            option.plugins.iter().any(|v| {
+                let string_value = v.as_str().is_some_and(|v| v == "typescript");
+                let array_value =
+                    v.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
+                string_value || array_value
+            })
+        })
+    }
+
+    fn is_typescript_definition(&self) -> bool {
+        self.options.as_ref().is_some_and(|option| {
+            option.plugins.iter().filter_map(Value::as_array).any(|p| {
+                let typescript =
+                    p.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
+                let dts = p
+                    .get(1)
+                    .and_then(Value::as_object)
+                    .and_then(|v| v.get("dts"))
+                    .and_then(Value::as_bool)
+                    .is_some_and(|v| v);
+                typescript && dts
+            })
         })
     }
 
@@ -209,7 +231,7 @@ impl Case for BabelCase {
             let has_not_supported_plugins = option
                 .plugins
                 .iter()
-                .filter_map(serde_json::Value::as_str)
+                .filter_map(Value::as_str)
                 .any(|p| not_supported_plugins.contains(&p));
             has_not_supported_plugins
                 || option.allow_await_outside_function
@@ -223,6 +245,7 @@ impl Case for BabelCase {
             .with_script(true)
             .with_jsx(self.is_jsx())
             .with_typescript(self.is_typescript())
+            .with_typescript_definition(self.is_typescript_definition())
             .with_module(self.is_module());
         self.result = self.execute(source_type);
     }
