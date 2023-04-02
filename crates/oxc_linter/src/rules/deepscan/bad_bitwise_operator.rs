@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{AssignmentOperator, BinaryOperator, Expression},
+    ast::{AssignmentOperator, BinaryOperator, Expression, UnaryOperator},
     AstKind, Span,
 };
 use oxc_diagnostics::{
@@ -75,9 +75,11 @@ impl Rule for BadBitwiseOperator {
                         Expression::NumberLiteral(_)
                         | Expression::NullLiteral(_)
                         | Expression::Identifier(_) => false,
+                        Expression::UnaryExpression(expr) => {
+                            expr.operator == UnaryOperator::Typeof || expr.operator == UnaryOperator::LogicalNot 
+                        }
                         Expression::BinaryExpression(expr) => {
-                            contains_string_literal(&expr.left)
-                                || contains_string_literal(&expr.right)
+                            contains_string_literal(&expr.right)
                         }
                         Expression::ParenthesizedExpression(expr) => {
                             contains_string_literal(&expr.expression)
@@ -92,30 +94,6 @@ impl Rule for BadBitwiseOperator {
             }
             _ => {}
         }
-    }
-}
-
-fn is_mistype_option_fallback(node: &AstNode) -> bool {
-    match node.get().kind() {
-        AstKind::BinaryExpression(bin_expr) => {
-            if bin_expr.operator != BinaryOperator::BitwiseOR {
-                return false;
-            }
-
-            if is_number_or_nullish_expr(&bin_expr.left) || is_number_or_nullish_expr(&bin_expr.right) {
-                return false;
-            }
-
-             // TODO
-            // need type inference
-            if let Expression::Identifier(_) = &bin_expr.left 
-            && let Expression::Identifier(_) = &bin_expr.right {
-                return false
-            }
-
-            true
-        }
-        _ => false,
     }
 }
 
@@ -143,16 +121,40 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
     }
 }
 
-fn is_number_or_nullish_expr(expr: &Expression) -> bool {
+fn is_mistype_option_fallback(node: &AstNode) -> bool {
+    match node.get().kind() {
+        AstKind::BinaryExpression(binary_expr) => {
+            if binary_expr.operator != BinaryOperator::BitwiseOR {
+                return false;
+            }
+
+            if let Expression::Identifier(_) = &binary_expr.left 
+            && !is_numeric_expr(&binary_expr.right, true) {
+                return true
+            }
+
+            false
+        }
+        _ => false,
+    }
+}
+
+fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {
     match expr {
         Expression::NumberLiteral(_)
-        | Expression::UnaryExpression(_)
         | Expression::NullLiteral(_) => true,
+        Expression::UnaryExpression(unary_expr) => {
+            if is_outer_most {
+                unary_expr.operator != UnaryOperator::Typeof && unary_expr.operator != UnaryOperator::LogicalNot
+            } else {
+                unary_expr.operator != UnaryOperator::Typeof
+            }
+        }
         Expression::BinaryExpression(bin_expr) => {
-            is_number_or_nullish_expr(&bin_expr.left) && is_number_or_nullish_expr(&bin_expr.right)
+            is_numeric_expr(&bin_expr.left, false) && is_numeric_expr(&bin_expr.right, false)
         }
         Expression::ParenthesizedExpression(paren_expr) => {
-            is_number_or_nullish_expr(&paren_expr.expression)
+            is_numeric_expr(&paren_expr.expression, false)
         }
         _ => expr.is_undefined(),
     }
@@ -161,8 +163,13 @@ fn is_number_or_nullish_expr(expr: &Expression) -> bool {
 fn contains_string_literal(expr: &Expression) -> bool {
     match expr {
         Expression::StringLiteral(_) => true,
-        Expression::BinaryExpression(bin_expr) => {
-            contains_string_literal(&bin_expr.left) || contains_string_literal(&bin_expr.right)
+        Expression::UnaryExpression(unary_expr) => {
+            unary_expr.operator == UnaryOperator::Typeof
+        }
+        Expression::BinaryExpression(binary_expr) => {
+            binary_expr.operator == BinaryOperator::Addition && (
+                contains_string_literal(&binary_expr.left) || contains_string_literal(&binary_expr.right)
+            )
         }
         Expression::ParenthesizedExpression(paren_expr) => {
             contains_string_literal(&paren_expr.expression)
@@ -183,15 +190,13 @@ fn test() {
         ("var a = options | 1", None),
         ("var a = options | undefined", None),
         ("var a = options | null", None),
-        ("var a = options | void 0", None),
+        ("var a = options | ~{}", None),
         ("var a = 1 | {}", None),
         ("var a = 1 | ''", None),
         ("var a = 1 | true", None),
-        ("var a = 1 | false", None),
         ("var a = {} | 1", None),
         ("var a = '' | 1", None),
         ("var a = true | 1", None),
-        ("var a = false | 1", None),
         ("var a = options | (1 + 2 + (3 + 4))", None),
         ("var a = options | (1 + 2 + (3 + !4))", None),
         ("var a = options | (1 + 2 + (3 + !''))", None),
@@ -200,7 +205,10 @@ fn test() {
         ("input |= null", None),
         ("input |= (1 + 1)", None),
         ("input |= (1 + true)", None),
+        ("input |= (1 + (3 * '1'))", None),
+        ("input |= (1 + (3 - '1'))", None),
         ("input |= a", None),
+        ("input |= ~{}", None),
         // TODO
         // ("var a = 1; input |= a", None),
     ];
@@ -208,12 +216,18 @@ fn test() {
     let fail = vec![
         ("var a = obj & obj.a", None),
         ("var a = options | {}", None),
+        ("var a = options | !{}", None),
+        ("var a = options | typeof {}", None),
         ("var a = options | ''", None),
         ("var a = options | true", None),
         ("var a = options | false", None),
+        ("var a = options | (1 + 2 + typeof {})", None),
         ("var a = options | (1 + 2 + (3 + ''))", None),
-        ("a = input |= ''", None),
-        ("a = input |= (1 + '')", None),
+        ("input |= ''", None),
+        ("input |= (1 + '')", None),
+        ("input |= (1 + (3 + '1'))", None),
+        ("input |= !{}", None),
+        ("input |= typeof {}", None),
         // TODO
         // ("var a = '1'; input |= a", None),
     ];

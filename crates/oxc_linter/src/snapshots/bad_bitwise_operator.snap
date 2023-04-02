@@ -19,6 +19,20 @@ expression: bad_bitwise_operator
 
   ⚠ Bad bitwise operator
    ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ var a = options | !{}
+   ·         ─────────────
+   ╰────
+  help: Bitwise operator '|' seems unintended. Did you mean logical operator '||'?
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ var a = options | typeof {}
+   ·         ───────────────────
+   ╰────
+  help: Bitwise operator '|' seems unintended. Did you mean logical operator '||'?
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
  1 │ var a = options | ''
    ·         ────────────
    ╰────
@@ -40,6 +54,13 @@ expression: bad_bitwise_operator
 
   ⚠ Bad bitwise operator
    ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ var a = options | (1 + 2 + typeof {})
+   ·         ─────────────────────────────
+   ╰────
+  help: Bitwise operator '|' seems unintended. Did you mean logical operator '||'?
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
  1 │ var a = options | (1 + 2 + (3 + ''))
    ·         ────────────────────────────
    ╰────
@@ -47,15 +68,36 @@ expression: bad_bitwise_operator
 
   ⚠ Bad bitwise operator
    ╭─[bad_bitwise_operator.tsx:1:1]
- 1 │ a = input |= ''
-   ·     ───────────
+ 1 │ input |= ''
+   · ───────────
    ╰────
   help: Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.
 
   ⚠ Bad bitwise operator
    ╭─[bad_bitwise_operator.tsx:1:1]
- 1 │ a = input |= (1 + '')
-   ·     ─────────────────
+ 1 │ input |= (1 + '')
+   · ─────────────────
+   ╰────
+  help: Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ input |= (1 + (3 + '1'))
+   · ────────────────────────
+   ╰────
+  help: Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ input |= !{}
+   · ────────────
+   ╰────
+  help: Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ input |= typeof {}
+   · ──────────────────
    ╰────
   help: Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.
 
