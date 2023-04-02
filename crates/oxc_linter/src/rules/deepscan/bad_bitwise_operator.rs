@@ -70,10 +70,8 @@ impl Rule for BadBitwiseOperator {
                 }
             }
             AstKind::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::BitwiseOR {
-                    if !is_numeric_expr(&assign_expr.right, true) {
-                        ctx.diagnostic(BadBitwiseOrOperatorDiagnostic(assign_expr.span));
-                    }
+                if assign_expr.operator == AssignmentOperator::BitwiseOR && !is_numeric_expr(&assign_expr.right, true) {
+                    ctx.diagnostic(BadBitwiseOrOperatorDiagnostic(assign_expr.span));
                 }
             }
             _ => {}
