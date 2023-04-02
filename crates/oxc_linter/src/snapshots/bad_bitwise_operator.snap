@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: bad_bitwise_operator
+---
+
+  ⚠ Bad bitwise operator
+   ╭─[bad_bitwise_operator.tsx:1:1]
+ 1 │ var a = obj & obj.a
+   ·         ───────────
+   ╰────
+  help: Bitwise operator '&' seems unintended. Did you mean logical operator '&&'?
+
