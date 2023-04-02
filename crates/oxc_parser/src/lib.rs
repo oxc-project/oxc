@@ -20,10 +20,10 @@
 //! AST Parsed     : 44000/44000 (100.00%)
 //!
 //! Babel Summary:
-//! AST Parsed     : 2064/2071 (99.66%)
+//! AST Parsed     : 2065/2071 (99.71%)
 //!
 //! TypeScript Summary:
-//! AST Parsed     : 2330/2340 (99.57%)
+//! AST Parsed     : 2337/2337 (100.00%)
 //! ```
 //!
 //! # Usage
