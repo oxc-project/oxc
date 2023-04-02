@@ -540,6 +540,16 @@ impl<'a> Parser<'a> {
                     self.bump_any();
                     self.ast.ts_non_null_expression(self.end_span(lhs_span), lhs)
                 }
+                kind if kind.is_template_start_of_tagged_template() => {
+                    let (expr, type_parameters) =
+                        if let Expression::TSInstantiationExpression(instantiation_expr) = lhs {
+                            let expr = instantiation_expr.unbox();
+                            (expr.expression, Some(expr.type_parameters))
+                        } else {
+                            (lhs, None)
+                        };
+                    self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_parameters)?
+                }
                 Kind::LAngle | Kind::ShiftLeft if self.ts_enabled() => {
                     if let Some(arguments) = self.parse_ts_type_arguments_in_expression() {
                         lhs = Expression::TSInstantiationExpression(self.ast.alloc(
@@ -647,60 +657,33 @@ impl<'a> Parser<'a> {
         in_optional_chain: &mut bool,
     ) -> Result<Expression<'a>> {
         let mut lhs = lhs;
-        let mut type_arguments = None;
         loop {
+            let mut type_arguments = None;
             lhs = self.parse_member_expression_rhs(lhs_span, lhs, in_optional_chain)?;
             let optional_call = self.eat(Kind::QuestionDot);
             *in_optional_chain = if optional_call { true } else { *in_optional_chain };
-            if let Expression::TSInstantiationExpression(expr) = lhs {
-                let expr = expr.unbox();
-                type_arguments.replace(expr.type_parameters);
-                lhs = expr.expression;
-            }
-            match self.cur_kind() {
-                Kind::LParen => {
-                    lhs = self.parse_call_arguments(
-                        lhs_span,
-                        lhs,
-                        optional_call,
-                        type_arguments.take(),
-                    )?;
-                }
-                Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
-                    lhs = self.parse_tagged_template(
-                        lhs_span,
-                        lhs,
-                        *in_optional_chain,
-                        type_arguments.take(),
-                    )?;
-                }
-                Kind::LAngle | Kind::ShiftLeft if self.ts_enabled() => {
-                    let result = self.try_parse(|p| {
-                        let arguments = p.parse_ts_type_arguments()?;
-                        if p.at(Kind::RAngle) {
-                            // a<b>>c is not (a<b>)>c, but a<(b>>c)
-                            return Err(p.unexpected());
-                        }
 
-                        // a<b>c is (a<b)>c
-                        if !p.at(Kind::LParen)
-                            && !p.at(Kind::NoSubstitutionTemplate)
-                            && !p.at(Kind::TemplateHead)
-                            && p.cur_kind().is_at_expression()
-                            && !p.cur_token().is_on_new_line
-                        {
-                            return Err(p.unexpected());
-                        }
-
-                        type_arguments = arguments;
-                        Ok(())
-                    });
-                    if result.is_err() {
-                        break;
-                    }
+            if optional_call {
+                type_arguments = self.parse_ts_type_arguments_in_expression();
+                if self.cur_kind().is_template_start_of_tagged_template() {
+                    lhs =
+                        self.parse_tagged_template(lhs_span, lhs, optional_call, type_arguments)?;
+                    continue;
                 }
-                _ => break,
             }
+
+            if type_arguments.is_some() || self.at(Kind::LParen) {
+                if let Expression::TSInstantiationExpression(expr) = lhs {
+                    let expr = expr.unbox();
+                    type_arguments.replace(expr.type_parameters);
+                    lhs = expr.expression;
+                }
+
+                lhs =
+                    self.parse_call_arguments(lhs_span, lhs, optional_call, type_arguments.take())?;
+                continue;
+            }
+            break;
         }
 
         Ok(lhs)
