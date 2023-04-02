@@ -1,6 +1,6 @@
 Babel Summary:
 AST Parsed     : 2065/2071 (99.71%)
-Positive Passed: 2057/2071 (99.32%)
+Positive Passed: 2058/2071 (99.37%)
 Negative Passed: 1332/1502 (88.68%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -239,13 +239,6 @@ Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
    ·   ─────┬─────
    ·        ╰── it cannot be redeclared here
  4 │ }
-   ╰────
-Expect to Parse: "typescript/declare/function-rest-trailing-comma/input.ts"
-
-  × Rest element must be last element
-   ╭─[typescript/declare/function-rest-trailing-comma/input.ts:1:1]
- 1 │ declare function foo(...args: any[], )
-   ·                      ──────────────
    ╰────
 Expect to Parse: "typescript/dts/no-initializer/input.ts"
 

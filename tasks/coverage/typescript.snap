@@ -7241,14 +7241,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  8 │ 
    ╰────
 
-  × Rest element must be last element
-    ╭─[es7/trailingCommasInFunctionParametersAndArguments.ts:9:1]
-  9 │ // Allowed for ambient declarations
- 10 │ declare function f25(...args,): void;
-    ·                      ───────
- 11 │ 
-    ╰────
-
   × Unexpected token
    ╭─[es7/trailingCommasInGetter.ts:1:1]
  1 │ class X {
