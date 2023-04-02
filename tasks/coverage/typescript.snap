@@ -1,6 +1,6 @@
 TypeScript Summary:
 AST Parsed     : 2332/2340 (99.66%)
-Positive Passed: 2325/2340 (99.36%)
+Positive Passed: 2326/2340 (99.40%)
 Negative Passed: 681/2532 (26.90%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
@@ -1866,23 +1866,6 @@ Expect to Parse: "async/es6/asyncWithVarShadowing_es6.ts"
      ·             ╰── It can not be redeclared here
  134 │     }
      ╰────
-Expect to Parse: "classes/propertyMemberDeclarations/staticPropertyNameConflictsInAmbientContext.ts"
-
-  × Classes may not have a static property named prototype
-    ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflictsInAmbientContext.ts:26:1]
- 26 │ declare class StaticPrototype {
- 27 │     static prototype: number; // ok
-    ·            ─────────
- 28 │     prototype: string; // ok
-    ╰────
-
-  × Classes may not have a static property named prototype
-    ╭─[classes/propertyMemberDeclarations/staticPropertyNameConflictsInAmbientContext.ts:31:1]
- 31 │ declare class StaticPrototypeFn {
- 32 │     static prototype: any; // ok
-    ·            ─────────
- 33 │     prototype(): any; // ok
-    ╰────
 Expect to Parse: "es6/for-ofStatements/for-of53.ts"
 
   × Identifier `v` has already been declared

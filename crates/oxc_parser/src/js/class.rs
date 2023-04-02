@@ -275,7 +275,7 @@ impl<'a> Parser<'a> {
                 optional,
             )?;
             if let Some((name, span)) = definition.prop_name() {
-                if r#static && name == "prototype" {
+                if r#static && name == "prototype" && !self.ctx.has_ambient() {
                     self.error(diagnostics::StaticPrototype(span));
                 }
                 if !r#static && name == "constructor" {
@@ -309,7 +309,7 @@ impl<'a> Parser<'a> {
                 if name == "constructor" {
                     self.error(diagnostics::FieldConstructor(span));
                 }
-                if r#static && name == "prototype" {
+                if r#static && name == "prototype" && !self.ctx.has_ambient() {
                     self.error(diagnostics::StaticPrototype(span));
                 }
             }
