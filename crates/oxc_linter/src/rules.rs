@@ -27,6 +27,7 @@ oxc_macros::declare_all_lint_rules! {
     no_unsafe_negation,
     no_bitwise,
     deepscan::uninvoked_array_callback,
+    deepscan::bad_bitwise_operator,
     use_isnan,
     valid_typeof,
     typescript::isolated_declaration
