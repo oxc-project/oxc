@@ -829,7 +829,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bitflags",
  "compact_str",
@@ -908,7 +908,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "is-terminal",
  "miette",
@@ -966,7 +966,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bitflags",
  "miette",
@@ -981,7 +981,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_printer"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "miette",
  "oxc_allocator",
@@ -991,7 +991,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bitflags",
  "indextree",
