@@ -780,6 +780,7 @@ impl<'a> Gen for Expression<'a> {
             Self::JSXElement(el) => el.gen(p),
             Self::JSXFragment(fragment) => fragment.gen(p),
             Self::TSAsExpression(expr) => expr.expression.gen(p),
+            Self::TSSatisfiesExpression(expr) => expr.expression.gen(p),
             Self::TSTypeAssertion(expr) => expr.expression.gen(p),
             Self::TSNonNullExpression(expr) => expr.expression.gen(p),
             Self::TSInstantiationExpression(expr) => expr.expression.gen(p),
@@ -1222,6 +1223,7 @@ impl<'a> Gen for SimpleAssignmentTarget<'a> {
             Self::AssignmentTargetIdentifier(ident) => ident.gen(p),
             Self::MemberAssignmentTarget(member_expr) => member_expr.gen(p),
             Self::TSAsExpression(expr) => expr.expression.gen(p),
+            Self::TSSatisfiesExpression(expr) => expr.expression.gen(p),
             Self::TSNonNullExpression(expr) => expr.expression.gen(p),
             Self::TSTypeAssertion(expr) => expr.expression.gen(p),
         }

@@ -53,7 +53,8 @@ impl BindingPower {
             | Kind::GtEq
             | Kind::Instanceof
             | Kind::In
-            | Kind::As => Some(Self::Relational),
+            | Kind::As
+            | Kind::Satisfies => Some(Self::Relational),
             Kind::ShiftLeft | Kind::ShiftRight | Kind::ShiftRight3 => Some(Self::Shift),
             Kind::Plus | Kind::Minus => Some(Self::Additive),
             Kind::Star | Kind::Slash | Kind::Percent => Some(Self::Multiplicative),

@@ -127,6 +127,7 @@ impl<'a> GetSpan for Expression<'a> {
             Self::JSXElement(e) => e.span,
             Self::JSXFragment(e) => e.span,
             Self::TSAsExpression(e) => e.span,
+            Self::TSSatisfiesExpression(e) => e.span,
             Self::TSTypeAssertion(e) => e.span,
             Self::TSNonNullExpression(e) => e.span,
             Self::TSInstantiationExpression(e) => e.span,
@@ -255,19 +256,7 @@ impl<'a> GetSpan for ObjectPatternProperty<'a> {
 impl<'a> GetSpan for AssignmentTarget<'a> {
     fn span(&self) -> Span {
         match self {
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::AssignmentTargetIdentifier(
-                ident,
-            )) => ident.span,
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::MemberAssignmentTarget(expr)) => {
-                expr.span()
-            }
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::TSAsExpression(expr)) => expr.span,
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::TSNonNullExpression(expr)) => {
-                expr.span
-            }
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::TSTypeAssertion(expr)) => {
-                expr.span
-            }
+            Self::SimpleAssignmentTarget(target) => target.span(),
             Self::AssignmentTargetPattern(AssignmentTargetPattern::ArrayAssignmentTarget(pat)) => {
                 pat.span
             }
@@ -311,6 +300,7 @@ impl<'a> GetSpan for SimpleAssignmentTarget<'a> {
             Self::AssignmentTargetIdentifier(ident) => ident.span,
             Self::MemberAssignmentTarget(expr) => expr.span(),
             Self::TSAsExpression(expr) => expr.span,
+            Self::TSSatisfiesExpression(expr) => expr.span,
             Self::TSNonNullExpression(expr) => expr.span,
             Self::TSTypeAssertion(expr) => expr.span,
         }

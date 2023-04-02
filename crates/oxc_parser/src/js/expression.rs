@@ -848,15 +848,6 @@ impl<'a> Parser<'a> {
             // This is need for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
-            // Omit the In keyword for the grammar in 13.10 Relational Operators
-            // RelationalExpression[In, Yield, Await] :
-            // [+In] RelationalExpression[+In, ?Yield, ?Await] in ShiftExpression[?Yield, ?Await]
-            if kind == Kind::In && !self.ctx.has_in()
-                || (kind == Kind::As && self.cur_token().is_on_new_line)
-            {
-                break;
-            }
-
             let Some(left_binding_power) = BindingPower::value(kind) else { break };
 
             let stop = if BindingPower::is_right_associative(left_binding_power) {
@@ -869,18 +860,29 @@ impl<'a> Parser<'a> {
                 break;
             }
 
-            self.bump_any(); // bump operator
+            // Omit the In keyword for the grammar in 13.10 Relational Operators
+            // RelationalExpression[In, Yield, Await] :
+            // [+In] RelationalExpression[+In, ?Yield, ?Await] in ShiftExpression[?Yield, ?Await]
+            if kind == Kind::In && !self.ctx.has_in() {
+                break;
+            }
 
-            if self.ts_enabled() && kind == Kind::As {
+            if self.ts_enabled() && matches!(kind, Kind::As | Kind::Satisfies) {
+                if self.cur_token().is_on_new_line {
+                    break;
+                }
+                self.bump_any();
                 let type_annotation = self.parse_ts_type()?;
-                lhs = Expression::TSAsExpression(self.ast.alloc(TSAsExpression {
-                    span: self.end_span(lhs_span),
-                    expression: lhs,
-                    type_annotation,
-                }));
+                let span = self.end_span(lhs_span);
+                lhs = if kind == Kind::As {
+                    self.ast.ts_as_expression(span, lhs, type_annotation)
+                } else {
+                    self.ast.ts_satisfies_expression(span, lhs, type_annotation)
+                };
                 continue;
             }
 
+            self.bump_any(); // bump operator
             let rhs = self.parse_binary_or_logical_expression_base(left_binding_power)?;
 
             lhs = if kind.is_logical_operator() {

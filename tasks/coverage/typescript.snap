@@ -1,7 +1,7 @@
 TypeScript Summary:
-AST Parsed     : 2332/2340 (99.66%)
-Positive Passed: 2326/2340 (99.40%)
-Negative Passed: 681/2532 (26.90%)
+AST Parsed     : 2336/2340 (99.83%)
+Positive Passed: 2330/2340 (99.57%)
+Negative Passed: 673/2532 (26.58%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -766,6 +766,14 @@ Expect Syntax Error: "expressions/typeGuards/typeGuardsInIfStatement.ts"
 Expect Syntax Error: "expressions/typeGuards/typeGuardsWithAny.ts"
 Expect Syntax Error: "expressions/typeGuards/typeGuardsWithInstanceOf.ts"
 Expect Syntax Error: "expressions/typeGuards/typeGuardsWithInstanceOfByConstructorSignature.ts"
+Expect Syntax Error: "expressions/typeSatisfaction/typeSatisfaction.ts"
+Expect Syntax Error: "expressions/typeSatisfaction/typeSatisfaction_contextualTyping2.ts"
+Expect Syntax Error: "expressions/typeSatisfaction/typeSatisfaction_js.ts"
+Expect Syntax Error: "expressions/typeSatisfaction/typeSatisfaction_optionalMemberConformance.ts"
+Expect Syntax Error: "expressions/typeSatisfaction/typeSatisfaction_propNameConstraining.ts"
+Expect Syntax Error: "expressions/typeSatisfaction/typeSatisfaction_propertyNameFulfillment.ts"
+Expect Syntax Error: "expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance3.ts"
+Expect Syntax Error: "expressions/typeSatisfaction/typeSatisfaction_vacuousIntersectionOfContextualTypes.ts"
 Expect Syntax Error: "expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithAnyOtherType.ts"
 Expect Syntax Error: "expressions/unaryOperators/decrementOperator/decrementOperatorWithEnumType.ts"
 Expect Syntax Error: "expressions/unaryOperators/deleteOperator/deleteOperatorWithAnyOtherType.ts"
@@ -1879,42 +1887,6 @@ Expect to Parse: "es6/for-ofStatements/for-of53.ts"
    ·         ╰── It can not be redeclared here
  4 │ }
    ╰────
-Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_contextualTyping1.ts"
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[expressions/typeSatisfaction/typeSatisfaction_contextualTyping1.ts:5:1]
- 5 │     isOdd: n => n % 2 === 1
- 6 │ } satisfies Predicates;
-   ·  ─
-   ╰────
-  help: Try insert a semicolon here
-Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_ensureInterfaceImpl.ts"
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[expressions/typeSatisfaction/typeSatisfaction_ensureInterfaceImpl.ts:10:1]
- 10 │     stop() { }
- 11 │ } satisfies Movable & Record<string, unknown>;
-    ·  ─
-    ╰────
-  help: Try insert a semicolon here
-Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance1.ts"
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance1.ts:24:1]
- 24 │     s: "false"
- 25 │ } satisfies Facts;
-    ·  ─
-    ╰────
-  help: Try insert a semicolon here
-Expect to Parse: "expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance2.ts"
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance2.ts:24:1]
- 24 │     s: "false"
- 25 │ } satisfies Facts;
-    ·  ─
-    ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "externalModules/topLevelAwait.2.ts"
 
   × The keyword 'await' is reserved
@@ -7683,75 +7655,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ 
  3 │ var y: z is number;
    ·         ─
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[expressions/typeSatisfaction/typeSatisfaction.ts:10:1]
- 10 │ 
- 11 │ const t1 = { a: 1 } satisfies I1; // Ok
-    ·                    ─
- 12 │ const t2 = { a: 1, b: 1 } satisfies I1; // Error
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[expressions/typeSatisfaction/typeSatisfaction_contextualTyping2.ts:5:1]
- 5 │     g(s) { }
- 6 │ } satisfies { g(s: string): void } & Record<string, unknown>;
-   ·  ─
- 7 │ 
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[expressions/typeSatisfaction/typeSatisfaction_js.ts:4:1]
- 4 │ 
- 5 │ var v = undefined satisfies 1;
-   ·                  ─
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[expressions/typeSatisfaction/typeSatisfaction_optionalMemberConformance.ts:2:1]
- 2 │ // Undesirable behavior today with type annotation
- 3 │ const a = { x: 10 } satisfies Partial<Point2d>;
-   ·                    ─
- 4 │ // Should OK
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[expressions/typeSatisfaction/typeSatisfaction_propNameConstraining.ts:6:1]
- 6 │     x: 8 // Should error, 'x' isn't in 'Keys'
- 7 │ } satisfies Partial<Record<Keys, unknown>>;
-   ·  ─
- 8 │ 
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[expressions/typeSatisfaction/typeSatisfaction_propertyNameFulfillment.ts:6:1]
- 6 │     x: 8 // Should error, 'x' isn't in 'Keys'
- 7 │ } satisfies Record<Keys, unknown>;
-   ·  ─
- 8 │ 
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[expressions/typeSatisfaction/typeSatisfaction_propertyValueConformance3.ts:7:1]
- 7 │     blue: { r: 0, g: 0, b: 255 },
- 8 │ } satisfies Record<string, Color>;
-   ·  ─
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[expressions/typeSatisfaction/typeSatisfaction_vacuousIntersectionOfContextualTypes.ts:1:1]
- 1 │ const a: "baz" = "foo" satisfies "foo" | "bar";
-   ·                       ─
- 2 │ const b: { xyz: "baz" } = { xyz: "foo" } satisfies { xyz: "foo" | "bar" };
    ╰────
   help: Try insert a semicolon here
 

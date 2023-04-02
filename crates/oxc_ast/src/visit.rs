@@ -496,6 +496,7 @@ pub trait Visit<'a>: Sized {
             Expression::JSXFragment(elem) => self.visit_jsx_fragment(elem),
 
             Expression::TSAsExpression(expr) => self.visit_ts_as_expression(expr),
+            Expression::TSSatisfiesExpression(expr) => self.visit_ts_satisfies_expression(expr),
             Expression::TSNonNullExpression(expr) => self.visit_ts_non_null_expression(expr),
             Expression::TSTypeAssertion(expr) => self.visit_ts_type_assertion(expr),
             Expression::TSInstantiationExpression(expr) => {
@@ -799,6 +800,9 @@ pub trait Visit<'a>: Sized {
                 self.visit_member_expression(expr);
             }
             SimpleAssignmentTarget::TSAsExpression(expr) => {
+                self.visit_expression(&expr.expression);
+            }
+            SimpleAssignmentTarget::TSSatisfiesExpression(expr) => {
                 self.visit_expression(&expr.expression);
             }
             SimpleAssignmentTarget::TSNonNullExpression(expr) => {
@@ -1299,6 +1303,14 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_as_expression(&mut self, expr: &'a TSAsExpression<'a>) {
         let kind = AstKind::TSAsExpression(expr);
+        self.enter_node(kind);
+        self.visit_expression(&expr.expression);
+        self.visit_ts_type(&expr.type_annotation);
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_satisfies_expression(&mut self, expr: &'a TSSatisfiesExpression<'a>) {
+        let kind = AstKind::TSSatisfiesExpression(expr);
         self.enter_node(kind);
         self.visit_expression(&expr.expression);
         self.visit_ts_type(&expr.type_annotation);

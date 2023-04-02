@@ -74,6 +74,7 @@ pub enum Expression<'a> {
     JSXFragment(Box<'a, JSXFragment<'a>>),
 
     TSAsExpression(Box<'a, TSAsExpression<'a>>),
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
     TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>),
@@ -189,6 +190,7 @@ impl<'a> Expression<'a> {
         match self {
             Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression(),
             Expression::TSAsExpression(expr) => expr.expression.get_inner_expression(),
+            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression(),
             Expression::TSInstantiationExpression(expr) => expr.expression.get_inner_expression(),
             Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression(),
             Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression(),
@@ -681,6 +683,7 @@ pub enum SimpleAssignmentTarget<'a> {
     AssignmentTargetIdentifier(Box<'a, IdentifierReference>),
     MemberAssignmentTarget(Box<'a, MemberExpression<'a>>),
     TSAsExpression(Box<'a, TSAsExpression<'a>>),
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
 }
@@ -690,6 +693,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         match self {
             Self::TSAsExpression(expr) => Some(&expr.expression),
+            Self::TSSatisfiesExpression(expr) => Some(&expr.expression),
             Self::TSNonNullExpression(expr) => Some(&expr.expression),
             Self::TSTypeAssertion(expr) => Some(&expr.expression),
             _ => None,
