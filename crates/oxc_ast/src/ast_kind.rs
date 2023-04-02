@@ -1,6 +1,7 @@
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, Atom, GetSpan, Span};
 
+/// Untyped AST Node Kind
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum AstKind<'a> {
     Root,
@@ -122,6 +123,7 @@ pub enum AstKind<'a> {
     TSIndexedAccessType(&'a TSIndexedAccessType<'a>),
 
     TSAsExpression(&'a TSAsExpression<'a>),
+    TSSatisfiesExpression(&'a TSSatisfiesExpression<'a>),
     TSNonNullExpression(&'a TSNonNullExpression<'a>),
 
     TSEnumDeclaration(&'a TSEnumDeclaration<'a>),
@@ -348,6 +350,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSIndexedAccessType(x) => x.span,
 
             Self::TSAsExpression(x) => x.span,
+            Self::TSSatisfiesExpression(x) => x.span,
             Self::TSNonNullExpression(x) => x.span,
 
             Self::TSEnumDeclaration(x) => x.span,

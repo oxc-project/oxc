@@ -1,5 +1,4 @@
-//! Module Record
-//! `https://tc39.es/ecma262/#sec-abstract-module-records`
+//! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
 use rustc_hash::FxHashMap;
 
@@ -9,7 +8,7 @@ use crate::{Atom, Span};
 /// <https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records>
 #[derive(Debug, Default)]
 pub struct ModuleRecord {
-    /// https://tc39.es/ecma262/#sec-static-semantics-modulerequests
+    /// <https://tc39.es/ecma262/#sec-static-semantics-modulerequests>
     /// Module requests from:
     ///   import ImportClause FromClause
     ///   import ModuleSpecifier
@@ -70,7 +69,7 @@ pub struct ImportEntry {
     /// String value of the ModuleSpecifier of the ImportDeclaration.
     pub module_request: NameSpan,
 
-    /// The name under which the desired binding is exported by the module identified by [[ModuleRequest]].
+    /// The name under which the desired binding is exported by the module identified by `[[ModuleRequest]]`.
     pub import_name: ImportImportName,
 
     /// The name that is used to locally access the imported value from within the importing module.
@@ -107,7 +106,7 @@ pub struct ExportEntry {
     /// null if the ExportDeclaration does not have a ModuleSpecifier.
     pub module_request: Option<NameSpan>,
 
-    /// The name under which the desired binding is exported by the module identified by [[ModuleRequest]].
+    /// The name under which the desired binding is exported by the module identified by `[[ModuleRequest]]`.
     /// null if the ExportDeclaration does not have a ModuleSpecifier.
     /// "all" is used for `export * as ns from "mod"`` declarations.
     /// "all-but-default" is used for `export * from "mod" declarations`.

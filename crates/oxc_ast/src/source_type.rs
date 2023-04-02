@@ -2,8 +2,7 @@ use std::path::Path;
 
 use thiserror::Error;
 
-use crate::context::Context;
-
+/// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
@@ -12,7 +11,7 @@ pub struct SourceType {
     /// Script or Module, default Module
     module_kind: ModuleKind,
 
-    /// support JSX for JavaScript and TypeScript? default without JSX
+    /// Support JSX for JavaScript and TypeScript? default without JSX
     variant: LanguageVariant,
 
     /// Mark strict mode as always strict
@@ -20,18 +19,21 @@ pub struct SourceType {
     always_strict: bool,
 }
 
+/// JavaScript or TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Language {
     JavaScript,
     TypeScript { is_definition_file: bool },
 }
 
+/// Script or Module
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ModuleKind {
     Script,
     Module,
 }
 
+/// JSX for JavaScript and TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LanguageVariant {
     Standard,
@@ -58,16 +60,6 @@ impl Default for SourceType {
 pub const VALID_EXTENSIONS: [&str; 8] = ["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 impl SourceType {
-    #[must_use]
-    pub fn default_context(&self) -> Context {
-        let ctx = Context::default().and_ambient(self.is_typescript_definition());
-        match self.module_kind {
-            ModuleKind::Script => ctx,
-            // for [top-level-await](https://tc39.es/proposal-top-level-await/)
-            ModuleKind::Module => ctx.and_await(true),
-        }
-    }
-
     #[must_use]
     pub fn is_script(self) -> bool {
         self.module_kind == ModuleKind::Script

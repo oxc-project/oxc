@@ -233,6 +233,9 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
     fn code(&self) -> &str;
     fn path(&self) -> &Path;
+    fn allow_return_outside_function(&self) -> bool {
+        false
+    }
     fn test_result(&self) -> &TestResult;
 
     fn should_fail(&self) -> bool {
@@ -267,10 +270,13 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn execute(&mut self, source_type: SourceType) -> TestResult {
         let allocator = Allocator::default();
         let source_text = self.code();
-        let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+        let parser_ret = Parser::new(&allocator, source_text, source_type)
+            .allow_return_outside_function(self.allow_return_outside_function())
+            .parse();
         let program = allocator.alloc(parser_ret.program);
-        let trivias = Rc::new(parser_ret.trivias);
-        let semantic_ret = SemanticBuilder::new(source_text, source_type, &trivias).build(program);
+        let semantic_ret = SemanticBuilder::new(source_text, source_type, &parser_ret.trivias)
+            .with_module_record_builder(true)
+            .build(program);
         let result = Linter::new().run_early_error(&Rc::new(semantic_ret.semantic), false);
         let errors = result
             .into_iter()

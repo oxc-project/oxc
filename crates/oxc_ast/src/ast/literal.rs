@@ -8,17 +8,15 @@ use std::{
 use bitflags::bitflags;
 use num_bigint::BigUint;
 use ordered_float::NotNan;
-use serde::{
-    ser::{SerializeStruct, Serializer},
-    Serialize,
-};
+#[cfg(feature = "serde")]
+use serde::Serialize;
 
 use crate::{Atom, Span};
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type", rename = "Literal")]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
 pub struct BooleanLiteral {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub value: bool,
 }
@@ -47,29 +45,15 @@ impl PartialEq for NullLiteral {
     }
 }
 
-impl Serialize for NullLiteral {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut state = serializer.serialize_struct("NullLiteral", 4)?;
-        state.serialize_field("type", &"Literal")?;
-        state.serialize_field("start", &self.span.start)?;
-        state.serialize_field("end", &self.span.end)?;
-        state.serialize_field("value", &())?;
-        state.end()
-    }
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
-#[serde(tag = "type", rename = "Literal")]
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
 pub struct NumberLiteral<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub value: NotNan<f64>, // using NotNan for `Hash`
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub raw: &'a str,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub base: NumberBase,
 }
 
@@ -88,19 +72,19 @@ impl<'a> Hash for NumberLiteral<'a> {
     }
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type", rename = "Literal")]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
 pub struct BigintLiteral {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    #[serde(serialize_with = "crate::serialize::serialize_bigint")]
+    #[cfg_attr(feature = "serde", serde(serialize_with = "crate::serialize::serialize_bigint"))]
     pub value: BigUint,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type", rename = "Literal")]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
 pub struct RegExpLiteral {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     // valid regex is printed as {}
     // invalid regex is printed as null, which we can't implement yet
@@ -108,7 +92,8 @@ pub struct RegExpLiteral {
     pub regex: RegExp,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct RegExp {
     pub pattern: Atom,
     pub flags: RegExpFlags,
@@ -164,22 +149,14 @@ impl fmt::Display for RegExpFlags {
     }
 }
 
-impl Serialize for RegExpFlags {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct EmptyObject;
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type", rename = "Literal")]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
 pub struct StringLiteral {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub value: Atom,
 }
@@ -220,7 +197,7 @@ impl<'a> NumberLiteral<'a> {
     }
 
     /// From [boa](https://github.com/boa-dev/boa/blob/52bc15bc2320cd6cbc661a138ae955ceb0c9597a/boa_engine/src/builtins/number/mod.rs#L417)
-    /// [spec]: `https://tc39.es/ecma262/#sec-number.prototype.toprecision`
+    /// [spec](https://tc39.es/ecma262/#sec-number.prototype.toprecision)
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
     #[must_use]
     pub fn to_precision(&self, precision: Option<usize>) -> Option<String> {

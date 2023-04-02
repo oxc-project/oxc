@@ -1,6 +1,6 @@
 [package]
 name = "oxc_ast"
-version = "0.0.1"
+version = "0.0.3"
 authors.workspace = true
 description.workspace = true
 edition.workspace = true
@@ -13,13 +13,18 @@ repository.workspace = true
 oxc_allocator = { workspace = true }
 
 bitflags = { workspace = true }
-compact_str = { workspace = true, features = ["serde"] }
+compact_str = { workspace = true }
 thiserror = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true, optional = true }
 miette = { workspace = true }
 rustc-hash = { workspace = true }
 
+serde = { workspace = true, features = ["derive"], optional = true }
+serde_json = { workspace = true, optional = true }
+
 num-bigint = "0.4.3"
 ryu-js = "0.2.2"
-ordered-float = { version = "3.4.0", features = ["serde"] }
+ordered-float = { version = "3.6.0" }
+
+[features]
+default = []
+serde = ["dep:serde", "dep:serde_json", "compact_str/serde", "ordered-float/serde"]

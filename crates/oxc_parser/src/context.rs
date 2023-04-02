@@ -1,4 +1,4 @@
-//! ECMAScript Grammar Contexts: [In] [Yield] [Await]
+//! ECMAScript Grammar Contexts: `[In`] `[Yield]` `[Await]`
 #![allow(non_upper_case_globals)]
 
 use bitflags::bitflags;
@@ -56,49 +56,49 @@ impl Default for Context {
 impl Context {
     #[must_use]
     #[inline]
-    pub fn has_in(self) -> bool {
+    pub(crate) fn has_in(self) -> bool {
         self.contains(Self::In)
     }
 
     #[must_use]
     #[inline]
-    pub fn has_yield(self) -> bool {
+    pub(crate) fn has_yield(self) -> bool {
         self.contains(Self::Yield)
     }
 
     #[must_use]
     #[inline]
-    pub fn has_await(self) -> bool {
+    pub(crate) fn has_await(self) -> bool {
         self.contains(Self::Await)
     }
 
     #[must_use]
     #[inline]
-    pub fn has_return(self) -> bool {
+    pub(crate) fn has_return(self) -> bool {
         self.contains(Self::Return)
     }
 
     #[must_use]
     #[inline]
-    pub fn has_disallow_conditional_types(self) -> bool {
+    pub(crate) fn has_disallow_conditional_types(self) -> bool {
         self.contains(Self::DisallowConditionalTypes)
     }
 
     #[must_use]
     #[inline]
-    pub fn has_ambient(self) -> bool {
+    pub(crate) fn has_ambient(self) -> bool {
         self.contains(Self::Ambient)
     }
 
     #[must_use]
     #[inline]
-    pub fn union_await_if(self, include: bool) -> Self {
+    pub(crate) fn union_await_if(self, include: bool) -> Self {
         self.union_if(Self::Await, include)
     }
 
     #[must_use]
     #[inline]
-    pub fn union_yield_if(self, include: bool) -> Self {
+    pub(crate) fn union_yield_if(self, include: bool) -> Self {
         self.union_if(Self::Yield, include)
     }
 
@@ -110,37 +110,31 @@ impl Context {
 
     #[must_use]
     #[inline]
-    pub fn and_in(self, include: bool) -> Self {
+    pub(crate) fn and_in(self, include: bool) -> Self {
         self.and(Self::In, include)
     }
 
     #[must_use]
     #[inline]
-    pub fn and_yield(self, include: bool) -> Self {
+    pub(crate) fn and_yield(self, include: bool) -> Self {
         self.and(Self::Yield, include)
     }
 
     #[must_use]
     #[inline]
-    pub fn and_await(self, include: bool) -> Self {
+    pub(crate) fn and_await(self, include: bool) -> Self {
         self.and(Self::Await, include)
     }
 
     #[must_use]
     #[inline]
-    pub fn and_return(self, include: bool) -> Self {
+    pub(crate) fn and_return(self, include: bool) -> Self {
         self.and(Self::Return, include)
     }
 
     #[must_use]
     #[inline]
-    pub fn and_disallow_conditional_types(self, include: bool) -> Self {
-        self.and(Self::DisallowConditionalTypes, include)
-    }
-
-    #[must_use]
-    #[inline]
-    pub fn and_ambient(self, include: bool) -> Self {
+    pub(crate) fn and_ambient(self, include: bool) -> Self {
         self.and(Self::Ambient, include)
     }
 
@@ -164,17 +158,7 @@ pub enum StatementContext {
 
 impl StatementContext {
     #[must_use]
-    pub fn is_single_statement(self) -> bool {
+    pub(crate) fn is_single_statement(self) -> bool {
         self != Self::StatementList
-    }
-
-    #[must_use]
-    pub fn is_statement_list(self) -> bool {
-        self == Self::StatementList
-    }
-
-    #[must_use]
-    pub fn is_iteration(self) -> bool {
-        matches!(self, Self::For | Self::While | Self::Do)
     }
 }

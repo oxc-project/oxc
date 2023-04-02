@@ -197,8 +197,8 @@ impl LintRunner {
         };
 
         let program = allocator.alloc(ret.program);
-        let trivias = Rc::new(ret.trivias);
-        let semantic_ret = SemanticBuilder::new(&source_text, source_type, &trivias).build(program);
+        let semantic_ret =
+            SemanticBuilder::new(&source_text, source_type, &ret.trivias).build(program);
 
         if !semantic_ret.errors.is_empty() {
             return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));

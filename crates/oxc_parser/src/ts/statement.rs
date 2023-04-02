@@ -1,26 +1,28 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, context::StatementContext, Span};
+use oxc_ast::{ast::*, Span};
 use oxc_diagnostics::Result;
 
 use super::{
     list::{TSEnumMemberList, TSInterfaceOrObjectBodyList},
     types::ModifierFlags,
 };
-use crate::js::declaration::{VariableDeclarationContext, VariableDeclarationParent};
-use crate::js::function::FunctionKind;
-use crate::lexer::Kind;
-use crate::list::{NormalList, SeparatedList};
-use crate::Parser;
+use crate::{
+    js::declaration::{VariableDeclarationContext, VariableDeclarationParent},
+    js::function::FunctionKind,
+    lexer::Kind,
+    list::{NormalList, SeparatedList},
+    Parser, StatementContext,
+};
 
 impl<'a> Parser<'a> {
     /** ------------------- Enum ------------------ */
 
-    pub fn is_at_enum_declaration(&mut self) -> bool {
+    pub(crate) fn is_at_enum_declaration(&mut self) -> bool {
         self.at(Kind::Enum) || (self.at(Kind::Const) && self.peek_at(Kind::Enum))
     }
 
     /// `https://www.typescriptlang.org/docs/handbook/enums.html`
-    pub fn parse_ts_enum_declaration(
+    pub(crate) fn parse_ts_enum_declaration(
         &mut self,
         span: Span,
         modifiers: Modifiers<'a>,
@@ -32,7 +34,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.ts_enum_declaration(span, id, members, modifiers))
     }
 
-    pub fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
+    pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
         let span = self.start_span();
         let id = self.parse_ts_enum_member_name()?;
 
@@ -57,7 +59,9 @@ impl<'a> Parser<'a> {
 
     /** ------------------- Annotation ----------------- */
 
-    pub fn parse_ts_type_annotation(&mut self) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
+    pub(crate) fn parse_ts_type_annotation(
+        &mut self,
+    ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
         if self.at(Kind::Colon) {
             let span = self.start_span();
             self.bump_any(); // bump ':'
@@ -68,7 +72,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_ts_variable_annotation(
+    pub(crate) fn parse_ts_variable_annotation(
         &mut self,
     ) -> Result<(Option<Box<'a, TSTypeAnnotation<'a>>>, bool)> {
         if !self.at(Kind::Bang) {
@@ -86,11 +90,11 @@ impl<'a> Parser<'a> {
             let type_annotation = self.parse_ts_type()?;
             Ok((Some(self.ast.ts_type_annotation(self.end_span(span), type_annotation)), true))
         } else {
-            self.unexpected()
+            Err(self.unexpected())
         }
     }
 
-    pub fn parse_ts_type_alias_declaration(
+    pub(crate) fn parse_ts_type_alias_declaration(
         &mut self,
         span: Span,
         modifiers: Modifiers<'a>,
@@ -109,7 +113,7 @@ impl<'a> Parser<'a> {
 
     /** ---------------------  Interface  ------------------------ */
 
-    pub fn parse_ts_interface_declaration(
+    pub(crate) fn parse_ts_interface_declaration(
         &mut self,
         span: Span,
         modifiers: Modifiers<'a>,
@@ -137,7 +141,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.ts_interface_body(self.end_span(span), body_list.body))
     }
 
-    pub fn is_at_interface_declaration(&mut self) -> bool {
+    pub(crate) fn is_at_interface_declaration(&mut self) -> bool {
         if !self.at(Kind::Interface) || self.peek_token().is_on_new_line {
             false
         } else {
@@ -145,7 +149,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_ts_type_signature(&mut self) -> Result<TSSignature<'a>> {
+    pub(crate) fn parse_ts_type_signature(&mut self) -> Result<TSSignature<'a>> {
         if self.is_at_ts_index_signature_member() {
             return self.parse_ts_index_signature_member();
         }
@@ -166,7 +170,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Must be at `[ident:` or `<modifiers> [ident:`
-    pub fn is_at_ts_index_signature_member(&mut self) -> bool {
+    pub(crate) fn is_at_ts_index_signature_member(&mut self) -> bool {
         let mut offset = 0;
         while self.is_nth_at_modifier(offset, false) {
             offset += 1;
@@ -183,7 +187,7 @@ impl<'a> Parser<'a> {
         self.nth_at(offset + 2, Kind::Colon)
     }
 
-    pub fn is_nth_at_modifier(&mut self, n: u8, is_constructor_parameter: bool) -> bool {
+    pub(crate) fn is_nth_at_modifier(&mut self, n: u8, is_constructor_parameter: bool) -> bool {
         let nth = self.nth(n);
         if !(matches!(
             nth.kind,
@@ -239,7 +243,7 @@ impl<'a> Parser<'a> {
         self.parse_statement_list_item(StatementContext::StatementList)
     }
 
-    pub fn parse_ts_namespace_or_module_declaration_body(
+    pub(crate) fn parse_ts_namespace_or_module_declaration_body(
         &mut self,
         span: Span,
         modifiers: Modifiers<'a>,
@@ -263,7 +267,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.ts_module_declaration(self.end_span(span), id, body, modifiers))
     }
 
-    pub fn parse_ts_namespace_or_module_declaration(
+    pub(crate) fn parse_ts_namespace_or_module_declaration(
         &mut self,
         modifiers: Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
@@ -272,7 +276,7 @@ impl<'a> Parser<'a> {
         self.parse_ts_namespace_or_module_declaration_body(span, modifiers)
     }
 
-    pub fn parse_ts_global_declaration(
+    pub(crate) fn parse_ts_global_declaration(
         &mut self,
         start_span: Span,
         modifiers: Modifiers<'a>,
@@ -280,64 +284,12 @@ impl<'a> Parser<'a> {
         self.parse_ts_namespace_or_module_declaration_body(start_span, modifiers)
     }
 
-    pub fn is_nth_at_ts_namespace_declaration(&mut self, n: u8) -> bool {
-        if self.nth(n + 1).is_on_new_line {
-            return false;
-        }
-
-        if self.nth_at(n, Kind::Module) || self.nth_at(n, Kind::Namespace) {
-            return self.nth_kind(n + 1).is_identifier() || self.nth_at(n + 1, Kind::Str);
-        }
-
-        if self.nth_at(n, Kind::Global) {
-            return self.nth_at(n + 1, Kind::LCurly);
-        }
-
-        false
-    }
-
     /** ----------------------- declare --------------------- */
 
-    pub fn is_at_ts_declare_clause(&mut self) -> bool {
-        if !self.at(Kind::Declare) || self.peek_token().is_on_new_line {
-            return false;
-        }
-
-        if matches!(
-            self.peek_kind(),
-            Kind::Function | Kind::Const | Kind::Enum | Kind::Class | Kind::Import
-        ) {
-            return true;
-        }
-
-        if self.peek_kind().is_variable_declaration() {
-            return true;
-        }
-
-        if self.nth(2).is_on_new_line {
-            return false;
-        }
-
-        if self.peek_at(Kind::Type) || self.peek_at(Kind::Interface) {
-            return true;
-        }
-
-        if self.peek_at(Kind::Async) && self.nth_at(2, Kind::Function) {
-            return true;
-        }
-
-        if self.is_nth_at_ts_namespace_declaration(1) {
-            return true;
-        }
-
-        if self.peek_at(Kind::Abstract) && self.nth_at(2, Kind::Class) {
-            return true;
-        }
-
-        false
-    }
-
-    pub fn parse_ts_declaration_statement(&mut self, start_span: Span) -> Result<Statement<'a>> {
+    pub(crate) fn parse_ts_declaration_statement(
+        &mut self,
+        start_span: Span,
+    ) -> Result<Statement<'a>> {
         let reserved_ctx = self.ctx;
 
         let (flags, modifiers) = self.eat_modifiers_before_declaration();
@@ -351,7 +303,7 @@ impl<'a> Parser<'a> {
         result.map(Statement::Declaration)
     }
 
-    pub fn parse_declaration(
+    pub(crate) fn parse_declaration(
         &mut self,
         start_span: Span,
         modifiers: Modifiers<'a>,
@@ -406,11 +358,11 @@ impl<'a> Parser<'a> {
                         .map(Declaration::FunctionDeclaration)
                 }
             }
-            _ => self.unexpected(),
+            _ => Err(self.unexpected()),
         }
     }
 
-    pub fn parse_ts_declare_function(
+    pub(crate) fn parse_ts_declare_function(
         &mut self,
         start_span: Span,
         modifiers: Modifiers<'a>,
@@ -422,7 +374,7 @@ impl<'a> Parser<'a> {
         self.parse_function(start_span, id, r#async, false, func_kind, modifiers)
     }
 
-    pub fn parse_ts_type_assertion(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_ts_type_assertion(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
         self.re_lex_ts_l_angle();
         self.expect(Kind::LAngle)?;
@@ -433,7 +385,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.ts_type_assertion(self.end_span(span), type_annotation, expression))
     }
 
-    pub fn parse_ts_import_equals_declaration(
+    pub(crate) fn parse_ts_import_equals_declaration(
         &mut self,
         span: Span,
         is_export: bool,
@@ -472,13 +424,13 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    pub fn parse_ts_this_parameter(&mut self) -> Result<()> {
+    pub(crate) fn parse_ts_this_parameter(&mut self) -> Result<()> {
         let _ident = self.parse_identifier_kind(Kind::Ident);
         self.parse_ts_type_annotation()?;
         Ok(())
     }
 
-    pub fn eat_decorators(&mut self) -> Result<()> {
+    pub(crate) fn eat_decorators(&mut self) -> Result<()> {
         if !self.at(Kind::At) {
             return Ok(());
         }
@@ -493,7 +445,7 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    pub fn eat_modifiers_before_declaration(&mut self) -> (ModifierFlags, Modifiers<'a>) {
+    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> (ModifierFlags, Modifiers<'a>) {
         let mut flags = ModifierFlags::empty();
         let mut modifiers = self.ast.new_vec();
         while self.at_modifier() {

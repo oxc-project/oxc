@@ -16,27 +16,27 @@ repository = "https://github.com/Boshen/oxc"
 
 [workspace.dependencies]
 oxc_allocator = { version = "0.0.1", path = "crates/oxc_allocator" }
-oxc_parser = { version = "0.0.1", path = "crates/oxc_parser" }
-oxc_ast = { version = "0.0.1", path = "crates/oxc_ast" }
-oxc_printer = { version = "0.0.1", path = "crates/oxc_printer" }
-oxc_semantic = { version = "0.0.1", path = "crates/oxc_semantic" }
-oxc_diagnostics = { version = "0.0.1", path = "crates/oxc_diagnostics" }
+oxc_ast = { version = "0.0.3", path = "crates/oxc_ast" }
+oxc_diagnostics = { version = "0.0.3", path = "crates/oxc_diagnostics" }
+oxc_parser = { version = "0.0.3", path = "crates/oxc_parser" }
+oxc_printer = { version = "0.0.3", path = "crates/oxc_printer" }
+oxc_semantic = { version = "0.0.2", path = "crates/oxc_semantic" }
 
 oxc_linter = { version = "0.0.0", path = "crates/oxc_linter" }
 oxc_macros = { version = "0.0.0", path = "crates/oxc_macros" }
 
 jemallocator = "0.5.0"
-mimalloc = "0.1.34"
+mimalloc = "0.1.35"
 bitflags = "1.3.2"
 bumpalo = "3.12.0"
 compact_str = "0.7.0"
-miette = "5.6.0"
+miette = "5.7.0"
 rayon = "1.7.0"
 rustc-hash = "1.1.0"
-serde = "1.0.156"
-serde_json = "1.0.94"
-thiserror = "1.0.39"
-clap = "4.1.8"
+serde = "1.0.159"
+serde_json = "1.0.95"
+thiserror = "1.0.40"
+clap = "4.2.1"
 indextree = "4.6.0"
 glob = "0.3.1"
 lazy_static = "1.4.0"

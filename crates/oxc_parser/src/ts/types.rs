@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, context::Context};
+use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 
 use super::list::{
@@ -11,7 +11,7 @@ use crate::{
     js::list::{ArrayPatternList, ObjectPatternProperties},
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    Parser,
+    Context, Parser,
 };
 
 bitflags! {
@@ -65,7 +65,7 @@ impl From<Kind> for ModifierFlags {
 }
 
 impl ModifierFlags {
-    pub fn accessibility(self) -> Option<TSAccessibility> {
+    pub(crate) fn accessibility(self) -> Option<TSAccessibility> {
         if self.contains(Self::PUBLIC) {
             return Some(TSAccessibility::Public);
         }
@@ -79,33 +79,33 @@ impl ModifierFlags {
         None
     }
 
-    pub fn readonly(self) -> bool {
+    pub(crate) fn readonly(self) -> bool {
         self.contains(Self::READONLY)
     }
 
-    pub fn declare(self) -> bool {
+    pub(crate) fn declare(self) -> bool {
         self.contains(Self::DECLARE)
     }
 
-    pub fn r#async(self) -> bool {
+    pub(crate) fn r#async(self) -> bool {
         self.contains(Self::ASYNC)
     }
 
-    pub fn r#override(self) -> bool {
+    pub(crate) fn r#override(self) -> bool {
         self.contains(Self::OVERRIDE)
     }
 
-    pub fn r#abstract(self) -> bool {
+    pub(crate) fn r#abstract(self) -> bool {
         self.contains(Self::ABSTRACT)
     }
 
-    pub fn r#static(self) -> bool {
+    pub(crate) fn r#static(self) -> bool {
         self.contains(Self::STATIC)
     }
 }
 
 impl<'a> Parser<'a> {
-    pub fn parse_ts_type(&mut self) -> Result<TSType<'a>> {
+    pub(crate) fn parse_ts_type(&mut self) -> Result<TSType<'a>> {
         if self.is_at_constructor_type() {
             return self.parse_ts_constructor_type();
         }
@@ -119,7 +119,7 @@ impl<'a> Parser<'a> {
         self.parse_ts_conditional_type(left)
     }
 
-    pub fn parse_ts_type_parameters(
+    pub(crate) fn parse_ts_type_parameters(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterDeclaration<'a>>>> {
         if !self.ts_enabled() {
@@ -133,7 +133,7 @@ impl<'a> Parser<'a> {
         Ok(Some(self.ast.ts_type_parameters(self.end_span(span), params)))
     }
 
-    pub fn parse_ts_implements_clause(
+    pub(crate) fn parse_ts_implements_clause(
         &mut self,
     ) -> Result<Vec<'a, Box<'a, TSClassImplements<'a>>>> {
         self.expect(Kind::Implements)?;
@@ -148,7 +148,7 @@ impl<'a> Parser<'a> {
         Ok(implements)
     }
 
-    pub fn parse_ts_type_parameter(&mut self) -> Result<Box<'a, TSTypeParameter<'a>>> {
+    pub(crate) fn parse_ts_type_parameter(&mut self) -> Result<Box<'a, TSTypeParameter<'a>>> {
         let span = self.start_span();
 
         let r#in = if self.at(Kind::In) && self.peek_kind().is_identifier_name() {
@@ -466,7 +466,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.ts_type_implement(self.end_span(span), expression, type_parameters))
     }
 
-    pub fn parse_ts_qualified_name(&mut self) -> Result<TSTypeName<'a>> {
+    pub(crate) fn parse_ts_qualified_name(&mut self) -> Result<TSTypeName<'a>> {
         let span = self.start_span();
         let identifier_name = self.parse_identifier_name()?;
         let mut left = TSTypeName::IdentifierName(self.ast.alloc(identifier_name));
@@ -483,7 +483,7 @@ impl<'a> Parser<'a> {
         Ok(left)
     }
 
-    pub fn parse_ts_type_arguments(
+    pub(crate) fn parse_ts_type_arguments(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
         self.re_lex_ts_l_angle();
@@ -495,27 +495,27 @@ impl<'a> Parser<'a> {
         Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)))
     }
 
-    pub fn parse_ts_type_arguments_in_expression(
+    pub(crate) fn parse_ts_type_arguments_in_expression(
         &mut self,
-    ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
+    ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
-            return Ok(None);
+            return None;
         }
         let span = self.start_span();
 
-        Ok(self
-            .try_parse(|p| {
-                p.re_lex_ts_l_angle();
+        self.try_parse(|p| {
+            p.re_lex_ts_l_angle();
 
-                let params = TSTypeArgumentList::parse(p)?.params;
-                if p.cur_kind().can_follow_type_arguments_in_expr() {
-                    Ok(params)
-                } else {
-                    p.unexpected()
-                }
-            })
-            .ok()
-            .map(|types| self.ast.ts_type_arguments(self.end_span(span), types)))
+            let params = TSTypeArgumentList::parse(p)?.params;
+            let token = p.cur_token();
+            if token.is_on_new_line || token.kind.can_follow_type_arguments_in_expr() {
+                Ok(params)
+            } else {
+                Err(p.unexpected())
+            }
+        })
+        .ok()
+        .map(|types| self.ast.ts_type_arguments(self.end_span(span), types))
     }
 
     fn parse_ts_tuple_type(&mut self) -> Result<TSType<'a>> {
@@ -604,7 +604,7 @@ impl<'a> Parser<'a> {
         self.expect(Kind::LBrack)?;
         let type_parameter_span = self.start_span();
         if !self.cur_kind().is_identifier_name() {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
         let name = self.parse_binding_identifier()?;
         self.expect(Kind::In)?;
@@ -655,7 +655,7 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    pub fn is_at_named_tuple_element(&mut self) -> bool {
+    pub(crate) fn is_at_named_tuple_element(&mut self) -> bool {
         let offset = u8::from(self.at(Kind::Dot3));
         let has_colon = self.nth_at(offset + 1, Kind::Colon);
         let has_question_colon =
@@ -693,7 +693,7 @@ impl<'a> Parser<'a> {
                 Expression::RegExpLiteral(literal) => TSLiteral::RegExpLiteral(literal),
                 Expression::StringLiteral(literal) => TSLiteral::StringLiteral(literal),
                 Expression::TemplateLiteral(literal) => TSLiteral::TemplateLiteral(literal),
-                _ => return self.unexpected(),
+                _ => return Err(self.unexpected()),
             }
         };
 
@@ -825,10 +825,10 @@ impl<'a> Parser<'a> {
                 return Ok(Some(constraint));
             }
         }
-        self.unexpected()
+        Err(self.unexpected())
     }
 
-    pub fn parse_ts_return_type_annotation(
+    pub(crate) fn parse_ts_return_type_annotation(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeAnnotation<'a>>>> {
         if !self.ts_enabled() {
@@ -879,7 +879,7 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    pub fn parse_ts_return_type(&mut self) -> Result<TSType<'a>> {
+    pub(crate) fn parse_ts_return_type(&mut self) -> Result<TSType<'a>> {
         let asserts = self.at(Kind::Asserts)
             && (self.peek_kind().is_identifier() || self.peek_at(Kind::This));
         let is_predicate =
@@ -891,11 +891,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn is_next_at_type_member_name(&mut self) -> bool {
+    pub(crate) fn is_next_at_type_member_name(&mut self) -> bool {
         self.peek_kind().is_literal_property_name() || self.peek_at(Kind::LBrack)
     }
 
-    pub fn parse_ts_call_signature_member(&mut self) -> Result<TSSignature<'a>> {
+    pub(crate) fn parse_ts_call_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
         let type_parameters = self.parse_ts_type_parameters()?;
         let params = self.parse_formal_parameters(FormalParameterKind::Signature)?;
@@ -910,7 +910,7 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    pub fn parse_ts_getter_signature_member(&mut self) -> Result<TSSignature<'a>> {
+    pub(crate) fn parse_ts_getter_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
         self.expect(Kind::Get)?;
         let (key, computed) = self.parse_property_name()?;
@@ -933,7 +933,7 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    pub fn parse_ts_setter_signature_member(&mut self) -> Result<TSSignature<'a>> {
+    pub(crate) fn parse_ts_setter_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
         self.expect(Kind::Set)?;
         let (key, computed) = self.parse_property_name()?;
@@ -959,7 +959,9 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    pub fn parse_ts_property_or_method_signature_member(&mut self) -> Result<TSSignature<'a>> {
+    pub(crate) fn parse_ts_property_or_method_signature_member(
+        &mut self,
+    ) -> Result<TSSignature<'a>> {
         let span = self.start_span();
         let readonly = self.at(Kind::Readonly) && self.is_next_at_type_member_name();
 
@@ -1000,7 +1002,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_ts_constructor_signature_member(&mut self) -> Result<TSSignature<'a>> {
+    pub(crate) fn parse_ts_constructor_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
         self.expect(Kind::New)?;
 
@@ -1018,11 +1020,11 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    pub fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
+    pub(crate) fn parse_ts_index_signature_member(&mut self) -> Result<TSSignature<'a>> {
         let span = self.start_span();
         while self.is_nth_at_modifier(0, false) {
             if !self.eat(Kind::Readonly) {
-                self.unexpected()?;
+                return Err(self.unexpected());
             }
         }
 
@@ -1038,7 +1040,7 @@ impl<'a> Parser<'a> {
             self.bump(Kind::Semicolon);
             Ok(self.ast.ts_index_signature(self.end_span(span), parameters, type_annotation))
         } else {
-            self.unexpected()
+            Err(self.unexpected())
         }
     }
 
@@ -1048,7 +1050,7 @@ impl<'a> Parser<'a> {
         let type_annotation = self.parse_ts_type_annotation()?;
 
         if type_annotation.is_none() {
-            self.unexpected()?;
+            return Err(self.unexpected());
         }
 
         Ok(self.ast.alloc(TSIndexSignatureName {
@@ -1058,7 +1060,7 @@ impl<'a> Parser<'a> {
         }))
     }
 
-    pub fn parse_class_element_modifiers(
+    pub(crate) fn parse_class_element_modifiers(
         &mut self,
         is_constructor_parameter: bool,
     ) -> ModifierFlags {

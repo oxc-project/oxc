@@ -51,6 +51,9 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 }
             }
             Expression::TSAsExpression(expr) => Ok(SimpleAssignmentTarget::TSAsExpression(expr)),
+            Expression::TSSatisfiesExpression(expr) => {
+                Ok(SimpleAssignmentTarget::TSSatisfiesExpression(expr))
+            }
             Expression::TSNonNullExpression(expr) => {
                 Ok(SimpleAssignmentTarget::TSNonNullExpression(expr))
             }
@@ -152,7 +155,7 @@ impl<'a> CoverGrammar<'a, Property<'a>> for AssignmentTargetProperty<'a> {
                 PropertyKey::Identifier(ident) => {
                     IdentifierReference { span: ident.span, name: ident.unbox().name }
                 }
-                _ => return p.unexpected(),
+                _ => return Err(p.unexpected()),
             };
             let init = match property.value {
                 PropertyValue::Expression(Expression::AssignmentExpression(assignment_expr)) => {

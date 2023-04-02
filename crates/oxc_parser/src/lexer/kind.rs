@@ -381,6 +381,11 @@ impl Kind {
     }
 
     #[must_use]
+    pub fn is_template_start_of_tagged_template(self) -> bool {
+        matches!(self, NoSubstitutionTemplate | TemplateHead)
+    }
+
+    #[must_use]
     #[rustfmt::skip]
     pub fn is_modifier_kind(self) -> bool {
         matches!(self, Abstract | Accessor | Async | Const | Declare | Default

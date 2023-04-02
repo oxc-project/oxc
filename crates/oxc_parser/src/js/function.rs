@@ -1,13 +1,9 @@
 use oxc_allocator::Box;
-use oxc_ast::{
-    ast::*,
-    context::{Context, StatementContext},
-    AstBuilder, GetSpan, Span,
-};
+use oxc_ast::{ast::*, AstBuilder, GetSpan, Span};
 use oxc_diagnostics::Result;
 
 use super::list::FormalParameterList;
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser, StatementContext};
 
 type ArrowFunctionHead<'a> = (
     Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -33,28 +29,28 @@ pub enum FunctionKind {
 }
 
 impl FunctionKind {
-    pub fn is_id_required(self) -> bool {
+    pub(crate) fn is_id_required(self) -> bool {
         matches!(self, Self::Declaration { single_statement: true })
     }
 
-    pub fn is_expression(self) -> bool {
+    pub(crate) fn is_expression(self) -> bool {
         self == Self::Expression
     }
 }
 
 impl<'a> Parser<'a> {
-    pub fn at_function_with_async(&mut self) -> bool {
+    pub(crate) fn at_function_with_async(&mut self) -> bool {
         self.at(Kind::Function)
             || self.at(Kind::Async)
                 && self.peek_at(Kind::Function)
                 && !self.peek_token().is_on_new_line
     }
 
-    pub fn at_async_no_new_line(&mut self) -> bool {
+    pub(crate) fn at_async_no_new_line(&mut self) -> bool {
         self.at(Kind::Async) && !self.cur_token().escaped && !self.peek_token().is_on_new_line
     }
 
-    pub fn parse_function_body(&mut self) -> Result<Box<'a, FunctionBody<'a>>> {
+    pub(crate) fn parse_function_body(&mut self) -> Result<Box<'a, FunctionBody<'a>>> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
 
@@ -66,7 +62,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.function_body(self.end_span(span), directives, statements))
     }
 
-    pub fn parse_formal_parameters(
+    pub(crate) fn parse_formal_parameters(
         &mut self,
         params_kind: FormalParameterKind,
     ) -> Result<Box<'a, FormalParameters<'a>>> {
@@ -75,7 +71,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.formal_parameters(self.end_span(span), params_kind, elements))
     }
 
-    pub fn parse_function(
+    pub(crate) fn parse_function(
         &mut self,
         span: Span,
         id: Option<BindingIdentifier>,
@@ -99,7 +95,7 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
         if !self.ts_enabled() && body.is_none() {
-            return self.unexpected();
+            return Err(self.unexpected());
         }
 
         let function_type = if body.is_none() {
@@ -134,7 +130,7 @@ impl<'a> Parser<'a> {
     }
 
     /// [Function Declaration](https://tc39.es/ecma262/#prod-FunctionDeclaration)
-    pub fn parse_function_declaration(
+    pub(crate) fn parse_function_declaration(
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Result<Statement<'a>> {
@@ -160,7 +156,7 @@ impl<'a> Parser<'a> {
 
     /// Parse function implementation in Javascript, cursor
     /// at `function` or `async function`
-    pub fn parse_function_impl(
+    pub(crate) fn parse_function_impl(
         &mut self,
         func_kind: FunctionKind,
     ) -> Result<Box<'a, Function<'a>>> {
@@ -174,7 +170,7 @@ impl<'a> Parser<'a> {
 
     /// Parse function implementation in Typescript, cursor
     /// at `function`
-    pub fn parse_ts_function_impl(
+    pub(crate) fn parse_ts_function_impl(
         &mut self,
         start_span: Span,
         func_kind: FunctionKind,
@@ -188,7 +184,7 @@ impl<'a> Parser<'a> {
     }
 
     /// [Function Expression](https://tc39.es/ecma262/#prod-FunctionExpression)
-    pub fn parse_function_expression(
+    pub(crate) fn parse_function_expression(
         &mut self,
         span: Span,
         r#async: bool,
@@ -204,7 +200,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.function_expression(function))
     }
 
-    pub fn parse_single_param_function_expression(
+    pub(crate) fn parse_single_param_function_expression(
         &mut self,
         span: Span,
         r#async: bool,
@@ -266,7 +262,7 @@ impl<'a> Parser<'a> {
     ///   async `ClassElementName`
     /// `AsyncGeneratorMethod`
     ///   async * `ClassElementName`
-    pub fn parse_method(
+    pub(crate) fn parse_method(
         &mut self,
         r#async: bool,
         generator: bool,
@@ -286,7 +282,7 @@ impl<'a> Parser<'a> {
     /// yield
     /// yield [no `LineTerminator` here] `AssignmentExpression`
     /// yield [no `LineTerminator` here] * `AssignmentExpression`
-    pub fn parse_yield_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_yield_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
         self.bump_any(); // advance `yield`
 
@@ -321,7 +317,7 @@ impl<'a> Parser<'a> {
     }
 
     // id: None - for AnonymousDefaultExportedFunctionDeclaration
-    pub fn parse_function_id(
+    pub(crate) fn parse_function_id(
         &mut self,
         kind: FunctionKind,
         r#async: bool,
@@ -345,7 +341,7 @@ impl<'a> Parser<'a> {
         id
     }
 
-    pub fn is_parenthesized_arrow_function_expression(
+    pub(crate) fn is_parenthesized_arrow_function_expression(
         &mut self,
         r#async: bool,
     ) -> IsParenthesizedArrowFunction {
@@ -421,7 +417,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn is_parenthesized_arrow_function(&mut self) -> IsParenthesizedArrowFunction {
+    pub(crate) fn is_parenthesized_arrow_function(&mut self) -> IsParenthesizedArrowFunction {
         match self.cur_kind() {
             Kind::LAngle | Kind::LParen => self.is_parenthesized_arrow_function_expression(false),
             Kind::Async => {
@@ -436,7 +432,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_parenthesized_arrow_function_head(&mut self) -> Result<ArrowFunctionHead<'a>> {
+    pub(crate) fn parse_parenthesized_arrow_function_head(
+        &mut self,
+    ) -> Result<ArrowFunctionHead<'a>> {
         let span = self.start_span();
         let r#async = self.eat(Kind::Async);
 
@@ -460,12 +458,12 @@ impl<'a> Parser<'a> {
         Ok((type_parameters, params, return_type, r#async, span))
     }
 
-    /// [`ConciseBody`](https://tc39.es/ecma262/#prod-ConciseBody)
+    /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
     ///     [lookahead ≠ {] `ExpressionBody`[?In, ~Await]
     ///     { `FunctionBody`[~Yield, ~Await] }
     /// `ExpressionBody`[In, Await] :
     ///     `AssignmentExpression`[?In, ~Yield, ?Await]
-    pub fn parse_arrow_function_body(
+    pub(crate) fn parse_arrow_function_body(
         &mut self,
         span: Span,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -501,10 +499,10 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    /// Section Arrow Function `https://tc39.es/ecma262/#sec-arrow-function-definitions`
+    /// Section [Arrow Function](https://tc39.es/ecma262/#sec-arrow-function-definitions)
     /// `ArrowFunction`[In, Yield, Await] :
     ///     `ArrowParameters`[?Yield, ?Await] [no `LineTerminator` here] => `ConciseBody`[?In]
-    pub fn parse_parenthesized_arrow_function(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_parenthesized_arrow_function(&mut self) -> Result<Expression<'a>> {
         let (type_parameters, params, return_type, r#async, span) =
             self.parse_parenthesized_arrow_function_head()?;
         self.parse_arrow_function_body(span, type_parameters, params, return_type, r#async)

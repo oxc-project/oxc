@@ -1,9 +1,9 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, context::StatementContext, syntax_directed_operations::PropName, Span};
+use oxc_ast::{ast::*, syntax_directed_operations::PropName, Span};
 use oxc_diagnostics::Result;
 
 use super::list::ClassElements;
-use crate::{diagnostics, lexer::Kind, list::NormalList, Parser};
+use crate::{diagnostics, lexer::Kind, list::NormalList, Parser, StatementContext};
 
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
@@ -13,7 +13,7 @@ type Implements<'a> = Vec<'a, Box<'a, TSClassImplements<'a>>>;
 /// Section 15.7 Class Definitions
 impl<'a> Parser<'a> {
     // `start_span` points at the start of all decoractors and `class` keyword.
-    pub fn parse_class_statement(
+    pub(crate) fn parse_class_statement(
         &mut self,
         stmt_ctx: StatementContext,
         start_span: Span,
@@ -31,7 +31,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Section 15.7 Class Definitions
-    pub fn parse_class_declaration(
+    pub(crate) fn parse_class_declaration(
         &mut self,
         start_span: Span,
         modifiers: Modifiers<'a>,
@@ -39,10 +39,10 @@ impl<'a> Parser<'a> {
         self.parse_class(start_span, ClassType::ClassDeclaration, modifiers)
     }
 
-    /// Section Class Definitions `https://tc39.es/ecma262/#prod-ClassExpression`
+    /// Section [Class Definitions](https://tc39.es/ecma262/#prod-ClassExpression)
     /// `ClassExpression`[Yield, Await] :
     ///     class `BindingIdentifier`[?Yield, ?Await]opt `ClassTail`[?Yield, ?Await]
-    pub fn parse_class_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_class_expression(&mut self) -> Result<Expression<'a>> {
         let class =
             self.parse_class(self.start_span(), ClassType::ClassExpression, Modifiers::empty())?;
         Ok(self.ast.class_expression(class))
@@ -93,7 +93,7 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    pub fn parse_heritage_clause(
+    pub(crate) fn parse_heritage_clause(
         &mut self,
     ) -> Result<(Option<Extends<'a>>, Option<Implements<'a>>)> {
         let mut extends = None;
@@ -159,7 +159,7 @@ impl<'a> Parser<'a> {
     }
 
     #[allow(clippy::too_many_lines)]
-    pub fn parse_class_element(&mut self) -> Result<ClassElement<'a>> {
+    pub(crate) fn parse_class_element(&mut self) -> Result<ClassElement<'a>> {
         let span = self.start_span();
 
         self.eat_decorators()?;
@@ -172,12 +172,7 @@ impl<'a> Parser<'a> {
 
         let modifier = self.parse_class_element_modifiers(false);
 
-        let accessor = matches!(
-            self.peek_kind(),
-            // js can use [prop] or "prop" to define a property,
-            // so we need to check `LBrack` and `Str`
-            Kind::Ident | Kind::PrivateIdentifier | Kind::LBrack | Kind::Str
-        ) && self.eat(Kind::Accessor);
+        let accessor = self.peek_kind().is_class_element_name_start() && self.eat(Kind::Accessor);
 
         let accessibility = modifier.accessibility();
 
@@ -241,7 +236,7 @@ impl<'a> Parser<'a> {
                 kind if kind.is_class_element_name_start() => {
                     Some(self.parse_class_element_name()?)
                 }
-                _ => return self.unexpected(),
+                _ => return Err(self.unexpected()),
             }
         }
 
@@ -280,7 +275,7 @@ impl<'a> Parser<'a> {
                 optional,
             )?;
             if let Some((name, span)) = definition.prop_name() {
-                if r#static && name == "prototype" {
+                if r#static && name == "prototype" && !self.ctx.has_ambient() {
                     self.error(diagnostics::StaticPrototype(span));
                 }
                 if !r#static && name == "constructor" {
@@ -314,7 +309,7 @@ impl<'a> Parser<'a> {
                 if name == "constructor" {
                     self.error(diagnostics::FieldConstructor(span));
                 }
-                if r#static && name == "prototype" {
+                if r#static && name == "prototype" && !self.ctx.has_ambient() {
                     self.error(diagnostics::StaticPrototype(span));
                 }
             }
@@ -464,7 +459,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.static_block(self.end_span(span), block.unbox().body))
     }
 
-    /// `https://github.com/tc39/proposal-decorators`
+    /// <https://github.com/tc39/proposal-decorators>
     fn parse_class_accessor_property(
         &mut self,
         span: Span,

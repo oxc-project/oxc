@@ -6,17 +6,15 @@ use serde::{
 
 use crate::{
     ast::{
-        ArrowExpression, Directive, FormalParameters, FunctionBody, MemberExpression, Program,
-        Statement,
+        ArrowExpression, Directive, FormalParameters, FunctionBody, MemberExpression, NullLiteral,
+        Program, RegExpFlags, Statement,
     },
     ModuleKind,
 };
 
-#[cfg(feature = "serde_json")]
 pub struct EcmaFormatter;
 
 /// Serialize f64 with `ryu_js`
-#[cfg(feature = "serde_json")]
 impl serde_json::ser::Formatter for EcmaFormatter {
     fn write_f64<W>(&mut self, writer: &mut W, value: f64) -> std::io::Result<()>
     where
@@ -31,7 +29,6 @@ impl serde_json::ser::Formatter for EcmaFormatter {
 impl<'a> Program<'a> {
     /// # Panics
     #[must_use]
-    #[cfg(feature = "serde_json")]
     pub fn to_json(&self) -> String {
         let buf = std::vec::Vec::new();
         let mut ser = serde_json::Serializer::with_formatter(buf, crate::serialize::EcmaFormatter);
@@ -69,6 +66,15 @@ where
     s.collect_str(&format_args!("{value}n"))
 }
 
+impl Serialize for RegExpFlags {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
 /// Helper struct for serializing `Program` and `FunctionBody`
 #[derive(Debug, PartialEq)]
 pub struct BlockWrapper<'a, 'b> {
@@ -89,6 +95,20 @@ impl<'a, 'b> Serialize for BlockWrapper<'a, 'b> {
             seq.serialize_element(e)?;
         }
         seq.end()
+    }
+}
+
+impl Serialize for NullLiteral {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("NullLiteral", 4)?;
+        state.serialize_field("type", &"Literal")?;
+        state.serialize_field("start", &self.span.start)?;
+        state.serialize_field("end", &self.span.end)?;
+        state.serialize_field("value", &())?;
+        state.end()
     }
 }
 

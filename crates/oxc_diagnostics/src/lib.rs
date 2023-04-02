@@ -4,7 +4,7 @@
 mod graphic_reporter;
 mod graphical_theme;
 
-use std::{cell::RefCell, ops::Deref, path::PathBuf, rc::Rc};
+use std::path::PathBuf;
 
 pub use graphic_reporter::GraphicalReportHandler;
 pub use miette;
@@ -18,25 +18,6 @@ pub type Severity = miette::Severity;
 pub type Report = miette::Report;
 
 pub type Result<T> = std::result::Result<T, Error>;
-
-#[derive(Debug, Default, Clone)]
-pub struct Diagnostics(Rc<RefCell<Vec<Error>>>);
-
-impl Deref for Diagnostics {
-    type Target = Rc<RefCell<Vec<Error>>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl Diagnostics {
-    /// # Panics
-    #[must_use]
-    pub fn into_inner(self) -> Vec<Error> {
-        Rc::try_unwrap(self.0).unwrap().into_inner()
-    }
-}
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Identifier `{0}` has already been declared")]

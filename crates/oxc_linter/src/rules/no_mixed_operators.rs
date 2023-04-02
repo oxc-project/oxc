@@ -217,7 +217,7 @@ const PRECEDENCES: [u8; 27] = [
   4, 3,
   9, 9,
   2,
-  9,
+  3
 ];
 
 const ARITHMETIC: &[&str] = &OPERATORS[..6];
@@ -296,6 +296,7 @@ fn test() {
         ("x ? a && b : 0", Some(json!([{ "groups": [["&&", "||", "?:"]] }]))),
         ("x ? 0 : a && b", Some(json!([{ "groups": [["&&", "||", "?:"]] }]))),
         ("a + b ?? c", Some(json!([{ "groups": [["+", "??"]] }]))),
+        ("a in b ?? c", Some(json!([{ "groups": [["in", "??"]] }]))),
     ];
 
     Tester::new(NoMixedOperators::NAME, pass, fail).test_and_snapshot();

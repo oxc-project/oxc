@@ -1,16 +1,19 @@
 use std::hash::{Hash, Hasher};
 
 use miette::{SourceOffset, SourceSpan};
+#[cfg(feature = "serde")]
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
 
-/// Newtype for working with text sizes/ranges.
+/// Newtype for working with text ranges
+///
 /// See the [`text-size`](https://docs.rs/text-size) crate for details.
 /// Utility methods can be copied from the `text-size` crate if they are needed.
 /// NOTE: `u32` is sufficient for "all" reasonable programs. Larger than u32 is a 4GB JS file.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize, PartialOrd, Ord)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Span {
     pub start: u32,
     pub end: u32,
@@ -52,6 +55,7 @@ impl From<Span> for SourceSpan {
     }
 }
 
+/// Get the span for an AST node
 pub trait GetSpan {
     #[must_use]
     fn span(&self) -> Span;
@@ -123,6 +127,7 @@ impl<'a> GetSpan for Expression<'a> {
             Self::JSXElement(e) => e.span,
             Self::JSXFragment(e) => e.span,
             Self::TSAsExpression(e) => e.span,
+            Self::TSSatisfiesExpression(e) => e.span,
             Self::TSTypeAssertion(e) => e.span,
             Self::TSNonNullExpression(e) => e.span,
             Self::TSInstantiationExpression(e) => e.span,
@@ -251,19 +256,7 @@ impl<'a> GetSpan for ObjectPatternProperty<'a> {
 impl<'a> GetSpan for AssignmentTarget<'a> {
     fn span(&self) -> Span {
         match self {
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::AssignmentTargetIdentifier(
-                ident,
-            )) => ident.span,
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::MemberAssignmentTarget(expr)) => {
-                expr.span()
-            }
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::TSAsExpression(expr)) => expr.span,
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::TSNonNullExpression(expr)) => {
-                expr.span
-            }
-            Self::SimpleAssignmentTarget(SimpleAssignmentTarget::TSTypeAssertion(expr)) => {
-                expr.span
-            }
+            Self::SimpleAssignmentTarget(target) => target.span(),
             Self::AssignmentTargetPattern(AssignmentTargetPattern::ArrayAssignmentTarget(pat)) => {
                 pat.span
             }
@@ -307,6 +300,7 @@ impl<'a> GetSpan for SimpleAssignmentTarget<'a> {
             Self::AssignmentTargetIdentifier(ident) => ident.span,
             Self::MemberAssignmentTarget(expr) => expr.span(),
             Self::TSAsExpression(expr) => expr.span,
+            Self::TSSatisfiesExpression(expr) => expr.span,
             Self::TSNonNullExpression(expr) => expr.span,
             Self::TSTypeAssertion(expr) => expr.span,
         }

@@ -1,7 +1,7 @@
 Babel Summary:
-AST Parsed     : 2064/2071 (99.66%)
-Positive Passed: 2054/2071 (99.18%)
-Negative Passed: 1333/1502 (88.75%)
+AST Parsed     : 2065/2071 (99.71%)
+Positive Passed: 2062/2071 (99.57%)
+Negative Passed: 1332/1502 (88.68%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -45,6 +45,7 @@ Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
 Expect Syntax Error: "typescript/arrow-function/async-rest-optional-parameter/input.ts"
 Expect Syntax Error: "typescript/cast/destructuring-assignent-rest-invalid/input.ts"
+Expect Syntax Error: "typescript/cast/satisfies-const-error/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-assert-and-assign/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-type-assertion-and-assign/input.ts"
 Expect Syntax Error: "typescript/class/abstract-method-in-non-abstract-class-1/input.ts"
@@ -171,38 +172,6 @@ Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
 Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
 Expect Syntax Error: "typescript/types/tuple-unlabeled-spread-after-labeled/input.ts"
 Expect Syntax Error: "typescript/types/tuple-unlabeled-spread-before-labeled/input.ts"
-Expect to Parse: "comments/decorators/decorators-after-export/input.js"
-
-  × Cannot use export statement outside a module
-   ╭─[comments/decorators/decorators-after-export/input.js:1:1]
- 1 │ /* 1 */ export /* 2 */ @dec1 /* 3 */ @dec2
-   ·         ──────
- 2 │ /* 4 */ class /* 5 */ C /* 6 */ { /* 7 */ } /* 8 */
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[comments/decorators/decorators-after-export/input.js:3:1]
- 3 │ 
- 4 │ /* A */ export /* B */ default /* C */ @dec1 /* D */ @dec2
-   ·         ──────
- 5 │ /* E */ class /* F */ { /* G */ } /* H */
-   ╰────
-Expect to Parse: "comments/decorators/decorators-before-export/input.js"
-
-  × Cannot use export statement outside a module
-   ╭─[comments/decorators/decorators-before-export/input.js:1:1]
- 1 │ /* 1 */ @dec1 /* 2 */ @dec2 /* 3 */
- 2 │ export /* 4 */ class /* 5 */ C /* 6 */ { /* 7 */ } /* 8 */
-   · ──────
- 3 │ 
-   ╰────
-
-  × Cannot use export statement outside a module
-   ╭─[comments/decorators/decorators-before-export/input.js:4:1]
- 4 │ /* A */ @dec1 /* B */ @dec2 /* C */
- 5 │ export /* D */ default /* E */ class /* F */ { /* G */ } /* H */
-   · ──────
-   ╰────
 Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
 
   × Unexpected new.target expression
@@ -220,39 +189,12 @@ Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
-Expect to Parse: "core/uncategorised/327/input.js"
-
-  × TS1108: A 'return' statement can only be used within a function body
-   ╭─[core/uncategorised/327/input.js:1:1]
- 1 │ return {} / 2
-   · ──────
-   ╰────
-Expect to Parse: "core/uncategorised/328/input.js"
-
-  × TS1108: A 'return' statement can only be used within a function body
-   ╭─[core/uncategorised/328/input.js:1:1]
- 1 │ return
-   · ──────
- 2 │ {}
-   ╰────
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
-  × Expect token
-   ╭─[typescript/arrow-function/generic-tsx-babel-7/input.ts:1:1]
- 1 │ // Same as `generic`. Verify that JSX doesn't change things.
+  × Expected `<` but found `EOF`
+   ╭─[typescript/arrow-function/generic-tsx-babel-7/input.ts:2:1]
  2 │ <T>(a: T): T => a;
-   ·                   ┬
-   ·                   ╰── Expect `<` here, but found `EOF`
    ╰────
-Expect to Parse: "typescript/cast/satisfies/input.ts"
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/cast/satisfies/input.ts:1:1]
- 1 │ x satisfies T;
-   ·  ─
- 2 │ x < y satisfies boolean; // (x < y) satisfies boolean;
-   ╰────
-  help: Try insert a semicolon here
 Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
 
   × Multiple constructor implementations are not allowed.
@@ -266,35 +208,14 @@ Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
    ·        ╰── it cannot be redeclared here
  4 │ }
    ╰────
-Expect to Parse: "typescript/declare/function-rest-trailing-comma/input.ts"
-
-  × Rest element must be last element
-   ╭─[typescript/declare/function-rest-trailing-comma/input.ts:1:1]
- 1 │ declare function foo(...args: any[], )
-   ·                      ──────────────
-   ╰────
-Expect to Parse: "typescript/dts/no-initializer/input.ts"
-
-  × Missing initializer in const declaration
-   ╭─[typescript/dts/no-initializer/input.ts:1:1]
- 1 │ const x: number;
-   ·       ─
-   ╰────
-Expect to Parse: "typescript/dts/valid-trailing-comma-for-rest/input.ts"
-
-  × Rest element must be last element
-   ╭─[typescript/dts/valid-trailing-comma-for-rest/input.ts:1:1]
- 1 │ function foo(...args: any[], );
-   ·              ──────────────
-   ╰────
 Expect to Parse: "typescript/interface/get-set-properties/input.ts"
 
-  × Expect token
+  × Expected `(` but found `:`
    ╭─[typescript/interface/get-set-properties/input.ts:1:1]
  1 │ interface Foo {
  2 │   get foo: string;
    ·          ┬
-   ·          ╰── Expect `(` here, but found `:`
+   ·          ╰── `(` expected
  3 │   set bar: string;
    ╰────
 Expect to Parse: "typescript/module-namespace/body-nested-declare/input.ts"
@@ -308,19 +229,19 @@ Expect to Parse: "typescript/module-namespace/body-nested-declare/input.ts"
    ╰────
 Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
 
-  × Expect token
+  × Expected `,` but found `extends`
    ╭─[typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts:1:1]
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
    ·                               ───┬───
-   ·                                  ╰── Expect `,` here, but found `extends`
+   ·                                  ╰── `,` expected
    ╰────
 Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input.ts"
 
-  × Expect token
+  × Expected `,` but found `extends`
    ╭─[typescript/regression/nested-extends-in-arrow-type-param/input.ts:1:1]
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
    ·                               ───┬───
-   ·                                  ╰── Expect `,` here, but found `extends`
+   ·                                  ╰── `,` expected
    ╰────
 Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
 
@@ -357,12 +278,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                 ╰── `f` has already been declared here
    ╰────
 
-  × Expect token
+  × Expected `;` but found `Identifier`
    ╭─[core/categorized/for-missing-semicolons/input.js:2:1]
  2 │   var a = 1
  3 │   a < 3
    ·   ┬
-   ·   ╰── Expect `;` here, but found `Identifier`
+   ·   ╰── `;` expected
  4 │   a++
    ╰────
 
@@ -742,11 +663,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·         ──
    ╰────
 
-  × Expect token
+  × Expected `(` but found `await`
    ╭─[core/opts/allowAwaitOutsideFunction-false/input.js:1:1]
  1 │ for await (const i of imports) {}
    ·     ──┬──
-   ·       ╰── Expect `(` here, but found `await`
+   ·       ╰── `(` expected
    ╰────
 
   × Unexpected new.target expression
@@ -1093,11 +1014,9 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[core/uncategorised/345/input.js:1:1]
  1 │ {
-   · ┬
-   · ╰── Expect `}` here, but found `EOF`
    ╰────
 
   × Unexpected token
@@ -1282,37 +1201,29 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ───────
    ╰────
 
-  × Expect token
+  × Expected `]` but found `EOF`
    ╭─[core/uncategorised/375/input.js:1:1]
  1 │ [
-   · ┬
-   · ╰── Expect `]` here, but found `EOF`
    ╰────
 
   × Unexpected token
    ╭─[core/uncategorised/376/input.js:1:1]
  1 │ [,
-   ·  ─
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[core/uncategorised/377/input.js:1:1]
  1 │ 1 + {
-   ·     ┬
-   ·     ╰── Expect `}` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[core/uncategorised/378/input.js:1:1]
  1 │ 1 + { t:t
-   ·          ▲
-   ·          ╰── Expect `}` here, but found `EOF`
    ╰────
 
   × Unexpected token
    ╭─[core/uncategorised/379/input.js:1:1]
  1 │ 1 + { t:t,
-   ·          ─
    ╰────
 
   × Unterminated regular expression
@@ -1346,19 +1257,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ──
    ╰────
 
-  × Expect token
+  × Expected `)` but found `EOF`
    ╭─[core/uncategorised/385/input.js:1:1]
  1 │ 1 + (
-   ·     ┬
-   ·     ╰── Expect `)` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[core/uncategorised/386/input.js:3:1]
  3 │ 
  4 │ {
-   · ┬
-   · ╰── Expect `}` here, but found `EOF`
    ╰────
 
   × Unexpected token
@@ -1394,25 +1301,25 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·          ─
    ╰────
 
-  × Expect token
+  × Expected `,` but found `{`
    ╭─[core/uncategorised/392/input.js:1:1]
  1 │ ({ set: s() { } })
    ·             ┬
-   ·             ╰── Expect `,` here, but found `{`
+   ·             ╰── `,` expected
    ╰────
 
-  × Expect token
+  × Expected `,` but found `{`
    ╭─[core/uncategorised/393/input.js:1:1]
  1 │ ({ set: s(a, b) { } })
    ·                 ┬
-   ·                 ╰── Expect `,` here, but found `{`
+   ·                 ╰── `,` expected
    ╰────
 
-  × Expect token
+  × Expected `,` but found `{`
    ╭─[core/uncategorised/394/input.js:1:1]
  1 │ ({ get: g(d) { } })
    ·              ┬
-   ·              ╰── Expect `,` here, but found `{`
+   ·              ╰── `,` expected
    ╰────
 
   × Unexpected token
@@ -1451,32 +1358,32 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·            ────
    ╰────
 
-  × Expect token
+  × Expected `(` but found `null`
    ╭─[core/uncategorised/401/input.js:1:1]
  1 │ function null() { }
    ·          ──┬─
-   ·            ╰── Expect `(` here, but found `null`
+   ·            ╰── `(` expected
    ╰────
 
-  × Expect token
+  × Expected `(` but found `true`
    ╭─[core/uncategorised/402/input.js:1:1]
  1 │ function true() { }
    ·          ──┬─
-   ·            ╰── Expect `(` here, but found `true`
+   ·            ╰── `(` expected
    ╰────
 
-  × Expect token
+  × Expected `(` but found `false`
    ╭─[core/uncategorised/403/input.js:1:1]
  1 │ function false() { }
    ·          ──┬──
-   ·            ╰── Expect `(` here, but found `false`
+   ·            ╰── `(` expected
    ╰────
 
-  × Expect token
+  × Expected `(` but found `if`
    ╭─[core/uncategorised/404/input.js:1:1]
  1 │ function if() { }
    ·          ─┬
-   ·           ╰── Expect `(` here, but found `if`
+   ·           ╰── `(` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -1486,11 +1393,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `(` but found `.`
    ╭─[core/uncategorised/406/input.js:1:1]
  1 │ if.a;
    ·   ┬
-   ·   ╰── Expect `(` here, but found `.`
+   ·   ╰── `(` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -1536,7 +1443,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
    ╭─[core/uncategorised/413/input.js:1:1]
  1 │ throw
-   ·     ─
    ╰────
 
   × Unexpected token
@@ -1551,11 +1457,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ─────────
    ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
    ╭─[core/uncategorised/416/input.js:1:1]
  1 │ for ((i in {}));
    ·               ┬
-   ·               ╰── Expect `;` here, but found `)`
+   ·               ╰── `;` expected
    ╰────
 
   × Unexpected token
@@ -1573,37 +1479,31 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
    ╭─[core/uncategorised/419/input.js:1:1]
  1 │ if(false)
-   ·         ─
    ╰────
 
   × Unexpected token
    ╭─[core/uncategorised/420/input.js:1:1]
  1 │ if(false) doThis(); else
-   ·                        ─
    ╰────
 
   × Unexpected token
    ╭─[core/uncategorised/421/input.js:1:1]
  1 │ do
-   ·  ─
    ╰────
 
   × Unexpected token
    ╭─[core/uncategorised/422/input.js:1:1]
  1 │ while(false)
-   ·            ─
    ╰────
 
   × Unexpected token
    ╭─[core/uncategorised/423/input.js:1:1]
  1 │ for(;;)
-   ·       ─
    ╰────
 
   × Unexpected token
    ╭─[core/uncategorised/424/input.js:1:1]
  1 │ with(x)
-   ·       ─
    ╰────
 
   × Missing catch or finally clause
@@ -1827,11 +1727,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
-  × Expect token
+  × Expected `while` but found `*`
    ╭─[core/uncategorised/458/input.js:1:1]
  1 │ do { x } *
    ·          ┬
-   ·          ╰── Expect `while` here, but found `*`
+   ·          ╰── `while` expected
    ╰────
 
   × Use of undefined label
@@ -2554,18 +2454,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                 ────
    ╰────
 
-  × Expect token
+  × Expected `:` but found `}`
    ╭─[es2015/destructuring/binding-this/input.js:1:1]
  1 │ var { this } = {};
    ·            ┬
-   ·            ╰── Expect `:` here, but found `}`
+   ·            ╰── `:` expected
    ╰────
 
-  × Expect token
+  × Expected `,` but found `(`
    ╭─[es2015/destructuring/invalid-object-method/input.js:1:1]
  1 │ const { foo() {} } = foo();
    ·            ┬
-   ·            ╰── Expect `,` here, but found `(`
+   ·            ╰── `,` expected
    ╰────
 
   × Cannot assign to this expression
@@ -2663,11 +2563,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ───────
    ╰────
 
-  × Expect token
+  × Expected `)` but found `,`
    ╭─[es2015/for-of/invalid-expr/input.js:1:1]
  1 │ for (let x of y, z) {}
    ·                ┬
-   ·                ╰── Expect `)` here, but found `,`
+   ·                ╰── `)` expected
    ╰────
 
   × Keywords cannot contain escape characters
@@ -3393,21 +3293,21 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ─
    ╰────
 
-  × Expect token
+  × Expected `,` but found `Identifier`
    ╭─[es2015/object/async-method-linebreak/input.js:2:1]
  2 │     async
  3 │     foo() {}
    ·     ─┬─
-   ·      ╰── Expect `,` here, but found `Identifier`
+   ·      ╰── `,` expected
  4 │ })
    ╰────
 
-  × Expect token
+  × Expected `,` but found `*`
    ╭─[es2015/object/invalid-accessor-generator/input.js:1:1]
  1 │ ({
  2 │     get *iterator() { },
    ·         ┬
-   ·         ╰── Expect `,` here, but found `*`
+   ·         ╰── `,` expected
  3 │     set *iterator(iter) { }
    ╰────
 
@@ -3751,11 +3651,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `(` but found `default`
    ╭─[es2015/uncategorised/226/input.js:1:1]
  1 │ function default() {}
    ·          ───┬───
-   ·             ╰── Expect `(` here, but found `default`
+   ·             ╰── `(` expected
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -3820,18 +3720,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ──────────
    ╰────
 
-  × Expect token
+  × Expected `from` but found `EOF`
    ╭─[es2015/uncategorised/237/input.js:1:1]
  1 │ import foo
-   ·          ┬
-   ·          ╰── Expect `from` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `from` but found `EOF`
    ╭─[es2015/uncategorised/238/input.js:1:1]
  1 │ import { foo, bar }
-   ·                   ┬
-   ·                   ╰── Expect `from` here, but found `EOF`
    ╰────
 
   × Unexpected token
@@ -3911,25 +3807,25 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `]` but found `,`
    ╭─[es2015/uncategorised/255/input.js:1:1]
  1 │ void { [1, 2]: 3 };
    ·          ┬
-   ·          ╰── Expect `]` here, but found `,`
+   ·          ╰── `]` expected
    ╰────
 
-  × Expect token
+  × Expected `(` but found `**`
    ╭─[es2015/uncategorised/261/input.js:1:1]
  1 │ var obj = { *test** }
    ·                  ─┬
-   ·                   ╰── Expect `(` here, but found `**`
+   ·                   ╰── `(` expected
    ╰────
 
-  × Expect token
+  × Expected `{` but found `default`
    ╭─[es2015/uncategorised/263/input.js:1:1]
  1 │ class default
    ·       ───┬───
-   ·          ╰── Expect `{` here, but found `default`
+   ·          ╰── `{` expected
    ╰────
 
   × Unterminated string
@@ -3938,18 +3834,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ─────
    ╰────
 
-  × Expect token
+  × Expected `(` but found `${}`
    ╭─[es2015/uncategorised/265/input.js:1:1]
  1 │ switch `test`
    ·        ───┬──
-   ·           ╰── Expect `(` here, but found `${}`
+   ·           ╰── `(` expected
    ╰────
 
-  × Expect token
+  × Expected `$}` but found `EOF`
    ╭─[es2015/uncategorised/266/input.js:1:1]
  1 │ `hello ${10 `test`
-   ·                  ┬
-   ·                  ╰── Expect `$}` here, but found `EOF`
    ╰────
 
   × Unexpected token
@@ -3991,7 +3885,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
    ╭─[es2015/uncategorised/278/input.js:1:1]
  1 │ function f(a, ...b = 0)
-   ·                       ─
    ╰────
 
   × Identifier `a` has already been declared
@@ -4065,11 +3958,9 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ───
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[es2015/uncategorised/295/input.js:1:1]
  1 │ switch (cond) { case 10: let a = 20;
-   ·                                     ▲
-   ·                                     ╰── Expect `}` here, but found `EOF`
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -4292,60 +4183,60 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ────
    ╰────
 
-  × Expect token
+  × Expected `:` but found `}`
    ╭─[es2015/uncategorised/372/input.js:1:1]
  1 │ const { enum } = foo();
    ·              ┬
-   ·              ╰── Expect `:` here, but found `}`
+   ·              ╰── `:` expected
    ╰────
 
-  × Expect token
+  × Expected `:` but found `}`
    ╭─[es2015/uncategorised/373/input.js:1:1]
  1 │ const { enum } = foo();
    ·              ┬
-   ·              ╰── Expect `:` here, but found `}`
+   ·              ╰── `:` expected
    ╰────
 
-  × Expect token
+  × Expected `:` but found `}`
    ╭─[es2015/uncategorised/374/input.js:1:1]
  1 │ function foo({ enum }) {}
    ·                     ┬
-   ·                     ╰── Expect `:` here, but found `}`
+   ·                     ╰── `:` expected
    ╰────
 
-  × Expect token
+  × Expected `:` but found `}`
    ╭─[es2015/uncategorised/375/input.js:1:1]
  1 │ function foo({ enum }) {}
    ·                     ┬
-   ·                     ╰── Expect `:` here, but found `}`
+   ·                     ╰── `:` expected
    ╰────
 
-  × Expect token
+  × Expected `(` but found `enum`
    ╭─[es2015/uncategorised/376/input.js:1:1]
  1 │ function enum() {}
    ·          ──┬─
-   ·            ╰── Expect `(` here, but found `enum`
+   ·            ╰── `(` expected
    ╰────
 
-  × Expect token
+  × Expected `(` but found `enum`
    ╭─[es2015/uncategorised/377/input.js:1:1]
  1 │ function enum() {}
    ·          ──┬─
-   ·            ╰── Expect `(` here, but found `enum`
+   ·            ╰── `(` expected
    ╰────
 
-  × Expect token
+  × Expected `{` but found `enum`
    ╭─[es2015/uncategorised/378/input.js:1:1]
  1 │ class enum {}
    ·       ──┬─
-   ·         ╰── Expect `{` here, but found `enum`
+   ·         ╰── `{` expected
    ╰────
 
-  × Expect token
+  × Expected `{` but found `enum`
    ╭─[es2015/uncategorised/379/input.js:1:1]
  1 │ class enum {}
    ·       ──┬─
-   ·         ╰── Expect `{` here, but found `enum`
+   ·         ╰── `{` expected
    ╰────
 
   × Empty parenthesized expression
@@ -4354,11 +4245,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                     ▲
    ╰────
 
-  × Expect token
+  × Expected `,` but found `=>`
    ╭─[es2015/uncategorised/38/input.js:1:1]
  1 │ console.log(typeof () => {});
    ·                       ─┬
-   ·                        ╰── Expect `,` here, but found `=>`
+   ·                        ╰── `,` expected
    ╰────
 
   × Unexpected token
@@ -4392,11 +4283,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ─────
    ╰────
 
-  × Expect token
+  × Expected `,` but found `:`
    ╭─[es2015/uncategorised/392/input.js:1:1]
  1 │ import foo, { bar: { a } } from 'my-module';
    ·                  ┬
-   ·                  ╰── Expect `,` here, but found `:`
+   ·                  ╰── `,` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4406,18 +4297,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `from` but found `EOF`
    ╭─[es2015/uncategorised/84/input.js:1:1]
  1 │ export *
-   ·        ┬
-   ·        ╰── Expect `from` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `from` but found `default`
    ╭─[es2015/uncategorised/96/input.js:1:1]
  1 │ import default from "foo"
    ·        ───┬───
-   ·           ╰── Expect `from` here, but found `default`
+   ·           ╰── `from` expected
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context
@@ -4447,11 +4336,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·          ─────
    ╰────
 
-  × Expect token
+  × Expected `{` but found `Identifier`
    ╭─[es2015/yield/in-class-heritage/input.js:1:1]
  1 │ class A extends yield B { }
    ·                       ┬
-   ·                       ╰── Expect `{` here, but found `Identifier`
+   ·                       ╰── `{` expected
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
@@ -4862,11 +4751,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × Expect token
+  × Expected `,` but found `?`
    ╭─[es2017/async-call/with-optional-operator/input.js:1:1]
  1 │ async(x?)
    ·        ┬
-   ·        ╰── Expect `,` here, but found `?`
+   ·        ╰── `,` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4899,18 +4788,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × Expect token
+  × Expected `(` but found `}`
    ╭─[es2017/async-functions/4/input.js:1:1]
  1 │ ({ async a });
    ·            ┬
-   ·            ╰── Expect `(` here, but found `}`
+   ·            ╰── `(` expected
    ╰────
 
-  × Expect token
+  × Expected `(` but found `:`
    ╭─[es2017/async-functions/5/input.js:1:1]
  1 │ ({ async a: function () {} });
    ·           ┬
-   ·           ╰── Expect `(` here, but found `:`
+   ·           ╰── `(` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -5089,11 +4978,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ──────────
    ╰────
 
-  × Expect token
+  × Expected `,` but found `Identifier`
    ╭─[es2017/async-functions/invalid-escape-sequence-arrow-list/input.js:1:1]
  1 │ (\u0061sync x => { await x })
    ·             ┬
-   ·             ╰── Expect `,` here, but found `Identifier`
+   ·             ╰── `,` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -5121,11 +5010,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·            ───────
    ╰────
 
-  × Expect token
+  × Expected `)` but found `;`
    ╭─[es2017/async-functions/invalid-for-await-expression-init/input.js:1:1]
  1 │ for (await o\u0066 [0];;);
    ·                       ┬
-   ·                       ╰── Expect `)` here, but found `;`
+   ·                       ╰── `)` expected
    ╰────
 
   × Invalid function declaration
@@ -5216,12 +5105,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·              ─
    ╰────
 
-  × Expect token
+  × Expected `(` but found `await`
    ╭─[es2018/async-generators/for-await-async-context/input.js:1:1]
  1 │ function f() {
  2 │   for await (let x of y);
    ·       ──┬──
-   ·         ╰── Expect `(` here, but found `await`
+   ·         ╰── `(` expected
  3 │ }
    ╰────
 
@@ -5503,11 +5392,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ─────────────
    ╰────
 
-  × Expect token
+  × Expected `)` but found `string`
    ╭─[es2020/dynamic-import/multiple-args/input.js:1:1]
  1 │ import('hello', 'world', '!');
    ·                          ─┬─
-   ·                           ╰── Expect `)` here, but found `string`
+   ·                           ╰── `)` expected
    ╰────
 
   × Unexpected token
@@ -6935,18 +6824,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·              ╰── `a` has already been declared here
    ╰────
 
-  × Expect token
+  × Expected `)` but found `=`
    ╭─[esprima/es2015-array-pattern/with-default-catch-param-fail/input.js:1:1]
  1 │ try { } catch ([a] = []) { }
    ·                    ┬
-   ·                    ╰── Expect `)` here, but found `=`
+   ·                    ╰── `)` expected
    ╰────
 
-  × Expect token
+  × Expected `,` but found `...`
    ╭─[esprima/es2015-arrow-function/arrow-rest-forgetting-comma/input.js:1:1]
  1 │ (a ...b) => 0
    ·    ─┬─
-   ·     ╰── Expect `,` here, but found `...`
+   ·     ╰── `,` expected
    ╰────
 
   × Rest element must be last element
@@ -7018,11 +6907,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `,` but found `=>`
    ╭─[esprima/es2015-arrow-function/object-binding-pattern-invalid-pattern-without-parenthesis/input.js:1:1]
  1 │ ({}=>0)
    ·    ─┬
-   ·     ╰── Expect `,` here, but found `=>`
+   ·     ╰── `,` expected
    ╰────
 
   × Unexpected token
@@ -7031,11 +6920,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ───
    ╰────
 
-  × Expect token
+  × Expected `=>` but found `+`
    ╭─[esprima/es2015-arrow-function/rest-without-arrow/input.js:1:1]
  1 │ (...a) + 1
    ·        ┬
-   ·        ╰── Expect `=>` here, but found `+`
+   ·        ╰── `=>` expected
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -7075,18 +6964,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ───
    ╰────
 
-  × Expect token
+  × Expected `from` but found `EOF`
    ╭─[esprima/es2015-export-declaration/invalid-export-batch-missing-from-clause/input.js:1:1]
  1 │ export *
-   ·         ▲
-   ·         ╰── Expect `from` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `from` but found `+`
    ╭─[esprima/es2015-export-declaration/invalid-export-batch-token/input.js:1:1]
  1 │ export * +
    ·          ┬
-   ·          ╰── Expect `from` here, but found `+`
+   ·          ╰── `from` expected
    ╰────
 
   × Unexpected token
@@ -7139,11 +7026,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ─────────
    ╰────
 
-  × Expect token
+  × Expected `;` but found `decimal`
    ╭─[esprima/es2015-for-of/unexpected-number/input.js:1:1]
  1 │ for (const of 42);
    ·               ─┬
-   ·                ╰── Expect `;` here, but found `decimal`
+   ·                ╰── `;` expected
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
@@ -7285,25 +7172,23 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ──────
    ╰────
 
-  × Expect token
+  × Expected `from` but found `,`
    ╭─[esprima/es2015-import-declaration/invalid-import-default-after-named-after-default/input.js:1:1]
  1 │ import foo, {bar}, foo from "foo";
    ·                  ┬
-   ·                  ╰── Expect `from` here, but found `,`
+   ·                  ╰── `from` expected
    ╰────
 
-  × Expect token
+  × Expected `from` but found `,`
    ╭─[esprima/es2015-import-declaration/invalid-import-default-after-named/input.js:1:1]
  1 │ import {bar}, foo from "foo"
    ·             ┬
-   ·             ╰── Expect `from` here, but found `,`
+   ·             ╰── `from` expected
    ╰────
 
-  × Expect token
+  × Expected `from` but found `EOF`
    ╭─[esprima/es2015-import-declaration/invalid-import-default-missing-module-specifier/input.js:1:1]
  1 │ import foo
-   ·           ▲
-   ·           ╰── Expect `from` here, but found `EOF`
    ╰────
 
   × Unexpected token
@@ -7312,25 +7197,23 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                 ───
    ╰────
 
-  × Expect token
+  × Expected `from` but found `default`
    ╭─[esprima/es2015-import-declaration/invalid-import-default/input.js:1:1]
  1 │ import default from "foo"
    ·        ───┬───
-   ·           ╰── Expect `from` here, but found `default`
+   ·           ╰── `from` expected
    ╰────
 
-  × Expect token
+  × Expected `from` but found `{`
    ╭─[esprima/es2015-import-declaration/invalid-import-missing-comma/input.js:1:1]
  1 │ import foo { bar } from "bar";
    ·            ┬
-   ·            ╰── Expect `from` here, but found `{`
+   ·            ╰── `from` expected
    ╰────
 
-  × Expect token
+  × Expected `from` but found `EOF`
    ╭─[esprima/es2015-import-declaration/invalid-import-missing-module-specifier/input.js:1:1]
  1 │ import { foo, bar }
-   ·                    ▲
-   ·                    ╰── Expect `from` here, but found `EOF`
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -7340,39 +7223,37 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `from` but found `,`
    ╭─[esprima/es2015-import-declaration/invalid-import-named-after-named/input.js:1:1]
  1 │ import {bar}, {foo} from "foo";
    ·             ┬
-   ·             ╰── Expect `from` here, but found `,`
+   ·             ╰── `from` expected
    ╰────
 
-  × Expect token
+  × Expected `from` but found `,`
    ╭─[esprima/es2015-import-declaration/invalid-import-named-after-namespace/input.js:1:1]
  1 │ import * as foo, {bar} from "foo";
    ·                ┬
-   ·                ╰── Expect `from` here, but found `,`
+   ·                ╰── `from` expected
    ╰────
 
-  × Expect token
+  × Expected `from` but found `EOF`
    ╭─[esprima/es2015-import-declaration/invalid-import-named-as-missing-from/input.js:1:1]
  1 │ import {default as foo}
-   ·                        ▲
-   ·                        ╰── Expect `from` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `from` but found `,`
    ╭─[esprima/es2015-import-declaration/invalid-import-namespace-after-named/input.js:1:1]
  1 │ import {bar}, * as foo from "foo";
    ·             ┬
-   ·             ╰── Expect `from` here, but found `,`
+   ·             ╰── `from` expected
    ╰────
 
-  × Expect token
+  × Expected `as` but found `from`
    ╭─[esprima/es2015-import-declaration/invalid-import-namespace-missing-as/input.js:1:1]
  1 │ import * from "foo"
    ·          ──┬─
-   ·            ╰── Expect `as` here, but found `from`
+   ·            ╰── `as` expected
    ╰────
 
   × Unexpected token
@@ -7548,11 +7429,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ───
    ╰────
 
-  × Expect token
+  × Expected `(` but found `${}`
    ╭─[esprima/es2015-template-literals/after-switch/input.js:1:1]
  1 │ switch `test`
    ·        ───┬──
-   ·           ╰── Expect `(` here, but found `${}`
+   ·           ╰── `(` expected
    ╰────
 
   × Bad escape sequence in untagged template literal
@@ -7567,11 +7448,9 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·            ─
    ╰────
 
-  × Expect token
+  × Expected `$}` but found `EOF`
    ╭─[esprima/es2015-template-literals/unclosed-nested/input.js:1:1]
  1 │ `hello ${10 `test`
-   ·                   ▲
-   ·                   ╰── Expect `$}` here, but found `EOF`
    ╰────
 
   × Unterminated string
@@ -7828,11 +7707,9 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ─────
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0000/input.js:1:1]
  1 │ {
-   ·  ▲
-   ·  ╰── Expect `}` here, but found `EOF`
    ╰────
 
   × Unexpected token
@@ -8245,37 +8122,29 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ───────
    ╰────
 
-  × Expect token
+  × Expected `]` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0057/input.js:1:1]
  1 │ [
-   ·  ▲
-   ·  ╰── Expect `]` here, but found `EOF`
    ╰────
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0058/input.js:1:1]
  1 │ [,
-   ·   ▲
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0059/input.js:1:1]
  1 │ 1 + {
-   ·      ▲
-   ·      ╰── Expect `}` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0060/input.js:1:1]
  1 │ 1 + { t:t
-   ·          ▲
-   ·          ╰── Expect `}` here, but found `EOF`
    ╰────
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0061/input.js:1:1]
  1 │ 1 + { t:t,
-   ·           ▲
    ╰────
 
   × Unterminated regular expression
@@ -8300,7 +8169,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Invalid Character `=`
    ╭─[esprima/invalid-syntax/migrated_0065/input.js:1:1]
  1 │ i #= 42
-   ·    ▲
+   ·    ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -8322,18 +8191,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ──
    ╰────
 
-  × Expect token
+  × Expected `)` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0068/input.js:1:1]
  1 │ 1 + (
-   ·      ▲
-   ·      ╰── Expect `)` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0069/input.js:1:1]
  1 │ {
-   ·  ▲
-   ·  ╰── Expect `}` here, but found `EOF`
    ╰────
 
   × Unexpected token
@@ -8375,39 +8240,39 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·         ──
    ╰────
 
-  × Expect token
+  × Expected `,` but found `{`
    ╭─[esprima/invalid-syntax/migrated_0076/input.js:1:1]
  1 │ ({ set: s() { } })
    ·             ┬
-   ·             ╰── Expect `,` here, but found `{`
+   ·             ╰── `,` expected
    ╰────
 
-  × Expect token
+  × Expected `,` but found `{`
    ╭─[esprima/invalid-syntax/migrated_0077/input.js:1:1]
  1 │ ({ set: s(a, b) { } })
    ·                 ┬
-   ·                 ╰── Expect `,` here, but found `{`
+   ·                 ╰── `,` expected
    ╰────
 
-  × Expect token
+  × Expected `,` but found `{`
    ╭─[esprima/invalid-syntax/migrated_0078/input.js:1:1]
  1 │ ({ get: g(d) { } })
    ·              ┬
-   ·              ╰── Expect `,` here, but found `{`
+   ·              ╰── `,` expected
    ╰────
 
-  × Expect token
+  × Expected `]` but found `,`
    ╭─[esprima/invalid-syntax/migrated_0080/input.js:1:1]
  1 │ ({[a,b]:0})
    ·     ┬
-   ·     ╰── Expect `]` here, but found `,`
+   ·     ╰── `]` expected
    ╰────
 
-  × Expect token
+  × Expected `]` but found `,`
    ╭─[esprima/invalid-syntax/migrated_0081/input.js:1:1]
  1 │ ({get[a,b]:0})
    ·        ┬
-   ·        ╰── Expect `]` here, but found `,`
+   ·        ╰── `]` expected
    ╰────
 
   × Unexpected token
@@ -8416,18 +8281,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·   ─
    ╰────
 
-  × Expect token
+  × Expected `,` but found `{`
    ╭─[esprima/invalid-syntax/migrated_0083/input.js:1:1]
  1 │ ({get{a}:0})
    ·      ┬
-   ·      ╰── Expect `,` here, but found `{`
+   ·      ╰── `,` expected
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0084/input.js:1:1]
  1 │ ({get
-   ·      ▲
-   ·      ╰── Expect `}` here, but found `EOF`
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -8495,11 +8358,9 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ▲
    ╰────
 
-  × Expect token
+  × Expected `:` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0096/input.js:1:1]
  1 │ () ? 42
-   ·        ▲
-   ·        ╰── Expect `:` here, but found `EOF`
    ╰────
 
   × Empty parenthesized expression
@@ -8534,11 +8395,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ────
    ╰────
 
-  × Expect token
+  × Expected `,` but found `/`
    ╭─[esprima/invalid-syntax/migrated_0102/input.js:1:1]
  1 │ p = { q/ }
    ·        ┬
-   ·        ╰── Expect `,` here, but found `/`
+   ·        ╰── `,` expected
    ╰────
 
   × Unexpected token
@@ -8554,11 +8415,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `(` but found `.`
    ╭─[esprima/invalid-syntax/migrated_0113/input.js:1:1]
  1 │ if.a;
    ·   ┬
-   ·   ╰── Expect `(` here, but found `.`
+   ·   ╰── `(` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -8611,7 +8472,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0120/input.js:1:1]
  1 │ throw
-   ·      ▲
    ╰────
 
   × Unexpected token
@@ -8630,7 +8490,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0122/input.js:1:1]
  1 │ throw
-   ·      ▲
    ╰────
 
   × Only a single declaration is allowed in a `for...in` statement
@@ -8639,11 +8498,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ─────────
    ╰────
 
-  × Expect token
+  × Expected `;` but found `)`
    ╭─[esprima/invalid-syntax/migrated_0124/input.js:1:1]
  1 │ for ((i in {}));
    ·               ┬
-   ·               ╰── Expect `;` here, but found `)`
+   ·               ╰── `;` expected
    ╰────
 
   × Unexpected token
@@ -8661,37 +8520,31 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0127/input.js:1:1]
  1 │ if(false)
-   ·          ▲
    ╰────
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0128/input.js:1:1]
  1 │ if(false) doThis(); else
-   ·                         ▲
    ╰────
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0129/input.js:1:1]
  1 │ do
-   ·   ▲
    ╰────
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0130/input.js:1:1]
  1 │ while(false)
-   ·             ▲
    ╰────
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0131/input.js:1:1]
  1 │ for(;;)
-   ·        ▲
    ╰────
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0132/input.js:1:1]
  1 │ with(x)
-   ·        ▲
    ╰────
 
   × Missing catch or finally clause
@@ -8706,11 +8559,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·               ──
    ╰────
 
-  × Expect token
+  × Expected `)` but found `(`
    ╭─[esprima/invalid-syntax/migrated_0135/input.js:1:1]
  1 │ try {} catch (answer()) {}
    ·                     ┬
-   ·                     ╰── Expect `)` here, but found `(`
+   ·                     ╰── `)` expected
    ╰────
 
   × Unexpected token
@@ -8966,11 +8819,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
 
-  × Expect token
+  × Expected `while` but found `*`
    ╭─[esprima/invalid-syntax/migrated_0175/input.js:1:1]
  1 │ do { x } *
    ·          ┬
-   ·          ╰── Expect `while` here, but found `*`
+   ·          ╰── `while` expected
    ╰────
 
   × Use of undefined label
@@ -9449,27 +9302,21 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0252/input.js:1:1]
  1 │ var
-   ·    ▲
    ╰────
 
   × Unexpected token
    ╭─[esprima/invalid-syntax/migrated_0254/input.js:1:1]
  1 │ const
-   ·      ▲
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0255/input.js:1:1]
  1 │ { ;  ;
-   ·       ▲
-   ·       ╰── Expect `}` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0256/input.js:1:1]
  1 │ function t() { ;  ;
-   ·                    ▲
-   ·                    ╰── Expect `}` here, but found `EOF`
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -9491,53 +9338,45 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·            ────────
    ╰────
 
-  × Expect token
+  × Expected `{` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0261/input.js:1:1]
  1 │ class
-   ·      ▲
-   ·      ╰── Expect `{` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `{` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0262/input.js:1:1]
  1 │ class
-   ·      ▲
-   ·      ╰── Expect `{` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `{` but found `;`
    ╭─[esprima/invalid-syntax/migrated_0263/input.js:1:1]
  1 │ class;
    ·      ┬
-   ·      ╰── Expect `{` here, but found `;`
+   ·      ╰── `{` expected
    ╰────
 
-  × Expect token
+  × Expected `{` but found `+`
    ╭─[esprima/invalid-syntax/migrated_0264/input.js:1:1]
  1 │ class A extends a + b {}
    ·                   ┬
-   ·                   ╰── Expect `{` here, but found `+`
+   ·                   ╰── `{` expected
    ╰────
 
-  × Expect token
+  × Expected `{` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0265/input.js:1:1]
  1 │ class A
-   ·        ▲
-   ·        ╰── Expect `{` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `}` but found `EOF`
    ╭─[esprima/invalid-syntax/migrated_0266/input.js:1:1]
  1 │ class A {
-   ·          ▲
-   ·          ╰── Expect `}` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `{` but found `;`
    ╭─[esprima/invalid-syntax/migrated_0267/input.js:1:1]
  1 │ class A;
    ·        ┬
-   ·        ╰── Expect `{` here, but found `;`
+   ·        ╰── `{` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -9759,11 +9598,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ─────
    ╰────
 
-  × Expect token
+  × Expected `:` but found `;`
    ╭─[typescript/arrow-function/arrow-like-in-conditional-2/input.ts:1:1]
  1 │ 0 ? v => (sum = v) : v => 0;
    ·                            ┬
-   ·                            ╰── Expect `:` here, but found `;`
+   ·                            ╰── `:` expected
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -9792,11 +9631,9 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ────
    ╰────
 
-  × Expect token
+  × Expected `=>` but found `EOF`
    ╭─[typescript/async-call/with-optional-parameter/input.ts:1:1]
  1 │ async(x?)
-   ·         ┬
-   ·         ╰── Expect `=>` here, but found `EOF`
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -9827,11 +9664,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `=>` but found `;`
    ╭─[typescript/cast/invalid/input.ts:1:1]
  1 │ (a:b);
    ·      ┬
-   ·      ╰── Expect `=>` here, but found `;`
+   ·      ╰── `=>` expected
  2 │ (a:b,c:d);
    ╰────
 
@@ -9843,20 +9680,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
+  × Expected `,` but found `:`
    ╭─[typescript/cast/parameter-typecast/input.ts:1:1]
  1 │ func(a: T);
    ·       ┬
-   ·       ╰── Expect `,` here, but found `:`
+   ·       ╰── `,` expected
  2 │ func<T>(a: T);
    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/cast/satisfies-const-error/input.ts:1:1]
- 1 │ x satisfies const
-   ·  ─
-   ╰────
-  help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/class/declare-new-line-abstract/input.ts:1:1]
@@ -9866,12 +9696,9 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expect token
-   ╭─[typescript/class/extends-empty/input.ts:1:1]
- 1 │ interface foo extends {
+  × Expected `{` but found `EOF`
+   ╭─[typescript/class/extends-empty/input.ts:2:1]
  2 │ }
-   ·  ▲
-   ·  ╰── Expect `{` here, but found `EOF`
    ╰────
 
   × Unexpected token
@@ -10046,21 +9873,21 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  4 │ }
    ╰────
 
-  × Expect token
+  × Expected `(` but found `<`
    ╭─[typescript/interface/get-set-type-parameters-babel-7/input.ts:1:1]
  1 │ interface Foo {
  2 │   get foo<T>(): string;
    ·          ┬
-   ·          ╰── Expect `(` here, but found `<`
+   ·          ╰── `(` expected
  3 │   set bar<T>(v);
    ╰────
 
-  × Expect token
+  × Expected `(` but found `<`
    ╭─[typescript/interface/get-set-type-parameters/input.ts:1:1]
  1 │ interface Foo {
  2 │   get foo<T>(): string;
    ·          ┬
-   ·          ╰── Expect `(` here, but found `<`
+   ·          ╰── `(` expected
  3 │   set bar<T>(v);
    ╰────
 
@@ -10209,12 +10036,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │   yield 2;
    ╰────
 
-  × Expect token
+  × Expected `,` but found `:`
    ╭─[typescript/tsx/cast-invalid/input.tsx:2:1]
  2 │   return (
  3 │     <div propA={[ key: value ]} propsB={(a: b)} />
    ·                      ┬
-   ·                      ╰── Expect `,` here, but found `:`
+   ·                      ╰── `,` expected
  4 │   );
    ╰────
 
@@ -10275,32 +10102,24 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                      ─────
    ╰────
 
-  × Expect token
+  × Expected `)` but found `EOF`
    ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-array-like/input.ts:1:1]
  1 │ type F = ([
-   ·            ▲
-   ·            ╰── Expect `)` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `)` but found `EOF`
    ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-object-like/input.ts:1:1]
  1 │ type F = ({
-   ·            ▲
-   ·            ╰── Expect `)` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `)` but found `EOF`
    ╭─[typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:1:1]
  1 │ type F = ([
-   ·            ▲
-   ·            ╰── Expect `)` here, but found `EOF`
    ╰────
 
-  × Expect token
+  × Expected `)` but found `EOF`
    ╭─[typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:1:1]
  1 │ type F = ({
-   ·            ▲
-   ·            ╰── Expect `)` here, but found `EOF`
    ╰────
 
   × Unexpected token
@@ -10333,60 +10152,60 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                                 ─
    ╰────
 
-  × Expect token
+  × Expected `,` but found `:`
    ╭─[typescript/types/tuple-invalid-label-1/input.ts:1:1]
  1 │ type T = [x.y: A];
    ·              ┬
-   ·              ╰── Expect `,` here, but found `:`
+   ·              ╰── `,` expected
    ╰────
 
-  × Expect token
+  × Expected `,` but found `:`
    ╭─[typescript/types/tuple-invalid-label-2/input.ts:1:1]
  1 │ type T = [x<y>: A];
    ·               ┬
-   ·               ╰── Expect `,` here, but found `:`
+   ·               ╰── `,` expected
    ╰────
 
-  × Expect token
+  × Expected `,` but found `?`
    ╭─[typescript/types/tuple-labeled-invalid-optional/input.ts:1:1]
  1 │ type T = [x: A?];
    ·               ┬
-   ·               ╰── Expect `,` here, but found `?`
+   ·               ╰── `,` expected
    ╰────
 
-  × Expect token
+  × Expected `,` but found `Identifier`
     ╭─[typescript/types/variance-annotations-babel-7/input.ts:94:1]
  94 │ 
  95 │ type T20<public T> = T;  // Error
     ·                 ┬
-    ·                 ╰── Expect `,` here, but found `Identifier`
+    ·                 ╰── `,` expected
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × Expect token
+  × Expected `,` but found `Identifier`
     ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:97:1]
  97 │ 
  98 │ type T20<public T> = T;  // Error
     ·                 ┬
-    ·                 ╰── Expect `,` here, but found `Identifier`
+    ·                 ╰── `,` expected
  99 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × Expect token
+  × Expected `,` but found `Identifier`
     ╭─[typescript/types/variance-annotations-with-jsx/input.tsx:97:1]
  97 │ 
  98 │ type T20<public T> = T;  // Error
     ·                 ┬
-    ·                 ╰── Expect `,` here, but found `Identifier`
+    ·                 ╰── `,` expected
  99 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × Expect token
+  × Expected `,` but found `Identifier`
     ╭─[typescript/types/variance-annotations/input.ts:94:1]
  94 │ 
  95 │ type T20<public T> = T;  // Error
     ·                 ┬
-    ·                 ╰── Expect `,` here, but found `Identifier`
+    ·                 ╰── `,` expected
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 

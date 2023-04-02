@@ -1,8 +1,8 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, context::StatementContext, GetSpan, Span};
+use oxc_ast::{ast::*, GetSpan, Span};
 use oxc_diagnostics::Result;
 
-use crate::{diagnostics, lexer::Kind, Parser};
+use crate::{diagnostics, lexer::Kind, Parser, StatementContext};
 
 #[derive(Clone, Debug, Copy, Eq, PartialEq)]
 pub enum VariableDeclarationParent {
@@ -17,13 +17,13 @@ pub struct VariableDeclarationContext {
 }
 
 impl VariableDeclarationContext {
-    pub fn new(parent: VariableDeclarationParent) -> Self {
+    pub(crate) fn new(parent: VariableDeclarationParent) -> Self {
         Self { parent }
     }
 }
 
 impl<'a> Parser<'a> {
-    pub fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
+    pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
         let span = self.start_span();
         let peeked = self.peek_kind();
         // let = foo, let instanceof x, let + 1
@@ -41,7 +41,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse_variable_declaration(
+    pub(crate) fn parse_variable_declaration(
         &mut self,
         start_span: Span,
         decl_ctx: VariableDeclarationContext,
@@ -51,7 +51,7 @@ impl<'a> Parser<'a> {
             Kind::Var => VariableDeclarationKind::Var,
             Kind::Const => VariableDeclarationKind::Const,
             Kind::Let => VariableDeclarationKind::Let,
-            _ => return self.unexpected(),
+            _ => return Err(self.unexpected()),
         };
         self.bump_any();
 

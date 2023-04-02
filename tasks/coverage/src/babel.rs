@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use oxc_ast::SourceType;
 use serde::{de::DeserializeOwned, Deserialize};
+use serde_json::Value;
 
 use crate::project_root;
 use crate::suite::{Case, Suite, TestResult};
@@ -21,7 +22,7 @@ pub struct BabelOptions {
     pub source_type: Option<String>,
     pub throws: Option<String>,
     #[serde(default)]
-    pub plugins: Vec<String>,
+    pub plugins: Vec<Value>, // Can be a string or an array
     #[serde(default)]
     pub allow_return_outside_function: bool,
     #[serde(default)]
@@ -154,13 +155,36 @@ impl BabelCase {
     }
 
     fn is_jsx(&self) -> bool {
-        self.options.as_ref().map_or(false, |option| option.plugins.contains(&"jsx".to_string()))
+        self.options.as_ref().is_some_and(|option| {
+            option.plugins.iter().any(|v| v.as_str().is_some_and(|v| v == "jsx"))
+        })
     }
 
     fn is_typescript(&self) -> bool {
-        self.options
-            .as_ref()
-            .map_or(false, |option| option.plugins.contains(&"typescript".to_string()))
+        self.options.as_ref().is_some_and(|option| {
+            option.plugins.iter().any(|v| {
+                let string_value = v.as_str().is_some_and(|v| v == "typescript");
+                let array_value =
+                    v.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
+                string_value || array_value
+            })
+        })
+    }
+
+    fn is_typescript_definition(&self) -> bool {
+        self.options.as_ref().is_some_and(|option| {
+            option.plugins.iter().filter_map(Value::as_array).any(|p| {
+                let typescript =
+                    p.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
+                let dts = p
+                    .get(1)
+                    .and_then(Value::as_object)
+                    .and_then(|v| v.get("dts"))
+                    .and_then(Value::as_bool)
+                    .is_some_and(|v| v);
+                typescript && dts
+            })
+        })
     }
 
     fn is_module(&self) -> bool {
@@ -188,6 +212,10 @@ impl Case for BabelCase {
         &self.path
     }
 
+    fn allow_return_outside_function(&self) -> bool {
+        self.options.as_ref().map_or(false, |option| option.allow_return_outside_function)
+    }
+
     fn test_result(&self) -> &TestResult {
         &self.result
     }
@@ -197,17 +225,15 @@ impl Case for BabelCase {
     }
 
     fn skip_test_case(&self) -> bool {
+        let not_supported_plugins =
+            ["async-do-expression", "flow", "placeholders", "decorators-legacy", "recordAndTuple"];
         self.options.as_ref().map_or(false, |option| {
-            let not_supported_plugins = [
-                "async-do-expression",
-                "flow",
-                "placeholders",
-                "decorators-legacy",
-                "recordAndTuple",
-            ]
-            .iter()
-            .any(|plugin| option.plugins.contains(&(*plugin).to_string()));
-            not_supported_plugins
+            let has_not_supported_plugins = option
+                .plugins
+                .iter()
+                .filter_map(Value::as_str)
+                .any(|p| not_supported_plugins.contains(&p));
+            has_not_supported_plugins
                 || option.allow_await_outside_function
                 || option.allow_undeclared_exports
         })
@@ -219,6 +245,7 @@ impl Case for BabelCase {
             .with_script(true)
             .with_jsx(self.is_jsx())
             .with_typescript(self.is_typescript())
+            .with_typescript_definition(self.is_typescript_definition())
             .with_module(self.is_module());
         self.result = self.execute(source_type);
     }

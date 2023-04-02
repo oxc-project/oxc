@@ -1,3 +1,5 @@
+#![feature(let_chains, is_some_and)]
+
 mod babel;
 mod printer;
 mod suite;

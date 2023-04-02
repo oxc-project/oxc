@@ -1,9 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{
-    ast::*,
-    context::{Context, StatementContext},
-    Span,
-};
+use oxc_ast::{ast::*, Span};
 use oxc_diagnostics::Result;
 
 use super::{
@@ -11,14 +7,19 @@ use super::{
     grammar::CoverGrammar,
     list::SwitchCases,
 };
-use crate::{diagnostics, lexer::Kind, list::NormalList, Parser};
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    list::NormalList,
+    Parser, {Context, StatementContext},
+};
 
 impl<'a> Parser<'a> {
-    /// `https://tc39.es/ecma262/#prod-StatementList`
+    /// <https://tc39.es/ecma262/#prod-StatementList>
     /// `StatementList`[Yield, Await, Return] :
     ///     `StatementListItem`[?Yield, ?Await, ?Return]
     ///     `StatementList`[?Yield, ?Await, ?Return] `StatementListItem`[?Yield, ?Await, ?Return]
-    pub fn parse_directives_and_statements(
+    pub(crate) fn parse_directives_and_statements(
         &mut self,
         is_top_level: bool,
     ) -> Result<(Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>)> {
@@ -50,7 +51,7 @@ impl<'a> Parser<'a> {
                     if expecting_diretives {
                         if let Statement::ExpressionStatement(expr) = &stmt {
                             if let Expression::StringLiteral(string) = &expr.expression {
-                                let src = &self.source
+                                let src = &self.source_text
                                     [string.span.start as usize + 1..string.span.end as usize - 1];
                                 let directive =
                                     self.ast.directive(expr.span, (*string).clone(), src);
@@ -72,7 +73,7 @@ impl<'a> Parser<'a> {
     /// `StatementListItem`[Yield, Await, Return] :
     ///     Statement[?Yield, ?Await, ?Return]
     ///     Declaration[?Yield, ?Await]
-    pub fn parse_statement_list_item(
+    pub(crate) fn parse_statement_list_item(
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Result<Statement<'a>> {
@@ -131,7 +132,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Section 14.2 Block Statement
-    pub fn parse_block(&mut self) -> Result<Box<'a, BlockStatement<'a>>> {
+    pub(crate) fn parse_block(&mut self) -> Result<Box<'a, BlockStatement<'a>>> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
         let mut body = self.ast.new_vec();
@@ -143,13 +144,13 @@ impl<'a> Parser<'a> {
         Ok(self.ast.block(self.end_span(span), body))
     }
 
-    pub fn parse_block_statement(&mut self) -> Result<Statement<'a>> {
+    pub(crate) fn parse_block_statement(&mut self) -> Result<Statement<'a>> {
         let block = self.parse_block()?;
         Ok(self.ast.block_statement(block))
     }
 
     /// Section 14.3.2 Variable Statement
-    pub fn parse_variable_statement(
+    pub(crate) fn parse_variable_statement(
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Result<Statement<'a>> {
@@ -175,7 +176,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Section 14.5 Expression Statement
-    pub fn parse_expression_statement(
+    pub(crate) fn parse_expression_statement(
         &mut self,
         span: Span,
         expression: Expression<'a>,
@@ -297,7 +298,7 @@ impl<'a> Parser<'a> {
             .then(|| self.parse_expression())
             .transpose()
             .map_err(|_| {
-                let range = self.current_range();
+                let range = self.cur_token().span();
                 diagnostics::ExpectToken(Kind::Semicolon.to_str(), self.cur_kind().to_str(), range)
             })?;
         self.expect(Kind::Semicolon)?;
@@ -405,7 +406,7 @@ impl<'a> Parser<'a> {
         Ok(self.ast.switch_statement(self.end_span(span), discriminant, cases))
     }
 
-    pub fn parse_switch_case(&mut self) -> Result<SwitchCase<'a>> {
+    pub(crate) fn parse_switch_case(&mut self) -> Result<SwitchCase<'a>> {
         let span = self.start_span();
         let test = match self.cur_kind() {
             Kind::Default => {
@@ -417,7 +418,7 @@ impl<'a> Parser<'a> {
                 let expression = self.parse_expression()?;
                 Some(expression)
             }
-            _ => return self.unexpected(),
+            _ => return Err(self.unexpected()),
         };
         self.expect(Kind::Colon)?;
         let mut consequent = self.ast.new_vec();

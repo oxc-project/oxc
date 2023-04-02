@@ -1,0 +1,61 @@
+# Run cargo-tarpaulin and upload to codecov.io
+
+name: Code Coverage
+
+on:
+  schedule:
+    - cron:  '0 16 * * *' # 0:00 am Beijing Time
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true # Pull submodules for `cargo coverage`
+
+      - name: Install toolchain
+        run: rustup show
+
+      - name: Install cargo-tarpaulin
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-tarpaulin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: tarpaulin
+
+      - name: Run
+        run: cargo tarpaulin --skip-clean --engine llvm --out Xml
+
+      - name: Upload cobertura.xml
+        uses: actions/upload-artifact@v3
+        with:
+          name: codecov
+          path: cobertura.xml
+
+  # codecov often fails, use another workflow for retry
+  upload-codecov:
+    name: Upload cobertura.xml
+    runs-on: ubuntu-latest
+    needs: coverage
+    steps:
+      - name: Download cobertura.xml
+        uses: actions/download-artifact@v3
+        with:
+          name: codecov
+
+      - name: Upload to codecov.io
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: cobertura.xml

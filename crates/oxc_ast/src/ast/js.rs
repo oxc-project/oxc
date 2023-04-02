@@ -2,6 +2,7 @@ use std::fmt::Display;
 
 use num_bigint::BigUint;
 use oxc_allocator::{Box, Vec};
+#[cfg(feature = "serde")]
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
@@ -29,8 +30,8 @@ impl<'a> Program<'a> {
 }
 
 /// Section 13 Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
@@ -73,6 +74,7 @@ pub enum Expression<'a> {
     JSXFragment(Box<'a, JSXFragment<'a>>),
 
     TSAsExpression(Box<'a, TSAsExpression<'a>>),
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
     TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>),
@@ -132,6 +134,12 @@ impl<'a> Expression<'a> {
         matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void)
     }
 
+    /// Determines whether the given expr is a `0`
+    #[must_use]
+    pub fn is_number_0(&self) -> bool {
+        matches!(self, Self::NumberLiteral(lit) if lit.value == 0.0)
+    }
+
     /// Determines whether the given expr evaluate to `undefined`
     #[must_use]
     pub fn evaluate_to_undefined(&self) -> bool {
@@ -182,6 +190,7 @@ impl<'a> Expression<'a> {
         match self {
             Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression(),
             Expression::TSAsExpression(expr) => expr.expression.get_inner_expression(),
+            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression(),
             Expression::TSInstantiationExpression(expr) => expr.expression.get_inner_expression(),
             Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression(),
             Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression(),
@@ -219,80 +228,80 @@ impl<'a> Expression<'a> {
 }
 
 /// Section 12.6 `IdentifierName`
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IdentifierName {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
 }
 
 /// Section 13.1 `IdentifierReference`
-#[derive(Debug, Clone, Serialize, PartialEq, Hash, Eq)]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IdentifierReference {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
 }
 
 /// Section 13.1 `BindingIdentifier`
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BindingIdentifier {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
 }
 
 /// Section 13.1 `LabelIdentifier`
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct LabelIdentifier {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
 }
 
 /// Section 13.2.2 This Expression
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ThisExpression {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
 }
 
 /// Section 13.2.5 Array Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ArrayExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, Option<Argument<'a>>>,
     pub trailing_comma: Option<Span>,
 }
 
 /// Section 13.2.6 Object Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ObjectExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, ObjectProperty<'a>>,
     pub trailing_comma: Option<Span>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ObjectProperty<'a> {
     Property(Box<'a, Property<'a>>),
     SpreadProperty(Box<'a, SpreadElement<'a>>),
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct Property<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
@@ -302,8 +311,8 @@ pub struct Property<'a> {
     pub computed: bool,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum PropertyKey<'a> {
     Identifier(Box<'a, IdentifierName>),
     PrivateIdentifier(Box<'a, PrivateIdentifier>),
@@ -336,16 +345,16 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum PropertyValue<'a> {
-    // for AssignmentProperty in ObjectPattern https://github.com/oxc_ast/oxc_ast/blob/master/es2015.md#objectpattern
+    // For AssignmentProperty in ObjectPattern <https://github.com/estree/estree/blob/master/es2015.md#objectpattern>
     Pattern(BindingPattern<'a>),
     Expression(Expression<'a>),
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Eq, PartialEq, Hash)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
 pub enum PropertyKind {
     Init,
     Get,
@@ -353,10 +362,10 @@ pub enum PropertyKind {
 }
 
 /// Section 13.2.9 Template Literal
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TemplateLiteral<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub quasis: Vec<'a, TemplateElement>,
     pub expressions: Vec<'a, Expression<'a>>,
@@ -375,27 +384,27 @@ impl<'a> TemplateLiteral<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TaggedTemplateExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub tag: Expression<'a>,
     pub quasi: TemplateLiteral<'a>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TemplateElement {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub tail: bool,
     pub value: TemplateElementValue,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct TemplateElementValue {
     pub raw: Atom,
     pub cooked: Option<Atom>,
@@ -480,15 +489,14 @@ pub struct PrivateFieldExpression<'a> {
 }
 
 /// Section 13.3 Call Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct CallExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
@@ -538,50 +546,49 @@ impl<'a> CallExpression<'a> {
 }
 
 /// Section 13.3 New Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct NewExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 /// Section 13.3 Meta Property
 /// `new.target` | `import.meta`
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct MetaProperty {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub meta: IdentifierName,
     pub property: IdentifierName,
 }
 
 /// Section 13.3 Spread Element
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SpreadElement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub argument: Expression<'a>,
 }
 
 /// Section 13.3 Argument
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Argument<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>),
     Expression(Expression<'a>),
 }
 
 /// Section 13.4 Update Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct UpdateExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub operator: UpdateOperator,
     pub prefix: bool,
@@ -589,10 +596,10 @@ pub struct UpdateExpression<'a> {
 }
 
 /// Section 13.5 Unary Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct UnaryExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub operator: UnaryOperator,
     pub prefix: bool,
@@ -600,10 +607,10 @@ pub struct UnaryExpression<'a> {
 }
 
 /// Section 13.6 - 13.13 Binary Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BinaryExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub left: Expression<'a>,
     pub operator: BinaryOperator,
@@ -612,10 +619,10 @@ pub struct BinaryExpression<'a> {
 
 /// `RelationalExpression`[In, Yield, Await] :
 ///     [+In] `PrivateIdentifier` in `ShiftExpression`[?Yield, ?Await]
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct PrivateInExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub left: PrivateIdentifier,
     pub operator: BinaryOperator, // BinaryOperator::In
@@ -623,10 +630,10 @@ pub struct PrivateInExpression<'a> {
 }
 
 /// Section 13.13 Binary Logical Operators
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct LogicalExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub left: Expression<'a>,
     pub operator: LogicalOperator,
@@ -634,10 +641,10 @@ pub struct LogicalExpression<'a> {
 }
 
 /// Section 13.14 Conditional Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ConditionalExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub test: Expression<'a>,
     pub consequent: Expression<'a>,
@@ -645,10 +652,10 @@ pub struct ConditionalExpression<'a> {
 }
 
 /// Section 13.15 Assignment Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub operator: AssignmentOperator,
     pub left: AssignmentTarget<'a>,
@@ -656,8 +663,8 @@ pub struct AssignmentExpression<'a> {
 }
 
 /// 13.15.5 Destructuring Assignment
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTarget<'a> {
     SimpleAssignmentTarget(SimpleAssignmentTarget<'a>),
     AssignmentTargetPattern(AssignmentTargetPattern<'a>),
@@ -670,12 +677,13 @@ impl<'a> AssignmentTarget<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum SimpleAssignmentTarget<'a> {
     AssignmentTargetIdentifier(Box<'a, IdentifierReference>),
     MemberAssignmentTarget(Box<'a, MemberExpression<'a>>),
     TSAsExpression(Box<'a, TSAsExpression<'a>>),
+    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
 }
@@ -685,6 +693,7 @@ impl<'a> SimpleAssignmentTarget<'a> {
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         match self {
             Self::TSAsExpression(expr) => Some(&expr.expression),
+            Self::TSSatisfiesExpression(expr) => Some(&expr.expression),
             Self::TSNonNullExpression(expr) => Some(&expr.expression),
             Self::TSTypeAssertion(expr) => Some(&expr.expression),
             _ => None,
@@ -692,34 +701,34 @@ impl<'a> SimpleAssignmentTarget<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTargetPattern<'a> {
     ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>),
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ArrayAssignmentTarget<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
     pub rest: Option<AssignmentTarget<'a>>,
     pub trailing_comma: Option<Span>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ObjectAssignmentTarget<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, AssignmentTargetProperty<'a>>,
     pub rest: Option<AssignmentTarget<'a>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTargetMaybeDefault<'a> {
     AssignmentTarget(Box<'a, AssignmentTarget<'a>>),
     AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>),
@@ -744,17 +753,17 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentTargetWithDefault<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub binding: AssignmentTarget<'a>,
     pub init: Expression<'a>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTargetProperty<'a> {
     AssignmentTargetPropertyIdentifier(Box<'a, AssignmentTargetPropertyIdentifier<'a>>),
     AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>),
@@ -762,10 +771,10 @@ pub enum AssignmentTargetProperty<'a> {
 
 /// `AssignmentProperty`[Yield, Await] :
 ///     `IdentifierReference`[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]opt
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub binding: IdentifierReference,
     pub init: Option<Expression<'a>>,
@@ -773,67 +782,67 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 
 /// `AssignmentProperty`[Yield, Await] :
 ///     `PropertyName`[?Yield, ?Await] : `AssignmentElement`[?Yield, ?Await]
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentTargetPropertyProperty<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: PropertyKey<'a>,
     pub binding: AssignmentTargetMaybeDefault<'a>,
 }
 
 /// Section 13.16 Sequence Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SequenceExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct Super {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
 }
 
 /// Section 15.8 Await Expression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AwaitExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub argument: Expression<'a>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ChainExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub expression: ChainElement<'a>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ChainElement<'a> {
     CallExpression(Box<'a, CallExpression<'a>>),
     MemberExpression(Box<'a, MemberExpression<'a>>),
 }
 
 // Section 13.2 ParenthesizedExpression
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ParenthesizedExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub expression: Expression<'a>,
 }
 
 /// Section 14 Statements
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Statement<'a> {
     // Statements
     BlockStatement(Box<'a, BlockStatement<'a>>),
@@ -860,10 +869,14 @@ pub enum Statement<'a> {
 }
 
 /// Section 11.2.1 Directive Prologue
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type", rename = "ExpressionStatement")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize),
+    serde(tag = "type", rename = "ExpressionStatement")
+)]
 pub struct Directive<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub expression: StringLiteral,
     // directives should always use the unescaped raw string
@@ -871,17 +884,17 @@ pub struct Directive<'a> {
 }
 
 /// Section 14.2 Block Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BlockStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
 }
 
 /// Section 14.3 Declarations and the Variable Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Declaration<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     FunctionDeclaration(Box<'a, Function<'a>>),
@@ -907,20 +920,19 @@ impl<'a> Declaration<'a> {
 }
 
 /// Section 14.3.2 Variable Declaration
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct VariableDeclaration<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
     /// Valid Modifiers: `export`, `declare`
-    #[serde(skip_serializing_if = "Modifiers::is_none")]
     pub modifiers: Modifiers<'a>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Hash)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
 pub enum VariableDeclarationKind {
     Var,
     Const,
@@ -950,12 +962,12 @@ impl Display for VariableDeclarationKind {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct VariableDeclarator<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    #[serde(skip)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub kind: VariableDeclarationKind,
     pub id: BindingPattern<'a>,
     pub init: Option<Expression<'a>>,
@@ -963,27 +975,27 @@ pub struct VariableDeclarator<'a> {
 }
 
 /// Section 14.4 Empty Statement
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct EmptyStatement {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
 }
 
 /// Section 14.5 Expression Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExpressionStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub expression: Expression<'a>,
 }
 
 /// Section 14.6 If Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IfStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub test: Expression<'a>,
     pub consequent: Statement<'a>,
@@ -991,30 +1003,30 @@ pub struct IfStatement<'a> {
 }
 
 /// Section 14.7.2 Do-While Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct DoWhileStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub body: Statement<'a>,
     pub test: Expression<'a>,
 }
 
 /// Section 14.7.3 While Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct WhileStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub test: Expression<'a>,
     pub body: Statement<'a>,
 }
 
 /// Section 14.7.4 For Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ForStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub init: Option<ForStatementInit<'a>>,
     pub test: Option<Expression<'a>>,
@@ -1022,18 +1034,18 @@ pub struct ForStatement<'a> {
     pub body: Statement<'a>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     Expression(Expression<'a>),
 }
 
 /// Section 14.7.5 For-In Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ForInStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
@@ -1041,10 +1053,10 @@ pub struct ForInStatement<'a> {
 }
 
 /// Section 14.7.5 For-Of Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ForOfStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub r#await: bool,
     pub left: ForStatementLeft<'a>,
@@ -1052,64 +1064,64 @@ pub struct ForOfStatement<'a> {
     pub body: Statement<'a>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     AssignmentTarget(AssignmentTarget<'a>),
 }
 
 /// Section 14.8 Continue Statement
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ContinueStatement {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub label: Option<LabelIdentifier>,
 }
 
 /// Section 14.9 Break Statement
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BreakStatement {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub label: Option<LabelIdentifier>,
 }
 
 /// Section 14.10 Return Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ReturnStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub argument: Option<Expression<'a>>,
 }
 
 /// Section 14.11 With Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct WithStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
     pub body: Statement<'a>,
 }
 
 /// Section 14.12 Switch Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SwitchStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub discriminant: Expression<'a>,
     pub cases: Vec<'a, SwitchCase<'a>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SwitchCase<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub test: Option<Expression<'a>>,
     pub consequent: Vec<'a, Statement<'a>>,
@@ -1123,65 +1135,64 @@ impl<'a> SwitchCase<'a> {
 }
 
 /// Section 14.13 Labelled Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct LabeledStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub label: LabelIdentifier,
     pub body: Statement<'a>,
 }
 
 /// Section 14.14 Throw Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ThrowStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub argument: Expression<'a>,
 }
 
 /// Section 14.15 Try Statement
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TryStatement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub block: Box<'a, BlockStatement<'a>>,
     pub handler: Option<Box<'a, CatchClause<'a>>>,
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct CatchClause<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub param: Option<BindingPattern<'a>>,
     pub body: Box<'a, BlockStatement<'a>>,
 }
 
 /// Section 14.16 Debugger Statement
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct DebuggerStatement {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
 }
 
 /// Section 14.3.3 Destructuring Binding Patterns
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub struct BindingPattern<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub kind: BindingPatternKind<'a>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub optional: bool,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum BindingPatternKind<'a> {
     BindingIdentifier(Box<'a, BindingIdentifier>),
     ObjectPattern(Box<'a, ObjectPattern<'a>>),
@@ -1202,67 +1213,63 @@ impl<'a> BindingPatternKind<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentPattern<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub left: BindingPattern<'a>,
     pub right: Expression<'a>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ObjectPattern<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub properties: Vec<'a, ObjectPatternProperty<'a>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ObjectPatternProperty<'a> {
     Property(Box<'a, Property<'a>>),
     RestElement(Box<'a, RestElement<'a>>),
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ArrayPattern<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct RestElement<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub argument: BindingPattern<'a>,
 }
 
 /// Section 15.2 Function Definitions
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Function<'a> {
     pub r#type: FunctionType,
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub id: Option<BindingIdentifier>,
     pub expression: bool,
     pub generator: bool,
     pub r#async: bool,
     pub params: Box<'a, FormalParameters<'a>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<Box<'a, FunctionBody<'a>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     /// Valid modifiers: `export`, `default`, `async`
-    #[serde(skip_serializing_if = "Modifiers::is_none")]
     pub modifiers: Modifiers<'a>,
 }
 
@@ -1293,7 +1300,8 @@ impl<'a> Function<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum FunctionType {
     FunctionDeclaration,
     FunctionExpression,
@@ -1307,26 +1315,25 @@ pub struct FormalParameters<'a> {
     pub items: Vec<'a, FormalParameter<'a>>,
 }
 
-#[derive(Debug, PartialEq, Hash, Serialize)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct FormalParameter<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub pattern: BindingPattern<'a>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FormalParameterKind {
-    /// https://tc39.es/ecma262/#prod-FormalParameters
+    /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter,
-    /// https://tc39.es/ecma262/#prod-UniqueFormalParameters
+    /// <https://tc39.es/ecma262/#prod-UniqueFormalParameters>
     UniqueFormalParameters,
-    /// https://tc39.es/ecma262/#prod-ArrowFormalParameters
+    /// <https://tc39.es/ecma262/#prod-ArrowFormalParameters>
     ArrowFormalParameters,
     /// Part of TypeScript type signatures
     Signature,
@@ -1377,35 +1384,30 @@ impl<'a> ArrowExpression<'a> {
 }
 
 /// Section 15.5 Generator Function Definitions
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct YieldExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub delegate: bool,
     pub argument: Option<Expression<'a>>,
 }
 
 /// Section 15.7 Class Definitions
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub struct Class<'a> {
     pub r#type: ClassType,
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub id: Option<BindingIdentifier>,
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub decorators: Vec<'a, Decorator<'a>>,
     /// Valid Modifiers: `export`, `abstract`
-    #[serde(skip_serializing_if = "Modifiers::is_none")]
     pub modifiers: Modifiers<'a>,
 }
 
@@ -1426,22 +1428,23 @@ impl<'a> Class<'a> {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum ClassType {
     ClassDeclaration,
     ClassExpression,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ClassBody<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub body: Vec<'a, ClassElement<'a>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ClassElement<'a> {
     StaticBlock(Box<'a, StaticBlock<'a>>),
     MethodDefinition(Box<'a, MethodDefinition<'a>>),
@@ -1528,11 +1531,11 @@ impl<'a> ClassElement<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[allow(clippy::struct_excessive_bools)]
 pub struct MethodDefinition<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
     pub value: Box<'a, Function<'a>>, // FunctionExpression
@@ -1541,17 +1544,15 @@ pub struct MethodDefinition<'a> {
     pub r#static: bool,
     pub r#override: bool,
     pub optional: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[allow(clippy::struct_excessive_bools)]
 pub struct PropertyDefinition<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
     pub value: Option<Expression<'a>>,
@@ -1562,16 +1563,13 @@ pub struct PropertyDefinition<'a> {
     pub optional: bool,
     pub definite: bool,
     pub readonly: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<TSAccessibility>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Eq, PartialEq, Hash)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
 pub enum MethodDefinitionKind {
     Constructor,
     Method,
@@ -1579,33 +1577,34 @@ pub enum MethodDefinitionKind {
     Set,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct PrivateIdentifier {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct StaticBlock<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub body: Vec<'a, Statement<'a>>,
 }
 
 /// Section 16.2.2 Imports
-#[derive(Debug, Serialize, PartialEq, Hash)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct ModuleDeclaration<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub kind: ModuleDeclarationKind<'a>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ModuleDeclarationKind<'a> {
     ImportDeclaration(Box<'a, ImportDeclaration<'a>>),
     ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>),
@@ -1630,10 +1629,10 @@ impl<'a> ModuleDeclarationKind<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AccessorProperty<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub key: PropertyKey<'a>,
     pub value: Option<Expression<'a>>,
@@ -1641,17 +1640,17 @@ pub struct AccessorProperty<'a> {
     pub r#static: bool,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportExpression<'a> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub source: Expression<'a>,
     pub arguments: Vec<'a, Expression<'a>>,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct ImportDeclaration<'a> {
     pub specifiers: Vec<'a, ImportDeclarationSpecifier>,
     pub source: StringLiteral,
@@ -1659,8 +1658,8 @@ pub struct ImportDeclaration<'a> {
     pub import_kind: Option<ImportOrExportKind>,      // `import type { foo } from 'bar'`
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ImportDeclarationSpecifier {
     ImportSpecifier(ImportSpecifier),
     ImportDefaultSpecifier(ImportDefaultSpecifier),
@@ -1669,44 +1668,44 @@ pub enum ImportDeclarationSpecifier {
 
 // import {imported} from "source"
 // import {imported as local} from "source"
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportSpecifier {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub imported: ModuleExportName,
     pub local: BindingIdentifier,
 }
 
 // import local from "source"
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportDefaultSpecifier {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub local: BindingIdentifier,
 }
 
 // import * as local from "source"
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportNamespaceSpecifier {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub local: BindingIdentifier,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportAttribute {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub key: ImportAttributeKey,
     pub value: StringLiteral,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ImportAttributeKey {
     Identifier(IdentifierName),
     StringLiteral(StringLiteral),
@@ -1724,8 +1723,8 @@ impl ImportAttributeKey {
 
 /// Exports
 /// [tc39/ecma262#sec-exports](https://tc39.es/ecma262/#sec-exports)
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportNamedDeclaration<'a> {
     pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier>,
@@ -1741,15 +1740,15 @@ impl<'a> ExportNamedDeclaration<'a> {
     }
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportDefaultDeclaration<'a> {
     pub declaration: ExportDefaultDeclarationKind<'a>,
     pub exported: ModuleExportName, // `default`
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportAllDeclaration<'a> {
     pub exported: Option<ModuleExportName>,
     pub source: StringLiteral,
@@ -1757,17 +1756,17 @@ pub struct ExportAllDeclaration<'a> {
     pub export_kind: Option<ImportOrExportKind>,      // `export type *`
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq, Hash)]
-#[serde(tag = "type")]
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportSpecifier {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub local: ModuleExportName,
     pub exported: ModuleExportName,
 }
 
-#[derive(Debug, Serialize, PartialEq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ExportDefaultDeclarationKind<'a> {
     Expression(Expression<'a>),
     FunctionDeclaration(Box<'a, Function<'a>>),
@@ -1794,13 +1793,13 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
     }
 }
 
-// es2022: https://github.com/oxc_ast/oxc_ast/blob/master/es2022.md#modules
-// https://github.com/tc39/ecma262/pull/2154
+// es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
+// <https://github.com/tc39/ecma262/pull/2154>
 // support:
 //   import {"\0 any unicode" as foo} from "";
 //   export {foo as "\0 any unicode"};
-#[derive(Debug, Clone, Serialize, PartialEq, Eq, Hash)]
-#[serde(untagged)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ModuleExportName {
     Identifier(IdentifierName),
     StringLiteral(StringLiteral),

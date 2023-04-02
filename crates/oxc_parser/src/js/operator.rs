@@ -2,8 +2,7 @@ use oxc_ast::ast::*;
 
 use crate::lexer::Kind;
 
-/// Operator Precedence
-/// `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence#table`
+/// [Operator Precedence](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence#table)
 #[derive(Debug, Eq, Ord, PartialOrd, PartialEq, Copy, Clone)]
 #[repr(u8)]
 pub enum BindingPower {
@@ -54,7 +53,8 @@ impl BindingPower {
             | Kind::GtEq
             | Kind::Instanceof
             | Kind::In
-            | Kind::As => Some(Self::Relational),
+            | Kind::As
+            | Kind::Satisfies => Some(Self::Relational),
             Kind::ShiftLeft | Kind::ShiftRight | Kind::ShiftRight3 => Some(Self::Shift),
             Kind::Plus | Kind::Minus => Some(Self::Additive),
             Kind::Star | Kind::Slash | Kind::Percent => Some(Self::Multiplicative),

@@ -25,6 +25,7 @@ oxc_macros::declare_all_lint_rules! {
     no_constant_binary_expression,
     no_compare_neg_zero,
     no_unsafe_negation,
+    no_bitwise,
     deepscan::uninvoked_array_callback,
     deepscan::bad_bitwise_operator,
     use_isnan,

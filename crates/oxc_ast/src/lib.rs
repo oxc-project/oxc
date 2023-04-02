@@ -1,32 +1,35 @@
-//! AST
-//! NOTE: This is not compatible with estree.
+//! Oxc AST
+//!
+//! This is 90% similar to estree expect a few places such as `BindingIdentifier` and `AssignmentTarget`.
 
 #![feature(let_chains)]
 #![feature(is_some_and)]
 
+#[cfg(feature = "serde")]
 mod serialize;
 
 pub mod ast;
-pub mod ast_builder;
-pub mod ast_kind;
-pub mod context;
+mod ast_builder;
+mod ast_kind;
 pub mod module_record;
-pub mod source_type;
-pub mod span;
+mod source_type;
+mod span;
 pub mod syntax_directed_operations;
-pub mod trivia;
+mod trivia;
 pub mod visit;
 pub mod visit_mut;
 
-pub use ast_kind::AstKind;
+use compact_str::CompactString;
 pub use num_bigint::BigUint;
 
-pub use crate::ast_builder::*;
-pub use crate::source_type::*;
-pub use crate::span::*;
-pub use crate::trivia::*;
+pub use crate::ast_builder::AstBuilder;
+pub use crate::ast_kind::AstKind;
+pub use crate::source_type::{Language, LanguageVariant, ModuleKind, SourceType, VALID_EXTENSIONS};
+pub use crate::span::{GetSpan, Span};
+pub use crate::trivia::{CommentKind, Trivias};
 
-pub type Atom = compact_str::CompactString;
+/// Type alis for [`CompactString`]
+pub type Atom = CompactString;
 
 // After experimenting with two types of boxed enum variants:
 //   1.
