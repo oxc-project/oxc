@@ -21,7 +21,7 @@ pub struct BabelOptions {
     pub source_type: Option<String>,
     pub throws: Option<String>,
     #[serde(default)]
-    pub plugins: Vec<String>,
+    pub plugins: Vec<serde_json::Value>, // Can be a string or an array
     #[serde(default)]
     pub allow_return_outside_function: bool,
     #[serde(default)]
@@ -154,13 +154,15 @@ impl BabelCase {
     }
 
     fn is_jsx(&self) -> bool {
-        self.options.as_ref().map_or(false, |option| option.plugins.contains(&"jsx".to_string()))
+        self.options.as_ref().is_some_and(|option| {
+            option.plugins.iter().any(|v| v.as_str().is_some_and(|v| v == "jsx"))
+        })
     }
 
     fn is_typescript(&self) -> bool {
-        self.options
-            .as_ref()
-            .map_or(false, |option| option.plugins.contains(&"typescript".to_string()))
+        self.options.as_ref().is_some_and(|option| {
+            option.plugins.iter().any(|v| v.as_str().is_some_and(|v| v == "typescript"))
+        })
     }
 
     fn is_module(&self) -> bool {
@@ -201,17 +203,15 @@ impl Case for BabelCase {
     }
 
     fn skip_test_case(&self) -> bool {
+        let not_supported_plugins =
+            ["async-do-expression", "flow", "placeholders", "decorators-legacy", "recordAndTuple"];
         self.options.as_ref().map_or(false, |option| {
-            let not_supported_plugins = [
-                "async-do-expression",
-                "flow",
-                "placeholders",
-                "decorators-legacy",
-                "recordAndTuple",
-            ]
-            .iter()
-            .any(|plugin| option.plugins.contains(&(*plugin).to_string()));
-            not_supported_plugins
+            let has_not_supported_plugins = option
+                .plugins
+                .iter()
+                .filter_map(serde_json::Value::as_str)
+                .any(|p| not_supported_plugins.contains(&p));
+            has_not_supported_plugins
                 || option.allow_await_outside_function
                 || option.allow_undeclared_exports
         })
