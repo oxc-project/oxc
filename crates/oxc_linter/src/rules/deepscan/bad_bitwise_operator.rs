@@ -104,10 +104,7 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
                 return false;
             }
 
-            let left_ident = match &bin_expr.left {
-                Expression::Identifier(ident) => ident,
-                _ => return false,
-            };
+            let Expression::Identifier(left_ident) = &bin_expr.left else { return false };
 
             if let Expression::MemberExpression(member_expr) = &bin_expr.right {
                 if let Expression::Identifier(ident) = member_expr.object() {
@@ -142,7 +139,9 @@ fn is_mistype_option_fallback(node: &AstNode) -> bool {
 fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {
     match expr {
         Expression::NumberLiteral(_)
-        | Expression::NullLiteral(_) => true,
+        | Expression::NullLiteral(_)
+        // TODO: handle type inference
+        | Expression::Identifier(_) => true,
         Expression::UnaryExpression(unary_expr) => {
             if is_outer_most {
                 unary_expr.operator != UnaryOperator::Typeof && unary_expr.operator != UnaryOperator::LogicalNot
@@ -156,8 +155,6 @@ fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {
         Expression::ParenthesizedExpression(paren_expr) => {
             is_numeric_expr(&paren_expr.expression, false)
         }
-        // TODO: handle type inference
-        Expression::Identifier(_) => true,
         _ => expr.is_undefined(),
     }
 }
