@@ -109,6 +109,7 @@ impl Case for TypeScriptCase {
             .unwrap()
             .with_script(true)
             .with_module(is_module)
+            .with_jsx(!compiler_options.jsx.is_empty())
             .with_typescript_definition(compiler_options.declaration);
         self.result = self.execute(source_type);
     }
@@ -182,10 +183,9 @@ impl TypeScriptTestMeta {
         let file_name = path.file_stem().unwrap().to_string_lossy();
         let root = project_root().join(TESTS_ROOT).join("baselines/reference");
         let mut suffixes = vec![String::new()];
-        let modules = &options.modules;
-        let targets = &options.targets;
-        suffixes.extend(modules.iter().map(|module| format!("(module={module})")));
-        suffixes.extend(targets.iter().map(|target| format!("(target={target})")));
+        suffixes.extend(options.modules.iter().map(|module| format!("(module={module})")));
+        suffixes.extend(options.targets.iter().map(|target| format!("(target={target})")));
+        suffixes.extend(options.jsx.iter().map(|jsx| format!("(jsx={jsx})")));
         let mut error_files = vec![];
         for suffix in suffixes {
             let error_path = root.join(format!("{file_name}{suffix}.errors.txt"));
@@ -211,6 +211,7 @@ struct CompilerOptions {
     pub modules: Vec<String>,
     pub targets: Vec<String>,
     pub strict: bool,
+    pub jsx: Vec<String>, // 'react', 'preserve'
     pub declaration: bool,
     pub always_strict: bool, // Ensure 'use strict' is always emitted.
     pub allow_unreachable_code: bool,
@@ -224,6 +225,7 @@ impl CompilerOptions {
             modules: Self::split_value_options(options.get("module")),
             targets: Self::split_value_options(options.get("target")),
             strict: Self::value_to_boolean(options.get("strict"), false),
+            jsx: Self::split_value_options(options.get("jsx")),
             declaration: Self::value_to_boolean(options.get("declaration"), false),
             always_strict: Self::value_to_boolean(options.get("alwaysstrict"), false),
             allow_unreachable_code: Self::value_to_boolean(
