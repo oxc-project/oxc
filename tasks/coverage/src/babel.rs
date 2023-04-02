@@ -188,6 +188,10 @@ impl Case for BabelCase {
         &self.path
     }
 
+    fn allow_return_outside_function(&self) -> bool {
+        self.options.as_ref().map_or(false, |option| option.allow_return_outside_function)
+    }
+
     fn test_result(&self) -> &TestResult {
         &self.result
     }
