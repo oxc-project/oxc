@@ -156,6 +156,8 @@ fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {
         Expression::ParenthesizedExpression(paren_expr) => {
             is_numeric_expr(&paren_expr.expression, false)
         }
+        // TODO: handle type inference
+        Expression::Identifier(_) => true,
         _ => expr.is_undefined(),
     }
 }
@@ -188,6 +190,7 @@ fn test() {
         ("var a = obj1 & obj2.a", None),
         ("var a = options || {}", None),
         ("var a = options | 1", None),
+        ("var a = b | c", None),
         ("var a = options | undefined", None),
         ("var a = options | null", None),
         ("var a = options | ~{}", None),
@@ -198,6 +201,7 @@ fn test() {
         ("var a = '' | 1", None),
         ("var a = true | 1", None),
         ("var a = options | (1 + 2 + (3 + 4))", None),
+        ("var a = b | (1 + 2 + (3 + c))", None),
         ("var a = options | (1 + 2 + (3 + !4))", None),
         ("var a = options | (1 + 2 + (3 + !''))", None),
         ("input |= 1", None),
@@ -211,6 +215,7 @@ fn test() {
         ("input |= ~{}", None),
         // TODO
         // ("var a = 1; input |= a", None),
+        // ("var a = 1; var b = a | {}", None),
     ];
 
     let fail = vec![
@@ -229,7 +234,8 @@ fn test() {
         ("input |= !{}", None),
         ("input |= typeof {}", None),
         // TODO
-        // ("var a = '1'; input |= a", None),
+        // ("var input; var a = '1'; input |= a", None),
+        // ("var a = '1'; var b = a | {}", None),
     ];
 
     Tester::new(BadBitwiseOperator::NAME, pass, fail).test_and_snapshot();
