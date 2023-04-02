@@ -1,6 +1,6 @@
 Babel Summary:
 AST Parsed     : 2065/2071 (99.71%)
-Positive Passed: 2055/2071 (99.23%)
+Positive Passed: 2057/2071 (99.32%)
 Negative Passed: 1332/1502 (88.68%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -221,21 +221,6 @@ Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
-Expect to Parse: "core/uncategorised/327/input.js"
-
-  × TS1108: A 'return' statement can only be used within a function body
-   ╭─[core/uncategorised/327/input.js:1:1]
- 1 │ return {} / 2
-   · ──────
-   ╰────
-Expect to Parse: "core/uncategorised/328/input.js"
-
-  × TS1108: A 'return' statement can only be used within a function body
-   ╭─[core/uncategorised/328/input.js:1:1]
- 1 │ return
-   · ──────
- 2 │ {}
-   ╰────
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
   × Expected `<` but found `EOF`
