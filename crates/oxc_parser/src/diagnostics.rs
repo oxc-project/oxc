@@ -130,7 +130,7 @@ pub struct ClassDeclaration(#[label] pub Span);
 #[derive(Debug, Error, Diagnostic)]
 #[error("Rest element must be last element")]
 #[diagnostic()]
-pub struct RestElement(#[label] pub Span);
+pub struct RestElementLast(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Spread must be last element")]
