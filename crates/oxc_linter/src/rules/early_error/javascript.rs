@@ -11,6 +11,7 @@ use oxc_diagnostics::{
     Redeclaration,
 };
 use oxc_semantic::ScopeFlags;
+use rustc_hash::FxHashMap;
 
 use crate::{ast_util::STRICT_MODE_NAMES, context::LintContext, rule::Rule, AstNode};
 
@@ -133,15 +134,12 @@ fn check_program(node: &AstNode, ctx: &LintContext) {
 }
 
 fn check_duplicate_bound_names<T: BoundNames>(bound_names: &T, ctx: &LintContext) {
-    // bound_names are usually small, a simple loop should be more performant checking with a hashmap
-    let mut idents = bound_names.bound_names();
-    idents.sort_unstable_by_key(|ident| ident.name.as_str());
-    for i in 1..idents.len() {
-        let ident = &idents[i - 1];
-        if let Some(found) = idents[i..].iter().find(|i| i.name == ident.name) {
-            ctx.diagnostic(Redeclaration(ident.name.clone(), ident.span, found.span));
+    let mut idents: FxHashMap<Atom, Span> = FxHashMap::default();
+    bound_names.bound_names(&mut |ident| {
+        if let Some(old_span) = idents.insert(ident.name.clone(), ident.span) {
+            ctx.diagnostic(Redeclaration(ident.name.clone(), old_span, ident.span));
         }
-    }
+    });
 }
 
 #[derive(Debug, Error, Diagnostic)]

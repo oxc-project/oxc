@@ -256,7 +256,7 @@ impl ModuleRecordBuilder {
         }
 
         if let Some(decl) = &decl.declaration {
-            for ident in decl.bound_names() {
+            decl.bound_names(&mut |ident| {
                 let export_entry = ExportEntry {
                     module_request: module_request.clone(),
                     export_name: ExportExportName::Name(NameSpan::new(
@@ -271,7 +271,7 @@ impl ModuleRecordBuilder {
                 };
                 self.add_export_entry(export_entry);
                 self.add_export_binding(ident.name.clone(), ident.span);
-            }
+            });
         }
 
         for specifier in &decl.specifiers {

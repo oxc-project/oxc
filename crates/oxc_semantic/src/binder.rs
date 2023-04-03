@@ -29,7 +29,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
                 (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
             }
         };
-        for ident in self.id.bound_names() {
+        self.id.bound_names(&mut |ident| {
             let symbol_id = builder.declare_symbol(
                 &ident.name,
                 ident.span,
@@ -60,7 +60,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
                     }
                 }
             }
-        }
+        });
     }
 }
 
@@ -132,7 +132,7 @@ impl<'a> Binder for FormalParameters<'a> {
         let includes = SymbolFlags::FunctionScopedVariable;
         let excludes = SymbolFlags::FunctionScopedVariableExcludes;
         let is_signature = self.kind == FormalParameterKind::Signature;
-        for ident in self.bound_names() {
+        self.bound_names(&mut |ident| {
             if !is_signature {
                 builder.declare_symbol(
                     &ident.name,
@@ -142,7 +142,7 @@ impl<'a> Binder for FormalParameters<'a> {
                     excludes,
                 );
             }
-        }
+        });
     }
 }
 
@@ -157,7 +157,7 @@ impl<'a> Binder for CatchClause<'a> {
                 let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
                 builder.declare_shadow_symbol(&ident.name, ident.span, current_scope_id, includes);
             } else {
-                for ident in param.bound_names() {
+                param.bound_names(&mut |ident| {
                     builder.declare_symbol(
                         &ident.name,
                         ident.span,
@@ -165,7 +165,7 @@ impl<'a> Binder for CatchClause<'a> {
                         SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
                         SymbolFlags::BlockScopedVariableExcludes,
                     );
-                }
+                });
             }
         }
     }
@@ -173,7 +173,7 @@ impl<'a> Binder for CatchClause<'a> {
 
 impl<'a> Binder for ModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        for ident in self.bound_names() {
+        self.bound_names(&mut |ident| {
             builder.declare_symbol(
                 &ident.name,
                 ident.span,
@@ -181,6 +181,6 @@ impl<'a> Binder for ModuleDeclaration<'a> {
                 SymbolFlags::empty(),
                 SymbolFlags::empty(),
             );
-        }
+        });
     }
 }
