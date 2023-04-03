@@ -93,7 +93,7 @@ impl Rule for ValidTypeof {
             }
 
             if sibling.is_undefined()
-                && ctx.is_unresolved_reference(sibling_id)
+                && ctx.semantic().is_unresolved_reference(sibling_id.into())
             {
                 ctx.diagnostic_with_fix(
                     if self.require_string_literals {
