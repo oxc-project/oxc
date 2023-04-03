@@ -8,6 +8,7 @@ mod table;
 use bitflags::bitflags;
 use oxc_ast::{Atom, Span};
 
+use self::reference::ResolvedReferenceId;
 pub use self::{
     id::SymbolId,
     reference::{Reference, ReferenceFlag, ResolvedReference},
@@ -24,7 +25,7 @@ pub struct Symbol {
     span: Span,
     flags: SymbolFlags,
     /// Pointers to the AST Nodes that reference this symbol
-    references: Vec<AstNodeId>,
+    references: Vec<ResolvedReferenceId>,
 }
 
 #[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
@@ -119,12 +120,8 @@ impl Symbol {
         self.flags.contains(SymbolFlags::Export)
     }
 
-    pub fn add_references(&mut self, new_references: &[Reference]) {
-        self.references.extend(new_references.iter().map(|r| r.ast_node_id));
-    }
-
     #[must_use]
-    pub fn references(&self) -> &[AstNodeId] {
+    pub fn references(&self) -> &[ResolvedReferenceId] {
         &self.references
     }
 

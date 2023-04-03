@@ -11,8 +11,9 @@ mod symbol;
 use std::rc::Rc;
 
 pub use builder::SemanticBuilder;
+use node::AstNodeId;
 pub use node::{AstNode, AstNodes, SemanticNode};
-use oxc_ast::{module_record::ModuleRecord, SourceType, Trivias};
+use oxc_ast::{module_record::ModuleRecord, AstKind, SourceType, Trivias};
 pub use scope::{Scope, ScopeFlags, ScopeTree};
 pub use symbol::{Reference, ResolvedReference, Symbol, SymbolFlags, SymbolTable};
 
@@ -66,5 +67,13 @@ impl<'a> Semantic<'a> {
     #[must_use]
     pub fn symbols(&self) -> &SymbolTable {
         &self.symbols
+    }
+
+    #[must_use]
+    pub fn is_unresolved_reference(&self, node_id: AstNodeId) -> bool {
+        let reference_node = &self.nodes()[node_id];
+        let AstKind::IdentifierReference(id) = reference_node.kind() else { return false; };
+        let scope = &self.scopes()[reference_node.scope_id()];
+        scope.unresolved_references.contains_key(&id.name)
     }
 }
