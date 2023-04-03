@@ -10,7 +10,7 @@ use crate::{Reference, ResolvedReference};
 /// `SymbolTable` is a storage of all the symbols (related to `BindingIdentifiers`)
 /// and references (related to `IdentifierReferences`) of the program. It supports two
 /// kinds of queries: indexing by `SymbolId` retrieves the corresponding `Symbol` and
-/// indexing by `ResovledReferenceId` retrieves the correspodning `ResolvedReference`
+/// indexing by `ResolvedReferenceId` retrieves the correspodning `ResolvedReference`
 ///
 #[derive(Debug, Default)]
 pub struct SymbolTable {
@@ -91,11 +91,14 @@ impl SymbolTable {
         self.resolved_references.get(id.index0())
     }
 
-    /// Resolve `reference` to `symbol_id`
-    pub(crate) fn resolve_reference(&mut self, reference: Reference, symbol_id: SymbolId) {
-        let resolved_reference_id = ResolvedReferenceId::new(self.resolved_references.len() + 1);
-        let resolved_reference = reference.resolve_to(symbol_id);
-        self.resolved_references.push(resolved_reference);
-        self.symbols[symbol_id].add_reference(resolved_reference_id);
+    /// Resolve all `references` to `symbol_id`
+    pub(crate) fn resolve_reference(&mut self, references: Vec<Reference>, symbol_id: SymbolId) {
+        for reference in references {
+            let resolved_reference_id =
+                ResolvedReferenceId::new(self.resolved_references.len() + 1);
+            let resolved_reference = reference.resolve_to(symbol_id);
+            self.resolved_references.push(resolved_reference);
+            self.symbols[symbol_id].add_reference(resolved_reference_id);
+        }
     }
 }

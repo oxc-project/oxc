@@ -73,9 +73,7 @@ impl ScopeBuilder {
                 let scope = &self.scopes[scope];
                 if let Some(symbol_id) = scope.get().get_variable_symbol_id(&variable) {
                     // We have resolved this reference.
-                    for r in reference {
-                        symbol_table.resolve_reference(r, symbol_id);
-                    }
+                    symbol_table.resolve_reference(reference, symbol_id);
                     continue 'outer;
                 }
             }
