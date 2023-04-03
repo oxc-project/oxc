@@ -120,10 +120,6 @@ impl Symbol {
         self.flags.contains(SymbolFlags::Export)
     }
 
-    pub fn add_reference(&mut self, reference_id: ResolvedReferenceId) {
-        self.references.push(reference_id);
-    }
-
     #[must_use]
     pub fn references(&self) -> &[ResolvedReferenceId] {
         &self.references

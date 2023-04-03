@@ -93,12 +93,19 @@ impl SymbolTable {
 
     /// Resolve all `references` to `symbol_id`
     pub(crate) fn resolve_reference(&mut self, references: Vec<Reference>, symbol_id: SymbolId) {
+        let additional_len = references.len();
+        let symbol = &mut self.symbols[symbol_id];
+
+        self.resolved_references.reserve(additional_len);
+        symbol.references.reserve(additional_len);
+
         for reference in references {
             let resolved_reference_id =
                 ResolvedReferenceId::new(self.resolved_references.len() + 1);
             let resolved_reference = reference.resolve_to(symbol_id);
             self.resolved_references.push(resolved_reference);
-            self.symbols[symbol_id].add_reference(resolved_reference_id);
+            // explicitly push to vector here in correspondence to the previous reserve call
+            symbol.references.push(resolved_reference_id);
         }
     }
 }
