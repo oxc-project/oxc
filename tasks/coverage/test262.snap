@@ -263,27 +263,30 @@ Negative Passed: 3915/3915 (100.00%)
  21 │   break;
     ╰────
 
-  × Unexpected token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.3_T1.js:19:1]
  19 │ for(
  20 │ ) {
-    · ─
+    · ┬
+    · ╰── `;` expected
  21 │   break;
     ╰────
 
-  × Unexpected token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.3_T2.js:20:1]
  20 │ 
  21 │ ) {
-    · ─
+    · ┬
+    · ╰── `;` expected
  22 │   break;
     ╰────
 
-  × Unexpected token
+  × Expected `;` but found `)`
     ╭─[language/asi/S7.9_A6.3_T3.js:21:1]
  21 │ 
  22 │ ) {
-    · ─
+    · ┬
+    · ╰── `;` expected
  23 │   break;
     ╰────
 
@@ -30849,12 +30852,12 @@ Negative Passed: 3915/3915 (100.00%)
  22 │ //
     ╰────
 
-  × Expected `;` but found `++`
+  × Expected `,` but found `++`
     ╭─[language/statements/for/S12.6.3_A8.1_T2.js:20:1]
  20 │ //CHECK#1
  21 │ for(var index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
     ·                        ─┬
-    ·                         ╰── `;` expected
+    ·                         ╰── `,` expected
  22 │ //
     ╰────
 
@@ -30875,12 +30878,12 @@ Negative Passed: 3915/3915 (100.00%)
  22 │ //
     ╰────
 
-  × Expected `;` but found `++`
+  × Expected `,` but found `++`
     ╭─[language/statements/for/S12.6.3_A8_T2.js:20:1]
  20 │ //CHECK#1
  21 │ for(index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
     ·                    ─┬
-    ·                     ╰── `;` expected
+    ·                     ╰── `,` expected
  22 │ //
     ╰────
 
