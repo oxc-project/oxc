@@ -241,17 +241,12 @@ impl<'a> Parser<'a> {
         {
             let start_span = self.start_span();
             let init_declaration = self.without_context(Context::In, |p| {
-                p.parse_variable_declaration(
-                    start_span,
-                    VariableDeclarationContext::new(VariableDeclarationParent::For),
-                    Modifiers::empty(),
-                )
+                let decl_ctx = VariableDeclarationContext::new(VariableDeclarationParent::For);
+                p.parse_variable_declaration(start_span, decl_ctx, Modifiers::empty())
             })?;
 
-            let kind = self.cur_kind();
-
             // for (.. a in) for (.. a of)
-            if matches!(kind, Kind::In | Kind::Of) {
+            if matches!(self.cur_kind(), Kind::In | Kind::Of) {
                 let init = ForStatementLeft::VariableDeclaration(init_declaration);
                 return self.parse_for_in_or_of_loop(span, r#await, init);
             }
@@ -263,24 +258,25 @@ impl<'a> Parser<'a> {
         let is_let_of = self.at(Kind::Let) && self.peek_at(Kind::Of);
         let is_async_of =
             self.at(Kind::Async) && !self.cur_token().escaped && self.peek_at(Kind::Of);
-        let expression_span = self.start_span();
+        let expr_span = self.start_span();
+
+        if self.at(Kind::RParen) {
+            return self.parse_for_loop(span, None, r#await);
+        }
 
         let init_expression = self.without_context(Context::In, Parser::parse_expression)?;
 
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
             let target = AssignmentTarget::cover(init_expression, self)
-                .map_err(|_| diagnostics::UnexpectedToken(self.end_span(expression_span)))?;
+                .map_err(|_| diagnostics::UnexpectedToken(self.end_span(expr_span)))?;
             let for_stmt_left = ForStatementLeft::AssignmentTarget(target);
-
             if !r#await && is_async_of {
-                self.error(diagnostics::ForLoopAsyncOf(self.end_span(expression_span)));
+                self.error(diagnostics::ForLoopAsyncOf(self.end_span(expr_span)));
             }
-
             if is_let_of {
-                self.error(diagnostics::UnexpectedKeyword("let", self.end_span(expression_span)));
+                self.error(diagnostics::UnexpectedKeyword("let", self.end_span(expr_span)));
             }
-
             return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
         }
 
@@ -294,23 +290,22 @@ impl<'a> Parser<'a> {
         r#await: bool,
     ) -> Result<Statement<'a>> {
         self.expect(Kind::Semicolon)?;
-        let test = (!self.at(Kind::Semicolon))
-            .then(|| self.parse_expression())
-            .transpose()
-            .map_err(|_| {
-                let range = self.cur_token().span();
-                diagnostics::ExpectToken(Kind::Semicolon.to_str(), self.cur_kind().to_str(), range)
-            })?;
+        let test = if !self.at(Kind::Semicolon) && !self.at(Kind::RParen) {
+            Some(self.with_context(Context::In, Parser::parse_expression)?)
+        } else {
+            None
+        };
         self.expect(Kind::Semicolon)?;
-        let update = (!self.at(Kind::RParen)).then(|| self.parse_expression()).transpose()?;
+        let update = if self.at(Kind::RParen) {
+            None
+        } else {
+            Some(self.with_context(Context::In, Parser::parse_expression)?)
+        };
         self.expect(Kind::RParen)?;
-
         if r#await {
             self.error(diagnostics::ForAwait(self.end_span(span)));
         }
-
         let body = self.parse_statement_list_item(StatementContext::For)?;
-
         Ok(self.ast.for_statement(self.end_span(span), init, test, update, body))
     }
 
