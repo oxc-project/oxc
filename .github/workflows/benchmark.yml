@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - './github/workflow/benchmark.yml'
       - 'crates/oxc_parser/**'
       - 'crates/oxc_ast/**'
       - 'crates/oxc_semantic/**'
@@ -34,10 +35,16 @@ jobs:
       - name: Install toolchain
         run: rustup show
 
-      - name: Cache
+      - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
           shared-key: benchmark
+
+      - name: Cache Benchmark Files # This doesn't speed up things, it is just for saving some bandwidth
+        uses: actions/cache@v3
+        with:
+          path: './target/*.js'
+          key: benchmark-files-${{ hashFiles('./tasks/benchmark/src') }}
 
       - name: Compile
         run: cargo build --release -p oxc_benchmark
