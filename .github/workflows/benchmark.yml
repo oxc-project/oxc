@@ -58,11 +58,10 @@ jobs:
         run: cargo build --release -p oxc_benchmark
 
       - name: Cache Benchmark Binary
-        uses: actions/cache@v3
+        uses: actions/cache/save@v3
         with:
           key: benchmark-binary-${{ matrix.os }}
           path: 'target/release/oxc_*'
-          lookup-only: true
 
   benchmark:
     if: ${{ github.ref_name	!= 'main' }}
@@ -97,20 +96,19 @@ jobs:
       - name: Run Bench on PR Branch
         run: cargo benchmark --save-baseline pr
 
-      - name: Checkout Main Branch
-        uses: actions/checkout@v3
+      - name: Read Benchmark Binary
+        uses: actions/cache/restore@v3
         with:
-          clean: false
-          ref: main
+          key: benchmark-binary-${{ matrix.os }}
+          path: 'target/release/oxc_*'
 
-      - name: Install toolchain
-        run: rustup show
+      - name: Run bench using binary from main branch
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: ./target/release/oxc_benchmark --save-baseline main
 
-      - name: Compile
-        run: cargo build --release -p oxc_benchmark
-
-      - name: Run Bench on Main Branch
-        run: cargo benchmark --save-baseline main
+      - name: Run bench using binary from main branch
+        if: ${{ matrix.os == 'windows-latest' }}
+        run: ./target/release/oxc_benchmark.exe --save-baseline main
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v3
