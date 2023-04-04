@@ -1,0 +1,12 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_eval
+---
+
+  × eslint(no-eval): Disallow the use of `eval()`
+   ╭─[no_eval.tsx:1:1]
+ 1 │ eval(foo)
+   · ──┬─
+   ·   ╰── eval can be harmful.
+   ╰────
+

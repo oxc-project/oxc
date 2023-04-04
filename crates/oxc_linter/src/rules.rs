@@ -30,5 +30,6 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::bad_bitwise_operator,
     use_isnan,
     valid_typeof,
-    typescript::isolated_declaration
+    typescript::isolated_declaration,
+    no_eval,
 }
