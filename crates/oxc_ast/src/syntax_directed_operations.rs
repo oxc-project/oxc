@@ -5,158 +5,150 @@ use crate::{ast::*, Span};
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
 pub trait BoundName {
-    fn bound_name(&self) -> Option<&BindingIdentifier>;
+    fn bound_name<F: FnMut(&BindingIdentifier)>(&self, f: &mut F);
 }
 
 pub trait BoundNames {
-    fn bound_names(&self) -> Vec<&BindingIdentifier>;
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F);
 }
 
 impl<'a> BoundNames for BindingPattern<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
         match &self.kind {
-            BindingPatternKind::BindingIdentifier(ident) => ident.bound_names(),
-            BindingPatternKind::ArrayPattern(array) => array.bound_names(),
-            BindingPatternKind::ObjectPattern(object) => object.bound_names(),
-            BindingPatternKind::AssignmentPattern(assignment) => assignment.bound_names(),
-            BindingPatternKind::RestElement(rest) => rest.argument.bound_names(),
+            BindingPatternKind::BindingIdentifier(ident) => ident.bound_names(f),
+            BindingPatternKind::ArrayPattern(array) => array.bound_names(f),
+            BindingPatternKind::ObjectPattern(object) => object.bound_names(f),
+            BindingPatternKind::AssignmentPattern(assignment) => assignment.bound_names(f),
+            BindingPatternKind::RestElement(rest) => rest.argument.bound_names(f),
         }
     }
 }
 
-impl<'a> BoundNames for Option<BindingPattern<'a>> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.as_ref().map_or(vec![], BoundNames::bound_names)
-    }
-}
-
-impl BoundNames for Option<BindingIdentifier> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.as_ref().map_or(vec![], |ident| vec![ident])
-    }
-}
-
 impl BoundNames for BindingIdentifier {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        vec![self]
+    fn bound_names<F: FnMut(&Self)>(&self, f: &mut F) {
+        f(self);
     }
 }
 
 impl<'a> BoundNames for ArrayPattern<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.elements.iter().flat_map(BoundNames::bound_names).collect()
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        for elem in self.elements.iter().flatten() {
+            elem.bound_names(f);
+        }
     }
 }
 
 impl<'a> BoundNames for ObjectPattern<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.properties
-            .iter()
-            .flat_map(|p| match p {
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        for p in &self.properties {
+            match p {
                 ObjectPatternProperty::Property(property) => {
                     if let PropertyValue::Pattern(pattern) = &property.value {
-                        pattern.bound_names()
-                    } else {
-                        vec![]
+                        pattern.bound_names(f);
                     }
                 }
-                ObjectPatternProperty::RestElement(rest) => rest.argument.bound_names(),
-            })
-            .collect()
+                ObjectPatternProperty::RestElement(rest) => rest.argument.bound_names(f),
+            }
+        }
     }
 }
 
 impl<'a> BoundNames for AssignmentPattern<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.left.bound_names()
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        self.left.bound_names(f);
     }
 }
 
 impl<'a> BoundNames for RestElement<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.argument.bound_names()
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        self.argument.bound_names(f);
     }
 }
 
 impl<'a> BoundNames for FormalParameters<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.items.iter().flat_map(BoundNames::bound_names).collect()
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        for item in &self.items {
+            item.bound_names(f);
+        }
     }
 }
 
 impl<'a> BoundNames for Declaration<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
         match self {
-            Declaration::VariableDeclaration(decl) => decl.bound_names(),
-            Declaration::FunctionDeclaration(func) => func.bound_names(),
-            Declaration::ClassDeclaration(decl) => decl.bound_names(),
-            _ => vec![],
+            Declaration::VariableDeclaration(decl) => decl.bound_names(f),
+            Declaration::FunctionDeclaration(func) => func.bound_names(f),
+            Declaration::ClassDeclaration(decl) => decl.bound_names(f),
+            _ => {}
         }
     }
 }
 
 impl<'a> BoundNames for VariableDeclaration<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.declarations.iter().flat_map(|declarator| declarator.id.bound_names()).collect()
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        for declarator in &self.declarations {
+            declarator.id.bound_names(f);
+        }
     }
 }
 
 impl<'a> BoundName for Function<'a> {
-    fn bound_name(&self) -> Option<&BindingIdentifier> {
-        self.id.as_ref()
+    fn bound_name<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        if let Some(ident) = &self.id {
+            f(ident);
+        }
     }
 }
 
 impl<'a> BoundNames for Function<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.bound_name().map_or(vec![], |name| vec![name])
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        self.bound_name(f);
     }
 }
 
 impl<'a> BoundName for Class<'a> {
-    fn bound_name(&self) -> Option<&BindingIdentifier> {
-        self.id.as_ref()
+    fn bound_name<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        if let Some(ident) = &self.id {
+            f(ident);
+        }
     }
 }
 
 impl<'a> BoundNames for Class<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.bound_name().map_or(vec![], |name| vec![name])
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        self.bound_name(f);
     }
 }
 
 impl<'a> BoundNames for FormalParameter<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.pattern.bound_names()
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        self.pattern.bound_names(f);
     }
 }
 
 impl<'a> BoundNames for ModuleDeclaration<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        match &self.kind {
-            ModuleDeclarationKind::ImportDeclaration(decl) => decl.bound_names(),
-            // ModuleDeclarationKind::ExportNamedDeclaration(decl) => decl.bound_names(),
-            _ => vec![],
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        if let ModuleDeclarationKind::ImportDeclaration(decl) = &self.kind {
+            decl.bound_names(f);
         }
     }
 }
 
 impl<'a> BoundNames for ImportDeclaration<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.specifiers
-            .iter()
-            .map(|specifier| match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(specifier) => &specifier.local,
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => &specifier.local,
-            })
-            .collect()
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        self.specifiers.iter().for_each(|specifier| match specifier {
+            ImportDeclarationSpecifier::ImportSpecifier(specifier) => f(&specifier.local),
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => f(&specifier.local),
+            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => f(&specifier.local),
+        });
     }
 }
 
 impl<'a> BoundNames for ExportNamedDeclaration<'a> {
-    fn bound_names(&self) -> Vec<&BindingIdentifier> {
-        self.declaration.as_ref().map_or(vec![], BoundNames::bound_names)
+    fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
+        if let Some(decl) = &self.declaration {
+            decl.bound_names(f);
+        }
     }
 }
 
