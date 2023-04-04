@@ -2,7 +2,9 @@ name: CI
 
 on:
   workflow_dispatch:
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
       - 'crates/**'
       - 'tasks/**'
@@ -10,9 +12,7 @@ on:
       - 'Cargo.lock'
       - 'rust-toolchain.toml'
       - '!**/*.md'
-  push:
-    branches:
-      - main
+  pull_request:
     paths:
       - 'crates/**'
       - 'tasks/**'

@@ -2,6 +2,18 @@ name: Benchmark
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+      - benchmark-cache
+    # paths:
+      # - './github/workflow/benchmark.yml'
+      # - 'crates/oxc_parser/**'
+      # - 'crates/oxc_ast/**'
+      # - 'crates/oxc_semantic/**'
+      # - 'tasks/benchmark/**'
+      # - 'rust-toolchain.toml'
+      # - '!**/*.md'
   pull_request:
     paths:
       - './github/workflow/benchmark.yml'
@@ -19,11 +31,44 @@ concurrency:
 env:
   CARGO_TERM_QUIET: true
 
+# NOTE: `macos-latest` is too unstable to be useful for benchmark, the variance is always huge.
 jobs:
-  benchmark:
+  benchmark-cache:
+    # if: ${{ github.ref_name	== 'main' }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest] # `macos-latest` is too unstable to be useful for benchmark, the variance is always huge.
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    name: Build and cache on ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Install toolchain
+        run: rustup show
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: benchmark
+
+      - name: Compile Benchmark
+        run: cargo build --release -p oxc_benchmark
+
+      - name: Cache Benchmark Binary
+        uses: actions/cache@v3
+        with:
+          key: benchmark-binary-${{ matrix.os }}
+          path: 'target/release/oxc_*'
+          lookup-only: true
+
+  benchmark:
+    if: ${{ github.ref_name	!= 'main' }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     name: Run benchmark on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
