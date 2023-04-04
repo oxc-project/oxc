@@ -1,0 +1,50 @@
+name: Rustup
+
+description: Install Rust with minimal profile and additional components
+
+inputs:
+  # See https://rust-lang.github.io/rustup/concepts/components.html
+  clippy:
+    default: false
+    required: false
+    type: boolean
+  fmt:
+    default: false
+    required: false
+    type: boolean
+  docs:
+    default: false
+    required: false
+    type: boolean
+  minimal:
+    default: true
+    required: false
+    type: boolean
+
+runs:
+  using: composite
+  steps:
+    - name: Install Rust Toolchain
+      shell: bash
+      run: |
+        # Inherit the channel by removing `profile` line
+        sed '/profile/d' rust-toolchain.toml | tee rust-toolchain
+        mv rust-toolchain rust-toolchain.toml
+
+        if [ ${{ inputs.minimal }} ]; then
+          rustup set profile minimal
+        fi
+
+        if [ ${{ inputs.clippy }} ]; then
+          rustup component add clippy
+        fi
+
+        if [ ${{ inputs.fmt }} ]; then
+          rustup component add rustfmt
+        fi
+
+        if [ ${{ inputs.docs }} ]; then
+          rustup component add rust-docs
+        fi
+
+        rustup show

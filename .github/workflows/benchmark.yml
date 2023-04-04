@@ -32,8 +32,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Install toolchain
-        run: rustup show
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
@@ -58,8 +58,8 @@ jobs:
           clean: false
           ref: main
 
-      - name: Install toolchain
-        run: rustup show
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
 
       - name: Compile
         run: cargo build --release -p oxc_benchmark
@@ -85,65 +85,62 @@ jobs:
       - benchmark
 
     steps:
-    - name: Install Rust toolchain
-      run: rustup show
+      - name: Install critcmp
+        uses: taiki-e/install-action@v2
+        with:
+          tool: critcmp
 
-    - name: Install critcmp
-      uses: taiki-e/install-action@v2
-      with:
-        tool: critcmp
+      - name: Linux | Download PR benchmark results
+        uses: actions/download-artifact@v3
+        with:
+          name: benchmark-results-ubuntu-latest
+          path: ./target/criterion
 
-    - name: Linux | Download PR benchmark results
-      uses: actions/download-artifact@v3
-      with:
-        name: benchmark-results-ubuntu-latest
-        path: ./target/criterion
+      - name: Linux | Compare benchmark results
+        shell: bash
+        run: |
+          echo "## Benchmark Results" >> summary.md
+          echo "### Linux" >> summary.md
+          echo "\`\`\`" >> summary.md
+          critcmp main pr >> summary.md
+          echo "\`\`\`" >> summary.md
+          echo "" >> summary.md
 
-    - name: Linux | Compare benchmark results
-      shell: bash
-      run: |
-        echo "## Benchmark Results" >> summary.md
-        echo "### Linux" >> summary.md
-        echo "\`\`\`" >> summary.md
-        critcmp main pr >> summary.md
-        echo "\`\`\`" >> summary.md
-        echo "" >> summary.md
+      - name: Linux | Cleanup benchmark results
+        run: rm -rf ./target/criterion
 
-    - name: Linux | Cleanup benchmark results
-      run: rm -rf ./target/criterion
+      - name: Windows | Download PR benchmark results
+        uses: actions/download-artifact@v3
+        with:
+          name: benchmark-results-windows-latest
+          path: ./target/criterion
 
-    - name: Windows | Download PR benchmark results
-      uses: actions/download-artifact@v3
-      with:
-        name: benchmark-results-windows-latest
-        path: ./target/criterion
+      - name: Windows | Compare benchmark results
+        shell: bash
+        run: |
+          echo "### Windows" >> summary.md
+          echo "\`\`\`" >> summary.md
+          critcmp main pr >> summary.md
+          echo "\`\`\`" >> summary.md
+          echo "" >> summary.md
+          cat summary.md > $GITHUB_STEP_SUMMARY
 
-    - name: Windows | Compare benchmark results
-      shell: bash
-      run: |
-        echo "### Windows" >> summary.md
-        echo "\`\`\`" >> summary.md
-        critcmp main pr >> summary.md
-        echo "\`\`\`" >> summary.md
-        echo "" >> summary.md
-        cat summary.md > $GITHUB_STEP_SUMMARY
+      - name: Find Comment
+        # Check if the event is not triggered by a fork
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: Benchmark Results
 
-    - name: Find Comment
-      # Check if the event is not triggered by a fork
-      if: github.event.pull_request.head.repo.full_name == github.repository
-      uses: peter-evans/find-comment@v2
-      id: fc
-      with:
-        issue-number: ${{ github.event.pull_request.number }}
-        comment-author: 'github-actions[bot]'
-        body-includes: Benchmark Results
-
-    - name: Create or update comment
-      # Check if the event is not triggered by a fork
-      if: github.event.pull_request.head.repo.full_name == github.repository
-      uses: peter-evans/create-or-update-comment@v2
-      with:
-        issue-number: ${{ github.event.pull_request.number }}
-        edit-mode: replace
-        comment-id: ${{ steps.fc.outputs.comment-id }}
-        body-file: summary.md
+      - name: Create or update comment
+        # Check if the event is not triggered by a fork
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          edit-mode: replace
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          body-file: summary.md

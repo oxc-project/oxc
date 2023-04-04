@@ -37,8 +37,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Toolchain
-        run: rustup show
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          minimal: false
+          fmt: true
 
       - name: Run rustfmt
         run: cargo fmt --all -- --check
@@ -50,8 +53,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Toolchain
-        run: rustup show
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          clippy: true
 
       - name: Cache
         uses: Swatinem/rust-cache@v2
@@ -80,8 +85,8 @@ jobs:
       - name: Checkout PR Branch
         uses: actions/checkout@v3
 
-      - name: Install Toolchain
-        run: rustup show
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
 
       - name: Install cargo-udeps
         uses: taiki-e/install-action@v2
@@ -105,8 +110,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Toolchain
-        run: rustup show
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2

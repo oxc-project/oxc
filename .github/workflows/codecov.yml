@@ -21,20 +21,16 @@ jobs:
         with:
           submodules: true # Pull submodules for `cargo coverage`
 
-      - name: Install toolchain
-        run: rustup show
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
 
       - name: Install cargo-tarpaulin
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-tarpaulin
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: tarpaulin
-
       - name: Run
-        run: cargo tarpaulin --skip-clean --engine llvm --out Xml
+        run: cargo tarpaulin --engine llvm --out Xml
 
       - name: Upload cobertura.xml
         uses: actions/upload-artifact@v3
