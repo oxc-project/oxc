@@ -1,8 +1,10 @@
 use oxc_allocator::Allocator;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::{
-    Argument, IdentifierName, IdentifierReference, JSXElementName, JSXFragment, JSXIdentifier,
-    JSXMemberExpressionObject, StringLiteral,
+    Argument, BindingIdentifier, IdentifierName, IdentifierReference, ImportDeclarationSpecifier,
+    ImportSpecifier, JSXChild, JSXElementName, JSXExpression, JSXFragment, JSXIdentifier,
+    JSXMemberExpressionObject, JSXText, ModuleDeclaration, ModuleDeclarationKind, ModuleExportName,
+    Program, Statement, StringLiteral,
 };
 use oxc_ast::Atom;
 use oxc_ast::Span;
@@ -12,23 +14,36 @@ use oxc_ast::{
     AstBuilder,
 };
 
-pub struct Automatic<'a> {
+pub struct AutomaticOptions {
     pub import_source: Atom,
     pub development: bool,
+}
+
+impl Default for AutomaticOptions {
+    fn default() -> Self {
+        Self { import_source: "react".into(), development: false }
+    }
+}
+
+#[derive(Default)]
+struct AutomaticState {
+    import_jsx: Option<IdentifierReference>,
+    import_jsxs: Option<IdentifierReference>,
+}
+
+pub struct Automatic<'a> {
     ast: AstBuilder<'a>,
+    options: AutomaticOptions,
+    state: AutomaticState,
 }
 
 impl<'a> Automatic<'a> {
-    pub fn new(
-        allocator: &'a Allocator,
-        import_source: Option<Atom>,
-        development: Option<bool>,
-    ) -> Self {
-        Self {
-            import_source: import_source.unwrap_or_else(|| Atom::from("React")),
-            development: development.unwrap_or_default(),
-            ast: AstBuilder::new(allocator),
-        }
+    pub fn new(allocator: &'a Allocator, options: AutomaticOptions) -> Self {
+        Self { ast: AstBuilder::new(allocator), options, state: Default::default() }
+    }
+
+    pub fn build<'b>(mut self, program: &'b mut Program<'a>) {
+        self.visit_program(program);
     }
 }
 
@@ -40,21 +55,64 @@ impl<'a, 'b> VisitMut<'a, 'b> for Automatic<'a> {
             _ => self.visit_expression_match(expr),
         }
     }
+
+    fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
+        stmts.iter_mut().for_each(|stmt| self.visit_statement(stmt));
+
+        let mut specifiers = self.ast.new_vec();
+        if let Some(import_jsx) = self.state.import_jsx.take() {
+            specifiers.push(ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier {
+                span: Span::default(),
+                imported: ModuleExportName::Identifier(IdentifierName {
+                    span: Span::default(),
+                    name: Atom::from("jsx"),
+                }),
+                local: Bridge::from_identifier_reference(import_jsx),
+            }))
+        }
+        if let Some(import_jsxs) = self.state.import_jsxs.take() {
+            specifiers.push(ImportDeclarationSpecifier::ImportSpecifier(ImportSpecifier {
+                span: Span::default(),
+                imported: ModuleExportName::Identifier(IdentifierName {
+                    span: Span::default(),
+                    name: Atom::from("jsxs"),
+                }),
+                local: Bridge::from_identifier_reference(import_jsxs),
+            }))
+        }
+
+        if !specifiers.is_empty() {
+            let source = format!("{}/jsx-runtime", self.options.import_source);
+            let source = StringLiteral { span: Span::default(), value: source.into() };
+            let import_declaration = self.ast.import_declaration(specifiers, source, None, None);
+
+            stmts.insert(
+                0,
+                Statement::ModuleDeclaration(self.ast.alloc(ModuleDeclaration {
+                    span: Span::default(),
+                    kind: ModuleDeclarationKind::ImportDeclaration(import_declaration),
+                })),
+            )
+        }
+    }
 }
 
 impl<'a, 'b> Automatic<'a> {
     fn fold_jsx_element(&mut self, jsx_element: &'b Box<JSXElement<'a>>) -> Expression<'a> {
-        let name = self.jsx_name(&jsx_element.opening_element.name);
+        let name = self.fold_jsx_element_name(&jsx_element.opening_element.name);
 
-        let mut arguments = Vec::new_in(self.ast.allocator);
+        let mut arguments = self.ast.new_vec();
         arguments.push(Argument::Expression(name));
+
+        let callee = if Utils::count_children(&jsx_element.children) > 1 {
+            self.import_jsxs()
+        } else {
+            self.import_jsx()
+        };
 
         self.ast.call_expression(
             jsx_element.span,
-            self.ast.identifier_expression(IdentifierReference {
-                span: Span::default(),
-                name: Atom::from("jsx"),
-            }),
+            self.ast.identifier_expression(callee),
             arguments,
             false,
             None,
@@ -65,7 +123,7 @@ impl<'a, 'b> Automatic<'a> {
         todo!()
     }
 
-    fn jsx_name(&self, name: &JSXElementName<'a>) -> Expression<'a> {
+    fn fold_jsx_element_name(&self, name: &JSXElementName<'a>) -> Expression<'a> {
         match name {
             JSXElementName::Identifier(JSXIdentifier { span, name }) => {
                 if *name == "this" {
@@ -97,7 +155,7 @@ impl<'a, 'b> Automatic<'a> {
                 self.ast.static_member_expression(
                     member_expression.span,
                     self.fold_jsx_member_expression_object(&member_expression.object),
-                    self.fold_jsx_identifier(&member_expression.property),
+                    Bridge::from_jsx_identifier(&member_expression.property),
                     false,
                 )
             }
@@ -121,15 +179,70 @@ impl<'a, 'b> Automatic<'a> {
                 self.ast.static_member_expression(
                     member_expression.span,
                     self.fold_jsx_member_expression_object(&member_expression.object),
-                    self.fold_jsx_identifier(&member_expression.property),
+                    Bridge::from_jsx_identifier(&member_expression.property),
                     false,
                 )
             }
         }
     }
+}
 
-    fn fold_jsx_identifier(&self, jsx_identifier: &JSXIdentifier) -> IdentifierName {
+impl<'a, 'b> Automatic<'a> {
+    fn import_jsx(&mut self) -> IdentifierReference {
+        self.state
+            .import_jsx
+            .get_or_insert_with(|| IdentifierReference {
+                span: Span::default(),
+                name: Atom::from("_jsx"),
+            })
+            .clone()
+    }
+
+    fn import_jsxs(&mut self) -> IdentifierReference {
+        self.state
+            .import_jsxs
+            .get_or_insert_with(|| IdentifierReference {
+                span: Span::default(),
+                name: Atom::from("_jsxs"),
+            })
+            .clone()
+    }
+}
+
+struct Bridge;
+
+impl Bridge {
+    fn from_jsx_identifier(jsx_identifier: &JSXIdentifier) -> IdentifierName {
         IdentifierName { span: jsx_identifier.span, name: jsx_identifier.name.clone() }
+    }
+
+    fn from_identifier_reference(identifier_reference: IdentifierReference) -> BindingIdentifier {
+        BindingIdentifier { span: identifier_reference.span, name: identifier_reference.name }
+    }
+}
+
+struct Utils;
+
+impl Utils {
+    fn count_children(jsx_child: &[JSXChild]) -> usize {
+        jsx_child
+            .iter()
+            .filter(|child| match child {
+                JSXChild::Text(jsx_text) => !Self::jsx_text_to_str(jsx_text).is_empty(),
+                JSXChild::Element(..) => true,
+                JSXChild::Fragment(..) => true,
+                JSXChild::ExpressionContainer(e) => match e.expression {
+                    JSXExpression::Expression(..) => true,
+                    JSXExpression::EmptyExpression(..) => false,
+                },
+                JSXChild::Spread(..) => true,
+            })
+            .count()
+    }
+
+    fn jsx_text_to_str(_jsx_text: &JSXText) -> Atom {
+        // TODO:
+        "".into()
     }
 }
 
@@ -141,14 +254,14 @@ fn run() {
     use oxc_printer::{Printer, PrinterOptions};
 
     let allocator = Allocator::default();
-    let source_text = "const a = <div />";
+    let source_text = "const a = <main><aside/><section></section></main>";
     let mut source_type = SourceType::default();
     let source_type = source_type.with_jsx(true);
     let ret = Parser::new(&allocator, source_text, *source_type).parse();
     let mut program = allocator.alloc(ret.program);
 
-    let mut automatic = Automatic::new(&allocator, None, None);
-    automatic.visit_program(&mut program);
+    let automatic = Automatic::new(&allocator, Default::default());
+    automatic.build(&mut program);
 
     let printer = Printer::new(
         source_text.len(),
