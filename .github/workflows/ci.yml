@@ -40,7 +40,6 @@ jobs:
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
-          minimal: false
           fmt: true
 
       - name: Run rustfmt
