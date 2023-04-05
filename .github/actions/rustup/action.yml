@@ -16,35 +16,42 @@ inputs:
     default: false
     required: false
     type: boolean
-  minimal:
-    default: true
-    required: false
-    type: boolean
 
 runs:
   using: composite
   steps:
-    - name: Install Rust Toolchain
+    - name: Remove `profile` line on non-MacOS
       shell: bash
+      if: runner.os == 'macOS'
       run: |
         # Inherit the channel by removing `profile` line
-        sed '/profile/d' rust-toolchain.toml | tee rust-toolchain
-        mv rust-toolchain rust-toolchain.toml
+        sed -i '' '/profile/d' rust-toolchain.toml
 
-        if [ ${{ inputs.minimal }} ]; then
-          rustup set profile minimal
-        fi
+    - name: Remove `profile` line on MacOS
+      shell: bash
+      if: runner.os != 'macOS'
+      run: |
+        sed -i '/profile/d' rust-toolchain.toml
 
-        if [ ${{ inputs.clippy }} ]; then
-          rustup component add clippy
-        fi
+    - name: Set minimal
+      shell: bash
+      run: rustup set profile minimal
 
-        if [ ${{ inputs.fmt }} ]; then
-          rustup component add rustfmt
-        fi
+    - name: Add Clippy
+      shell: bash
+      if: ${{ inputs.clippy == 'true' }}
+      run: rustup component add clippy
 
-        if [ ${{ inputs.docs }} ]; then
-          rustup component add rust-docs
-        fi
+    - name: Add Rustfmt
+      shell: bash
+      if: ${{ inputs.fmt == 'true' }}
+      run: rustup component add rustfmt
 
-        rustup show
+    - name: Add docs
+      shell: bash
+      if: ${{ inputs.docs == 'true' }}
+      run: rustup component add rust-docs
+
+    - name: Install
+      shell: bash
+      run: rustup show
