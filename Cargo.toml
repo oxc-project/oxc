@@ -16,11 +16,11 @@ repository = "https://github.com/Boshen/oxc"
 
 [workspace.dependencies]
 oxc_allocator = { version = "0.0.1", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.0.3", path = "crates/oxc_ast" }
+oxc_ast = { version = "0.0.4", path = "crates/oxc_ast" }
 oxc_diagnostics = { version = "0.0.3", path = "crates/oxc_diagnostics" }
-oxc_parser = { version = "0.0.3", path = "crates/oxc_parser" }
+oxc_parser = { version = "0.0.4", path = "crates/oxc_parser" }
 oxc_printer = { version = "0.0.3", path = "crates/oxc_printer" }
-oxc_semantic = { version = "0.0.2", path = "crates/oxc_semantic" }
+oxc_semantic = { version = "0.0.3", path = "crates/oxc_semantic" }
 
 oxc_linter = { version = "0.0.0", path = "crates/oxc_linter" }
 oxc_macros = { version = "0.0.0", path = "crates/oxc_macros" }
