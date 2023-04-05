@@ -3925,7 +3925,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
    ╭─[es2015/uncategorised/286/input.js:1:1]
  1 │ (...[ 5 ]) => {}
-   ·       ─
+   ·  ───
    ╰────
 
   × Cannot assign to 'eval' in strict mode
@@ -6920,11 +6920,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ───
    ╰────
 
-  × Expected `=>` but found `+`
+  × Unexpected token
    ╭─[esprima/es2015-arrow-function/rest-without-arrow/input.js:1:1]
  1 │ (...a) + 1
-   ·        ┬
-   ·        ╰── `=>` expected
+   ·  ───
    ╰────
 
   × Cannot assign to 'eval' in strict mode

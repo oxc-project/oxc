@@ -359,8 +359,14 @@ impl<'a> Parser<'a> {
                 {
                     IsParenthesizedArrowFunction::True
                 }
-                // Rest parameter '(...a' is certainly not a parenthesized expression
-                Kind::Dot3 => IsParenthesizedArrowFunction::True,
+                // Rest parameter
+                // '(...ident' is not a parenthesized expression
+                // '(...null' is a parenthesized expression
+                Kind::Dot3 => match self.nth_kind(offset + 1) {
+                    Kind::Ident => IsParenthesizedArrowFunction::True,
+                    kind if kind.is_literal() => IsParenthesizedArrowFunction::False,
+                    _ => IsParenthesizedArrowFunction::Maybe,
+                },
                 // '([ ...', '({ ... } can either be a parenthesized object or array expression or a destructing parameter
                 Kind::LBrack | Kind::LCurly => IsParenthesizedArrowFunction::Maybe,
                 _ if self.nth_kind(offset + 1).is_binding_identifier()
