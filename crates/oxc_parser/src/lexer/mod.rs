@@ -1128,10 +1128,17 @@ impl<'a> Lexer<'a> {
     /// `JSXFragment`
     /// { `JSXChildExpressionopt` }
     fn read_jsx_child(&mut self) -> Kind {
-        match self.current.chars.next() {
-            Some('<') => Kind::LAngle,
-            Some('{') => Kind::LCurly,
-            Some(c) => {
+        match self.peek() {
+            '<' => {
+                self.current.chars.next();
+                Kind::LAngle
+            }
+            '{' => {
+                self.current.chars.next();
+                Kind::LCurly
+            }
+            EOF => Kind::Eof,
+            c => {
                 let mut builder = AutoCow::new(self);
                 builder.push_matching(c);
                 loop {
@@ -1149,7 +1156,6 @@ impl<'a> Lexer<'a> {
                 self.current.token.value = self.string_to_token_value(builder.finish(self));
                 Kind::JSXText
             }
-            None => Kind::Eof,
         }
     }
 
