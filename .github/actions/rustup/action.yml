@@ -20,18 +20,15 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Remove `profile` line on non-MacOS
-      shell: bash
-      if: runner.os == 'macOS'
-      run: |
-        # Inherit the channel by removing `profile` line
-        sed -i '' '/profile/d' rust-toolchain.toml
-
     - name: Remove `profile` line on MacOS
       shell: bash
+      if: runner.os == 'macOS'
+      run: sed -i '' '/profile/d' rust-toolchain.toml
+
+    - name: Remove `profile` line on non-MacOS
+      shell: bash
       if: runner.os != 'macOS'
-      run: |
-        sed -i '/profile/d' rust-toolchain.toml
+      run: sed -i '/profile/d' rust-toolchain.toml
 
     - name: Set minimal
       shell: bash
