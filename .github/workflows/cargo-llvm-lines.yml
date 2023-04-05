@@ -20,8 +20,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install toolchain
-        run: rustup show
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
 
       - name: Install cargo-llvm-lines
         uses: taiki-e/install-action@v2
