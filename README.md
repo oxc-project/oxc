@@ -66,10 +66,7 @@ As of now, Oxc has a fully working parser and a prototype for the linter.
 The current objectives are:
 
 * A MVP (Most Viable Product) for the linter.
-* Improve the parser for real usage. Areas include:
-  * Performance
-  * API
-  * Pass more conformance tests
+* A prototype for the minifier.
 
 ## Linter
 
@@ -83,7 +80,7 @@ Checked 3479 files in 335ms using 12 cores.
 Found 17 errors.
 ```
 
-And also in a large monorepo:
+And also in a huge monorepo:
 
 ```
 Checked 73660 files in 7415ms using 12 cores.
