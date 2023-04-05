@@ -351,13 +351,15 @@ impl<'a> Parser<'a> {
             Kind::LParen => match self.nth_kind(offset + 1) {
                 // '()' is an arrow expression if followed by an '=>', a type annotation or body.
                 // Otherwise, a parenthesized expression with a missing inner expression
-                Kind::RParen
-                    if matches!(
-                        self.nth_kind(offset + 2),
-                        Kind::Arrow | Kind::Colon | Kind::LCurly
-                    ) =>
-                {
-                    IsParenthesizedArrowFunction::True
+                Kind::RParen => {
+                    let kind = self.nth_kind(offset + 2);
+                    if self.ts_enabled() && kind == Kind::Colon {
+                        IsParenthesizedArrowFunction::Maybe
+                    } else if matches!(kind, Kind::Arrow | Kind::LCurly) {
+                        IsParenthesizedArrowFunction::True
+                    } else {
+                        IsParenthesizedArrowFunction::False
+                    }
                 }
                 // Rest parameter
                 // '(...ident' is not a parenthesized expression

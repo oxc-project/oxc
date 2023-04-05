@@ -285,7 +285,7 @@ mod test {
             assert!(!ret.errors.is_empty());
         }
 
-        let pass = ["async(...null)"];
+        let pass = ["async(...null)", "null?async():null", "switch(null){case async():}"];
 
         for source in pass {
             let ret = Parser::new(&allocator, source, source_type).parse();
