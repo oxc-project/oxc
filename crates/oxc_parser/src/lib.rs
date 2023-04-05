@@ -276,13 +276,20 @@ mod test {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
 
-        let tests = [
+        let fail = [
             "1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>",
         ];
 
-        for source in tests {
+        for source in fail {
             let ret = Parser::new(&allocator, source, source_type).parse();
             assert!(!ret.errors.is_empty());
+        }
+
+        let pass = ["async(...null)", "null?async():null", "switch(null){case async():}"];
+
+        for source in pass {
+            let ret = Parser::new(&allocator, source, source_type).parse();
+            assert!(ret.errors.is_empty());
         }
     }
 }

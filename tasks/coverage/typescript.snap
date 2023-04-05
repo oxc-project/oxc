@@ -9214,14 +9214,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │ 
    ╰────
 
-  × Expected `=>` but found `{`
+  × Empty parenthesized expression
    ╭─[parser/ecmascript5/RegressionTests/parser509669.ts:1:1]
  1 │ function foo():any {
  2 │  return ():void {};
-   ·                 ┬
-   ·                 ╰── `=>` expected
+   ·          ▲
  3 │ }
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[parser/ecmascript5/RegressionTests/parser509669.ts:1:1]
+ 1 │ function foo():any {
+ 2 │  return ():void {};
+   ·           ▲
+ 3 │ }
+   ╰────
+  help: Try insert a semicolon here
 
   × Expected `}` but found `EOF`
    ╭─[parser/ecmascript5/RegressionTests/parser512084.ts:1:1]
