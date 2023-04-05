@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{AssignmentOperator, BinaryOperator, Expression, UnaryOperator, BinaryExpression},
+    ast::{AssignmentOperator, BinaryExpression, BinaryOperator, Expression, UnaryOperator},
     AstKind, Span,
 };
 use oxc_diagnostics::{
@@ -56,7 +56,8 @@ declare_oxc_lint!(
     /// input |= '';
     /// ```
     BadBitwiseOperator,
-    correctness
+    restriction // Restricted because there are false positives for enum bitflags in TypeScript,
+                // e.g. in the vscode repo
 );
 
 impl Rule for BadBitwiseOperator {
@@ -70,7 +71,9 @@ impl Rule for BadBitwiseOperator {
                 }
             }
             AstKind::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::BitwiseOR && !is_numeric_expr(&assign_expr.right, true) {
+                if assign_expr.operator == AssignmentOperator::BitwiseOR
+                    && !is_numeric_expr(&assign_expr.right, true)
+                {
                     ctx.diagnostic(BadBitwiseOrOperatorDiagnostic(assign_expr.span));
                 }
             }
@@ -107,7 +110,7 @@ fn is_mistype_option_fallback(node: &AstNode) -> bool {
                 return false;
             }
 
-            if let Expression::Identifier(_) = &binary_expr.left 
+            if let Expression::Identifier(_) = &binary_expr.left
             && !is_numeric_expr(&binary_expr.right, true) {
                 return true
             }
@@ -137,26 +140,26 @@ fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {
         }
         _ => {
             if is_outer_most {
-                expr.is_undefined() 
+                expr.is_undefined()
             } else {
-                !expr.is_string_literal() 
+                !expr.is_string_literal()
             }
         }
     }
 }
 
 fn is_string_concat(binary_expr: &BinaryExpression) -> bool {
-    binary_expr.operator == BinaryOperator::Addition && (
-        contains_string_literal(&binary_expr.left) || contains_string_literal(&binary_expr.right)
-    ) 
+    binary_expr.operator == BinaryOperator::Addition
+        && (contains_string_literal(&binary_expr.left)
+            || contains_string_literal(&binary_expr.right))
 }
 
 fn contains_string_literal(expr: &Expression) -> bool {
     match expr {
         Expression::StringLiteral(_) => true,
         Expression::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::Typeof,
-        
-        Expression::BinaryExpression(binary_expr) => is_string_concat(binary_expr), 
+
+        Expression::BinaryExpression(binary_expr) => is_string_concat(binary_expr),
         Expression::ParenthesizedExpression(paren_expr) => {
             contains_string_literal(&paren_expr.expression)
         }
