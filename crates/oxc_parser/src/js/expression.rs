@@ -349,7 +349,9 @@ impl<'a> Parser<'a> {
             }
             Kind::TemplateHead => {
                 quasis.push(self.parse_template_element(tagged));
-                expressions.push(self.parse_expression()?);
+                // TemplateHead Expression[+In, ?Yield, ?Await]
+                let expr = self.with_context(Context::In, Self::parse_expression)?;
+                expressions.push(expr);
                 self.re_lex_template_substitution_tail();
                 loop {
                     match self.cur_kind() {
@@ -362,7 +364,9 @@ impl<'a> Parser<'a> {
                             quasis.push(self.parse_template_element(tagged));
                         }
                         _ => {
-                            expressions.push(self.parse_expression()?);
+                            // TemplateMiddle Expression[+In, ?Yield, ?Await]
+                            let expr = self.with_context(Context::In, Self::parse_expression)?;
+                            expressions.push(expr);
                             self.re_lex_template_substitution_tail();
                         }
                     }
