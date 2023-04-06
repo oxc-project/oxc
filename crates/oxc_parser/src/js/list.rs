@@ -184,13 +184,12 @@ impl<'a> SeparatedList<'a> for CallArguments<'a> {
 }
 
 pub struct SequenceExpressionList<'a> {
-    pub span: Span,
     pub elements: Vec<'a, Expression<'a>>,
 }
 
 impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
     fn new(p: &Parser<'a>) -> Self {
-        Self { elements: p.ast.new_vec(), span: Span::default() }
+        Self { elements: p.ast.new_vec() }
     }
 
     fn open(&self) -> Kind {
@@ -199,14 +198,6 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
 
     fn close(&self) -> Kind {
         Kind::RParen
-    }
-
-    fn start_sequence(&mut self, p: &mut Parser) {
-        self.span = p.start_span();
-    }
-
-    fn finish_sequence(&mut self, p: &mut Parser) {
-        self.span = p.end_span(self.span);
     }
 
     // read everything as expression and map to it to either

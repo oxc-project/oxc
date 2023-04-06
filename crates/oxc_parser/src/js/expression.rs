@@ -196,18 +196,22 @@ impl<'a> Parser<'a> {
         self.ctx = self.ctx.and_in(has_in);
 
         let mut expressions = list.elements;
+        let paren_span = self.end_span(span);
 
         // ParenthesizedExpression is from acorn --preserveParens
         let expression = if expressions.len() == 1 {
             expressions.remove(0)
         } else {
             if expressions.is_empty() {
-                self.error(diagnostics::EmptyParenthesizedExpression(list.span));
+                self.error(diagnostics::EmptyParenthesizedExpression(paren_span));
             }
-            self.ast.sequence_expression(list.span, expressions)
+            self.ast.sequence_expression(
+                Span::new(paren_span.start + 1, paren_span.end - 1),
+                expressions,
+            )
         };
 
-        Ok(self.ast.parenthesized_expression(self.end_span(span), expression))
+        Ok(self.ast.parenthesized_expression(paren_span, expression))
     }
 
     /// Section 13.2.2 This Expression

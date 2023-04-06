@@ -28,6 +28,7 @@ impl Span {
 
     #[must_use]
     pub fn len(&self) -> u32 {
+        debug_assert!(self.start <= self.end);
         self.end - self.start
     }
 
