@@ -292,6 +292,7 @@ mod test {
             "switch(null){case async():}",
             "for(new null(null in null);;);",
             "for(`${null in null}`;;);",
+            "for(var[l=null in null]in null);",
         ];
 
         for source in pass {

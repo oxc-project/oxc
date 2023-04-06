@@ -3,7 +3,7 @@ use oxc_ast::{ast::*, Span};
 use oxc_diagnostics::Result;
 
 use super::list::{ArrayPatternList, ObjectPatternProperties};
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser};
 
 impl<'a> Parser<'a> {
     /// Destructuring Binding Patterns
@@ -66,15 +66,15 @@ impl<'a> Parser<'a> {
 
     /// `BindingElement`
     ///     `SingleNameBinding`
-    ///     `BindingPattern` Initializer
+    ///     `BindingPattern`[?Yield, ?Await] `Initializer`[+In, ?Yield, ?Await]opt
     pub(crate) fn parse_binding_element(&mut self) -> Result<BindingPattern<'a>> {
         let span = self.start_span();
         let pattern = self.parse_binding_pattern()?.0;
-        self.parse_initializer(span, pattern)
+        self.with_context(Context::In, |p| p.parse_initializer(span, pattern))
     }
 
     // object pattern property only has kind: init and method: false
-    // <https://github.com/oxc_ast/oxc_ast/blob/master/es2015.md#objectpattern
+    // <https://github.com/estree/estree/blob/master/es2015.md#objectpattern
     pub(crate) fn parse_object_pattern_property(&mut self) -> Result<Property<'a>> {
         let span = self.start_span();
 
