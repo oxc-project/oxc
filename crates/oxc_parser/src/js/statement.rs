@@ -7,12 +7,7 @@ use super::{
     grammar::CoverGrammar,
     list::SwitchCases,
 };
-use crate::{
-    diagnostics,
-    lexer::Kind,
-    list::NormalList,
-    Parser, {Context, StatementContext},
-};
+use crate::{diagnostics, lexer::Kind, list::NormalList, Context, Parser, StatementContext};
 
 impl<'a> Parser<'a> {
     /// <https://tc39.es/ecma262/#prod-StatementList>
