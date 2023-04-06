@@ -14,7 +14,7 @@ use crate::Parser;
 impl<'a> Parser<'a> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Result<Expression<'a>> {
         if self.peek_at(Kind::RAngle) {
-            self.parse_jsx_fragment().map(Expression::JSXFragment)
+            self.parse_jsx_fragment(false).map(Expression::JSXFragment)
         } else {
             self.parse_jsx_element(false).map(Expression::JSXElement)
         }
@@ -22,11 +22,11 @@ impl<'a> Parser<'a> {
 
     /// `JSXFragment` :
     ///   < > `JSXChildren_opt` < / >
-    fn parse_jsx_fragment(&mut self) -> Result<Box<'a, JSXFragment<'a>>> {
+    fn parse_jsx_fragment(&mut self, in_jsx_child: bool) -> Result<Box<'a, JSXFragment<'a>>> {
         let span = self.start_span();
         let opening_fragment = self.parse_jsx_opening_fragment(span)?;
         let children = self.parse_jsx_children()?;
-        let closing_fragment = self.parse_jsx_closing_fragment()?;
+        let closing_fragment = self.parse_jsx_closing_fragment(in_jsx_child)?;
         Ok(self.ast.jsx_fragment(self.end_span(span), opening_fragment, closing_fragment, children))
     }
 
@@ -38,11 +38,15 @@ impl<'a> Parser<'a> {
     }
 
     /// </>
-    fn parse_jsx_closing_fragment(&mut self) -> Result<JSXClosingFragment> {
+    fn parse_jsx_closing_fragment(&mut self, in_jsx_child: bool) -> Result<JSXClosingFragment> {
         let span = self.start_span();
         self.expect(Kind::LAngle)?;
         self.expect(Kind::Slash)?;
-        self.expect(Kind::RAngle)?;
+        if in_jsx_child {
+            self.expect_jsx_child(Kind::RAngle)?;
+        } else {
+            self.expect(Kind::RAngle)?;
+        }
         Ok(self.ast.jsx_closing_fragment(self.end_span(span)))
     }
 
@@ -201,7 +205,7 @@ impl<'a> Parser<'a> {
             Kind::LAngle if self.peek_at(Kind::Slash) => Ok(None),
             // <> open fragment
             Kind::LAngle if self.peek_at(Kind::RAngle) => {
-                self.parse_jsx_fragment().map(JSXChild::Fragment).map(Some)
+                self.parse_jsx_fragment(true).map(JSXChild::Fragment).map(Some)
             }
             // <ident open element
             Kind::LAngle if self.peek_at(Kind::Ident) || self.peek_kind().is_all_keyword() => {
@@ -338,7 +342,7 @@ impl<'a> Parser<'a> {
             }
             Kind::LAngle => {
                 if self.peek_at(Kind::RAngle) {
-                    self.parse_jsx_fragment().map(JSXAttributeValue::Fragment)
+                    self.parse_jsx_fragment(false).map(JSXAttributeValue::Fragment)
                 } else {
                     self.parse_jsx_element(false).map(JSXAttributeValue::Element)
                 }
