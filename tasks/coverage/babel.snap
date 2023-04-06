@@ -3790,7 +3790,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Empty parenthesized expression
    ╭─[es2015/uncategorised/250/input.js:1:1]
  1 │ () <= 42
-   ·  ▲
+   · ──
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4242,7 +4242,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Empty parenthesized expression
    ╭─[es2015/uncategorised/38/input.js:1:1]
  1 │ console.log(typeof () => {});
-   ·                     ▲
+   ·                    ──
    ╰────
 
   × Expected `,` but found `=>`
@@ -8348,13 +8348,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Empty parenthesized expression
    ╭─[esprima/invalid-syntax/migrated_0095/input.js:1:1]
  1 │ () <= 42
-   ·  ▲
+   · ──
    ╰────
 
   × Empty parenthesized expression
    ╭─[esprima/invalid-syntax/migrated_0096/input.js:1:1]
  1 │ () ? 42
-   ·  ▲
+   · ──
    ╰────
 
   × Expected `:` but found `EOF`
@@ -8365,7 +8365,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Empty parenthesized expression
    ╭─[esprima/invalid-syntax/migrated_0097/input.js:1:1]
  1 │ () + 42
-   ·  ▲
+   · ──
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

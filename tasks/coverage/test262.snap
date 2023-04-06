@@ -9678,7 +9678,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
  22 │ 
  23 │ var C = class extends () => {} {
-    ·                        ▲
+    ·                       ──
  24 │   
     ╰────
 
@@ -14737,7 +14737,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/in/private-field-invalid-rhs.js:23:1]
  23 │   constructor() {
  24 │     #field in () => {};
-    ·                ▲
+    ·               ──
  25 │   }
     ╰────
 
@@ -20404,14 +20404,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/module-code/parse-err-invoke-anon-fun-decl.js:25:1]
  25 │ 
  26 │ export default function() {}();
-    ·                              ▲
+    ·                             ──
     ╰────
 
   × Empty parenthesized expression
     ╭─[language/module-code/parse-err-invoke-anon-gen-decl.js:27:1]
  27 │ 
  28 │ export default function* () {}();
-    ·                                ▲
+    ·                               ──
     ╰────
 
   × TS1108: A 'return' statement can only be used within a function body
@@ -25084,7 +25084,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/elements/syntax/early-errors/class-heritage-array-literal-arrow-heritage.js:22:1]
  22 │ 
  23 │ class C extends () => {} {
-    ·                  ▲
+    ·                 ──
  24 │   
     ╰────
 
@@ -28812,7 +28812,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/expression/S12.4_A1.js:18:1]
  18 │ //CHECK#1
  19 │ function(){}();
-    ·              ▲
+    ·             ──
  20 │ //
     ╰────
 

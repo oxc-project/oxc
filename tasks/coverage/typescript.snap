@@ -8436,7 +8436,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Empty parenthesized expression
    ╭─[parser/ecmascript5/ErrorRecovery/Expressions/parserErrorRecovery_Expression1.ts:1:1]
  1 │ var v = ()({});
-   ·          ▲
+   ·         ──
    ╰────
 
   × Expected `{` but found `EOF`
@@ -8688,7 +8688,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/ErrorRecovery/parserEmptyParenthesizedExpression1.ts:1:1]
  1 │ function getObj() {
  2 │    ().toString();
-   ·     ▲
+   ·    ──
  3 │ }
    ╰────
 
@@ -9218,7 +9218,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[parser/ecmascript5/RegressionTests/parser509669.ts:1:1]
  1 │ function foo():any {
  2 │  return ():void {};
-   ·          ▲
+   ·         ──
  3 │ }
    ╰────
 
@@ -9268,7 +9268,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
   × Empty parenthesized expression
    ╭─[parser/ecmascript5/RegressionTests/parser566700.ts:1:1]
  1 │ var v = ()({});
-   ·          ▲
+   ·         ──
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

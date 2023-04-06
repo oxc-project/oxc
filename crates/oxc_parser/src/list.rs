@@ -42,15 +42,11 @@ pub trait SeparatedList<'a>: Sized {
         Kind::Comma
     }
 
-    fn start_sequence(&mut self, _p: &mut Parser<'a>) {}
-    fn finish_sequence(&mut self, _p: &mut Parser<'a>) {}
-
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()>;
 
     /// Main entry point, parse the list
     fn parse_list(&mut self, p: &mut Parser<'a>) -> Result<()> {
         p.expect(self.open())?;
-        self.start_sequence(p);
 
         let mut first = true;
 
@@ -67,7 +63,6 @@ pub trait SeparatedList<'a>: Sized {
             self.parse_element(p)?;
         }
 
-        self.finish_sequence(p);
         p.expect(self.close())?;
         Ok(())
     }
