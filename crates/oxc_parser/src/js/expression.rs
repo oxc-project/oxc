@@ -13,7 +13,7 @@ use crate::{
     diagnostics,
     lexer::{Kind, TokenValue},
     list::SeparatedList,
-    Parser,
+    Context, Parser,
 };
 
 impl<'a> Parser<'a> {
@@ -635,7 +635,9 @@ impl<'a> Parser<'a> {
 
         // parse `new ident` without arguments
         let arguments = if self.at(Kind::LParen) {
-            CallArguments::parse(self)?.elements
+            // ArgumentList[Yield, Await] :
+            //   AssignmentExpression[+In, ?Yield, ?Await]
+            self.with_context(Context::In, CallArguments::parse)?.elements
         } else {
             self.ast.new_vec()
         };
@@ -743,10 +745,9 @@ impl<'a> Parser<'a> {
         optional: bool,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> Result<Expression<'a>> {
-        let has_in = self.ctx.has_in();
-        self.ctx = self.ctx.and_in(true);
-        let call_arguments = CallArguments::parse(self)?;
-        self.ctx = self.ctx.and_in(has_in);
+        // ArgumentList[Yield, Await] :
+        //   AssignmentExpression[+In, ?Yield, ?Await]
+        let call_arguments = self.with_context(Context::In, CallArguments::parse)?;
         Ok(self.ast.call_expression(
             self.end_span(lhs_span),
             lhs,

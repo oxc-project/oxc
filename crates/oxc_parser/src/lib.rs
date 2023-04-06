@@ -286,7 +286,12 @@ mod test {
             assert!(!ret.errors.is_empty());
         }
 
-        let pass = ["async(...null)", "null?async():null", "switch(null){case async():}"];
+        let pass = [
+            "async(...null)",
+            "null?async():null",
+            "switch(null){case async():}",
+            "for(new null(null in null);;);",
+        ];
 
         for source in pass {
             let ret = Parser::new(&allocator, source, source_type).parse();
