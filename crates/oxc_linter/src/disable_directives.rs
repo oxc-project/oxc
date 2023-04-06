@@ -97,7 +97,7 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                         .lines()
                         .rev()
                         .next()
-                        .map_or(0, |line| span.start - line.len() as u32);
+                        .map_or(0, |line| span.start - (line.len() as u32 - 1));
                     let stop = span.start;
 
                     // `eslint-disable-line`
@@ -192,7 +192,7 @@ fn test() {
         //     debugger;
         // ",
         // To disable all rules on a specific line, use a line or block comment in one of the following formats:
-        "
+        "debugger; // eslint-disable-line
             debugger; // eslint-disable-line
 
             // eslint-disable-next-line
