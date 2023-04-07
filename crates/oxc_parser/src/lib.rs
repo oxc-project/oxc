@@ -137,6 +137,7 @@ impl<'a> Parser<'a> {
     /// Create a new parser
     #[must_use]
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+        println!("a");
         Self {
             lexer: Lexer::new(allocator, source_text, source_type),
             source_type,
