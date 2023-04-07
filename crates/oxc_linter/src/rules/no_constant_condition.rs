@@ -1,7 +1,4 @@
-use oxc_ast::{
-    ast::{BinaryOperator, Expression},
-    AstKind, Span,
-};
+use oxc_ast::{ast::Expression, AstKind, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -12,12 +9,12 @@ use crate::{ast_util::IsConstant, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-constant-condition): Unexpected constant condition")]
-#[diagnostic(severity(warning), help("A constant expression are not allowed as a test condition"))]
+#[diagnostic(severity(warning), help("Constant expression as a test condition is not allowed"))]
 struct NoConstantConditionDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConstantCondition {
-    check_loops: bool,
+    _check_loops: bool,
 }
 
 declare_oxc_lint!(
@@ -45,7 +42,7 @@ impl Rule for NoConstantCondition {
         let obj = value.get(0);
 
         Self {
-            check_loops: obj
+            _check_loops: obj
                 .and_then(|v| v.get("checkLoops"))
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or_default(),
@@ -57,6 +54,11 @@ impl Rule for NoConstantCondition {
             AstKind::IfStatement(if_stmt) => {
                 if if_stmt.test.is_constant(true, ctx) {
                     diagnose_constant_expr(&if_stmt.test, ctx);
+                }
+            }
+            AstKind::ConditionalExpression(cond_expr) => {
+                if cond_expr.test.is_constant(true, ctx) {
+                    diagnose_constant_expr(&cond_expr.test, ctx);
                 }
             }
             _ => {}
@@ -220,6 +222,11 @@ fn test_no_constant() {
         // ("const Boolean = () => {}; if (Boolean(1)) {}", None),
         // "if (Boolean()) {}",
         // "if (undefined) {}",
+        ("q > 0 ? 1 : 2;", None),
+        ("`${a}` === a ? 1 : 2", None),
+        ("`foo${a}` === a ? 1 : 2", None),
+        ("tag`a` === a ? 1 : 2", None),
+        ("tag`${a}` === a ? 1 : 2", None),
     ];
 
     let fail = vec![
@@ -233,11 +240,7 @@ fn test_no_constant() {
         ("if(a, 1);", None),
         ("if(`foo`);", None),
         ("if(``);", None),
-        (
-            "if(`\
-            `);",
-            None,
-        ),
+        ("if(`\\\n`);", None),
         ("if(`${'bar'}`);", None),
         ("if(`${'bar' + `foo`}`);", None),
         ("if(`foo${false || true}`);", None),
@@ -328,16 +331,21 @@ fn test_no_constant() {
         ("if(new Number(foo)) {}", None),
         // Spreading a constant array
         ("if(`${[...['a']]}`) {}", None),
-        /*
-         * undefined is always falsy (except in old browsers that let you
-         * re-assign, but that's an obscure enough edge case to not worry about)
-         */
+        // undefined is always falsy (except in old browsers that let you
+        // re-assign, but that's an obscure enough edge case to not worry about)
         ("if (undefined) {}", None),
         // Coercion to boolean via Boolean function
         ("if (Boolean(1)) {}", None),
         ("if (Boolean()) {}", None),
         ("if (Boolean([a])) {}", None),
         ("if (Boolean(1)) { function Boolean() {}}", None),
+        ("true ? 1 : 2;", None),
+        ("1 ? 1 : 2;", None),
+        ("q = 0 ? 1 : 2;", None),
+        ("(q = 0) ? 1 : 2;", None),
+        ("`` ? 1 : 2;", None),
+        ("`foo` ? 1 : 2;", None),
+        ("`foo${bar}` ? 1 : 2;", None),
     ];
 
     Tester::new(NoConstantCondition::NAME, pass, fail).test_and_snapshot();
