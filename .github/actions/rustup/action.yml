@@ -16,6 +16,18 @@ inputs:
     default: false
     required: false
     type: boolean
+  cache:
+    default: true
+    required: false
+    type: boolean
+  shared-key:
+    default: ''
+    required: false
+    type: string
+  sccache:
+    default: true
+    required: false
+    type: boolean
 
 runs:
   using: composite
@@ -52,3 +64,13 @@ runs:
     - name: Install
       shell: bash
       run: rustup show
+
+    - name: sccache-cache
+      if: ${{ inputs.sccache == 'true' }}
+      uses: mozilla-actions/sccache-action@v0.0.3
+
+    - name: Swatinem/rust-cache
+      if: ${{ inputs.cache == 'true' }}
+      uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: ${{ inputs.shared_key }}

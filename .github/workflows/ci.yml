@@ -13,13 +13,14 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'crates/**'
-      - 'tasks/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'rust-toolchain.toml'
-      - '!**/*.md'
+      - sccache
+    # paths:
+      # - 'crates/**'
+      # - 'tasks/**'
+      # - 'Cargo.toml'
+      # - 'Cargo.lock'
+      # - 'rust-toolchain.toml'
+      # - '!**/*.md'
 
 # cancel previous job runs for the same workflow + pr
 concurrency:
@@ -27,7 +28,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CARGO_TERM_QUIET: true
+  # CARGO_TERM_QUIET: true
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
 
 jobs:
   format:
@@ -37,10 +40,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Rust Toolchain
+      - name: Install Rust
         uses: ./.github/actions/rustup
         with:
           fmt: true
+          shared-key: ci
 
       - name: Run rustfmt
         run: cargo fmt --all -- --check
@@ -52,15 +56,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Rust Toolchain
+      - name: Install Rust
         uses: ./.github/actions/rustup
         with:
           clippy: true
-
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: check
+          shared-key: ci
 
       - name: Run cargo check
         run: cargo check --workspace --all-targets --all-features --release --locked
@@ -78,14 +78,20 @@ jobs:
           files: .
 
   check-dependencies:
-    name: Check Dependencies
+    name: Check Unused Dependencies
     runs-on: ubuntu-latest
+    env:
+      SCCACHE_GHA_ENABLED: ""
+      RUSTC_WRAPPER: ""
     steps:
       - name: Checkout PR Branch
         uses: actions/checkout@v3
 
-      - name: Install Rust Toolchain
+      - name: Install Rust
         uses: ./.github/actions/rustup
+        with:
+          shared-key: ci
+          sccache: false
 
       - name: Install cargo-udeps
         uses: taiki-e/install-action@v2
@@ -109,18 +115,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install Rust Toolchain
+      - name: Install Rust
         uses: ./.github/actions/rustup
+        with:
+          shared-key: ci
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-nextest
-
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: check
 
       - name: Build tests
         run: cargo nextest run --no-run --locked
