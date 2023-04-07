@@ -98,7 +98,7 @@ fn diagnose_constant_expr(expr: &Expression, ctx: &LintContext) {
 }
 
 #[test]
-fn test_no_constant() {
+fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
@@ -205,6 +205,7 @@ fn test_no_constant() {
         ("if ('' + [y, 'm'] === '' + ['ty']) {}", None),
         ("if ([,] in\n\n($2))\n ;\nelse\n ;", None),
         ("if ([...x]+'' === 'y'){}", None),
+        ("if (new Number(x) + 1 === 2) {}", None),
         ("if([a]==[b]) {}", None),
         ("if (+[...a]) {}", None),
         ("if (+[...[...a]]) {}", None),
@@ -227,6 +228,30 @@ fn test_no_constant() {
         ("`foo${a}` === a ? 1 : 2", None),
         ("tag`a` === a ? 1 : 2", None),
         ("tag`${a}` === a ? 1 : 2", None),
+        //TODO
+        // ("while(~!a);", None),
+        // ("while(a = b);", None),
+        // ("while(`${a}`);", None),
+        // ("for(;x < 10;);", None),
+        // ("for(;;);", None),
+        // ("for(;`${a}`;);", None),
+        // ("do{ }while(x)", None),
+        // ("while(x += 3) {}", None),
+        // ("while(tag`a`) {}", None),
+        // ("while(tag`${a}`) {}", None),
+        // ("while(`\\\n${a}`) {}", None),
+        // ("while(true);", Some(json!([{"checkLoops":false}]))),
+        // ("for(;true;);", Some(json!([{"checkLoops":false}]))),
+        // ("do{}while(true)", Some(json!([{"checkLoops":false}]))),
+        // ("function* foo(){while(true){yield 'foo';}}", None),
+        // ("function* foo(){for(;true;){yield 'foo';}}", None),
+        // ("function* foo(){do{yield 'foo';}while(true)}", None),
+        // ("function* foo(){while (true) { while(true) {yield;}}}", None),
+        // ("function* foo() {for (; yield; ) {}}", None),
+        // ("function* foo() {for (; ; yield) {}}", None),
+        // ("function* foo() {while (true) {function* foo() {yield;}yield;}}", None),
+        // ("function* foo() { for (let x = yield; x < 10; x++) {yield;}yield;}", None),
+        // ("function* foo() { for (let x = yield; ; x++) { yield; }}", None),
     ];
 
     let fail = vec![
@@ -346,6 +371,40 @@ fn test_no_constant() {
         ("`` ? 1 : 2;", None),
         ("`foo` ? 1 : 2;", None),
         ("`foo${bar}` ? 1 : 2;", None),
+        // TODO
+        // ("for(;true;);", None),
+        // ("for(;``;);", None),
+        // ("for(;`foo`;);", None),
+        // ("for(;`foo${bar}`;);", None),
+        // ("do{}while(true)", None),
+        // ("do{}while('1')", None),
+        // ("do{}while(0)", None),
+        // ("do{}while(t = -2)", None),
+        // ("do{}while(``)", None),
+        // ("do{}while(`foo`)", None),
+        // ("do{}while(`foo${bar}`)", None),
+        // ("while([]);", None),
+        // ("while(~!0);", None),
+        // ("while(x = 1);", None),
+        // ("while(function(){});", None),
+        // ("while(true);", None),
+        // ("while(1);", None),
+        // ("while(() => {});", None),
+        // ("while(`foo`);", None),
+        // ("while(``);", None),
+        // ("while(`${'foo'}`);", None),
+        // ("while(`${'foo' + 'bar'}`);", None),
+        // ("function* foo(){while(true){} yield 'foo';}", None),
+        // ("function* foo(){while(true){if (true) {yield 'foo';}}}", None),
+        // ("function* foo(){while(true){yield 'foo';} while(true) {}}", None),
+        // ("var a = function* foo(){while(true){} yield 'foo';}", None),
+        // ("while (true) { function* foo() {yield;}}", None),
+        // ("function* foo(){if (true) {yield 'foo';}}", None),
+        // ("function* foo() {for (let foo = yield; true;) {}}", None),
+        // ("function* foo() {for (foo = yield; true;) {}}", None),
+        // ("function foo() {while (true) {function* bar() {while (true) {yield;}}}}", None),
+        // ("function foo() {while (true) {const bar = function*() {while (true) {yield;}}}}", None),
+        // ("function* foo() { for (let foo = 1 + 2 + 3 + (yield); true; baz) {}}", None),
     ];
 
     Tester::new(NoConstantCondition::NAME, pass, fail).test_and_snapshot();
