@@ -1,6 +1,8 @@
 use std::ops::{Deref, Index, IndexMut};
 
+use oxc_ast::ast::IdentifierReference;
 use oxc_ast::{Atom, Span};
+use rustc_hash::FxHashMap;
 
 use super::reference::ResolvedReferenceId;
 use super::{Symbol, SymbolFlags, SymbolId};
@@ -18,6 +20,9 @@ pub struct SymbolTable {
     symbols: Vec<Symbol>,
     /// Stores all the resolved references indexed by `ResolvedReferenceId`
     resolved_references: Vec<ResolvedReference>,
+    // A (temporary) index mapping `Span` to `ResolvedReferenceId` to enable
+    // querying reference information on `IdentifierReference` directly
+    resolved_references_index: FxHashMap<Span, ResolvedReferenceId>,
 }
 
 impl Index<SymbolId> for SymbolTable {
@@ -91,6 +96,16 @@ impl SymbolTable {
         self.resolved_references.get(id.index0())
     }
 
+    #[must_use]
+    pub fn get_resolved_reference_for_id(
+        &self,
+        id: &IdentifierReference,
+    ) -> Option<&ResolvedReference> {
+        self.resolved_references_index
+            .get(&id.span)
+            .map(|reference_id| &self.resolved_references[reference_id.index0()])
+    }
+
     /// Resolve all `references` to `symbol_id`
     pub(crate) fn resolve_reference(&mut self, references: Vec<Reference>, symbol_id: SymbolId) {
         let additional_len = references.len();
@@ -102,10 +117,14 @@ impl SymbolTable {
         for reference in references {
             let resolved_reference_id =
                 ResolvedReferenceId::new(self.resolved_references.len() + 1);
+            let reference_span = reference.span;
+
             let resolved_reference = reference.resolve_to(symbol_id);
             self.resolved_references.push(resolved_reference);
             // explicitly push to vector here in correspondence to the previous reserve call
             symbol.references.push(resolved_reference_id);
+
+            self.resolved_references_index.insert(reference_span, resolved_reference_id);
         }
     }
 }
