@@ -1,4 +1,5 @@
-use oxc_ast::{ast::Expression, AstKind, Span};
+use oxc_ast::GetSpan;
+use oxc_ast::{AstKind, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -53,47 +54,16 @@ impl Rule for NoConstantCondition {
         match node.get().kind() {
             AstKind::IfStatement(if_stmt) => {
                 if if_stmt.test.is_constant(true, ctx) {
-                    diagnose_constant_expr(&if_stmt.test, ctx);
+                    ctx.diagnostic(NoConstantConditionDiagnostic(if_stmt.test.span()));
                 }
             }
-            AstKind::ConditionalExpression(cond_expr) => {
-                if cond_expr.test.is_constant(true, ctx) {
-                    diagnose_constant_expr(&cond_expr.test, ctx);
+            AstKind::ConditionalExpression(condition_expr) => {
+                if condition_expr.test.is_constant(true, ctx) {
+                    ctx.diagnostic(NoConstantConditionDiagnostic(condition_expr.test.span()));
                 }
             }
             _ => {}
         }
-    }
-}
-
-fn diagnose_constant_expr(expr: &Expression, ctx: &LintContext) {
-    let diagnose = |span: Span| {
-        ctx.diagnostic(NoConstantConditionDiagnostic(span));
-    };
-
-    match expr {
-        Expression::ArrowFunctionExpression(expr) => diagnose(expr.span),
-        Expression::FunctionExpression(expr) => diagnose(expr.span),
-        Expression::ClassExpression(expr) => diagnose(expr.span),
-        Expression::ObjectExpression(expr) => diagnose(expr.span),
-        Expression::TemplateLiteral(expr) => diagnose(expr.span),
-        Expression::ArrayExpression(expr) => diagnose(expr.span),
-        Expression::UnaryExpression(expr) => diagnose(expr.span),
-        Expression::BinaryExpression(expr) => diagnose(expr.span),
-        Expression::LogicalExpression(expr) => diagnose(expr.span),
-        Expression::NewExpression(expr) => diagnose(expr.span),
-        Expression::AssignmentExpression(expr) => diagnose(expr.span),
-        Expression::SequenceExpression(expr) => diagnose(expr.span),
-        Expression::CallExpression(expr) => diagnose(expr.span),
-        Expression::ParenthesizedExpression(expr) => diagnose(expr.span),
-        Expression::Identifier(expr) => diagnose(expr.span),
-        Expression::BooleanLiteral(expr) => diagnose(expr.span),
-        Expression::NullLiteral(expr) => diagnose(expr.span),
-        Expression::NumberLiteral(expr) => diagnose(expr.span),
-        Expression::BigintLiteral(expr) => diagnose(expr.span),
-        Expression::RegExpLiteral(expr) => diagnose(expr.span),
-        Expression::StringLiteral(expr) => diagnose(expr.span),
-        _ => {}
     }
 }
 
