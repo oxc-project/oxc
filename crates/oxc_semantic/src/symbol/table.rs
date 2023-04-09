@@ -1,13 +1,12 @@
+use std::collections::BTreeMap;
 use std::ops::{Deref, Index, IndexMut};
 
 use oxc_ast::ast::IdentifierReference;
-use oxc_ast::{Atom, Span};
-use rustc_hash::FxHashMap;
+use oxc_ast::Span;
 
 use super::reference::ResolvedReferenceId;
-use super::{Symbol, SymbolFlags, SymbolId};
-use crate::node::AstNodeId;
-use crate::{Reference, ResolvedReference};
+use super::{Symbol, SymbolId};
+use crate::ResolvedReference;
 
 /// `SymbolTable` is a storage of all the symbols (related to `BindingIdentifiers`)
 /// and references (related to `IdentifierReferences`) of the program. It supports two
@@ -20,9 +19,7 @@ pub struct SymbolTable {
     symbols: Vec<Symbol>,
     /// Stores all the resolved references indexed by `ResolvedReferenceId`
     resolved_references: Vec<ResolvedReference>,
-    // A (temporary) index mapping `Span` to `ResolvedReferenceId` to enable
-    // querying reference information on `IdentifierReference` directly
-    resolved_references_index: FxHashMap<Span, ResolvedReferenceId>,
+    resolved_references_index: BTreeMap<Span, ResolvedReferenceId>,
 }
 
 impl Index<SymbolId> for SymbolTable {
@@ -63,6 +60,15 @@ impl Deref for SymbolTable {
 
 impl SymbolTable {
     #[must_use]
+    pub fn new(
+        symbols: Vec<Symbol>,
+        resolved_references: Vec<ResolvedReference>,
+        resolved_references_index: BTreeMap<Span, ResolvedReferenceId>,
+    ) -> Self {
+        Self { symbols, resolved_references, resolved_references_index }
+    }
+
+    #[must_use]
     pub fn symbols(&self) -> &Vec<Symbol> {
         &self.symbols
     }
@@ -70,20 +76,6 @@ impl SymbolTable {
     #[must_use]
     pub fn get_symbol(&self, id: SymbolId) -> Option<&Symbol> {
         self.symbols.get(id.index0())
-    }
-
-    #[must_use]
-    pub(crate) fn create(
-        &mut self,
-        declaration: AstNodeId,
-        name: Atom,
-        span: Span,
-        flags: SymbolFlags,
-    ) -> SymbolId {
-        let symbol_id = SymbolId::new(self.symbols.len() + 1);
-        let symbol = Symbol::new(symbol_id, declaration, name, span, flags);
-        self.symbols.push(symbol);
-        symbol_id
     }
 
     #[must_use]
@@ -103,28 +95,6 @@ impl SymbolTable {
     ) -> Option<&ResolvedReference> {
         self.resolved_references_index
             .get(&id.span)
-            .map(|reference_id| &self.resolved_references[reference_id.index0()])
-    }
-
-    /// Resolve all `references` to `symbol_id`
-    pub(crate) fn resolve_reference(&mut self, references: Vec<Reference>, symbol_id: SymbolId) {
-        let additional_len = references.len();
-        let symbol = &mut self.symbols[symbol_id];
-
-        self.resolved_references.reserve(additional_len);
-        symbol.references.reserve(additional_len);
-
-        for reference in references {
-            let resolved_reference_id =
-                ResolvedReferenceId::new(self.resolved_references.len() + 1);
-            let reference_span = reference.span;
-
-            let resolved_reference = reference.resolve_to(symbol_id);
-            self.resolved_references.push(resolved_reference);
-            // explicitly push to vector here in correspondence to the previous reserve call
-            symbol.references.push(resolved_reference_id);
-
-            self.resolved_references_index.insert(reference_span, resolved_reference_id);
-        }
+            .map(|ref_id| &self.resolved_references[ref_id.index0()])
     }
 }

@@ -1,6 +1,7 @@
 //! Symbol and Symbol Table for tracking of semantics of variables
 #![allow(non_upper_case_globals)]
 
+mod builder;
 mod id;
 mod reference;
 mod table;
@@ -10,6 +11,7 @@ use oxc_ast::{Atom, Span};
 
 use self::reference::ResolvedReferenceId;
 pub use self::{
+    builder::SymbolTableBuilder,
     id::SymbolId,
     reference::{Reference, ReferenceFlag, ResolvedReference},
     table::SymbolTable,
