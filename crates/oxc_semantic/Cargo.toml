@@ -16,6 +16,7 @@ oxc_diagnostics = { workspace = true }
 indextree = { workspace = true }
 bitflags = { workspace = true }
 rustc-hash = { workspace = true }
+phf = { workspace = true, features = ["macros"] }
 
 [dev_dependencies]
 oxc_parser = { workspace = true }

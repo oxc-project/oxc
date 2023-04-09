@@ -10,21 +10,20 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
     Redeclaration,
 };
-use oxc_semantic::ScopeFlags;
+use phf::{phf_set, Set};
 use rustc_hash::FxHashMap;
 
-use crate::{ast_util::STRICT_MODE_NAMES, context::LintContext, rule::Rule, AstNode};
+use crate::scope::ScopeFlags;
+use crate::{builder::SemanticBuilder, AstNode};
 
-#[derive(Debug, Default, Clone)]
 pub struct EarlyErrorJavaScript;
 
-impl Rule for EarlyErrorJavaScript {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+impl EarlyErrorJavaScript {
+    pub fn run<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         let kind = node.get().kind();
         check_function_declaration(kind, node, ctx);
 
         match kind {
-            AstKind::Program(_) => check_program(node, ctx),
             AstKind::BindingIdentifier(ident) => {
                 check_identifier(&ident.name, ident.span, node, ctx);
                 check_binding_identifier(ident, node, ctx);
@@ -36,8 +35,8 @@ impl Rule for EarlyErrorJavaScript {
             AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
             AstKind::PrivateIdentifier(ident) => check_private_identifier(ident, node, ctx),
 
-            AstKind::NumberLiteral(lit) => check_number_literal(lit, node, ctx),
-            AstKind::StringLiteral(lit) => check_string_literal(lit, node, ctx),
+            AstKind::NumberLiteral(lit) => check_number_literal(lit, ctx),
+            AstKind::StringLiteral(lit) => check_string_literal(lit, ctx),
             AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
 
             AstKind::Directive(dir) => check_directive(dir, node, ctx),
@@ -49,7 +48,7 @@ impl Rule for EarlyErrorJavaScript {
             }
             AstKind::MetaProperty(prop) => check_meta_property(prop, node, ctx),
 
-            AstKind::WithStatement(stmt) => check_with_statement(stmt, node, ctx),
+            AstKind::WithStatement(stmt) => check_with_statement(stmt, ctx),
             AstKind::SwitchStatement(stmt) => check_switch_statement(stmt, ctx),
             AstKind::BreakStatement(stmt) => check_break_statement(stmt, node, ctx),
             AstKind::ContinueStatement(stmt) => check_continue_statement(stmt, node, ctx),
@@ -75,9 +74,13 @@ impl Rule for EarlyErrorJavaScript {
             _ => {}
         }
     }
+
+    pub fn check_module_record(ctx: &SemanticBuilder) {
+        check_module_record(ctx);
+    }
 }
 
-fn check_program(node: &AstNode, ctx: &LintContext) {
+fn check_module_record(ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Export '{0}' is not defined")]
     #[diagnostic()]
@@ -93,12 +96,12 @@ fn check_program(node: &AstNode, ctx: &LintContext) {
     );
 
     // Skip checkking for exports in TypeScript for now
-    if ctx.source_type().is_typescript() {
+    if ctx.source_type.is_typescript() {
         return;
     }
 
-    let scope = ctx.scope(node);
-    let module_record = ctx.semantic().module_record();
+    let scope = ctx.scope.current_scope();
+    let module_record = &ctx.module_record_builder.module_record;
 
     // It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
     // does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
@@ -111,33 +114,33 @@ fn check_program(node: &AstNode, ctx: &LintContext) {
         })
         .filter(|name_span| scope.get_variable_symbol_id(name_span.name()).is_none())
         .for_each(|name_span| {
-            ctx.diagnostic(UndefinedExport(name_span.name().clone(), name_span.span()));
+            ctx.error(UndefinedExport(name_span.name().clone(), name_span.span()));
         });
 
     // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
     for name_span in &module_record.exported_bindings_duplicated {
         let old_span = module_record.exported_bindings[name_span.name()];
-        ctx.diagnostic(DuplicateExport(name_span.name().clone(), name_span.span(), old_span));
+        ctx.error(DuplicateExport(name_span.name().clone(), name_span.span(), old_span));
     }
 
     for span in &module_record.export_default_duplicated {
         let old_span = module_record.export_default.unwrap();
-        ctx.diagnostic(DuplicateExport("default".into(), *span, old_span));
+        ctx.error(DuplicateExport("default".into(), *span, old_span));
     }
 
     // `export default x;`
     // `export { y as default };`
     if let Some(span) = module_record.exported_bindings.get("default")
         && let Some(default_span) = &module_record.export_default {
-            ctx.diagnostic(DuplicateExport("default".into(), *default_span, *span));
+            ctx.error(DuplicateExport("default".into(), *default_span, *span));
     }
 }
 
-fn check_duplicate_bound_names<T: BoundNames>(bound_names: &T, ctx: &LintContext) {
+fn check_duplicate_bound_names<T: BoundNames>(bound_names: &T, ctx: &SemanticBuilder) {
     let mut idents: FxHashMap<Atom, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
         if let Some(old_span) = idents.insert(ident.name.clone(), ident.span) {
-            ctx.diagnostic(Redeclaration(ident.name.clone(), old_span, ident.span));
+            ctx.error(Redeclaration(ident.name.clone(), old_span, ident.span));
         }
     });
 }
@@ -152,21 +155,33 @@ struct ClassStatickBlockAwait(#[label] Span);
 #[diagnostic()]
 struct ReservedKeyword(Atom, #[label] Span);
 
-fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
+    "implements",
+    "interface",
+    "let",
+    "package",
+    "private",
+    "protected",
+    "public",
+    "static",
+    "yield",
+};
+
+fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     if *name == "await" {
         // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
-        if ctx.source_type().is_module() {
-            return ctx.diagnostic(ReservedKeyword(name.clone(), span));
+        if ctx.source_type.is_module() {
+            return ctx.error(ReservedKeyword(name.clone(), span));
         }
         // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-        if ctx.scope(node).flags.contains(ScopeFlags::ClassStaticBlock) {
-            return ctx.diagnostic(ClassStatickBlockAwait(span));
+        if ctx.scope.node_scope(node).flags.contains(ScopeFlags::ClassStaticBlock) {
+            return ctx.error(ClassStatickBlockAwait(span));
         }
     }
 
     // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
-    if ctx.strict_mode(node) && STRICT_MODE_NAMES.contains(name.as_str()) {
-        ctx.diagnostic(ReservedKeyword(name.clone(), span));
+    if ctx.strict_mode() && STRICT_MODE_NAMES.contains(name.as_str()) {
+        ctx.error(ReservedKeyword(name.clone(), span));
     }
 }
 
@@ -178,19 +193,19 @@ struct UnexpectedIdentifierAssign(Atom, #[label] Span);
 fn check_binding_identifier<'a>(
     ident: &BindingIdentifier,
     node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &SemanticBuilder<'a>,
 ) {
-    let strict_mode = ctx.strict_mode(node);
+    let strict_mode = ctx.strict_mode();
     // It is a Diagnostic if the StringValue of a BindingIdentifier is "eval" or "arguments" within strict mode code.
     if strict_mode && matches!(ident.name.as_str(), "eval" | "arguments") {
-        return ctx.diagnostic(UnexpectedIdentifierAssign(ident.name.clone(), ident.span));
+        return ctx.error(UnexpectedIdentifierAssign(ident.name.clone(), ident.span));
     }
 
     // LexicalDeclaration : LetOrConst BindingList ;
     // * It is a Syntax Error if the BoundNames of BindingList contains "let".
     if !strict_mode && ident.name == "let" {
-        for node_id in ctx.ancestors(node).skip(1) {
-            match ctx.kind(node_id) {
+        for node_id in ctx.nodes.ancestors(node).skip(1) {
+            match ctx.nodes.kind(node_id) {
                 AstKind::VariableDeclaration(decl) if decl.kind.is_lexical() => {
                     #[derive(Debug, Error, Diagnostic)]
                     #[error(
@@ -198,8 +213,7 @@ fn check_binding_identifier<'a>(
                     )]
                     #[diagnostic()]
                     struct InvalidLetDeclaration(String, #[label] Span);
-                    return ctx
-                        .diagnostic(InvalidLetDeclaration(decl.kind.to_string(), ident.span));
+                    return ctx.error(InvalidLetDeclaration(decl.kind.to_string(), ident.span));
                 }
                 AstKind::VariableDeclaration(_) | AstKind::Function(_) | AstKind::Program(_) => {
                     break;
@@ -213,7 +227,7 @@ fn check_binding_identifier<'a>(
 fn check_identifier_reference<'a>(
     ident: &IdentifierReference,
     node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &SemanticBuilder<'a>,
 ) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("'arguments' is not allowed in {0}")]
@@ -222,12 +236,11 @@ fn check_identifier_reference<'a>(
 
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
-    if ctx.strict_mode(node) && matches!(ident.name.as_str(), "arguments" | "eval") {
-        for node_id in ctx.ancestors(node).skip(1) {
-            match ctx.kind(node_id) {
+    if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {
+        for node_id in ctx.nodes.ancestors(node).skip(1) {
+            match ctx.nodes.kind(node_id) {
                 AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) => {
-                    return ctx
-                        .diagnostic(UnexpectedIdentifierAssign(ident.name.clone(), ident.span));
+                    return ctx.error(UnexpectedIdentifierAssign(ident.name.clone(), ident.span));
                 }
                 AstKind::MemberExpression(_) => break,
                 _ => {}
@@ -241,18 +254,15 @@ fn check_identifier_reference<'a>(
     //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
 
     if ident.name == "arguments" {
-        for node_id in ctx.ancestors(node).skip(1) {
-            match ctx.kind(node_id) {
+        for node_id in ctx.nodes.ancestors(node).skip(1) {
+            match ctx.nodes.kind(node_id) {
                 AstKind::Function(_) => break,
                 AstKind::PropertyDefinition(_) => {
-                    return ctx
-                        .diagnostic(UnexpectedArguments("class field initializer", ident.span));
+                    return ctx.error(UnexpectedArguments("class field initializer", ident.span));
                 }
                 AstKind::StaticBlock(_) => {
-                    return ctx.diagnostic(UnexpectedArguments(
-                        "static initialization block",
-                        ident.span,
-                    ));
+                    return ctx
+                        .error(UnexpectedArguments("static initialization block", ident.span));
                 }
                 _ => {}
             }
@@ -263,17 +273,17 @@ fn check_identifier_reference<'a>(
 fn check_private_identifier<'a>(
     ident: &PrivateIdentifier,
     node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &SemanticBuilder<'a>,
 ) {
     // Ignore private identifier declaration inside class
-    if matches!(ctx.parent_kind(node), AstKind::PropertyKey(_)) {
+    if matches!(ctx.nodes.parent_kind(node), AstKind::PropertyKey(_)) {
         return;
     }
 
     // Find enclosing classes
     let mut classes = vec![];
-    for node_id in ctx.ancestors(node).skip(1) {
-        let kind = ctx.kind(node_id);
+    for node_id in ctx.nodes.ancestors(node).skip(1) {
+        let kind = ctx.nodes.kind(node_id);
         if let AstKind::Class(class) = kind {
             classes.push(class);
         }
@@ -290,7 +300,7 @@ fn check_private_identifier<'a>(
         #[error("Private identifier '#{0}' is not allowed outside class bodies")]
         #[diagnostic()]
         struct PrivateNotInClass(Atom, #[label] Span);
-        return ctx.diagnostic(PrivateNotInClass(ident.name.clone(), ident.span));
+        return ctx.error(PrivateNotInClass(ident.name.clone(), ident.span));
     };
 
     // Check private identifier declarations in class.
@@ -317,7 +327,7 @@ fn check_private_identifier<'a>(
         #[error("Private field '{0}' must be declared in an enclosing class")]
         #[diagnostic()]
         struct PrivateFieldUndeclared(Atom, #[label] Span);
-        ctx.diagnostic(PrivateFieldUndeclared(ident.name.clone(), ident.span));
+        ctx.error(PrivateFieldUndeclared(ident.name.clone(), ident.span));
     }
 }
 
@@ -326,7 +336,7 @@ fn check_private_identifier<'a>(
 #[diagnostic(help("for octal literals use the '0o' prefix instead"))]
 struct LegacyOctal(#[label] Span);
 
-fn check_number_literal(lit: &NumberLiteral, node: &AstNode, ctx: &LintContext) {
+fn check_number_literal(lit: &NumberLiteral, ctx: &SemanticBuilder) {
     // NumericLiteral :: LegacyOctalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
@@ -340,49 +350,49 @@ fn check_number_literal(lit: &NumberLiteral, node: &AstNode, ctx: &LintContext) 
         false
     }
 
-    if ctx.strict_mode(node) {
+    if ctx.strict_mode() {
         match lit.base {
             NumberBase::Octal if leading_zero(lit.raw) => {
-                ctx.diagnostic(LegacyOctal(lit.span));
+                ctx.error(LegacyOctal(lit.span));
             }
             NumberBase::Decimal if leading_zero(lit.raw) => {
                 #[derive(Debug, Error, Diagnostic)]
                 #[error("Decimals with leading zeros are not allowed in strict mode")]
                 #[diagnostic(help("remove the leading zero"))]
                 struct LeadingZeroDecimal(#[label] Span);
-                ctx.diagnostic(LeadingZeroDecimal(lit.span));
+                ctx.error(LeadingZeroDecimal(lit.span));
             }
             _ => {}
         }
     }
 }
 
-fn check_string_literal<'a>(lit: &StringLiteral, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     // 12.9.4.1 Static Semantics: Early Errors
     // EscapeSequence ::
     //   LegacyOctalEscapeSequence
     //   NonOctalDecimalEscapeSequence
     // It is a Syntax Error if the source text matched by this production is strict mode code.
-    let raw = lit.span.source_text(ctx.source_text());
-    if ctx.strict_mode(node) && raw.len() != lit.value.len() {
+    let raw = lit.span.source_text(ctx.source_text);
+    if ctx.strict_mode() && raw.len() != lit.value.len() {
         let mut chars = raw.chars().peekable();
         while let Some(c) = chars.next() {
             if c == '\\' {
                 match chars.next() {
                     Some('0') => {
                         if chars.peek().is_some_and(|c| ('1'..='9').contains(c)) {
-                            return ctx.diagnostic(LegacyOctal(lit.span));
+                            return ctx.error(LegacyOctal(lit.span));
                         }
                     }
                     Some('1'..='7') => {
-                        return ctx.diagnostic(LegacyOctal(lit.span));
+                        return ctx.error(LegacyOctal(lit.span));
                     }
                     Some('8'..='9') => {
                         #[derive(Debug, Error, Diagnostic)]
                         #[error("Invalid escape sequence")]
                         #[diagnostic(help("\\8 and \\9 are not allowed in strict mode"))]
                         struct NonOctalDecimalEscapeSequence(#[label] Span);
-                        return ctx.diagnostic(NonOctalDecimalEscapeSequence(lit.span));
+                        return ctx.error(NonOctalDecimalEscapeSequence(lit.span));
                     }
                     _ => {}
                 }
@@ -393,7 +403,7 @@ fn check_string_literal<'a>(lit: &StringLiteral, node: &AstNode<'a>, ctx: &LintC
 
 // It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody is true and IsSimpleParameterList of FormalParameters is false.
 // background: https://humanwhocodes.com/blog/2016/10/the-ecmascript-2016-change-you-probably-dont-know/
-fn check_directive<'a>(directive: &Directive, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_directive<'a>(directive: &Directive, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Illegal 'use strict' directive in function with non-simple parameter list")]
     #[diagnostic()]
@@ -403,16 +413,16 @@ fn check_directive<'a>(directive: &Directive, node: &AstNode<'a>, ctx: &LintCont
         return;
     }
 
-    if !ctx.scope(node).is_function() {
+    if !ctx.scope.node_scope(node).is_function() {
         return;
     }
 
-    for node_id in ctx.ancestors(node) {
-        match ctx.kind(node_id) {
+    for node_id in ctx.nodes.ancestors(node) {
+        match ctx.nodes.kind(node_id) {
             AstKind::Function(Function { params, .. })
             | AstKind::ArrowExpression(ArrowExpression { params, .. }) => {
                 if !params.is_simple_parameter_list() {
-                    return ctx.diagnostic(IllegalUseStrict(directive.span));
+                    return ctx.error(IllegalUseStrict(directive.span));
                 }
                 break;
             }
@@ -424,7 +434,7 @@ fn check_directive<'a>(directive: &Directive, node: &AstNode<'a>, ctx: &LintCont
 fn check_module_declaration<'a>(
     decl: &ModuleDeclaration,
     node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &SemanticBuilder<'a>,
 ) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("'{0}' declaration can only be used at the top level of a module")]
@@ -439,7 +449,7 @@ fn check_module_declaration<'a>(
     // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
     // Basically we need to "upgrade" from script to module if we see any module syntax inside the
     // semantic builder
-    if ctx.source_type().is_typescript() {
+    if ctx.source_type.is_typescript() {
         return;
     }
 
@@ -452,27 +462,27 @@ fn check_module_declaration<'a>(
         | ModuleDeclarationKind::TSNamespaceExportDeclaration(_) => "export statement",
     };
     let span = Span::new(decl.span.start, decl.span.start + 6);
-    match ctx.source_type().module_kind() {
+    match ctx.source_type.module_kind() {
         ModuleKind::Script => {
-            ctx.diagnostic(ModuleCode(text, span));
+            ctx.error(ModuleCode(text, span));
         }
         ModuleKind::Module => {
-            if matches!(ctx.parent_kind(node), AstKind::Program(_)) {
+            if matches!(ctx.nodes.parent_kind(node), AstKind::Program(_)) {
                 return;
             }
-            ctx.diagnostic(TopLevel(text, span));
+            ctx.error(TopLevel(text, span));
         }
     }
 }
 
-fn check_import_declaration(decl: &ImportDeclaration, ctx: &LintContext) {
+fn check_import_declaration(decl: &ImportDeclaration, ctx: &SemanticBuilder) {
     // ModuleItem : ImportDeclaration
     // It is a Syntax Error if the BoundNames of ImportDeclaration contains any duplicate entries.
     // bound_names are usually small, a simple loop should be more performant checking with a hashmap
     check_duplicate_bound_names(decl, ctx);
 }
 
-fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Unexpected new.target expression")]
     #[diagnostic(help(
@@ -498,18 +508,18 @@ fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &LintCo
     match prop.meta.name.as_str() {
         "import" => {
             if prop.property.name == "meta" {
-                if ctx.source_type().is_script() {
-                    return ctx.diagnostic(ImportMeta(prop.span));
+                if ctx.source_type.is_script() {
+                    return ctx.error(ImportMeta(prop.span));
                 }
                 return;
             }
-            ctx.diagnostic(ImportMetaProperty(prop.span));
+            ctx.error(ImportMetaProperty(prop.span));
         }
         "new" => {
             if prop.property.name == "target" {
                 let mut in_function_scope = false;
-                for scope_id in ctx.scope_ancestors(node) {
-                    let flags = ctx.scopes()[scope_id].get().flags;
+                for scope_id in ctx.scope.scopes.ancestors(node.get().scope_id()) {
+                    let flags = ctx.scope.scopes[scope_id].get().flags;
                     // In arrow functions, new.target is inherited from the surrounding scope.
                     if flags.contains(ScopeFlags::Arrow) {
                         continue;
@@ -520,17 +530,21 @@ fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &LintCo
                     }
                 }
                 if !in_function_scope {
-                    return ctx.diagnostic(NewTarget(prop.span));
+                    return ctx.error(NewTarget(prop.span));
                 }
                 return;
             }
-            ctx.diagnostic(NewTargetProperty(prop.span));
+            ctx.error(NewTargetProperty(prop.span));
         }
         _ => {}
     }
 }
 
-fn check_function_declaration<'a>(kind: AstKind<'a>, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_function_declaration<'a>(
+    kind: AstKind<'a>,
+    _node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Invalid function declaration")]
     #[diagnostic(help(
@@ -548,10 +562,10 @@ fn check_function_declaration<'a>(kind: AstKind<'a>, node: &AstNode<'a>, ctx: &L
     // Function declaration not allowed in statement position
     let check = |stmt: &Statement<'a>| {
         if let Statement::Declaration(Declaration::FunctionDeclaration(decl)) = stmt {
-            if ctx.strict_mode(node) {
-                ctx.diagnostic(FunctionDeclarationStrict(decl.span));
+            if ctx.strict_mode() {
+                ctx.error(FunctionDeclarationStrict(decl.span));
             } else if !matches!(kind, AstKind::IfStatement(_) | AstKind::LabeledStatement(_)) {
-                ctx.diagnostic(FunctionDeclarationNonStrict(decl.span));
+                ctx.error(FunctionDeclarationNonStrict(decl.span));
             }
         }
     };
@@ -576,7 +590,7 @@ fn check_function_declaration<'a>(kind: AstKind<'a>, node: &AstNode<'a>, ctx: &L
     }
 }
 
-fn check_regexp_literal(lit: &RegExpLiteral, ctx: &LintContext) {
+fn check_regexp_literal(lit: &RegExpLiteral, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("The 'u' and 'v' regular expression flags cannot be enabled at the same time")]
     #[diagnostic()]
@@ -584,27 +598,27 @@ fn check_regexp_literal(lit: &RegExpLiteral, ctx: &LintContext) {
 
     let flags = lit.regex.flags;
     if flags.contains(RegExpFlags::U | RegExpFlags::V) {
-        ctx.diagnostic(RegExpFlagUAndV(lit.span));
+        ctx.error(RegExpFlagUAndV(lit.span));
     }
 }
 
-fn check_with_statement<'a>(stmt: &WithStatement, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("'with' statements are not allowed")]
     #[diagnostic()]
     struct WithStatement(#[label] Span);
 
-    if ctx.strict_mode(node) || ctx.source_type().is_typescript() {
-        ctx.diagnostic(WithStatement(Span::new(stmt.span.start, stmt.span.start + 4)));
+    if ctx.strict_mode() || ctx.source_type.is_typescript() {
+        ctx.error(WithStatement(Span::new(stmt.span.start, stmt.span.start + 4)));
     }
 }
 
-fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &LintContext<'a>) {
+fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuilder<'a>) {
     let mut previous_default: Option<Span> = None;
     for case in &stmt.cases {
         if case.test.is_none() {
             if let Some(previous_span) = previous_default {
-                ctx.diagnostic(Redeclaration("default".into(), previous_span, case.span));
+                ctx.error(Redeclaration("default".into(), previous_span, case.span));
                 break;
             }
             previous_default.replace(case.span);
@@ -622,7 +636,7 @@ struct InvalidLabelJumpTarget(#[label] Span);
 #[diagnostic()]
 struct InvalidLabelTarget(#[label("This label is used, but not defined")] Span);
 
-fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Illegal break statement")]
     #[diagnostic(help(
@@ -631,18 +645,18 @@ fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &Li
     struct InvalidBreak(#[label] Span);
 
     // It is a Syntax Error if this BreakStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement or a SwitchStatement.
-    for node_id in ctx.ancestors(node).skip(1) {
-        match ctx.kind(node_id) {
+    for node_id in ctx.nodes.ancestors(node).skip(1) {
+        match ctx.nodes.kind(node_id) {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
-                    || ctx.diagnostic(InvalidBreak(stmt.span)),
-                    |label| ctx.diagnostic(InvalidLabelTarget(label.span)),
+                    || ctx.error(InvalidBreak(stmt.span)),
+                    |label| ctx.error(InvalidLabelTarget(label.span)),
                 );
             }
             AstKind::Function(_) | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
-                    || ctx.diagnostic(InvalidBreak(stmt.span)),
-                    |label| ctx.diagnostic(InvalidLabelJumpTarget(label.span)),
+                    || ctx.error(InvalidBreak(stmt.span)),
+                    |label| ctx.error(InvalidLabelJumpTarget(label.span)),
                 );
             }
             AstKind::LabeledStatement(labeled_statement) => {
@@ -665,7 +679,7 @@ fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &Li
 fn check_continue_statement<'a>(
     stmt: &ContinueStatement,
     node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &SemanticBuilder<'a>,
 ) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Illegal continue statement: no surrounding iteration statement")]
@@ -686,18 +700,18 @@ fn check_continue_statement<'a>(
     );
 
     // It is a Syntax Error if this ContinueStatement is not nested, directly or indirectly (but not crossing function or static initialization block boundaries), within an IterationStatement.
-    for node_id in ctx.ancestors(node).skip(1) {
-        match ctx.kind(node_id) {
+    for node_id in ctx.nodes.ancestors(node).skip(1) {
+        match ctx.nodes.kind(node_id) {
             AstKind::Program(_) => {
                 return stmt.label.as_ref().map_or_else(
-                    || ctx.diagnostic(InvalidContinue(stmt.span)),
-                    |label| ctx.diagnostic(InvalidLabelTarget(label.span)),
+                    || ctx.error(InvalidContinue(stmt.span)),
+                    |label| ctx.error(InvalidLabelTarget(label.span)),
                 );
             }
             AstKind::Function(_) | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
-                    || ctx.diagnostic(InvalidContinue(stmt.span)),
-                    |label| ctx.diagnostic(InvalidLabelJumpTarget(label.span)),
+                    || ctx.error(InvalidContinue(stmt.span)),
+                    |label| ctx.error(InvalidLabelJumpTarget(label.span)),
                 );
             }
             AstKind::LabeledStatement(labeled_statement) => {
@@ -714,7 +728,7 @@ fn check_continue_statement<'a>(
                     ) {
                         break;
                     }
-                    return ctx.diagnostic(InvalidLabelNonIteration(
+                    return ctx.error(InvalidLabelNonIteration(
                             "continue",
                             labeled_statement.label.span,
                             label.span,
@@ -727,14 +741,18 @@ fn check_continue_statement<'a>(
     }
 }
 
-fn check_labeled_statement<'a>(stmt: &LabeledStatement, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    for node_id in ctx.ancestors(node).skip(1) {
-        match ctx.kind(node_id) {
+fn check_labeled_statement<'a>(
+    stmt: &LabeledStatement,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    for node_id in ctx.nodes.ancestors(node).skip(1) {
+        match ctx.nodes.kind(node_id) {
             // label cannot cross boundary on function or static block
             AstKind::Function(_) | AstKind::StaticBlock(_) | AstKind::Program(_) => break,
             // check label name redeclaration
             AstKind::LabeledStatement(label_stmt) if stmt.label.name == label_stmt.label.name => {
-                return ctx.diagnostic(Redeclaration(
+                return ctx.error(Redeclaration(
                     stmt.label.name.clone(),
                     label_stmt.label.span,
                     stmt.label.span,
@@ -748,8 +766,8 @@ fn check_labeled_statement<'a>(stmt: &LabeledStatement, node: &AstNode<'a>, ctx:
 fn check_for_statement_left<'a>(
     left: &ForStatementLeft,
     is_for_in: bool,
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    _node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
 ) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Only a single declaration is allowed in a `for...{0}` statement")]
@@ -765,13 +783,13 @@ fn check_for_statement_left<'a>(
 
     // initializer is not allowed for for-in / for-of
     if decl.declarations.len() > 1 {
-        return ctx.diagnostic(MultipleDeclarationInForLoopHead(
+        return ctx.error(MultipleDeclarationInForLoopHead(
             if is_for_in { "in" } else { "of" },
             decl.span,
         ));
     }
 
-    let strict_mode = ctx.strict_mode(node);
+    let strict_mode = ctx.strict_mode();
     for declarator in &decl.declarations {
         if declarator.init.is_some()
             && (strict_mode
@@ -779,7 +797,7 @@ fn check_for_statement_left<'a>(
                 || decl.kind.is_lexical()
                 || !matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_)))
         {
-            return ctx.diagnostic(UnexpectedInitializerInForLoopHead(
+            return ctx.error(UnexpectedInitializerInForLoopHead(
                 if is_for_in { "for-in" } else { "for-of" },
                 decl.span,
             ));
@@ -787,7 +805,7 @@ fn check_for_statement_left<'a>(
     }
 }
 
-fn check_class(class: &Class, ctx: &LintContext) {
+fn check_class(class: &Class, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Multiple constructor implementations are not allowed.")]
     #[diagnostic()]
@@ -811,13 +829,13 @@ fn check_class(class: &Class, ctx: &LintContext) {
     });
     for new_span in constructors {
         if let Some(prev_span) = prev_constructor {
-            return ctx.diagnostic(DuplicateConstructor(prev_span, new_span));
+            return ctx.error(DuplicateConstructor(prev_span, new_span));
         }
         prev_constructor = Some(new_span);
     }
 }
 
-fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("'super' can only be referenced in a derived class.")]
     #[diagnostic(help("either remove this super, or extend the class"))]
@@ -835,7 +853,7 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
     #[diagnostic()]
     struct UnexpectedSuperReference(#[label] Span);
 
-    let super_call_span = match ctx.parent_kind(node) {
+    let super_call_span = match ctx.nodes.parent_kind(node) {
         AstKind::CallExpression(expr) => Some(expr.span),
         AstKind::NewExpression(expr) => Some(expr.span),
         _ => None,
@@ -843,8 +861,8 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
 
     // skip(1) is the self `Super`
     // skip(2) is the parent `CallExpression` or `NewExpression`
-    for node_id in ctx.ancestors(node).skip(2) {
-        match ctx.kind(node_id) {
+    for node_id in ctx.nodes.ancestors(node).skip(2) {
+        match ctx.nodes.kind(node_id) {
             AstKind::Class(class) => {
                 // ClassTail : ClassHeritageopt { ClassBody }
                 // It is a Syntax Error if ClassHeritage is not present and the following algorithm returns true:
@@ -852,7 +870,7 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 // 2. If constructor is empty, return false.
                 // 3. Return HasDirectSuper of constructor.
                 if class.super_class.is_none() {
-                    return ctx.diagnostic(SuperWithoutDerivedClass(sup.span, class.span));
+                    return ctx.error(SuperWithoutDerivedClass(sup.span, class.span));
                 }
                 break;
             }
@@ -863,7 +881,7 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
                     if def.kind == MethodDefinitionKind::Constructor {
                         // pass through and let AstKind::Class check ClassHeritage
                     } else {
-                        return ctx.diagnostic(UnexpectedSuperCall(super_call_span));
+                        return ctx.error(UnexpectedSuperCall(super_call_span));
                     }
                 } else {
                     // super references are allowed in method
@@ -876,7 +894,7 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
             // * It is a Syntax Error if HasDirectSuper of MethodDefinition is true.
             AstKind::PropertyDefinition(_) => {
                 if let Some(super_call_span) = super_call_span {
-                    return ctx.diagnostic(UnexpectedSuperCall(super_call_span));
+                    return ctx.error(UnexpectedSuperCall(super_call_span));
                 }
                 break;
             }
@@ -886,7 +904,7 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 ) = value
                 {
                     if let Some(super_call_span) = super_call_span {
-                        return ctx.diagnostic(UnexpectedSuperCall(super_call_span));
+                        return ctx.error(UnexpectedSuperCall(super_call_span));
                     }
                     break;
                 }
@@ -895,7 +913,7 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
             // * It is a Syntax Error if ClassStaticBlockStatementList Contains SuperCall is true.
             AstKind::StaticBlock(_) => {
                 if let Some(super_call_span) = super_call_span {
-                    return ctx.diagnostic(UnexpectedSuperCall(super_call_span));
+                    return ctx.error(UnexpectedSuperCall(super_call_span));
                 }
             }
             // ModuleBody : ModuleItemList
@@ -904,8 +922,8 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
             // * It is a Syntax Error if StatementList Contains super
             AstKind::Program(_) => {
                 return super_call_span.map_or_else(
-                    || ctx.diagnostic(UnexpectedSuperReference(sup.span)),
-                    |super_call_span| ctx.diagnostic(UnexpectedSuperCall(super_call_span)),
+                    || ctx.error(UnexpectedSuperReference(sup.span)),
+                    |super_call_span| ctx.error(UnexpectedSuperCall(super_call_span)),
                 );
             }
             _ => {}
@@ -913,7 +931,7 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &LintContext<'a>) {
     }
 }
 
-fn check_property(prop: &Property, ctx: &LintContext) {
+fn check_property(prop: &Property, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Invalid assignment in object literal")]
     #[diagnostic(help(
@@ -925,15 +943,15 @@ fn check_property(prop: &Property, ctx: &LintContext) {
     // It is a Syntax Error if any source text is matched by this production.
     if prop.shorthand {
         if let PropertyValue::Expression(Expression::AssignmentExpression(expr)) = &prop.value {
-            ctx.diagnostic(CoverInitializedName(expr.span));
+            ctx.error(CoverInitializedName(expr.span));
         }
     }
 }
 
 fn check_formal_parameters<'a>(
     params: &FormalParameters,
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    _node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
 ) {
     if params.is_empty() {
         return;
@@ -941,7 +959,7 @@ fn check_formal_parameters<'a>(
 
     // Note: all other cases forbid duplicate parameter names.
     if params.kind == FormalParameterKind::FormalParameter
-        && !ctx.strict_mode(node)
+        && !ctx.strict_mode()
         && params.is_simple_parameter_list()
     {
         return;
@@ -950,7 +968,7 @@ fn check_formal_parameters<'a>(
     check_duplicate_bound_names(params, ctx);
 }
 
-fn check_formal_parameter(param: &FormalParameter, ctx: &LintContext) {
+fn check_formal_parameter(param: &FormalParameter, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("A rest parameter cannot have an initializer")]
     #[diagnostic()]
@@ -960,13 +978,13 @@ fn check_formal_parameter(param: &FormalParameter, ctx: &LintContext) {
         BindingPatternKind::RestElement(pat)
             if matches!(pat.argument.kind, BindingPatternKind::AssignmentPattern(_)) =>
         {
-            ctx.diagnostic(ARestParameterCannotHaveAnInitializer(param.span));
+            ctx.error(ARestParameterCannotHaveAnInitializer(param.span));
         }
         _ => {}
     }
 }
 
-fn check_array_pattern(pattern: &ArrayPattern, ctx: &LintContext) {
+fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("A rest parameter cannot have an initializer")]
     #[diagnostic()]
@@ -979,14 +997,14 @@ fn check_array_pattern(pattern: &ArrayPattern, ctx: &LintContext) {
             BindingPatternKind::RestElement(pat)
                 if matches!(pat.argument.kind, BindingPatternKind::AssignmentPattern(_)) =>
             {
-                ctx.diagnostic(ARestParameterCannotHaveAnInitializer(elem.span()));
+                ctx.error(ARestParameterCannotHaveAnInitializer(elem.span()));
             }
             _ => {}
         }
     }
 }
 
-fn check_object_expression(obj_expr: &ObjectExpression, ctx: &LintContext) {
+fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder) {
     // ObjectLiteral : { PropertyDefinitionList }
     // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
     // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
@@ -995,14 +1013,14 @@ fn check_object_expression(obj_expr: &ObjectExpression, ctx: &LintContext) {
     for prop_name in prop_names {
         if prop_name.0 == "__proto__" {
             if let Some(prev_span) = prev_proto {
-                ctx.diagnostic(Redeclaration("__proto__".into(), prev_span, prop_name.1));
+                ctx.error(Redeclaration("__proto__".into(), prev_span, prop_name.1));
             }
             prev_proto = Some(prop_name.1);
         }
     }
 }
 
-fn check_binary_expression(binary_expr: &BinaryExpression, ctx: &LintContext) {
+fn check_binary_expression(binary_expr: &BinaryExpression, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Unexpected exponentiation expression")]
     #[diagnostic(help("Wrap {0} expression in parentheses to enforce operator precedence"))]
@@ -1013,18 +1031,18 @@ fn check_binary_expression(binary_expr: &BinaryExpression, ctx: &LintContext) {
             // async () => await 5 ** 6
             // async () => await -5 ** 6
             Expression::AwaitExpression(_) => {
-                ctx.diagnostic(UnexpectedExponential("await", binary_expr.span));
+                ctx.error(UnexpectedExponential("await", binary_expr.span));
             }
             // -5 ** 6
             Expression::UnaryExpression(_) => {
-                ctx.diagnostic(UnexpectedExponential("unary", binary_expr.span));
+                ctx.error(UnexpectedExponential("unary", binary_expr.span));
             }
             _ => {}
         }
     }
 }
 
-fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &LintContext) {
+fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Logical expressions and coalesce expressions cannot be mixed")]
     #[diagnostic(help("Wrap either expression by parentheses"))]
@@ -1044,13 +1062,13 @@ fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &LintContext)
         }
         if let Some(expr) = maybe_mixed_coalesce_expr {
             if matches!(expr.operator, LogicalOperator::And | LogicalOperator::Or) {
-                ctx.diagnostic(MixedCoalesce(logical_expr.span));
+                ctx.error(MixedCoalesce(logical_expr.span));
             }
         }
     }
 }
 
-fn check_member_expression(member_expr: &MemberExpression, ctx: &LintContext) {
+fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Private fields cannot be accessed on super")]
     #[diagnostic()]
@@ -1059,15 +1077,15 @@ fn check_member_expression(member_expr: &MemberExpression, ctx: &LintContext) {
     if let MemberExpression::PrivateFieldExpression(private_expr) = member_expr {
         // super.#m
         if let Expression::Super(_) = &private_expr.object {
-            ctx.diagnostic(SuperPrivate(private_expr.span));
+            ctx.error(SuperPrivate(private_expr.span));
         }
     }
 }
 
 fn check_unary_expression<'a>(
     unary_expr: &'a UnaryExpression,
-    node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    _node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
 ) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Delete of an unqualified identifier in strict mode.")]
@@ -1082,12 +1100,12 @@ fn check_unary_expression<'a>(
     // https://tc39.es/ecma262/#sec-delete-operator-static-semantics-early-errors
     if unary_expr.operator == UnaryOperator::Delete {
         match unary_expr.argument.get_inner_expression() {
-            Expression::Identifier(ident) if ctx.strict_mode(node) => {
-                ctx.diagnostic(DeleteOfUnqualified(ident.span));
+            Expression::Identifier(ident) if ctx.strict_mode() => {
+                ctx.error(DeleteOfUnqualified(ident.span));
             }
             Expression::MemberExpression(expr) => {
                 if let MemberExpression::PrivateFieldExpression(expr) = &**expr {
-                    ctx.diagnostic(DeletePrivateField(expr.span));
+                    ctx.error(DeletePrivateField(expr.span));
                 }
             }
             _ => {}
@@ -1095,9 +1113,9 @@ fn check_unary_expression<'a>(
     }
 }
 
-fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    for node_id in ctx.ancestors(node).skip(1) {
-        match ctx.kind(node_id) {
+fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) -> bool {
+    for node_id in ctx.nodes.ancestors(node).skip(1) {
+        match ctx.nodes.kind(node_id) {
             AstKind::FormalParameters(_) => return true,
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowExpression(_) => break,
             _ => {}
@@ -1114,19 +1132,27 @@ struct AwaitOrYieldInParameter(
     #[label("{0} expression not allowed in formal parameter")] Span,
 );
 
-fn check_await_expression<'a>(expr: &AwaitExpression, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_await_expression<'a>(
+    expr: &AwaitExpression,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
     if is_in_formal_parameters(node, ctx) {
-        ctx.diagnostic(AwaitOrYieldInParameter("await", expr.span));
+        ctx.error(AwaitOrYieldInParameter("await", expr.span));
     }
     // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-    if ctx.scope(node).flags.contains(ScopeFlags::ClassStaticBlock) {
+    if ctx.scope.node_scope(node).flags.contains(ScopeFlags::ClassStaticBlock) {
         let start = expr.span.start;
-        ctx.diagnostic(ClassStatickBlockAwait(Span::new(start, start + 5)));
+        ctx.error(ClassStatickBlockAwait(Span::new(start, start + 5)));
     }
 }
 
-fn check_yield_expression<'a>(expr: &YieldExpression, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_yield_expression<'a>(
+    expr: &YieldExpression,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
     if is_in_formal_parameters(node, ctx) {
-        ctx.diagnostic(AwaitOrYieldInParameter("yield", expr.span));
+        ctx.error(AwaitOrYieldInParameter("yield", expr.span));
     }
 }

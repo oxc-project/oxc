@@ -954,7 +954,6 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
- "oxc_linter",
  "oxc_parser",
  "oxc_printer",
  "oxc_semantic",
@@ -1061,6 +1060,7 @@ dependencies = [
  "oxc_ast",
  "oxc_diagnostics",
  "oxc_parser",
+ "phf",
  "rustc-hash",
 ]
 

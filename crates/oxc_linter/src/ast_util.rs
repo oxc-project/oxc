@@ -11,21 +11,8 @@ pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
 }
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use phf::{phf_set, Set};
 
 use crate::context::LintContext;
-
-pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
-    "implements",
-    "interface",
-    "let",
-    "package",
-    "private",
-    "protected",
-    "public",
-    "static",
-    "yield",
-};
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:

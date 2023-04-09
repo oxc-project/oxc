@@ -1,7 +1,3 @@
-pub mod early_error {
-    pub mod javascript;
-}
-
 oxc_macros::declare_all_lint_rules! {
     array_callback_return,
     constructor_super,
