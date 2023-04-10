@@ -16,7 +16,7 @@ use crate::{
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
     scope::{ScopeBuilder, ScopeId},
-    symbol::{Reference, ReferenceFlag, SymbolFlags, SymbolId, SymbolTable},
+    symbol::{Reference, ReferenceFlag, SymbolFlags, SymbolId, SymbolTableBuilder},
     Semantic,
 };
 
@@ -38,7 +38,7 @@ pub struct SemanticBuilder<'a> {
     // builders
     pub nodes: AstNodes<'a>,
     pub scope: ScopeBuilder,
-    pub symbols: SymbolTable,
+    pub symbols: SymbolTableBuilder,
 
     with_module_record_builder: bool,
     module_record_builder: ModuleRecordBuilder,
@@ -67,7 +67,7 @@ impl<'a> SemanticBuilder<'a> {
             current_symbol_flags: SymbolFlags::empty(),
             nodes,
             scope,
-            symbols: SymbolTable::default(),
+            symbols: SymbolTableBuilder::default(),
             with_module_record_builder: false,
             module_record_builder: ModuleRecordBuilder::default(),
         }
@@ -84,6 +84,7 @@ impl<'a> SemanticBuilder<'a> {
         // First AST pass
         self.visit_program(program);
 
+        let symbols = self.symbols.build();
         // Second partial AST pass on top level import / export statements
         let module_record = if self.with_module_record_builder {
             self.module_record_builder.build(program)
@@ -97,7 +98,7 @@ impl<'a> SemanticBuilder<'a> {
             trivias: self.trivias,
             nodes: self.nodes,
             scopes: self.scope.scopes,
-            symbols: self.symbols,
+            symbols,
             module_record,
         };
         SemanticBuilderReturn { semantic, errors: self.errors }

@@ -2,7 +2,7 @@ use oxc_ast::{ast::ClassType, AstKind, Atom, SourceType};
 use rustc_hash::FxHashMap;
 
 use super::{Scope, ScopeFlags, ScopeId, ScopeTree};
-use crate::{symbol::Reference, SymbolTable};
+use crate::symbol::{Reference, SymbolTableBuilder};
 
 #[derive(Debug)]
 pub struct ScopeBuilder {
@@ -58,7 +58,7 @@ impl ScopeBuilder {
         }
     }
 
-    pub fn resolve_reference(&mut self, symbol_table: &mut SymbolTable) {
+    pub fn resolve_reference(&mut self, symbol_table: &mut SymbolTableBuilder) {
         // At the initial stage, all references are unresolved.
         let all_references = {
             let current_scope = self.current_scope_mut();

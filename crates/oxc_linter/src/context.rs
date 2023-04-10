@@ -143,9 +143,8 @@ impl<'a> LintContext<'a> {
 
     /* Symbols */
 
-    #[allow(clippy::unused_self)]
-    pub fn is_reference_to_global_variable(&self, _ident: &IdentifierReference) -> bool {
-        true
+    pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
+        self.semantic().is_reference_to_global_variables(ident)
     }
 
     #[allow(clippy::unused_self)]
