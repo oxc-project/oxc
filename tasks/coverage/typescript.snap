@@ -1,7 +1,7 @@
 TypeScript Summary:
 AST Parsed     : 2337/2337 (100.00%)
-Positive Passed: 2331/2337 (99.74%)
-Negative Passed: 673/2535 (26.55%)
+Positive Passed: 2332/2337 (99.79%)
+Negative Passed: 669/2535 (26.39%)
 Expect Syntax Error: "Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "additionalChecks/noPropertyAccessFromIndexSignature1.ts"
@@ -999,6 +999,7 @@ Expect Syntax Error: "jsdoc/typedefCrossModule3.ts"
 Expect Syntax Error: "jsdoc/typedefCrossModule4.ts"
 Expect Syntax Error: "jsdoc/typedefDuplicateTypeDeclaration.ts"
 Expect Syntax Error: "jsdoc/typedefInnerNamepaths.ts"
+Expect Syntax Error: "jsdoc/typedefOnStatements.ts"
 Expect Syntax Error: "jsdoc/typedefScope1.ts"
 Expect Syntax Error: "jsdoc/typedefTagTypeResolution.ts"
 Expect Syntax Error: "jsx/checkJsxChildrenCanBeTupleType.tsx"
@@ -1272,6 +1273,8 @@ Expect Syntax Error: "parser/ecmascript5/Statements/BreakStatements/parser_break
 Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueInIterationStatement4.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/ContinueStatements/parser_continueNotInIterationStatement4.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserBlockStatement1.d.ts"
+Expect Syntax Error: "parser/ecmascript5/Statements/parserBreakStatement1.d.ts"
+Expect Syntax Error: "parser/ecmascript5/Statements/parserContinueStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserDebuggerStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserDoStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserES5ForOfStatement1.d.ts"
@@ -1304,6 +1307,7 @@ Expect Syntax Error: "parser/ecmascript5/Statements/parserTryStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserVariableStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserVariableStatement2.d.ts"
 Expect Syntax Error: "parser/ecmascript5/Statements/parserWhileStatement1.d.ts"
+Expect Syntax Error: "parser/ecmascript5/Statements/parserWithStatement1.d.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode1.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode15-negative.ts"
 Expect Syntax Error: "parser/ecmascript5/StrictMode/parserStrictMode16.ts"
@@ -1892,6 +1896,13 @@ Expect to Parse: "es6/for-ofStatements/for-of53.ts"
    ╰────
 Expect to Parse: "externalModules/topLevelAwait.2.ts"
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[externalModules/topLevelAwait.2.ts:6:1]
+ 6 │ // await allowed in import=namespace when not a module
+ 7 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwait.2.ts:3:1]
  3 │ 
@@ -1901,13 +1912,6 @@ Expect to Parse: "externalModules/topLevelAwait.2.ts"
    ╰────
 
   × The keyword 'await' is reserved
-   ╭─[externalModules/topLevelAwait.2.ts:6:1]
- 6 │ // await allowed in import=namespace when not a module
- 7 │ import await = foo.await;
-   ·        ─────
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
    ╭─[externalModules/topLevelAwait.2.ts:6:1]
  6 │ // await allowed in import=namespace when not a module
  7 │ import await = foo.await;
@@ -1941,14 +1945,6 @@ Expect to Parse: "salsa/plainJSRedeclare3.ts"
    ·     ───┬───
    ·        ╰── It can not be redeclared here
  7 │ orbitol.toExponential()
-   ╰────
-Expect to Parse: "salsa/privateIdentifierExpando.ts"
-
-  × Private identifier '#bar' is not allowed outside class bodies
-   ╭─[salsa/privateIdentifierExpando.ts:7:1]
- 7 │ const x = {};
- 8 │ x.#bar.baz = 20;
-   ·   ────
    ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -2553,22 +2549,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  14 │ 
     ╰────
 
-  × Cannot use await in class static initialization block
-   ╭─[classes/classStaticBlock/classStaticBlock7.ts:2:1]
- 2 │     static {
- 3 │         await 1;
-   ·         ─────
- 4 │         yield 1;
-   ╰────
-
-  × Cannot use await in class static initialization block
-    ╭─[classes/classStaticBlock/classStaticBlock7.ts:11:1]
- 11 │         static {
- 12 │             await 1;
-    ·             ─────
- 13 │ 
-    ╰────
-
   × A 'yield' expression is only allowed in a generator body.
    ╭─[classes/classStaticBlock/classStaticBlock7.ts:3:1]
  3 │         await 1;
@@ -2599,6 +2579,22 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  36 │             return 1;
     ·             ──────
  37 │ 
+    ╰────
+
+  × Cannot use await in class static initialization block
+   ╭─[classes/classStaticBlock/classStaticBlock7.ts:2:1]
+ 2 │     static {
+ 3 │         await 1;
+   ·         ─────
+ 4 │         yield 1;
+   ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[classes/classStaticBlock/classStaticBlock7.ts:11:1]
+ 11 │         static {
+ 12 │             await 1;
+    ·             ─────
+ 13 │ 
     ╰────
 
   × Jump target cannot cross function boundary.
@@ -6539,7 +6535,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:7:1]
  7 │ 1 ** -2 ** -3;
  8 │ -1 ** -2 ** -3;
-   · ──────────────
+   ·       ────────
  9 │ -(1 ** 2) ** 3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -6548,7 +6544,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╭─[es7/exponentiationOperator/exponentiationOperatorSyntaxError1.ts:7:1]
  7 │ 1 ** -2 ** -3;
  8 │ -1 ** -2 ** -3;
-   ·       ────────
+   · ──────────────
  9 │ -(1 ** 2) ** 3;
    ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
@@ -7381,6 +7377,15 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·    ────────
    ╰────
 
+  × 'super' can only be used with function calls or in property accesses
+    ╭─[expressions/superCalls/errorSuperCalls.ts:45:1]
+ 45 │     constructor() {
+ 46 │         super<string>();
+    ·         ─────
+ 47 │         super();
+    ╰────
+  help: replace with `super()` or `super.prop` or `super[prop]`
+
   × 'super' can only be referenced in a derived class.
     ╭─[expressions/superCalls/errorSuperCalls.ts:1:1]
   1 │     //super call in class constructor with no base type
@@ -7536,15 +7541,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
     ·         ───────
  72 │     }
     ╰────
-
-  × 'super' can only be used with function calls or in property accesses
-    ╭─[expressions/superCalls/errorSuperCalls.ts:45:1]
- 45 │     constructor() {
- 46 │         super<string>();
-    ·         ─────
- 47 │         super();
-    ╰────
-  help: replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
   │ 
@@ -7809,6 +7805,13 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  11 │ 
     ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[externalModules/topLevelAwaitErrors.12.ts:7:1]
+ 7 │ // await disallowed in import=namespace when in a module
+ 8 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.12.ts:4:1]
  4 │ export {};
@@ -7825,20 +7828,13 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
 
   × Cannot use `await` as an identifier in an async context
-   ╭─[externalModules/topLevelAwaitErrors.12.ts:7:1]
- 7 │ // await disallowed in import=namespace when in a module
- 8 │ import await = foo.await;
-   ·        ─────
-   ╰────
-
-  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.2.ts:6:1]
  6 │ // reparse variable name as await should fail
  7 │ var await = 1;
    ·     ─────
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.2.ts:6:1]
  6 │ // reparse variable name as await should fail
  7 │ var await = 1;
@@ -7852,13 +7848,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·      ─────
    ╰────
 
-  × The keyword 'await' is reserved
-   ╭─[externalModules/topLevelAwaitErrors.4.ts:6:1]
- 6 │ // reparse binding pattern as await should fail
- 7 │ var [await] = [1];
-   ·      ─────
-   ╰────
-
   × Cannot use `await` as an identifier in an async context
    ╭─[externalModules/topLevelAwaitErrors.4.ts:6:1]
  6 │ // reparse binding pattern as await should fail
@@ -7867,11 +7856,10 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
 
   × The keyword 'await' is reserved
-   ╭─[externalModules/topLevelAwaitErrors.5.ts:4:1]
- 4 │ // await in exported class name should fail
- 5 │ export class await {
-   ·              ─────
- 6 │ }
+   ╭─[externalModules/topLevelAwaitErrors.4.ts:6:1]
+ 6 │ // reparse binding pattern as await should fail
+ 7 │ var [await] = [1];
+   ·      ─────
    ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -7883,6 +7871,14 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ╰────
 
   × The keyword 'await' is reserved
+   ╭─[externalModules/topLevelAwaitErrors.5.ts:4:1]
+ 4 │ // await in exported class name should fail
+ 5 │ export class await {
+   ·              ─────
+ 6 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
    ╭─[externalModules/topLevelAwaitErrors.6.ts:4:1]
  4 │ // await in exported function name should fail
  5 │ export function await() {
@@ -7890,7 +7886,7 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  6 │ }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × The keyword 'await' is reserved
    ╭─[externalModules/topLevelAwaitErrors.6.ts:4:1]
  4 │ // await in exported function name should fail
  5 │ export function await() {
@@ -8067,32 +8063,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  2 │ function parse1(n: number=) { }
    ·                           ─
    ╰────
-
-  × Illegal break statement
-    ╭─[jsdoc/typedefOnStatements.ts:31:1]
- 31 │ /** @typedef {{ j: string }} J */
- 32 │ break;
-    · ──────
- 33 │ /** @typedef {{ k: string }} K */
-    ╰────
-  help: A `break` statement can only be used within an enclosing iteration or switch statement.
-
-  × Illegal continue statement: no surrounding iteration statement
-    ╭─[jsdoc/typedefOnStatements.ts:36:1]
- 36 │ /** @typedef {{ l: string }} L */
- 37 │ continue;
-    · ─────────
- 38 │ /** @typedef {{ m: string }} M */
-    ╰────
-  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
-
-  × 'with' statements are not allowed
-    ╭─[jsdoc/typedefOnStatements.ts:38:1]
- 38 │ /** @typedef {{ m: string }} M */
- 39 │ with (name) {
-    · ────
- 40 │ }
-    ╰────
 
   × Unexpected token
     ╭─[jsx/checkJsxNamespaceNamesQuestionableForms.tsx:12:1]
@@ -9674,20 +9644,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ }
    ╰────
 
-  × Illegal break statement
-   ╭─[parser/ecmascript5/Statements/parserBreakStatement1.d.ts:1:1]
- 1 │ break;
-   · ──────
-   ╰────
-  help: A `break` statement can only be used within an enclosing iteration or switch statement.
-
-  × Illegal continue statement: no surrounding iteration statement
-   ╭─[parser/ecmascript5/Statements/parserContinueStatement1.d.ts:1:1]
- 1 │ continue;
-   · ─────────
-   ╰────
-  help: A `continue` statement can only be used within an enclosing `for`, `while` or `do while`
-
   × Expected `;` but found `Identifier`
    ╭─[parser/ecmascript5/Statements/parserES5ForOfStatement2.ts:1:1]
  1 │ //@target: ES5
@@ -9798,25 +9754,18 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    · ──────
    ╰────
 
-  × 'with' statements are not allowed
-   ╭─[parser/ecmascript5/Statements/parserWithStatement1.d.ts:1:1]
- 1 │ with (foo) {
-   · ────
- 2 │ }
-   ╰────
-
-  × 'with' statements are not allowed
-   ╭─[parser/ecmascript5/Statements/parserWithStatement2.ts:1:1]
- 1 │ with (1)
-   · ────
- 2 │   return;
-   ╰────
-
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[parser/ecmascript5/Statements/parserWithStatement2.ts:1:1]
  1 │ with (1)
  2 │   return;
    ·   ──────
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[parser/ecmascript5/Statements/parserWithStatement2.ts:1:1]
+ 1 │ with (1)
+   · ────
+ 2 │   return;
    ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -9931,15 +9880,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  3 │ };
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
-   ╭─[parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:2:1]
- 2 │   M() {
- 3 │     super<T>(0);
-   ·     ───────────
- 4 │   }
-   ╰────
-
   × 'super' can only be used with function calls or in property accesses
    ╭─[parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:2:1]
  2 │   M() {
@@ -9948,6 +9888,15 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │   }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+   ╭─[parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:2:1]
+ 2 │   M() {
+ 3 │     super<T>(0);
+   ·     ───────────
+ 4 │   }
+   ╰────
 
   × Expected `]` but found `EOF`
    ╭─[parser/ecmascript5/TupleTypes/TupleType4.ts:1:1]
@@ -10264,18 +10213,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  4 │ }
    ╰────
 
-  × Multiple constructor implementations are not allowed.
-   ╭─[salsa/constructorNameInAccessor.ts:2:1]
- 2 │ class C1 {
- 3 │     get constructor() { return }
-   ·         ─────┬─────
-   ·              ╰── constructor has already been declared here
- 4 │     set constructor(value) {}
-   ·         ─────┬─────
-   ·              ╰── it cannot be redeclared here
- 5 │ }
-   ╰────
-
   × Constructor can't have get/set modifier
    ╭─[salsa/constructorNameInAccessor.ts:2:1]
  2 │ class C1 {
@@ -10292,6 +10229,18 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  5 │ }
    ╰────
 
+  × Multiple constructor implementations are not allowed.
+   ╭─[salsa/constructorNameInAccessor.ts:2:1]
+ 2 │ class C1 {
+ 3 │     get constructor() { return }
+   ·         ─────┬─────
+   ·              ╰── constructor has already been declared here
+ 4 │     set constructor(value) {}
+   ·         ─────┬─────
+   ·              ╰── it cannot be redeclared here
+ 5 │ }
+   ╰────
+
   × Constructor can't be a generator
    ╭─[salsa/constructorNameInGenerator.ts:2:1]
  2 │ class C2 {
@@ -10299,6 +10248,30 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
    ·      ───────────
  4 │ }
    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[salsa/plainJSBinderErrors.ts:9:1]
+  9 │ async function f() {
+ 10 │     const await = 3
+    ·           ─────
+ 11 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[salsa/plainJSBinderErrors.ts:12:1]
+ 12 │ function* g() {
+ 13 │     const yield = 4
+    ·           ─────
+ 14 │ }
+    ╰────
+
+  × Classes can't have an element named '#constructor'
+    ╭─[salsa/plainJSBinderErrors.ts:15:1]
+ 15 │ class C {
+ 16 │     #constructor = 5
+    ·     ────────────
+ 17 │     deleted() {
+    ╰────
 
   × Delete of an unqualified identifier in strict mode.
     ╭─[salsa/plainJSBinderErrors.ts:18:1]
@@ -10363,30 +10336,6 @@ Expect to Parse: "salsa/privateIdentifierExpando.ts"
  38 │             break label
     ·                   ─────
  39 │         }
-    ╰────
-
-  × Cannot use `await` as an identifier in an async context
-    ╭─[salsa/plainJSBinderErrors.ts:9:1]
-  9 │ async function f() {
- 10 │     const await = 3
-    ·           ─────
- 11 │ }
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[salsa/plainJSBinderErrors.ts:12:1]
- 12 │ function* g() {
- 13 │     const yield = 4
-    ·           ─────
- 14 │ }
-    ╰────
-
-  × Classes can't have an element named '#constructor'
-    ╭─[salsa/plainJSBinderErrors.ts:15:1]
- 15 │ class C {
- 16 │     #constructor = 5
-    ·     ────────────
- 17 │     deleted() {
     ╰────
 
   × Expected `in` but found `Identifier`

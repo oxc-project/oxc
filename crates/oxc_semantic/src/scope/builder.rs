@@ -2,7 +2,10 @@ use oxc_ast::{ast::ClassType, AstKind, Atom, SourceType};
 use rustc_hash::FxHashMap;
 
 use super::{Scope, ScopeFlags, ScopeId, ScopeTree};
-use crate::symbol::{Reference, SymbolTableBuilder};
+use crate::{
+    node::AstNode,
+    symbol::{Reference, SymbolTableBuilder},
+};
 
 #[derive(Debug)]
 pub struct ScopeBuilder {
@@ -29,6 +32,11 @@ impl ScopeBuilder {
     #[must_use]
     pub fn current_scope_mut(&mut self) -> &mut Scope {
         &mut self.scopes[self.current_scope_id]
+    }
+
+    #[must_use]
+    pub fn node_scope(&self, node: &AstNode) -> &Scope {
+        self.scopes[node.get().scope_id().indextree_id()].get()
     }
 
     pub fn enter(&mut self, flags: ScopeFlags) {

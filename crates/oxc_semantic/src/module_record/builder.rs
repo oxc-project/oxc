@@ -5,13 +5,12 @@ use oxc_ast::{
 
 #[derive(Debug, Default)]
 pub struct ModuleRecordBuilder {
-    module_record: ModuleRecord,
+    pub module_record: ModuleRecord,
     export_entries: Vec<ExportEntry>,
 }
 
 impl ModuleRecordBuilder {
-    #[must_use]
-    pub fn build(mut self, program: &Program) -> ModuleRecord {
+    pub fn visit(&mut self, program: &Program) {
         // This avoids additional checks on TypeScript `TsModuleBlock` which
         // also has `ModuleDeclaration`s.
         for stmt in &program.body {
@@ -23,6 +22,10 @@ impl ModuleRecordBuilder {
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
         // resolved before resovling export entries.
         self.resolve_export_entries();
+    }
+
+    #[must_use]
+    pub fn build(self) -> ModuleRecord {
         self.module_record
     }
 

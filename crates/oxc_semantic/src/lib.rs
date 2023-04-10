@@ -3,6 +3,7 @@
 
 mod binder;
 mod builder;
+mod checker;
 mod module_record;
 mod node;
 mod scope;

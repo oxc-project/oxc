@@ -1186,12 +1186,6 @@ expression: no_constant_binary_expression
    ·         ╰── This compares constantly with the right-hand side of the `===`
    ╰────
 
-  × Delete of an unqualified identifier in strict mode.
-   ╭─[no_constant_binary_expression.tsx:1:1]
- 1 │ delete a === null
-   ·        ─
-   ╰────
-
   ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
    ╭─[no_constant_binary_expression.tsx:1:1]
  1 │ void a === null
@@ -1372,12 +1366,6 @@ expression: no_constant_binary_expression
  1 │ delete a === undefined
    · ───────────┬──────────
    ·            ╰── This compares constantly with the right-hand side of the `===`
-   ╰────
-
-  × Delete of an unqualified identifier in strict mode.
-   ╭─[no_constant_binary_expression.tsx:1:1]
- 1 │ delete a === undefined
-   ·        ─
    ╰────
 
   ⚠ eslint(no-constant-binary-expression): Unexpected constant binary expression
