@@ -974,7 +974,6 @@ dependencies = [
  "is-terminal",
  "miette",
  "owo-colors",
- "oxc_ast",
  "textwrap 0.16.0",
  "thiserror",
  "unicode-width",

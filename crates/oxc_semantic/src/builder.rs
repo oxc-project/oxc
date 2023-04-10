@@ -9,11 +9,12 @@ use oxc_ast::{
     ast::*, module_record::ModuleRecord, visit::Visit, AstKind, Atom, GetSpan, SourceType, Span,
     Trivias,
 };
-use oxc_diagnostics::{Error, Redeclaration};
+use oxc_diagnostics::Error;
 
 use crate::{
     binder::Binder,
     checker::EarlyErrorJavaScript,
+    diagnostics::Redeclaration,
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
     scope::{ScopeBuilder, ScopeId},

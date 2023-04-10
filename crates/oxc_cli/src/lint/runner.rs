@@ -12,7 +12,11 @@ use std::{
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
-use oxc_diagnostics::{Error, GraphicalReportHandler, MinifiedFileError, Severity};
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::Error,
+    Error, GraphicalReportHandler, Severity,
+};
 use oxc_linter::{Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -26,6 +30,11 @@ pub struct LintRunner {
 
     linter: Arc<Linter>,
 }
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("File is too long to fit on the screen")]
+#[diagnostic(help("{0:?} seems like a minified file"))]
+pub struct MinifiedFileError(pub PathBuf);
 
 impl LintRunner {
     #[must_use]

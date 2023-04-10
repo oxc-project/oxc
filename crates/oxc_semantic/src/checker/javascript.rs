@@ -8,13 +8,11 @@ use oxc_ast::{
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
-    Redeclaration,
 };
 use phf::{phf_set, Set};
 use rustc_hash::FxHashMap;
 
-use crate::scope::ScopeFlags;
-use crate::{builder::SemanticBuilder, AstNode};
+use crate::{builder::SemanticBuilder, diagnostics::Redeclaration, scope::ScopeFlags, AstNode};
 
 pub struct EarlyErrorJavaScript;
 
