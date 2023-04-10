@@ -5,7 +5,7 @@ _default:
 
 # Initialize the project by installing all the necessary tools
 init:
-  cargo binstall cargo-nextest cargo-watch cargo-insta -y
+  cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli -y
 
 # Run all the tests
 test:
@@ -29,6 +29,7 @@ new-rule name:
 
 ready:
   git diff --exit-code --quiet
+  typos
   just test
   cargo coverage
   git status
