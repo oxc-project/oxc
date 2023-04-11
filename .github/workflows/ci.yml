@@ -113,9 +113,7 @@ jobs:
         uses: ./.github/actions/rustup
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
 
       - name: Cache
         uses: Swatinem/rust-cache@v2
