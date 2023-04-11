@@ -30,6 +30,7 @@ new-rule name:
 ready:
   git diff --exit-code --quiet
   typos
+  just lint
   just test
   cargo coverage
   git status
