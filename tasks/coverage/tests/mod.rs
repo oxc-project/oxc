@@ -1,5 +1,5 @@
 #[test]
-#[cfg(tarpaulin)]
+#[cfg(any(coverage, coverage_nightly))]
 fn test() {
     use oxc_coverage::{
         AppArgs, BabelCase, BabelSuite, PrinterTest262Case, Suite, Test262Case, Test262Suite,
