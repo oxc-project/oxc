@@ -35,6 +35,9 @@ jobs:
 
       - name: Cache
         uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: check
+          save-if: false
 
       - name: Run
         run: cargo llvm-cov nextest --all-features --workspace --ignore-filename-regex tasks --release --lcov --output-path lcov.info
