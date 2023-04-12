@@ -54,9 +54,9 @@ impl<'a> JSDocBuilder<'a> {
         }
 
         // The comment is the leading comment of this span if there is nothing in between.
-        let end = comment.end() + if comment.is_multi_line() { 2 } else { 0 };
-        let text_between = Span::new(end, span.start).source_text(self.source_text);
-        if !text_between.chars().all(char::is_whitespace) {
+        // +2 to skip `*/` ending
+        let text_between = Span::new(comment.end() + 2, span.start).source_text(self.source_text);
+        if text_between.chars().any(|c| !c.is_whitespace()) {
             return None;
         }
 
@@ -108,9 +108,11 @@ mod test {
     #[test]
     fn not_found() {
         let source_texts = [
+            "function foo() {}",
             "/* test */function foo() {}",
             "/*** test */function foo() {}",
             "/** test */ ; function foo() {}",
+            "/** test */ function foo1() {} function foo() {}",
         ];
         for source_text in source_texts {
             test_jsdoc_not_found(source_text, "function foo() {}");
