@@ -15,6 +15,7 @@ use crate::{
     binder::Binder,
     checker::EarlyErrorJavaScript,
     diagnostics::Redeclaration,
+    jsdoc::JSDocBuilder,
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
     scope::{ScopeBuilder, ScopeId},
@@ -45,6 +46,8 @@ pub struct SemanticBuilder<'a> {
     with_module_record_builder: bool,
     pub module_record_builder: ModuleRecordBuilder,
 
+    jsdoc: JSDocBuilder<'a>,
+
     check_syntax_error: bool,
 }
 
@@ -74,6 +77,7 @@ impl<'a> SemanticBuilder<'a> {
             symbols: SymbolTableBuilder::default(),
             with_module_record_builder: false,
             module_record_builder: ModuleRecordBuilder::default(),
+            jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
         }
     }
@@ -118,6 +122,7 @@ impl<'a> SemanticBuilder<'a> {
             scopes: self.scope.scopes,
             symbols,
             module_record,
+            jsdoc: self.jsdoc.build(),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
@@ -138,10 +143,12 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
-        let ast_node =
-            SemanticNode::new(kind, self.scope.current_scope_id, self.current_node_flags);
+        let mut flags = self.current_node_flags;
+        if self.jsdoc.retrieve_jsdoc_comment(kind) {
+            flags |= NodeFlags::JSDoc;
+        }
+        let ast_node = SemanticNode::new(kind, self.scope.current_scope_id, flags);
         let node_id = self.current_node_id.append_value(ast_node, &mut self.nodes);
-
         self.current_node_id = node_id.into();
     }
 
