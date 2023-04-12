@@ -145,7 +145,7 @@ impl<'a> SemanticBuilder<'a> {
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
         if self.jsdoc.retrieve_jsdoc_comment(kind) {
-            flags |= NodeFlags::JsDoc;
+            flags |= NodeFlags::JSDoc;
         }
         let ast_node = SemanticNode::new(kind, self.scope.current_scope_id, flags);
         let node_id = self.current_node_id.append_value(ast_node, &mut self.nodes);

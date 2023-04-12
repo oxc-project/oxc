@@ -27,7 +27,7 @@ pub struct SemanticNode<'a> {
 bitflags! {
     #[derive(Default)]
     pub struct NodeFlags: u8 {
-        const JsDoc = 1 << 0; // If the Node has a JsDoc comment attached
+        const JSDoc = 1 << 0; // If the Node has a JSDoc comment attached
         const Class = 1 << 1; // If Node is inside a class
     }
 }
@@ -61,6 +61,6 @@ impl<'a> SemanticNode<'a> {
 
     #[must_use]
     pub fn has_jsdoc(&self) -> bool {
-        self.flags.contains(NodeFlags::JsDoc)
+        self.flags.contains(NodeFlags::JSDoc)
     }
 }

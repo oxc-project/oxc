@@ -73,12 +73,12 @@ impl<'a> JSDocTag<'a> {
 }
 
 #[derive(Debug)]
-pub struct JsDocParser<'a> {
+pub struct JSDocParser<'a> {
     source_text: &'a str,
     current: usize,
 }
 
-impl<'a> JsDocParser<'a> {
+impl<'a> JSDocParser<'a> {
     pub fn new(source_text: &'a str) -> Self {
         Self { source_text, current: 0 }
     }
@@ -187,7 +187,7 @@ impl<'a> JsDocParser<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::JsDocParser;
+    use super::JSDocParser;
     use crate::jsdoc::parser::{JSDocTag, JSDocTagKind, Param, ParamType, ParamTypeKind};
 
     #[test]
@@ -206,7 +206,7 @@ mod test {
     fn parses_single_line_jsdoc() {
         let source = "/** @deprecated */";
 
-        let tags = JsDocParser::new(source).parse();
+        let tags = JSDocParser::new(source).parse();
         assert_eq!(tags.len(), 1);
         assert_eq!(tags, vec![JSDocTag { kind: JSDocTagKind::Deprecated, description: "" }]);
     }
@@ -217,7 +217,7 @@ mod test {
         */
         "#;
 
-        let tags = JsDocParser::new(source).parse();
+        let tags = JSDocParser::new(source).parse();
         assert_eq!(tags.len(), 1);
         assert_eq!(tags, vec![JSDocTag { kind: JSDocTagKind::Deprecated, description: "" }]);
     }
@@ -230,7 +230,7 @@ mod test {
         */
        "#;
 
-        let tags = JsDocParser::new(source).parse();
+        let tags = JSDocParser::new(source).parse();
         assert_eq!(tags.len(), 2);
         assert_eq!(
             tags,
@@ -252,7 +252,7 @@ mod test {
         */
        "#;
 
-        let tags = JsDocParser::new(source).parse();
+        let tags = JSDocParser::new(source).parse();
         assert_eq!(tags.len(), 2);
         assert_eq!(
             tags,
@@ -275,7 +275,7 @@ mod test {
         */
        "#;
 
-        let tags = JsDocParser::new(source).parse();
+        let tags = JSDocParser::new(source).parse();
         assert_eq!(tags.len(), 3);
         assert_eq!(
             tags,

@@ -7,7 +7,7 @@ use once_cell::unsync::OnceCell;
 use oxc_ast::{GetSpan, Span};
 
 pub use self::parser::JSDocTag;
-use self::parser::JsDocParser;
+use self::parser::JSDocParser;
 use crate::AstNode;
 
 mod parser;
@@ -53,6 +53,6 @@ impl<'a> JSDocComment<'a> {
     }
 
     pub fn tags<'b>(&'b self) -> &'b Vec<JSDocTag<'a>> {
-        self.tags.get_or_init(|| JsDocParser::new(self.comment).parse())
+        self.tags.get_or_init(|| JSDocParser::new(self.comment).parse())
     }
 }

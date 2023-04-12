@@ -151,7 +151,7 @@ impl<'a> LintContext<'a> {
         Printer::new(0, PrinterOptions::default())
     }
 
-    /* JsDoc */
+    /* JSDoc */
     pub fn jsdoc(&self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
         self.semantic().jsdoc().get_by_node(node)
     }
