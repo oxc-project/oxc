@@ -6,8 +6,8 @@ pub use builder::JSDocBuilder;
 use once_cell::unsync::OnceCell;
 use oxc_ast::{GetSpan, Span};
 
-pub use self::parser::JSDocTag;
 use self::parser::JSDocParser;
+pub use self::parser::JSDocTag;
 use crate::AstNode;
 
 mod parser;
