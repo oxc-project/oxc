@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2065/2071 (99.71%)
 Positive Passed: 2062/2071 (99.57%)
-Negative Passed: 1332/1502 (88.68%)
+Negative Passed: 1327/1502 (88.35%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -13,6 +13,8 @@ Expect Syntax Error: "annex-b/disabled/3.5-for-in-initializer/input.js"
 Expect Syntax Error: "annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-if/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-loop/input.js"
+Expect Syntax Error: "core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js"
+Expect Syntax Error: "core/escape-string/non-octal-eight-and-nine/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-func/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-func-var-sloppy/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
@@ -23,6 +25,7 @@ Expect Syntax Error: "es2015/uncategorised/.191/input.js"
 Expect Syntax Error: "es2015/uncategorised/.335/input.js"
 Expect Syntax Error: "es2015/uncategorised/.343/input.js"
 Expect Syntax Error: "es2015/uncategorised/220/input.js"
+Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
 Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
@@ -32,6 +35,7 @@ Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-nested/input.
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest/input.js"
 Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
+Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
 Expect Syntax Error: "esprima/es2015-identifier/.invalid_function_wait/input.js"
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.migrated_0005/input.js"
@@ -40,6 +44,7 @@ Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.u-f
 Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.u-flag-invalid-range-var-hex/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/.GH-1106-09/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/.migrated_0035/input.js"
+Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
 Expect Syntax Error: "esprima/statement-if/.migrated_0003/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
@@ -529,60 +534,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
     · ─────────────────────
     ╰────
   help: for octal literals use the '0o' prefix instead
-
-  × Invalid escape sequence
-   ╭─[core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:1:1]
- 1 │ () => {
- 2 │   "\8";"\9";
-   ·   ────
- 3 │   "use strict";
-   ╰────
-  help: \8 and \9 are not allowed in strict mode
-
-  × Invalid escape sequence
-   ╭─[core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:1:1]
- 1 │ () => {
- 2 │   "\8";"\9";
-   ·        ────
- 3 │   "use strict";
-   ╰────
-  help: \8 and \9 are not allowed in strict mode
-
-  × Invalid escape sequence
-   ╭─[core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:3:1]
- 3 │   "use strict";
- 4 │   "\8";"\9";
-   ·   ────
- 5 │ }
-   ╰────
-  help: \8 and \9 are not allowed in strict mode
-
-  × Invalid escape sequence
-   ╭─[core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js:3:1]
- 3 │   "use strict";
- 4 │   "\8";"\9";
-   ·        ────
- 5 │ }
-   ╰────
-  help: \8 and \9 are not allowed in strict mode
-
-  × Invalid escape sequence
-   ╭─[core/escape-string/non-octal-eight-and-nine/input.js:3:1]
- 3 │   "use strict";
- 4 │   "\8";"\9";
-   ·   ────
- 5 │ }
-   ╰────
-  help: \8 and \9 are not allowed in strict mode
-
-  × Invalid escape sequence
-   ╭─[core/escape-string/non-octal-eight-and-nine/input.js:3:1]
- 3 │   "use strict";
- 4 │   "\8";"\9";
-   ·        ────
- 5 │ }
-   ╰────
-  help: \8 and \9 are not allowed in strict mode
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[core/escape-string/numeric-escape-in-directive/input.js:1:1]
@@ -2582,18 +2533,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ───────────────
    ╰────
 
+  × Generators can only be declared at the top level or inside a block
+   ╭─[es2015/generators/invalid-sloppy-function/input.js:1:1]
+ 1 │ while (1) function *foo() {}
+   ·           ───────────────
+   ╰────
+
   × Invalid function declaration
    ╭─[es2015/generators/invalid-sloppy-function/input.js:1:1]
  1 │ while (1) function *foo() {}
    ·           ──────────────────
    ╰────
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
-
-  × Generators can only be declared at the top level or inside a block
-   ╭─[es2015/generators/invalid-sloppy-function/input.js:1:1]
- 1 │ while (1) function *foo() {}
-   ·           ───────────────
-   ╰────
 
   × Unexpected token
    ╭─[es2015/identifiers/invalid-escape-seq-const/input.js:1:1]
@@ -2819,16 +2770,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                 ╰── It cannot be redeclared here
    ╰────
 
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring10/input.js:1:1]
- 1 │ export function foo() {};
-   ·                 ─┬─
-   ·                  ╰── Export has already been declared here
- 2 │ export const { a: [{foo}] } = bar;
-   ·                     ─┬─
-   ·                      ╰── It cannot be redeclared here
-   ╰────
-
   × Identifier `foo` has already been declared
    ╭─[es2015/modules/duplicate-named-export-destructuring10/input.js:1:1]
  1 │ export function foo() {};
@@ -2839,14 +2780,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                      ╰── It can not be redeclared here
    ╰────
 
-  × Duplicated export 'foo4'
-   ╭─[es2015/modules/duplicate-named-export-destructuring11/input.js:1:1]
- 1 │ export function foo4() {};
-   ·                 ──┬─
-   ·                   ╰── Export has already been declared here
- 2 │ export const [{ a: [{ foo }], b: { foo2: [{ foo3: foo4 }] } }] = bar;
-   ·                                                   ──┬─
-   ·                                                     ╰── It cannot be redeclared here
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring10/input.js:1:1]
+ 1 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── Export has already been declared here
+ 2 │ export const { a: [{foo}] } = bar;
+   ·                     ─┬─
+   ·                      ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo4` has already been declared
@@ -2860,13 +2801,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Duplicated export 'foo4'
-   ╭─[es2015/modules/duplicate-named-export-destructuring12/input.js:1:1]
+   ╭─[es2015/modules/duplicate-named-export-destructuring11/input.js:1:1]
  1 │ export function foo4() {};
    ·                 ──┬─
    ·                   ╰── Export has already been declared here
- 2 │ export const { a: [{ foo }], b: { foo2: [{ foo3: foo4 }] } } = bar;
-   ·                                                  ──┬─
-   ·                                                    ╰── It cannot be redeclared here
+ 2 │ export const [{ a: [{ foo }], b: { foo2: [{ foo3: foo4 }] } }] = bar;
+   ·                                                   ──┬─
+   ·                                                     ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo4` has already been declared
@@ -2880,13 +2821,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Duplicated export 'foo4'
-   ╭─[es2015/modules/duplicate-named-export-destructuring13/input.js:1:1]
+   ╭─[es2015/modules/duplicate-named-export-destructuring12/input.js:1:1]
  1 │ export function foo4() {};
    ·                 ──┬─
    ·                   ╰── Export has already been declared here
- 2 │ export const { a: [{ foo4: foo }], b, c: { foo2: [{ foo3: foo4 }] } } = bar;
-   ·                                                           ──┬─
-   ·                                                             ╰── It cannot be redeclared here
+ 2 │ export const { a: [{ foo }], b: { foo2: [{ foo3: foo4 }] } } = bar;
+   ·                                                  ──┬─
+   ·                                                    ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo4` has already been declared
@@ -2899,15 +2840,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                                                             ╰── It can not be redeclared here
    ╰────
 
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring14/input.js:1:1]
- 1 │ export const foo = 1;
-   ·              ─┬─
-   ·               ╰── Export has already been declared here
- 2 │ export const { foo2: foo } = bar;
-   ·                      ─┬─
-   ·                       ╰── It cannot be redeclared here
- 3 │ 
+  × Duplicated export 'foo4'
+   ╭─[es2015/modules/duplicate-named-export-destructuring13/input.js:1:1]
+ 1 │ export function foo4() {};
+   ·                 ──┬─
+   ·                   ╰── Export has already been declared here
+ 2 │ export const { a: [{ foo4: foo }], b, c: { foo2: [{ foo3: foo4 }] } } = bar;
+   ·                                                           ──┬─
+   ·                                                             ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo` has already been declared
@@ -2921,14 +2861,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ 
    ╰────
 
-  × Duplicated export 'foo2'
-   ╭─[es2015/modules/duplicate-named-export-destructuring15/input.js:1:1]
- 1 │ export const { foo: foo2 } = bar;
-   ·                     ──┬─
-   ·                       ╰── Export has already been declared here
- 2 │ export const foo2 = 1;
-   ·              ──┬─
-   ·                ╰── It cannot be redeclared here
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring14/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const { foo2: foo } = bar;
+   ·                      ─┬─
+   ·                       ╰── It cannot be redeclared here
  3 │ 
    ╰────
 
@@ -2943,14 +2883,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ 
    ╰────
 
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring16/input.js:1:1]
- 1 │ export const foo = 1;
-   ·              ─┬─
-   ·               ╰── Export has already been declared here
- 2 │ export const [bar, ...foo] = baz;
-   ·                       ─┬─
-   ·                        ╰── It cannot be redeclared here
+  × Duplicated export 'foo2'
+   ╭─[es2015/modules/duplicate-named-export-destructuring15/input.js:1:1]
+ 1 │ export const { foo: foo2 } = bar;
+   ·                     ──┬─
+   ·                       ╰── Export has already been declared here
+ 2 │ export const foo2 = 1;
+   ·              ──┬─
+   ·                ╰── It cannot be redeclared here
  3 │ 
    ╰────
 
@@ -2965,14 +2905,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ 
    ╰────
 
-  × Duplicated export 'bar'
-   ╭─[es2015/modules/duplicate-named-export-destructuring17/input.js:1:1]
- 1 │ export const [foo, ...bar] = baz;
-   ·                       ─┬─
-   ·                        ╰── Export has already been declared here
- 2 │ export const bar = 1;
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring16/input.js:1:1]
+ 1 │ export const foo = 1;
    ·              ─┬─
-   ·               ╰── It cannot be redeclared here
+   ·               ╰── Export has already been declared here
+ 2 │ export const [bar, ...foo] = baz;
+   ·                       ─┬─
+   ·                        ╰── It cannot be redeclared here
  3 │ 
    ╰────
 
@@ -2987,14 +2927,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ 
    ╰────
 
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring18/input.js:1:1]
- 1 │ export const foo = 1;
+  × Duplicated export 'bar'
+   ╭─[es2015/modules/duplicate-named-export-destructuring17/input.js:1:1]
+ 1 │ export const [foo, ...bar] = baz;
+   ·                       ─┬─
+   ·                        ╰── Export has already been declared here
+ 2 │ export const bar = 1;
    ·              ─┬─
-   ·               ╰── Export has already been declared here
- 2 │ export const [bar, [baz, ...foo]] = qux;
-   ·                             ─┬─
-   ·                              ╰── It cannot be redeclared here
+   ·               ╰── It cannot be redeclared here
  3 │ 
    ╰────
 
@@ -3010,13 +2950,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring19/input.js:1:1]
+   ╭─[es2015/modules/duplicate-named-export-destructuring18/input.js:1:1]
  1 │ export const foo = 1;
    ·              ─┬─
    ·               ╰── Export has already been declared here
- 2 │ export const { bar: [baz, ...foo] } = qux;
-   ·                              ─┬─
-   ·                               ╰── It cannot be redeclared here
+ 2 │ export const [bar, [baz, ...foo]] = qux;
+   ·                             ─┬─
+   ·                              ╰── It cannot be redeclared here
  3 │ 
    ╰────
 
@@ -3032,131 +2972,132 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring2/input.js:1:1]
- 1 │ export function foo() {};
-   ·                 ─┬─
-   ·                  ╰── Export has already been declared here
- 2 │ export const { foo } = bar;
-   ·                ─┬─
-   ·                 ╰── It cannot be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[es2015/modules/duplicate-named-export-destructuring2/input.js:1:1]
- 1 │ export function foo() {};
-   ·                 ─┬─
-   ·                  ╰── `foo` has already been declared here
- 2 │ export const { foo } = bar;
-   ·                ─┬─
-   ·                 ╰── It can not be redeclared here
-   ╰────
-
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring3/input.js:1:1]
- 1 │ export const { foo } = bar;
-   ·                ─┬─
-   ·                 ╰── Export has already been declared here
- 2 │ export function foo() {};
-   ·                 ─┬─
-   ·                  ╰── It cannot be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[es2015/modules/duplicate-named-export-destructuring3/input.js:1:1]
- 1 │ export const { foo } = bar;
-   ·                ─┬─
-   ·                 ╰── `foo` has already been declared here
- 2 │ export function foo() {};
-   ·                 ─┬─
-   ·                  ╰── It can not be redeclared here
-   ╰────
-
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring4/input.js:1:1]
- 1 │ export function foo() {};
-   ·                 ─┬─
-   ·                  ╰── Export has already been declared here
- 2 │ export const [foo] = bar;
-   ·               ─┬─
-   ·                ╰── It cannot be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[es2015/modules/duplicate-named-export-destructuring4/input.js:1:1]
- 1 │ export function foo() {};
-   ·                 ─┬─
-   ·                  ╰── `foo` has already been declared here
- 2 │ export const [foo] = bar;
-   ·               ─┬─
-   ·                ╰── It can not be redeclared here
-   ╰────
-
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring5/input.js:1:1]
- 1 │ export const [foo] = bar;
-   ·               ─┬─
-   ·                ╰── Export has already been declared here
- 2 │ export function foo() {};
-   ·                 ─┬─
-   ·                  ╰── It cannot be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[es2015/modules/duplicate-named-export-destructuring5/input.js:1:1]
- 1 │ export const [foo] = bar;
-   ·               ─┬─
-   ·                ╰── `foo` has already been declared here
- 2 │ export function foo() {};
-   ·                 ─┬─
-   ·                  ╰── It can not be redeclared here
-   ╰────
-
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring6/input.js:1:1]
- 1 │ export const { foo } = bar;
-   ·                ─┬─
-   ·                 ╰── Export has already been declared here
- 2 │ export const [foo] = bar2;
-   ·               ─┬─
-   ·                ╰── It cannot be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[es2015/modules/duplicate-named-export-destructuring6/input.js:1:1]
- 1 │ export const { foo } = bar;
-   ·                ─┬─
-   ·                 ╰── `foo` has already been declared here
- 2 │ export const [foo] = bar2;
-   ·               ─┬─
-   ·                ╰── It can not be redeclared here
-   ╰────
-
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring7/input.js:1:1]
- 1 │ export const [foo] = bar;
-   ·               ─┬─
-   ·                ╰── Export has already been declared here
- 2 │ export const { foo } = bar2;
-   ·                ─┬─
-   ·                 ╰── It cannot be redeclared here
-   ╰────
-
-  × Identifier `foo` has already been declared
-   ╭─[es2015/modules/duplicate-named-export-destructuring7/input.js:1:1]
- 1 │ export const [foo] = bar;
-   ·               ─┬─
-   ·                ╰── `foo` has already been declared here
- 2 │ export const { foo } = bar2;
-   ·                ─┬─
-   ·                 ╰── It can not be redeclared here
-   ╰────
-
-  × Duplicated export 'Foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring8/input.js:1:1]
- 1 │ export class Foo {};
+   ╭─[es2015/modules/duplicate-named-export-destructuring19/input.js:1:1]
+ 1 │ export const foo = 1;
    ·              ─┬─
    ·               ╰── Export has already been declared here
- 2 │ export const { Foo } = bar;
+ 2 │ export const { bar: [baz, ...foo] } = qux;
+   ·                              ─┬─
+   ·                               ╰── It cannot be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring2/input.js:1:1]
+ 1 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── `foo` has already been declared here
+ 2 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring2/input.js:1:1]
+ 1 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── Export has already been declared here
+ 2 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── It cannot be redeclared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring3/input.js:1:1]
+ 1 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── `foo` has already been declared here
+ 2 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring3/input.js:1:1]
+ 1 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── Export has already been declared here
+ 2 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── It cannot be redeclared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring4/input.js:1:1]
+ 1 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── `foo` has already been declared here
+ 2 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring4/input.js:1:1]
+ 1 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── Export has already been declared here
+ 2 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── It cannot be redeclared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring5/input.js:1:1]
+ 1 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── `foo` has already been declared here
+ 2 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring5/input.js:1:1]
+ 1 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── Export has already been declared here
+ 2 │ export function foo() {};
+   ·                 ─┬─
+   ·                  ╰── It cannot be redeclared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring6/input.js:1:1]
+ 1 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── `foo` has already been declared here
+ 2 │ export const [foo] = bar2;
+   ·               ─┬─
+   ·                ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring6/input.js:1:1]
+ 1 │ export const { foo } = bar;
+   ·                ─┬─
+   ·                 ╰── Export has already been declared here
+ 2 │ export const [foo] = bar2;
+   ·               ─┬─
+   ·                ╰── It cannot be redeclared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[es2015/modules/duplicate-named-export-destructuring7/input.js:1:1]
+ 1 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── `foo` has already been declared here
+ 2 │ export const { foo } = bar2;
+   ·                ─┬─
+   ·                 ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring7/input.js:1:1]
+ 1 │ export const [foo] = bar;
+   ·               ─┬─
+   ·                ╰── Export has already been declared here
+ 2 │ export const { foo } = bar2;
    ·                ─┬─
    ·                 ╰── It cannot be redeclared here
    ╰────
@@ -3172,13 +3113,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Duplicated export 'Foo'
-   ╭─[es2015/modules/duplicate-named-export-destructuring9/input.js:1:1]
+   ╭─[es2015/modules/duplicate-named-export-destructuring8/input.js:1:1]
  1 │ export class Foo {};
    ·              ─┬─
    ·               ╰── Export has already been declared here
- 2 │ export const [Foo] = bar;
-   ·               ─┬─
-   ·                ╰── It cannot be redeclared here
+ 2 │ export const { Foo } = bar;
+   ·                ─┬─
+   ·                 ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `Foo` has already been declared
@@ -3189,6 +3130,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const [Foo] = bar;
    ·               ─┬─
    ·                ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'Foo'
+   ╭─[es2015/modules/duplicate-named-export-destructuring9/input.js:1:1]
+ 1 │ export class Foo {};
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const [Foo] = bar;
+   ·               ─┬─
+   ·                ╰── It cannot be redeclared here
    ╰────
 
   × Duplicated export 'foo'
@@ -3269,16 +3220,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·          ────────
    ╰────
 
-  × Export 'X' is not defined
-   ╭─[es2015/modules/invalid-escape-export-as/input.js:1:1]
- 1 │ export { X \u0061s Y }
-   ·          ─
-   ╰────
-
   × Keywords cannot contain escape characters
    ╭─[es2015/modules/invalid-escape-export-as/input.js:1:1]
  1 │ export { X \u0061s Y }
    ·            ───────
+   ╰────
+
+  × Export 'X' is not defined
+   ╭─[es2015/modules/invalid-escape-export-as/input.js:1:1]
+ 1 │ export { X \u0061s Y }
+   ·          ─
    ╰────
 
   × Keywords cannot contain escape characters
@@ -3969,12 +3920,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ────
    ╰────
 
-  × Cannot assign to 'eval' in strict mode
-   ╭─[es2015/uncategorised/297/input.js:1:1]
- 1 │ (eval) => { "use strict"; 42 }
-   ·  ────
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/298/input.js:1:1]
  1 │ ({ get test() { } }) => 42
@@ -4070,19 +4015,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                       ─
    ╰────
 
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
-   ╭─[es2015/uncategorised/344/input.js:1:1]
- 1 │ super
-   · ─────
-   ╰────
-
   × 'super' can only be used with function calls or in property accesses
    ╭─[es2015/uncategorised/344/input.js:1:1]
  1 │ super
    · ─────
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+   ╭─[es2015/uncategorised/344/input.js:1:1]
+ 1 │ super
+   · ─────
+   ╰────
 
   × A 'set' accessor must have exactly one parameter.
    ╭─[es2015/uncategorised/347/input.js:1:1]
@@ -4104,13 +4049,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ─
    ╰────
 
-  × The keyword 'await' is reserved
+  × Cannot use `await` as an identifier in an async context
    ╭─[es2015/uncategorised/359/input.js:1:1]
  1 │ const await = foo();
    ·       ─────
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × The keyword 'await' is reserved
    ╭─[es2015/uncategorised/359/input.js:1:1]
  1 │ const await = foo();
    ·       ─────
@@ -4128,12 +4073,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ─────
    ╰────
 
-  × The keyword 'await' is reserved
-   ╭─[es2015/uncategorised/365/input.js:1:1]
- 1 │ function await() {}
-   ·          ─────
-   ╰────
-
   × Cannot use `await` as an identifier in an async context
    ╭─[es2015/uncategorised/365/input.js:1:1]
  1 │ function await() {}
@@ -4141,12 +4080,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × The keyword 'await' is reserved
+   ╭─[es2015/uncategorised/365/input.js:1:1]
+ 1 │ function await() {}
+   ·          ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
    ╭─[es2015/uncategorised/367/input.js:1:1]
  1 │ class await {}
    ·       ─────
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × The keyword 'await' is reserved
    ╭─[es2015/uncategorised/367/input.js:1:1]
  1 │ class await {}
    ·       ─────
@@ -4498,15 +4443,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × yield expression not allowed in formal parameter
    ╭─[es2015/yield/yield-star-parameter-default-inside-generator/input.js:1:1]
  1 │ function* fn(x = yield* yield) {}
-   ·                  ──────┬─────
-   ·                        ╰── yield expression not allowed in formal parameter
+   ·                         ──┬──
+   ·                           ╰── yield expression not allowed in formal parameter
    ╰────
 
   × yield expression not allowed in formal parameter
    ╭─[es2015/yield/yield-star-parameter-default-inside-generator/input.js:1:1]
  1 │ function* fn(x = yield* yield) {}
-   ·                         ──┬──
-   ·                           ╰── yield expression not allowed in formal parameter
+   ·                  ──────┬─────
+   ·                        ╰── yield expression not allowed in formal parameter
    ╰────
 
   × Unexpected exponentiation expression
@@ -4890,20 +4835,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[es2017/async-functions/await-inside-parameters-of-nested-function/input.js:1:1]
+ 1 │ async function foo() {
+ 2 │   function bar(x = await 2) {}
+   ·                    ─────
+ 3 │ }
+   ╰────
+
   × await expression not allowed in formal parameter
    ╭─[es2017/async-functions/await-inside-parameters-of-nested-function/input.js:1:1]
  1 │ async function foo() {
  2 │   function bar(x = await 2) {}
    ·                    ───┬───
    ·                       ╰── await expression not allowed in formal parameter
- 3 │ }
-   ╰────
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[es2017/async-functions/await-inside-parameters-of-nested-function/input.js:1:1]
- 1 │ async function foo() {
- 2 │   function bar(x = await 2) {}
-   ·                    ─────
  3 │ }
    ╰────
 
@@ -4960,16 +4905,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                     ──────────
    ╰────
 
-  × Cannot use export statement outside a module
-   ╭─[es2017/async-functions/invalid-escape-export-async-function/input.js:1:1]
- 1 │ export \u0061sync function y() { await x }
-   · ──────
-   ╰────
-
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-export-async-function/input.js:1:1]
  1 │ export \u0061sync function y() { await x }
    ·        ──────────
+   ╰────
+
+  × Cannot use export statement outside a module
+   ╭─[es2017/async-functions/invalid-escape-export-async-function/input.js:1:1]
+ 1 │ export \u0061sync function y() { await x }
+   · ──────
    ╰────
 
   × Keywords cannot contain escape characters
@@ -5017,6 +4962,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                       ╰── `)` expected
    ╰────
 
+  × Async functions can only be declared at the top level or inside a block
+   ╭─[es2017/async-functions/invalid-generator-inside-loop/input.js:1:1]
+ 1 │ while (1) async function *foo(){}
+   ·           ─────────────────────
+   ╰────
+
   × Invalid function declaration
    ╭─[es2017/async-functions/invalid-generator-inside-loop/input.js:1:1]
  1 │ while (1) async function *foo(){}
@@ -5025,9 +4976,9 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
 
   × Async functions can only be declared at the top level or inside a block
-   ╭─[es2017/async-functions/invalid-generator-inside-loop/input.js:1:1]
- 1 │ while (1) async function *foo(){}
-   ·           ─────────────────────
+   ╭─[es2017/async-functions/invalid-inside-loop/input.js:1:1]
+ 1 │ while (1) async function foo(){}
+   ·           ────────────────────
    ╰────
 
   × Invalid function declaration
@@ -5036,12 +4987,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·           ──────────────────────
    ╰────
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
-
-  × Async functions can only be declared at the top level or inside a block
-   ╭─[es2017/async-functions/invalid-inside-loop/input.js:1:1]
- 1 │ while (1) async function foo(){}
-   ·           ────────────────────
-   ╰────
 
   × Line terminator not permitted before arrow
    ╭─[es2017/async-functions/invalid-newline-after-params/input.js:1:1]
@@ -5162,16 +5107,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × Duplicated export 'foo'
-   ╭─[es2018/object-rest-spread/11/input.js:1:1]
- 1 │ export const foo = 1;
-   ·              ─┬─
-   ·               ╰── Export has already been declared here
- 2 │ export const { bar, ...foo } = baz;
-   ·                        ─┬─
-   ·                         ╰── It cannot be redeclared here
-   ╰────
-
   × Identifier `foo` has already been declared
    ╭─[es2018/object-rest-spread/11/input.js:1:1]
  1 │ export const foo = 1;
@@ -5182,14 +5117,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                         ╰── It can not be redeclared here
    ╰────
 
-  × Duplicated export 'bar'
-   ╭─[es2018/object-rest-spread/12/input.js:1:1]
- 1 │ export const { foo, ...bar } = baz;
-   ·                        ─┬─
-   ·                         ╰── Export has already been declared here
- 2 │ export const bar = 1;
+  × Duplicated export 'foo'
+   ╭─[es2018/object-rest-spread/11/input.js:1:1]
+ 1 │ export const foo = 1;
    ·              ─┬─
-   ·               ╰── It cannot be redeclared here
+   ·               ╰── Export has already been declared here
+ 2 │ export const { bar, ...foo } = baz;
+   ·                        ─┬─
+   ·                         ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `bar` has already been declared
@@ -5202,14 +5137,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·               ╰── It can not be redeclared here
    ╰────
 
-  × Duplicated export 'foo'
-   ╭─[es2018/object-rest-spread/13/input.js:1:1]
- 1 │ export const foo = 1;
+  × Duplicated export 'bar'
+   ╭─[es2018/object-rest-spread/12/input.js:1:1]
+ 1 │ export const { foo, ...bar } = baz;
+   ·                        ─┬─
+   ·                         ╰── Export has already been declared here
+ 2 │ export const bar = 1;
    ·              ─┬─
-   ·               ╰── Export has already been declared here
- 2 │ export const { bar: { baz, ...foo } } = qux;
-   ·                               ─┬─
-   ·                                ╰── It cannot be redeclared here
+   ·               ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo` has already been declared
@@ -5223,13 +5158,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Duplicated export 'foo'
-   ╭─[es2018/object-rest-spread/14/input.js:1:1]
+   ╭─[es2018/object-rest-spread/13/input.js:1:1]
  1 │ export const foo = 1;
    ·              ─┬─
    ·               ╰── Export has already been declared here
- 2 │ export const [bar, { baz, ...foo }] = qux;
-   ·                              ─┬─
-   ·                               ╰── It cannot be redeclared here
+ 2 │ export const { bar: { baz, ...foo } } = qux;
+   ·                               ─┬─
+   ·                                ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo` has already been declared
@@ -5243,13 +5178,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Duplicated export 'foo'
-   ╭─[es2018/object-rest-spread/15/input.js:1:1]
+   ╭─[es2018/object-rest-spread/14/input.js:1:1]
  1 │ export const foo = 1;
    ·              ─┬─
    ·               ╰── Export has already been declared here
- 2 │ export const [bar, [{ baz, ...foo }]] = qux;
-   ·                               ─┬─
-   ·                                ╰── It cannot be redeclared here
+ 2 │ export const [bar, { baz, ...foo }] = qux;
+   ·                              ─┬─
+   ·                               ╰── It cannot be redeclared here
    ╰────
 
   × Identifier `foo` has already been declared
@@ -5260,6 +5195,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ export const [bar, [{ baz, ...foo }]] = qux;
    ·                               ─┬─
    ·                                ╰── It can not be redeclared here
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2018/object-rest-spread/15/input.js:1:1]
+ 1 │ export const foo = 1;
+   ·              ─┬─
+   ·               ╰── Export has already been declared here
+ 2 │ export const [bar, [{ baz, ...foo }]] = qux;
+   ·                               ─┬─
+   ·                                ╰── It cannot be redeclared here
    ╰────
 
   × Invalid rest argument
@@ -6867,12 +6812,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ──
    ╰────
 
-  × Cannot assign to 'eval' in strict mode
-   ╭─[esprima/es2015-arrow-function/invalid-param-strict-mode/input.js:1:1]
- 1 │ eval => {"use strict"};
-   · ────
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-arrow-function/non-arrow-param-followed-by-arrow/input.js:1:1]
  1 │ ((a)) => 0
@@ -7038,6 +6977,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ─────
    ╰────
 
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[esprima/es2015-generator/generator-parameter-binding-element/input.js:1:1]
+ 1 │ (function*() {
+ 2 │     function(x = yield 3) {}
+   ·                  ─────
+ 3 │ })
+   ╰────
+
   × yield expression not allowed in formal parameter
    ╭─[esprima/es2015-generator/generator-parameter-binding-element/input.js:1:1]
  1 │ (function*() {
@@ -7048,10 +6995,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
-   ╭─[esprima/es2015-generator/generator-parameter-binding-element/input.js:1:1]
+   ╭─[esprima/es2015-generator/generator-parameter-binding-property/input.js:1:1]
  1 │ (function*() {
- 2 │     function(x = yield 3) {}
-   ·                  ─────
+ 2 │     function({x: y = yield 3}) {}
+   ·                      ─────
  3 │ })
    ╰────
 
@@ -7065,10 +7012,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
-   ╭─[esprima/es2015-generator/generator-parameter-binding-property/input.js:1:1]
+   ╭─[esprima/es2015-generator/generator-parameter-computed-property-name/input.js:1:1]
  1 │ (function*() {
- 2 │     function({x: y = yield 3}) {}
-   ·                      ─────
+ 2 │     function({[yield 3]: y}) {}
+   ·                ─────
  3 │ })
    ╰────
 
@@ -7078,14 +7025,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │     function({[yield 3]: y}) {}
    ·                ───┬───
    ·                   ╰── yield expression not allowed in formal parameter
- 3 │ })
-   ╰────
-
-  × A 'yield' expression is only allowed in a generator body.
-   ╭─[esprima/es2015-generator/generator-parameter-computed-property-name/input.js:1:1]
- 1 │ (function*() {
- 2 │     function({[yield 3]: y}) {}
-   ·                ─────
  3 │ })
    ╰────
 
@@ -7391,15 +7330,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
-   ╭─[esprima/es2015-super-property/.invalid_super_id/input.js:1:1]
- 1 │ class A {
- 2 │     foo() { new super + 3 }
-   ·             ─────────
- 3 │ }
-   ╰────
-
   × 'super' can only be used with function calls or in property accesses
    ╭─[esprima/es2015-super-property/.invalid_super_id/input.js:1:1]
  1 │ class A {
@@ -7408,6 +7338,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  │ 
+   ╭─[esprima/es2015-super-property/.invalid_super_id/input.js:1:1]
+ 1 │ class A {
+ 2 │     foo() { new super + 3 }
+   ·             ─────────
+ 3 │ }
+   ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
@@ -8386,12 +8325,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0100/input.js:1:1]
  1 │ "use strict"; (eval) => 42
    ·                ────
-   ╰────
-
-  × Cannot assign to 'eval' in strict mode
-   ╭─[esprima/invalid-syntax/migrated_0101/input.js:1:1]
- 1 │ (eval) => { "use strict"; 42 }
-   ·  ────
    ╰────
 
   × Expected `,` but found `/`

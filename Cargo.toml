@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
 	"crates/*",
+	"examples/*",
 	"tasks/*",
 ]
 
@@ -16,11 +17,11 @@ repository = "https://github.com/Boshen/oxc"
 
 [workspace.dependencies]
 oxc_allocator = { version = "0.0.1", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.0.4", path = "crates/oxc_ast" }
-oxc_diagnostics = { version = "0.0.4", path = "crates/oxc_diagnostics" }
-oxc_parser = { version = "0.0.4", path = "crates/oxc_parser" }
+oxc_ast = { version = "0.0.5", path = "crates/oxc_ast" }
+oxc_diagnostics = { version = "0.0.5", path = "crates/oxc_diagnostics" }
+oxc_parser = { version = "0.0.5", path = "crates/oxc_parser" }
 oxc_printer = { version = "0.0.3", path = "crates/oxc_printer" }
-oxc_semantic = { version = "0.0.3", path = "crates/oxc_semantic" }
+oxc_semantic = { version = "0.0.4", path = "crates/oxc_semantic" }
 
 oxc_linter = { version = "0.0.0", path = "crates/oxc_linter" }
 oxc_macros = { version = "0.0.0", path = "crates/oxc_macros" }
@@ -40,6 +41,8 @@ clap = "4.2.1"
 indextree = "4.6.0"
 glob = "0.3.1"
 lazy_static = "1.4.0"
+phf = "0.11"
+once_cell = "1.17.1"
 
 [workspace.metadata.workspaces]
 independent = true

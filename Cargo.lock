@@ -702,6 +702,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsdoc"
+version = "0.1.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_parser",
+ "oxc_semantic",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -891,7 +901,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "bitflags",
  "compact_str",
@@ -954,7 +964,6 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
- "oxc_linter",
  "oxc_parser",
  "oxc_printer",
  "oxc_semantic",
@@ -970,12 +979,11 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "is-terminal",
  "miette",
  "owo-colors",
- "oxc_ast",
  "textwrap 0.16.0",
  "thiserror",
  "unicode-width",
@@ -1028,7 +1036,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "bitflags",
  "miette",
@@ -1053,14 +1061,16 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.0.3"
+version = "0.0.4"
 dependencies = [
  "bitflags",
  "indextree",
+ "once_cell",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
  "oxc_parser",
+ "phf",
  "rustc-hash",
 ]
 

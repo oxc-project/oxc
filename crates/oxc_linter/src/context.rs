@@ -4,7 +4,7 @@ use indextree::{Ancestors, NodeId};
 use oxc_ast::{ast::IdentifierReference, AstKind, SourceType};
 use oxc_diagnostics::Error;
 use oxc_printer::{Printer, PrinterOptions};
-use oxc_semantic::{AstNodes, Scope, ScopeTree, Semantic, SemanticNode, SymbolTable};
+use oxc_semantic::{AstNodes, JSDocComment, Scope, ScopeTree, Semantic, SemanticNode, SymbolTable};
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -109,8 +109,7 @@ impl<'a> LintContext<'a> {
 
     #[must_use]
     pub fn ancestors(&self, node: &AstNode<'a>) -> Ancestors<'_, SemanticNode<'a>> {
-        let node_id = self.nodes().get_node_id(node).unwrap();
-        node_id.ancestors(self.nodes())
+        self.nodes().ancestors(node)
     }
 
     /* Scopes */
@@ -143,13 +142,17 @@ impl<'a> LintContext<'a> {
 
     /* Symbols */
 
-    #[allow(clippy::unused_self)]
-    pub fn is_reference_to_global_variable(&self, _ident: &IdentifierReference) -> bool {
-        true
+    pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
+        self.semantic().is_reference_to_global_variables(ident)
     }
 
     #[allow(clippy::unused_self)]
     pub fn printer(&self) -> Printer {
         Printer::new(0, PrinterOptions::default())
+    }
+
+    /* JSDoc */
+    pub fn jsdoc(&self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
+        self.semantic().jsdoc().get_by_node(node)
     }
 }

@@ -6083,14 +6083,14 @@ Negative Passed: 3915/3915 (100.00%)
     ·                        ╰── yield expression not allowed in formal parameter
     ╰────
 
-  × The keyword 'yield' is reserved
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-yield.js:17:1]
  17 │ 
  18 │ (async function*(yield) { });
     ·                  ─────
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-yield.js:17:1]
  17 │ 
  18 │ (async function*(yield) { });
@@ -6121,14 +6121,14 @@ Negative Passed: 3915/3915 (100.00%)
     ·  ─────────────────────
     ╰────
 
-  × The keyword 'yield' is reserved
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/early-errors-expression-yield-as-function-binding-identifier.js:16:1]
  16 │ 
  17 │ (async function* yield() { });
     ·                  ─────
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/async-generator/early-errors-expression-yield-as-function-binding-identifier.js:16:1]
  16 │ 
  17 │ (async function* yield() { });
@@ -6264,14 +6264,6 @@ Negative Passed: 3915/3915 (100.00%)
  37 │   
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/async-generator/named-yield-as-binding-identifier-escaped.js:29:1]
- 29 │ var gen = async function *g() {
- 30 │   var yi\u0065ld;
-    ·       ──────────
- 31 │ };
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/named-yield-as-binding-identifier-escaped.js:29:1]
  29 │ var gen = async function *g() {
@@ -6281,10 +6273,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/async-generator/named-yield-as-binding-identifier.js:29:1]
+    ╭─[language/expressions/async-generator/named-yield-as-binding-identifier-escaped.js:29:1]
  29 │ var gen = async function *g() {
- 30 │   var yield;
-    ·       ─────
+ 30 │   var yi\u0065ld;
+    ·       ──────────
  31 │ };
     ╰────
 
@@ -6297,10 +6289,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/async-generator/named-yield-as-identifier-reference-escaped.js:29:1]
+    ╭─[language/expressions/async-generator/named-yield-as-binding-identifier.js:29:1]
  29 │ var gen = async function *g() {
- 30 │   void yi\u0065ld;
-    ·        ──────────
+ 30 │   var yield;
+    ·       ─────
  31 │ };
     ╰────
 
@@ -6313,6 +6305,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/async-generator/named-yield-as-identifier-reference-escaped.js:29:1]
+ 29 │ var gen = async function *g() {
+ 30 │   void yi\u0065ld;
+    ·        ──────────
+ 31 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/named-yield-as-identifier-reference.js:29:1]
  29 │ var gen = async function *g() {
  30 │   void yield;
@@ -6320,7 +6320,7 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ };
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/async-generator/named-yield-as-identifier-reference.js:29:1]
  29 │ var gen = async function *g() {
  30 │   void yield;
@@ -6394,14 +6394,6 @@ Negative Passed: 3915/3915 (100.00%)
  37 │   
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/async-generator/yield-as-binding-identifier-escaped.js:29:1]
- 29 │ var gen = async function *() {
- 30 │   var yi\u0065ld;
-    ·       ──────────
- 31 │ };
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/yield-as-binding-identifier-escaped.js:29:1]
  29 │ var gen = async function *() {
@@ -6411,10 +6403,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/async-generator/yield-as-binding-identifier.js:29:1]
+    ╭─[language/expressions/async-generator/yield-as-binding-identifier-escaped.js:29:1]
  29 │ var gen = async function *() {
- 30 │   var yield;
-    ·       ─────
+ 30 │   var yi\u0065ld;
+    ·       ──────────
  31 │ };
     ╰────
 
@@ -6427,10 +6419,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/async-generator/yield-as-identifier-reference-escaped.js:29:1]
+    ╭─[language/expressions/async-generator/yield-as-binding-identifier.js:29:1]
  29 │ var gen = async function *() {
- 30 │   void yi\u0065ld;
-    ·        ──────────
+ 30 │   var yield;
+    ·       ─────
  31 │ };
     ╰────
 
@@ -6443,6 +6435,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/async-generator/yield-as-identifier-reference-escaped.js:29:1]
+ 29 │ var gen = async function *() {
+ 30 │   void yi\u0065ld;
+    ·        ──────────
+ 31 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/async-generator/yield-as-identifier-reference.js:29:1]
  29 │ var gen = async function *() {
  30 │   void yield;
@@ -6450,7 +6450,7 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ };
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/async-generator/yield-as-identifier-reference.js:29:1]
  29 │ var gen = async function *() {
  30 │   void yield;
@@ -6645,14 +6645,6 @@ Negative Passed: 3915/3915 (100.00%)
  61 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { static async *gen() {
@@ -6662,10 +6654,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { static async *gen() {
- 35 │     var yield;
-    ·         ─────
+ 35 │     var yi\u0065ld;
+    ·         ──────────
  36 │ }};
     ╰────
 
@@ -6678,10 +6670,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
  34 │ var C = class { static async *gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
+ 35 │     var yield;
+    ·         ─────
  36 │ }};
     ╰────
 
@@ -6694,6 +6686,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { static async *gen() {
  35 │     void yield;
@@ -6701,7 +6701,7 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }};
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { static async *gen() {
  35 │     void yield;
@@ -6865,14 +6865,6 @@ Negative Passed: 3915/3915 (100.00%)
  61 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { async *gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { async *gen() {
@@ -6882,10 +6874,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier.js:34:1]
+    ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { async *gen() {
- 35 │     var yield;
-    ·         ─────
+ 35 │     var yi\u0065ld;
+    ·         ──────────
  36 │ }};
     ╰────
 
@@ -6898,10 +6890,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method/yield-as-identifier-reference-escaped.js:34:1]
+    ╭─[language/expressions/class/async-gen-method/yield-as-binding-identifier.js:34:1]
  34 │ var C = class { async *gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
+ 35 │     var yield;
+    ·         ─────
  36 │ }};
     ╰────
 
@@ -6914,6 +6906,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/async-gen-method/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { async *gen() {
  35 │     void yield;
@@ -6921,7 +6921,7 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }};
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/class/async-gen-method/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { async *gen() {
  35 │     void yield;
@@ -7199,13 +7199,6 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × The keyword 'await' is reserved
-    ╭─[language/expressions/class/class-name-ident-await-escaped-module.js:22:1]
- 22 │ 
- 23 │ var C = class aw\u0061it {};
-    ·               ──────────
-    ╰────
-
   × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/class/class-name-ident-await-escaped-module.js:22:1]
  22 │ 
@@ -7214,13 +7207,20 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'await' is reserved
+    ╭─[language/expressions/class/class-name-ident-await-escaped-module.js:22:1]
+ 22 │ 
+ 23 │ var C = class aw\u0061it {};
+    ·               ──────────
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/class/class-name-ident-await-module.js:21:1]
  21 │ 
  22 │ var C = class await {};
     ·               ─────
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × The keyword 'await' is reserved
     ╭─[language/expressions/class/class-name-ident-await-module.js:21:1]
  21 │ 
  22 │ var C = class await {};
@@ -8502,14 +8502,6 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }};
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { static async *#gen() {
@@ -8519,10 +8511,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { static async *#gen() {
- 35 │     var yield;
-    ·         ─────
+ 35 │     var yi\u0065ld;
+    ·         ──────────
  36 │ }};
     ╰────
 
@@ -8535,10 +8527,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
  34 │ var C = class { static async *#gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
+ 35 │     var yield;
+    ·         ─────
  36 │ }};
     ╰────
 
@@ -8551,6 +8543,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { static async *#gen() {
  35 │     void yield;
@@ -8558,7 +8558,7 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }};
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { static async *#gen() {
  35 │     void yield;
@@ -8672,14 +8672,6 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }};
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { async *#gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { async *#gen() {
@@ -8689,10 +8681,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { async *#gen() {
- 35 │     var yield;
-    ·         ─────
+ 35 │     var yi\u0065ld;
+    ·         ──────────
  36 │ }};
     ╰────
 
@@ -8705,10 +8697,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:34:1]
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
  34 │ var C = class { async *#gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
+ 35 │     var yield;
+    ·         ─────
  36 │ }};
     ╰────
 
@@ -8721,6 +8713,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { async *#gen() {
  35 │     void yield;
@@ -8728,7 +8728,7 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }};
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
  34 │ var C = class { async *#gen() {
  35 │     void yield;
@@ -9036,14 +9036,6 @@ Negative Passed: 3915/3915 (100.00%)
  30 │ };
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }};
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
  33 │ var C = class { static *#gen() {
@@ -9053,10 +9045,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
  33 │ var C = class { static *#gen() {
- 34 │     var yield;
-    ·         ─────
+ 34 │     var yi\u0065ld;
+    ·         ──────────
  35 │ }};
     ╰────
 
@@ -9069,10 +9061,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
  33 │ var C = class { static *#gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
+ 34 │     var yield;
+    ·         ─────
  35 │ }};
     ╰────
 
@@ -9085,6 +9077,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
  33 │ var C = class { static *#gen() {
  34 │     void yield;
@@ -9092,7 +9092,7 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ }};
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
  33 │ var C = class { static *#gen() {
  34 │     void yield;
@@ -9142,14 +9142,6 @@ Negative Passed: 3915/3915 (100.00%)
  34 │             throw new Test262Error();
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ var C = class {*#gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }};
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ var C = class {*#gen() {
@@ -9159,10 +9151,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ var C = class {*#gen() {
- 34 │     var yield;
-    ·         ─────
+ 34 │     var yi\u0065ld;
+    ·         ──────────
  35 │ }};
     ╰────
 
@@ -9175,10 +9167,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:33:1]
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
  33 │ var C = class {*#gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
+ 34 │     var yield;
+    ·         ─────
  35 │ }};
     ╰────
 
@@ -9191,6 +9183,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class {*#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
  33 │ var C = class {*#gen() {
  34 │     void yield;
@@ -9198,7 +9198,7 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ }};
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
  33 │ var C = class {*#gen() {
  34 │     void yield;
@@ -9700,14 +9700,6 @@ Negative Passed: 3915/3915 (100.00%)
  24 │   
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
- 39 │   g = this.f;
- 40 │   x = delete (g().#m);
-    ·               ──────
- 41 │ 
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
  39 │   g = this.f;
@@ -9717,7 +9709,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·               ──────
@@ -9733,7 +9725,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:39:1]
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·               ──────
@@ -9749,7 +9741,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·               ──────
@@ -9765,7 +9757,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:39:1]
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·               ──────
@@ -9781,7 +9773,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:39:1]
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·               ──────
@@ -9797,7 +9789,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:39:1]
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·               ──────
@@ -9809,6 +9801,14 @@ Negative Passed: 3915/3915 (100.00%)
  39 │   g = this.f;
  40 │   x = delete (g().#m);
     ·                   ──
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete (g().#m);
+    ·               ──────
  41 │ 
     ╰────
 
@@ -9820,14 +9820,6 @@ Negative Passed: 3915/3915 (100.00%)
  41 │ 
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
- 39 │   
- 40 │   x = delete (this.#m
-    ·               ───────
- 41 │ );
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
  39 │   
@@ -9837,7 +9829,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
  39 │   
  40 │   x = delete (this.#m
     ·               ───────
@@ -9849,6 +9841,14 @@ Negative Passed: 3915/3915 (100.00%)
  39 │   
  40 │   x = delete (this.#m
     ·                    ──
+ 41 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·               ───────
  41 │ );
     ╰────
 
@@ -9876,14 +9876,6 @@ Negative Passed: 3915/3915 (100.00%)
  41 │ );
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:39:1]
- 39 │   
- 40 │   x = delete (this.#m
-    ·               ───────
- 41 │ );
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:39:1]
  39 │   
@@ -9893,18 +9885,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:39:1]
+ 39 │   
+ 40 │   x = delete (this.#m
+    ·               ───────
+ 41 │ );
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:39:1]
  39 │   
  40 │   x = delete (this.#m);
-    ·               ───────
+    ·                    ──
  41 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:39:1]
  39 │   
  40 │   x = delete (this.#m);
-    ·                    ──
+    ·               ───────
  41 │ 
     ╰────
 
@@ -9916,14 +9916,6 @@ Negative Passed: 3915/3915 (100.00%)
  41 │ 
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
- 33 │   g = this.f;
- 34 │   x = delete g().#m;
-    ·              ──────
- 35 │ 
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
  33 │   g = this.f;
@@ -9933,7 +9925,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:33:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -9949,7 +9941,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -9965,7 +9957,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:33:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -9981,7 +9973,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -9997,7 +9989,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:33:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -10013,7 +10005,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -10025,6 +10017,14 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·                  ──
+ 35 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
  35 │ 
     ╰────
 
@@ -10036,14 +10036,6 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ 
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
- 33 │   
- 34 │   x = delete this.#m
-    ·              ───────
- 35 │ ;
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
  33 │   
@@ -10053,7 +10045,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:33:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
  33 │   
  34 │   x = delete this.#m
     ·              ───────
@@ -10065,6 +10057,14 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   
  34 │   x = delete this.#m
     ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
  35 │ ;
     ╰────
 
@@ -10092,14 +10092,6 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ ;
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
- 33 │   
- 34 │   x = delete this.#m
-    ·              ───────
- 35 │ ;
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
  33 │   
@@ -10109,18 +10101,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:33:1]
  33 │   
  34 │   x = delete this.#m;
-    ·              ───────
+    ·                   ──
  35 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:33:1]
  33 │   
  34 │   x = delete this.#m;
-    ·                   ──
+    ·              ───────
  35 │ 
     ╰────
 
@@ -10132,14 +10132,6 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ 
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
- 39 │   g = this.f;
- 40 │   x = delete ((g().#m));
-    ·                ──────
- 41 │ 
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
  39 │   g = this.f;
@@ -10149,7 +10141,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:39:1]
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                ──────
@@ -10165,7 +10157,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:39:1]
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                ──────
@@ -10181,7 +10173,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:39:1]
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                ──────
@@ -10197,7 +10189,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:39:1]
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                ──────
@@ -10213,7 +10205,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:39:1]
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                ──────
@@ -10229,7 +10221,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:39:1]
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                ──────
@@ -10241,6 +10233,14 @@ Negative Passed: 3915/3915 (100.00%)
  39 │   g = this.f;
  40 │   x = delete ((g().#m));
     ·                    ──
+ 41 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:39:1]
+ 39 │   g = this.f;
+ 40 │   x = delete ((g().#m));
+    ·                ──────
  41 │ 
     ╰────
 
@@ -10252,14 +10252,6 @@ Negative Passed: 3915/3915 (100.00%)
  41 │ 
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
- 39 │   
- 40 │   x = delete ((this.#m
-    ·                ───────
- 41 │ ));
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
  39 │   
@@ -10269,7 +10261,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:39:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:39:1]
  39 │   
  40 │   x = delete ((this.#m
     ·                ───────
@@ -10281,6 +10273,14 @@ Negative Passed: 3915/3915 (100.00%)
  39 │   
  40 │   x = delete ((this.#m
     ·                     ──
+ 41 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                ───────
  41 │ ));
     ╰────
 
@@ -10308,14 +10308,6 @@ Negative Passed: 3915/3915 (100.00%)
  41 │ ));
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:39:1]
- 39 │   
- 40 │   x = delete ((this.#m
-    ·                ───────
- 41 │ ));
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:39:1]
  39 │   
@@ -10325,18 +10317,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:39:1]
+ 39 │   
+ 40 │   x = delete ((this.#m
+    ·                ───────
+ 41 │ ));
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:39:1]
  39 │   
  40 │   x = delete ((this.#m));
-    ·                ───────
+    ·                     ──
  41 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:39:1]
  39 │   
  40 │   x = delete ((this.#m));
-    ·                     ──
+    ·                ───────
  41 │ 
     ╰────
 
@@ -10348,14 +10348,6 @@ Negative Passed: 3915/3915 (100.00%)
  41 │ 
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
- 41 │     var g = this.f;
- 42 │     delete (g().#m);
-    ·             ──────
- 43 │   }
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
@@ -10365,7 +10357,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -10381,7 +10373,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -10397,7 +10389,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -10413,7 +10405,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -10429,7 +10421,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -10445,7 +10437,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -10457,6 +10449,14 @@ Negative Passed: 3915/3915 (100.00%)
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
  43 │   }
     ╰────
 
@@ -10468,14 +10468,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
- 41 │     
- 42 │     delete (this.#m
-    ·             ───────
- 43 │ );
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
@@ -10485,7 +10477,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
  42 │     delete (this.#m
     ·             ───────
@@ -10497,6 +10489,14 @@ Negative Passed: 3915/3915 (100.00%)
  41 │     
  42 │     delete (this.#m
     ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
  43 │ );
     ╰────
 
@@ -10524,14 +10524,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ );
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
- 41 │     
- 42 │     delete (this.#m
-    ·             ───────
- 43 │ );
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
  41 │     
@@ -10541,18 +10533,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete (this.#m);
-    ·             ───────
+    ·                  ──
  43 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete (this.#m);
-    ·                  ──
+    ·             ───────
  43 │   }
     ╰────
 
@@ -10564,14 +10564,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
- 35 │     var g = this.f;
- 36 │     delete g().#m;
-    ·            ──────
- 37 │   }
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
  35 │     var g = this.f;
@@ -10581,7 +10573,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:35:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -10597,7 +10589,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -10613,7 +10605,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:35:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -10629,7 +10621,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -10645,7 +10637,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:35:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -10661,7 +10653,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -10673,6 +10665,14 @@ Negative Passed: 3915/3915 (100.00%)
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·                ──
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
  37 │   }
     ╰────
 
@@ -10684,14 +10684,6 @@ Negative Passed: 3915/3915 (100.00%)
  37 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
- 35 │     
- 36 │     delete this.#m
-    ·            ───────
- 37 │ ;
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
  35 │     
@@ -10701,7 +10693,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:35:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
  35 │     
  36 │     delete this.#m
     ·            ───────
@@ -10713,6 +10705,14 @@ Negative Passed: 3915/3915 (100.00%)
  35 │     
  36 │     delete this.#m
     ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
  37 │ ;
     ╰────
 
@@ -10740,14 +10740,6 @@ Negative Passed: 3915/3915 (100.00%)
  37 │ ;
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
- 35 │     
- 36 │     delete this.#m
-    ·            ───────
- 37 │ ;
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
  35 │     
@@ -10757,18 +10749,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:35:1]
  35 │     
  36 │     delete this.#m;
-    ·            ───────
+    ·                 ──
  37 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:35:1]
  35 │     
  36 │     delete this.#m;
-    ·                 ──
+    ·            ───────
  37 │   }
     ╰────
 
@@ -10780,14 +10780,6 @@ Negative Passed: 3915/3915 (100.00%)
  37 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
- 41 │     var g = this.f;
- 42 │     delete ((g().#m));
-    ·              ──────
- 43 │   }
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
@@ -10797,7 +10789,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -10813,7 +10805,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -10829,7 +10821,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -10845,7 +10837,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -10861,7 +10853,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -10877,7 +10869,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -10889,6 +10881,14 @@ Negative Passed: 3915/3915 (100.00%)
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
  43 │   }
     ╰────
 
@@ -10900,14 +10900,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
- 41 │     
- 42 │     delete ((this.#m
-    ·              ───────
- 43 │ ));
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
@@ -10917,7 +10909,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
  42 │     delete ((this.#m
     ·              ───────
@@ -10929,6 +10921,14 @@ Negative Passed: 3915/3915 (100.00%)
  41 │     
  42 │     delete ((this.#m
     ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
  43 │ ));
     ╰────
 
@@ -10956,14 +10956,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ ));
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
- 41 │     
- 42 │     delete ((this.#m
-    ·              ───────
- 43 │ ));
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
  41 │     
@@ -10973,18 +10965,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete ((this.#m));
-    ·              ───────
+    ·                   ──
  43 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete ((this.#m));
-    ·                   ──
+    ·              ───────
  43 │   }
     ╰────
 
@@ -12279,14 +12279,6 @@ Negative Passed: 3915/3915 (100.00%)
  82 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ var C = class { static *gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }};
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
  33 │ var C = class { static *gen() {
@@ -12296,10 +12288,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier.js:33:1]
+    ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
  33 │ var C = class { static *gen() {
- 34 │     var yield;
-    ·         ─────
+ 34 │     var yi\u0065ld;
+    ·         ──────────
  35 │ }};
     ╰────
 
@@ -12312,10 +12304,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method-static/yield-as-identifier-reference-escaped.js:33:1]
+    ╭─[language/expressions/class/gen-method-static/yield-as-binding-identifier.js:33:1]
  33 │ var C = class { static *gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
+ 34 │     var yield;
+    ·         ─────
  35 │ }};
     ╰────
 
@@ -12328,6 +12320,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class { static *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/gen-method-static/yield-as-identifier-reference.js:33:1]
  33 │ var C = class { static *gen() {
  34 │     void yield;
@@ -12335,7 +12335,7 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ }};
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/class/gen-method-static/yield-as-identifier-reference.js:33:1]
  33 │ var C = class { static *gen() {
  34 │     void yield;
@@ -12435,14 +12435,6 @@ Negative Passed: 3915/3915 (100.00%)
  82 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }};
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ var C = class {*gen() {
@@ -12452,10 +12444,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier.js:33:1]
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ var C = class {*gen() {
- 34 │     var yield;
-    ·         ─────
+ 34 │     var yi\u0065ld;
+    ·         ──────────
  35 │ }};
     ╰────
 
@@ -12468,10 +12460,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier.js:33:1]
  33 │ var C = class {*gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
+ 34 │     var yield;
+    ·         ─────
  35 │ }};
     ╰────
 
@@ -12484,6 +12476,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/gen-method/yield-as-identifier-reference.js:33:1]
  33 │ var C = class {*gen() {
  34 │     void yield;
@@ -12491,7 +12491,7 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ }};
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/class/gen-method/yield-as-identifier-reference.js:33:1]
  33 │ var C = class {*gen() {
  34 │     void yield;
@@ -14296,14 +14296,6 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/generators/named-yield-as-binding-identifier-escaped.js:27:1]
- 27 │ var gen = function *g() {
- 28 │   var yi\u0065ld;
-    ·       ──────────
- 29 │ };
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/named-yield-as-binding-identifier-escaped.js:27:1]
  27 │ var gen = function *g() {
@@ -14313,10 +14305,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/generators/named-yield-as-binding-identifier.js:27:1]
+    ╭─[language/expressions/generators/named-yield-as-binding-identifier-escaped.js:27:1]
  27 │ var gen = function *g() {
- 28 │   var yield;
-    ·       ─────
+ 28 │   var yi\u0065ld;
+    ·       ──────────
  29 │ };
     ╰────
 
@@ -14329,10 +14321,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/generators/named-yield-as-identifier-reference-escaped.js:27:1]
+    ╭─[language/expressions/generators/named-yield-as-binding-identifier.js:27:1]
  27 │ var gen = function *g() {
- 28 │   void yi\u0065ld;
-    ·        ──────────
+ 28 │   var yield;
+    ·       ─────
  29 │ };
     ╰────
 
@@ -14345,6 +14337,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/generators/named-yield-as-identifier-reference-escaped.js:27:1]
+ 27 │ var gen = function *g() {
+ 28 │   void yi\u0065ld;
+    ·        ──────────
+ 29 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/named-yield-as-identifier-reference.js:27:1]
  27 │ var gen = function *g() {
  28 │   void yield;
@@ -14352,7 +14352,7 @@ Negative Passed: 3915/3915 (100.00%)
  29 │ };
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/generators/named-yield-as-identifier-reference.js:27:1]
  27 │ var gen = function *g() {
  28 │   void yield;
@@ -14442,14 +14442,6 @@ Negative Passed: 3915/3915 (100.00%)
  22 │ }
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/generators/yield-as-binding-identifier-escaped.js:27:1]
- 27 │ var gen = function *() {
- 28 │   var yi\u0065ld;
-    ·       ──────────
- 29 │ };
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/yield-as-binding-identifier-escaped.js:27:1]
  27 │ var gen = function *() {
@@ -14459,6 +14451,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/generators/yield-as-binding-identifier-escaped.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   var yi\u0065ld;
+    ·       ──────────
+ 29 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/yield-as-binding-identifier.js:27:1]
  27 │ var gen = function *() {
  28 │   var yield;
@@ -14466,7 +14466,7 @@ Negative Passed: 3915/3915 (100.00%)
  29 │ };
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/generators/yield-as-binding-identifier.js:27:1]
  27 │ var gen = function *() {
  28 │   var yield;
@@ -14481,14 +14481,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·                   ─────
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/generators/yield-as-identifier-reference-escaped.js:27:1]
- 27 │ var gen = function *() {
- 28 │   void yi\u0065ld;
-    ·        ──────────
- 29 │ };
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/yield-as-identifier-reference-escaped.js:27:1]
  27 │ var gen = function *() {
@@ -14498,6 +14490,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/generators/yield-as-identifier-reference-escaped.js:27:1]
+ 27 │ var gen = function *() {
+ 28 │   void yi\u0065ld;
+    ·        ──────────
+ 29 │ };
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/yield-as-identifier-reference.js:27:1]
  27 │ var gen = function *() {
  28 │   void yield;
@@ -14505,7 +14505,7 @@ Negative Passed: 3915/3915 (100.00%)
  29 │ };
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/generators/yield-as-identifier-reference.js:27:1]
  27 │ var gen = function *() {
  28 │   void yield;
@@ -14547,14 +14547,14 @@ Negative Passed: 3915/3915 (100.00%)
  19 │ };
     ╰────
 
-  × The keyword 'yield' is reserved
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/generators/yield-as-parameter.js:16:1]
  16 │ 
  17 │ var g = function*(yield) {};
     ·                   ─────
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/generators/yield-as-parameter.js:16:1]
  16 │ 
  17 │ var g = function*(yield) {};
@@ -15274,7 +15274,7 @@ Negative Passed: 3915/3915 (100.00%)
  32 │   });
     ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/object/identifier-shorthand-static-init-await-invalid.js:22:1]
  22 │   static {
  23 │     ({ await });
@@ -15282,7 +15282,7 @@ Negative Passed: 3915/3915 (100.00%)
  24 │   }
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × Cannot use await in class static initialization block
     ╭─[language/expressions/object/identifier-shorthand-static-init-await-invalid.js:22:1]
  22 │   static {
  23 │     ({ await });
@@ -15492,14 +15492,6 @@ Negative Passed: 3915/3915 (100.00%)
  42 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier-escaped.js:28:1]
- 28 │   async *method() {
- 29 │     var yi\u0065ld;
-    ·         ──────────
- 30 │   }
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier-escaped.js:28:1]
  28 │   async *method() {
@@ -15509,10 +15501,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier.js:28:1]
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier-escaped.js:28:1]
  28 │   async *method() {
- 29 │     var yield;
-    ·         ─────
+ 29 │     var yi\u0065ld;
+    ·         ──────────
  30 │   }
     ╰────
 
@@ -15525,10 +15517,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/object/method-definition/async-gen-yield-as-identifier-reference-escaped.js:28:1]
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-binding-identifier.js:28:1]
  28 │   async *method() {
- 29 │     void yi\u0065ld;
-    ·          ──────────
+ 29 │     var yield;
+    ·         ─────
  30 │   }
     ╰────
 
@@ -15541,6 +15533,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/object/method-definition/async-gen-yield-as-identifier-reference-escaped.js:28:1]
+ 28 │   async *method() {
+ 29 │     void yi\u0065ld;
+    ·          ──────────
+ 30 │   }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/object/method-definition/async-gen-yield-as-identifier-reference.js:28:1]
  28 │   async *method() {
  29 │     void yield;
@@ -15548,7 +15548,7 @@ Negative Passed: 3915/3915 (100.00%)
  30 │   }
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/object/method-definition/async-gen-yield-as-identifier-reference.js:28:1]
  28 │   async *method() {
  29 │     void yield;
@@ -15866,14 +15866,6 @@ Negative Passed: 3915/3915 (100.00%)
  64 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier-escaped.js:28:1]
- 28 │   *method() {
- 29 │     var yi\u0065ld;
-    ·         ──────────
- 30 │   }
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier-escaped.js:28:1]
  28 │   *method() {
@@ -15883,10 +15875,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier.js:28:1]
+    ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier-escaped.js:28:1]
  28 │   *method() {
- 29 │     var yield;
-    ·         ─────
+ 29 │     var yi\u0065ld;
+    ·         ──────────
  30 │   }
     ╰────
 
@@ -15899,10 +15891,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/expressions/object/method-definition/gen-yield-as-identifier-reference-escaped.js:28:1]
+    ╭─[language/expressions/object/method-definition/gen-yield-as-binding-identifier.js:28:1]
  28 │   *method() {
- 29 │     void yi\u0065ld;
-    ·          ──────────
+ 29 │     var yield;
+    ·         ─────
  30 │   }
     ╰────
 
@@ -15915,6 +15907,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/expressions/object/method-definition/gen-yield-as-identifier-reference-escaped.js:28:1]
+ 28 │   *method() {
+ 29 │     void yi\u0065ld;
+    ·          ──────────
+ 30 │   }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/object/method-definition/gen-yield-as-identifier-reference.js:28:1]
  28 │   *method() {
  29 │     void yield;
@@ -15922,7 +15922,7 @@ Negative Passed: 3915/3915 (100.00%)
  30 │   }
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/object/method-definition/gen-yield-as-identifier-reference.js:28:1]
  28 │   *method() {
  29 │     void yield;
@@ -16239,7 +16239,7 @@ Negative Passed: 3915/3915 (100.00%)
  19 │   }
     ╰────
 
-  × The keyword 'yield' is reserved
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/object/method-definition/yield-as-parameter.js:17:1]
  17 │ var obj = {
  18 │   *g(yield) {}
@@ -16247,7 +16247,7 @@ Negative Passed: 3915/3915 (100.00%)
  19 │ };
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/expressions/object/method-definition/yield-as-parameter.js:17:1]
  17 │ var obj = {
  18 │   *g(yield) {}
@@ -19341,17 +19341,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·             ╰── It cannot be redeclared here
     ╰────
 
-  × Duplicated export 'f'
-    ╭─[language/module-code/early-dup-export-decl.js:16:1]
- 16 │ 
- 17 │ export function f() {}
-    ·                 ┬
-    ·                 ╰── Export has already been declared here
- 18 │ export function *f() {}
-    ·                  ┬
-    ·                  ╰── It cannot be redeclared here
-    ╰────
-
   × Identifier `f` has already been declared
     ╭─[language/module-code/early-dup-export-decl.js:16:1]
  16 │ 
@@ -19361,6 +19350,17 @@ Negative Passed: 3915/3915 (100.00%)
  18 │ export function *f() {}
     ·                  ┬
     ·                  ╰── It can not be redeclared here
+    ╰────
+
+  × Duplicated export 'f'
+    ╭─[language/module-code/early-dup-export-decl.js:16:1]
+ 16 │ 
+ 17 │ export function f() {}
+    ·                 ┬
+    ·                 ╰── Export has already been declared here
+ 18 │ export function *f() {}
+    ·                  ┬
+    ·                  ╰── It cannot be redeclared here
     ╰────
 
   × Duplicated export 'default'
@@ -19489,18 +19489,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·          ──────
     ╰────
 
-  × Duplicated export '\ud83c'
-    ╭─[language/module-code/early-export-ill-formed-string.js:20:1]
- 20 │ // 🌙 is '\uD83C\uDF19'
- 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
-    ·                 ────┬───
-    ·                     ╰── Export has already been declared here
- 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
-    ·         ────┬───
-    ·             ╰── It cannot be redeclared here
- 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
-    ╰────
-
   × An export name cannot include a unicode lone surrogate
     ╭─[language/module-code/early-export-ill-formed-string.js:20:1]
  20 │ // 🌙 is '\uD83C\uDF19'
@@ -19523,6 +19511,18 @@ Negative Passed: 3915/3915 (100.00%)
  23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
     ·         ────────
  24 │ 
+    ╰────
+
+  × Duplicated export '\ud83c'
+    ╭─[language/module-code/early-export-ill-formed-string.js:20:1]
+ 20 │ // 🌙 is '\uD83C\uDF19'
+ 21 │ export {Moon as "\uD83C",} from "./early-export-ill-formed-string.js";
+    ·                 ────┬───
+    ·                     ╰── Export has already been declared here
+ 22 │ export {"\uD83C"} from "./early-export-ill-formed-string.js";
+    ·         ────┬───
+    ·             ╰── It cannot be redeclared here
+ 23 │ import {'\uD83C' as Usagi} from "./early-export-ill-formed-string.js";
     ╰────
 
   × Export 'unresolvable' is not defined
@@ -19586,14 +19586,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·     ──────
     ╰────
 
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
-    ╭─[language/module-code/early-super.js:14:1]
- 14 │ 
- 15 │ super;
-    · ─────
-    ╰────
-
   × 'super' can only be used with function calls or in property accesses
     ╭─[language/module-code/early-super.js:14:1]
  14 │ 
@@ -19601,6 +19593,14 @@ Negative Passed: 3915/3915 (100.00%)
     · ─────
     ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
+
+  × 'super' can only be referenced in members of derived classes or object literal expressions.
+  │ 
+    ╭─[language/module-code/early-super.js:14:1]
+ 14 │ 
+ 15 │ super;
+    · ─────
+    ╰────
 
   × Use of undefined label
     ╭─[language/module-code/early-undef-break.js:16:1]
@@ -20557,14 +20557,14 @@ Negative Passed: 3915/3915 (100.00%)
     ·  ───────
     ╰────
 
-  × The keyword 'await' is reserved
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/module-code/top-level-await/new-await.js:16:1]
  16 │ 
  17 │ new await;
     ·     ─────
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × The keyword 'await' is reserved
     ╭─[language/module-code/top-level-await/new-await.js:16:1]
  16 │ 
  17 │ new await;
@@ -20585,20 +20585,20 @@ Negative Passed: 3915/3915 (100.00%)
     ·                 ─────
     ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js:37:1]
+ 37 │ 
+ 38 │ function fn(x = await 1) {
+    ·                 ─────
+ 39 │   return x;
+    ╰────
+
   × await expression not allowed in formal parameter
     ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js:37:1]
  37 │ 
  38 │ function fn(x = await 1) {
     ·                 ───┬───
     ·                    ╰── await expression not allowed in formal parameter
- 39 │   return x;
-    ╰────
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-declaration-params.js:37:1]
- 37 │ 
- 38 │ function fn(x = await 1) {
-    ·                 ─────
  39 │   return x;
     ╰────
 
@@ -20610,20 +20610,20 @@ Negative Passed: 3915/3915 (100.00%)
  30 │ };
     ╰────
 
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js:27:1]
+ 27 │ 
+ 28 │ 0, function (x = await 1) {
+    ·                  ─────
+ 29 │   return x;
+    ╰────
+
   × await expression not allowed in formal parameter
     ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js:27:1]
  27 │ 
  28 │ 0, function (x = await 1) {
     ·                  ───┬───
     ·                     ╰── await expression not allowed in formal parameter
- 29 │   return x;
-    ╰────
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[language/module-code/top-level-await/syntax/early-does-not-propagate-to-fn-expr-params.js:27:1]
- 27 │ 
- 28 │ 0, function (x = await 1) {
-    ·                  ─────
  29 │   return x;
     ╰────
 
@@ -20765,14 +20765,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × The keyword 'await' is reserved
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/reserved-words/await-module.js:14:1]
  14 │ 
  15 │ var await;
     ·     ─────
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × The keyword 'await' is reserved
     ╭─[language/reserved-words/await-module.js:14:1]
  14 │ 
  15 │ var await;
@@ -21374,14 +21374,6 @@ Negative Passed: 3915/3915 (100.00%)
  37 │   
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/async-generator/yield-as-binding-identifier-escaped.js:29:1]
- 29 │ async function *gen() {
- 30 │   var yi\u0065ld;
-    ·       ──────────
- 31 │ }
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/async-generator/yield-as-binding-identifier-escaped.js:29:1]
  29 │ async function *gen() {
@@ -21391,10 +21383,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/async-generator/yield-as-binding-identifier.js:29:1]
+    ╭─[language/statements/async-generator/yield-as-binding-identifier-escaped.js:29:1]
  29 │ async function *gen() {
- 30 │   var yield;
-    ·       ─────
+ 30 │   var yi\u0065ld;
+    ·       ──────────
  31 │ }
     ╰────
 
@@ -21407,10 +21399,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/async-generator/yield-as-identifier-reference-escaped.js:29:1]
+    ╭─[language/statements/async-generator/yield-as-binding-identifier.js:29:1]
  29 │ async function *gen() {
- 30 │   void yi\u0065ld;
-    ·        ──────────
+ 30 │   var yield;
+    ·       ─────
  31 │ }
     ╰────
 
@@ -21423,6 +21415,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/async-generator/yield-as-identifier-reference-escaped.js:29:1]
+ 29 │ async function *gen() {
+ 30 │   void yi\u0065ld;
+    ·        ──────────
+ 31 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/async-generator/yield-as-identifier-reference.js:29:1]
  29 │ async function *gen() {
  30 │   void yield;
@@ -21430,7 +21430,7 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ }
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/async-generator/yield-as-identifier-reference.js:29:1]
  29 │ async function *gen() {
  30 │   void yield;
@@ -21830,14 +21830,6 @@ Negative Passed: 3915/3915 (100.00%)
  61 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
  34 │ class C { static async *gen() {
@@ -21847,10 +21839,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
  34 │ class C { static async *gen() {
- 35 │     var yield;
-    ·         ─────
+ 35 │     var yi\u0065ld;
+    ·         ──────────
  36 │ }}
     ╰────
 
@@ -21863,10 +21855,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
  34 │ class C { static async *gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
+ 35 │     var yield;
+    ·         ─────
  36 │ }}
     ╰────
 
@@ -21879,6 +21871,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
  34 │ class C { static async *gen() {
  35 │     void yield;
@@ -21886,7 +21886,7 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }}
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
  34 │ class C { static async *gen() {
  35 │     void yield;
@@ -22050,14 +22050,6 @@ Negative Passed: 3915/3915 (100.00%)
  60 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { async *gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
  34 │ class C { async *gen() {
@@ -22067,10 +22059,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier.js:34:1]
+    ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier-escaped.js:34:1]
  34 │ class C { async *gen() {
- 35 │     var yield;
-    ·         ─────
+ 35 │     var yi\u0065ld;
+    ·         ──────────
  36 │ }}
     ╰────
 
@@ -22083,10 +22075,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method/yield-as-identifier-reference-escaped.js:34:1]
+    ╭─[language/statements/class/async-gen-method/yield-as-binding-identifier.js:34:1]
  34 │ class C { async *gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
+ 35 │     var yield;
+    ·         ─────
  36 │ }}
     ╰────
 
@@ -22099,6 +22091,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/async-gen-method/yield-as-identifier-reference.js:34:1]
  34 │ class C { async *gen() {
  35 │     void yield;
@@ -22106,7 +22106,7 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }}
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/class/async-gen-method/yield-as-identifier-reference.js:34:1]
  34 │ class C { async *gen() {
  35 │     void yield;
@@ -22392,13 +22392,6 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × The keyword 'await' is reserved
-    ╭─[language/statements/class/class-name-ident-await-escaped-module.js:22:1]
- 22 │ 
- 23 │ class aw\u0061it {}
-    ·       ──────────
-    ╰────
-
   × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/class-name-ident-await-escaped-module.js:22:1]
  22 │ 
@@ -22407,13 +22400,20 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'await' is reserved
+    ╭─[language/statements/class/class-name-ident-await-escaped-module.js:22:1]
+ 22 │ 
+ 23 │ class aw\u0061it {}
+    ·       ──────────
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/class-name-ident-await-module.js:21:1]
  21 │ 
  22 │ class await {}
     ·       ─────
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × The keyword 'await' is reserved
     ╭─[language/statements/class/class-name-ident-await-module.js:21:1]
  21 │ 
  22 │ class await {}
@@ -22573,7 +22573,7 @@ Negative Passed: 3915/3915 (100.00%)
  19 │   }
     ╰────
 
-  × The keyword 'yield' is reserved
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/definition/methods-gen-yield-as-parameter.js:17:1]
  17 │ class A {
  18 │   *g(yield) {}
@@ -22581,7 +22581,7 @@ Negative Passed: 3915/3915 (100.00%)
  19 │ }
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/class/definition/methods-gen-yield-as-parameter.js:17:1]
  17 │ class A {
  18 │   *g(yield) {}
@@ -23847,14 +23847,6 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }}
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
  34 │ class C { static async *#gen() {
@@ -23864,10 +23856,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
  34 │ class C { static async *#gen() {
- 35 │     var yield;
-    ·         ─────
+ 35 │     var yi\u0065ld;
+    ·         ──────────
  36 │ }}
     ╰────
 
@@ -23880,10 +23872,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
  34 │ class C { static async *#gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
+ 35 │     var yield;
+    ·         ─────
  36 │ }}
     ╰────
 
@@ -23896,6 +23888,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
  34 │ class C { static async *#gen() {
  35 │     void yield;
@@ -23903,7 +23903,7 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }}
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
  34 │ class C { static async *#gen() {
  35 │     void yield;
@@ -24017,14 +24017,6 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }}
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { async *#gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
  34 │ class C { async *#gen() {
@@ -24034,10 +24026,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier-escaped.js:34:1]
  34 │ class C { async *#gen() {
- 35 │     var yield;
-    ·         ─────
+ 35 │     var yi\u0065ld;
+    ·         ──────────
  36 │ }}
     ╰────
 
@@ -24050,10 +24042,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:34:1]
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-binding-identifier.js:34:1]
  34 │ class C { async *#gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
+ 35 │     var yield;
+    ·         ─────
  36 │ }}
     ╰────
 
@@ -24066,6 +24058,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
  34 │ class C { async *#gen() {
  35 │     void yield;
@@ -24073,7 +24073,7 @@ Negative Passed: 3915/3915 (100.00%)
  36 │ }}
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/class/elements/async-gen-private-method/yield-as-identifier-reference.js:34:1]
  34 │ class C { async *#gen() {
  35 │     void yield;
@@ -24381,14 +24381,6 @@ Negative Passed: 3915/3915 (100.00%)
  30 │ }
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }}
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
  33 │ class C {static *#gen() {
@@ -24398,10 +24390,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
  33 │ class C {static *#gen() {
- 34 │     var yield;
-    ·         ─────
+ 34 │     var yi\u0065ld;
+    ·         ──────────
  35 │ }}
     ╰────
 
@@ -24414,10 +24406,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
  33 │ class C {static *#gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
+ 34 │     var yield;
+    ·         ─────
  35 │ }}
     ╰────
 
@@ -24430,6 +24422,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
  33 │ class C {static *#gen() {
  34 │     void yield;
@@ -24437,7 +24437,7 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ }}
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
  33 │ class C {static *#gen() {
  34 │     void yield;
@@ -24487,14 +24487,6 @@ Negative Passed: 3915/3915 (100.00%)
  34 │             throw new Test262Error();
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ class C { *#gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }}
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ class C { *#gen() {
@@ -24504,10 +24496,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ class C { *#gen() {
- 34 │     var yield;
-    ·         ─────
+ 34 │     var yi\u0065ld;
+    ·         ──────────
  35 │ }}
     ╰────
 
@@ -24520,10 +24512,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:33:1]
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier.js:33:1]
  33 │ class C { *#gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
+ 34 │     var yield;
+    ·         ─────
  35 │ }}
     ╰────
 
@@ -24536,6 +24528,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C { *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
  33 │ class C { *#gen() {
  34 │     void yield;
@@ -24543,7 +24543,7 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ }}
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/class/elements/gen-private-method/yield-as-identifier-reference.js:33:1]
  33 │ class C { *#gen() {
  34 │     void yield;
@@ -25106,14 +25106,6 @@ Negative Passed: 3915/3915 (100.00%)
  24 │   
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
- 36 │   g = this.f;
- 37 │   x = delete (g().#m);
-    ·               ──────
- 38 │   f() {
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
  36 │   g = this.f;
@@ -25123,7 +25115,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·               ──────
@@ -25139,7 +25131,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:36:1]
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·               ──────
@@ -25155,7 +25147,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·               ──────
@@ -25171,7 +25163,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:36:1]
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·               ──────
@@ -25187,7 +25179,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:36:1]
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·               ──────
@@ -25203,7 +25195,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:36:1]
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·               ──────
@@ -25215,6 +25207,14 @@ Negative Passed: 3915/3915 (100.00%)
  36 │   g = this.f;
  37 │   x = delete (g().#m);
     ·                   ──
+ 38 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete (g().#m);
+    ·               ──────
  38 │   f() {
     ╰────
 
@@ -25226,14 +25226,6 @@ Negative Passed: 3915/3915 (100.00%)
  38 │   f() {
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
- 36 │   
- 37 │   x = delete (this.#m
-    ·               ───────
- 38 │ );
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
  36 │   
@@ -25243,7 +25235,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
  36 │   
  37 │   x = delete (this.#m
     ·               ───────
@@ -25255,6 +25247,14 @@ Negative Passed: 3915/3915 (100.00%)
  36 │   
  37 │   x = delete (this.#m
     ·                    ──
+ 38 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·               ───────
  38 │ );
     ╰────
 
@@ -25282,14 +25282,6 @@ Negative Passed: 3915/3915 (100.00%)
  38 │ );
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:36:1]
- 36 │   
- 37 │   x = delete (this.#m
-    ·               ───────
- 38 │ );
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:36:1]
  36 │   
@@ -25299,18 +25291,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:36:1]
+ 36 │   
+ 37 │   x = delete (this.#m
+    ·               ───────
+ 38 │ );
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:36:1]
  36 │   
  37 │   x = delete (this.#m);
-    ·               ───────
+    ·                    ──
  38 │   
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:36:1]
  36 │   
  37 │   x = delete (this.#m);
-    ·                    ──
+    ·               ───────
  38 │   
     ╰────
 
@@ -25322,14 +25322,6 @@ Negative Passed: 3915/3915 (100.00%)
  38 │   
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
- 33 │   g = this.f;
- 34 │   x = delete g().#m;
-    ·              ──────
- 35 │   f() {
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
  33 │   g = this.f;
@@ -25339,7 +25331,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:33:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -25355,7 +25347,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -25371,7 +25363,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:33:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -25387,7 +25379,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -25403,7 +25395,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:33:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -25419,7 +25411,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:33:1]
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·              ──────
@@ -25431,6 +25423,14 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   g = this.f;
  34 │   x = delete g().#m;
     ·                  ──
+ 35 │   f() {
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:33:1]
+ 33 │   g = this.f;
+ 34 │   x = delete g().#m;
+    ·              ──────
  35 │   f() {
     ╰────
 
@@ -25442,14 +25442,6 @@ Negative Passed: 3915/3915 (100.00%)
  35 │   f() {
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
- 33 │   
- 34 │   x = delete this.#m
-    ·              ───────
- 35 │ ;
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
  33 │   
@@ -25459,7 +25451,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:33:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:33:1]
  33 │   
  34 │   x = delete this.#m
     ·              ───────
@@ -25471,6 +25463,14 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   
  34 │   x = delete this.#m
     ·                   ──
+ 35 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
  35 │ ;
     ╰────
 
@@ -25498,14 +25498,6 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ ;
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
- 33 │   
- 34 │   x = delete this.#m
-    ·              ───────
- 35 │ ;
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
  33 │   
@@ -25515,18 +25507,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:33:1]
+ 33 │   
+ 34 │   x = delete this.#m
+    ·              ───────
+ 35 │ ;
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:33:1]
  33 │   
  34 │   x = delete this.#m;
-    ·              ───────
+    ·                   ──
  35 │   
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:33:1]
  33 │   
  34 │   x = delete this.#m;
-    ·                   ──
+    ·              ───────
  35 │   
     ╰────
 
@@ -25538,14 +25538,6 @@ Negative Passed: 3915/3915 (100.00%)
  35 │   
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
- 36 │   g = this.f;
- 37 │   x = delete ((g().#m));
-    ·                ──────
- 38 │ 
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
  36 │   g = this.f;
@@ -25555,7 +25547,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:36:1]
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                ──────
@@ -25571,7 +25563,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:36:1]
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                ──────
@@ -25587,7 +25579,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:36:1]
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                ──────
@@ -25603,7 +25595,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:36:1]
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                ──────
@@ -25619,7 +25611,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:36:1]
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                ──────
@@ -25635,7 +25627,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:36:1]
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                ──────
@@ -25647,6 +25639,14 @@ Negative Passed: 3915/3915 (100.00%)
  36 │   g = this.f;
  37 │   x = delete ((g().#m));
     ·                    ──
+ 38 │ 
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:36:1]
+ 36 │   g = this.f;
+ 37 │   x = delete ((g().#m));
+    ·                ──────
  38 │ 
     ╰────
 
@@ -25658,14 +25658,6 @@ Negative Passed: 3915/3915 (100.00%)
  38 │ 
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
- 36 │   
- 37 │   x = delete ((this.#m
-    ·                ───────
- 38 │ ));
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
  36 │   
@@ -25675,7 +25667,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:36:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:36:1]
  36 │   
  37 │   x = delete ((this.#m
     ·                ───────
@@ -25687,6 +25679,14 @@ Negative Passed: 3915/3915 (100.00%)
  36 │   
  37 │   x = delete ((this.#m
     ·                     ──
+ 38 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                ───────
  38 │ ));
     ╰────
 
@@ -25714,14 +25714,6 @@ Negative Passed: 3915/3915 (100.00%)
  38 │ ));
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:36:1]
- 36 │   
- 37 │   x = delete ((this.#m
-    ·                ───────
- 38 │ ));
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:36:1]
  36 │   
@@ -25731,18 +25723,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:36:1]
+ 36 │   
+ 37 │   x = delete ((this.#m
+    ·                ───────
+ 38 │ ));
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:36:1]
  36 │   
  37 │   x = delete ((this.#m));
-    ·                ───────
+    ·                     ──
  38 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:36:1]
  36 │   
  37 │   x = delete ((this.#m));
-    ·                     ──
+    ·                ───────
  38 │ 
     ╰────
 
@@ -25754,14 +25754,6 @@ Negative Passed: 3915/3915 (100.00%)
  38 │ 
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
- 41 │     var g = this.f;
- 42 │     delete (g().#m);
-    ·             ──────
- 43 │   }
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
@@ -25771,7 +25763,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -25787,7 +25779,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -25803,7 +25795,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -25819,7 +25811,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -25835,7 +25827,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -25851,7 +25843,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:41:1]
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·             ──────
@@ -25863,6 +25855,14 @@ Negative Passed: 3915/3915 (100.00%)
  41 │     var g = this.f;
  42 │     delete (g().#m);
     ·                 ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete (g().#m);
+    ·             ──────
  43 │   }
     ╰────
 
@@ -25874,14 +25874,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
- 41 │     
- 42 │     delete (this.#m
-    ·             ───────
- 43 │ );
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
@@ -25891,7 +25883,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
  42 │     delete (this.#m
     ·             ───────
@@ -25903,6 +25895,14 @@ Negative Passed: 3915/3915 (100.00%)
  41 │     
  42 │     delete (this.#m
     ·                  ──
+ 43 │ );
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
  43 │ );
     ╰────
 
@@ -25930,14 +25930,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ );
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
- 41 │     
- 42 │     delete (this.#m
-    ·             ───────
- 43 │ );
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
  41 │     
@@ -25947,18 +25939,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete (this.#m
+    ·             ───────
+ 43 │ );
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete (this.#m);
-    ·             ───────
+    ·                  ──
  43 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete (this.#m);
-    ·                  ──
+    ·             ───────
  43 │   }
     ╰────
 
@@ -25970,14 +25970,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
- 35 │     var g = this.f;
- 36 │     delete g().#m;
-    ·            ──────
- 37 │   }
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
  35 │     var g = this.f;
@@ -25987,7 +25979,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:35:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -26003,7 +25995,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -26019,7 +26011,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:35:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -26035,7 +26027,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -26051,7 +26043,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:35:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -26067,7 +26059,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:35:1]
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·            ──────
@@ -26079,6 +26071,14 @@ Negative Passed: 3915/3915 (100.00%)
  35 │     var g = this.f;
  36 │     delete g().#m;
     ·                ──
+ 37 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:35:1]
+ 35 │     var g = this.f;
+ 36 │     delete g().#m;
+    ·            ──────
  37 │   }
     ╰────
 
@@ -26090,14 +26090,6 @@ Negative Passed: 3915/3915 (100.00%)
  37 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
- 35 │     
- 36 │     delete this.#m
-    ·            ───────
- 37 │ ;
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
  35 │     
@@ -26107,7 +26099,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:35:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:35:1]
  35 │     
  36 │     delete this.#m
     ·            ───────
@@ -26119,6 +26111,14 @@ Negative Passed: 3915/3915 (100.00%)
  35 │     
  36 │     delete this.#m
     ·                 ──
+ 37 │ ;
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
  37 │ ;
     ╰────
 
@@ -26146,14 +26146,6 @@ Negative Passed: 3915/3915 (100.00%)
  37 │ ;
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
- 35 │     
- 36 │     delete this.#m
-    ·            ───────
- 37 │ ;
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
  35 │     
@@ -26163,18 +26155,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:35:1]
+ 35 │     
+ 36 │     delete this.#m
+    ·            ───────
+ 37 │ ;
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:35:1]
  35 │     
  36 │     delete this.#m;
-    ·            ───────
+    ·                 ──
  37 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:35:1]
  35 │     
  36 │     delete this.#m;
-    ·                 ──
+    ·            ───────
  37 │   }
     ╰────
 
@@ -26186,14 +26186,6 @@ Negative Passed: 3915/3915 (100.00%)
  37 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
- 41 │     var g = this.f;
- 42 │     delete ((g().#m));
-    ·              ──────
- 43 │   }
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
@@ -26203,7 +26195,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -26219,7 +26211,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -26235,7 +26227,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -26251,7 +26243,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -26267,7 +26259,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -26283,7 +26275,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:41:1]
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·              ──────
@@ -26295,6 +26287,14 @@ Negative Passed: 3915/3915 (100.00%)
  41 │     var g = this.f;
  42 │     delete ((g().#m));
     ·                  ──
+ 43 │   }
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:1]
+ 41 │     var g = this.f;
+ 42 │     delete ((g().#m));
+    ·              ──────
  43 │   }
     ╰────
 
@@ -26306,14 +26306,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │   }
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
- 41 │     
- 42 │     delete ((this.#m
-    ·              ───────
- 43 │ ));
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
@@ -26323,7 +26315,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:1]
  41 │     
  42 │     delete ((this.#m
     ·              ───────
@@ -26335,6 +26327,14 @@ Negative Passed: 3915/3915 (100.00%)
  41 │     
  42 │     delete ((this.#m
     ·                   ──
+ 43 │ ));
+    ╰────
+
+  × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
  43 │ ));
     ╰────
 
@@ -26362,14 +26362,6 @@ Negative Passed: 3915/3915 (100.00%)
  43 │ ));
     ╰────
 
-  × Private fields can not be deleted
-    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
- 41 │     
- 42 │     delete ((this.#m
-    ·              ───────
- 43 │ ));
-    ╰────
-
   × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
  41 │     
@@ -26379,18 +26371,26 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Private fields can not be deleted
+    ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:41:1]
+ 41 │     
+ 42 │     delete ((this.#m
+    ·              ───────
+ 43 │ ));
+    ╰────
+
+  × Private field 'm' must be declared in an enclosing class
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete ((this.#m));
-    ·              ───────
+    ·                   ──
  43 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private fields can not be deleted
     ╭─[language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:1]
  41 │     
  42 │     delete ((this.#m));
-    ·                   ──
+    ·              ───────
  43 │   }
     ╰────
 
@@ -27685,14 +27685,6 @@ Negative Passed: 3915/3915 (100.00%)
  80 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ class C {static *gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }}
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
  33 │ class C {static *gen() {
@@ -27702,10 +27694,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier.js:33:1]
+    ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier-escaped.js:33:1]
  33 │ class C {static *gen() {
- 34 │     var yield;
-    ·         ─────
+ 34 │     var yi\u0065ld;
+    ·         ──────────
  35 │ }}
     ╰────
 
@@ -27718,10 +27710,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method-static/yield-as-identifier-reference-escaped.js:33:1]
+    ╭─[language/statements/class/gen-method-static/yield-as-binding-identifier.js:33:1]
  33 │ class C {static *gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
+ 34 │     var yield;
+    ·         ─────
  35 │ }}
     ╰────
 
@@ -27734,6 +27726,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C {static *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/gen-method-static/yield-as-identifier-reference.js:33:1]
  33 │ class C {static *gen() {
  34 │     void yield;
@@ -27741,7 +27741,7 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ }}
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/class/gen-method-static/yield-as-identifier-reference.js:33:1]
  33 │ class C {static *gen() {
  34 │     void yield;
@@ -27841,14 +27841,6 @@ Negative Passed: 3915/3915 (100.00%)
  80 │     
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ class C { *gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }}
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ class C { *gen() {
@@ -27858,10 +27850,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method/yield-as-binding-identifier.js:33:1]
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ class C { *gen() {
- 34 │     var yield;
-    ·         ─────
+ 34 │     var yi\u0065ld;
+    ·         ──────────
  35 │ }}
     ╰────
 
@@ -27874,10 +27866,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier.js:33:1]
  33 │ class C { *gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
+ 34 │     var yield;
+    ·         ─────
  35 │ }}
     ╰────
 
@@ -27890,6 +27882,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/gen-method/yield-as-identifier-reference.js:33:1]
  33 │ class C { *gen() {
  34 │     void yield;
@@ -27897,7 +27897,7 @@ Negative Passed: 3915/3915 (100.00%)
  35 │ }}
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/class/gen-method/yield-as-identifier-reference.js:33:1]
  33 │ class C { *gen() {
  34 │     void yield;
@@ -28119,7 +28119,7 @@ Negative Passed: 3915/3915 (100.00%)
  27 │ }
     ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/static-init-await-binding-invalid.js:23:1]
  23 │   static {
  24 │     class await {}
@@ -28127,7 +28127,7 @@ Negative Passed: 3915/3915 (100.00%)
  25 │   }
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × Cannot use await in class static initialization block
     ╭─[language/statements/class/static-init-await-binding-invalid.js:23:1]
  23 │   static {
  24 │     class await {}
@@ -28331,7 +28331,7 @@ Negative Passed: 3915/3915 (100.00%)
  15 │ 
     ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/const/static-init-await-binding-invalid.js:23:1]
  23 │   static {
  24 │     const await = 0;
@@ -28339,7 +28339,7 @@ Negative Passed: 3915/3915 (100.00%)
  25 │   }
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × Cannot use await in class static initialization block
     ╭─[language/statements/const/static-init-await-binding-invalid.js:23:1]
  23 │   static {
  24 │     const await = 0;
@@ -28714,6 +28714,13 @@ Negative Passed: 3915/3915 (100.00%)
  18 │ //
     ╰────
 
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/do-while/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ do async function f() {} while (false)
+    ·    ──────────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/do-while/decl-async-fun.js:19:1]
  19 │ 
@@ -28723,10 +28730,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/do-while/decl-async-fun.js:19:1]
+    ╭─[language/statements/do-while/decl-async-gen.js:19:1]
  19 │ 
- 20 │ do async function f() {} while (false)
-    ·    ──────────────────
+ 20 │ do async function* g() {} while (false)
+    ·    ───────────────────
     ╰────
 
   × Invalid function declaration
@@ -28736,13 +28743,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·    ──────────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/do-while/decl-async-gen.js:19:1]
- 19 │ 
- 20 │ do async function* g() {} while (false)
-    ·    ───────────────────
-    ╰────
 
   × Invalid class declaration
     ╭─[language/statements/do-while/decl-cls.js:13:1]
@@ -28768,6 +28768,13 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/do-while/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ do function* g() {} while (false)
+    ·    ─────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/do-while/decl-gen.js:14:1]
  14 │ 
@@ -28775,13 +28782,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·    ────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/do-while/decl-gen.js:14:1]
- 14 │ 
- 15 │ do function* g() {} while (false)
-    ·    ─────────────
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/statements/do-while/decl-let.js:13:1]
@@ -29546,6 +29546,13 @@ Negative Passed: 3915/3915 (100.00%)
  20 │    break ;
     ╰────
 
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/for-in/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ for (var x in {}) async function f() {}
+    ·                   ──────────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/for-in/decl-async-fun.js:19:1]
  19 │ 
@@ -29555,10 +29562,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/for-in/decl-async-fun.js:19:1]
+    ╭─[language/statements/for-in/decl-async-gen.js:19:1]
  19 │ 
- 20 │ for (var x in {}) async function f() {}
-    ·                   ──────────────────
+ 20 │ for (var x in {}) async function* g() {}
+    ·                   ───────────────────
     ╰────
 
   × Invalid function declaration
@@ -29568,13 +29575,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·                   ──────────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/for-in/decl-async-gen.js:19:1]
- 19 │ 
- 20 │ for (var x in {}) async function* g() {}
-    ·                   ───────────────────
-    ╰────
 
   × Invalid class declaration
     ╭─[language/statements/for-in/decl-cls.js:13:1]
@@ -29600,6 +29600,13 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/for-in/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ for (var x in {}) function* g() {}
+    ·                   ─────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/for-in/decl-gen.js:14:1]
  14 │ 
@@ -29607,13 +29614,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·                   ────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/for-in/decl-gen.js:14:1]
- 14 │ 
- 15 │ for (var x in {}) function* g() {}
-    ·                   ─────────────
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/statements/for-in/decl-let.js:13:1]
@@ -29986,19 +29986,19 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Wrap this declaration in a block statement
 
-  × for-in loop variable declaration may not have an initializer
-    ╭─[language/statements/for-in/var-arguments-fn-strict-init.js:17:1]
- 17 │ function f() {
- 18 │   for (var arguments = 42 in null) {}
-    ·        ──────────────────
- 19 │ }
-    ╰────
-
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/statements/for-in/var-arguments-fn-strict-init.js:17:1]
  17 │ function f() {
  18 │   for (var arguments = 42 in null) {}
     ·            ─────────
+ 19 │ }
+    ╰────
+
+  × for-in loop variable declaration may not have an initializer
+    ╭─[language/statements/for-in/var-arguments-fn-strict-init.js:17:1]
+ 17 │ function f() {
+ 18 │   for (var arguments = 42 in null) {}
+    ·        ──────────────────
  19 │ }
     ╰────
 
@@ -30010,6 +30010,13 @@ Negative Passed: 3915/3915 (100.00%)
  19 │ }
     ╰────
 
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[language/statements/for-in/var-arguments-strict-init.js:16:1]
+ 16 │ 
+ 17 │ for (var arguments = 42 in null) {}
+    ·          ─────────
+    ╰────
+
   × for-in loop variable declaration may not have an initializer
     ╭─[language/statements/for-in/var-arguments-strict-init.js:16:1]
  16 │ 
@@ -30018,17 +30025,17 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
-    ╭─[language/statements/for-in/var-arguments-strict-init.js:16:1]
- 16 │ 
- 17 │ for (var arguments = 42 in null) {}
-    ·          ─────────
-    ╰────
-
-  × Cannot assign to 'arguments' in strict mode
     ╭─[language/statements/for-in/var-arguments-strict.js:14:1]
  14 │ 
  15 │ for (var arguments in null) {}
     ·          ─────────
+    ╰────
+
+  × Cannot assign to 'eval' in strict mode
+    ╭─[language/statements/for-in/var-eval-strict-init.js:14:1]
+ 14 │ 
+ 15 │ for (var eval = 42 in null) {}
+    ·          ────
     ╰────
 
   × for-in loop variable declaration may not have an initializer
@@ -30039,17 +30046,17 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Cannot assign to 'eval' in strict mode
-    ╭─[language/statements/for-in/var-eval-strict-init.js:14:1]
- 14 │ 
- 15 │ for (var eval = 42 in null) {}
-    ·          ────
-    ╰────
-
-  × Cannot assign to 'eval' in strict mode
     ╭─[language/statements/for-in/var-eval-strict.js:14:1]
  14 │ 
  15 │ for (var eval in null) {}
     ·          ────
+    ╰────
+
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/for-of/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ for (var x of []) async function f() {}
+    ·                   ──────────────────
     ╰────
 
   × Invalid function declaration
@@ -30061,10 +30068,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/for-of/decl-async-fun.js:19:1]
+    ╭─[language/statements/for-of/decl-async-gen.js:19:1]
  19 │ 
- 20 │ for (var x of []) async function f() {}
-    ·                   ──────────────────
+ 20 │ for (var x of []) async function* g() {}
+    ·                   ───────────────────
     ╰────
 
   × Invalid function declaration
@@ -30074,13 +30081,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·                   ──────────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/for-of/decl-async-gen.js:19:1]
- 19 │ 
- 20 │ for (var x of []) async function* g() {}
-    ·                   ───────────────────
-    ╰────
 
   × Invalid class declaration
     ╭─[language/statements/for-of/decl-cls.js:13:1]
@@ -30106,6 +30106,13 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/for-of/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ for (var x of []) function* g() {}
+    ·                   ─────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/for-of/decl-gen.js:14:1]
  14 │ 
@@ -30113,13 +30120,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·                   ────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/for-of/decl-gen.js:14:1]
- 14 │ 
- 15 │ for (var x of []) function* g() {}
-    ·                   ─────────────
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/statements/for-of/decl-let.js:13:1]
@@ -30896,6 +30896,13 @@ Negative Passed: 3915/3915 (100.00%)
  22 │ //
     ╰────
 
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/for/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ for ( ; false; ) async function f() {}
+    ·                  ──────────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/for/decl-async-fun.js:19:1]
  19 │ 
@@ -30905,10 +30912,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/for/decl-async-fun.js:19:1]
+    ╭─[language/statements/for/decl-async-gen.js:19:1]
  19 │ 
- 20 │ for ( ; false; ) async function f() {}
-    ·                  ──────────────────
+ 20 │ for ( ; false; ) async function* g() {}
+    ·                  ───────────────────
     ╰────
 
   × Invalid function declaration
@@ -30918,13 +30925,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·                  ──────────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/for/decl-async-gen.js:19:1]
- 19 │ 
- 20 │ for ( ; false; ) async function* g() {}
-    ·                  ───────────────────
-    ╰────
 
   × Invalid class declaration
     ╭─[language/statements/for/decl-cls.js:13:1]
@@ -30950,6 +30950,13 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/for/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ for ( ; false; ) function* g() {}
+    ·                  ─────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/for/decl-gen.js:14:1]
  14 │ 
@@ -30957,13 +30964,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·                  ────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/for/decl-gen.js:14:1]
- 14 │ 
- 15 │ for ( ; false; ) function* g() {}
-    ·                  ─────────────
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/statements/for/decl-let.js:13:1]
@@ -31847,14 +31847,6 @@ Negative Passed: 3915/3915 (100.00%)
  22 │ }
     ╰────
 
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/generators/yield-as-binding-identifier-escaped.js:27:1]
- 27 │ function *gen() {
- 28 │   var yi\u0065ld;
-    ·       ──────────
- 29 │ }
-    ╰────
-
   × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/generators/yield-as-binding-identifier-escaped.js:27:1]
  27 │ function *gen() {
@@ -31864,10 +31856,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/generators/yield-as-binding-identifier.js:27:1]
+    ╭─[language/statements/generators/yield-as-binding-identifier-escaped.js:27:1]
  27 │ function *gen() {
- 28 │   var yield;
-    ·       ─────
+ 28 │   var yi\u0065ld;
+    ·       ──────────
  29 │ }
     ╰────
 
@@ -31880,10 +31872,10 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
-    ╭─[language/statements/generators/yield-as-identifier-reference-escaped.js:27:1]
+    ╭─[language/statements/generators/yield-as-binding-identifier.js:27:1]
  27 │ function *gen() {
- 28 │   void yi\u0065ld;
-    ·        ──────────
+ 28 │   var yield;
+    ·       ─────
  29 │ }
     ╰────
 
@@ -31896,6 +31888,14 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × The keyword 'yield' is reserved
+    ╭─[language/statements/generators/yield-as-identifier-reference-escaped.js:27:1]
+ 27 │ function *gen() {
+ 28 │   void yi\u0065ld;
+    ·        ──────────
+ 29 │ }
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/generators/yield-as-identifier-reference.js:27:1]
  27 │ function *gen() {
  28 │   void yield;
@@ -31903,7 +31903,7 @@ Negative Passed: 3915/3915 (100.00%)
  29 │ }
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/generators/yield-as-identifier-reference.js:27:1]
  27 │ function *gen() {
  28 │   void yield;
@@ -31945,14 +31945,14 @@ Negative Passed: 3915/3915 (100.00%)
  19 │ }
     ╰────
 
-  × The keyword 'yield' is reserved
+  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/generators/yield-as-parameter.js:16:1]
  16 │ 
  17 │ function* g(yield) {}
     ·             ─────
     ╰────
 
-  × Cannot use `yield` as an identifier in a generator context
+  × The keyword 'yield' is reserved
     ╭─[language/statements/generators/yield-as-parameter.js:16:1]
  16 │ 
  17 │ function* g(yield) {}
@@ -32032,6 +32032,20 @@ Negative Passed: 3915/3915 (100.00%)
  18 │ //
     ╰────
 
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/if/if-async-fun-else-async-fun.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function f() {  } else async function _f() {}
+    ·           ──────────────────
+    ╰────
+
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/if/if-async-fun-else-async-fun.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function f() {  } else async function _f() {}
+    ·                                        ───────────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/if/if-async-fun-else-async-fun.js:19:1]
  19 │ 
@@ -32049,17 +32063,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-async-fun-else-async-fun.js:19:1]
+    ╭─[language/statements/if/if-async-fun-else-stmt.js:19:1]
  19 │ 
- 20 │ if (true) async function f() {  } else async function _f() {}
+ 20 │ if (true) async function f() {  } else ;
     ·           ──────────────────
-    ╰────
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-async-fun-else-async-fun.js:19:1]
- 19 │ 
- 20 │ if (true) async function f() {  } else async function _f() {}
-    ·                                        ───────────────────
     ╰────
 
   × Invalid function declaration
@@ -32071,9 +32078,9 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-async-fun-else-stmt.js:19:1]
+    ╭─[language/statements/if/if-async-fun-no-else.js:19:1]
  19 │ 
- 20 │ if (true) async function f() {  } else ;
+ 20 │ if (true) async function f() {  }
     ·           ──────────────────
     ╰────
 
@@ -32086,10 +32093,17 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-async-fun-no-else.js:19:1]
+    ╭─[language/statements/if/if-async-gen-else-async-gen.js:19:1]
  19 │ 
- 20 │ if (true) async function f() {  }
-    ·           ──────────────────
+ 20 │ if (true) async function* f() {  } else async function* _f() {}
+    ·           ───────────────────
+    ╰────
+
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/if/if-async-gen-else-async-gen.js:19:1]
+ 19 │ 
+ 20 │ if (true) async function* f() {  } else async function* _f() {}
+    ·                                         ────────────────────
     ╰────
 
   × Invalid function declaration
@@ -32109,17 +32123,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-async-gen-else-async-gen.js:19:1]
+    ╭─[language/statements/if/if-async-gen-else-stmt.js:19:1]
  19 │ 
- 20 │ if (true) async function* f() {  } else async function* _f() {}
+ 20 │ if (true) async function* f() {  } else ;
     ·           ───────────────────
-    ╰────
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-async-gen-else-async-gen.js:19:1]
- 19 │ 
- 20 │ if (true) async function* f() {  } else async function* _f() {}
-    ·                                         ────────────────────
     ╰────
 
   × Invalid function declaration
@@ -32131,9 +32138,9 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-async-gen-else-stmt.js:19:1]
+    ╭─[language/statements/if/if-async-gen-no-else.js:19:1]
  19 │ 
- 20 │ if (true) async function* f() {  } else ;
+ 20 │ if (true) async function* f() {  }
     ·           ───────────────────
     ╰────
 
@@ -32144,13 +32151,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·           ────────────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-async-gen-no-else.js:19:1]
- 19 │ 
- 20 │ if (true) async function* f() {  }
-    ·           ───────────────────
-    ╰────
 
   × Invalid class declaration
     ╭─[language/statements/if/if-cls-else-cls.js:13:1]
@@ -32280,6 +32280,20 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/if/if-gen-else-gen.js:14:1]
+ 14 │ 
+ 15 │ if (true) function* g() {  } else function* _g() {}
+    ·           ─────────────
+    ╰────
+
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/if/if-gen-else-gen.js:14:1]
+ 14 │ 
+ 15 │ if (true) function* g() {  } else function* _g() {}
+    ·                                   ──────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/if/if-gen-else-gen.js:14:1]
  14 │ 
@@ -32297,17 +32311,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-gen-else-gen.js:14:1]
+    ╭─[language/statements/if/if-gen-else-stmt.js:14:1]
  14 │ 
- 15 │ if (true) function* g() {  } else function* _g() {}
+ 15 │ if (true) function* g() {  } else ;
     ·           ─────────────
-    ╰────
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-gen-else-gen.js:14:1]
- 14 │ 
- 15 │ if (true) function* g() {  } else function* _g() {}
-    ·                                   ──────────────
     ╰────
 
   × Invalid function declaration
@@ -32319,9 +32326,9 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-gen-else-stmt.js:14:1]
+    ╭─[language/statements/if/if-gen-no-else.js:14:1]
  14 │ 
- 15 │ if (true) function* g() {  } else ;
+ 15 │ if (true) function* g() {  }
     ·           ─────────────
     ╰────
 
@@ -32332,13 +32339,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·           ──────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-gen-no-else.js:14:1]
- 14 │ 
- 15 │ if (true) function* g() {  }
-    ·           ─────────────
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/statements/if/if-let-else-let.js:13:1]
@@ -32364,6 +32364,13 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/if/if-stmt-else-async-fun.js:19:1]
+ 19 │ 
+ 20 │ if (false) ; else async function f() {  }
+    ·                   ──────────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/if/if-stmt-else-async-fun.js:19:1]
  19 │ 
@@ -32373,10 +32380,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-stmt-else-async-fun.js:19:1]
+    ╭─[language/statements/if/if-stmt-else-async-gen.js:19:1]
  19 │ 
- 20 │ if (false) ; else async function f() {  }
-    ·                   ──────────────────
+ 20 │ if (false) ; else async function* f() {  }
+    ·                   ───────────────────
     ╰────
 
   × Invalid function declaration
@@ -32386,13 +32393,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·                   ────────────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-stmt-else-async-gen.js:19:1]
- 19 │ 
- 20 │ if (false) ; else async function* f() {  }
-    ·                   ───────────────────
-    ╰────
 
   × Invalid class declaration
     ╭─[language/statements/if/if-stmt-else-cls.js:13:1]
@@ -32426,6 +32426,13 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/if/if-stmt-else-gen.js:14:1]
+ 14 │ 
+ 15 │ if (false) ; else function* g() {  }
+    ·                   ─────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/if/if-stmt-else-gen.js:14:1]
  14 │ 
@@ -32433,13 +32440,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·                   ──────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/if/if-stmt-else-gen.js:14:1]
- 14 │ 
- 15 │ if (false) ; else function* g() {  }
-    ·                   ─────────────
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/statements/if/if-stmt-else-let.js:13:1]
@@ -32493,6 +32493,13 @@ Negative Passed: 3915/3915 (100.00%)
  26 │   }
     ╰────
 
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/labeled/decl-async-function.js:19:1]
+ 19 │ 
+ 20 │ label: async function f() {}
+    ·        ──────────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/labeled/decl-async-function.js:19:1]
  19 │ 
@@ -32502,10 +32509,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/labeled/decl-async-function.js:19:1]
+    ╭─[language/statements/labeled/decl-async-generator.js:19:1]
  19 │ 
- 20 │ label: async function f() {}
-    ·        ──────────────────
+ 20 │ label: async function* g() {}
+    ·        ───────────────────
     ╰────
 
   × Invalid function declaration
@@ -32515,13 +32522,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·        ──────────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/labeled/decl-async-generator.js:19:1]
- 19 │ 
- 20 │ label: async function* g() {}
-    ·        ───────────────────
-    ╰────
 
   × Invalid class declaration
     ╭─[language/statements/labeled/decl-cls.js:13:1]
@@ -32547,6 +32547,13 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/labeled/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ label: function* g() {}
+    ·        ─────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/labeled/decl-gen.js:14:1]
  14 │ 
@@ -32554,13 +32561,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·        ────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/labeled/decl-gen.js:14:1]
- 14 │ 
- 15 │ label: function* g() {}
-    ·        ─────────────
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/statements/labeled/decl-let.js:13:1]
@@ -32680,7 +32680,7 @@ Negative Passed: 3915/3915 (100.00%)
  15 │ 
     ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/let/static-init-await-binding-invalid.js:23:1]
  23 │   static {
  24 │     let await;
@@ -32688,7 +32688,7 @@ Negative Passed: 3915/3915 (100.00%)
  25 │   }
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × Cannot use await in class static initialization block
     ╭─[language/statements/let/static-init-await-binding-invalid.js:23:1]
  23 │   static {
  24 │     let await;
@@ -34022,7 +34022,7 @@ Negative Passed: 3915/3915 (100.00%)
     ·     ─────────
     ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/variable/dstr/ary-ptrn-elem-id-static-init-await-invalid.js:23:1]
  23 │   static {
  24 │     var [await] = [];
@@ -34030,7 +34030,7 @@ Negative Passed: 3915/3915 (100.00%)
  25 │   }
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × Cannot use await in class static initialization block
     ╭─[language/statements/variable/dstr/ary-ptrn-elem-id-static-init-await-invalid.js:23:1]
  23 │   static {
  24 │     var [await] = [];
@@ -34178,7 +34178,7 @@ Negative Passed: 3915/3915 (100.00%)
     ·     ────
     ╰────
 
-  × Cannot use await in class static initialization block
+  × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/variable/static-init-await-binding-invalid.js:23:1]
  23 │   static {
  24 │     var await;
@@ -34186,7 +34186,7 @@ Negative Passed: 3915/3915 (100.00%)
  25 │   }
     ╰────
 
-  × Cannot use `await` as an identifier in an async context
+  × Cannot use await in class static initialization block
     ╭─[language/statements/variable/static-init-await-binding-invalid.js:23:1]
  23 │   static {
  24 │     var await;
@@ -34256,6 +34256,13 @@ Negative Passed: 3915/3915 (100.00%)
  18 │ //
     ╰────
 
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/while/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ while (false) async function f() {}
+    ·               ──────────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/while/decl-async-fun.js:19:1]
  19 │ 
@@ -34265,10 +34272,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In strict mode code, functions can only be declared at top level or inside a block
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/while/decl-async-fun.js:19:1]
+    ╭─[language/statements/while/decl-async-gen.js:19:1]
  19 │ 
- 20 │ while (false) async function f() {}
-    ·               ──────────────────
+ 20 │ while (false) async function* g() {}
+    ·               ───────────────────
     ╰────
 
   × Invalid function declaration
@@ -34278,13 +34285,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·               ──────────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/while/decl-async-gen.js:19:1]
- 19 │ 
- 20 │ while (false) async function* g() {}
-    ·               ───────────────────
-    ╰────
 
   × Invalid class declaration
     ╭─[language/statements/while/decl-cls.js:13:1]
@@ -34310,6 +34310,13 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/while/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ while (false) function* g() {}
+    ·               ─────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/while/decl-gen.js:14:1]
  14 │ 
@@ -34317,13 +34324,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·               ────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/while/decl-gen.js:14:1]
- 14 │ 
- 15 │ while (false) function* g() {}
-    ·               ─────────────
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/statements/while/decl-let.js:13:1]
@@ -34356,6 +34356,13 @@ Negative Passed: 3915/3915 (100.00%)
     · ────
     ╰────
 
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/with/decl-async-fun.js:20:1]
+ 20 │ 
+ 21 │ with ({}) async function f() {}
+    ·           ──────────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/with/decl-async-fun.js:20:1]
  20 │ 
@@ -34365,10 +34372,10 @@ Negative Passed: 3915/3915 (100.00%)
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
 
   × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/with/decl-async-fun.js:20:1]
+    ╭─[language/statements/with/decl-async-gen.js:20:1]
  20 │ 
- 21 │ with ({}) async function f() {}
-    ·           ──────────────────
+ 21 │ with ({}) async function* g() {}
+    ·           ───────────────────
     ╰────
 
   × Invalid function declaration
@@ -34378,13 +34385,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·           ──────────────────────
     ╰────
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/with/decl-async-gen.js:20:1]
- 20 │ 
- 21 │ with ({}) async function* g() {}
-    ·           ───────────────────
-    ╰────
 
   × Invalid class declaration
     ╭─[language/statements/with/decl-cls.js:14:1]
@@ -34410,6 +34410,13 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
 
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/with/decl-gen.js:15:1]
+ 15 │ 
+ 16 │ with ({}) function* g() {}
+    ·           ─────────────
+    ╰────
+
   × Invalid function declaration
     ╭─[language/statements/with/decl-gen.js:15:1]
  15 │ 
@@ -34417,13 +34424,6 @@ Negative Passed: 3915/3915 (100.00%)
     ·           ────────────────
     ╰────
   help: In non-strict mode code, functions can only be declared at top level, inside a block, or as the body of an if statement
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/with/decl-gen.js:15:1]
- 15 │ 
- 16 │ with ({}) function* g() {}
-    ·           ─────────────
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/statements/with/decl-let.js:14:1]
@@ -34433,13 +34433,6 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × 'with' statements are not allowed
-    ╭─[language/statements/with/labelled-fn-stmt.js:25:1]
- 25 │ 
- 26 │ with ({}) label1: label2: function test262() {}
-    · ────
-    ╰────
-
   × Invalid function declaration
     ╭─[language/statements/with/labelled-fn-stmt.js:25:1]
  25 │ 
@@ -34447,6 +34440,13 @@ Negative Passed: 3915/3915 (100.00%)
     ·                           ─────────────────────
     ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/labelled-fn-stmt.js:25:1]
+ 25 │ 
+ 26 │ with ({}) label1: label2: function test262() {}
+    · ────
+    ╰────
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[language/statements/with/let-array-with-newline.js:21:1]
