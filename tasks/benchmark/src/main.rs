@@ -1,5 +1,5 @@
 #![cfg(not(miri))] // Miri does not support custom allocators
-//
+
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
@@ -22,13 +22,12 @@ use pico_args::Arguments;
 /// # Errors
 /// # Panics
 pub fn main() -> Result<(), String> {
-    let codes = vec![
-        Code::new(20, "https://cdn.jsdelivr.net/npm/pdfjs-dist@2.12.313/build/pdf.js")?,
-        Code::new(20, "https://cdn.jsdelivr.net/npm/lodash@4.17.0/lodash.js")?,
-        Code::new(20, "https://cdn.jsdelivr.net/npm/d3@7.1.1/dist/d3.js")?,
-        Code::new(30, "https://cdn.jsdelivr.net/npm/typescript@4.6.2/lib/typescript.js")?,
-        Code::new(30, "https://cdn.jsdelivr.net/npm/babylonjs@4.2.1/babylon.max.js")?,
-    ];
+    let root = project_root::get_project_root().unwrap();
+    let codes = std::fs::read_to_string(root.join("./tasks/benchmark/libs.txt"))
+        .unwrap()
+        .lines()
+        .map(|file| Code::new(10, file).unwrap())
+        .collect::<Vec<_>>();
 
     let mut args = Arguments::from_env();
 
@@ -45,6 +44,7 @@ pub fn main() -> Result<(), String> {
         let ret =
             Parser::new(&allocator, black_box(&code.source_text), SourceType::default()).parse();
         if !ret.errors.is_empty() {
+            println!("{} failed", &code.file_name);
             for error in &ret.errors {
                 println!("{error:?}");
             }

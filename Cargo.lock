@@ -928,6 +928,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "pico-args",
+ "project-root",
  "ureq",
  "url",
 ]
@@ -968,6 +969,7 @@ dependencies = [
  "oxc_printer",
  "oxc_semantic",
  "pico-args",
+ "project-root",
  "rayon",
  "regex",
  "serde",
@@ -1198,6 +1200,12 @@ checksum = "1d0dd4be24fcdcfeaa12a432d588dc59bbad6cad3510c67e74a2b6b2fc950564"
 dependencies = [
  "unicode-ident",
 ]
+
+[[package]]
+name = "project-root"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8bccbff07d5ed689c4087d20d7307a52ab6141edeedf487c3876a55b86cf63df"
 
 [[package]]
 name = "quote"

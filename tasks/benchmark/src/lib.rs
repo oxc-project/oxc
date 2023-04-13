@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr, time::Duration};
 
 pub struct Code {
-    pub url: &'static str,
+    pub url: String,
     pub file_name: String,
     pub source_text: String,
     pub measurement_time: Duration,
@@ -9,10 +9,10 @@ pub struct Code {
 
 impl Code {
     /// # Errors
-    pub fn new(measurement_seconds: u64, url: &'static str) -> Result<Self, String> {
+    pub fn new(measurement_seconds: u64, url: &str) -> Result<Self, String> {
         let (file_name, source_text) = Self::get_source_text(url)?;
         Ok(Self {
-            url,
+            url: url.to_string(),
             file_name,
             source_text,
             measurement_time: Duration::new(measurement_seconds, 0),

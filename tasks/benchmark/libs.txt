@@ -1,0 +1,13 @@
+https://unpkg.com/react@17.0.1/cjs/react.development.js
+https://unpkg.com/moment@2.29.1/moment.js
+https://unpkg.com/jquery@3.5.1/dist/jquery.js
+https://unpkg.com/vue@2.6.12/dist/vue.js
+https://unpkg.com/lodash@4.17.21/lodash.js
+https://unpkg.com/d3@6.3.1/dist/d3.js
+https://unpkg.com/terser@5.10.0/dist/bundle.min.js
+https://unpkg.com/three@0.124.0/build/three.js
+https://unpkg.com/victory@35.8.4/dist/victory.js
+https://unpkg.com/echarts@5.1.1/dist/echarts.js
+https://unpkg.com/antd@4.16.1/dist/antd.js
+https://unpkg.com/typescript@5.0.4/lib/typescript.js
+https://unpkg.com/babylonjs@5.55.0/babylon.js
