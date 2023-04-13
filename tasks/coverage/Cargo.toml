@@ -22,6 +22,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 rayon = { workspace = true }
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
+project-root = { workspace = true }
 
 console = "0.15.5"
 encoding_rs = "0.8.32"

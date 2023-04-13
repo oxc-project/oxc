@@ -6,10 +6,7 @@ mod suite;
 mod test262;
 mod typescript;
 
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
 pub use crate::babel::{BabelCase, BabelSuite};
 pub use crate::printer::PrinterTest262Case;
@@ -21,13 +18,7 @@ pub use crate::typescript::{TypeScriptCase, TypeScriptSuite};
 /// Invalid Project Root
 #[must_use]
 pub fn project_root() -> PathBuf {
-    Path::new(
-        &env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned()),
-    )
-    .ancestors()
-    .nth(2)
-    .unwrap()
-    .to_path_buf()
+    project_root::get_project_root().unwrap()
 }
 
 #[derive(Debug, Default)]
