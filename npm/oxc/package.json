@@ -13,6 +13,9 @@
     "directory": "npm/oxc"
   },
   "bin": "bin/oxc",
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
   "engines": {
     "node": ">=14.*"
   },
