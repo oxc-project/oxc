@@ -1,4 +1,11 @@
-# The JavaScript Oxidation Compiler (oxc)
+<p align="center">
+	<picture>
+		<source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-dark.png" width="700">
+		<img alt="OXC Logo" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-white.png" width="700">
+	</picture>
+</p>
+
+<div align="center">
 
 [![Discord chat][discord-badge]][discord-url]
 [![Build Status][ci-badge]][ci-url]
@@ -9,6 +16,8 @@
 [![Code Coverage][code-coverage-badge]][code-coverage-url]
 [![Code Size][code-size-badge]][code-size-url]
 [![MIT licensed][mit-badge]][mit-url]
+
+</div>
 
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
 [discord-url]: https://discord.gg/9uXCAwqQZW
@@ -27,7 +36,7 @@
 [code-coverage-badge]: https://codecov.io/gh/Boshen/oxc/branch/main/graph/badge.svg
 [code-coverage-url]: https://codecov.io/gh/Boshen/oxc
 
-The Oxidation Compiler is currently creating a suite of tools for the JavaScript/TypeScript language, which comprises:
+The Oxidation Compiler is creating a suite of tools for the JavaScript/TypeScript language, which comprises:
 
 * [Parser](./crates/oxc_parser) - See [docs.rs/oxc_parser](https://docs.rs/oxc_parser)
 * [Linter](./crates/oxc_linter) - Work in progress. Try it out! `npx oxidation-compiler@latest lint path`
