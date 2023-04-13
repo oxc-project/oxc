@@ -80,9 +80,8 @@ impl<'a> Parser<'a> {
         func_kind: FunctionKind,
         modifiers: Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
-        let has_await = self.ctx.has_await();
-        let has_yield = self.ctx.has_yield();
-        self.ctx = self.ctx.and_await(r#async).and_yield(generator);
+        let ctx = self.ctx;
+        self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
 
         let type_parameters = self.parse_ts_type_parameters()?;
 
@@ -92,7 +91,8 @@ impl<'a> Parser<'a> {
 
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()?) } else { None };
 
-        self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
+        self.ctx =
+            self.ctx.and_in(ctx.has_in()).and_await(ctx.has_await()).and_yield(ctx.has_yield());
 
         if !self.ts_enabled() && body.is_none() {
             return Err(self.unexpected());
