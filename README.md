@@ -36,7 +36,7 @@
 [code-coverage-badge]: https://codecov.io/gh/Boshen/oxc/branch/main/graph/badge.svg
 [code-coverage-url]: https://codecov.io/gh/Boshen/oxc
 
-The Oxidation Compiler is creating a suite of tools for the JavaScript/TypeScript language, which comprises:
+The Oxidation Compiler is creating a suite of tools for the JavaScript / TypeScript language:
 
 * [Parser](./crates/oxc_parser) - See [docs.rs/oxc_parser](https://docs.rs/oxc_parser)
 * [Linter](./crates/oxc_linter) - Work in progress. Try it out! `npx oxidation-compiler@latest lint path`
