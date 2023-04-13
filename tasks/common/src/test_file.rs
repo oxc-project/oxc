@@ -1,22 +1,48 @@
-use std::{path::PathBuf, str::FromStr, time::Duration};
+use std::str::FromStr;
 
-pub struct Code {
+use crate::project_root;
+
+pub struct TestFiles {
+    files: Vec<TestFile>,
+}
+
+impl Default for TestFiles {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl TestFiles {
+    /// # Panics
+    /// Fails to read file
+    #[must_use]
+    pub fn new() -> Self {
+        let root = project_root();
+        let files = std::fs::read_to_string(root.join("./tasks/libs.txt"))
+            .unwrap()
+            .lines()
+            .map(|file| TestFile::new(file).unwrap())
+            .collect::<Vec<_>>();
+        Self { files }
+    }
+
+    #[must_use]
+    pub fn files(&self) -> &Vec<TestFile> {
+        &self.files
+    }
+}
+
+pub struct TestFile {
     pub url: String,
     pub file_name: String,
     pub source_text: String,
-    pub measurement_time: Duration,
 }
 
-impl Code {
+impl TestFile {
     /// # Errors
-    pub fn new(measurement_seconds: u64, url: &str) -> Result<Self, String> {
+    pub fn new(url: &str) -> Result<Self, String> {
         let (file_name, source_text) = Self::get_source_text(url)?;
-        Ok(Self {
-            url: url.to_string(),
-            file_name,
-            source_text,
-            measurement_time: Duration::new(measurement_seconds, 0),
-        })
+        Ok(Self { url: url.to_string(), file_name, source_text })
     }
 
     /// # Errors
@@ -28,8 +54,7 @@ impl Code {
 
         let filename = segments.last().ok_or_else(|| "lib url has no segments".to_string())?;
 
-        let mut file = PathBuf::from_str("target").map_err(err_to_string)?;
-        file.push(filename);
+        let file = project_root().join("target").join(filename);
 
         if let Ok(code) = std::fs::read_to_string(&file) {
             println!("[{filename}] - using [{}]", file.display());
