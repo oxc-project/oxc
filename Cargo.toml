@@ -2,7 +2,6 @@
 resolver = "2"
 members = [
 	"crates/*",
-	"examples/*",
 	"tasks/*",
 ]
 
@@ -26,6 +25,8 @@ oxc_semantic = { version = "0.0.4", path = "crates/oxc_semantic" }
 oxc_linter = { version = "0.0.0", path = "crates/oxc_linter" }
 oxc_macros = { version = "0.0.0", path = "crates/oxc_macros" }
 
+oxc_tasks_common = {  path = "tasks/common" }
+
 jemallocator = "0.5.0"
 mimalloc = "0.1.35"
 bitflags = "1.3.2"
@@ -43,6 +44,8 @@ glob = "0.3.1"
 lazy_static = "1.4.0"
 phf = "0.11"
 once_cell = "1.17.1"
+project-root = "0.2.2"
+pico-args = "0.5.0"
 
 [workspace.metadata.workspaces]
 independent = true

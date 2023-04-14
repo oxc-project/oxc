@@ -27,10 +27,11 @@ benchmark:
 new-rule name:
   cargo run -p rulegen ${{name}}
 
+# We are ready, let's run the same CI commands
 ready:
   git diff --exit-code --quiet
   typos
+  cargo fmt
   just lint
   just test
-  cargo coverage
   git status
