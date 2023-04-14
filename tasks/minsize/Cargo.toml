@@ -13,4 +13,6 @@ oxc_diagnostics = {  workspace = true  }
 oxc_semantic = {  workspace = true  }
 
 oxc_tasks_common = { workspace = true  }
+
 humansize = "2.1.3"
+flate2 = "1.0.25"
