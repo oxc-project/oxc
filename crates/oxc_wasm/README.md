@@ -13,6 +13,7 @@ const ast = oxc.main(code, options)
 ### 🛠️ Build with `wasm-pack build`
 
 ```
+cargo binstall wasm-pack
 wasm-pack build
 ```
 

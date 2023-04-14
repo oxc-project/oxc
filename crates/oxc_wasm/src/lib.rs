@@ -31,9 +31,9 @@ pub struct Options {
 }
 
 #[wasm_bindgen]
-#[must_use]
 #[allow(deprecated)]
-pub fn main(text: &str, js_options: &JsValue) -> JsValue {
+#[must_use]
+pub fn parse(text: &str, js_options: &JsValue) -> JsValue {
     set_panic_hook();
     let options: Options = js_options.into_serde().unwrap_or_default();
     let path_str = format!(
