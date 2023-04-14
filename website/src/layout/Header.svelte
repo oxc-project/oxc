@@ -1,5 +1,5 @@
 <script>
-  import logo from "../assets/logo-square.png";
+  import { logoSquare } from "../../assets";
   import LinkButton from "../components/LinkButton.svelte";
 </script>
 
@@ -9,7 +9,7 @@
   >
     <div>
       <a href="/" class="flex items-center">
-        <img src={logo} class="w-56px h-56px" alt="OXC Logo" />
+        <img src={logoSquare} class="w-56px h-56px" alt="OXC Logo" />
         <h1 class="text-xl text-white ml-2">OXC</h1>
       </a>
     </div>

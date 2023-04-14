@@ -1,7 +1,7 @@
 <script>
-  import logo from "../assets/logo-round.png";
+  import { logoRound } from "../../assets";
   import LinkButton from "../components/LinkButton.svelte";
-  
+
   const footerGroups = [
     {
       name: "Docs",
@@ -45,7 +45,7 @@
   <container class="container mx-auto py-4">
     <div class="flex">
       <ul class="flex-1">
-        <img src={logo} class="w-56px h-56px" alt="OXC Logo" />
+        <img src={logoRound} class="w-56px h-56px" alt="OXC Logo" />
       </ul>
       {#each footerGroups as group}
         <ul class="flex-1">
