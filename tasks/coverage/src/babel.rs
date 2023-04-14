@@ -90,6 +90,10 @@ pub struct BabelCase {
 }
 
 impl BabelCase {
+    pub fn set_result(&mut self, result: TestResult) {
+        self.result = result;
+    }
+
     fn read_file<T>(path: &Path, file_name: &'static str) -> Option<T>
     where
         T: DeserializeOwned,
@@ -195,6 +199,18 @@ impl BabelCase {
                 .map_or(false, |s| matches!(s.as_str(), "module" | "unambiguous"))
         })
     }
+
+    /// # Panics
+    #[must_use]
+    pub fn source_type(&self) -> SourceType {
+        let mut source_type = SourceType::from_path(self.path()).unwrap();
+        *source_type
+            .with_script(true)
+            .with_jsx(self.is_jsx())
+            .with_typescript(self.is_typescript())
+            .with_typescript_definition(self.is_typescript_definition())
+            .with_module(self.is_module())
+    }
 }
 
 impl Case for BabelCase {
@@ -240,13 +256,7 @@ impl Case for BabelCase {
     }
 
     fn run(&mut self) {
-        let mut source_type = SourceType::from_path(self.path()).unwrap();
-        let source_type = *source_type
-            .with_script(true)
-            .with_jsx(self.is_jsx())
-            .with_typescript(self.is_typescript())
-            .with_typescript_definition(self.is_typescript_definition())
-            .with_module(self.is_module());
+        let source_type = self.source_type();
         self.result = self.execute(source_type);
     }
 }
