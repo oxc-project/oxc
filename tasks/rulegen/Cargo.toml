@@ -1,8 +1,8 @@
 [package]
 name = "rulegen"
 version = "0.0.0"
-edition = "2021"
 publish = false
+edition.workspace = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
