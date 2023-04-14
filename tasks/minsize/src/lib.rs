@@ -52,7 +52,7 @@ fn minify(file: &TestFile) -> String {
     let source_text = &file.source_text;
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
-    let _semantic = SemanticBuilder::new(source_text, source_type, &ret.trivias);
+    let _semantic = SemanticBuilder::new(source_text, source_type, &ret.trivias).build(program);
     let printer_options = PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() };
     Printer::new(source_text.len(), printer_options).build(program)
 }

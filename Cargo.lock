@@ -1036,6 +1036,7 @@ dependencies = [
  "oxc_ast",
  "oxc_parser",
  "oxc_printer",
+ "oxc_semantic",
  "walkdir",
 ]
 
