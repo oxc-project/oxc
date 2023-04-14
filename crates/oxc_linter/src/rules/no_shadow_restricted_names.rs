@@ -11,10 +11,13 @@ use crate::{context::LintContext, rule::Rule};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-shadow-restricted-names): Shadowing of global property '{0}'")]
 #[diagnostic(severity(warning))]
-struct NoShadowRestrictedNamesDiagnostic(Atom, #[label("Shadowing of global property '{0}'")] pub Span);
+struct NoShadowRestrictedNamesDiagnostic(
+    Atom,
+    #[label("Shadowing of global property '{0}'")] pub Span,
+);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoShadowRestrictedNames {}
+pub struct NoShadowRestrictedNames;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -25,7 +28,7 @@ declare_oxc_lint!(
     /// Defining them to mean something else can have unintended consequences and confuse others reading the code.
     ///
     /// ### Example
-    /// ```
+    /// ```javascript
     /// var undefined = "foo";
     /// ```
     NoShadowRestrictedNames,
@@ -40,23 +43,23 @@ fn safely_shadows_undefined(symbol: &Symbol, ctx: &LintContext<'_>) -> bool {
         for reference_id in symbol.references() {
             let reference = ctx.semantic().symbols().get_resolved_reference(*reference_id).unwrap();
             if reference.is_write() {
-                no_assign = false
+                no_assign = false;
             }
         }
         let mut no_init = false;
         let decl = ctx.nodes()[symbol.declaration()];
         if let AstKind::VariableDeclarator(var) = decl.kind() {
-            no_init = var.init.is_none()
+            no_init = var.init.is_none();
         }
         return no_assign && no_init;
     }
-    return false;
+    false
 }
 
 impl Rule for NoShadowRestrictedNames {
     fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
         if RESTRICTED.contains(&symbol.name().as_str()) && !safely_shadows_undefined(symbol, ctx) {
-            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(symbol.name().clone(), symbol.span()))
+            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(symbol.name().clone(), symbol.span()));
         }
     }
 }
