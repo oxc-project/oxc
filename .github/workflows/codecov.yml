@@ -3,9 +3,12 @@
 name: Code Coverage
 
 on:
-  schedule:
-    - cron:  '0 16 * * *' # 0:00 am Beijing Time
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.rs'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
