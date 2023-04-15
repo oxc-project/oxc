@@ -1,6 +1,11 @@
-//! Oxc AST
+//! # Oxc AST
 //!
-//! This is 90% similar to estree expect a few places such as `BindingIdentifier` and `AssignmentTarget`.
+//! This is almost similar to [estree](https://github.com/estree/estree) expect a few places:
+//! * `Identifier` is replaced with explicit `BindingIdentifier`, `IdentifierReference`, `IdentifierName` per spec
+//! * `AssignmentExpression`.`left` `Pattern` is replaced with `AssignmentTarget`
+//!
+//! ## Cargo Features
+//!   * `"serde"` enables support for serde serialization
 
 #![feature(let_chains)]
 #![feature(is_some_and)]
@@ -16,8 +21,8 @@ mod source_type;
 mod span;
 pub mod syntax_directed_operations;
 mod trivia;
-pub mod visit;
-pub mod visit_mut;
+mod visit;
+mod visit_mut;
 
 use compact_str::CompactString;
 pub use num_bigint::BigUint;
@@ -26,9 +31,11 @@ pub use crate::ast_builder::AstBuilder;
 pub use crate::ast_kind::AstKind;
 pub use crate::source_type::{Language, LanguageVariant, ModuleKind, SourceType, VALID_EXTENSIONS};
 pub use crate::span::{GetSpan, Span};
-pub use crate::trivia::{CommentKind, Trivias};
+pub use crate::trivia::Trivias;
+pub use crate::visit::Visit;
+pub use crate::visit_mut::VisitMut;
 
-/// Type alis for [`CompactString`]
+/// Type alias for [`CompactString`]
 pub type Atom = CompactString;
 
 // After experimenting with two types of boxed enum variants:

@@ -29,7 +29,7 @@ impl<'a> Program<'a> {
     }
 }
 
-/// Section 13 Expression
+/// Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Expression<'a> {
@@ -227,7 +227,7 @@ impl<'a> Expression<'a> {
     }
 }
 
-/// Section 12.6 `IdentifierName`
+/// Identifier Name
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IdentifierName {
@@ -236,7 +236,7 @@ pub struct IdentifierName {
     pub name: Atom,
 }
 
-/// Section 13.1 `IdentifierReference`
+/// Identifier Reference
 #[derive(Debug, Clone, PartialEq, Hash, Eq)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IdentifierReference {
@@ -245,7 +245,7 @@ pub struct IdentifierReference {
     pub name: Atom,
 }
 
-/// Section 13.1 `BindingIdentifier`
+/// Binding Identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BindingIdentifier {
@@ -254,7 +254,7 @@ pub struct BindingIdentifier {
     pub name: Atom,
 }
 
-/// Section 13.1 `LabelIdentifier`
+/// Label Identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct LabelIdentifier {
@@ -263,7 +263,7 @@ pub struct LabelIdentifier {
     pub name: Atom,
 }
 
-/// Section 13.2.2 This Expression
+/// This Expression
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ThisExpression {
@@ -271,7 +271,7 @@ pub struct ThisExpression {
     pub span: Span,
 }
 
-/// Section 13.2.5 Array Expression
+/// Array Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ArrayExpression<'a> {
@@ -281,7 +281,7 @@ pub struct ArrayExpression<'a> {
     pub trailing_comma: Option<Span>,
 }
 
-/// Section 13.2.6 Object Expression
+/// Object Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ObjectExpression<'a> {
@@ -361,7 +361,7 @@ pub enum PropertyKind {
     Set,
 }
 
-/// Section 13.2.9 Template Literal
+/// Template Literal
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TemplateLiteral<'a> {
@@ -410,7 +410,7 @@ pub struct TemplateElementValue {
     pub cooked: Option<Atom>,
 }
 
-/// Section 13.3 Member Expression
+/// Member Expression
 #[derive(Debug, PartialEq, Hash)]
 pub enum MemberExpression<'a> {
     ComputedMemberExpression(ComputedMemberExpression<'a>),
@@ -488,7 +488,7 @@ pub struct PrivateFieldExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// Section 13.3 Call Expression
+/// Call Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct CallExpression<'a> {
@@ -545,7 +545,7 @@ impl<'a> CallExpression<'a> {
     }
 }
 
-/// Section 13.3 New Expression
+/// New Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct NewExpression<'a> {
@@ -556,8 +556,7 @@ pub struct NewExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-/// Section 13.3 Meta Property
-/// `new.target` | `import.meta`
+/// Meta Property `new.target` | `import.meta`
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct MetaProperty {
@@ -567,7 +566,7 @@ pub struct MetaProperty {
     pub property: IdentifierName,
 }
 
-/// Section 13.3 Spread Element
+/// Spread Element
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SpreadElement<'a> {
@@ -576,7 +575,7 @@ pub struct SpreadElement<'a> {
     pub argument: Expression<'a>,
 }
 
-/// Section 13.3 Argument
+/// Argument
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Argument<'a> {
@@ -584,7 +583,7 @@ pub enum Argument<'a> {
     Expression(Expression<'a>),
 }
 
-/// Section 13.4 Update Expression
+/// Update Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct UpdateExpression<'a> {
@@ -595,7 +594,7 @@ pub struct UpdateExpression<'a> {
     pub argument: SimpleAssignmentTarget<'a>,
 }
 
-/// Section 13.5 Unary Expression
+/// Unary Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct UnaryExpression<'a> {
@@ -606,7 +605,7 @@ pub struct UnaryExpression<'a> {
     pub argument: Expression<'a>,
 }
 
-/// Section 13.6 - 13.13 Binary Expression
+/// Binary Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BinaryExpression<'a> {
@@ -629,7 +628,7 @@ pub struct PrivateInExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// Section 13.13 Binary Logical Operators
+/// Binary Logical Operators
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct LogicalExpression<'a> {
@@ -640,7 +639,7 @@ pub struct LogicalExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// Section 13.14 Conditional Expression
+/// Conditional Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ConditionalExpression<'a> {
@@ -651,7 +650,7 @@ pub struct ConditionalExpression<'a> {
     pub alternate: Expression<'a>,
 }
 
-/// Section 13.15 Assignment Expression
+/// Assignment Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentExpression<'a> {
@@ -791,7 +790,7 @@ pub struct AssignmentTargetPropertyProperty<'a> {
     pub binding: AssignmentTargetMaybeDefault<'a>,
 }
 
-/// Section 13.16 Sequence Expression
+/// Sequence Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SequenceExpression<'a> {
@@ -807,7 +806,7 @@ pub struct Super {
     pub span: Span,
 }
 
-/// Section 15.8 Await Expression
+/// Await Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AwaitExpression<'a> {
@@ -831,7 +830,7 @@ pub enum ChainElement<'a> {
     MemberExpression(Box<'a, MemberExpression<'a>>),
 }
 
-// Section 13.2 ParenthesizedExpression
+/// Parenthesized Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ParenthesizedExpression<'a> {
@@ -840,7 +839,7 @@ pub struct ParenthesizedExpression<'a> {
     pub expression: Expression<'a>,
 }
 
-/// Section 14 Statements
+/// Statements
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Statement<'a> {
@@ -868,7 +867,7 @@ pub enum Statement<'a> {
     Declaration(Declaration<'a>),
 }
 
-/// Section 11.2.1 Directive Prologue
+/// Directive Prologue
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(
     feature = "serde",
@@ -883,7 +882,7 @@ pub struct Directive<'a> {
     pub directive: &'a str,
 }
 
-/// Section 14.2 Block Statement
+/// Block Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BlockStatement<'a> {
@@ -892,7 +891,7 @@ pub struct BlockStatement<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
-/// Section 14.3 Declarations and the Variable Statement
+/// Declarations and the Variable Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Declaration<'a> {
@@ -919,7 +918,7 @@ impl<'a> Declaration<'a> {
     }
 }
 
-/// Section 14.3.2 Variable Declaration
+/// Variable Declaration
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct VariableDeclaration<'a> {
@@ -974,7 +973,7 @@ pub struct VariableDeclarator<'a> {
     pub definite: bool,
 }
 
-/// Section 14.4 Empty Statement
+/// Empty Statement
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct EmptyStatement {
@@ -982,7 +981,7 @@ pub struct EmptyStatement {
     pub span: Span,
 }
 
-/// Section 14.5 Expression Statement
+/// Expression Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExpressionStatement<'a> {
@@ -991,7 +990,7 @@ pub struct ExpressionStatement<'a> {
     pub expression: Expression<'a>,
 }
 
-/// Section 14.6 If Statement
+/// If Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IfStatement<'a> {
@@ -1002,7 +1001,7 @@ pub struct IfStatement<'a> {
     pub alternate: Option<Statement<'a>>,
 }
 
-/// Section 14.7.2 Do-While Statement
+/// Do-While Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct DoWhileStatement<'a> {
@@ -1012,7 +1011,7 @@ pub struct DoWhileStatement<'a> {
     pub test: Expression<'a>,
 }
 
-/// Section 14.7.3 While Statement
+/// While Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct WhileStatement<'a> {
@@ -1022,7 +1021,7 @@ pub struct WhileStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// Section 14.7.4 For Statement
+/// For Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ForStatement<'a> {
@@ -1041,7 +1040,7 @@ pub enum ForStatementInit<'a> {
     Expression(Expression<'a>),
 }
 
-/// Section 14.7.5 For-In Statement
+/// For-In Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ForInStatement<'a> {
@@ -1052,7 +1051,7 @@ pub struct ForInStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// Section 14.7.5 For-Of Statement
+/// For-Of Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ForOfStatement<'a> {
@@ -1071,7 +1070,7 @@ pub enum ForStatementLeft<'a> {
     AssignmentTarget(AssignmentTarget<'a>),
 }
 
-/// Section 14.8 Continue Statement
+/// Continue Statement
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ContinueStatement {
@@ -1080,7 +1079,7 @@ pub struct ContinueStatement {
     pub label: Option<LabelIdentifier>,
 }
 
-/// Section 14.9 Break Statement
+/// Break Statement
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BreakStatement {
@@ -1089,7 +1088,7 @@ pub struct BreakStatement {
     pub label: Option<LabelIdentifier>,
 }
 
-/// Section 14.10 Return Statement
+/// Return Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ReturnStatement<'a> {
@@ -1098,7 +1097,7 @@ pub struct ReturnStatement<'a> {
     pub argument: Option<Expression<'a>>,
 }
 
-/// Section 14.11 With Statement
+/// With Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct WithStatement<'a> {
@@ -1108,7 +1107,7 @@ pub struct WithStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// Section 14.12 Switch Statement
+/// Switch Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SwitchStatement<'a> {
@@ -1134,7 +1133,7 @@ impl<'a> SwitchCase<'a> {
     }
 }
 
-/// Section 14.13 Labelled Statement
+/// Labelled Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct LabeledStatement<'a> {
@@ -1144,7 +1143,7 @@ pub struct LabeledStatement<'a> {
     pub body: Statement<'a>,
 }
 
-/// Section 14.14 Throw Statement
+/// Throw Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ThrowStatement<'a> {
@@ -1153,7 +1152,7 @@ pub struct ThrowStatement<'a> {
     pub argument: Expression<'a>,
 }
 
-/// Section 14.15 Try Statement
+/// Try Statement
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TryStatement<'a> {
@@ -1173,7 +1172,7 @@ pub struct CatchClause<'a> {
     pub body: Box<'a, BlockStatement<'a>>,
 }
 
-/// Section 14.16 Debugger Statement
+/// Debugger Statement
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct DebuggerStatement {
@@ -1181,7 +1180,7 @@ pub struct DebuggerStatement {
     pub span: Span,
 }
 
-/// Section 14.3.3 Destructuring Binding Patterns
+/// Destructuring Binding Patterns
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub struct BindingPattern<'a> {
@@ -1253,7 +1252,7 @@ pub struct RestElement<'a> {
     pub argument: BindingPattern<'a>,
 }
 
-/// Section 15.2 Function Definitions
+/// Function Definitions
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[allow(clippy::struct_excessive_bools)]
@@ -1360,7 +1359,7 @@ impl<'a> FunctionBody<'a> {
     }
 }
 
-/// Section 15.3 Arrow Function Definitions
+/// Arrow Function Definitions
 #[derive(Debug, PartialEq, Hash)]
 pub struct ArrowExpression<'a> {
     pub span: Span,
@@ -1383,7 +1382,7 @@ impl<'a> ArrowExpression<'a> {
     }
 }
 
-/// Section 15.5 Generator Function Definitions
+/// Generator Function Definitions
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct YieldExpression<'a> {
@@ -1393,7 +1392,7 @@ pub struct YieldExpression<'a> {
     pub argument: Option<Expression<'a>>,
 }
 
-/// Section 15.7 Class Definitions
+/// Class Definitions
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub struct Class<'a> {
@@ -1593,7 +1592,7 @@ pub struct StaticBlock<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
-/// Section 16.2.2 Imports
+/// Imports
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct ModuleDeclaration<'a> {

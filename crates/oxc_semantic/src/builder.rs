@@ -6,8 +6,7 @@ use std::{cell::RefCell, rc::Rc};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
-    ast::*, module_record::ModuleRecord, visit::Visit, AstKind, Atom, GetSpan, SourceType, Span,
-    Trivias,
+    ast::*, module_record::ModuleRecord, AstKind, Atom, GetSpan, SourceType, Span, Trivias, Visit,
 };
 use oxc_diagnostics::Error;
 

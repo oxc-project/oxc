@@ -6,10 +6,9 @@ use oxc_ast::ast::{
     ArrayExpression, CallExpression, ExpressionStatement, ObjectExpression, Program, Property,
     Statement, StringLiteral, TemplateLiteral,
 };
-use oxc_ast::visit::Visit;
 use oxc_ast::{
     ast::{Argument, Expression, ObjectProperty, PropertyKey, PropertyValue},
-    GetSpan, SourceType,
+    GetSpan, SourceType, Visit,
 };
 use oxc_parser::Parser;
 use serde::Serialize;
