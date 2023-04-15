@@ -25,6 +25,7 @@ pub enum TestResult {
     ToBeRun,
     Passed,
     IncorrectlyPassed,
+    #[allow(unused)]
     Mismatch(String, String),
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),

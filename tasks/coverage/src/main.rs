@@ -1,7 +1,4 @@
-use oxc_coverage::{
-    AppArgs, BabelCase, BabelSuite, PrinterBabelCase, PrinterTest262Case, Suite, Test262Case,
-    Test262Suite, TypeScriptCase, TypeScriptSuite,
-};
+use oxc_coverage::AppArgs;
 use pico_args::Arguments;
 
 fn main() {
@@ -16,33 +13,11 @@ fn main() {
 
     let task = command.as_deref().unwrap_or("default");
 
-    let run_test262 = || {
-        Test262Suite::<Test262Case>::new().run("Test262", &args);
-    };
-
-    let run_babel = || {
-        BabelSuite::<BabelCase>::new().run("Babel", &args);
-    };
-
-    let run_typescript = || {
-        TypeScriptSuite::<TypeScriptCase>::new().run("TypeScript", &args);
-    };
-
-    let run_printer = || {
-        Test262Suite::<PrinterTest262Case>::new().run("Printer_Test262", &args);
-        BabelSuite::<PrinterBabelCase>::new().run("Printer_Babel", &args);
-    };
-
     match task {
-        "js" | "test262" => run_test262(),
-        "babel" => run_babel(),
-        "ts" | "typescript" => run_typescript(),
-        "printer" => run_printer(),
-        _ => {
-            run_test262();
-            run_babel();
-            run_typescript();
-            run_printer();
-        }
+        "js" | "test262" => args.run_test262(),
+        "babel" => args.run_babel(),
+        "ts" | "typescript" => args.run_typescript(),
+        "printer" => args.run_printer(),
+        _ => args.run_all(),
     };
 }

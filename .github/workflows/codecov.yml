@@ -40,7 +40,7 @@ jobs:
           save-if: false
 
       - name: Run
-        run: cargo llvm-cov nextest --all-features --workspace --ignore-filename-regex tasks --release --lcov --output-path lcov.info
+        run: cargo codecov --lcov --output-path lcov.info
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3

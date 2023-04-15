@@ -20,6 +20,10 @@ coverage:
   cargo coverage
   cargo minsize
 
+codecov:
+  cargo binstall cargo-llvm-cov -y
+  cargo codecov
+
 # Run the benchmarks. See `tasks/benchmark`
 benchmark:
   cargo benchmark
