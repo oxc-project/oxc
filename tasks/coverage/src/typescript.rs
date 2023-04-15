@@ -34,10 +34,7 @@ impl<T: Case> Default for TypeScriptSuite<T> {
 impl<T: Case> TypeScriptSuite<T> {
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            test_root: project_root().join(TESTS_ROOT).join("cases/conformance"),
-            test_cases: vec![],
-        }
+        Self { test_root: project_root().join(TESTS_ROOT).join("cases"), test_cases: vec![] }
     }
 }
 
@@ -47,6 +44,8 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
     }
 
     fn skip_test_path(&self, path: &Path) -> bool {
+        let supported_paths =
+            ["conformance", "compiler"].iter().any(|p| path.to_string_lossy().contains(p));
         let unsupported_tests = [
             // these 2 relies on the ts "target" option
             "functionWithUseStrictAndSimpleParameterList.ts",
@@ -54,7 +53,7 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
         ]
         .iter()
         .any(|p| path.to_string_lossy().contains(p));
-        unsupported_tests
+        !supported_paths || unsupported_tests
     }
 
     fn save_test_cases(&mut self, tests: Vec<T>) {
