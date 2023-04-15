@@ -1,4 +1,4 @@
-//! AST Visitor Pattern
+//! Visitor Pattern
 //!
 //! See:
 //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)

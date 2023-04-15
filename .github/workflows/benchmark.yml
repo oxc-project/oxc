@@ -44,7 +44,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: './target/*.js'
-          key: benchmark-files-${{ hashFiles('./tasks/benchmark/src') }}
+          key: benchmark-files-${{ hashFiles('./tasks/libs.txt') }}
 
       - name: Compile
         run: cargo build --release -p oxc_benchmark

@@ -3,7 +3,6 @@ use std::{
     io::{stdout, Read, Write},
     panic::{catch_unwind, UnwindSafe},
     path::{Path, PathBuf},
-    rc::Rc,
     result::Result,
 };
 
@@ -13,7 +12,6 @@ use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
-use oxc_linter::Linter;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use rayon::prelude::*;
@@ -27,6 +25,7 @@ pub enum TestResult {
     ToBeRun,
     Passed,
     IncorrectlyPassed,
+    #[allow(unused)]
     Mismatch(String, String),
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
@@ -276,12 +275,11 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let program = allocator.alloc(parser_ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type, &parser_ret.trivias)
             .with_module_record_builder(true)
+            .with_check_syntax_error(true)
             .build(program);
-        let result = Linter::new().run_early_error(&Rc::new(semantic_ret.semantic), false);
-        let errors = result
+        let errors = parser_ret
+            .errors
             .into_iter()
-            .map(|msg| msg.error)
-            .chain(parser_ret.errors.into_iter())
             .chain(semantic_ret.errors.into_iter())
             .collect::<Vec<_>>();
 

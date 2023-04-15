@@ -1,7 +1,3 @@
-pub mod early_error {
-    pub mod javascript;
-}
-
 oxc_macros::declare_all_lint_rules! {
     array_callback_return,
     constructor_super,
@@ -21,8 +17,10 @@ oxc_macros::declare_all_lint_rules! {
     no_empty_pattern,
     no_new_symbol,
     no_self_compare,
+    no_shadow_restricted_names,
     no_mixed_operators,
     no_constant_binary_expression,
+    no_constant_condition,
     no_compare_neg_zero,
     no_unsafe_negation,
     no_bitwise,

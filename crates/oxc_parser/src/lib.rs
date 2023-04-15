@@ -225,7 +225,9 @@ impl<'a> Parser<'a> {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if self.cur_kind() == Kind::Undetermined {
-            return self.lexer.errors.pop().unwrap();
+            if let Some(error) = self.lexer.errors.pop() {
+                return error;
+            }
         }
         diagnostics::UnexpectedToken(self.cur_token().span()).into()
     }

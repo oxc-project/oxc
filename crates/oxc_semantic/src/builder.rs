@@ -2,21 +2,23 @@
 //! This builds:
 //!   * The untyped and flattened ast nodes into an indextree
 
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
-    ast::*, module_record::ModuleRecord, visit::Visit, AstKind, Atom, GetSpan, SourceType, Span,
-    Trivias,
+    ast::*, module_record::ModuleRecord, AstKind, Atom, GetSpan, SourceType, Span, Trivias, Visit,
 };
-use oxc_diagnostics::{Error, Redeclaration};
+use oxc_diagnostics::Error;
 
 use crate::{
     binder::Binder,
+    checker::EarlyErrorJavaScript,
+    diagnostics::Redeclaration,
+    jsdoc::JSDocBuilder,
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
     scope::{ScopeBuilder, ScopeId},
-    symbol::{Reference, ReferenceFlag, SymbolFlags, SymbolId, SymbolTable},
+    symbol::{Reference, ReferenceFlag, SymbolFlags, SymbolId, SymbolTableBuilder},
     Semantic,
 };
 
@@ -28,7 +30,7 @@ pub struct SemanticBuilder<'a> {
     trivias: Rc<Trivias>,
 
     /// Semantic early errors such as redeclaration errors.
-    errors: Vec<Error>,
+    errors: RefCell<Vec<Error>>,
 
     // states
     pub current_node_id: AstNodeId,
@@ -38,10 +40,14 @@ pub struct SemanticBuilder<'a> {
     // builders
     pub nodes: AstNodes<'a>,
     pub scope: ScopeBuilder,
-    pub symbols: SymbolTable,
+    pub symbols: SymbolTableBuilder,
 
     with_module_record_builder: bool,
-    module_record_builder: ModuleRecordBuilder,
+    pub module_record_builder: ModuleRecordBuilder,
+
+    jsdoc: JSDocBuilder<'a>,
+
+    check_syntax_error: bool,
 }
 
 pub struct SemanticBuilderReturn<'a> {
@@ -61,15 +67,17 @@ impl<'a> SemanticBuilder<'a> {
             source_text,
             source_type,
             trivias: Rc::clone(trivias),
-            errors: vec![],
+            errors: RefCell::new(vec![]),
             current_node_id,
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
             nodes,
             scope,
-            symbols: SymbolTable::default(),
+            symbols: SymbolTableBuilder::default(),
             with_module_record_builder: false,
             module_record_builder: ModuleRecordBuilder::default(),
+            jsdoc: JSDocBuilder::new(source_text, trivias),
+            check_syntax_error: false,
         }
     }
 
@@ -80,16 +88,30 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[must_use]
+    pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
+        self.check_syntax_error = yes;
+        self
+    }
+
+    #[must_use]
     pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         // First AST pass
-        self.visit_program(program);
+        if !self.source_type.is_typescript_definition() {
+            self.visit_program(program);
+        }
 
         // Second partial AST pass on top level import / export statements
         let module_record = if self.with_module_record_builder {
-            self.module_record_builder.build(program)
+            self.module_record_builder.visit(program);
+            if self.check_syntax_error {
+                EarlyErrorJavaScript::check_module_record(&self);
+            }
+            self.module_record_builder.build()
         } else {
             ModuleRecord::default()
         };
+
+        let symbols = self.symbols.build();
 
         let semantic = Semantic {
             source_text: self.source_text,
@@ -97,15 +119,16 @@ impl<'a> SemanticBuilder<'a> {
             trivias: self.trivias,
             nodes: self.nodes,
             scopes: self.scope.scopes,
-            symbols: self.symbols,
+            symbols,
             module_record,
+            jsdoc: self.jsdoc.build(),
         };
-        SemanticBuilderReturn { semantic, errors: self.errors }
+        SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
 
     /// Push a Syntax Error
-    fn error<T: Into<Error>>(&mut self, error: T) {
-        self.errors.push(error.into());
+    pub fn error<T: Into<Error>>(&self, error: T) {
+        self.errors.borrow_mut().push(error.into());
     }
 
     /// # Panics
@@ -119,10 +142,12 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
-        let ast_node =
-            SemanticNode::new(kind, self.scope.current_scope_id, self.current_node_flags);
+        let mut flags = self.current_node_flags;
+        if self.jsdoc.retrieve_jsdoc_comment(kind) {
+            flags |= NodeFlags::JSDoc;
+        }
+        let ast_node = SemanticNode::new(kind, self.scope.current_scope_id, flags);
         let node_id = self.current_node_id.append_value(ast_node, &mut self.nodes);
-
         self.current_node_id = node_id.into();
     }
 
@@ -132,8 +157,21 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn try_enter_scope(&mut self, kind: AstKind<'a>) {
+        fn is_strict(directives: &[Directive]) -> bool {
+            directives.iter().any(|d| d.directive == "use strict")
+        }
         if let Some(flags) = ScopeBuilder::scope_flags_from_ast_kind(kind) {
             self.scope.enter(flags);
+        }
+        let strict_mode = match kind {
+            AstKind::Program(program) => is_strict(&program.directives),
+            AstKind::Function(func) => {
+                func.body.as_ref().is_some_and(|body| is_strict(&body.directives))
+            }
+            _ => false,
+        };
+        if strict_mode {
+            self.scope.current_scope_mut().strict_mode = true;
         }
     }
 
@@ -144,6 +182,12 @@ impl<'a> SemanticBuilder<'a> {
             self.scope.resolve_reference(&mut self.symbols);
             self.scope.leave();
         }
+    }
+
+    #[must_use]
+    pub fn strict_mode(&self) -> bool {
+        self.scope.current_scope().strict_mode()
+            || self.current_node_flags.contains(NodeFlags::Class)
     }
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
@@ -212,6 +256,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn leave_node(&mut self, kind: AstKind<'a>) {
+        if self.check_syntax_error {
+            let node = &self.nodes[*self.current_node_id];
+            EarlyErrorJavaScript::run(node, self);
+        }
         self.leave_kind(kind);
         self.pop_ast_node();
         self.try_leave_scope(kind);
@@ -246,12 +294,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::JSXElementName(elem) => {
                 self.reference_jsx_element_name(elem);
-            }
-            AstKind::Directive(directive) => {
-                // Turn on strict mode for "use strict"
-                if directive.directive == "use strict" {
-                    self.scope.current_scope_mut().strict_mode = true;
-                }
             }
             _ => {}
         }

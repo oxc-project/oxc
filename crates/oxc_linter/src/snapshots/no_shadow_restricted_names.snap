@@ -1,0 +1,194 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_shadow_restricted_names
+---
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'NaN'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }
+   ·          ─┬─
+   ·           ╰── Shadowing of global property 'NaN'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'NaN'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }
+   ·              ─┬─
+   ·               ╰── Shadowing of global property 'NaN'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'NaN'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }
+   ·                                            ─┬─
+   ·                                             ╰── Shadowing of global property 'NaN'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'NaN'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }
+   ·                                                                ─┬─
+   ·                                                                 ╰── Shadowing of global property 'NaN'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'undefined'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }
+   ·          ────┬────
+   ·              ╰── Shadowing of global property 'undefined'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'undefined'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }
+   ·                    ────┬────
+   ·                        ╰── Shadowing of global property 'undefined'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'undefined'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }
+   ·                                                     ────┬────
+   ·                                                         ╰── Shadowing of global property 'undefined'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'undefined'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }
+   ·                                                                               ────┬────
+   ·                                                                                   ╰── Shadowing of global property 'undefined'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'Infinity'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function Infinity(Infinity) { var Infinity; !function Infinity(Infinity) { try {} catch(Infinity) {} }; }
+   ·          ────┬───
+   ·              ╰── Shadowing of global property 'Infinity'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'Infinity'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function Infinity(Infinity) { var Infinity; !function Infinity(Infinity) { try {} catch(Infinity) {} }; }
+   ·                   ────┬───
+   ·                       ╰── Shadowing of global property 'Infinity'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'Infinity'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function Infinity(Infinity) { var Infinity; !function Infinity(Infinity) { try {} catch(Infinity) {} }; }
+   ·                                                                ────┬───
+   ·                                                                    ╰── Shadowing of global property 'Infinity'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'Infinity'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function Infinity(Infinity) { var Infinity; !function Infinity(Infinity) { try {} catch(Infinity) {} }; }
+   ·                                                                                         ────┬───
+   ·                                                                                             ╰── Shadowing of global property 'Infinity'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'arguments'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function arguments(arguments) { var arguments; !function arguments(arguments) { try {} catch(arguments) {} }; }
+   ·          ────┬────
+   ·              ╰── Shadowing of global property 'arguments'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'arguments'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function arguments(arguments) { var arguments; !function arguments(arguments) { try {} catch(arguments) {} }; }
+   ·                    ────┬────
+   ·                        ╰── Shadowing of global property 'arguments'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'arguments'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function arguments(arguments) { var arguments; !function arguments(arguments) { try {} catch(arguments) {} }; }
+   ·                                                                    ────┬────
+   ·                                                                        ╰── Shadowing of global property 'arguments'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'arguments'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function arguments(arguments) { var arguments; !function arguments(arguments) { try {} catch(arguments) {} }; }
+   ·                                                                                              ────┬────
+   ·                                                                                                  ╰── Shadowing of global property 'arguments'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'eval'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function eval(eval) { var eval; !function eval(eval) { try {} catch(eval) {} }; }
+   ·          ──┬─
+   ·            ╰── Shadowing of global property 'eval'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'eval'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function eval(eval) { var eval; !function eval(eval) { try {} catch(eval) {} }; }
+   ·               ──┬─
+   ·                 ╰── Shadowing of global property 'eval'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'eval'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function eval(eval) { var eval; !function eval(eval) { try {} catch(eval) {} }; }
+   ·                                                ──┬─
+   ·                                                  ╰── Shadowing of global property 'eval'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'eval'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ function eval(eval) { var eval; !function eval(eval) { try {} catch(eval) {} }; }
+   ·                                                                     ──┬─
+   ·                                                                       ╰── Shadowing of global property 'eval'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'eval'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ var eval = (eval) => { var eval; !function eval(eval) { try {} catch(eval) {} }; }
+   ·     ──┬─
+   ·       ╰── Shadowing of global property 'eval'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'eval'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ var eval = (eval) => { var eval; !function eval(eval) { try {} catch(eval) {} }; }
+   ·             ──┬─
+   ·               ╰── Shadowing of global property 'eval'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'eval'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ var eval = (eval) => { var eval; !function eval(eval) { try {} catch(eval) {} }; }
+   ·                                                 ──┬─
+   ·                                                   ╰── Shadowing of global property 'eval'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'eval'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ var eval = (eval) => { var eval; !function eval(eval) { try {} catch(eval) {} }; }
+   ·                                                                      ──┬─
+   ·                                                                        ╰── Shadowing of global property 'eval'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'undefined'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ var [undefined] = [1]
+   ·      ────┬────
+   ·          ╰── Shadowing of global property 'undefined'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'undefined'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ var {undefined} = obj; var {a: undefined} = obj; var {a: {b: {undefined}}} = obj; var {a, ...undefined} = obj;
+   ·      ────┬────
+   ·          ╰── Shadowing of global property 'undefined'
+   ╰────
+
+  ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'undefined'
+   ╭─[no_shadow_restricted_names.tsx:1:1]
+ 1 │ var undefined; undefined = 5;
+   ·     ────┬────
+   ·         ╰── Shadowing of global property 'undefined'
+   ╰────
+

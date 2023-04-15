@@ -161,11 +161,11 @@ impl<'a> AstKind<'a> {
     #[must_use]
     #[rustfmt::skip]
     pub fn is_declaration(self) -> bool {
-        matches!(
-            self,
-            Self::ModuleDeclaration(_) | Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_)
-                | Self::VariableDeclaration(_) | Self::TSInterfaceDeclaration(_)
-                | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_)
+        matches!(self, Self::Function(func) if func.is_declaration())
+        || matches!(self, Self::Class(class) if class.is_declaration())
+        || matches!(self, Self::ModuleDeclaration(_) | Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_)
+            | Self::VariableDeclaration(_) | Self::TSInterfaceDeclaration(_)
+            | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_)
         )
     }
 

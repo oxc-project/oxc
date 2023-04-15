@@ -1,6 +1,6 @@
 [package]
 name = "oxc_semantic"
-version = "0.0.3"
+version = "0.0.4"
 authors.workspace = true
 description.workspace = true
 edition.workspace = true
@@ -16,6 +16,8 @@ oxc_diagnostics = { workspace = true }
 indextree = { workspace = true }
 bitflags = { workspace = true }
 rustc-hash = { workspace = true }
+once_cell = { workspace = true }
+phf = { workspace = true, features = ["macros"] }
 
 [dev_dependencies]
 oxc_parser = { workspace = true }

@@ -18,9 +18,7 @@ pub use fixer::{Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 
-use crate::{
-    context::LintContext, rule::Rule, rules::early_error::javascript::EarlyErrorJavaScript,
-};
+use crate::context::LintContext;
 pub use crate::{
     rule::RuleCategory,
     rules::{RuleEnum, RULES},
@@ -29,8 +27,6 @@ pub use crate::{
 #[derive(Debug)]
 pub struct Linter {
     rules: Vec<RuleEnum>,
-
-    early_error_javascript: EarlyErrorJavaScript,
 
     fix: bool,
 }
@@ -49,7 +45,7 @@ impl Linter {
 
     #[must_use]
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
-        Self { rules, early_error_javascript: EarlyErrorJavaScript, fix: false }
+        Self { rules, fix: false }
     }
 
     #[must_use]
@@ -93,12 +89,7 @@ impl Linter {
     #[must_use]
     pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>) -> Vec<Message<'a>> {
         let mut ctx = LintContext::new(semantic, self.fix);
-        let is_check_early_error = !semantic.source_type().is_typescript_definition();
-
         for node in semantic.nodes().iter() {
-            if is_check_early_error {
-                self.early_error_javascript.run(node, &ctx);
-            }
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
                 rule.run(node, &ctx);
@@ -111,15 +102,6 @@ impl Linter {
             }
         }
 
-        ctx.into_message()
-    }
-
-    #[must_use]
-    pub fn run_early_error<'a>(&self, semantic: &Rc<Semantic<'a>>, fix: bool) -> Vec<Message<'a>> {
-        let ctx = LintContext::new(semantic, fix);
-        for node in semantic.nodes().iter() {
-            self.early_error_javascript.run(node, &ctx);
-        }
         ctx.into_message()
     }
 

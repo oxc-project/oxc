@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
-use indextree::{Arena, NodeId};
+use indextree::{Ancestors, Arena, NodeId};
 use oxc_ast::AstKind;
 
 use super::{AstNode, AstNodeId, SemanticNode};
@@ -12,6 +12,15 @@ pub struct AstNodes<'a> {
     /// which allows for efficient traversal.
     /// This also allows for parallel traversal by using `rayon`.
     nodes: Arena<SemanticNode<'a>>,
+}
+
+impl<'a> AstNodes<'a> {
+    /// # Panics
+    #[must_use]
+    pub fn ancestors(&self, node: &AstNode<'a>) -> Ancestors<'_, SemanticNode<'a>> {
+        let node_id = self.nodes.get_node_id(node).unwrap();
+        node_id.ancestors(&self.nodes)
+    }
 }
 
 impl<'a> Index<NodeId> for AstNodes<'a> {

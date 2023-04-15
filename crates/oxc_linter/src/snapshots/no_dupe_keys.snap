@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 53
 expression: no_dupe_keys
 ---
 
@@ -45,13 +44,6 @@ expression: no_dupe_keys
    ·           ───     ──
    ╰────
   help: Consider removing the duplicated key
-
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
-   ╭─[no_dupe_keys.tsx:1:1]
- 1 │ var x = { 012: 1, 10: 2 };
-   ·           ───
-   ╰────
-  help: for octal literals use the '0o' prefix instead
 
   ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]

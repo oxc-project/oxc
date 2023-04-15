@@ -1,4 +1,4 @@
-//! AST `VisitMut` Pattern
+//! Visit Mut Pattern
 
 use oxc_allocator::Vec;
 

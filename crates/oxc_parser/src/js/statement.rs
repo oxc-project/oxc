@@ -270,7 +270,7 @@ impl<'a> Parser<'a> {
                 self.error(diagnostics::ForLoopAsyncOf(self.end_span(expr_span)));
             }
             if is_let_of {
-                self.error(diagnostics::UnexpectedKeyword("let", self.end_span(expr_span)));
+                self.error(diagnostics::UnexpectedToken(self.end_span(expr_span)));
             }
             return self.parse_for_in_or_of_loop(span, r#await, for_stmt_left);
         }

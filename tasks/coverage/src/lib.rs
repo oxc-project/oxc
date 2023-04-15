@@ -6,28 +6,19 @@ mod suite;
 mod test262;
 mod typescript;
 
-use std::{
-    env,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
-pub use crate::babel::{BabelCase, BabelSuite};
-pub use crate::printer::PrinterTest262Case;
-pub use crate::suite::Suite;
-pub use crate::test262::{Test262Case, Test262Suite};
-pub use crate::typescript::{TypeScriptCase, TypeScriptSuite};
+use crate::babel::{BabelCase, BabelSuite};
+use crate::printer::{PrinterBabelCase, PrinterTest262Case};
+use crate::suite::Suite;
+use crate::test262::{Test262Case, Test262Suite};
+use crate::typescript::{TypeScriptCase, TypeScriptSuite};
 
 /// # Panics
 /// Invalid Project Root
 #[must_use]
 pub fn project_root() -> PathBuf {
-    Path::new(
-        &env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| env!("CARGO_MANIFEST_DIR").to_owned()),
-    )
-    .ancestors()
-    .nth(2)
-    .unwrap()
-    .to_path_buf()
+    project_root::get_project_root().unwrap()
 }
 
 #[derive(Debug, Default)]
@@ -42,4 +33,35 @@ impl AppArgs {
     fn should_print_detail(&self) -> bool {
         self.filter.is_some() || self.detail
     }
+
+    pub fn run_all(&self) {
+        self.run_test262();
+        self.run_babel();
+        self.run_typescript();
+        self.run_printer();
+    }
+
+    pub fn run_test262(&self) {
+        Test262Suite::<Test262Case>::new().run("Test262", self);
+    }
+
+    pub fn run_babel(&self) {
+        BabelSuite::<BabelCase>::new().run("Babel", self);
+    }
+
+    pub fn run_typescript(&self) {
+        TypeScriptSuite::<TypeScriptCase>::new().run("TypeScript", self);
+    }
+
+    pub fn run_printer(&self) {
+        Test262Suite::<PrinterTest262Case>::new().run("Printer_Test262", self);
+        BabelSuite::<PrinterBabelCase>::new().run("Printer_Babel", self);
+    }
+}
+
+#[test]
+#[cfg(any(coverage, coverage_nightly))]
+fn test() {
+    let args = AppArgs { filter: None, detail: false, diff: false };
+    args.run_all()
 }

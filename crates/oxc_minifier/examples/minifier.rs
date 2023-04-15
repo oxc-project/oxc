@@ -5,6 +5,7 @@ use oxc_ast::SourceType;
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_printer::{Printer, PrinterOptions};
+use oxc_semantic::SemanticBuilder;
 
 // Instruction:
 // create a `test.js`,
@@ -32,8 +33,10 @@ fn main() {
     let minifier_options = MinifierOptions::default();
     Minifier::new(&allocator, minifier_options).build(program);
 
-    let printer_options = PrinterOptions::default();
-    let printed = Printer::new(source_text.len(), printer_options).build(program);
+    let _semantic = SemanticBuilder::new(&source_text, source_type, &ret.trivias).build(program);
 
-    println!("{printed}");
+    let printer_options = PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() };
+    let _printed = Printer::new(source_text.len(), printer_options).build(program);
+
+    // println!("{printed}");
 }

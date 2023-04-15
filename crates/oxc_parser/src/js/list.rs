@@ -1,12 +1,25 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, syntax_directed_operations::PrivateBoundIdentifiers, Atom, GetSpan, Span};
-use oxc_diagnostics::{Redeclaration, Result};
+use oxc_diagnostics::{
+    miette::{self, Diagnostic},
+    thiserror::{self, Error},
+    Result,
+};
 use rustc_hash::FxHashMap;
 
 use crate::diagnostics;
 use crate::lexer::Kind;
 use crate::list::{NormalList, SeparatedList};
 use crate::Parser;
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("Identifier `{0}` has already been declared")]
+#[diagnostic()]
+struct Redeclaration(
+    pub Atom,
+    #[label("`{0}` has already been declared here")] pub Span,
+    #[label("It can not be redeclared here")] pub Span,
+);
 
 /// ObjectExpression.properties
 pub struct ObjectExpressionProperties<'a> {

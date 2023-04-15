@@ -4,8 +4,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{Atom, Span};
 
-/// Source Text Module Record
-/// <https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records>
+/// [Source Text Module Record](https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records)
 #[derive(Debug, Default)]
 pub struct ModuleRecord {
     /// <https://tc39.es/ecma262/#sec-static-semantics-modulerequests>

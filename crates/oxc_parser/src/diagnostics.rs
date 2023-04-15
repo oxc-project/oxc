@@ -24,10 +24,6 @@ pub struct ExpectToken(pub &'static str, pub &'static str, #[label("`{0}` expect
 pub struct InvalidEscapeSequence(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("\\8 and \\9 are not allowed in strict mode")]
-pub struct NonOctalDecimalEscapeSequence(#[label] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("Invalid Unicode escape sequence")]
 pub struct UnicodeEscapeSequence(#[label] pub Span);
 
@@ -76,11 +72,6 @@ pub struct EscapedKeyword(#[label] pub Span);
 #[error("Expected a semicolon or an implicit semicolon after a statement, but found none")]
 #[diagnostic(help("Try insert a semicolon here"))]
 pub struct AutoSemicolonInsertion(#[label] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("'0'-prefixed octal literals and octal escape sequences are deprecated")]
-#[diagnostic(help("for octal literals use the '0o' prefix instead"))]
-pub struct LegacyOctal(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Line terminator not permitted before arrow")]
@@ -233,11 +224,6 @@ pub struct TemplateLiteral(#[label] pub Span);
 pub struct EmptyParenthesizedExpression(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("'{0}' keyword is unexpected here")]
-#[diagnostic()]
-pub struct UnexpectedKeyword(pub &'static str, #[label] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
 #[error("Illegal newline after {0}")]
 #[diagnostic()]
 pub struct IllegalNewline(
@@ -295,10 +281,3 @@ pub struct ReturnStatementOnlyInFunctionBody(#[label] pub Span);
 #[error("TS18007: JSX expressions may not use the comma operator.")]
 #[diagnostic(help("Did you mean to write an array?"))]
 pub struct JSXExpressionsMayNotUseTheCommaOperator(#[label] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("Leading decorators must be attached to a class declaration")]
-#[diagnostic()]
-pub struct BadLeadingDecorator(
-    #[label("Leading decorators must be attached to a class declaration")] pub Span,
-);

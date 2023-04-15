@@ -1,6 +1,6 @@
 {
   "name": "oxidation-compiler",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "The JavaScript Oxidation Compiler",
   "keywords": [],
   "author": "Boshen and oxc contributors",
@@ -13,6 +13,9 @@
     "directory": "npm/oxc"
   },
   "bin": "bin/oxc",
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
   "engines": {
     "node": ">=14.*"
   },

@@ -1,6 +1,6 @@
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, visit_mut::VisitMut, AstBuilder, Span};
+use oxc_ast::{ast::*, AstBuilder, Span, VisitMut};
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]

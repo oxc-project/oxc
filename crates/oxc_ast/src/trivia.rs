@@ -1,3 +1,5 @@
+//! Trivias such as comments
+
 use std::collections::BTreeMap;
 
 use crate::Span;
@@ -12,7 +14,7 @@ pub struct Trivias {
     comments: BTreeMap<u32, Comment>,
 }
 
-/// Single or multi line comment
+/// Single or multiline comment
 #[derive(Debug, Clone, Copy)]
 #[allow(unused)]
 pub struct Comment {
@@ -59,8 +61,13 @@ impl Trivias {
         self.comments.range(span.start..span.end).count() > 0
     }
 
-    pub fn add_comment(&mut self, span: Span, kind: CommentKind) {
-        let comment = Comment::new(span.end, kind);
+    pub fn add_single_line_comment(&mut self, span: Span) {
+        let comment = Comment::new(span.end, CommentKind::SingleLine);
+        self.comments.insert(span.start, comment);
+    }
+
+    pub fn add_multi_line_comment(&mut self, span: Span) {
+        let comment = Comment::new(span.end, CommentKind::MultiLine);
         self.comments.insert(span.start, comment);
     }
 }

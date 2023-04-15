@@ -84,12 +84,16 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
 pub struct BabelCase {
     path: PathBuf,
     code: String,
-    options: Option<BabelOptions>,
+    options: BabelOptions,
     should_fail: bool,
     result: TestResult,
 }
 
 impl BabelCase {
+    pub fn set_result(&mut self, result: TestResult) {
+        self.result = result;
+    }
+
     fn read_file<T>(path: &Path, file_name: &'static str) -> Option<T>
     where
         T: DeserializeOwned,
@@ -113,7 +117,7 @@ impl BabelCase {
     }
 
     /// read options.json, it exists in ancestor folders as well and they need to be merged
-    fn read_options_json(path: &Path) -> Option<BabelOptions> {
+    fn read_options_json(path: &Path) -> BabelOptions {
         let dir = project_root().join(FIXTURES_PATH).join(path);
         let mut options_json: Option<BabelOptions> = None;
         for path in dir.ancestors().take(3) {
@@ -131,23 +135,21 @@ impl BabelCase {
                 }
             }
         }
-        options_json
+        options_json.unwrap_or_default()
     }
 
     // it is an error if:
     //   * its output.json contains an errors field
     //   * the directory contains a options.json with a "throws" field
-    fn determine_should_fail(path: &Path, options: &Option<BabelOptions>) -> bool {
+    fn determine_should_fail(path: &Path, options: &BabelOptions) -> bool {
         let output_json = Self::read_output_json(path);
 
         if let Some(output_json) = output_json {
             return output_json.errors.map_or(false, |errors| !errors.is_empty());
         }
 
-        if let Some(options) = options {
-            if options.throws.is_some() {
-                return true;
-            }
+        if options.throws.is_some() {
+            return true;
         }
 
         // both files doesn't exist
@@ -155,45 +157,47 @@ impl BabelCase {
     }
 
     fn is_jsx(&self) -> bool {
-        self.options.as_ref().is_some_and(|option| {
-            option.plugins.iter().any(|v| v.as_str().is_some_and(|v| v == "jsx"))
-        })
+        self.options.plugins.iter().any(|v| v.as_str().is_some_and(|v| v == "jsx"))
     }
 
     fn is_typescript(&self) -> bool {
-        self.options.as_ref().is_some_and(|option| {
-            option.plugins.iter().any(|v| {
-                let string_value = v.as_str().is_some_and(|v| v == "typescript");
-                let array_value =
-                    v.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
-                string_value || array_value
-            })
+        self.options.plugins.iter().any(|v| {
+            let string_value = v.as_str().is_some_and(|v| v == "typescript");
+            let array_value = v.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
+            string_value || array_value
         })
     }
 
     fn is_typescript_definition(&self) -> bool {
-        self.options.as_ref().is_some_and(|option| {
-            option.plugins.iter().filter_map(Value::as_array).any(|p| {
-                let typescript =
-                    p.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
-                let dts = p
-                    .get(1)
-                    .and_then(Value::as_object)
-                    .and_then(|v| v.get("dts"))
-                    .and_then(Value::as_bool)
-                    .is_some_and(|v| v);
-                typescript && dts
-            })
+        self.options.plugins.iter().filter_map(Value::as_array).any(|p| {
+            let typescript = p.get(0).and_then(Value::as_str).is_some_and(|s| s == "typescript");
+            let dts = p
+                .get(1)
+                .and_then(Value::as_object)
+                .and_then(|v| v.get("dts"))
+                .and_then(Value::as_bool)
+                .is_some_and(|v| v);
+            typescript && dts
         })
     }
 
     fn is_module(&self) -> bool {
-        self.options.as_ref().map_or(false, |option| {
-            option
-                .source_type
-                .as_ref()
-                .map_or(false, |s| matches!(s.as_str(), "module" | "unambiguous"))
-        })
+        self.options
+            .source_type
+            .as_ref()
+            .map_or(false, |s| matches!(s.as_str(), "module" | "unambiguous"))
+    }
+
+    /// # Panics
+    #[must_use]
+    pub fn source_type(&self) -> SourceType {
+        let mut source_type = SourceType::from_path(self.path()).unwrap();
+        *source_type
+            .with_script(true)
+            .with_jsx(self.is_jsx())
+            .with_typescript(self.is_typescript())
+            .with_typescript_definition(self.is_typescript_definition())
+            .with_module(self.is_module())
     }
 }
 
@@ -213,7 +217,7 @@ impl Case for BabelCase {
     }
 
     fn allow_return_outside_function(&self) -> bool {
-        self.options.as_ref().map_or(false, |option| option.allow_return_outside_function)
+        self.options.allow_return_outside_function
     }
 
     fn test_result(&self) -> &TestResult {
@@ -227,26 +231,19 @@ impl Case for BabelCase {
     fn skip_test_case(&self) -> bool {
         let not_supported_plugins =
             ["async-do-expression", "flow", "placeholders", "decorators-legacy", "recordAndTuple"];
-        self.options.as_ref().map_or(false, |option| {
-            let has_not_supported_plugins = option
-                .plugins
-                .iter()
-                .filter_map(Value::as_str)
-                .any(|p| not_supported_plugins.contains(&p));
-            has_not_supported_plugins
-                || option.allow_await_outside_function
-                || option.allow_undeclared_exports
-        })
+        let has_not_supported_plugins = self
+            .options
+            .plugins
+            .iter()
+            .filter_map(Value::as_str)
+            .any(|p| not_supported_plugins.contains(&p));
+        has_not_supported_plugins
+            || self.options.allow_await_outside_function
+            || self.options.allow_undeclared_exports
     }
 
     fn run(&mut self) {
-        let mut source_type = SourceType::from_path(self.path()).unwrap();
-        let source_type = *source_type
-            .with_script(true)
-            .with_jsx(self.is_jsx())
-            .with_typescript(self.is_typescript())
-            .with_typescript_definition(self.is_typescript_definition())
-            .with_module(self.is_module());
+        let source_type = self.source_type();
         self.result = self.execute(source_type);
     }
 }

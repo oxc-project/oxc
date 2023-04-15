@@ -1,14 +1,17 @@
-# Run cargo-tarpaulin and upload to codecov.io
+# Run cargo-llvm-cov and upload to codecov.io
 
 name: Code Coverage
 
 on:
-  schedule:
-    - cron:  '0 16 * * *' # 0:00 am Beijing Time
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.rs'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -24,27 +27,40 @@ jobs:
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
 
-      - name: Install cargo-tarpaulin
-        uses: taiki-e/install-action@v2
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
+      - name: Install llvm-tools-preview for llvm-cov
+        run: rustup component add llvm-tools-preview
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
         with:
-          tool: cargo-tarpaulin
+          shared-key: check
+          save-if: false
 
       - name: Run
-        run: cargo tarpaulin --engine llvm --out Xml
+        run: cargo codecov --lcov --output-path lcov.info
 
-      - name: Upload cobertura.xml
+      - name: Upload Artifact
         uses: actions/upload-artifact@v3
         with:
           name: codecov
-          path: cobertura.xml
+          path: lcov.info
 
   # codecov often fails, use another workflow for retry
   upload-codecov:
-    name: Upload cobertura.xml
+    name: Upload coverage file
     runs-on: ubuntu-latest
     needs: coverage
     steps:
-      - name: Download cobertura.xml
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download coverage file
         uses: actions/download-artifact@v3
         with:
           name: codecov
@@ -54,4 +70,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-          files: cobertura.xml
+          files: lcov.info

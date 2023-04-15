@@ -10,9 +10,9 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-oxc_allocator = {  workspace = true  }
-oxc_ast = {  workspace = true  }
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
 
 [dev_dependencies]
-oxc_parser = {  workspace = true  }
+oxc_parser = { workspace = true }
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
