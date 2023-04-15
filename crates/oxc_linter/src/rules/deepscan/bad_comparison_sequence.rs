@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{BinaryOperator, Expression},
+    ast::{Expression, BinaryExpression},
     AstKind, Span,
 };
 use oxc_diagnostics::{
@@ -45,7 +45,7 @@ declare_oxc_lint!(
 impl Rule for BadComparisonSequence {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::BinaryExpression(expr) = node.get().kind() 
-            && is_bad_comparison(node) 
+            && is_bad_comparison(expr) 
             && has_no_bad_comparison_in_parent(node, ctx) 
         {
             ctx.diagnostic(BadComparisonSequenceDiagnostic(expr.span));
@@ -62,6 +62,8 @@ fn has_no_bad_comparison_in_parent<'a, 'b>(
         current_node = ctx.parent_node(current_node).unwrap();
         let kind = current_node.get().kind();
 
+        // `a === b === c === d === e` only produce one error, since `(a === b === c) === d === e` will produce two errors. 
+        // So we should treat Parenthesized Expression as a boundary.
         if matches!(kind, AstKind::Root | AstKind::ParenthesizedExpression(_))
             || kind.is_declaration()
             || kind.is_statement()
@@ -69,50 +71,28 @@ fn has_no_bad_comparison_in_parent<'a, 'b>(
             return true;
         }
 
-        if is_bad_comparison(node) {
+        if let AstKind::BinaryExpression(expr) = kind && is_bad_comparison(expr) {
             return false;
         }
     }
 }
 
-fn is_bad_comparison(node: &AstNode) -> bool {
-    if let AstKind::BinaryExpression(expr) = node.get().kind() {
-        if is_equality_operator(expr.operator) 
-            && let Expression::BinaryExpression(left_expr) = &expr.left 
-            && is_equality_operator(left_expr.operator) 
-        {
-            return true
-        }
-        
-        if is_relational_operator(expr.operator) 
-            && let Expression::BinaryExpression(left_expr) = &expr.left 
-            && is_relational_operator(left_expr.operator) 
-        {
-            return true
-        }
+fn is_bad_comparison(expr: &BinaryExpression) -> bool {
+    if expr.operator.is_equality() 
+        && let Expression::BinaryExpression(left_expr) = &expr.left 
+        && left_expr.operator.is_equality()
+    {
+        return true
+    }
+    
+    if expr.operator.is_compare() 
+        && let Expression::BinaryExpression(left_expr) = &expr.left 
+        && left_expr.operator.is_compare()
+    {
+        return true
     }
 
     false
-}
-
-fn is_equality_operator(operator: BinaryOperator) -> bool {
-    matches!(
-        operator,
-        BinaryOperator::Equality
-            | BinaryOperator::StrictEquality
-            | BinaryOperator::Inequality
-            | BinaryOperator::StrictInequality
-    )
-}
-
-fn is_relational_operator(operator: BinaryOperator) -> bool {
-    matches!(
-        operator,
-        BinaryOperator::GreaterThan
-            | BinaryOperator::GreaterEqualThan
-            | BinaryOperator::LessThan
-            | BinaryOperator::LessEqualThan
-    )
 }
 
 #[test]
