@@ -14,6 +14,7 @@ use oxc_tasks_common::project_root;
 use oxc_tasks_common::{TestFile, TestFiles};
 
 #[test]
+#[cfg(any(coverage, coverage_nightly))]
 fn test() {
     run().unwrap();
 }

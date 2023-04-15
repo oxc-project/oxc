@@ -15,9 +15,10 @@ test:
 lint:
   cargo lint
 
-# Run all the conformance tests. See `tasks/coverage`
+# Run all the conformance tests. See `tasks/coverage`, `tasks/minsize`
 coverage:
   cargo coverage
+  cargo minsize
 
 # Run the benchmarks. See `tasks/benchmark`
 benchmark:
