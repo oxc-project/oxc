@@ -44,10 +44,11 @@ declare_oxc_lint!(
 
 impl Rule for BadComparisonSequence {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::BinaryExpression(expr) = node.get().kind() {
-            if is_bad_comparison(node) && has_no_bad_comparison_in_parent(node, ctx) {
-                ctx.diagnostic(BadComparisonSequenceDiagnostic(expr.span));
-            }
+        if let AstKind::BinaryExpression(expr) = node.get().kind() 
+            && is_bad_comparison(node) 
+            && has_no_bad_comparison_in_parent(node, ctx) 
+        {
+            ctx.diagnostic(BadComparisonSequenceDiagnostic(expr.span));
         }
     }
 }
@@ -76,40 +77,42 @@ fn has_no_bad_comparison_in_parent<'a, 'b>(
 
 fn is_bad_comparison(node: &AstNode) -> bool {
     if let AstKind::BinaryExpression(expr) = node.get().kind() {
-        if is_equality_operator(&expr.operator) {
-            if let Expression::BinaryExpression(left_expr) = &expr.left && is_equality_operator(&left_expr.operator) {
-                return true
-            }
+        if is_equality_operator(expr.operator) 
+            && let Expression::BinaryExpression(left_expr) = &expr.left 
+            && is_equality_operator(left_expr.operator) 
+        {
+            return true
         }
-
-        if is_relational_operator(&expr.operator) {
-            if let Expression::BinaryExpression(left_expr) = &expr.left && is_relational_operator(&left_expr.operator) {
-                return true
-            }
+        
+        if is_relational_operator(expr.operator) 
+            && let Expression::BinaryExpression(left_expr) = &expr.left 
+            && is_relational_operator(left_expr.operator) 
+        {
+            return true
         }
     }
 
     false
 }
 
-fn is_equality_operator(operator: &BinaryOperator) -> bool {
-    match operator {
+fn is_equality_operator(operator: BinaryOperator) -> bool {
+    matches!(
+        operator,
         BinaryOperator::Equality
-        | BinaryOperator::StrictEquality
-        | BinaryOperator::Inequality
-        | BinaryOperator::StrictInequality => true,
-        _ => false,
-    }
+            | BinaryOperator::StrictEquality
+            | BinaryOperator::Inequality
+            | BinaryOperator::StrictInequality
+    )
 }
 
-fn is_relational_operator(operator: &BinaryOperator) -> bool {
-    match operator {
+fn is_relational_operator(operator: BinaryOperator) -> bool {
+    matches!(
+        operator,
         BinaryOperator::GreaterThan
-        | BinaryOperator::GreaterEqualThan
-        | BinaryOperator::LessThan
-        | BinaryOperator::LessEqualThan => true,
-        _ => false,
-    }
+            | BinaryOperator::GreaterEqualThan
+            | BinaryOperator::LessThan
+            | BinaryOperator::LessEqualThan
+    )
 }
 
 #[test]
