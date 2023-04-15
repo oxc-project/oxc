@@ -23,6 +23,7 @@ oxc_macros::declare_all_lint_rules! {
     no_constant_condition,
     no_compare_neg_zero,
     no_unsafe_negation,
+    no_unused_labels,
     no_bitwise,
     deepscan::uninvoked_array_callback,
     deepscan::bad_bitwise_operator,

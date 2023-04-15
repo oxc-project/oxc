@@ -29,6 +29,7 @@ bitflags! {
     pub struct NodeFlags: u8 {
         const JSDoc = 1 << 0; // If the Node has a JSDoc comment attached
         const Class = 1 << 1; // If Node is inside a class
+        const UnusedLabel = 1 << 2;
     }
 }
 
@@ -62,5 +63,14 @@ impl<'a> SemanticNode<'a> {
     #[must_use]
     pub fn has_jsdoc(&self) -> bool {
         self.flags.contains(NodeFlags::JSDoc)
+    }
+
+    pub fn mark_as_unused(&mut self) {
+        self.flags.insert(NodeFlags::UnusedLabel);
+    }
+
+    #[must_use]
+    pub fn has_unused_label(&self) -> bool {
+        self.flags.contains(NodeFlags::UnusedLabel)
     }
 }
