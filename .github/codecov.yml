@@ -1,6 +1,0 @@
-comment: false
-
-ignore:
-  - "tasks"
-  - "crates/oxc_diagnostics"
-  - "crates/oxc_ast/src/serialize.rs"
