@@ -133,6 +133,7 @@ fn test() {
         ("if (a <= b != c) { console.log('foo') }", None),
         ("if (a <= b !== c) { console.log('foo') }", None),
         ("if ((a == b) && (b == c)) { console.log('foo') }", None),
+        ("if ((a > b) && (b > c)) { console.log('foo') }", None),
     ];
 
     let fail = vec![
