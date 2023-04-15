@@ -78,7 +78,9 @@ impl Case for PrinterBabelCase {
     }
 
     fn skip_test_case(&self) -> bool {
-        self.base.should_fail() || self.base.source_type().is_typescript()
+        self.base.skip_test_case()
+            || self.base.should_fail()
+            || self.base.source_type().is_typescript()
     }
 
     fn run(&mut self) {

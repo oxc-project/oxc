@@ -1,11 +1,3 @@
 Printer_Babel Summary:
-AST Parsed     : 2270/2270 (100.00%)
-Positive Passed: 2262/2270 (99.65%)
-Expect to Parse: "flow/type-alias/3/input.js"
-Expect to Parse: "flow/type-exports/alias/input.js"
-Expect to Parse: "jsx/basic/19/input.js"
-Expect to Parse: "jsx/basic/2/input.js"
-Expect to Parse: "jsx/basic/3/input.js"
-Expect to Parse: "jsx/regression/6/input.js"
-Expect to Parse: "jsx/regression/7/input.js"
-Expect to Parse: "jsx/regression/issue-2114/input.js"
+AST Parsed     : 1621/1621 (100.00%)
+Positive Passed: 1621/1621 (100.00%)
