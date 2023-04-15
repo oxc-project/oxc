@@ -44,6 +44,10 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
     }
 
     fn skip_test_path(&self, path: &Path) -> bool {
+        // stack overflows in compiler tests
+        #[cfg(any(coverage, coverage_nightly))]
+        let supported_paths = ["conformance"].iter().any(|p| path.to_string_lossy().contains(p));
+        #[cfg(not(any(coverage, coverage_nightly)))]
         let supported_paths =
             ["conformance", "compiler"].iter().any(|p| path.to_string_lossy().contains(p));
         let unsupported_tests = [
