@@ -4,10 +4,10 @@
 
 [files]
 extend-exclude = [
-	"tasks/coverage/test262",
-	"tasks/coverage/babel",
-	"tasks/coverage/typescript",
-	"**/*.snap",
+  "tasks/coverage/test262",
+  "tasks/coverage/babel",
+  "tasks/coverage/typescript",
+  "**/*.snap",
 ]
 
 [default.extend-words]

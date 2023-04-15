@@ -1,9 +1,6 @@
 [workspace]
 resolver = "2"
-members = [
-	"crates/*",
-	"tasks/*",
-]
+members = ["crates/*", "tasks/*"]
 
 [workspace.package]
 authors = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
@@ -25,7 +22,7 @@ oxc_semantic = { version = "0.0.4", path = "crates/oxc_semantic" }
 oxc_linter = { version = "0.0.0", path = "crates/oxc_linter" }
 oxc_macros = { version = "0.0.0", path = "crates/oxc_macros" }
 
-oxc_tasks_common = {  path = "tasks/common" }
+oxc_tasks_common = { path = "tasks/common" }
 
 jemallocator = "0.5.0"
 mimalloc = "0.1.35"
@@ -60,7 +57,7 @@ lto = "fat"
 codegen-units = 1
 strip = "symbols"
 debug = false
-panic = "abort" # Let it crash and force ourselves to write safe Rust.
+panic = "abort"   # Let it crash and force ourselves to write safe Rust.
 
 # Use the `--profile release-debug` flag to show symbols in release mode.
 # e.g. `cargo build --profile release-debug`

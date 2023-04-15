@@ -17,11 +17,11 @@ jemallocator = { workspace = true }
 mimalloc = { workspace = true }
 
 [dependencies]
-oxc_ast = {  workspace = true  }
-oxc_allocator = {  workspace = true  }
-oxc_parser = {  workspace = true  }
-oxc_semantic = {  workspace = true  }
-oxc_tasks_common = { workspace = true  }
+oxc_ast = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_parser = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_tasks_common = { workspace = true }
 
 pico-args = "0.5.0"
 criterion = { version = "0.4.0", default-features = false }

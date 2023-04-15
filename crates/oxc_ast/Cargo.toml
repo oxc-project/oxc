@@ -27,4 +27,9 @@ ordered-float = { version = "3.6.0" }
 
 [features]
 default = []
-serde = ["dep:serde", "dep:serde_json", "compact_str/serde", "ordered-float/serde"]
+serde = [
+  "dep:serde",
+  "dep:serde_json",
+  "compact_str/serde",
+  "ordered-float/serde",
+]
