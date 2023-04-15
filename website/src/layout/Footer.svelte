@@ -1,5 +1,5 @@
 <script>
-  import { logoRound } from "../../assets";
+  import { logoRound } from "../assets/brand";
   import LinkButton from "../components/LinkButton.svelte";
 
   const footerGroups = [

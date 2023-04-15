@@ -1,5 +1,5 @@
 <script>
-  import { logoSquare } from "../../assets";
+  import { logoSquare } from "../assets/brand";
   import LinkButton from "../components/LinkButton.svelte";
 </script>
 
