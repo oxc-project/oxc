@@ -46,14 +46,14 @@ impl Rule for BadComparisonSequence {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::BinaryExpression(expr) = node.get().kind() 
             && is_bad_comparison(expr) 
-            && has_no_bad_comparison_in_parent(node, ctx) 
+            && has_no_bad_comparison_in_parents(node, ctx) 
         {
             ctx.diagnostic(BadComparisonSequenceDiagnostic(expr.span));
         }
     }
 }
 
-fn has_no_bad_comparison_in_parent<'a, 'b>(
+fn has_no_bad_comparison_in_parents<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> bool {
