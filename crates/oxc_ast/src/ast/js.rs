@@ -616,8 +616,7 @@ pub struct BinaryExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// `RelationalExpression`[In, Yield, Await] :
-///     [+In] `PrivateIdentifier` in `ShiftExpression`[?Yield, ?Await]
+/// Private Identifier in Shift Expression
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct PrivateInExpression<'a> {
@@ -661,7 +660,7 @@ pub struct AssignmentExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// 13.15.5 Destructuring Assignment
+/// Destructuring Assignment
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTarget<'a> {
@@ -768,8 +767,7 @@ pub enum AssignmentTargetProperty<'a> {
     AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>),
 }
 
-/// `AssignmentProperty`[Yield, Await] :
-///     `IdentifierReference`[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]opt
+/// Assignment Property - Identifier Reference
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
@@ -779,8 +777,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub init: Option<Expression<'a>>,
 }
 
-/// `AssignmentProperty`[Yield, Await] :
-///     `PropertyName`[?Yield, ?Await] : `AssignmentElement`[?Yield, ?Await]
+/// Assignment Property - Property Name
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentTargetPropertyProperty<'a> {
@@ -1720,8 +1717,6 @@ impl ImportAttributeKey {
     }
 }
 
-/// Exports
-/// [tc39/ecma262#sec-exports](https://tc39.es/ecma262/#sec-exports)
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportNamedDeclaration<'a> {

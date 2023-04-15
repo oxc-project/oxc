@@ -9,6 +9,7 @@ use oxc_allocator::Vec;
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, ast_kind::AstKind};
 
+/// Syntax tree traversal
 pub trait Visit<'a>: Sized {
     fn enter_node(&mut self, _kind: AstKind<'a>) {}
     fn leave_node(&mut self, _kind: AstKind<'a>) {}

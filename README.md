@@ -38,6 +38,7 @@
 
 The Oxidation Compiler is creating a suite of tools for the JavaScript / TypeScript language:
 
+* [AST](./crates/oxc_ast) - See [docs.rs/oxc_ast](https://docs.rs/oxc_ast)
 * [Parser](./crates/oxc_parser) - See [docs.rs/oxc_parser](https://docs.rs/oxc_parser)
 * [Linter](./crates/oxc_linter) - Work in progress. Try it out! `npx oxidation-compiler@latest lint path`
 * Formatter

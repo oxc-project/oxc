@@ -7,13 +7,8 @@ use serde::Serialize;
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, Atom, Span};
 
-#[allow(clippy::trivially_copy_pass_by_ref)]
-#[must_use]
-pub fn is_false(val: &bool) -> bool {
-    !val
-}
-
-/// `EnumDeclaration`:
+/// Enum Declaration
+///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -124,8 +119,9 @@ impl<'a> TSType<'a> {
     }
 }
 
+/// `SomeType extends OtherType ? TrueType : FalseType;`
+///
 /// <https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#handbook-content>
-/// `SomeType` extends `OtherType` ? `TrueType` : `FalseType`;
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSConditionalType<'a> {
@@ -137,8 +133,9 @@ pub struct TSConditionalType<'a> {
     pub false_type: TSType<'a>,
 }
 
-/// <https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#unions>
 /// string | string[] | (() => string) | { s: string }
+///
+/// <https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#unions>
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TSUnionType<'a> {
@@ -147,8 +144,9 @@ pub struct TSUnionType<'a> {
     pub types: Vec<'a, TSType<'a>>,
 }
 
-/// <https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types>
 /// type `ColorfulCircle` = Colorful & Circle;
+///
+/// <https://www.typescriptlang.org/docs/handbook/2/objects.html#intersection-types>
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TSIntersectionType<'a> {
@@ -157,8 +155,9 @@ pub struct TSIntersectionType<'a> {
     pub types: Vec<'a, TSType<'a>>,
 }
 
-/// <https://www.typescriptlang.org/docs/handbook/2/keyof-types.html>
 /// keyof unique readonly
+///
+/// <https://www.typescriptlang.org/docs/handbook/2/keyof-types.html>
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "TSTypeOperator"))]
 pub struct TSTypeOperatorType<'a> {
@@ -191,8 +190,9 @@ impl TSTypeOperator {
     }
 }
 
+/// `let myArray: string[] = ["hello", "world"];`
+///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#the-array-type>
-/// let myArray: string[] = ["hello", "world"];
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSArrayType<'a> {
@@ -201,8 +201,9 @@ pub struct TSArrayType<'a> {
     pub element_type: TSType<'a>,
 }
 
+/// `type I1 = Person["age" | "name"];`
+///
 /// <https://www.typescriptlang.org/docs/handbook/2/indexed-access-types.html#handbook-content>
-/// type I1 = Person["age" | "name"];
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSIndexedAccessType<'a> {
@@ -212,8 +213,9 @@ pub struct TSIndexedAccessType<'a> {
     pub index_type: TSType<'a>,
 }
 
-/// <https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types>
 /// type `StringNumberPair` = [string, number];
+///
+/// <https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types>
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTupleType<'a> {
@@ -477,7 +479,8 @@ pub struct TSClassImplements<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-/// `InterfaceDeclaration`:
+/// Interface Declaration
+///
 ///   interface `BindingIdentifier` `TypeParameters_opt` `InterfaceExtendsClause_opt` `ObjectType`
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]

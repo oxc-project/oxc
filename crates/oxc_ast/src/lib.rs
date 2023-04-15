@@ -1,11 +1,11 @@
 //! # Oxc AST
 //!
-//! This is almost similar to [estree](https://github.com/estree/estree) expect a few places:
+//! This is almost similar to [estree](https://github.com/estree/estree) except a few places:
 //! * `Identifier` is replaced with explicit `BindingIdentifier`, `IdentifierReference`, `IdentifierName` per spec
 //! * `AssignmentExpression`.`left` `Pattern` is replaced with `AssignmentTarget`
 //!
 //! ## Cargo Features
-//!   * `"serde"` enables support for serde serialization
+//! * `"serde"` enables support for serde serialization
 
 #![feature(let_chains)]
 #![feature(is_some_and)]
