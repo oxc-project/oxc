@@ -97,6 +97,7 @@ jobs:
 
   test:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
