@@ -103,7 +103,6 @@ impl<'a> SeparatedList<'a> for TSTypeParameterList<'a> {
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
         let param = p.parse_ts_type_parameter()?;
-        p.re_lex_ts_r_angle();
         self.params.push(param);
         Ok(())
     }
@@ -154,7 +153,6 @@ impl<'a> SeparatedList<'a> for TSTypeArgumentList<'a> {
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
         let ty = p.parse_ts_type()?;
-        p.re_lex_ts_r_angle();
         self.params.push(ty);
         Ok(())
     }

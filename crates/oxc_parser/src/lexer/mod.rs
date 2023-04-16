@@ -232,21 +232,6 @@ impl<'a> Lexer<'a> {
         self.finish_next(kind)
     }
 
-    /// Re-tokenize '>>' or '>=' or '>>>' or '>>=' or '>>>=' to '<'
-    pub fn re_lex_as_typescript_r_angle(&mut self, kind: Kind) -> Token<'a> {
-        let offset = match kind {
-            Kind::ShiftRight | Kind::GtEq => 2,
-            Kind::ShiftRightEq | Kind::ShiftRight3 => 3,
-            Kind::ShiftRight3Eq => 4,
-            _ => unreachable!(),
-        };
-        self.current.token.start = self.offset() - offset;
-        self.current.chars = self.source[self.current.token.start as usize + 1..].chars();
-        let kind = Kind::RAngle;
-        self.lookahead.clear();
-        self.finish_next(kind)
-    }
-
     // ---------- Private Methods ---------- //
     fn error<T: Into<Error>>(&mut self, error: T) {
         self.errors.push(error.into());
