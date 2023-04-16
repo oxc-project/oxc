@@ -191,8 +191,8 @@ impl BabelCase {
     /// # Panics
     #[must_use]
     pub fn source_type(&self) -> SourceType {
-        let mut source_type = SourceType::from_path(self.path()).unwrap();
-        *source_type
+        SourceType::from_path(self.path())
+            .unwrap()
             .with_script(true)
             .with_jsx(self.is_jsx())
             .with_typescript(self.is_typescript())

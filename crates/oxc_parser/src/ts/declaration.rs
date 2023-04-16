@@ -83,7 +83,7 @@ mod test_is_declaration {
 
     fn run_check(source: &str, expected: bool) {
         let alloc = Allocator::default();
-        let source_type = *SourceType::default().with_typescript(true);
+        let source_type = SourceType::default().with_typescript(true);
         let mut parser = Parser::new(&alloc, source, source_type);
         // Get the parser to the first token.
         parser.bump_any();

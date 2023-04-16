@@ -12,7 +12,7 @@ mod module_record_tests {
     use crate::SemanticBuilder;
 
     fn build(source_text: &str) -> ModuleRecord {
-        let source_type = *SourceType::default().with_module(true);
+        let source_type = SourceType::default().with_module(true);
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);

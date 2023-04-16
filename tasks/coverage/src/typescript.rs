@@ -108,7 +108,7 @@ impl Case for TypeScriptCase {
         let is_module = ["esnext", "es2022", "es2020", "es2015"]
             .into_iter()
             .any(|module| compiler_options.modules.contains(&module.to_string()));
-        let source_type = *SourceType::from_path(self.path())
+        let source_type = SourceType::from_path(self.path())
             .unwrap()
             .with_script(true)
             .with_module(is_module)

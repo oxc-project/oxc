@@ -37,7 +37,7 @@ impl Case for PrinterTest262Case {
     fn run(&mut self) {
         let source_text = self.base.code();
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
-        let source_type = *SourceType::default().with_module(is_module);
+        let source_type = SourceType::default().with_module(is_module);
 
         // Test printer
         let printer_options = PrinterOptions::default();

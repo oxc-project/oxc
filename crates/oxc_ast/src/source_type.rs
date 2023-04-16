@@ -102,7 +102,7 @@ impl SourceType {
     }
 
     #[must_use]
-    pub fn with_script(&mut self, yes: bool) -> &mut Self {
+    pub fn with_script(mut self, yes: bool) -> Self {
         if yes {
             self.module_kind = ModuleKind::Script;
         }
@@ -110,7 +110,7 @@ impl SourceType {
     }
 
     #[must_use]
-    pub fn with_module(&mut self, yes: bool) -> &mut Self {
+    pub fn with_module(mut self, yes: bool) -> Self {
         if yes {
             self.module_kind = ModuleKind::Module;
         }
@@ -118,7 +118,7 @@ impl SourceType {
     }
 
     #[must_use]
-    pub fn with_typescript(&mut self, yes: bool) -> &mut Self {
+    pub fn with_typescript(mut self, yes: bool) -> Self {
         if yes {
             self.language = Language::TypeScript { is_definition_file: false };
         }
@@ -126,7 +126,7 @@ impl SourceType {
     }
 
     #[must_use]
-    pub fn with_typescript_definition(&mut self, yes: bool) -> &mut Self {
+    pub fn with_typescript_definition(mut self, yes: bool) -> Self {
         if yes {
             self.language = Language::TypeScript { is_definition_file: true };
         }
@@ -134,7 +134,7 @@ impl SourceType {
     }
 
     #[must_use]
-    pub fn with_jsx(&mut self, yes: bool) -> &mut Self {
+    pub fn with_jsx(mut self, yes: bool) -> Self {
         if yes {
             self.variant = LanguageVariant::Jsx;
         }
@@ -142,7 +142,7 @@ impl SourceType {
     }
 
     #[must_use]
-    pub fn with_always_strict(&mut self, yes: bool) -> &mut Self {
+    pub fn with_always_strict(mut self, yes: bool) -> Self {
         self.always_strict = yes;
         self
     }
