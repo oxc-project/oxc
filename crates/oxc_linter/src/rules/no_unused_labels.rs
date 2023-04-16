@@ -41,14 +41,17 @@ declare_oxc_lint!(
 
 impl Rule for NoUnusedLabels {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::LabeledStatement(stmt) = node.get().kind() {
-            if node.get().has_unused_label() {
-                // TODO: Ignore fix where comments exist between label and statment
-                // e.g. A: /* Comment */ function foo(){}
-                ctx.diagnostic_with_fix(
-                    NoUnusedLabelsDiagnostic(stmt.label.name.clone(), stmt.label.span),
-                    || Fix::delete(stmt.label.span),
-                );
+        if AstKind::Root == node.get().kind() {
+            for id in ctx.semantic().unused_labels() {
+                let node = ctx.semantic().nodes()[*id];
+                if let AstKind::LabeledStatement(stmt) = node.kind() {
+                    // TODO: Ignore fix where comments exist between label and statment
+                    // e.g. A: /* Comment */ function foo(){}
+                    ctx.diagnostic_with_fix(
+                        NoUnusedLabelsDiagnostic(stmt.label.name.clone(), stmt.label.span),
+                        || Fix::delete(stmt.label.span),
+                    );
+                }
             }
         }
     }
