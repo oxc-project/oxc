@@ -41,6 +41,8 @@ pub struct Semantic<'a> {
     module_record: ModuleRecord,
 
     jsdoc: JSDoc<'a>,
+
+    unused_labels: Vec<AstNodeId>,
 }
 
 impl<'a> Semantic<'a> {
@@ -82,6 +84,11 @@ impl<'a> Semantic<'a> {
     #[must_use]
     pub fn symbols(&self) -> &SymbolTable {
         &self.symbols
+    }
+
+    #[must_use]
+    pub fn unused_labels(&self) -> &Vec<AstNodeId> {
+        &self.unused_labels
     }
 
     #[must_use]
