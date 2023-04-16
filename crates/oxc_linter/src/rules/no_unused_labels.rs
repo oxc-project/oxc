@@ -45,7 +45,7 @@ impl Rule for NoUnusedLabels {
             for id in ctx.semantic().unused_labels() {
                 let node = ctx.semantic().nodes()[*id];
                 if let AstKind::LabeledStatement(stmt) = node.kind() {
-                    // TODO: Ignore fix where comments exist between label and statment
+                    // TODO: Ignore fix where comments exist between label and statement
                     // e.g. A: /* Comment */ function foo(){}
                     ctx.diagnostic_with_fix(
                         NoUnusedLabelsDiagnostic(stmt.label.name.clone(), stmt.label.span),
