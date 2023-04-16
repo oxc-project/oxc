@@ -141,8 +141,8 @@ impl<'a> Parser<'a> {
             self.eat_decorators()?;
         }
 
-        // AsyncFunctionExpression
-        // AsyncGeneratorExpression
+        // FunctionExpression, GeneratorExpression
+        // AsyncFunctionExpression, AsyncGeneratorExpression
         if self.at_function_with_async() {
             let r#async = self.eat(Kind::Async);
             return self.parse_function_expression(span, r#async);
@@ -156,8 +156,6 @@ impl<'a> Parser<'a> {
             Kind::LBrack => self.parse_array_expression(),
             // ObjectLiteral
             Kind::LCurly => self.parse_object_expression(),
-            // FunctionExpression, GeneratorExpression
-            Kind::Function => self.parse_function_expression(span, false),
             // ClassExpression
             Kind::Class => self.parse_class_expression(),
             // This
@@ -235,9 +233,6 @@ impl<'a> Parser<'a> {
                 let literal = self.parse_literal_null();
                 Ok(self.ast.literal_null_expression(literal))
             }
-            Kind::RegExp => self
-                .parse_literal_regexp()
-                .map(|literal| self.ast.literal_regexp_expression(literal)),
             kind if kind.is_number() => {
                 if self.cur_src().ends_with('n') {
                     self.parse_literal_bigint()
