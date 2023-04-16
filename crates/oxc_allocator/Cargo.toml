@@ -12,3 +12,6 @@ repository.workspace = true
 [dependencies]
 bumpalo = { workspace = true, features = ["collections"] }
 serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

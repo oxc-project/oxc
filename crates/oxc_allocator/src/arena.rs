@@ -92,16 +92,6 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
         Self(collections::Vec::from_iter_in(iter, allocator))
     }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    #[must_use]
-    pub fn into_inner(self) -> collections::Vec<'alloc, T> {
-        self.0
-    }
 }
 
 impl<'alloc, T> ops::Deref for Vec<'alloc, T> {
@@ -157,5 +147,53 @@ impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
         for e in self.0.iter() {
             e.hash(state);
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{Allocator, Box, Vec};
+
+    #[test]
+    fn box_deref_mut() {
+        let allocator = Allocator::default();
+        let mut b = Box(allocator.alloc("x"));
+        let b = &mut *b;
+        *b = allocator.alloc("v");
+        assert_eq!(*b, "v");
+    }
+
+    #[test]
+    fn box_debug() {
+        let allocator = Allocator::default();
+        let b = Box(allocator.alloc("x"));
+        let b = format!("{b:?}");
+        assert_eq!(b, "\"x\"");
+    }
+
+    #[test]
+    fn vec_debug() {
+        let allocator = Allocator::default();
+        let mut v = Vec::new_in(&allocator);
+        v.push("x");
+        let v = format!("{v:?}");
+        assert_eq!(v, "Vec([\"x\"])");
+    }
+
+    #[test]
+    fn box_serialize() {
+        let allocator = Allocator::default();
+        let b = Box(allocator.alloc("x"));
+        let b = serde_json::to_string(&b).unwrap();
+        assert_eq!(b, "\"x\"");
+    }
+
+    #[test]
+    fn vec_serialize() {
+        let allocator = Allocator::default();
+        let mut v = Vec::new_in(&allocator);
+        v.push("x");
+        let v = serde_json::to_string(&v).unwrap();
+        assert_eq!(v, "[\"x\"]");
     }
 }
