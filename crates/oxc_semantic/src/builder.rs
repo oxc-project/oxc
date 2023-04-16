@@ -136,7 +136,7 @@ impl<'a> SemanticBuilder<'a> {
             symbols,
             module_record,
             jsdoc: self.jsdoc.build(),
-            unused_labels: self.unused_labels.labels
+            unused_labels: self.unused_labels.labels,
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }

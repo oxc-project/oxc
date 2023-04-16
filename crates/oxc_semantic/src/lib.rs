@@ -42,7 +42,7 @@ pub struct Semantic<'a> {
 
     jsdoc: JSDoc<'a>,
 
-    unused_labels: Vec<AstNodeId>
+    unused_labels: Vec<AstNodeId>,
 }
 
 impl<'a> Semantic<'a> {
