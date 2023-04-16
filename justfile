@@ -37,6 +37,6 @@ ready:
   git diff --exit-code --quiet
   typos
   cargo fmt
-  just lint
   just test
+  just lint
   git status
