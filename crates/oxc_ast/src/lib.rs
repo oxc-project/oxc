@@ -60,7 +60,7 @@ pub type Atom = CompactString;
 //  I have concluded that the first options is more performant and more ergonomic to use.
 //  The following test make sure all enum variants are boxed, resulting 16 bytes for each enum.
 //  Read `https://nnethercote.github.io/perf-book/type-sizes.html` for more details.
-#[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
+#[cfg(target_pointer_width = "64")]
 #[test]
 fn no_bloat_enum_sizes() {
     use std::mem::size_of;

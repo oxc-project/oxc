@@ -25,7 +25,7 @@ pub struct Token<'a> {
     pub value: TokenValue<'a>,
 }
 
-#[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
+#[cfg(target_pointer_width = "64")]
 #[test]
 fn no_bloat_token() {
     use std::mem::size_of;

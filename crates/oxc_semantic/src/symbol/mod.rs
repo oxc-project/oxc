@@ -30,7 +30,7 @@ pub struct Symbol {
     references: Vec<ResolvedReferenceId>,
 }
 
-#[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
+#[cfg(target_pointer_width = "64")]
 #[test]
 fn symbol_size() {
     use std::mem::size_of;
