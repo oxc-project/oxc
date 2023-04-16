@@ -1443,7 +1443,6 @@ impl<'a> Lexer<'a> {
     }
 }
 
-#[derive(Debug)]
 enum SurrogatePair {
     // valid \u Hex4Digits \u Hex4Digits
     Astral(u32),

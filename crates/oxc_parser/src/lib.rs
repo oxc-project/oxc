@@ -93,7 +93,6 @@ use crate::{
 /// The parser always return a valid AST.
 /// When `panicked = true`, then program will always be empty.
 /// When `errors.len() > 0`, then program may or may not be empty due to error recovery.
-#[derive(Debug)]
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<Error>,
