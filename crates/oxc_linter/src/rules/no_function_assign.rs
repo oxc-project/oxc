@@ -40,9 +40,9 @@ declare_oxc_lint!(
 impl Rule for NoFunctionAssign {
     fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
         if let AstKind::Function(_) = ctx.kind(symbol.declaration().into()) {
+            let symbols = ctx.symbols();
             for reference_id in symbol.references() {
-                let reference =
-                    ctx.semantic().symbols().get_resolved_reference(*reference_id).unwrap();
+                let reference = symbols.get_resolved_reference(*reference_id).unwrap();
                 if reference.is_write() {
                     ctx.diagnostic(NoFunctionAssignDiagnostic(
                         symbol.name().clone(),

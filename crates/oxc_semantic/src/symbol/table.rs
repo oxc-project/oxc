@@ -4,9 +4,10 @@ use std::ops::{Deref, Index, IndexMut};
 use oxc_ast::ast::IdentifierReference;
 use oxc_ast::Span;
 
-use super::reference::ResolvedReferenceId;
-use super::{Symbol, SymbolId};
-use crate::ResolvedReference;
+use super::{
+    reference::{ResolvedReference, ResolvedReferenceId},
+    Mangler, Symbol, SymbolId,
+};
 
 /// `SymbolTable` is a storage of all the symbols (related to `BindingIdentifiers`)
 /// and references (related to `IdentifierReferences`) of the program. It supports two
@@ -17,9 +18,15 @@ use crate::ResolvedReference;
 pub struct SymbolTable {
     /// Stores all the `Symbols` indexed by `SymbolId`
     symbols: Vec<Symbol>,
+
+    mangler: Mangler,
+
     /// Stores all the resolved references indexed by `ResolvedReferenceId`
     resolved_references: Vec<ResolvedReference>,
+
     resolved_references_index: BTreeMap<Span, ResolvedReferenceId>,
+
+    symbol_index: BTreeMap<Span, SymbolId>,
 }
 
 impl Index<SymbolId> for SymbolTable {
@@ -62,15 +69,26 @@ impl SymbolTable {
     #[must_use]
     pub fn new(
         symbols: Vec<Symbol>,
+        mangler: Mangler,
         resolved_references: Vec<ResolvedReference>,
         resolved_references_index: BTreeMap<Span, ResolvedReferenceId>,
+        symbol_index: BTreeMap<Span, SymbolId>,
     ) -> Self {
-        Self { symbols, resolved_references, resolved_references_index }
+        Self { symbols, mangler, resolved_references, resolved_references_index, symbol_index }
+    }
+
+    pub fn mangle(&self) {
+        self.mangler.compute_slot_frequency(&self.symbols);
     }
 
     #[must_use]
     pub fn symbols(&self) -> &Vec<Symbol> {
         &self.symbols
+    }
+
+    #[must_use]
+    pub fn mangler(&self) -> &Mangler {
+        &self.mangler
     }
 
     #[must_use]
@@ -96,5 +114,10 @@ impl SymbolTable {
         self.resolved_references_index
             .get(&id.span)
             .map(|ref_id| &self.resolved_references[ref_id.index0()])
+    }
+
+    #[must_use]
+    pub fn get_symbol_by_span(&self, span: Span) -> Option<&Symbol> {
+        self.symbol_index.get(&span).map(|symbol_id| &self.symbols[*symbol_id])
     }
 }

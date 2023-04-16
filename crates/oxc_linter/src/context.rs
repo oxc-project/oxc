@@ -130,8 +130,8 @@ impl<'a> LintContext<'a> {
     }
 
     #[must_use]
-    pub fn symbols(&self) -> &SymbolTable {
-        self.semantic().symbols()
+    pub fn symbols(&self) -> Rc<SymbolTable> {
+        Rc::clone(&self.semantic().symbols())
     }
 
     #[must_use]

@@ -40,8 +40,9 @@ static RESTRICTED: [&str; 5] = ["undefined", "NaN", "Infinity", "arguments", "ev
 fn safely_shadows_undefined(symbol: &Symbol, ctx: &LintContext<'_>) -> bool {
     if symbol.name().as_str() == "undefined" {
         let mut no_assign = true;
+        let symbols = ctx.symbols();
         for reference_id in symbol.references() {
-            let reference = ctx.semantic().symbols().get_resolved_reference(*reference_id).unwrap();
+            let reference = symbols.get_resolved_reference(*reference_id).unwrap();
             if reference.is_write() {
                 no_assign = false;
             }

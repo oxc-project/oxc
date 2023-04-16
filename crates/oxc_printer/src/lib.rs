@@ -5,8 +5,11 @@
 
 mod gen;
 
+use std::rc::Rc;
+
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_semantic::SymbolTable;
 
 pub use crate::gen::Gen;
 
@@ -24,6 +27,9 @@ impl Default for PrinterOptions {
 
 pub struct Printer {
     options: PrinterOptions,
+
+    /// Symbol Table for name mangling
+    symbols: Rc<SymbolTable>,
 
     /// Output Code
     code: Vec<u8>,
@@ -54,12 +60,22 @@ impl Printer {
         let capacity = if options.minify_whitespace { source_len / 2 } else { source_len };
         Self {
             options,
+            symbols: Rc::new(SymbolTable::default()),
             code: Vec::with_capacity(capacity),
             indentation: 0,
             needs_semicolon: false,
             prev_op_end: 0,
             prev_op: None,
         }
+    }
+
+    #[must_use]
+    pub fn with_symbol_table(mut self, symbols: &Rc<SymbolTable>, yes: bool) -> Self {
+        if yes {
+            symbols.mangle();
+            self.symbols = Rc::clone(symbols);
+        }
+        self
     }
 
     #[must_use]
@@ -265,10 +281,6 @@ impl Printer {
             }
             item.gen(self);
         }
-    }
-
-    pub fn print_identifier(&mut self, name: &[u8]) {
-        self.print_str(name);
     }
 
     #[must_use]
