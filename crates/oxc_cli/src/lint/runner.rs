@@ -36,6 +36,22 @@ pub struct LintRunner {
 #[diagnostic(help("{0:?} seems like a minified file"))]
 pub struct MinifiedFileError(pub PathBuf);
 
+fn print_rules() {
+    let rules_by_category = RULES.iter().fold(FxHashMap::default(), |mut map, rule| {
+        map.entry(rule.category()).or_insert_with(Vec::new).push(rule);
+        map
+    });
+
+    let mut stdout = BufWriter::new(std::io::stdout());
+    for (category, rules) in rules_by_category {
+        writeln!(stdout, "{} ({}):", category, rules.len()).unwrap();
+        for rule in rules {
+            writeln!(stdout, "  • {}", rule.name()).unwrap();
+        }
+    }
+    writeln!(stdout, "Total: {}", RULES.len()).unwrap();
+}
+
 impl LintRunner {
     #[must_use]
     pub fn new(options: LintOptions) -> Self {
@@ -97,7 +113,7 @@ impl LintRunner {
         let now = std::time::Instant::now();
 
         if self.options.list_rules {
-            Self::dump_rules();
+            print_rules();
         }
 
         let number_of_files = Arc::new(AtomicUsize::new(0));
@@ -117,22 +133,6 @@ impl LintRunner {
                 .max_warnings
                 .map_or(false, |max_warnings| number_of_warnings > max_warnings),
         }
-    }
-
-    fn dump_rules() {
-        let rules_by_category = RULES.iter().fold(FxHashMap::default(), |mut map, rule| {
-            map.entry(rule.category()).or_insert_with(Vec::new).push(rule);
-            map
-        });
-
-        let mut stdout = BufWriter::new(std::io::stdout());
-        for (category, rules) in rules_by_category {
-            writeln!(stdout, "{} ({}):", category, rules.len()).unwrap();
-            for rule in rules {
-                writeln!(stdout, "  • {}", rule.name()).unwrap();
-            }
-        }
-        writeln!(stdout, "Total: {}", RULES.len()).unwrap();
     }
 
     fn process_paths(
