@@ -41,9 +41,11 @@ impl From<&'static str> for AllowWarnDeny {
 
 impl<'a> From<&'a ArgMatches> for LintOptions {
     fn from(matches: &'a ArgMatches) -> Self {
+        let list_rules = matches.get_flag("rules");
+
         Self {
             paths: matches.get_many("path").map_or_else(
-                || vec![PathBuf::from(".")],
+                || if !list_rules { vec![PathBuf::from(".")] } else { vec![] },
                 |paths| paths.into_iter().cloned().collect(),
             ),
             rules: Self::get_rules(matches),
@@ -58,7 +60,7 @@ impl<'a> From<&'a ArgMatches> for LintOptions {
                 .map(|patterns| patterns.into_iter().cloned().collect())
                 .unwrap_or_default(),
             max_warnings: matches.get_one("max-warnings").copied(),
-            list_rules: matches.get_flag("rules"),
+            list_rules,
         }
     }
 }
@@ -184,7 +186,8 @@ mod test {
 
     #[test]
     fn list_rules_true() {
-        let options = get_lint_options("lint foo.js --rules");
+        let options = get_lint_options("lint --rules");
+        assert!(options.paths.is_empty());
         assert!(options.list_rules);
     }
 }
