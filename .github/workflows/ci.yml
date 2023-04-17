@@ -79,7 +79,7 @@ jobs:
           clippy: true
 
       - name: Run Clippy
-        run: cargo lint
+        run: cargo lint -- -D warnings
 
   typos:
     name: Spell Check
