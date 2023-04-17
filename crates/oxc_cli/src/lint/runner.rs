@@ -133,7 +133,7 @@ impl LintRunner {
     fn dump_rules(&self) {
         let mut stdout = BufWriter::new(std::io::stdout());
         for (category, rules) in &self.registered_rules {
-            writeln!(stdout, "{} ({}):", category.as_ref(), rules.len()).unwrap();
+            writeln!(stdout, "{} ({}):", category, rules.len()).unwrap();
             for rule in rules {
                 writeln!(stdout, "  • {}", rule.name()).unwrap();
             }
