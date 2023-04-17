@@ -4,7 +4,6 @@ use oxc_allocator::String;
 
 use crate::lexer::Lexer;
 
-#[derive(Debug)]
 pub struct AutoCow<'a> {
     pub start: &'a str,
     pub value: Option<String<'a>>,

@@ -8,7 +8,6 @@ enum DisabledRule<'a> {
     Single(&'a str),
 }
 
-#[derive(Debug)]
 pub struct DisableDirectives<'a> {
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,

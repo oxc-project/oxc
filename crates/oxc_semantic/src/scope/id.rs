@@ -7,11 +7,6 @@ pub struct ScopeId(NodeId);
 
 impl ScopeId {
     #[must_use]
-    pub fn new(node_id: NodeId) -> Self {
-        Self(node_id)
-    }
-
-    #[must_use]
     pub fn indextree_id(&self) -> NodeId {
         self.0
     }

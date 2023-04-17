@@ -38,7 +38,6 @@ fn symbol_size() {
 }
 
 bitflags! {
-    #[derive(Default)]
     pub struct SymbolFlags: u16 {
         const None                    = 0;
         /// Variable (var) or parameter
@@ -104,12 +103,6 @@ impl Symbol {
     #[must_use]
     pub fn is_const(&self) -> bool {
         self.flags.contains(SymbolFlags::ConstVariable)
-    }
-
-    #[must_use]
-    pub fn is_let(&self) -> bool {
-        self.flags.contains(SymbolFlags::BlockScopedVariable)
-            && !self.flags.contains(SymbolFlags::ConstVariable)
     }
 
     #[must_use]

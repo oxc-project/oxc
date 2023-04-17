@@ -5,7 +5,6 @@ use indextree::{Ancestors, Arena, Node, NodeId};
 use super::{Scope, ScopeFlags, ScopeId};
 use crate::node::AstNode;
 
-#[derive(Debug)]
 pub struct ScopeTree {
     scopes: Arena<Scope>,
 

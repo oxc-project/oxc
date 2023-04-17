@@ -7,7 +7,6 @@ use crate::{
     symbol::{Reference, SymbolTableBuilder},
 };
 
-#[derive(Debug)]
 pub struct ScopeBuilder {
     pub scopes: ScopeTree,
 
