@@ -19,8 +19,9 @@ oxc_parser = { version = "0.0.5", path = "crates/oxc_parser" }
 oxc_printer = { version = "0.0.3", path = "crates/oxc_printer" }
 oxc_semantic = { version = "0.0.4", path = "crates/oxc_semantic" }
 
-oxc_linter = { version = "0.0.0", path = "crates/oxc_linter" }
 oxc_macros = { version = "0.0.0", path = "crates/oxc_macros" }
+oxc_linter = { version = "0.0.0", path = "crates/oxc_linter" }
+oxc_minifier = { version = "0.0.0", path = "crates/oxc_minifier" }
 
 oxc_tasks_common = { path = "tasks/common" }
 
