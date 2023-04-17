@@ -13,7 +13,9 @@ fn test() {
     let files = WalkDir::new("tests/fixtures")
         .into_iter()
         .filter_map(Result::ok)
-        .filter(|e| !e.file_type().is_dir());
+        .filter(|e| !e.file_type().is_dir())
+        .collect::<Vec<_>>();
+    assert!(!files.is_empty());
     for file in files {
         let path = file.path();
         let source_text = std::fs::read_to_string(path).unwrap();
@@ -43,6 +45,7 @@ impl TestSuite {
     }
 
     fn execute_tests(&self) {
+        assert!(!self.tests.is_empty());
         for test in &self.tests {
             test.execute_test();
         }
@@ -60,7 +63,7 @@ struct TestCase {
 impl TestCase {
     fn execute_test(&self) {
         fn remove_whitespace(s: &str) -> String {
-            s.replace('\n', " ").replace(' ', "")
+            s.replace(char::is_whitespace, "")
         }
 
         let allocator = Allocator::default();
