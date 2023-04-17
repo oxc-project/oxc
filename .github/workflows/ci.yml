@@ -42,7 +42,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Run Cargo Check
-        run: cargo check --release --workspace --all-features --locked
+        run: cargo check --release --workspace --all-targets --all-features --locked
 
   format:
     name: Format Rust Files
