@@ -36,13 +36,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
+
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
           save-cache: ${{ github.ref_name == 'main' }}
 
-      - name: Run Cargo Check
-        run: cargo check --release --workspace --all-targets --all-features --locked
+      - name: Build cache by Cargo Check and Cargo Test
+        run: |
+          cargo check --workspace --all-targets --all-features --locked
+          cargo nextest run --workspace --all-targets --all-features --no-run
 
   format:
     name: Format Rust Files
