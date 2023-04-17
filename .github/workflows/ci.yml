@@ -2,17 +2,18 @@ name: CI
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'crates/**'
-      - 'tasks/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'rust-toolchain.toml'
-      - '!**/*.md'
+  # pull_request:
+    # paths:
+      # - 'crates/**'
+      # - 'tasks/**'
+      # - 'Cargo.toml'
+      # - 'Cargo.lock'
+      # - 'rust-toolchain.toml'
+      # - '!**/*.md'
   push:
     branches:
       - main
+      - sccache
     paths-ignore:
       - '**/*.md'
 
@@ -21,6 +22,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  RUSTC_WRAPPER: sccache
+  SCCACHE_CACHE_SIZE: 2G
+
 jobs:
   cache: # Warm cache factory for all other CI jobs
     name: Build Cache
@@ -28,9 +33,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
           - os: ubuntu-latest
           - os: macos-latest
+          - os: windows-latest
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -39,15 +44,26 @@ jobs:
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
 
-      - name: Install Rust Toolchain
+      - name: Install Rust
         uses: ./.github/actions/rustup
         with:
-          save-cache: ${{ github.ref_name == 'main' }}
+          save-cache: ${{ github.ref_name == 'sccache' }}
 
       - name: Build cache by Cargo Check and Cargo Test
         run: |
           cargo check --workspace --all-targets --all-features --locked
           cargo nextest run --workspace --all-targets --all-features --no-run
+
+      - name: Stop sccache server
+        run: sccache --stop-server || true
+
+      - name: Save sccache
+        uses: actions/cache/save@v3
+        continue-on-error: false
+        if: ${{ github.ref_name == 'sccache' }}
+        with:
+          path: ${{ env.SCCACHE_PATH }}
+          key: ${{ runner.os }}-sccache-${{ hashFiles('crates/**/*.rs', 'tasks/**/*.rs') }}
 
   format:
     name: Format Rust Files

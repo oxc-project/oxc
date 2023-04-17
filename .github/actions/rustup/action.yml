@@ -76,3 +76,38 @@ runs:
       with:
         shared-key: warm
         save-if: ${{ inputs.save-cache == 'true' }}
+
+    - name: Install sccache
+      uses: taiki-e/install-action@v2
+      if: ${{ inputs.save-cache == 'true' || inputs.restore-cache == 'true' }}
+      with:
+        tool: sccache
+
+    - name: Set SCCACHE_PATH
+      id: run
+      shell: bash
+      run: |
+        if [[ "${{ contains(runner.os, 'linux') }}" == "true" ]]; then
+          echo "SCCACHE_PATH=/home/runner/.cache/sccache" >> "$GITHUB_ENV"
+        fi
+        if [[ "${{ contains(runner.os, 'macos') }}" == "true" ]]; then
+          echo "SCCACHE_PATH=/Users/runner/Library/Caches/Mozilla.sccache" >> "$GITHUB_ENV"
+        fi
+        if [[ "${{ contains(runner.os, 'windows') }}" == "true" ]]; then
+          echo "SCCACHE_PATH=/Users/runner/%LOCALAPPDATA%\Mozilla\sccache" >> "$GITHUB_ENV"
+        fi
+
+    - name: Restore sccache
+      uses: actions/cache/restore@v3
+      continue-on-error: false
+      if: ${{ github.ref_name == 'sccache' && inputs.restore-cache == 'true' }}
+      with:
+        path: ${{ env.SCCACHE_PATH }}
+        key: ${{ runner.os }}-sccache-${{ hashFiles('crates/**/*.rs', 'tasks/**/*.rs') }}
+        restore-keys: |
+          ${{ runner.os }}-sccache-
+
+    - name: Start sccache server
+      if: ${{ inputs.restore-cache == 'true' }}
+      shell: bash
+      run: sccache --start-server
