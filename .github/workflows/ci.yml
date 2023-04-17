@@ -24,8 +24,15 @@ concurrency:
 jobs:
   cache: # Warm cache factory for our other CI jobs
     name: Build Cache
-    runs-on: ubuntu-latest
-    if: ${{ github.ref }} == 'refs/heads/main'
+    if: ${{ github.ref_name == 'main' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-latest
+          - os: macos-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
