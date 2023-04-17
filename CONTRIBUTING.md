@@ -6,13 +6,26 @@
 git clone --recurse-submodules git@github.com:Boshen/oxc.git
 ```
 
+The `--recurse-submodules` flag will install the following submodules:
+- [babel](https://github.com/babel/babel) registered for path `tasks/coverage/babel`
+- [test262](https://github.com/tc39/test262) registered for path `tasks/coverage/test262`
+- [typescript](https://github.com/microsoft/TypeScript) registered for path `tasks/coverage/typescript`
+
 ## New to Rust
 
 ### Install Rust
 ```bash
 # https://rustup.rs/
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
 
+```bash
+# move to the cloned repository
+cd oxc
+```
+
+```bash
+# rust toolchain
 rustup show
 ```
 
