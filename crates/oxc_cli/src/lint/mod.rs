@@ -13,13 +13,13 @@ pub struct LintOptions {
     /// Allow / Deny rules in order. [("allow" / "deny", rule name)]
     /// Defaults to [("deny", "correctness")]
     pub rules: Vec<(AllowWarnDeny, String)>,
+    pub list_rules: bool,
     pub fix: bool,
     pub quiet: bool,
     pub ignore_path: PathBuf,
     pub no_ignore: bool,
     pub ignore_pattern: Vec<String>,
     pub max_warnings: Option<usize>,
-    pub list_rules: bool,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
