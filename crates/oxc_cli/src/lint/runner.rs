@@ -29,8 +29,6 @@ pub struct LintRunner {
     options: LintOptions,
 
     linter: Arc<Linter>,
-
-    registered_rules: FxHashMap<RuleCategory, Vec<RuleEnum>>,
 }
 
 #[derive(Debug, Error, Diagnostic)]
@@ -41,17 +39,8 @@ pub struct MinifiedFileError(pub PathBuf);
 impl LintRunner {
     #[must_use]
     pub fn new(options: LintOptions) -> Self {
-        let rules = Self::derive_rules(&options);
-        let linter = Linter::from_rules(rules.clone()).with_fix(options.fix);
-        Self { options, linter: Arc::new(linter), registered_rules: Self::map_by_category(rules) }
-    }
-
-    fn map_by_category(rules: Vec<RuleEnum>) -> FxHashMap<RuleCategory, Vec<RuleEnum>> {
-        let mut map = FxHashMap::default();
-        for rule in rules {
-            map.entry(rule.category()).or_insert_with(Vec::new).push(rule);
-        }
-        map
+        let linter = Linter::from_rules(Self::derive_rules(&options)).with_fix(options.fix);
+        Self { options, linter: Arc::new(linter) }
     }
 
     fn derive_rules(options: &LintOptions) -> Vec<RuleEnum> {
@@ -108,7 +97,7 @@ impl LintRunner {
         let now = std::time::Instant::now();
 
         if self.options.list_rules {
-            self.dump_rules();
+            Self::dump_rules();
         }
 
         let number_of_files = Arc::new(AtomicUsize::new(0));
@@ -130,16 +119,20 @@ impl LintRunner {
         }
     }
 
-    fn dump_rules(&self) {
+    fn dump_rules() {
+        let rules_by_category = RULES.iter().fold(FxHashMap::default(), |mut map, rule| {
+            map.entry(rule.category()).or_insert_with(Vec::new).push(rule);
+            map
+        });
+
         let mut stdout = BufWriter::new(std::io::stdout());
-        for (category, rules) in &self.registered_rules {
+        for (category, rules) in rules_by_category {
             writeln!(stdout, "{} ({}):", category, rules.len()).unwrap();
             for rule in rules {
                 writeln!(stdout, "  • {}", rule.name()).unwrap();
             }
         }
-        let total_rules = self.registered_rules.values().map(Vec::len).sum::<usize>();
-        writeln!(stdout, "Total: {total_rules}").unwrap();
+        writeln!(stdout, "Total: {}", RULES.len()).unwrap();
     }
 
     fn process_paths(
