@@ -1,0 +1,5 @@
+Minifier_Babel Summary:
+AST Parsed     : 1621/1621 (100.00%)
+Positive Passed: 1619/1621 (99.88%)
+Expect to Parse: "annex-b/enabled/3.3-function-in-if-body/input.js"
+Expect to Parse: "core/regression/use-strict-with-pre-semi/input.js"
