@@ -35,11 +35,6 @@ jobs:
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
 
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: benchmark
-
       - name: Cache Benchmark Files # This doesn't speed up things, it is just for saving some bandwidth
         uses: actions/cache@v3
         with:

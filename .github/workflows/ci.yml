@@ -30,8 +30,23 @@ env:
   CARGO_TERM_QUIET: true
 
 jobs:
+  cache: # Warm cache factory for our other CI jobs
+    name: Build Cache
+    runs-on: ubuntu-latest
+    if: ${{ github.ref }} == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+
+      - name: Run cargo build
+        run: cargo build --release --workspace --all-targets --all-features --locked
+
   format:
     name: Format Rust Files
+    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -47,6 +62,7 @@ jobs:
 
   lint:
     name: Lint Rust Files
+    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -56,11 +72,6 @@ jobs:
         uses: ./.github/actions/rustup
         with:
           clippy: true
-
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: check
 
       - name: Run cargo check
         run: cargo check --workspace --all-targets --all-features --release --locked
@@ -79,6 +90,7 @@ jobs:
 
   check-dependencies:
     name: Check Dependencies
+    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR Branch
@@ -96,6 +108,8 @@ jobs:
         run: cargo udeps
 
   test:
+    name: Test
+    needs: cache
     strategy:
       fail-fast: false
       matrix:
@@ -103,8 +117,6 @@ jobs:
           - os: windows-latest
           - os: ubuntu-latest
           - os: macos-latest
-
-    name: Test
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -115,14 +127,6 @@ jobs:
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
-
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: check
-
-      - name: Build tests
-        run: cargo nextest run --no-run --locked
 
       - name: Run tests
         run: cargo nextest run

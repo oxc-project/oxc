@@ -36,12 +36,6 @@ jobs:
       - name: Install llvm-tools-preview for llvm-cov
         run: rustup component add llvm-tools-preview
 
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: check
-          save-if: false
-
       - name: Run
         run: cargo codecov --lcov --output-path lcov.info
 
