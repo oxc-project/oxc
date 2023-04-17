@@ -13,13 +13,8 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'crates/**'
-      - 'tasks/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'rust-toolchain.toml'
-      - '!**/*.md'
+    paths-ignore:
+      - '**/*.md'
 
 # cancel previous job runs for the same workflow + pr
 concurrency:
