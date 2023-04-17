@@ -24,7 +24,6 @@ concurrency:
 jobs:
   cache: # Warm cache factory for our other CI jobs
     name: Build Cache
-    if: ${{ github.ref_name == 'main' }}
     strategy:
       fail-fast: false
       matrix:
@@ -39,9 +38,11 @@ jobs:
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Run cargo build
-        run: cargo check --release --workspace --all-targets --all-features --locked
+        run: cargo check --release --workspace --all-features --locked
 
   format:
     name: Format Rust Files
@@ -54,6 +55,7 @@ jobs:
         uses: ./.github/actions/rustup
         with:
           fmt: true
+          restore-cache: false
 
       - name: Run rustfmt
         run: cargo fmt --all -- --check
@@ -74,7 +76,7 @@ jobs:
         run: cargo check --workspace --all-targets --all-features --release --locked
 
   lint:
-    name: lint Rust Files
+    name: Lint Rust Files
     needs: cache
     runs-on: ubuntu-latest
     steps:

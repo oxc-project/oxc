@@ -16,6 +16,14 @@ inputs:
     default: false
     required: false
     type: boolean
+  restore-cache:
+    default: true
+    required: false
+    type: boolean
+  save-cache:
+    default: false
+    required: false
+    type: boolean
 
 runs:
   using: composite
@@ -55,6 +63,7 @@ runs:
 
     - name: Cache on ${{ github.ref_name }}
       uses: Swatinem/rust-cache@v2
+      if: ${{ inputs.restore-cache == 'true' }}
       with:
         shared-key: warm
-        save-if: ${{ github.ref_name == 'main' }}
+        save-if: ${{ inputs.save-cache == 'true' }}
