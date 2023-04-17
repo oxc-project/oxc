@@ -82,4 +82,8 @@ The default category is -D correctness.")
                   .required(false)
                   .help("This option allows you to specify a warning threshold, which can be used to force oxc_lint to exit with an error status if there are too many warning-level rule violations in your project.")
               )
+              .arg(
+                Arg::new("rules")
+                    .long("rules")
+                    .required(false).action(ArgAction::SetTrue).help("This option allows you to list all the rules that are currently registered."))
 }

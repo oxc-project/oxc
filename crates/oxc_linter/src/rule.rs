@@ -28,7 +28,7 @@ pub trait RuleMeta {
 }
 
 /// Rule categories defined by rust-clippy
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RuleCategory {
     /// Code that is outright wrong or useless
     Correctness,
@@ -50,6 +50,16 @@ impl RuleCategory {
             "restriction" => Some(Self::Restriction),
             "nursery" => Some(Self::Nursery),
             _ => None,
+        }
+    }
+}
+
+impl AsRef<str> for RuleCategory {
+    fn as_ref(&self) -> &'static str {
+        match self {
+            Self::Correctness => "Correctness",
+            Self::Restriction => "Restriction",
+            Self::Nursery => "Nursery",
         }
     }
 }

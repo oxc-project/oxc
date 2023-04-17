@@ -19,6 +19,7 @@ pub struct LintOptions {
     pub no_ignore: bool,
     pub ignore_pattern: Vec<String>,
     pub max_warnings: Option<usize>,
+    pub list_rules: bool,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -57,6 +58,7 @@ impl<'a> From<&'a ArgMatches> for LintOptions {
                 .map(|patterns| patterns.into_iter().cloned().collect())
                 .unwrap_or_default(),
             max_warnings: matches.get_one("max-warnings").copied(),
+            list_rules: matches.get_flag("rules"),
         }
     }
 }
@@ -178,5 +180,11 @@ mod test {
         let options =
             get_lint_options("lint --ignore-pattern ./test --ignore-pattern bar.js foo.js");
         assert_eq!(options.ignore_pattern, vec![String::from("./test"), String::from("bar.js")]);
+    }
+
+    #[test]
+    fn list_rules_true() {
+        let options = get_lint_options("lint foo.js --rules");
+        assert!(options.list_rules);
     }
 }
