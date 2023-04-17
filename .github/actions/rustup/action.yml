@@ -53,8 +53,8 @@ runs:
       shell: bash
       run: rustup show
 
-    - name: Cache
+    - name: Cache on ${{ github.ref_name }}
       uses: Swatinem/rust-cache@v2
       with:
         shared-key: warm
-        save-if: ${{ github.ref }} == 'refs/heads/main'
+        save-if: ${{ github.ref_name == 'main' }}
