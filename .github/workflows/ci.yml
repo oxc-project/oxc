@@ -41,11 +41,10 @@ jobs:
         uses: ./.github/actions/rustup
 
       - name: Run cargo build
-        run: cargo build --release --workspace --all-targets --all-features --locked
+        run: cargo check --release --workspace --all-targets --all-features --locked
 
   format:
     name: Format Rust Files
-    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -59,8 +58,23 @@ jobs:
       - name: Run rustfmt
         run: cargo fmt --all -- --check
 
+  check:
+    name: Check Rust Files
+    needs: cache
+    if: ${{ github.ref_name != 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+
+      - name: Run Cargo Check
+        run: cargo check --workspace --all-targets --all-features --release --locked
+
   lint:
-    name: Lint Rust Files
+    name: lint Rust Files
     needs: cache
     runs-on: ubuntu-latest
     steps:
@@ -72,10 +86,7 @@ jobs:
         with:
           clippy: true
 
-      - name: Run cargo check
-        run: cargo check --workspace --all-targets --all-features --release --locked
-
-      - name: Run clippy
+      - name: Run Clippy
         run: cargo lint
 
   typos:
