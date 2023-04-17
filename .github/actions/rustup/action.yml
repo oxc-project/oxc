@@ -28,6 +28,15 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Print Inputs
+      shell: bash
+      run: |
+        echo 'clippy: ${{ inputs.clippy }}'
+        echo 'fmt: ${{ inputs.fmt }}'
+        echo 'docs: ${{ inputs.docs }}'
+        echo 'restore-cache: ${{ inputs.restore-cache }}'
+        echo 'save-cache: ${{ inputs.save-cache }}'
+
     - name: Remove `profile` line on MacOS
       shell: bash
       if: runner.os == 'macOS'
