@@ -1,5 +1,3 @@
-comment: false
-
 ignore:
   - "tasks"
   - "crates/oxc_diagnostics"
