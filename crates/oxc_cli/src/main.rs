@@ -24,6 +24,12 @@ fn main() -> CliRunResult {
     match subcommand {
         "lint" => {
             let options = LintOptions::from(matches);
+
+            if options.list_rules {
+                LintRunner::print_rules();
+                return CliRunResult::None;
+            }
+
             LintRunner::new(options).run()
         }
         _ => CliRunResult::None,
