@@ -3,10 +3,10 @@
 # Installation
 
 ```bash
-cargo install cargo-fuzz
+cargo binstall cargo-fuzz
 ```
 
-Run fuzzer for the parser, for 15mins.
+Run fuzzer for the parser, for 15 minutes.
 
 ```bash
 cd crates/oxc_parser/fuzz
