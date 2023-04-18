@@ -20,7 +20,7 @@ use oxc_diagnostics::{
 use oxc_linter::{Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 use super::{AllowWarnDeny, LintOptions};
 use crate::{CliRunResult, Walk};
@@ -43,20 +43,9 @@ impl LintRunner {
         Self { options, linter: Arc::new(linter) }
     }
 
-    fn print_rules() {
-        let rules_by_category = RULES.iter().fold(FxHashMap::default(), |mut map, rule| {
-            map.entry(rule.category()).or_insert_with(Vec::new).push(rule);
-            map
-        });
-
+    pub fn print_rules() {
         let mut stdout = BufWriter::new(std::io::stdout());
-        for (category, rules) in rules_by_category {
-            writeln!(stdout, "{} ({}):", category, rules.len()).unwrap();
-            for rule in rules {
-                writeln!(stdout, "  • {}", rule.name()).unwrap();
-            }
-        }
-        writeln!(stdout, "Total: {}", RULES.len()).unwrap();
+        Linter::print_rules(&mut stdout);
     }
 
     fn derive_rules(options: &LintOptions) -> Vec<RuleEnum> {
@@ -111,10 +100,6 @@ impl LintRunner {
     #[must_use]
     pub fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
-
-        if self.options.list_rules {
-            Self::print_rules();
-        }
 
         let number_of_files = Arc::new(AtomicUsize::new(0));
         let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();

@@ -12,11 +12,12 @@ mod globals;
 pub mod rule;
 mod rules;
 
-use std::{fs, rc::Rc};
+use std::{fs, io::Write, rc::Rc};
 
 pub use fixer::{Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
+use rustc_hash::FxHashMap;
 
 use crate::context::LintContext;
 pub use crate::{
@@ -112,5 +113,32 @@ impl Linter {
             .and_then(|s| serde_json::from_str(&s).ok())
             .and_then(|v: serde_json::Value| v.get("rules").cloned())
             .and_then(|v| v.as_object().cloned())
+    }
+
+    pub fn print_rules<W: Write>(writer: &mut W) {
+        let rules_by_category = RULES.iter().fold(FxHashMap::default(), |mut map, rule| {
+            map.entry(rule.category()).or_insert_with(Vec::new).push(rule);
+            map
+        });
+
+        for (category, rules) in rules_by_category {
+            writeln!(writer, "{} ({}):", category, rules.len()).unwrap();
+            for rule in rules {
+                writeln!(writer, "  • {}", rule.name()).unwrap();
+            }
+        }
+        writeln!(writer, "Total: {}", RULES.len()).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Linter;
+
+    #[test]
+    fn print_rules() {
+        let mut writer = Vec::new();
+        Linter::print_rules(&mut writer);
+        assert!(!writer.is_empty());
     }
 }
