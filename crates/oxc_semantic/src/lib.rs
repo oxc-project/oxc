@@ -23,7 +23,7 @@ use oxc_ast::{
 use scope::ScopeId;
 pub use scope::{Scope, ScopeFlags, ScopeTree};
 use symbol::SymbolId;
-pub use symbol::{Reference, ResolvedReference, Symbol, SymbolFlags, SymbolTable};
+pub use symbol::{Mangler, Reference, ResolvedReference, Symbol, SymbolFlags, SymbolTable};
 
 pub struct Semantic<'a> {
     source_text: &'a str,
@@ -34,7 +34,7 @@ pub struct Semantic<'a> {
 
     scopes: ScopeTree,
 
-    symbols: SymbolTable,
+    symbols: Rc<SymbolTable>,
 
     trivias: Rc<Trivias>,
 
@@ -82,8 +82,8 @@ impl<'a> Semantic<'a> {
     }
 
     #[must_use]
-    pub fn symbols(&self) -> &SymbolTable {
-        &self.symbols
+    pub fn symbols(&self) -> Rc<SymbolTable> {
+        Rc::clone(&self.symbols)
     }
 
     #[must_use]

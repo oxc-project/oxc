@@ -5,17 +5,25 @@ use std::{
 
 use oxc_ast::{Atom, Span};
 
-use super::{reference::ResolvedReferenceId, SymbolId};
-use crate::{node::AstNodeId, Reference, ResolvedReference, Symbol, SymbolFlags, SymbolTable};
+use super::{
+    Mangler, Reference, ResolvedReference, ResolvedReferenceId, Symbol, SymbolFlags, SymbolId,
+    SymbolTable,
+};
+use crate::node::AstNodeId;
 
 #[derive(Debug, Default)]
 pub struct SymbolTableBuilder {
     /// Stores all the `Symbols` indexed by `SymbolId`
     symbols: Vec<Symbol>,
+
+    mangler: Mangler,
+
     /// Stores all the resolved references indexed by `ResolvedReferenceId`
     resolved_references: Vec<ResolvedReference>,
+
     // BTreeMap is empirically a lot faster than FxHashMap for our insertion,
     resolved_references_index: BTreeMap<Span, ResolvedReferenceId>,
+    symbol_index: BTreeMap<Span, SymbolId>,
 }
 
 impl Index<SymbolId> for SymbolTableBuilder {
@@ -44,6 +52,7 @@ impl SymbolTableBuilder {
         let symbol_id = SymbolId::new(self.symbols.len() + 1);
         let symbol = Symbol::new(symbol_id, declaration, name, span, flags);
         self.symbols.push(symbol);
+        self.symbol_index.insert(span, symbol_id);
         symbol_id
     }
 
@@ -67,7 +76,18 @@ impl SymbolTableBuilder {
         }
     }
 
+    pub fn update_slot(&mut self, symbol_id: SymbolId) {
+        let next_slot = self.mangler.next_slot();
+        self.symbols[symbol_id].slot = next_slot;
+    }
+
     pub fn build(self) -> SymbolTable {
-        SymbolTable::new(self.symbols, self.resolved_references, self.resolved_references_index)
+        SymbolTable::new(
+            self.symbols,
+            self.mangler,
+            self.resolved_references,
+            self.resolved_references_index,
+            self.symbol_index,
+        )
     }
 }

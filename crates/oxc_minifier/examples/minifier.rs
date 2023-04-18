@@ -33,10 +33,12 @@ fn main() {
     let minifier_options = MinifierOptions::default();
     Minifier::new(&allocator, minifier_options).build(program);
 
-    let _semantic = SemanticBuilder::new(&source_text, source_type, &ret.trivias).build(program);
+    let semantic_ret = SemanticBuilder::new(&source_text, source_type, &ret.trivias).build(program);
 
     let printer_options = PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() };
-    let _printed = Printer::new(source_text.len(), printer_options).build(program);
+    let printed = Printer::new(source_text.len(), printer_options)
+        .with_symbol_table(&semantic_ret.semantic.symbols(), true)
+        .build(program);
 
-    // println!("{printed}");
+    println!("{printed}");
 }

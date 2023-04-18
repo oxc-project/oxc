@@ -1080,6 +1080,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
+ "oxc_semantic",
 ]
 
 [[package]]
@@ -1087,6 +1088,7 @@ name = "oxc_semantic"
 version = "0.0.4"
 dependencies = [
  "bitflags",
+ "compact_str",
  "indextree",
  "once_cell",
  "oxc_allocator",

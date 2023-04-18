@@ -1,6 +1,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
+use oxc_semantic::Symbol;
 
 use crate::{Printer, Separator};
 
@@ -790,7 +791,17 @@ impl<'a> Gen for Expression<'a> {
 
 impl Gen for IdentifierReference {
     fn gen(&self, p: &mut Printer) {
-        p.print_identifier(self.name.as_bytes());
+        let symbols = &p.symbols;
+        let slot = symbols
+            .get_resolved_reference_for_id(self)
+            .map(|r| symbols[r.resolved_symbol_id].slot())
+            .filter(|slot| slot.is_some());
+        if let Some(slot) = slot {
+            let name = symbols.mangler().mangled_name(slot);
+            p.print_str(name.as_bytes());
+        } else {
+            p.print_str(self.name.as_bytes());
+        }
     }
 }
 
@@ -802,7 +813,15 @@ impl Gen for IdentifierName {
 
 impl Gen for BindingIdentifier {
     fn gen(&self, p: &mut Printer) {
-        p.print_identifier(self.name.as_bytes());
+        let symbols = &p.symbols;
+        let slot =
+            symbols.get_symbol_by_span(self.span).map(Symbol::slot).filter(|slot| slot.is_some());
+        if let Some(slot) = slot {
+            let name = symbols.mangler().mangled_name(slot);
+            p.print_str(name.as_bytes());
+        } else {
+            p.print_str(self.name.as_bytes());
+        }
     }
 }
 

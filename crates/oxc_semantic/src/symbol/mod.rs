@@ -3,6 +3,7 @@
 
 mod builder;
 mod id;
+mod mangler;
 mod reference;
 mod table;
 
@@ -13,6 +14,7 @@ use self::reference::ResolvedReferenceId;
 pub use self::{
     builder::SymbolTableBuilder,
     id::SymbolId,
+    mangler::{Mangler, Slot},
     reference::{Reference, ReferenceFlag, ResolvedReference},
     table::SymbolTable,
 };
@@ -26,6 +28,7 @@ pub struct Symbol {
     name: Atom,
     span: Span,
     flags: SymbolFlags,
+    slot: Slot,
     /// Pointers to the AST Nodes that reference this symbol
     references: Vec<ResolvedReferenceId>,
 }
@@ -34,7 +37,7 @@ pub struct Symbol {
 #[test]
 fn symbol_size() {
     use std::mem::size_of;
-    assert_eq!(size_of::<Symbol>(), 88);
+    assert_eq!(size_of::<Symbol>(), 96);
 }
 
 bitflags! {
@@ -68,6 +71,13 @@ bitflags! {
     }
 }
 
+impl SymbolFlags {
+    #[must_use]
+    pub fn is_variable(&self) -> bool {
+        self.intersects(Self::Variable)
+    }
+}
+
 impl Symbol {
     #[must_use]
     pub fn new(
@@ -77,7 +87,7 @@ impl Symbol {
         span: Span,
         flags: SymbolFlags,
     ) -> Self {
-        Self { id, declaration, name, span, flags, references: vec![] }
+        Self { id, declaration, name, span, flags, slot: Slot::default(), references: vec![] }
     }
 
     #[must_use]
@@ -98,6 +108,11 @@ impl Symbol {
     #[must_use]
     pub fn flags(&self) -> SymbolFlags {
         self.flags
+    }
+
+    #[must_use]
+    pub fn slot(&self) -> Slot {
+        self.slot
     }
 
     #[must_use]

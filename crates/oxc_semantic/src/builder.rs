@@ -125,15 +125,13 @@ impl<'a> SemanticBuilder<'a> {
             ModuleRecord::default()
         };
 
-        let symbols = self.symbols.build();
-
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
             trivias: self.trivias,
             nodes: self.nodes,
             scopes: self.scope.scopes,
-            symbols,
+            symbols: Rc::new(self.symbols.build()),
             module_record,
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
@@ -223,6 +221,9 @@ impl<'a> SemanticBuilder<'a> {
         let includes = includes | self.current_symbol_flags;
         let symbol_id = self.symbols.create(self.current_node_id, name.clone(), span, includes);
         self.scope.scopes[scope_id].variables.insert(name.clone(), symbol_id);
+        if !self.scope.current_scope().is_top() && includes.is_variable() {
+            self.symbols.update_slot(symbol_id);
+        }
         symbol_id
     }
 
