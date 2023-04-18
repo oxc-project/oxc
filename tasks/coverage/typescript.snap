@@ -1,7 +1,7 @@
 TypeScript Summary:
-AST Parsed     : 5012/5016 (99.92%)
-Positive Passed: 5005/5016 (99.78%)
-Negative Passed: 980/4712 (20.80%)
+AST Parsed     : 5043/5047 (99.92%)
+Positive Passed: 5036/5047 (99.78%)
+Negative Passed: 990/4741 (20.88%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -363,6 +363,7 @@ Expect Syntax Error: "compiler/constEnumErrors.ts"
 Expect Syntax Error: "compiler/constWithNonNull.ts"
 Expect Syntax Error: "compiler/constantEnumAssert.ts"
 Expect Syntax Error: "compiler/constraintErrors1.ts"
+Expect Syntax Error: "compiler/constraintWithIndexedAccess.ts"
 Expect Syntax Error: "compiler/constraints0.ts"
 Expect Syntax Error: "compiler/constructorArgsErrors1.ts"
 Expect Syntax Error: "compiler/constructorArgsErrors2.ts"
@@ -379,7 +380,10 @@ Expect Syntax Error: "compiler/constructorParametersThatShadowExternalNamesInVar
 Expect Syntax Error: "compiler/constructorReturnsInvalidType.ts"
 Expect Syntax Error: "compiler/constructorsWithSpecializedSignatures.ts"
 Expect Syntax Error: "compiler/contextualOverloadListFromUnionWithPrimitiveNoImplicitAny.ts"
+Expect Syntax Error: "compiler/contextualSignatureInArrayElementLibEs2015.ts"
+Expect Syntax Error: "compiler/contextualSignatureInArrayElementLibEs5.ts"
 Expect Syntax Error: "compiler/contextualSignatureInstatiationContravariance.ts"
+Expect Syntax Error: "compiler/contextualTupleTypeParameterReadonly.ts"
 Expect Syntax Error: "compiler/contextualTypeAny.ts"
 Expect Syntax Error: "compiler/contextualTypeForInitalizedVariablesFiltersUndefined.ts"
 Expect Syntax Error: "compiler/contextualTyping.ts"
@@ -418,6 +422,7 @@ Expect Syntax Error: "compiler/controlFlowNullTypeAndLiteral.ts"
 Expect Syntax Error: "compiler/controlFlowSelfReferentialLoop.ts"
 Expect Syntax Error: "compiler/copyrightWithNewLine1.ts"
 Expect Syntax Error: "compiler/copyrightWithoutNewLine1.ts"
+Expect Syntax Error: "compiler/corrupted.ts"
 Expect Syntax Error: "compiler/couldNotSelectGenericOverload.ts"
 Expect Syntax Error: "compiler/crashInEmitTokenWithComment.ts"
 Expect Syntax Error: "compiler/crashInsourcePropertyIsRelatableToTargetProperty.ts"
@@ -425,6 +430,7 @@ Expect Syntax Error: "compiler/crashIntypeCheckInvocationExpression.ts"
 Expect Syntax Error: "compiler/crashIntypeCheckObjectCreationExpression.ts"
 Expect Syntax Error: "compiler/crashOnMethodSignatures.ts"
 Expect Syntax Error: "compiler/crashRegressionTest.ts"
+Expect Syntax Error: "compiler/dataViewConstructor.ts"
 Expect Syntax Error: "compiler/declFileEmitDeclarationOnlyError1.ts"
 Expect Syntax Error: "compiler/declFileEmitDeclarationOnlyError2.ts"
 Expect Syntax Error: "compiler/declarationEmitDestructuring2.ts"
@@ -495,6 +501,7 @@ Expect Syntax Error: "compiler/discriminatedUnionErrorMessage.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes2.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes4.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes5.ts"
+Expect Syntax Error: "compiler/divergentAccessorsTypes6.ts"
 Expect Syntax Error: "compiler/divergentAccessorsVisibility1.ts"
 Expect Syntax Error: "compiler/doNotElaborateAssignabilityToTypeParameters.ts"
 Expect Syntax Error: "compiler/doYouNeedToChangeYourTargetLibraryES2015.ts"
@@ -517,7 +524,8 @@ Expect Syntax Error: "compiler/duplicateLocalVariable2.ts"
 Expect Syntax Error: "compiler/duplicateLocalVariable3.ts"
 Expect Syntax Error: "compiler/duplicateLocalVariable4.ts"
 Expect Syntax Error: "compiler/duplicateObjectLiteralProperty.ts"
-Expect Syntax Error: "compiler/duplicateObjectLiteralProperty_computedName.ts"
+Expect Syntax Error: "compiler/duplicateObjectLiteralProperty_computedName1.ts"
+Expect Syntax Error: "compiler/duplicateObjectLiteralProperty_computedName2.ts"
 Expect Syntax Error: "compiler/duplicatePropertiesInStrictMode.ts"
 Expect Syntax Error: "compiler/duplicateStringNamedProperty1.ts"
 Expect Syntax Error: "compiler/duplicateSymbolsExportMatching.ts"
@@ -736,6 +744,7 @@ Expect Syntax Error: "compiler/functionTypeArgumentArityErrors.ts"
 Expect Syntax Error: "compiler/functionTypeArgumentAssignmentCompat.ts"
 Expect Syntax Error: "compiler/functionVariableInReturnTypeAnnotation.ts"
 Expect Syntax Error: "compiler/functionWithSameNameAsField.ts"
+Expect Syntax Error: "compiler/functionsMissingReturnStatementsAndExpressionsStrictNullChecks.ts"
 Expect Syntax Error: "compiler/functionsWithModifiersInBlocks1.ts"
 Expect Syntax Error: "compiler/fuzzy.ts"
 Expect Syntax Error: "compiler/generatorES6_5.ts"
@@ -819,11 +828,9 @@ Expect Syntax Error: "compiler/generics4.ts"
 Expect Syntax Error: "compiler/generics5.ts"
 Expect Syntax Error: "compiler/genericsWithDuplicateTypeParameters1.ts"
 Expect Syntax Error: "compiler/genericsWithoutTypeParameters1.ts"
-Expect Syntax Error: "compiler/getAndSetNotIdenticalType.ts"
 Expect Syntax Error: "compiler/getAndSetNotIdenticalType2.ts"
 Expect Syntax Error: "compiler/getAndSetNotIdenticalType3.ts"
 Expect Syntax Error: "compiler/getterControlFlowStrictNull.ts"
-Expect Syntax Error: "compiler/getterErrorMessageNotDuplicated.ts"
 Expect Syntax Error: "compiler/getterMissingReturnError.ts"
 Expect Syntax Error: "compiler/gettersAndSetters.ts"
 Expect Syntax Error: "compiler/gettersAndSettersAccessibility.ts"
@@ -908,6 +915,7 @@ Expect Syntax Error: "compiler/indirectSelfReferenceGeneric.ts"
 Expect Syntax Error: "compiler/inexistentPropertyInsideToStringType.ts"
 Expect Syntax Error: "compiler/inferFromGenericFunctionReturnTypes1.ts"
 Expect Syntax Error: "compiler/inferFromGenericFunctionReturnTypes3.ts"
+Expect Syntax Error: "compiler/inferFromNestedSameShapeTuple.ts"
 Expect Syntax Error: "compiler/inferSetterParamType.ts"
 Expect Syntax Error: "compiler/inferenceFromIncompleteSource.ts"
 Expect Syntax Error: "compiler/inferenceShouldFailOnEvolvingArrays.ts"
@@ -1062,6 +1070,8 @@ Expect Syntax Error: "compiler/jsxChildrenGenericContextualTypes.tsx"
 Expect Syntax Error: "compiler/jsxChildrenIndividualErrorElaborations.tsx"
 Expect Syntax Error: "compiler/jsxChildrenWrongType.tsx"
 Expect Syntax Error: "compiler/jsxComponentTypeErrors.tsx"
+Expect Syntax Error: "compiler/jsxElementType.tsx"
+Expect Syntax Error: "compiler/jsxElementTypeLiteral.tsx"
 Expect Syntax Error: "compiler/jsxEmptyExpressionNotCountedAsChild2.tsx"
 Expect Syntax Error: "compiler/jsxExcessPropsAndAssignability.tsx"
 Expect Syntax Error: "compiler/jsxFactoryAndJsxFragmentFactoryErrorNotIdentifier.tsx"
@@ -1098,6 +1108,7 @@ Expect Syntax Error: "compiler/mappedTypeGenericWithKnownKeys.ts"
 Expect Syntax Error: "compiler/mappedTypeIndexedAccess.ts"
 Expect Syntax Error: "compiler/mappedTypeNotMistakenlyHomomorphic.ts"
 Expect Syntax Error: "compiler/mappedTypeRecursiveInference.ts"
+Expect Syntax Error: "compiler/mappedTypeUnionConstrainTupleTreatedAsArrayLike.ts"
 Expect Syntax Error: "compiler/mappedTypeUnionConstraintInferences.ts"
 Expect Syntax Error: "compiler/mappedTypeWithAsClauseAndLateBoundProperty.ts"
 Expect Syntax Error: "compiler/mappedTypeWithCombinedTypeMappers.ts"
@@ -1181,6 +1192,7 @@ Expect Syntax Error: "compiler/namespaceDisambiguationInUnion.ts"
 Expect Syntax Error: "compiler/namespacesDeclaration2.ts"
 Expect Syntax Error: "compiler/nanEquality.ts"
 Expect Syntax Error: "compiler/narrowByEquality.ts"
+Expect Syntax Error: "compiler/narrowingMutualSubtypes.ts"
 Expect Syntax Error: "compiler/narrowingOfDottedNames.ts"
 Expect Syntax Error: "compiler/narrowingOfQualifiedNames.ts"
 Expect Syntax Error: "compiler/narrowingTruthyObject.ts"
@@ -1226,6 +1238,7 @@ Expect Syntax Error: "compiler/noImplicitAnyParametersInModule.ts"
 Expect Syntax Error: "compiler/noImplicitAnyReferencingDeclaredInterface.ts"
 Expect Syntax Error: "compiler/noImplicitAnyStringIndexerOnObject.ts"
 Expect Syntax Error: "compiler/noImplicitAnyWithOverloads.ts"
+Expect Syntax Error: "compiler/noImplicitReturnsExclusions.ts"
 Expect Syntax Error: "compiler/noImplicitReturnsInAsync2.ts"
 Expect Syntax Error: "compiler/noImplicitReturnsWithProtectedBlocks2.ts"
 Expect Syntax Error: "compiler/noImplicitReturnsWithProtectedBlocks3.ts"
@@ -1439,6 +1452,7 @@ Expect Syntax Error: "compiler/recursiveBaseCheck5.ts"
 Expect Syntax Error: "compiler/recursiveBaseCheck6.ts"
 Expect Syntax Error: "compiler/recursiveBaseConstructorCreation3.ts"
 Expect Syntax Error: "compiler/recursiveClassReferenceTest.ts"
+Expect Syntax Error: "compiler/recursiveConditionalCrash4.ts"
 Expect Syntax Error: "compiler/recursiveConditionalTypes.ts"
 Expect Syntax Error: "compiler/recursiveFunctionTypes.ts"
 Expect Syntax Error: "compiler/recursiveInheritance.ts"
@@ -1497,6 +1511,9 @@ Expect Syntax Error: "compiler/shorthand-property-es5-es6.ts"
 Expect Syntax Error: "compiler/shorthand-property-es6-amd.ts"
 Expect Syntax Error: "compiler/shorthand-property-es6-es6.ts"
 Expect Syntax Error: "compiler/shorthandPropertyUndefined.ts"
+Expect Syntax Error: "compiler/signatureLengthMismatchCall.ts"
+Expect Syntax Error: "compiler/signatureLengthMismatchInOverload.ts"
+Expect Syntax Error: "compiler/signatureLengthMismatchWithOptionalParameters.ts"
 Expect Syntax Error: "compiler/signaturesUseJSDocForOptionalParameters.ts"
 Expect Syntax Error: "compiler/slightlyIndirectedDeepObjectLiteralElaborations.ts"
 Expect Syntax Error: "compiler/sourceMap-Comment1.ts"
@@ -1590,6 +1607,7 @@ Expect Syntax Error: "compiler/targetTypeCastTest.ts"
 Expect Syntax Error: "compiler/targetTypeTest1.ts"
 Expect Syntax Error: "compiler/targetTypeTest3.ts"
 Expect Syntax Error: "compiler/targetTypeVoidFunc.ts"
+Expect Syntax Error: "compiler/templateLiteralIntersection2.ts"
 Expect Syntax Error: "compiler/templateLiteralsInTypes.ts"
 Expect Syntax Error: "compiler/templateStringsArrayTypeDefinedInES5Mode.ts"
 Expect Syntax Error: "compiler/templateStringsArrayTypeNotDefinedES5Mode.ts"
@@ -2608,7 +2626,6 @@ Expect Syntax Error: "conformance/expressions/optionalChaining/optionalChainingI
 Expect Syntax Error: "conformance/expressions/optionalChaining/optionalChainingInParameterInitializer.2.ts"
 Expect Syntax Error: "conformance/expressions/optionalChaining/privateIdentifierChain/privateIdentifierChain.1.ts"
 Expect Syntax Error: "conformance/expressions/propertyAccess/propertyAccess.ts"
-Expect Syntax Error: "conformance/expressions/propertyAccess/propertyAccessNumericLiterals.ts"
 Expect Syntax Error: "conformance/expressions/propertyAccess/propertyAccessStringIndexSignature.ts"
 Expect Syntax Error: "conformance/expressions/propertyAccess/propertyAccessStringIndexSignatureNoImplicitAny.ts"
 Expect Syntax Error: "conformance/expressions/propertyAccess/propertyAccessWidening.ts"
@@ -2910,6 +2927,7 @@ Expect Syntax Error: "conformance/jsx/tsxEmit3.tsx"
 Expect Syntax Error: "conformance/jsx/tsxGenericArrowFunctionParsing.tsx"
 Expect Syntax Error: "conformance/jsx/tsxIntrinsicAttributeErrors.tsx"
 Expect Syntax Error: "conformance/jsx/tsxLibraryManagedAttributes.tsx"
+Expect Syntax Error: "conformance/jsx/tsxNamespacedTagName2.tsx"
 Expect Syntax Error: "conformance/jsx/tsxReactComponentWithDefaultTypeParameter3.tsx"
 Expect Syntax Error: "conformance/jsx/tsxReactEmit4.tsx"
 Expect Syntax Error: "conformance/jsx/tsxReactEmit7.tsx"
@@ -3555,6 +3573,7 @@ Expect Syntax Error: "conformance/types/thisType/typeRelationships.ts"
 Expect Syntax Error: "conformance/types/thisType/unionThisTypeInFunctions.ts"
 Expect Syntax Error: "conformance/types/tuple/arityAndOrderCompatibility01.ts"
 Expect Syntax Error: "conformance/types/tuple/castingTuple.ts"
+Expect Syntax Error: "conformance/types/tuple/contextualTypeTupleEnd.ts"
 Expect Syntax Error: "conformance/types/tuple/contextualTypeWithTuple.ts"
 Expect Syntax Error: "conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion01.ts"
 Expect Syntax Error: "conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion02.ts"
@@ -6076,11 +6095,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Unexpected token
-     ╭─[compiler/functionsMissingReturnStatementsAndExpressions.ts:130:1]
- 130 │         throw undefined.
- 131 │     }
+     ╭─[compiler/functionsMissingReturnStatementsAndExpressions.ts:156:1]
+ 156 │         throw undefined.
+ 157 │     }
      ·     ─
- 132 │ }
+ 158 │ }
      ╰────
 
   × Unexpected token
@@ -6274,6 +6293,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │         var non_export_var = 0;
    ╰────
   help: Try insert a semicolon here
+
+  × Unexpected token
+    ╭─[compiler/instanceofOnInstantiationExpression.ts:13:1]
+ 13 │ 
+ 14 │ Box<number> instanceof Object; // OK
+    ·             ──────────
+ 15 │ (Box<number>) instanceof Object; // OK
+    ╰────
 
   × Unexpected token
     ╭─[compiler/intTypeCheck.ts:36:1]
@@ -7112,6 +7139,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: Try insert a semicolon here
 
   × Unexpected token
+   ╭─[compiler/nestedUnaryExpressionHang.ts:1:1]
+ 1 │ 3333%!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   ╰────
+
+  × Unexpected token
     ╭─[compiler/newExpressionWithCast.ts:8:1]
   8 │ // parse error
   9 │ var test2 = new <any>Test2();
@@ -7188,6 +7220,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·     ────
  9 │ 
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[compiler/numberLiteralsWithLeadingZeros.ts:7:1]
+ 7 │ 
+ 8 │ 00.5;
+   ·   ▲
+ 9 │ 000.5;
+   ╰────
+  help: Try insert a semicolon here
 
   × Missing initializer in const declaration
     ╭─[compiler/numberVsBigIntOperations.ts:87:1]
@@ -7306,6 +7347,229 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │     }
    ╰────
 
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:87:1]
+ 87 │ `\0`;
+ 88 │ `\5`;
+    ·  ──
+ 89 │ `\00`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:88:1]
+ 88 │ `\5`;
+ 89 │ `\00`;
+    ·  ───
+ 90 │ `\05`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:89:1]
+ 89 │ `\00`;
+ 90 │ `\05`;
+    ·  ───
+ 91 │ `\55`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:90:1]
+ 90 │ `\05`;
+ 91 │ `\55`;
+    ·  ───
+ 92 │ `\000`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:91:1]
+ 91 │ `\55`;
+ 92 │ `\000`;
+    ·  ────
+ 93 │ `\005`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:92:1]
+ 92 │ `\000`;
+ 93 │ `\005`;
+    ·  ────
+ 94 │ `\055`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:93:1]
+ 93 │ `\005`;
+ 94 │ `\055`;
+    ·  ────
+ 95 │ `${0}\0`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:95:1]
+ 95 │ `${0}\0`;
+ 96 │ `${0}\5`;
+    ·      ──
+ 97 │ `${0}\00`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:96:1]
+ 96 │ `${0}\5`;
+ 97 │ `${0}\00`;
+    ·      ───
+ 98 │ `${0}\05`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/octalLiteralAndEscapeSequence.ts:97:1]
+ 97 │ `${0}\00`;
+ 98 │ `${0}\05`;
+    ·      ───
+ 99 │ `${0}\55`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:98:1]
+  98 │ `${0}\05`;
+  99 │ `${0}\55`;
+     ·      ───
+ 100 │ `${0}\000`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:99:1]
+  99 │ `${0}\55`;
+ 100 │ `${0}\000`;
+     ·      ────
+ 101 │ `${0}\005`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:100:1]
+ 100 │ `${0}\000`;
+ 101 │ `${0}\005`;
+     ·      ────
+ 102 │ `${0}\055`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:101:1]
+ 101 │ `${0}\005`;
+ 102 │ `${0}\055`;
+     ·      ────
+ 103 │ `\0${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:103:1]
+ 103 │ `\0${0}`;
+ 104 │ `\5${0}`;
+     ·  ──
+ 105 │ `\00${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:104:1]
+ 104 │ `\5${0}`;
+ 105 │ `\00${0}`;
+     ·  ───
+ 106 │ `\05${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:105:1]
+ 105 │ `\00${0}`;
+ 106 │ `\05${0}`;
+     ·  ───
+ 107 │ `\55${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:106:1]
+ 106 │ `\05${0}`;
+ 107 │ `\55${0}`;
+     ·  ───
+ 108 │ `\000${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:107:1]
+ 107 │ `\55${0}`;
+ 108 │ `\000${0}`;
+     ·  ────
+ 109 │ `\005${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:108:1]
+ 108 │ `\000${0}`;
+ 109 │ `\005${0}`;
+     ·  ────
+ 110 │ `\055${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:109:1]
+ 109 │ `\005${0}`;
+ 110 │ `\055${0}`;
+     ·  ────
+ 111 │ `${0}\0${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:111:1]
+ 111 │ `${0}\0${0}`;
+ 112 │ `${0}\5${0}`;
+     ·      ──
+ 113 │ `${0}\00${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:112:1]
+ 112 │ `${0}\5${0}`;
+ 113 │ `${0}\00${0}`;
+     ·      ───
+ 114 │ `${0}\05${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:113:1]
+ 113 │ `${0}\00${0}`;
+ 114 │ `${0}\05${0}`;
+     ·      ───
+ 115 │ `${0}\55${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:114:1]
+ 114 │ `${0}\05${0}`;
+ 115 │ `${0}\55${0}`;
+     ·      ───
+ 116 │ `${0}\000${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:115:1]
+ 115 │ `${0}\55${0}`;
+ 116 │ `${0}\000${0}`;
+     ·      ────
+ 117 │ `${0}\005${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:116:1]
+ 116 │ `${0}\000${0}`;
+ 117 │ `${0}\005${0}`;
+     ·      ────
+ 118 │ `${0}\055${0}`;
+     ╰────
+
+  × Bad escape sequence in untagged template literal
+     ╭─[compiler/octalLiteralAndEscapeSequence.ts:117:1]
+ 117 │ `${0}\005${0}`;
+ 118 │ `${0}\055${0}`;
+     ·      ────
+     ╰────
+
   × Unexpected token
     ╭─[compiler/optionalPropertiesSyntax.ts:10:1]
  10 │     (): any;
@@ -7418,6 +7682,26 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  8 │ function f3(a: number?) {}
    ╰────
 
+  × Expected `>` but found `EOF`
+   ╭─[compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:4:1]
+ 4 │ ~< <
+   ╰────
+
+  × Unexpected token
+   ╭─[compiler/parseJsxElementInUnaryExpressionNoCrash2.ts:3:1]
+ 3 │ // @filename: a.js
+ 4 │ ~<></> <
+   ·   ─
+   ╰────
+
+  × Unexpected token
+   ╭─[compiler/parseJsxElementInUnaryExpressionNoCrash3.ts:3:1]
+ 3 │ // @filename: a.js
+ 4 │ !< {:>
+   ·     ─
+ 5 │ 
+   ╰────
+
   × Unexpected token
    ╭─[compiler/parseJsxExtends2.ts:7:1]
  7 │     // Error: T is not declared.
@@ -7450,6 +7734,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·   ─────┬─────
    ·        ╰── it cannot be redeclared here
  4 │   constructor <>() { }
+   ╰────
+
+  × Expected `in` but found `]`
+   ╭─[compiler/parserPrivateIdentifierInArrayAssignment.ts:1:1]
+ 1 │ [#abc]=
+   ·      ┬
+   ·      ╰── `in` expected
    ╰────
 
   × Expected `,` but found `;`
@@ -8589,6 +8880,262 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │ // Incomplete call, not enough parameters, at EOF.
  7 │ f `123qdawdrqw${ 1 }${
    ╰────
+
+  × Bad escape sequence in untagged template literal
+   ╭─[compiler/templateLiteralEscapeSequence.ts:2:1]
+ 2 │ 
+ 3 │ `\u`;
+   ·  ──
+ 4 │ `\u0`;
+   ╰────
+
+  × Bad escape sequence in untagged template literal
+   ╭─[compiler/templateLiteralEscapeSequence.ts:3:1]
+ 3 │ `\u`;
+ 4 │ `\u0`;
+   ·  ───
+ 5 │ `\u00`;
+   ╰────
+
+  × Bad escape sequence in untagged template literal
+   ╭─[compiler/templateLiteralEscapeSequence.ts:4:1]
+ 4 │ `\u0`;
+ 5 │ `\u00`;
+   ·  ────
+ 6 │ `\u000`;
+   ╰────
+
+  × Bad escape sequence in untagged template literal
+   ╭─[compiler/templateLiteralEscapeSequence.ts:5:1]
+ 5 │ `\u00`;
+ 6 │ `\u000`;
+   ·  ─────
+ 7 │ `\u0000`;
+   ╰────
+
+  × Bad escape sequence in untagged template literal
+   ╭─[compiler/templateLiteralEscapeSequence.ts:7:1]
+ 7 │ `\u0000`;
+ 8 │ `\u{}`;
+   ·  ────
+ 9 │ `\u{ffffff}`;
+   ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:8:1]
+  8 │ `\u{}`;
+  9 │ `\u{ffffff}`;
+    ·  ──────────
+ 10 │ `\x`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:9:1]
+  9 │ `\u{ffffff}`;
+ 10 │ `\x`;
+    ·  ──
+ 11 │ `\x0`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:10:1]
+ 10 │ `\x`;
+ 11 │ `\x0`;
+    ·  ───
+ 12 │ `\x00`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:12:1]
+ 12 │ `\x00`;
+ 13 │ `${0}\u`;
+    ·      ──
+ 14 │ `${0}\u0`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:13:1]
+ 13 │ `${0}\u`;
+ 14 │ `${0}\u0`;
+    ·      ───
+ 15 │ `${0}\u00`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:14:1]
+ 14 │ `${0}\u0`;
+ 15 │ `${0}\u00`;
+    ·      ────
+ 16 │ `${0}\u000`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:15:1]
+ 15 │ `${0}\u00`;
+ 16 │ `${0}\u000`;
+    ·      ─────
+ 17 │ `${0}\u0000`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:17:1]
+ 17 │ `${0}\u0000`;
+ 18 │ `${0}\u{}`;
+    ·      ────
+ 19 │ `${0}\u{ffffff}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:18:1]
+ 18 │ `${0}\u{}`;
+ 19 │ `${0}\u{ffffff}`;
+    ·      ──────────
+ 20 │ `${0}\x`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:19:1]
+ 19 │ `${0}\u{ffffff}`;
+ 20 │ `${0}\x`;
+    ·      ──
+ 21 │ `${0}\x0`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:20:1]
+ 20 │ `${0}\x`;
+ 21 │ `${0}\x0`;
+    ·      ───
+ 22 │ `${0}\x00`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:22:1]
+ 22 │ `${0}\x00`;
+ 23 │ `\u${0}`;
+    ·  ──
+ 24 │ `\u0${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:23:1]
+ 23 │ `\u${0}`;
+ 24 │ `\u0${0}`;
+    ·  ───
+ 25 │ `\u00${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:24:1]
+ 24 │ `\u0${0}`;
+ 25 │ `\u00${0}`;
+    ·  ────
+ 26 │ `\u000${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:25:1]
+ 25 │ `\u00${0}`;
+ 26 │ `\u000${0}`;
+    ·  ─────
+ 27 │ `\u0000${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:27:1]
+ 27 │ `\u0000${0}`;
+ 28 │ `\u{}${0}`;
+    ·  ────
+ 29 │ `\u{ffffff}${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:28:1]
+ 28 │ `\u{}${0}`;
+ 29 │ `\u{ffffff}${0}`;
+    ·  ──────────
+ 30 │ `\x${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:29:1]
+ 29 │ `\u{ffffff}${0}`;
+ 30 │ `\x${0}`;
+    ·  ──
+ 31 │ `\x0${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:30:1]
+ 30 │ `\x${0}`;
+ 31 │ `\x0${0}`;
+    ·  ───
+ 32 │ `\x00${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:32:1]
+ 32 │ `\x00${0}`;
+ 33 │ `${0}\u${0}`;
+    ·      ──
+ 34 │ `${0}\u0${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:33:1]
+ 33 │ `${0}\u${0}`;
+ 34 │ `${0}\u0${0}`;
+    ·      ───
+ 35 │ `${0}\u00${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:34:1]
+ 34 │ `${0}\u0${0}`;
+ 35 │ `${0}\u00${0}`;
+    ·      ────
+ 36 │ `${0}\u000${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:35:1]
+ 35 │ `${0}\u00${0}`;
+ 36 │ `${0}\u000${0}`;
+    ·      ─────
+ 37 │ `${0}\u0000${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:37:1]
+ 37 │ `${0}\u0000${0}`;
+ 38 │ `${0}\u{}${0}`;
+    ·      ────
+ 39 │ `${0}\u{ffffff}${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:38:1]
+ 38 │ `${0}\u{}${0}`;
+ 39 │ `${0}\u{ffffff}${0}`;
+    ·      ──────────
+ 40 │ `${0}\x${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:39:1]
+ 39 │ `${0}\u{ffffff}${0}`;
+ 40 │ `${0}\x${0}`;
+    ·      ──
+ 41 │ `${0}\x0${0}`;
+    ╰────
+
+  × Bad escape sequence in untagged template literal
+    ╭─[compiler/templateLiteralEscapeSequence.ts:40:1]
+ 40 │ `${0}\x${0}`;
+ 41 │ `${0}\x0${0}`;
+    ·      ───
+ 42 │ `${0}\x00${0}`;
+    ╰────
 
   × Unexpected token
    ╭─[compiler/throwWithoutNewLine1.ts:1:1]
@@ -14222,6 +14769,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·    ────────
    ╰────
 
+  × Invalid characters after number
+   ╭─[conformance/expressions/propertyAccess/propertyAccessNumericLiterals.ts:7:1]
+ 7 │ 08.8e5.toString();
+ 8 │ 0_8.8e5.toString();
+   ·  ─
+ 9 │ 8.8e5.toString();
+   ╰────
+
   × 'super' can only be used with function calls or in property accesses
     ╭─[conformance/expressions/superCalls/errorSuperCalls.ts:45:1]
  45 │     constructor() {
@@ -17158,18 +17713,9 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  28 │     }
     ╰────
 
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
-    ╭─[conformance/salsa/plainJSBinderErrors.ts:29:1]
- 29 │     withOctal() {
- 30 │         const redundant = 010
-    ·                           ───
- 31 │         with (redundant) {
-    ╰────
-  help: for octal literals use the '0o' prefix instead
-
   × 'with' statements are not allowed
     ╭─[conformance/salsa/plainJSBinderErrors.ts:30:1]
- 30 │         const redundant = 010
+ 30 │         const redundant = 0o10
  31 │         with (redundant) {
     ·         ────
  32 │             return toFixed()

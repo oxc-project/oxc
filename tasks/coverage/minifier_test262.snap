@@ -1,6 +1,6 @@
 Minifier_Test262 Summary:
-AST Parsed     : 44519/44519 (100.00%)
-Positive Passed: 44466/44519 (99.88%)
+AST Parsed     : 44676/44676 (100.00%)
+Positive Passed: 44623/44676 (99.88%)
 Expect to Parse: "annexB/language/function-code/if-stmt-else-decl-func-block-scoping.js"
 Expect to Parse: "annexB/language/function-code/if-stmt-else-decl-func-existing-block-fn-no-init.js"
 Expect to Parse: "annexB/language/function-code/if-stmt-else-decl-func-existing-block-fn-update.js"

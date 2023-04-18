@@ -1,6 +1,6 @@
 Test262 Summary:
-AST Parsed     : 44000/44000 (100.00%)
-Positive Passed: 44000/44000 (100.00%)
+AST Parsed     : 44157/44157 (100.00%)
+Positive Passed: 44157/44157 (100.00%)
 Negative Passed: 3915/3915 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -4023,23 +4023,23 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Cannot assign to this expression
-    ╭─[language/expressions/assignmenttargettype/direct-updateexpression-star-star-exponentiationexpression-0.js:19:1]
- 19 │ 
- 20 │ x ** y = 1;
+    ╭─[language/expressions/assignmenttargettype/direct-updateexpression-star-star-exponentiationexpression-0.js:20:1]
+ 20 │ 
+ 21 │ x ** y = 1;
     · ──────
     ╰────
 
   × Cannot assign to this expression
-    ╭─[language/expressions/assignmenttargettype/direct-updateexpression-star-star-exponentiationexpression-1.js:19:1]
- 19 │ 
- 20 │ 1 ** 2 = 1;
+    ╭─[language/expressions/assignmenttargettype/direct-updateexpression-star-star-exponentiationexpression-1.js:20:1]
+ 20 │ 
+ 21 │ 1 ** 2 = 1;
     · ──────
     ╰────
 
   × Cannot assign to this expression
-    ╭─[language/expressions/assignmenttargettype/direct-updateexpression-star-star-exponentiationexpression-2.js:19:1]
- 19 │ 
- 20 │ true ** false = 1;
+    ╭─[language/expressions/assignmenttargettype/direct-updateexpression-star-star-exponentiationexpression-2.js:20:1]
+ 20 │ 
+ 21 │ true ** false = 1;
     · ─────────────
     ╰────
 
@@ -5087,23 +5087,23 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Cannot assign to this expression
-    ╭─[language/expressions/assignmenttargettype/parenthesized-updateexpression-star-star-exponentiationexpression-0.js:22:1]
- 22 │ 
- 23 │ (x ** y) = 1;
+    ╭─[language/expressions/assignmenttargettype/parenthesized-updateexpression-star-star-exponentiationexpression-0.js:23:1]
+ 23 │ 
+ 24 │ (x ** y) = 1;
     ·  ──────
     ╰────
 
   × Cannot assign to this expression
-    ╭─[language/expressions/assignmenttargettype/parenthesized-updateexpression-star-star-exponentiationexpression-1.js:22:1]
- 22 │ 
- 23 │ (1 ** 2) = 1;
+    ╭─[language/expressions/assignmenttargettype/parenthesized-updateexpression-star-star-exponentiationexpression-1.js:23:1]
+ 23 │ 
+ 24 │ (1 ** 2) = 1;
     ·  ──────
     ╰────
 
   × Cannot assign to this expression
-    ╭─[language/expressions/assignmenttargettype/parenthesized-updateexpression-star-star-exponentiationexpression-2.js:22:1]
- 22 │ 
- 23 │ (true ** false) = 1;
+    ╭─[language/expressions/assignmenttargettype/parenthesized-updateexpression-star-star-exponentiationexpression-2.js:23:1]
+ 23 │ 
+ 24 │ (true ** false) = 1;
     ·  ─────────────
     ╰────
 
@@ -13788,57 +13788,57 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
 
   × Unexpected exponentiation expression
-    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-bitnot-unary-expression-base.js:23:1]
- 23 │ $DONOTEVALUATE();
- 24 │ ~3 ** 2;
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-bitnot-unary-expression-base.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ ~3 ** 2;
     · ───────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
-    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-delete-unary-expression-base.js:23:1]
- 23 │ $DONOTEVALUATE();
- 24 │ delete o.p ** 2;
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-delete-unary-expression-base.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ delete o.p ** 2;
     · ───────────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
-    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-logical-not-unary-expression-base.js:23:1]
- 23 │ $DONOTEVALUATE();
- 24 │ !1 ** 2;
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-logical-not-unary-expression-base.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ !1 ** 2;
     · ───────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
-    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-negate-unary-expression-base.js:23:1]
- 23 │ $DONOTEVALUATE();
- 24 │ -3 ** 2;
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-negate-unary-expression-base.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ -3 ** 2;
     · ───────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
-    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-plus-unary-expression-base.js:23:1]
- 23 │ $DONOTEVALUATE();
- 24 │ +1 ** 2;
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-plus-unary-expression-base.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ +1 ** 2;
     · ───────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
-    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-typeof-unary-expression-base.js:23:1]
- 23 │ $DONOTEVALUATE();
- 24 │ typeof 1 ** 2;
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-typeof-unary-expression-base.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ typeof 1 ** 2;
     · ─────────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Unexpected exponentiation expression
-    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-void-unary-expression-base.js:23:1]
- 23 │ $DONOTEVALUATE();
- 24 │ void 1 ** 2;
+    ╭─[language/expressions/exponentiation/exp-operator-syntax-error-void-unary-expression-base.js:24:1]
+ 24 │ $DONOTEVALUATE();
+ 25 │ void 1 ** 2;
     · ───────────
     ╰────
   help: Wrap unary expression in parentheses to enforce operator precedence
