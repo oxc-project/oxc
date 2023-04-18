@@ -1,4 +1,7 @@
 ignore:
+  - "**/main.rs"
+  - "**/examples"
   - "tasks"
+  - "crates/oxc_parser/fuzz"
   - "crates/oxc_diagnostics"
   - "crates/oxc_ast/src/serialize.rs"
