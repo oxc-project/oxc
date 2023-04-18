@@ -4,6 +4,9 @@ name: Code Coverage
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '**.rs'
   push:
     branches:
       - main
