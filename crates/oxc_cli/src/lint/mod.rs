@@ -8,6 +8,7 @@ use clap::ArgMatches;
 pub use self::{command::lint_command, runner::LintRunner};
 
 #[derive(Debug)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct LintOptions {
     pub paths: Vec<PathBuf>,
     /// Allow / Deny rules in order. [("allow" / "deny", rule name)]
@@ -45,7 +46,7 @@ impl<'a> From<&'a ArgMatches> for LintOptions {
 
         Self {
             paths: matches.get_many("path").map_or_else(
-                || if !list_rules { vec![PathBuf::from(".")] } else { vec![] },
+                || if list_rules { vec![] } else { vec![PathBuf::from(".")] },
                 |paths| paths.into_iter().cloned().collect(),
             ),
             rules: Self::get_rules(matches),
