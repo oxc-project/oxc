@@ -66,6 +66,10 @@ runs:
       if: ${{ inputs.docs == 'true' }}
       run: rustup component add rust-docs
 
+    - name: Cache ~/rustup
+      shell: bash
+      run: ls $HOME/.rustup
+
     - name: Install
       shell: bash
       run: rustup show
