@@ -8,11 +8,13 @@ use clap::ArgMatches;
 pub use self::{command::lint_command, runner::LintRunner};
 
 #[derive(Debug)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct LintOptions {
     pub paths: Vec<PathBuf>,
     /// Allow / Deny rules in order. [("allow" / "deny", rule name)]
     /// Defaults to [("deny", "correctness")]
     pub rules: Vec<(AllowWarnDeny, String)>,
+    pub list_rules: bool,
     pub fix: bool,
     pub quiet: bool,
     pub ignore_path: PathBuf,
@@ -40,9 +42,11 @@ impl From<&'static str> for AllowWarnDeny {
 
 impl<'a> From<&'a ArgMatches> for LintOptions {
     fn from(matches: &'a ArgMatches) -> Self {
+        let list_rules = matches.get_flag("rules");
+
         Self {
             paths: matches.get_many("path").map_or_else(
-                || vec![PathBuf::from(".")],
+                || if list_rules { vec![] } else { vec![PathBuf::from(".")] },
                 |paths| paths.into_iter().cloned().collect(),
             ),
             rules: Self::get_rules(matches),
@@ -57,6 +61,7 @@ impl<'a> From<&'a ArgMatches> for LintOptions {
                 .map(|patterns| patterns.into_iter().cloned().collect())
                 .unwrap_or_default(),
             max_warnings: matches.get_one("max-warnings").copied(),
+            list_rules,
         }
     }
 }
@@ -178,5 +183,12 @@ mod test {
         let options =
             get_lint_options("lint --ignore-pattern ./test --ignore-pattern bar.js foo.js");
         assert_eq!(options.ignore_pattern, vec![String::from("./test"), String::from("bar.js")]);
+    }
+
+    #[test]
+    fn list_rules_true() {
+        let options = get_lint_options("lint --rules");
+        assert!(options.paths.is_empty());
+        assert!(options.list_rules);
     }
 }
