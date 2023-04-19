@@ -50,6 +50,9 @@ flate2 = "1.0.25"
 independent = true
 allow_branch = "main"
 
+[profile.release.package.oxc_wasm]
+opt-level = 'z'
+
 [profile.release]
 # Configurations explicitly listed here for clarity.
 # Using the best options for performance.

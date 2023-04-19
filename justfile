@@ -5,7 +5,7 @@ _default:
 
 # Initialize the project by installing all the necessary tools
 init:
-  cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli -y
+  cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli wasm-pack -y
 
 # Run all the tests
 test:

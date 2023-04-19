@@ -8,6 +8,7 @@ extend-exclude = [
   "tasks/coverage/babel",
   "tasks/coverage/typescript",
   "**/*.snap",
+  "pnpm-lock.yaml"
 ]
 
 [default.extend-words]
