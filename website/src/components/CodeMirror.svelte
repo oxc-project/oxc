@@ -140,5 +140,25 @@
 
     border: 1px solid #ddd;
     background-color: white;
+
+    height: 100%;
+    overflow: auto;
+
+    :global(.cm-editor) {
+      position: relative;
+      display: flex !important;
+      box-sizing: border-box;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    :global(.cm-gutters) {
+      background-color: rgba(34, 34, 34, var(--tw-bg-opacity)) !important;
+      border: 0 !important;
+    }
+
+    :global(.cm-activeLineGutter) {
+      background-color: rgba(34, 34, 34, var(--tw-bg-opacity)) !important;
+    }
   }
 </style>

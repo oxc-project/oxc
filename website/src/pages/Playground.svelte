@@ -1,49 +1,42 @@
-<script>
+<script lang="ts">
   import CodeMirror, { basicSetup } from "../components/CodeMirror.svelte";
-  import init, { parse } from "@oxc/wasm-web";
+  import init, { Oxc } from "@oxc/wasm-web";
 
-  let store;
-  let defaultDoc = "var a = 233\n{}";
-  let parseResult;
+  let oxc;
+  let doc = '';
+  let docStore;
+  let result;
+  let ast
 
   function changeHandler({ detail: { tr } }) {
     console.log("change", tr.changes.toJSON());
   }
 
-  async function autoParse() {
+  async function main() {
+    // This must be called before everything else
     await init();
 
-    store.subscribe((content) => {
-      parseResult = parse(content);
-      console.info(parseResult);
+    oxc = new Oxc();
+
+    docStore.subscribe((content) => {
+      let ret = oxc.parse(content);
+      if (typeof ret === "string") {
+        ast = "";
+        result = ret
+      } else {
+        ast = JSON.stringify(ret, null, 4);
+        result = ''
+      }
     });
   }
 
-  autoParse();
+  main();
 </script>
 
 <style>
   :global(.codemirror) {
-    height: 100%;
-    overflow: auto;
   }
 
-  :global(.cm-editor) {
-    position: relative;
-    display: flex !important;
-    box-sizing: border-box;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  :global(.cm-gutters) {
-    background-color: rgba(34, 34, 34, var(--tw-bg-opacity)) !important;
-    border: 0 !important;
-  }
-
-  :global(.cm-activeLineGutter) {
-    background-color: rgba(34, 34, 34, var(--tw-bg-opacity)) !important;
-  }
 </style>
 
 <div class="flex flex-1 bg-dark-400 divide-x">
@@ -53,23 +46,24 @@
 
   <div class="flex-1 flex flex-col divide-y">
     <CodeMirror
-      doc={defaultDoc}
-      bind:docStore={store}
+      doc={doc}
+      bind:docStore={docStore}
       extensions={basicSetup}
       on:change={changeHandler}
+      placeholder="Enter your code here"
     />
 
     <div class="h-200px">
       <textarea
         class="w-full bg-dark-400"
         rows="10"
-        value={typeof parseResult === "string" ? parseResult : "Good Job!"}
+        value={result}
       />
     </div>
   </div>
 
-  <div class="flex-1 flex flex-col divide-y">
-    AST
+  <div class="flex-1 flex flex-col whitespace-pre h-screen overflow-y text-xs">
+      { ast }
   </div>
 
 </div>
