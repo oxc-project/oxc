@@ -4,9 +4,9 @@
 </script>
 
 <main class="flex flex-col h-full overflow-hidden justify-between">
-  <Header />
+  <!-- <Header /> -->
   <slot />
-  <Footer />
+  <!-- <Footer /> -->
 </main>
 
 <style>
