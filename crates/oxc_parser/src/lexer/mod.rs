@@ -1371,22 +1371,21 @@ impl<'a> Lexer<'a> {
                 'v' => text.push(constants::VT),
                 // HexEscapeSequence
                 'x' => {
-                    let value = self
-                        .hex_digit()
+                    self.hex_digit()
                         .and_then(|value1| {
                             let value2 = self.hex_digit()?;
                             Some((value1, value2))
                         })
                         .map(|(value1, value2)| (value1 << 4) | value2)
-                        .and_then(|value| char::try_from(value).ok());
-                    value.map_or_else(
-                        || {
-                            *is_valid_escape_sequence = false;
-                        },
-                        |c| {
-                            text.push(c);
-                        },
-                    );
+                        .and_then(|value| char::try_from(value).ok())
+                        .map_or_else(
+                            || {
+                                *is_valid_escape_sequence = false;
+                            },
+                            |c| {
+                                text.push(c);
+                            },
+                        );
                 }
                 // UnicodeEscapeSequence
                 'u' => {

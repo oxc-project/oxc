@@ -61,7 +61,7 @@ impl Rule for ConstructorSuper {
             ctor.value.body.as_ref().map_or_else(|| {
                 ctx.diagnostic(ConstructorSuperDiagnostic(ctor.span));
             }, |function_body| {
-                let super_call_expr = function_body.statements.iter().find_map(|stmt| {
+                function_body.statements.iter().find_map(|stmt| {
                     let Statement::ExpressionStatement(expr) = stmt else { return None };
                     let Expression::CallExpression(call_expr) = &expr.expression else { return None };
                     if matches!(call_expr.callee, Expression::Super(_)) {
@@ -69,9 +69,7 @@ impl Rule for ConstructorSuper {
                     } else {
                         None
                     }
-                });
-
-                super_call_expr.map_or_else(|| {
+                }).map_or_else(|| {
                     ctx.diagnostic(ConstructorSuperDiagnostic(ctor.span));
                 }, |span| {
                     if let Some(super_class_span) = super_class.span() {

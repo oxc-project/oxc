@@ -1,4 +1,4 @@
-#![feature(let_chains, is_some_and)]
+#![feature(let_chains)]
 
 mod babel;
 mod minifier;

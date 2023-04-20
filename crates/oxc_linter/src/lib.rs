@@ -1,5 +1,5 @@
 #![allow(clippy::self_named_module_files)] // for rules.rs
-#![feature(let_chains, is_some_and, const_trait_impl, const_slice_index)]
+#![feature(let_chains, const_trait_impl, const_slice_index)]
 
 #[cfg(test)]
 mod tester;

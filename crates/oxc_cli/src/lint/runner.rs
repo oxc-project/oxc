@@ -78,7 +78,7 @@ impl LintRunner {
                         Some(category) => rules.retain(|rule| rule.category() != category),
                         None => {
                             if name_or_category == "all" {
-                                rules.drain();
+                                rules.clear();
                             } else {
                                 rules.retain(|rule| rule.name() == name_or_category);
                             }
