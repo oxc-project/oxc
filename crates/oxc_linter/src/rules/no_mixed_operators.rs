@@ -198,7 +198,7 @@ impl NoMixedOperators {
 }
 
 #[rustfmt::skip]
-const OPERATORS: [&str; 27] = [
+static OPERATORS: [&str; 27] = [
   "+", "-", "*", "/", "%", "**",                  /* Arithmetic operator: 6 */
   "&", "|", "^", "~", "<<", ">>", ">>>",          /*Bitwise operator: 13 */
   "==", "!=", "===", "!==", ">", ">=", "<", "<=", /*Compare operator: 21 */
@@ -220,17 +220,15 @@ const PRECEDENCES: [u8; 27] = [
   3
 ];
 
-const ARITHMETIC: &[&str] = &OPERATORS[..6];
-const BITWISE: &[&str] = &OPERATORS[6..13];
-const COMPARE: &[&str] = &OPERATORS[13..21];
-const LOGICAL: &[&str] = &OPERATORS[21..23];
-const RELATIONAL: &[&str] = &OPERATORS[23..25];
-
-const DEFAULT_OPERATORS: [&[&str]; 5] = [ARITHMETIC, BITWISE, COMPARE, LOGICAL, RELATIONAL];
-
 #[inline]
 fn default_groups() -> Vec<Vec<&'static str>> {
-    DEFAULT_OPERATORS.iter().map(|operators| operators.to_vec()).collect()
+    let arithmetic: &[&str] = &OPERATORS[..6];
+    let bitwise: &[&str] = &OPERATORS[6..13];
+    let compare: &[&str] = &OPERATORS[13..21];
+    let logical: &[&str] = &OPERATORS[21..23];
+    let relational: &[&str] = &OPERATORS[23..25];
+    let default_operators: [&[&str]; 5] = [arithmetic, bitwise, compare, logical, relational];
+    default_operators.iter().map(|operators| operators.to_vec()).collect()
 }
 
 #[inline]

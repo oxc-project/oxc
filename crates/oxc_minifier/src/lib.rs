@@ -1,6 +1,6 @@
 //! ECMAScript Minifier
 
-#![feature(let_chains, is_some_and)]
+#![feature(let_chains)]
 
 mod compressor;
 
