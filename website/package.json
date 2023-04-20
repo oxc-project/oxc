@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "pnpm run build:wasm-dev && vite",
     "build": "pnpm build:wasm && vite build --base=https://boshen.github.io/oxc/",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
