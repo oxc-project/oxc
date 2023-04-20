@@ -47,9 +47,9 @@ declare_oxc_lint!(
 
 impl Rule for BadArrayMethodOnArguments {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // only access the Array.prototype.method can also pass, so we don't need check if the parent not a CallExpression
-        let AstKind::CallExpression(_) = ctx.parent_kind(node) else {return};
         let AstKind::MemberExpression(member_expr) = node.get().kind() else {return};
+        // access Array.prototype.method without caller will pass
+        let AstKind::CallExpression(_) = ctx.parent_kind(node) else {return};
 
         match member_expr {
             MemberExpression::StaticMemberExpression(expr) => {
@@ -58,7 +58,7 @@ impl Rule for BadArrayMethodOnArguments {
                         return;
                     }
 
-                    if ARRAY_METHODS.iter().any(|method| method == &expr.property.name) {
+                    if ARRAY_METHODS.contains(&expr.property.name.as_str()){
                         ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
                             expr.property.name.clone(),
                             expr.span,
@@ -74,7 +74,7 @@ impl Rule for BadArrayMethodOnArguments {
 
                     match &expr.expression {
                         Expression::StringLiteral(name) => {
-                            if ARRAY_METHODS.iter().any(|method| method == &name.value) {
+                            if ARRAY_METHODS.contains(&name.value.as_str()) {
                                 ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
                                     name.value.clone(),
                                     expr.span,
@@ -82,20 +82,16 @@ impl Rule for BadArrayMethodOnArguments {
                             }
                         }
                         Expression::TemplateLiteral(template) => {
-                            if template.expressions.is_empty() && template.quasis.len() == 1 {
-                                if let Some(name) = &template.quasis[0].value.cooked.as_deref() {
-                                    if ARRAY_METHODS.iter().any(|method| method == name) {
-                                        ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                            template.quasis[0]
-                                                .value
-                                                .cooked
-                                                .as_ref()
-                                                .unwrap()
-                                                .clone(),
-                                            expr.span,
-                                        ));
-                                    }
-                                }
+                            // only check template string like "`map`" for Deepscan compatible
+                            if template.expressions.is_empty() 
+                              && template.quasis.len() == 1 
+                              && let Some(template_element) = template.quasis.get(0)
+                              && let Some(name) = template_element.value.cooked.as_deref()
+                              && ARRAY_METHODS.contains(&name) {
+                                ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
+                                    Atom::new(name), 
+                                    expr.span,
+                                ));
                             }
                         }
                         _ => {}
@@ -107,29 +103,85 @@ impl Rule for BadArrayMethodOnArguments {
     }
 }
 
-// `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#instance_methods`
-const ARRAY_METHODS: [&str; 2] = ["reduce", "map"];
+/// `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#instance_methods`
+const ARRAY_METHODS: [&str; 32] = [
+  "at", 
+  "concat", "copyWithin", 
+  "entries", "every", 
+  "fill", "filter", "find", "findIndex", "flat", "flatMap", "forEach", 
+  "includes", "indexOf", 
+  "join",
+   "keys", 
+  "lastIndexOf", 
+  "map", 
+  "pop", "push", "push",
+  "reduce", "reduceRight", "reverse",
+   "shift", "slice", "some", "sort", "splice", 
+   "unshift", 
+   "values", 
+   "@@iterator"
+];
+
 
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("function sum() {}", None),
-        ("function sum(...args) {return args.reduce((prev, cur) => prev + cur, 0)}", None),
-        ("function sum() { arguments.foo }", None),
-        ("function sum() { arguments.map }", None),
-        // keep those passing tests for Deepscan Compatible
-        ("function sum() {arguments[`map${''}`]((prev, cur) => prev + cur, 0)}", None),
-        ("function sum() {arguments[`${''}map`]((prev, cur) => prev + cur, 0)}", None),
-        ("function sum() {arguments[`${'map'}`]((prev, cur) => prev + cur, 0)}", None),
+        ("function fn() {}", None),
+        ("function fn(...args) {return args.reduce((prev, cur) => prev + cur, 0)}", None),
+        ("function fn() { arguments.foo }", None),
+        ("function fn() { arguments.map }", None),
+        ("function fn() { foo.arguments.map }", None),
+        ("function fn() {arguments[`map${''}`]((prev, cur) => prev + cur, 0)}", None),
+        ("function fn() {arguments[`${''}map`]((prev, cur) => prev + cur, 0)}", None),
+        ("function fn() {arguments[`${'map'}`]((prev, cur) => prev + cur, 0)}", None),
+        ("function fn() {arguments.toLocaleString(() => {})}", None),
+        ("function fn() {arguments.toString(() => {})}", None),
+        // keep pass for DeepScan compatible
+        ("function fn() {arguments.findLast(() => {})}", None),
+        ("function fn() {arguments.group(() => {})}", None),
+        ("function fn() {arguments.groupToMap(() => {})}", None),
+        ("function fn() {arguments.toReversed(() => {})}", None),
+        ("function fn() {arguments.toSorted(() => {})}", None),
+        ("function fn() {arguments.toSpliced(0)}", None),
+        ("function fn() {arguments.with(1, 1)}", None),
     ];
 
     let fail = vec![
-        ("function sum() {arguments.map((prev, cur) => prev + cur, 0)}", None),
-        ("function sum() {arguments['map']((prev, cur) => prev + cur, 0)}", None),
-        ("function sum() {arguments[`map`]((prev, cur) => prev + cur, 0)}", None),
-        ("function sum() {arguments.reduce((prev, cur) => prev + cur, 0)}", None),
+        ("function fn() {arguments['map'](() => {})}", None),
+        ("function fn() {arguments[`map`](() => {})}", None),
+        ("function fn() {arguments.at(0)}", None),
+        ("function fn() {arguments.concat([])}", None),
+        ("function fn() {arguments.copyWithin(0)}", None),
+        ("function fn() {arguments.entries()}", None),
+        ("function fn() {arguments.every(() => {})}", None),
+        ("function fn() {arguments.fill(() => {})}", None),
+        ("function fn() {arguments.filter(() => {})}", None),
+        ("function fn() {arguments.find(() => {})}", None),
+        ("function fn() {arguments.findIndex(() => {})}", None),
+        ("function fn() {arguments.flat(() => {})}", None),
+        ("function fn() {arguments.flatMap(() => {})}", None),
+        ("function fn() {arguments.forEach(() => {})}", None),
+        ("function fn() {arguments.includes(() => {})}", None),
+        ("function fn() {arguments.indexOf(() => {})}", None),
+        ("function fn() {arguments.join()}", None),
+        ("function fn() {arguments.keys()}", None),
+        ("function fn() {arguments.lastIndexOf('')}", None),
+        ("function fn() {arguments.map(() => {})}", None),
+        ("function fn() {arguments.pop()}", None),
+        ("function fn() {arguments.push('')}", None),
+        ("function fn() {arguments.reduce(() => {})}", None),
+        ("function fn() {arguments.reduceRight(() => {})}", None),
+        ("function fn() {arguments.reverse()}", None),
+        ("function fn() {arguments.shift()}", None),
+        ("function fn() {arguments.slice()}", None),
+        ("function fn() {arguments.some(() => {})}", None),
+        ("function fn() {arguments.sort(() => {})}", None),
+        ("function fn() {arguments.splice(() => {})}", None),
+        ("function fn() {arguments.unshift()}", None),
+        ("function fn() {arguments.values()}", None),
+        ("function fn() {arguments['@@iterator'](() => {})}", None),
     ];
 
     Tester::new(BadArrayMethodOnArguments::NAME, pass, fail).test_and_snapshot();
