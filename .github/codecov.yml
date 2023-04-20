@@ -1,3 +1,9 @@
+coverage:
+  status:
+    project: yes
+    patch: no
+    changes: no
+
 ignore:
   - "**/main.rs"
   - "**/examples"

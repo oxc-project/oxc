@@ -8,6 +8,7 @@ on:
       - website
     paths:
       - 'website/**'
+      - '.github/workflows/website.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,28 +18,40 @@ jobs:
   website:
     name: Deploy Website
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./website
     steps:
-      - name: Checkout sources
+      - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@wasm-pack
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: wasm
+
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        working-directory: website
+        run: corepack enable
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 16
+          cache-dependency-path: ./website/package.json
           cache: pnpm
 
       - name: Install Npm Dependencies
+        working-directory: website
         run: pnpm install
+
+      - name: Build Website
+        working-directory: website
+        run: pnpm run build
 
       - name: Deploy Website
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: website/dist
           publish_branch: gh-pages

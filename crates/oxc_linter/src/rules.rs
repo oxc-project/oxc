@@ -33,3 +33,16 @@ oxc_macros::declare_all_lint_rules! {
     valid_typeof,
     typescript::isolated_declaration
 }
+
+#[cfg(test)]
+mod test {
+    use super::RULES;
+
+    #[test]
+    fn ensure_documentation() {
+        assert!(!RULES.is_empty());
+        for rule in RULES.iter() {
+            assert!(rule.documentation().is_some_and(|s| !s.is_empty()), "{}", rule.name());
+        }
+    }
+}

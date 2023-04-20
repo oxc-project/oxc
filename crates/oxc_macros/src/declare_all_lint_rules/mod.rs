@@ -79,6 +79,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
+            pub fn documentation(&self) -> Option<&'static str> {
+                match self {
+                    #(Self::#struct_names(_) => #struct_names::documentation()),*
+                }
+            }
+
             pub fn read_json(&self, maybe_value: Option<serde_json::Value>) -> Self {
                 match self {
                     #(Self::#struct_names(_) => Self::#struct_names(

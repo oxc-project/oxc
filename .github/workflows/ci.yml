@@ -67,7 +67,6 @@ jobs:
 
   lint:
     name: Lint Rust Files
-    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -92,7 +91,6 @@ jobs:
 
   check-dependencies:
     name: Check Dependencies
-    needs: cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR Branch
@@ -111,7 +109,6 @@ jobs:
 
   test:
     name: Test
-    needs: cache
     strategy:
       fail-fast: false
       matrix:
