@@ -48,7 +48,7 @@ declare_oxc_lint!(
 impl Rule for BadArrayMethodOnArguments {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::MemberExpression(member_expr) = node.get().kind() else {return};
-        // access Array.prototype.method without caller will pass
+        // only access Array.prototype.method as function call should be checked 
         let AstKind::CallExpression(_) = ctx.parent_kind(node) else {return};
 
         match member_expr {
@@ -82,7 +82,7 @@ impl Rule for BadArrayMethodOnArguments {
                             }
                         }
                         Expression::TemplateLiteral(template) => {
-                            // only check template string like "`map`" for Deepscan compatible
+                            // only check template string like "arguments[`METHOD_NAME`]" for Deepscan compatible
                             if template.expressions.is_empty() 
                               && template.quasis.len() == 1 
                               && let Some(template_element) = template.quasis.get(0)
@@ -98,28 +98,28 @@ impl Rule for BadArrayMethodOnArguments {
                     }
                 }
             }
-            _ => {}
+            MemberExpression::PrivateFieldExpression(_) => {}
         }
     }
 }
 
 /// `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#instance_methods`
 const ARRAY_METHODS: [&str; 32] = [
-  "at", 
-  "concat", "copyWithin", 
-  "entries", "every", 
-  "fill", "filter", "find", "findIndex", "flat", "flatMap", "forEach", 
-  "includes", "indexOf", 
-  "join",
-   "keys", 
-  "lastIndexOf", 
-  "map", 
-  "pop", "push", "push",
-  "reduce", "reduceRight", "reverse",
-   "shift", "slice", "some", "sort", "splice", 
-   "unshift", 
-   "values", 
-   "@@iterator"
+    "at", 
+    "concat", "copyWithin", 
+    "entries", "every", 
+    "fill", "filter", "find", "findIndex", "flat", "flatMap", "forEach", 
+    "includes", "indexOf", 
+    "join",
+    "keys", 
+    "lastIndexOf", 
+    "map", 
+    "pop", "push", "push",
+    "reduce", "reduceRight", "reverse",
+    "shift", "slice", "some", "sort", "splice", 
+    "unshift", 
+    "values", 
+    "@@iterator"
 ];
 
 
@@ -132,6 +132,8 @@ fn test() {
         ("function fn(...args) {return args.reduce((prev, cur) => prev + cur, 0)}", None),
         ("function fn() { arguments.foo }", None),
         ("function fn() { arguments.map }", None),
+        ("function fn() { arguments['map'] }", None),
+        ("function fn() { arguments[`map`] }", None),
         ("function fn() { foo.arguments.map }", None),
         ("function fn() {arguments[`map${''}`]((prev, cur) => prev + cur, 0)}", None),
         ("function fn() {arguments[`${''}map`]((prev, cur) => prev + cur, 0)}", None),
