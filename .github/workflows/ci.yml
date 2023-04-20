@@ -44,7 +44,16 @@ jobs:
         with:
           save-cache: ${{ github.ref_name == 'main' }}
 
+      # NAPI crashes nextest on windows
+      # https://github.com/napi-rs/napi-rs/issues/1405
       - name: Build cache by Cargo Check and Cargo Test
+        if: runner.os == 'Windows'
+        run: |
+          cargo check --workspace --all-targets --all-features --locked
+          cargo test run --workspace --all-targets --all-features --no-run
+
+      - name: Build cache by Cargo Check and Cargo Test
+        if: runner.os != 'Windows'
         run: |
           cargo check --workspace --all-targets --all-features --locked
           cargo nextest run --workspace --all-targets --all-features --no-run
@@ -127,5 +136,12 @@ jobs:
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
 
+      # NAPI crashes nextest on windows
+      # https://github.com/napi-rs/napi-rs/issues/1405
       - name: Run tests
+        if: runner.os == 'Windows'
+        run: cargo test
+
+      - name: Run tests
+        if: runner.os != 'Windows'
         run: cargo nextest run

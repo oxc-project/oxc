@@ -4,6 +4,9 @@
 node_modules/
 npm/cli-*
 
+# From napi build
+crates/oxc_napi/*.node
+
 # Ignore accidental files from the root
 /*.js
 /*.jsx
