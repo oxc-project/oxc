@@ -188,15 +188,8 @@ fn test() {
 
 #[test]
 fn test_array_is_sorted() {
-    let is_sorted = |arr: &[&str]| -> bool {
-        for i in 1..arr.len() {
-            if arr[i] < arr[i - 1] {
-                println!("{}, {}", arr[i], arr[i-1]);
-                return false;
-            }
-        }
-        true
-    };
+    let mut sorted_array = ARRAY_METHODS.to_vec();    
+    sorted_array.sort();
 
-    assert!(is_sorted(&ARRAY_METHODS));
+    assert_eq!(sorted_array, ARRAY_METHODS);
 }
