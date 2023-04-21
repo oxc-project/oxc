@@ -47,24 +47,21 @@ declare_oxc_lint!(
 
 impl Rule for BadArrayMethodOnArguments {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MemberExpression(member_expr) = node.get().kind() else {return};
-        // only access Array.prototype.method as function call should be checked 
-        let AstKind::CallExpression(_) = ctx.parent_kind(node) else {return};
-
-        match member_expr {
-            MemberExpression::StaticMemberExpression(expr) => {
-                if let Some(reference) = expr.object.get_identifier_reference() 
-                  && reference.name == "arguments" 
-                  && ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() 
-                {
-                    ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                        expr.property.name.clone(),
-                        expr.span,
-                    ));
+        if let AstKind::MemberExpression(member_expr) = node.get().kind() 
+            && let Some(reference) = member_expr.object().get_identifier_reference()
+            && reference.name == "arguments"
+            && let AstKind::CallExpression(_) = ctx.parent_kind(node)
+        {
+            match member_expr {
+                MemberExpression::StaticMemberExpression(expr) => {
+                    if ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
+                        ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
+                            expr.property.name.clone(),
+                            expr.span,
+                        ));
+                    }
                 }
-            }
-            MemberExpression::ComputedMemberExpression(expr) => {
-                if let Some(reference) = expr.object.get_identifier_reference() && reference.name == "arguments" {
+                MemberExpression::ComputedMemberExpression(expr) => {
                     match &expr.expression {
                         Expression::StringLiteral(name) => {
                             if ARRAY_METHODS.binary_search(&name.value.as_str()).is_ok() {
@@ -77,10 +74,10 @@ impl Rule for BadArrayMethodOnArguments {
                         Expression::TemplateLiteral(template) => {
                             // only check template string like "arguments[`METHOD_NAME`]" for Deepscan compatible
                             if template.expressions.is_empty() 
-                              && template.quasis.len() == 1 
-                              && let Some(template_element) = template.quasis.get(0)
-                              && let Some(name) = template_element.value.cooked.as_deref()
-                              && ARRAY_METHODS.binary_search(&name).is_ok() {
+                            && template.quasis.len() == 1 
+                            && let Some(template_element) = template.quasis.get(0)
+                            && let Some(name) = template_element.value.cooked.as_deref()
+                            && ARRAY_METHODS.binary_search(&name).is_ok() {
                                 ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
                                     Atom::new(name), 
                                     expr.span,
@@ -90,8 +87,8 @@ impl Rule for BadArrayMethodOnArguments {
                         _ => {}
                     }
                 }
+                MemberExpression::PrivateFieldExpression(_) => {}
             }
-            MemberExpression::PrivateFieldExpression(_) => {}
         }
     }
 }
