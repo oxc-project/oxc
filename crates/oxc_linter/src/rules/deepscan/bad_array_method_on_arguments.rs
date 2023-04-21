@@ -53,28 +53,21 @@ impl Rule for BadArrayMethodOnArguments {
 
         match member_expr {
             MemberExpression::StaticMemberExpression(expr) => {
-                if let Some(reference) = expr.object.get_identifier_reference() {
-                    if reference.name != "arguments" {
-                        return;
-                    }
-
-                    if ARRAY_METHODS.contains(&expr.property.name.as_str()){
-                        ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                            expr.property.name.clone(),
-                            expr.span,
-                        ));
-                    }
+                if let Some(reference) = expr.object.get_identifier_reference() 
+                  && reference.name == "arguments" 
+                  && ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() 
+                {
+                    ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
+                        expr.property.name.clone(),
+                        expr.span,
+                    ));
                 }
             }
             MemberExpression::ComputedMemberExpression(expr) => {
-                if let Some(reference) = expr.object.get_identifier_reference() {
-                    if reference.name != "arguments" {
-                        return;
-                    }
-
+                if let Some(reference) = expr.object.get_identifier_reference() && reference.name == "arguments" {
                     match &expr.expression {
                         Expression::StringLiteral(name) => {
-                            if ARRAY_METHODS.contains(&name.value.as_str()) {
+                            if ARRAY_METHODS.binary_search(&name.value.as_str()).is_ok() {
                                 ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
                                     name.value.clone(),
                                     expr.span,
@@ -87,7 +80,7 @@ impl Rule for BadArrayMethodOnArguments {
                               && template.quasis.len() == 1 
                               && let Some(template_element) = template.quasis.get(0)
                               && let Some(name) = template_element.value.cooked.as_deref()
-                              && ARRAY_METHODS.contains(&name) {
+                              && ARRAY_METHODS.binary_search(&name).is_ok() {
                                 ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
                                     Atom::new(name), 
                                     expr.span,
@@ -106,6 +99,7 @@ impl Rule for BadArrayMethodOnArguments {
 /// `https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#instance_methods`
 #[rustfmt::skip]
 const ARRAY_METHODS: [&str; 32] = [
+    "@@iterator",
     "at", 
     "concat", "copyWithin", 
     "entries", "every", 
@@ -120,7 +114,6 @@ const ARRAY_METHODS: [&str; 32] = [
     "shift", "slice", "some", "sort", "splice", 
     "unshift", 
     "values", 
-    "@@iterator"
 ];
 
 
@@ -190,4 +183,20 @@ fn test() {
     ];
 
     Tester::new(BadArrayMethodOnArguments::NAME, pass, fail).test_and_snapshot();
+}
+
+
+#[test]
+fn test_array_is_sorted() {
+    let is_sorted = |arr: &[&str]| -> bool {
+        for i in 1..arr.len() {
+            if arr[i] < arr[i - 1] {
+                println!("{}, {}", arr[i], arr[i-1]);
+                return false;
+            }
+        }
+        true
+    };
+
+    assert!(is_sorted(&ARRAY_METHODS));
 }
