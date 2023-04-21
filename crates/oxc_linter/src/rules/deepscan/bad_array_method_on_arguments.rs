@@ -189,7 +189,7 @@ fn test() {
 #[test]
 fn test_array_is_sorted() {
     let mut sorted_array = ARRAY_METHODS.to_vec();    
-    sorted_array.sort();
+    sorted_array.sort_unstable();
 
     assert_eq!(sorted_array, ARRAY_METHODS);
 }
