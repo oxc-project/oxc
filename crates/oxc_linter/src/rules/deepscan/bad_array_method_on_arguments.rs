@@ -47,10 +47,12 @@ declare_oxc_lint!(
 
 impl Rule for BadArrayMethodOnArguments {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::MemberExpression(member_expr) = node.get().kind() 
-            && let Some(reference) = member_expr.object().get_identifier_reference()
+        if let AstKind::IdentifierReference(reference) = node.get().kind() 
             && reference.name == "arguments"
-            && let AstKind::CallExpression(_) = ctx.parent_kind(node)
+            && let Some(parent_node) = ctx.parent_node(node)
+            && let AstKind::MemberExpression(member_expr) = parent_node.get().kind()
+            && let Some(parent_node) = ctx.parent_node(parent_node)
+            && let AstKind::CallExpression(_) = parent_node.get().kind()
         {
             match member_expr {
                 MemberExpression::StaticMemberExpression(expr) => {
@@ -74,10 +76,11 @@ impl Rule for BadArrayMethodOnArguments {
                         Expression::TemplateLiteral(template) => {
                             // only check template string like "arguments[`METHOD_NAME`]" for Deepscan compatible
                             if template.expressions.is_empty() 
-                            && template.quasis.len() == 1 
-                            && let Some(template_element) = template.quasis.get(0)
-                            && let Some(name) = template_element.value.cooked.as_deref()
-                            && ARRAY_METHODS.binary_search(&name).is_ok() {
+                                && template.quasis.len() == 1
+                                && let Some(template_element) = template.quasis.get(0)
+                                && let Some(name) = template_element.value.cooked.as_deref()
+                                && ARRAY_METHODS.binary_search(&name).is_ok()
+                            {
                                 ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
                                     Atom::new(name), 
                                     expr.span,
