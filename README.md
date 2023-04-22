@@ -38,12 +38,16 @@
 
 The Oxidation Compiler is creating a suite of tools for the JavaScript / TypeScript language:
 
-* [AST](./crates/oxc_ast) - See [docs.rs/oxc_ast](https://docs.rs/oxc_ast)
-* [Parser](./crates/oxc_parser) - See [docs.rs/oxc_parser](https://docs.rs/oxc_parser)
+* [AST](./crates/oxc_ast) - See [docs.rs/oxc_ast][docs-ast]
+* [Parser](./crates/oxc_parser) - See [docs.rs/oxc_parser][docs-parser], [@oxidation-compiler/napi][npm-napi]
 * [Linter](./crates/oxc_linter) - Work in progress. Try it out! `npx oxidation-compiler@latest lint path`
 * Formatter
 * Transpiler
 * [Minifier](./crates/oxc_minifier) - Draft
+
+[docs-ast]: https://docs.rs/oxc_ast
+[docs-parser]: https://docs.rs/oxc_parser
+[npm-napi]: https://www.npmjs.com/package/@oxidation-compiler/napi
 
 ## Goals
 
@@ -144,13 +148,13 @@ Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 * [Crafting Interpreters](https://craftinginterpreters.com)
 * [Create an issue and insert your inspirational learning resources here]
 
-## Rust cloc
+## Rust [cloc](https://github.com/boyter/scc) (`scc . --include-ext=rs --no-complexity`)
 
 ```
 ───────────────────────────────────────────────────────────────────────────────
-Language    Files       Lines     Blanks    Comments      Code
+Language                     Files       Lines     Blanks    Comments      Code
 ───────────────────────────────────────────────────────────────────────────────
-Rust          160       39747       4286        2693     32768
+Rust                           167       40405       4368        2727     33310
 ```
 
 ## Credits
