@@ -1,50 +1,63 @@
-mod driver;
-mod utils;
-
-use driver::Driver;
+use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
-use serde::{Deserialize, Serialize};
-use utils::set_panic_hook;
+use oxc_diagnostics::Error;
+use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use wasm_bindgen::prelude::*;
 
-#[derive(Deserialize, Serialize, PartialEq, Eq)]
-pub enum Language {
-    #[serde(rename = "javascript")]
-    JavaScript,
-    #[serde(rename = "typescript")]
-    TypeScript,
-}
-
-impl Default for Language {
-    fn default() -> Self {
-        Self::TypeScript
-    }
-}
-
-#[derive(Serialize, Deserialize, Default)]
-pub struct Options {
-    pub language: Option<Language>,
-
-    pub jsx: Option<bool>,
-
-    pub eslintrc: Option<String>,
+#[wasm_bindgen(start)]
+pub fn main() {
+    #[cfg(feature = "console_error_panic_hook")]
+    console_error_panic_hook::set_once();
 }
 
 #[wasm_bindgen]
-#[allow(deprecated)]
-#[must_use]
-pub fn parse(text: &str, js_options: &JsValue) -> JsValue {
-    set_panic_hook();
-    let options: Options = js_options.into_serde().unwrap_or_default();
-    let path_str = format!(
-        "test.{}{}",
-        if matches!(options.language, Some(Language::TypeScript)) { "ts" } else { "js" },
-        if options.jsx.unwrap_or_default() { "x" } else { "" }
-    );
+pub struct Oxc {
+    diagnostics: Vec<Error>,
+}
 
-    let source_type = SourceType::from_path(&path_str).unwrap_or_default();
+#[wasm_bindgen]
+impl Oxc {
+    #[wasm_bindgen(constructor)]
+    #[allow(clippy::new_without_default)]
+    #[must_use]
+    pub fn new() -> Self {
+        Self { diagnostics: vec![] }
+    }
 
-    let driver = Driver::new();
+    #[wasm_bindgen]
+    #[must_use]
+    pub fn diagnostics(&self) -> JsValue {
+        let diagnostics = self
+            .diagnostics
+            .iter()
+            .map(|error| format!("{error:?}"))
+            .collect::<Vec<String>>()
+            .join("\n");
+        JsValue::from_str(&diagnostics)
+    }
 
-    driver.run(&path_str, text, source_type, &options.eslintrc.unwrap_or_default())
+    /// # Panics
+    #[wasm_bindgen]
+    #[must_use]
+    pub fn parse(&mut self, source_text: &str) -> JsValue {
+        self.diagnostics = vec![];
+
+        let allocator = Allocator::default();
+        let source_type = SourceType::from_path("test.tsx").unwrap_or_default();
+
+        let ret = Parser::new(&allocator, source_text, source_type)
+            .allow_return_outside_function(true)
+            .parse();
+        self.diagnostics.extend(ret.errors);
+
+        let program = allocator.alloc(ret.program);
+        let semantic_ret = SemanticBuilder::new(source_text, source_type, &ret.trivias)
+            .with_module_record_builder(true)
+            .with_check_syntax_error(true)
+            .build(program);
+        self.diagnostics.extend(semantic_ret.errors);
+
+        serde_wasm_bindgen::to_value(program).unwrap()
+    }
 }

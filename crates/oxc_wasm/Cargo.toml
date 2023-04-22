@@ -17,15 +17,15 @@ default = ["console_error_panic_hook"]
 oxc_allocator   = { workspace = true }
 oxc_ast         = { workspace = true, features = ["serde"] }
 oxc_diagnostics = { workspace = true }
-oxc_linter      = { workspace = true }
 oxc_parser      = { workspace = true }
 oxc_semantic    = { workspace = true }
 
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }
-serde      = { workspace = true, features = ["derive"] }
+serde      = { workspace = true }
 serde_json = { workspace = true }
 
-wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2" }
+serde-wasm-bindgen = "0.5.0"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
