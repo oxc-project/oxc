@@ -90,7 +90,7 @@ impl Rule for BadArrayMethodOnArguments {
                         _ => {}
                     }
                 }
-                MemberExpression::PrivateFieldExpression(_) => {}
+                MemberExpression::PrivateFieldExpression(_) => unreachable!()
             }
         }
     }
