@@ -1,0 +1,6 @@
+include = ["Cargo.toml", "crates/**/*.toml", "tasks/**/*.toml"]
+
+[formatting]
+align_entries = true
+column_width = 120
+reorder_keys = true

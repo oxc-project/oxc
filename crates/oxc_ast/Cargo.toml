@@ -1,28 +1,28 @@
 [package]
-name = "oxc_ast"
-version = "0.0.5"
-authors.workspace = true
+name                  = "oxc_ast"
+version               = "0.0.5"
+authors.workspace     = true
 description.workspace = true
-edition.workspace = true
-homepage.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
+edition.workspace     = true
+homepage.workspace    = true
+keywords.workspace    = true
+license.workspace     = true
+repository.workspace  = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
 
-bitflags = { workspace = true }
+bitflags    = { workspace = true }
 compact_str = { workspace = true }
-thiserror = { workspace = true }
-miette = { workspace = true }
-rustc-hash = { workspace = true }
+thiserror   = { workspace = true }
+miette      = { workspace = true }
+rustc-hash  = { workspace = true }
 
-serde = { workspace = true, features = ["derive"], optional = true }
+serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 
-num-bigint = "0.4.3"
-ryu-js = { version = "0.2.2", optional = true }
+num-bigint    = "0.4.3"
+ryu-js        = { version = "0.2.2", optional = true }
 ordered-float = { version = "3.6.0" }
 
 [features]

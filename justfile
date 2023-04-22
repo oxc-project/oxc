@@ -5,7 +5,12 @@ _default:
 
 # Initialize the project by installing all the necessary tools
 init:
-  cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli wasm-pack -y
+  cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack -y
+
+# Run all fmt for all files
+fmt:
+  cargo fmt
+  taplo format
 
 # Run all the tests
 test:

@@ -1,9 +1,9 @@
 [package]
-name = "oxc_wasm"
-version = "0.0.0"
-publish = false
-authors.workspace = true
-edition.workspace = true
+name               = "oxc_wasm"
+version            = "0.0.0"
+publish            = false
+authors.workspace  = true
+edition.workspace  = true
 keywords.workspace = true
 
 [lib]
@@ -13,15 +13,15 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true, features = ["serde"] }
+oxc_allocator   = { workspace = true }
+oxc_ast         = { workspace = true, features = ["serde"] }
 oxc_diagnostics = { workspace = true }
-oxc_linter = { workspace = true }
-oxc_parser = { workspace = true }
-oxc_semantic = { workspace = true }
+oxc_linter      = { workspace = true }
+oxc_parser      = { workspace = true }
+oxc_semantic    = { workspace = true }
 
-miette = { workspace = true, features = ["fancy-no-backtrace"] }
-serde = { workspace = true, features = ["derive"] }
+miette     = { workspace = true, features = ["fancy-no-backtrace"] }
+serde      = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 
 wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }

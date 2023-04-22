@@ -1,5 +1,5 @@
 [alias]
-lint = "clippy --workspace --all-targets --all-features" # Do not append `--` or it will break IDEs
+lint = "clippy --workspace --all-targets --all-features"               # Do not append `--` or it will break IDEs
 codecov = "llvm-cov nextest --workspace --ignore-filename-regex tasks"
 coverage = "run -p oxc_coverage --release --"
 benchmark = "run -p oxc_benchmark --release --"

@@ -1,17 +1,17 @@
 [package]
-name = "rulegen"
-version = "0.0.0"
-publish = false
+name              = "rulegen"
+version           = "0.0.0"
+publish           = false
 edition.workspace = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true }
-oxc_parser = { workspace = true }
+oxc_ast       = { workspace = true }
+oxc_parser    = { workspace = true }
 
 convert_case = "0.6.0"
-handlebars = "4.3.6"
-serde = { workspace = true, features = ["derive"] }
-regex = "1.7.3"
-lazy_static = "1.4.0"
-ureq = "2.6.2"
+handlebars   = "4.3.6"
+serde        = { workspace = true, features = ["derive"] }
+regex        = "1.7.3"
+lazy_static  = "1.4.0"
+ureq         = "2.6.2"

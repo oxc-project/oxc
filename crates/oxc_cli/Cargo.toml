@@ -1,14 +1,14 @@
 [package]
-name = "oxc_cli"
-version = "0.0.0"
-publish = false
-authors.workspace = true
+name                  = "oxc_cli"
+version               = "0.0.0"
+publish               = false
+authors.workspace     = true
 description.workspace = true
-edition.workspace = true
-homepage.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
+edition.workspace     = true
+homepage.workspace    = true
+keywords.workspace    = true
+license.workspace     = true
+repository.workspace  = true
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 jemallocator = { workspace = true }
@@ -18,17 +18,17 @@ mimalloc = { workspace = true }
 
 [dependencies]
 oxc_diagnostics = { workspace = true }
-oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true }
-oxc_parser = { workspace = true }
-oxc_semantic = { workspace = true }
-oxc_linter = { workspace = true }
+oxc_allocator   = { workspace = true }
+oxc_ast         = { workspace = true }
+oxc_parser      = { workspace = true }
+oxc_semantic    = { workspace = true }
+oxc_linter      = { workspace = true }
 
-clap = { workspace = true }
-rayon = { workspace = true }
-miette = { workspace = true, features = ["fancy-no-backtrace"] }
+clap       = { workspace = true }
+rayon      = { workspace = true }
+miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 rustc-hash = { workspace = true }
 
 num_cpus = "1.15.0"
-ignore = { version = "0.4.20", features = ["simd-accel"] }
+ignore   = { version = "0.4.20", features = ["simd-accel"] }
 # git2 = { version = "0.16.1", default_features = false }

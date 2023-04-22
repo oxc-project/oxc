@@ -1,50 +1,50 @@
 [workspace]
 resolver = "2"
-members = ["crates/*", "tasks/*"]
+members  = ["crates/*", "tasks/*"]
 
 [workspace.package]
-authors = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
+authors     = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
 description = "Oxc is a JavaScript / TypeScript parser with full Test262 conformance."
-edition = "2021"
-homepage = "https://github.com/Boshen/oxc"
-keywords = ["JavaScript", "TypeScript", "parser"]
-license = "MIT"
-repository = "https://github.com/Boshen/oxc"
+edition     = "2021"
+homepage    = "https://github.com/Boshen/oxc"
+keywords    = ["JavaScript", "TypeScript", "parser"]
+license     = "MIT"
+repository  = "https://github.com/Boshen/oxc"
 
 [workspace.dependencies]
-oxc_allocator = { version = "0.0.1", path = "crates/oxc_allocator" }
-oxc_ast = { version = "0.0.5", path = "crates/oxc_ast" }
+oxc_allocator   = { version = "0.0.1", path = "crates/oxc_allocator" }
+oxc_ast         = { version = "0.0.5", path = "crates/oxc_ast" }
 oxc_diagnostics = { version = "0.0.5", path = "crates/oxc_diagnostics" }
-oxc_parser = { version = "0.0.5", path = "crates/oxc_parser" }
-oxc_printer = { version = "0.0.3", path = "crates/oxc_printer" }
-oxc_semantic = { version = "0.0.4", path = "crates/oxc_semantic" }
+oxc_parser      = { version = "0.0.5", path = "crates/oxc_parser" }
+oxc_printer     = { version = "0.0.3", path = "crates/oxc_printer" }
+oxc_semantic    = { version = "0.0.4", path = "crates/oxc_semantic" }
 
-oxc_macros = { version = "0.0.0", path = "crates/oxc_macros" }
-oxc_linter = { version = "0.0.0", path = "crates/oxc_linter" }
+oxc_macros   = { version = "0.0.0", path = "crates/oxc_macros" }
+oxc_linter   = { version = "0.0.0", path = "crates/oxc_linter" }
 oxc_minifier = { version = "0.0.0", path = "crates/oxc_minifier" }
 
 oxc_tasks_common = { path = "tasks/common" }
 
 jemallocator = "0.5.0"
-mimalloc = "0.1.35"
-bitflags = "1.3.2"
-bumpalo = "3.12.0"
-compact_str = "0.7.0"
-miette = "5.7.0"
-rayon = "1.7.0"
-rustc-hash = "1.1.0"
-serde = "1.0.159"
-serde_json = "1.0.95"
-thiserror = "1.0.40"
-clap = "4.2.1"
-indextree = "4.6.0"
-glob = "0.3.1"
-lazy_static = "1.4.0"
-phf = "0.11"
-once_cell = "1.17.1"
+mimalloc     = "0.1.35"
+bitflags     = "1.3.2"
+bumpalo      = "3.12.0"
+compact_str  = "0.7.0"
+miette       = "5.7.0"
+rayon        = "1.7.0"
+rustc-hash   = "1.1.0"
+serde        = "1.0.159"
+serde_json   = "1.0.95"
+thiserror    = "1.0.40"
+clap         = "4.2.1"
+indextree    = "4.6.0"
+glob         = "0.3.1"
+lazy_static  = "1.4.0"
+phf          = "0.11"
+once_cell    = "1.17.1"
 project-root = "0.2.2"
-pico-args = "0.5.0"
-flate2 = "1.0.25"
+pico-args    = "0.5.0"
+flate2       = "1.0.25"
 
 [workspace.metadata.workspaces]
 allow_branch = "main"
@@ -55,16 +55,16 @@ opt-level = 'z'
 [profile.release]
 # Configurations explicitly listed here for clarity.
 # Using the best options for performance.
-opt-level = 3
-lto = "fat"
+opt-level     = 3
+lto           = "fat"
 codegen-units = 1
-strip = "symbols"
-debug = false
-panic = "abort"   # Let it crash and force ourselves to write safe Rust.
+strip         = "symbols"
+debug         = false
+panic         = "abort"   # Let it crash and force ourselves to write safe Rust.
 
 # Use the `--profile release-debug` flag to show symbols in release mode.
 # e.g. `cargo build --profile release-debug`
 [profile.release-debug]
 inherits = "release"
-strip = false
-debug = true
+strip    = false
+debug    = true

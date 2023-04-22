@@ -1,22 +1,22 @@
 [package]
-name = "oxc_minifier"
-version = "0.0.0"
-publish = false
-authors.workspace = true
+name                  = "oxc_minifier"
+version               = "0.0.0"
+publish               = false
+authors.workspace     = true
 description.workspace = true
-edition.workspace = true
-homepage.workspace = true
-keywords.workspace = true
-license.workspace = true
-repository.workspace = true
+edition.workspace     = true
+homepage.workspace    = true
+keywords.workspace    = true
+license.workspace     = true
+repository.workspace  = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true }
+oxc_ast       = { workspace = true }
 
 [dev-dependencies]
-oxc_parser = { workspace = true }
-oxc_printer = { workspace = true }
+oxc_parser   = { workspace = true }
+oxc_printer  = { workspace = true }
 oxc_semantic = { workspace = true }
 
 walkdir = "2.3.3"
