@@ -7,10 +7,14 @@ _default:
 init:
   cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack -y
 
-# Run all fmt for all files
+# Format all files
 fmt:
   cargo fmt
   taplo format
+
+# Run cargo check
+check:
+  cargo check --workspace --all-targets --all-features --locked
 
 # Run all the tests
 test:
@@ -25,6 +29,7 @@ coverage:
   cargo coverage
   cargo minsize
 
+# Get code coverage
 codecov:
   cargo binstall cargo-llvm-cov -y
   cargo codecov
@@ -42,6 +47,7 @@ ready:
   git diff --exit-code --quiet
   typos
   cargo fmt
+  just check
   just test
   just lint
   git status
