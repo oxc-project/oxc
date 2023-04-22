@@ -1,0 +1,13 @@
+{
+  "name": "@oxidation-compiler/napi",
+  "version": "0.0.1",
+  "description": "The JavaScript Oxidation Compiler Node API",
+  "main": "index.js",
+  "author": "Boshen and oxc contributors",
+  "files": [
+    "index.d.ts",
+    "index.js"
+  ],
+  "license": "MIT",
+  "repository": "git@github.com:Boshen/oxc.git"
+}

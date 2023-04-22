@@ -1,16 +1,13 @@
-# Code copied from [rome](https://github.com/rome/tools/blob/main/.github/workflows/release_cli.yml)
-
-name: Release CLI
+name: Release NAPI
 on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-  workflow_dispatch:
   push:
     branches:
       - main
     paths:
-      - npm/oxc/package.json
+      - npm/napi/package.json
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -31,8 +28,8 @@ jobs:
         id: version
         with:
           static-checking: localIsNew
-          file-url: https://unpkg.com/oxidation-compiler@latest/package.json
-          file-name: npm/oxc/package.json
+          file-url: https://unpkg.com/@oxidation-compiler/napi@latest/package.json
+          file-name: npm/napi/package.json
 
       - name: Set version name
         if: steps.version.outputs.changed == 'true'
@@ -48,71 +45,82 @@ jobs:
     outputs:
       version: ${{ env.version }}
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - os: windows-2022
+          - host: windows-latest
             target: x86_64-pc-windows-msvc
-            code-target: win32-x64
-          - os: windows-2022
+            code-target: win32-x64-msvc
+            file: oxc_napi.dll
+
+          - host: windows-latest
             target: aarch64-pc-windows-msvc
-            code-target: win32-arm64
-          - os: ubuntu-20.04
+            code-target: win32-arm64-msvc
+            file: oxc_napi.dll
+
+          - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            code-target: linux-x64
-          - os: ubuntu-20.04
+            code-target: linux-x64-gnu
+            file: liboxc_napi.so
+
+          - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            code-target: linux-arm64
-          - os: macos-11
+            code-target: linux-arm64-gnu
+            file: liboxc_napi.so
+
+          - host: macos-latest
             target: x86_64-apple-darwin
             code-target: darwin-x64
-          - os: macos-11
+            file: liboxc_napi.dylib
+
+          - host: macos-latest
             target: aarch64-apple-darwin
             code-target: darwin-arm64
+            file: liboxc_napi.dylib
 
-    name: Package ${{ matrix.code-target }}
-    runs-on: ${{ matrix.os }}
-
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.host }}
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Rust toolchain
+      - name: Install cross
+        uses: taiki-e/install-action@cross
+
+      - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - name: Install arm64 toolchain
-        if: matrix.code-target == 'linux-arm64'
+      - name: Build with cross
+        run: cross build -p oxc_napi --release --target=${{ matrix.target }}
+
+      - name: Move file on ${{ matrix.host }}
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
+          # See --crate-type=cdylib in https://doc.rust-lang.org/reference/linkage.html
+          export FROM=target/${{ matrix.target }}/release
+          ls ${FROM}
+          export DIST=crates/oxc_napi/napi.${{ matrix.code-target }}.node
+          mv ${FROM}/${{ matrix.file }} ${DIST}
 
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: release-${{ matrix.target }}
-
-      - name: Build Binary
-        # strip debug symbols from std, see https://github.com/johnthagen/min-sized-rust#remove-panic-string-formatting-with-panic_immediate_abort
-        run: cargo build --release --target ${{ matrix.target }} -p oxc_cli
-        env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+      - name: Test
+        working-directory: crates/oxc_napi
+        if: ${{ contains(matrix.target, 'x86') }} # Need docker for aarch64
+        run: |
+          ls
+          node test.mjs
 
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
         if: runner.os == 'Windows'
         shell: bash
-        run: |
-          BIN_NAME=oxc-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxc_cli.exe $BIN_NAME.exe
-          7z a $BIN_NAME.zip $BIN_NAME.exe
+        run: 7z a ${{ matrix.code-target }}.zip crates/oxc_napi/napi.${{ matrix.code-target }}.node
 
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
         if: runner.os != 'Windows'
-        run: |
-          BIN_NAME=oxc-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxc_cli $BIN_NAME
-          tar czf $BIN_NAME.tar.gz $BIN_NAME
+        shell: bash
+        run: tar czf ${{ matrix.code-target }}.tar.gz crates/oxc_napi/napi.${{ matrix.code-target }}.node
 
-      - name: Upload Binary
+      - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           if-no-files-found: error
@@ -122,7 +130,7 @@ jobs:
             *.tar.gz
 
   publish:
-    name: Publish
+    name: Publish NAPI
     runs-on: ubuntu-latest
     needs:
       - build
@@ -146,25 +154,31 @@ jobs:
           args: unzip -qq *.zip -d .
 
       - name: Untar
-        run: ls *.gz | xargs -i tar xf {}
+        shell: bash
+        run: ls *.gz | xargs -i tar xvf {}
 
       - name: Generate npm packages
+        shell: bash
         run: |
-          node npm/oxc/scripts/generate-packages.mjs
-          cat npm/oxc/package.json
-          for package in npm/oxc*; do cat $package/package.json ; echo ; done
+          ls
+          ls crates/oxc_napi
+          node npm/napi/scripts/generate-packages.mjs
+          cat npm/napi/package.json
+          for package in npm/napi*
+          do
+            ls $package
+            cat $package/package.json
+            echo '----'
+          done
 
       - name: Publish npm packages as latest
-        # NOTE: The trailing slash on $package/ changes it to publishing the directory
-        run: for package in npm/oxc*; do npm publish $package/ --tag latest --access public; done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: CLI v${{ needs.build.outputs.version }}
-          draft: true
-          files: oxc-*
-          fail_on_unmatched_files: true
-          generate_release_notes: true
+        # NOTE: The trailing slash on $package/ changes it to publishing the directory
+        shell: bash
+        run: |
+          for package in npm/napi*
+          do
+            npm publish $package/ --tag latest --access public
+            echo '----'
+          done
