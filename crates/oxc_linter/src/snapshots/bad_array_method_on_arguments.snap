@@ -1,0 +1,236 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: bad_array_method_on_arguments
+---
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments['map'](() => {})}
+   ·                ────────────────
+   ╰────
+  help: The 'arguments' object does not have 'map()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments[`map`](() => {})}
+   ·                ────────────────
+   ╰────
+  help: The 'arguments' object does not have 'map()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.at(0)}
+   ·                ────────────
+   ╰────
+  help: The 'arguments' object does not have 'at()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.concat([])}
+   ·                ────────────────
+   ╰────
+  help: The 'arguments' object does not have 'concat()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.copyWithin(0)}
+   ·                ────────────────────
+   ╰────
+  help: The 'arguments' object does not have 'copyWithin()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.entries()}
+   ·                ─────────────────
+   ╰────
+  help: The 'arguments' object does not have 'entries()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.every(() => {})}
+   ·                ───────────────
+   ╰────
+  help: The 'arguments' object does not have 'every()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.fill(() => {})}
+   ·                ──────────────
+   ╰────
+  help: The 'arguments' object does not have 'fill()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.filter(() => {})}
+   ·                ────────────────
+   ╰────
+  help: The 'arguments' object does not have 'filter()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.find(() => {})}
+   ·                ──────────────
+   ╰────
+  help: The 'arguments' object does not have 'find()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.findIndex(() => {})}
+   ·                ───────────────────
+   ╰────
+  help: The 'arguments' object does not have 'findIndex()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.flat(() => {})}
+   ·                ──────────────
+   ╰────
+  help: The 'arguments' object does not have 'flat()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.flatMap(() => {})}
+   ·                ─────────────────
+   ╰────
+  help: The 'arguments' object does not have 'flatMap()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.forEach(() => {})}
+   ·                ─────────────────
+   ╰────
+  help: The 'arguments' object does not have 'forEach()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.includes(() => {})}
+   ·                ──────────────────
+   ╰────
+  help: The 'arguments' object does not have 'includes()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.indexOf(() => {})}
+   ·                ─────────────────
+   ╰────
+  help: The 'arguments' object does not have 'indexOf()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.join()}
+   ·                ──────────────
+   ╰────
+  help: The 'arguments' object does not have 'join()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.keys()}
+   ·                ──────────────
+   ╰────
+  help: The 'arguments' object does not have 'keys()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.lastIndexOf('')}
+   ·                ─────────────────────
+   ╰────
+  help: The 'arguments' object does not have 'lastIndexOf()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.map(() => {})}
+   ·                ─────────────
+   ╰────
+  help: The 'arguments' object does not have 'map()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.pop()}
+   ·                ─────────────
+   ╰────
+  help: The 'arguments' object does not have 'pop()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.push('')}
+   ·                ──────────────
+   ╰────
+  help: The 'arguments' object does not have 'push()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.reduce(() => {})}
+   ·                ────────────────
+   ╰────
+  help: The 'arguments' object does not have 'reduce()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.reduceRight(() => {})}
+   ·                ─────────────────────
+   ╰────
+  help: The 'arguments' object does not have 'reduceRight()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.reverse()}
+   ·                ─────────────────
+   ╰────
+  help: The 'arguments' object does not have 'reverse()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.shift()}
+   ·                ───────────────
+   ╰────
+  help: The 'arguments' object does not have 'shift()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.slice()}
+   ·                ───────────────
+   ╰────
+  help: The 'arguments' object does not have 'slice()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.some(() => {})}
+   ·                ──────────────
+   ╰────
+  help: The 'arguments' object does not have 'some()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.sort(() => {})}
+   ·                ──────────────
+   ╰────
+  help: The 'arguments' object does not have 'sort()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.splice(() => {})}
+   ·                ────────────────
+   ╰────
+  help: The 'arguments' object does not have 'splice()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.unshift()}
+   ·                ─────────────────
+   ╰────
+  help: The 'arguments' object does not have 'unshift()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments.values()}
+   ·                ────────────────
+   ╰────
+  help: The 'arguments' object does not have 'values()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
+  ⚠ Bad array method on arguments
+   ╭─[bad_array_method_on_arguments.tsx:1:1]
+ 1 │ function fn() {arguments['@@iterator'](() => {})}
+   ·                ───────────────────────
+   ╰────
+  help: The 'arguments' object does not have '@@iterator()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+

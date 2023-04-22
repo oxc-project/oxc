@@ -28,6 +28,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::uninvoked_array_callback,
     deepscan::bad_bitwise_operator,
     deepscan::bad_comparison_sequence,
+    deepscan::bad_array_method_on_arguments,
     use_isnan,
     valid_typeof,
     typescript::isolated_declaration
