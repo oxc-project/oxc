@@ -1,9 +1,8 @@
 name: Release NAPI
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: [ci]
     types: [completed]
-  push:
     branches:
       - main
     paths:
@@ -16,6 +15,7 @@ concurrency:
 jobs:
   check:
     name: Check version
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ env.version }}
@@ -48,38 +48,38 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - host: windows-latest
+          - os: windows-latest
             target: x86_64-pc-windows-msvc
             code-target: win32-x64-msvc
             file: oxc_napi.dll
 
-          - host: windows-latest
+          - os: windows-latest
             target: aarch64-pc-windows-msvc
             code-target: win32-arm64-msvc
             file: oxc_napi.dll
 
-          - host: ubuntu-latest
+          - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             code-target: linux-x64-gnu
             file: liboxc_napi.so
 
-          - host: ubuntu-latest
+          - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             code-target: linux-arm64-gnu
             file: liboxc_napi.so
 
-          - host: macos-latest
+          - os: macos-latest
             target: x86_64-apple-darwin
             code-target: darwin-x64
             file: liboxc_napi.dylib
 
-          - host: macos-latest
+          - os: macos-latest
             target: aarch64-apple-darwin
             code-target: darwin-arm64
             file: liboxc_napi.dylib
 
-    name: Build ${{ matrix.target }}
-    runs-on: ${{ matrix.host }}
+    name: Package ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
 
@@ -92,7 +92,7 @@ jobs:
       - name: Build with cross
         run: cross build -p oxc_napi --release --target=${{ matrix.target }}
 
-      - name: Move file on ${{ matrix.host }}
+      - name: Move file on ${{ matrix.os }}
         shell: bash
         run: |
           # See --crate-type=cdylib in https://doc.rust-lang.org/reference/linkage.html
