@@ -101,13 +101,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'Cargo.lock'
 
       - name: Install cargo-udeps
+        if: steps.filter.outputs.src == 'true'
         uses: taiki-e/install-action@cargo-udeps
 
-      - name: Run udeps
+      - if: steps.filter.outputs.src == 'true'
         run: cargo udeps
 
   test:
