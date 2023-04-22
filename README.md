@@ -148,7 +148,9 @@ Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 * [Crafting Interpreters](https://craftinginterpreters.com)
 * [Create an issue and insert your inspirational learning resources here]
 
-## Rust [cloc](https://github.com/boyter/scc) (`scc . --include-ext=rs --no-complexity`)
+## Rust [cloc](https://github.com/boyter/scc)
+
+`scc . --include-ext=rs --no-complexity`
 
 ```
 ───────────────────────────────────────────────────────────────────────────────

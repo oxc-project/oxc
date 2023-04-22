@@ -18,12 +18,12 @@ on:
 
 # cancel previous job runs for the same workflow + pr
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   cache: # Warm cache factory for all other CI jobs
-    name: Build Cache
+    name: Check and Build
     strategy:
       fail-fast: false
       matrix:
@@ -33,8 +33,7 @@ jobs:
           - os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Install cargo-nextest
         uses: taiki-e/install-action@cargo-nextest
@@ -59,29 +58,26 @@ jobs:
           cargo nextest run --workspace --all-targets --all-features --no-run
 
   format:
-    name: Format Rust Files
+    name: Format
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Install Rust Toolchain
+      - name: Install Rust
         uses: ./.github/actions/rustup
         with:
           fmt: true
           restore-cache: false
 
-      - name: Run rustfmt
-        run: cargo fmt --all -- --check
+      - run: cargo fmt --all -- --check
 
   lint:
-    name: Lint Rust Files
+    name: Clippy
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Install Rust Toolchain
+      - name: Install Rust
         uses: ./.github/actions/rustup
         with:
           clippy: true
@@ -94,6 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - uses: crate-ci/typos@master
         with:
           files: .
@@ -102,16 +99,13 @@ jobs:
     name: Check Dependencies
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout PR Branch
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Install Rust Toolchain
+      - name: Install Rust
         uses: ./.github/actions/rustup
 
       - name: Install cargo-udeps
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-udeps
+        uses: taiki-e/install-action@cargo-udeps
 
       - name: Run udeps
         run: cargo udeps
@@ -127,8 +121,7 @@ jobs:
           - os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -138,10 +131,8 @@ jobs:
 
       # NAPI crashes nextest on windows
       # https://github.com/napi-rs/napi-rs/issues/1405
-      - name: Run tests
-        if: runner.os == 'Windows'
+      - if: runner.os == 'Windows'
         run: cargo test
 
-      - name: Run tests
-        if: runner.os != 'Windows'
+      - if: runner.os != 'Windows'
         run: cargo nextest run
