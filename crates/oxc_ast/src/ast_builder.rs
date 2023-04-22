@@ -49,11 +49,11 @@ impl<'a> AstBuilder<'a> {
     pub fn program(
         &self,
         span: Span,
+        source_type: SourceType,
         directives: Vec<'a, Directive>,
         body: Vec<'a, Statement<'a>>,
-        source_type: SourceType,
     ) -> Program<'a> {
-        Program { span, directives, body, source_type }
+        Program { span, source_type, directives, body }
     }
 
     /* ---------- Literals ---------- */

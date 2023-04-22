@@ -171,9 +171,9 @@ impl<'a> Parser<'a> {
                 self.error(self.flow_error().unwrap_or(error));
                 let program = self.ast.program(
                     Span::default(),
-                    self.ast.new_vec(),
-                    self.ast.new_vec(),
                     self.source_type,
+                    self.ast.new_vec(),
+                    self.ast.new_vec(),
                 );
                 (program, true)
             }
@@ -192,7 +192,7 @@ impl<'a> Parser<'a> {
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
         let span = Span::new(0, self.source_text.len() as u32);
-        Ok(self.ast.program(span, directives, statements, self.source_type))
+        Ok(self.ast.program(span, self.source_type, directives, statements))
     }
 
     #[must_use]
