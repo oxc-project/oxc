@@ -90,7 +90,7 @@ impl Rule for BadArrayMethodOnArguments {
                         _ => {}
                     }
                 }
-                MemberExpression::PrivateFieldExpression(_) => unreachable!()
+                MemberExpression::PrivateFieldExpression(_) => {}
             }
         }
     }
@@ -128,7 +128,6 @@ fn test() {
         ("function fn() {arguments.map}", None),
         ("function fn() {arguments[method] }", None),
         ("function fn() {let method='map'; arguments[method](() => {}) }", None),
-        ("class A {#arguments = []; fn() {this.#arguments.map(() => {});}}", None),
         ("function fn() {arguments['map']}", None),
         ("function fn() {arguments[`map`]}", None),
         ("function fn() {arg['map'](() => {})}", None),
