@@ -5,6 +5,7 @@ publish            = false
 authors.workspace  = true
 edition.workspace  = true
 keywords.workspace = true
+license.workspace = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]

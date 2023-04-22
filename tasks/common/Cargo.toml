@@ -3,6 +3,7 @@ name              = "oxc_tasks_common"
 version           = "0.0.0"
 publish           = false
 edition.workspace = true
+license.workspace = true
 
 [dependencies]
 project-root = { workspace = true }

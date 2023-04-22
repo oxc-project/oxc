@@ -57,6 +57,56 @@ jobs:
           cargo check --workspace --all-targets --all-features --locked
           cargo nextest run --workspace --all-targets --all-features --no-run
 
+  typos:
+    name: Spell Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: crate-ci/typos@master
+        with:
+          files: .
+
+  check-dependencies:
+    name: Check Unused Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'Cargo.lock'
+
+      - name: Install cargo-udeps
+        if: steps.filter.outputs.src == 'true'
+        uses: taiki-e/install-action@cargo-udeps
+
+      - if: steps.filter.outputs.src == 'true'
+        run: cargo udeps
+
+  deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'Cargo.lock'
+
+      - name: Install cargo-deny
+        if: steps.filter.outputs.src == 'true'
+        uses: taiki-e/install-action@cargo-deny
+
+      - if: steps.filter.outputs.src == 'true'
+        run: cargo deny check
+
   format:
     name: Format
     runs-on: ubuntu-latest
@@ -84,36 +134,6 @@ jobs:
 
       - name: Run Clippy
         run: cargo lint -- -D warnings
-
-  typos:
-    name: Spell Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: crate-ci/typos@master
-        with:
-          files: .
-
-  check-dependencies:
-    name: Check Dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            src:
-              - 'Cargo.lock'
-
-      - name: Install cargo-udeps
-        if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@cargo-udeps
-
-      - if: steps.filter.outputs.src == 'true'
-        run: cargo udeps
 
   test:
     name: Test
