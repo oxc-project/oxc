@@ -1,9 +1,12 @@
 use std::path::Path;
 
+#[cfg(feature = "serde")]
+use serde::Serialize;
 use thiserror::Error;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
     language: Language,
@@ -21,6 +24,7 @@ pub struct SourceType {
 
 /// JavaScript or TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase", untagged))]
 pub enum Language {
     JavaScript,
     TypeScript { is_definition_file: bool },
@@ -28,6 +32,7 @@ pub enum Language {
 
 /// Script or Module
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase", untagged))]
 pub enum ModuleKind {
     Script,
     Module,
@@ -35,6 +40,7 @@ pub enum ModuleKind {
 
 /// JSX for JavaScript and TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase", untagged))]
 pub enum LanguageVariant {
     Standard,
     Jsx,

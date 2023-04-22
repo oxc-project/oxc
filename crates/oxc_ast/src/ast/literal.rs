@@ -29,7 +29,9 @@ impl BooleanLiteral {
 }
 
 #[derive(Debug, Clone, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct NullLiteral {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
 }
 

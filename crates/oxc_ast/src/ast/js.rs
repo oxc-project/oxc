@@ -9,11 +9,13 @@ use serde::Serialize;
 use crate::{ast::*, Atom, SourceType, Span};
 
 #[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct Program<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
+    pub source_type: SourceType,
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
-    pub source_type: SourceType,
 }
 
 // SAFETY: The AST is part of the bump allocator,
@@ -412,6 +414,7 @@ pub struct TemplateElementValue {
 
 /// Member Expression
 #[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum MemberExpression<'a> {
     ComputedMemberExpression(ComputedMemberExpression<'a>),
     StaticMemberExpression(StaticMemberExpression<'a>),
@@ -465,7 +468,9 @@ impl<'a> MemberExpression<'a> {
 }
 
 #[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ComputedMemberExpression<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
     pub expression: Expression<'a>,
@@ -473,7 +478,9 @@ pub struct ComputedMemberExpression<'a> {
 }
 
 #[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct StaticMemberExpression<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
     pub property: IdentifierName,
@@ -481,7 +488,9 @@ pub struct StaticMemberExpression<'a> {
 }
 
 #[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct PrivateFieldExpression<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
     pub field: PrivateIdentifier,
@@ -1305,7 +1314,9 @@ pub enum FunctionType {
 }
 
 #[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct FormalParameters<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub kind: FormalParameterKind,
     pub items: Vec<'a, FormalParameter<'a>>,
@@ -1324,6 +1335,7 @@ pub struct FormalParameter<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter,
@@ -1343,7 +1355,9 @@ impl<'a> FormalParameters<'a> {
 }
 
 #[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct FunctionBody<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub directives: Vec<'a, Directive<'a>>,
     pub statements: Vec<'a, Statement<'a>>,
@@ -1358,6 +1372,7 @@ impl<'a> FunctionBody<'a> {
 
 /// Arrow Function Definitions
 #[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct ArrowExpression<'a> {
     pub span: Span,
     pub expression: bool,

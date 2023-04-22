@@ -22,7 +22,7 @@ serde = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 
 num-bigint = "0.4.3"
-ryu-js = "0.2.2"
+ryu-js = { version = "0.2.2", optional = true }
 ordered-float = { version = "3.6.0" }
 
 [features]
@@ -30,6 +30,7 @@ default = []
 serde = [
   "dep:serde",
   "dep:serde_json",
+  "dep:ryu-js",
   "compact_str/serde",
   "ordered-float/serde",
 ]
