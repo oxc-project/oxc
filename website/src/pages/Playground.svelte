@@ -62,7 +62,7 @@
     </div>
   </div>
 
-  <div class="flex-1 flex flex-col whitespace-pre h-screen overflow-y text-xs">
+  <div class="flex-1 flex flex-col whitespace-pre h-screen overflow-y-auto text-xs">
       { ast }
   </div>
 
