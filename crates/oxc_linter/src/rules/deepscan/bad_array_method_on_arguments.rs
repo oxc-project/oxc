@@ -127,7 +127,7 @@ fn test() {
         ("function fn() {arguments.foo}", None),
         ("function fn() {arguments.map}", None),
         ("function fn() {arguments[method] }", None),
-        ("function fn() {arguments[method].map(() => {}) }", None),
+        ("function fn() {let method='map'; arguments[method](() => {}) }", None),
         ("function fn() {arguments['map']}", None),
         ("function fn() {arguments[`map`]}", None),
         ("function fn() {arg['map'](() => {})}", None),
