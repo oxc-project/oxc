@@ -24,15 +24,18 @@ pub struct SourceType {
 
 /// JavaScript or TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase", untagged))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub enum Language {
     JavaScript,
-    TypeScript { is_definition_file: bool },
+    #[cfg_attr(feature = "serde", serde(rename_all = "camelCase"))]
+    TypeScript {
+        is_definition_file: bool,
+    },
 }
 
 /// Script or Module
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase", untagged))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub enum ModuleKind {
     Script,
     Module,
@@ -40,7 +43,7 @@ pub enum ModuleKind {
 
 /// JSX for JavaScript and TypeScript
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase", untagged))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub enum LanguageVariant {
     Standard,
     Jsx,
