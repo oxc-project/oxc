@@ -47,7 +47,6 @@ pico-args = "0.5.0"
 flate2 = "1.0.25"
 
 [workspace.metadata.workspaces]
-independent = true
 allow_branch = "main"
 
 [profile.release.package.oxc_wasm]
