@@ -1,12 +1,16 @@
 name: Release NAPI
+
+# When main is pushed and npm/napi/package.json has been changed,
+# trigger the jobs after the ci workflow has been passed.
 on:
-  workflow_run:
-    workflows: [ci]
-    types: [completed]
+  push:
     branches:
       - main
     paths:
       - npm/napi/package.json
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
