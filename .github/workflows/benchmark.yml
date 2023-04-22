@@ -10,7 +10,7 @@ on:
       - 'crates/oxc_semantic/**'
       - 'tasks/benchmark/**'
       - 'rust-toolchain.toml'
-      - '!**/*.md'
+      - 'Cargo.lock'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
