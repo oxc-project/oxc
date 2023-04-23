@@ -19,6 +19,9 @@ oxc_ast         = { workspace = true, features = ["serde"] }
 oxc_diagnostics = { workspace = true }
 oxc_parser      = { workspace = true }
 oxc_semantic    = { workspace = true }
+oxc_linter      = { workspace = true }
+oxc_printer     = { workspace = true }
+oxc_minifier    = { workspace = true }
 
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 serde      = { workspace = true }
