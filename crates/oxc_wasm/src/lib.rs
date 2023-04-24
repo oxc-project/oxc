@@ -26,7 +26,7 @@ pub struct Oxc {
 
     ast: JsValue,
 
-    printed_text: JsValue,
+    printed_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -87,27 +87,27 @@ impl Oxc {
     }
 
     /// Returns AST in JSON
-    #[wasm_bindgen]
-    pub fn ast(&self) -> JsValue {
+    #[wasm_bindgen(js_name = getAst)]
+    pub fn get_ast(&self) -> JsValue {
         self.ast.clone()
     }
 
-    /// Returns String
-    #[wasm_bindgen]
-    pub fn printed_text(&self) -> JsValue {
+    #[wasm_bindgen(js_name = getPrintedText)]
+    pub fn get_printed_text(&self) -> String {
         self.printed_text.clone()
     }
 
     /// Returns Array of String
-    #[wasm_bindgen]
-    pub fn diagnostics(&self) -> Result<JsValue, serde_wasm_bindgen::Error> {
-        let diagnostics = self
-            .diagnostics
+    #[wasm_bindgen(js_name = getDiagnostics)]
+    pub fn get_diagnostics(&self) -> Result<Vec<JsValue>, serde_wasm_bindgen::Error> {
+        self.diagnostics
             .borrow()
             .iter()
-            .map(|error| format!("{error:?}"))
-            .collect::<Vec<String>>();
-        diagnostics.serialize(&self.serializer)
+            .map(|error| {
+                let s = format!("{error:?}");
+                s.serialize(&self.serializer)
+            })
+            .collect()
     }
 
     /// # Errors
@@ -157,7 +157,7 @@ impl Oxc {
             let printed = Printer::new(source_text.len(), printer_options)
                 .with_symbol_table(&semantic.symbols(), o.mangle)
                 .build(program);
-            self.printed_text = printed.serialize(&self.serializer)?;
+            self.printed_text = printed;
         }
 
         Ok(())
