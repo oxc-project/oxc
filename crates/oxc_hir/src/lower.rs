@@ -1,35 +1,46 @@
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast;
 
-use crate::hir;
+use crate::{hir, hir_builder::HirBuilder};
 
 pub struct LowerToHIR<'a> {
-    allocator: &'a Allocator,
+    hir: HirBuilder<'a>,
 }
 
 impl<'a> LowerToHIR<'a> {
+    pub fn new(allocator: &'a Allocator) -> Self {
+        Self { hir: HirBuilder::new(allocator) }
+    }
+
     #[must_use]
-    pub fn build(self, program: ast::Program<'a>) -> hir::Program<'a> {
+    pub fn build(mut self, program: &ast::Program<'a>) -> hir::Program<'a> {
         self.lower_program(program)
     }
 
-    fn lower_program(&self, program: ast::Program<'a>) -> hir::Program<'a> {
-        hir::Program {
-            span: program.span,
-            source_type: program.source_type,
-            directives: self.lower_directives(program.directives),
-            // body: program.body,
+    #[must_use]
+    pub fn lower_vec<T, R, F>(&mut self, items: &Vec<'a, T>, cb: F) -> Vec<'a, R>
+    where
+        F: Fn(&mut Self, &T) -> R,
+    {
+        let mut vec = self.hir.new_vec_with_capacity(items.len());
+        for item in items {
+            vec.push(cb(self, item));
         }
+        vec
     }
 
-    fn lower_directives(
-        &self,
-        directives: Vec<'a, ast::Directive<'a>>,
-    ) -> Vec<'a, hir::Directive<'a>> {
-        let directives =
-            directives.into_iter().map(|d| hir::Directive { span: d.span, directive: d.directive });
-        Vec::from_iter_in(directives, self.allocator)
+    fn lower_program(&mut self, program: &ast::Program<'a>) -> hir::Program<'a> {
+        let directives = self.lower_vec(&program.directives, Self::lower_directive);
+        let statements = self.lower_vec(&program.body, Self::lower_statement);
+        self.hir.program(program.span, program.source_type, directives, statements)
     }
 
-    // manually type out everything ...
+    fn lower_directive(&mut self, directive: &ast::Directive<'a>) -> hir::Directive<'a> {
+        self.hir.directive(directive.span, directive.expression.clone(), directive.directive)
+    }
+
+    #[allow(clippy::unused_self)]
+    fn lower_statement(&mut self, _statement: &ast::Statement<'a>) -> hir::Statement<'a> {
+        unreachable!()
+    }
 }

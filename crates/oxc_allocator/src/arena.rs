@@ -81,14 +81,17 @@ impl<'alloc, T: Hash> Hash for Box<'alloc, T> {
 pub struct Vec<'alloc, T>(collections::Vec<'alloc, T>);
 
 impl<'alloc, T> Vec<'alloc, T> {
+    #[inline]
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         Self(collections::Vec::new_in(allocator))
     }
 
+    #[inline]
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         Self(collections::Vec::with_capacity_in(capacity, allocator))
     }
 
+    #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
         Self(collections::Vec::from_iter_in(iter, allocator))
     }
