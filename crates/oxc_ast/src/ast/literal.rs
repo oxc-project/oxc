@@ -14,7 +14,7 @@ use serde::Serialize;
 use crate::{Atom, Span};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BooleanLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -48,7 +48,7 @@ impl PartialEq for NullLiteral {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct NumberLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -75,7 +75,7 @@ impl<'a> Hash for NumberLiteral<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BigintLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -84,7 +84,7 @@ pub struct BigintLiteral {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct RegExpLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -156,7 +156,7 @@ impl fmt::Display for RegExpFlags {
 pub struct EmptyObject;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename = "Literal"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct StringLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,

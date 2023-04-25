@@ -875,11 +875,7 @@ pub enum Statement<'a> {
 
 /// Directive Prologue
 #[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize),
-    serde(tag = "type", rename = "ExpressionStatement")
-)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct Directive<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,

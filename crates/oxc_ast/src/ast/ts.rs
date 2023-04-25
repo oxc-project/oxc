@@ -168,13 +168,10 @@ pub struct TSTypeOperatorType<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged, rename_all = "lowercase"))]
 pub enum TSTypeOperator {
-    #[cfg_attr(feature = "serde", serde(rename = "keyof"))]
     Keyof,
-    #[cfg_attr(feature = "serde", serde(rename = "unique"))]
     Unique,
-    #[cfg_attr(feature = "serde", serde(rename = "readonly"))]
     Readonly,
 }
 
@@ -577,11 +574,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
 }
 
 #[derive(Debug, PartialEq, Hash)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize),
-    serde(tag = "type", rename_all = "camelCase", rename = "Identifier")
-)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSIndexSignatureName<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
