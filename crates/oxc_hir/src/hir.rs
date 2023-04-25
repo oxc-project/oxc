@@ -10,14 +10,16 @@ use oxc_ast::{Atom, SourceType, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[derive(Debug, Eq, PartialEq, Hash)]
+use crate::HirId;
+
+#[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct Program<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub source_type: SourceType,
     pub directives: Vec<'a, Directive<'a>>,
-    // pub body: Vec<'a, Statement<'a>>,
+    pub body: Vec<'a, Statement<'a>>,
 }
 
 // impl<'a> Program<'a> {
@@ -873,9 +875,10 @@ pub enum Statement<'a> {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct Directive<'a> {
+    pub hir_id: HirId,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    // pub expression: StringLiteral,
+    pub expression: StringLiteral,
     // directives should always use the unescaped raw string
     pub directive: &'a str,
 }
