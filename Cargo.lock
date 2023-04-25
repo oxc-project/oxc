@@ -1091,6 +1091,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_hir"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [

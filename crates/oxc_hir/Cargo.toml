@@ -1,0 +1,25 @@
+[package]
+name                  = "oxc_hir"
+version               = "0.0.0"
+publish               = false
+authors.workspace     = true
+description.workspace = true
+edition.workspace     = true
+homepage.workspace    = true
+keywords.workspace    = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+
+serde      = { workspace = true, features = ["derive"], optional = true }
+serde_json = { workspace = true, optional = true }
+
+[features]
+default = []
+serde = [
+  "dep:serde",
+  "dep:serde_json",
+]
