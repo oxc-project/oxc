@@ -59,6 +59,16 @@ The primary objectives for this project include:
 
 > Performance issues are considered as bugs in this project.
 
+## Milestone
+
+As of now, Oxc has a fully working parser and a prototype for the linter.
+
+The current objectives are:
+
+* [HIR - High-Level Intermediate Representation](https://github.com/Boshen/oxc/issues/315) for the compiler 
+* A prototype for the minifier.
+* A MVP (Most Viable Product) for the linter.
+
 ## Contributing
 
 This project is an invitation for you to come and learn Rust with us,
@@ -72,15 +82,6 @@ If you are unable to contribute code,, you can still participate by:
 * join us on [Discord](https://discord.gg/9uXCAwqQZW)
 * [follow me on twitter](https://twitter.com/boshen_c)
 * provide your wisdom in [discussions](https://github.com/Boshen/oxc/discussions)
-
-## Milestone
-
-As of now, Oxc has a fully working parser and a prototype for the linter.
-
-The current objectives are:
-
-* A MVP (Most Viable Product) for the linter.
-* A prototype for the minifier.
 
 ## Linter
 
