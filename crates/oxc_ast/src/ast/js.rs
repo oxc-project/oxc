@@ -18,12 +18,6 @@ pub struct Program<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
-// SAFETY: The AST is part of the bump allocator,
-// it is our responsibility to never simultaneously mutate across threads.
-#[allow(clippy::non_send_fields_in_send_ty)]
-unsafe impl<'a> Send for Program<'a> {}
-unsafe impl<'a> Sync for Program<'a> {}
-
 impl<'a> Program<'a> {
     #[must_use]
     pub fn is_empty(&self) -> bool {
