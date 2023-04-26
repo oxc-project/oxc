@@ -674,8 +674,6 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn enter_object_expression(&mut self, _expr: &'a ObjectExpression<'a>) {}
-
     fn visit_object_property(&mut self, prop: &'a ObjectProperty<'a>) {
         match prop {
             ObjectProperty::Property(prop) => self.visit_property(prop),

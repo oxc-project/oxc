@@ -511,8 +511,6 @@ pub trait VisitMut<'a, 'b>: Sized {
         }
     }
 
-    fn enter_object_expression(&mut self, _expr: &'b mut ObjectExpression<'a>) {}
-
     fn visit_object_property(&mut self, prop: &'b mut ObjectProperty<'a>) {
         match prop {
             ObjectProperty::Property(prop) => self.visit_property(prop),
