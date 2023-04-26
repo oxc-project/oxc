@@ -23,7 +23,8 @@ indextree   = { workspace = true }
 rustc-hash  = { workspace = true }
 bitflags    = { workspace = true }
 phf         = { workspace = true, features = ["macros"] }
-num-traits  = "0.2.15"
+num-traits  = { workspace = true }
+
 rust-lapper = "1.1.0"
 
 [dev_dependencies]

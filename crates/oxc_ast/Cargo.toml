@@ -12,18 +12,17 @@ repository.workspace  = true
 [dependencies]
 oxc_allocator = { workspace = true }
 
-bitflags    = { workspace = true }
-compact_str = { workspace = true }
-thiserror   = { workspace = true }
-miette      = { workspace = true }
-rustc-hash  = { workspace = true }
+bitflags      = { workspace = true }
+compact_str   = { workspace = true }
+thiserror     = { workspace = true }
+miette        = { workspace = true }
+rustc-hash    = { workspace = true }
+num-bigint    = { workspace = true }
+ordered-float = { workspace = true }
 
 serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
-
-num-bigint    = "0.4.3"
-ryu-js        = { version = "0.2.2", optional = true }
-ordered-float = { version = "3.6.0" }
+ryu-js     = { workspace = true, optional = true }
 
 [features]
 default = []

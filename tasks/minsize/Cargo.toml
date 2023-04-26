@@ -14,6 +14,6 @@ oxc_diagnostics = { workspace = true }
 oxc_semantic    = { workspace = true }
 
 oxc_tasks_common = { workspace = true }
-flate2           = { workspace = true }
+flate2           = { workspace = true, features = ["zlib"] }
 
 humansize = "2.1.3"

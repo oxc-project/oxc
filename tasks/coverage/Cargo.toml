@@ -26,11 +26,11 @@ miette       = { workspace = true, features = ["fancy-no-backtrace"] }
 project-root = { workspace = true }
 pico-args    = { workspace = true }
 lazy_static  = { workspace = true }
+walkdir      = { workspace = true }
+regex        = { workspace = true }
 
 console        = "0.15.5"
 encoding_rs    = "0.8.32"
 encoding_rs_io = "0.1.7"
-regex          = "1.8.1"
 serde_yaml     = "0.9.21"
 similar        = "2.2.1"
-walkdir        = "2.3.3"

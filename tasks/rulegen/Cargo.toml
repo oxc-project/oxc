@@ -10,9 +10,10 @@ oxc_allocator = { workspace = true }
 oxc_ast       = { workspace = true }
 oxc_parser    = { workspace = true }
 
-convert_case = "0.6.0"
-handlebars   = "4.3.6"
+convert_case = { workspace = true }
 serde        = { workspace = true, features = ["derive"] }
-regex        = "1.8.1"
-lazy_static  = "1.4.0"
-ureq         = "2.6.2"
+regex        = { workspace = true }
+lazy_static  = { workspace = true }
+ureq         = { workspace = true }
+
+handlebars = "4.3.6"

@@ -28,7 +28,6 @@ clap       = { workspace = true }
 rayon      = { workspace = true }
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 rustc-hash = { workspace = true }
-
-num_cpus = "1.15.0"
-ignore   = { version = "0.4.20", features = ["simd-accel"] }
+num_cpus   = { workspace = true }
+ignore     = { workspace = true, features = ["simd-accel"] }
 # git2 = { version = "0.16.1", default_features = false }

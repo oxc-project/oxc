@@ -19,4 +19,4 @@ oxc_parser   = { workspace = true }
 oxc_printer  = { workspace = true }
 oxc_semantic = { workspace = true }
 
-walkdir = "2.3.3"
+walkdir = { workspace = true }
