@@ -2,9 +2,11 @@
 
 use std::num::NonZeroU32;
 
+#[cfg(feature = "serde")]
+mod serialize;
+
 pub mod hir;
 pub mod hir_builder;
-pub mod lower;
 
 #[cfg(feature = "serde")]
 use serde::Serialize;

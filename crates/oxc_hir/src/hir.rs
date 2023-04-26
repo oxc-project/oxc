@@ -1,11 +1,12 @@
-use std::fmt;
-
-use oxc_allocator::{Box, Vec};
-use oxc_ast::ast::{
-    AssignmentOperator, BigintLiteral, BinaryOperator, BooleanLiteral, LogicalOperator,
-    NullLiteral, NumberLiteral, RegExpLiteral, StringLiteral, UnaryOperator, UpdateOperator,
+use std::{
+    fmt,
+    hash::{Hash, Hasher},
 };
-use oxc_ast::{BigUint, SourceType};
+
+use bitflags::bitflags;
+use num_bigint::BigUint;
+use ordered_float::NotNan;
+use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
@@ -17,17 +18,16 @@ use crate::HirId;
 pub struct Program<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub source_type: SourceType,
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
 }
 
-// impl<'a> Program<'a> {
-// #[must_use]
-// pub fn is_empty(&self) -> bool {
-// self.body.is_empty() && self.directives.is_empty()
-// }
-// }
+impl<'a> Program<'a> {
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.body.is_empty() && self.directives.is_empty()
+    }
+}
 
 /// Expression
 #[derive(Debug, PartialEq, Hash)]
@@ -225,6 +225,184 @@ impl<'a> Expression<'a> {
             _ => None,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct BooleanLiteral {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub value: bool,
+}
+
+impl BooleanLiteral {
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        if self.value { "true" } else { "false" }
+    }
+}
+
+#[derive(Debug, Clone, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct NullLiteral {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+}
+
+impl Hash for NullLiteral {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        None::<bool>.hash(state);
+    }
+}
+
+impl PartialEq for NullLiteral {
+    fn eq(&self, _other: &Self) -> bool {
+        true
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct NumberLiteral<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub value: NotNan<f64>, // using NotNan for `Hash`
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub raw: &'a str,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub base: NumberBase,
+}
+
+impl<'a> NumberLiteral<'a> {
+    #[must_use]
+    pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
+        let value = unsafe { NotNan::new_unchecked(value) };
+        Self { span, value, raw, base }
+    }
+}
+
+impl<'a> Hash for NumberLiteral<'a> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.base.hash(state);
+        self.value.hash(state);
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct BigintLiteral {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    #[cfg_attr(feature = "serde", serde(serialize_with = "crate::serialize::serialize_bigint"))]
+    pub value: BigUint,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct RegExpLiteral {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    // valid regex is printed as {}
+    // invalid regex is printed as null, which we can't implement yet
+    pub value: EmptyObject,
+    pub regex: RegExp,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct RegExp {
+    pub pattern: Atom,
+    pub flags: RegExpFlags,
+}
+
+impl fmt::Display for RegExp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "/{}/{}", self.pattern, self.flags)
+    }
+}
+
+bitflags! {
+    pub struct RegExpFlags: u8 {
+        const G = 1 << 0;
+        const I = 1 << 1;
+        const M = 1 << 2;
+        const S = 1 << 3;
+        const U = 1 << 4;
+        const Y = 1 << 5;
+        const D = 1 << 6;
+        /// v flag from `https://github.com/tc39/proposal-regexp-set-notation`
+        const V = 1 << 7;
+    }
+}
+
+impl fmt::Display for RegExpFlags {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.contains(Self::G) {
+            write!(f, "g")?;
+        }
+        if self.contains(Self::I) {
+            write!(f, "i")?;
+        }
+        if self.contains(Self::M) {
+            write!(f, "m")?;
+        }
+        if self.contains(Self::S) {
+            write!(f, "s")?;
+        }
+        if self.contains(Self::U) {
+            write!(f, "u")?;
+        }
+        if self.contains(Self::Y) {
+            write!(f, "y")?;
+        }
+        if self.contains(Self::D) {
+            write!(f, "d")?;
+        }
+        if self.contains(Self::V) {
+            write!(f, "v")?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub struct EmptyObject;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct StringLiteral {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub value: Atom,
+}
+
+impl StringLiteral {
+    /// Static Semantics: `IsStringWellFormedUnicode`
+    /// test for \uD800-\uDFFF
+    #[must_use]
+    pub fn is_string_well_formed_unicode(&self) -> bool {
+        let mut chars = self.value.chars();
+        while let Some(c) = chars.next() {
+            if c == '\\' && chars.next() == Some('u') {
+                let hex = &chars.as_str()[..4];
+                if let Ok(hex) = u32::from_str_radix(hex, 16) {
+                    if (0xd800..=0xdfff).contains(&hex) {
+                        return false;
+                    }
+                };
+            }
+        }
+        true
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum NumberBase {
+    Decimal,
+    Binary,
+    Octal,
+    Hex,
 }
 
 /// Identifier Name
@@ -2957,4 +3135,402 @@ pub struct JSXText {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub value: Atom,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub enum Operator {
+    AssignmentOperator(AssignmentOperator),
+    BinaryOperator(BinaryOperator),
+    LogicalOperator(LogicalOperator),
+    UnaryOperator(UnaryOperator),
+    UpdateOperator(UpdateOperator),
+}
+
+impl From<AssignmentOperator> for Operator {
+    fn from(op: AssignmentOperator) -> Self {
+        Self::AssignmentOperator(op)
+    }
+}
+
+impl From<BinaryOperator> for Operator {
+    fn from(op: BinaryOperator) -> Self {
+        Self::BinaryOperator(op)
+    }
+}
+
+impl From<LogicalOperator> for Operator {
+    fn from(op: LogicalOperator) -> Self {
+        Self::LogicalOperator(op)
+    }
+}
+
+impl From<UnaryOperator> for Operator {
+    fn from(op: UnaryOperator) -> Self {
+        Self::UnaryOperator(op)
+    }
+}
+
+impl From<UpdateOperator> for Operator {
+    fn from(op: UpdateOperator) -> Self {
+        Self::UpdateOperator(op)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub enum AssignmentOperator {
+    #[cfg_attr(feature = "serde", serde(rename = "="))]
+    Assign,
+    #[cfg_attr(feature = "serde", serde(rename = "+="))]
+    Addition,
+    #[cfg_attr(feature = "serde", serde(rename = "-="))]
+    Subtraction,
+    #[cfg_attr(feature = "serde", serde(rename = "*="))]
+    Multiplication,
+    #[cfg_attr(feature = "serde", serde(rename = "/="))]
+    Division,
+    #[cfg_attr(feature = "serde", serde(rename = "%="))]
+    Remainder,
+    #[cfg_attr(feature = "serde", serde(rename = "<<="))]
+    ShiftLeft,
+    #[cfg_attr(feature = "serde", serde(rename = ">>="))]
+    ShiftRight,
+    #[cfg_attr(feature = "serde", serde(rename = ">>>="))]
+    ShiftRightZeroFill,
+    #[cfg_attr(feature = "serde", serde(rename = "|="))]
+    BitwiseOR,
+    #[cfg_attr(feature = "serde", serde(rename = "^="))]
+    BitwiseXOR,
+    #[cfg_attr(feature = "serde", serde(rename = "&="))]
+    BitwiseAnd,
+    #[cfg_attr(feature = "serde", serde(rename = "&&="))]
+    LogicalAnd,
+    #[cfg_attr(feature = "serde", serde(rename = "||="))]
+    LogicalOr,
+    #[cfg_attr(feature = "serde", serde(rename = "??="))]
+    LogicalNullish,
+    #[cfg_attr(feature = "serde", serde(rename = "**="))]
+    Exponential,
+}
+
+impl AssignmentOperator {
+    #[must_use]
+    pub fn is_logical_operator(self) -> bool {
+        matches!(self, Self::LogicalAnd | Self::LogicalOr | Self::LogicalNullish)
+    }
+
+    #[must_use]
+    pub fn is_arithmetic(self) -> bool {
+        matches!(
+            self,
+            Self::Addition
+                | Self::Subtraction
+                | Self::Multiplication
+                | Self::Division
+                | Self::Remainder
+                | Self::Exponential
+        )
+    }
+
+    #[must_use]
+    pub fn is_bitwise(self) -> bool {
+        matches!(
+            self,
+            Self::BitwiseOR
+                | Self::BitwiseXOR
+                | Self::BitwiseAnd
+                | Self::ShiftLeft
+                | Self::ShiftRight
+                | Self::ShiftRightZeroFill
+        )
+    }
+
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Assign => "=",
+            Self::Addition => "+=",
+            Self::Subtraction => "-=",
+            Self::Multiplication => "*=",
+            Self::Division => "/=",
+            Self::Remainder => "%=",
+            Self::ShiftLeft => "<<=",
+            Self::ShiftRight => ">>=",
+            Self::ShiftRightZeroFill => ">>>=",
+            Self::BitwiseOR => "|=",
+            Self::BitwiseXOR => "^=",
+            Self::BitwiseAnd => "&=",
+            Self::LogicalAnd => "&&=",
+            Self::LogicalOr => "||=",
+            Self::LogicalNullish => "??=",
+            Self::Exponential => "**=",
+        }
+    }
+}
+
+impl fmt::Display for AssignmentOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let operator = self.as_str();
+        write!(f, "{operator}")
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub enum BinaryOperator {
+    #[cfg_attr(feature = "serde", serde(rename = "=="))]
+    Equality,
+    #[cfg_attr(feature = "serde", serde(rename = "!="))]
+    Inequality,
+    #[cfg_attr(feature = "serde", serde(rename = "==="))]
+    StrictEquality,
+    #[cfg_attr(feature = "serde", serde(rename = "!=="))]
+    StrictInequality,
+    #[cfg_attr(feature = "serde", serde(rename = "<"))]
+    LessThan,
+    #[cfg_attr(feature = "serde", serde(rename = "<="))]
+    LessEqualThan,
+    #[cfg_attr(feature = "serde", serde(rename = ">"))]
+    GreaterThan,
+    #[cfg_attr(feature = "serde", serde(rename = ">="))]
+    GreaterEqualThan,
+    #[cfg_attr(feature = "serde", serde(rename = "<<"))]
+    ShiftLeft,
+    #[cfg_attr(feature = "serde", serde(rename = ">>"))]
+    ShiftRight,
+    #[cfg_attr(feature = "serde", serde(rename = ">>>"))]
+    ShiftRightZeroFill,
+    #[cfg_attr(feature = "serde", serde(rename = "+"))]
+    Addition,
+    #[cfg_attr(feature = "serde", serde(rename = "-"))]
+    Subtraction,
+    #[cfg_attr(feature = "serde", serde(rename = "*"))]
+    Multiplication,
+    #[cfg_attr(feature = "serde", serde(rename = "/"))]
+    Division,
+    #[cfg_attr(feature = "serde", serde(rename = "%"))]
+    Remainder,
+    #[cfg_attr(feature = "serde", serde(rename = "|"))]
+    BitwiseOR,
+    #[cfg_attr(feature = "serde", serde(rename = "^"))]
+    BitwiseXOR,
+    #[cfg_attr(feature = "serde", serde(rename = "&"))]
+    BitwiseAnd,
+    #[cfg_attr(feature = "serde", serde(rename = "in"))]
+    In,
+    #[cfg_attr(feature = "serde", serde(rename = "instanceof"))]
+    Instanceof,
+    #[cfg_attr(feature = "serde", serde(rename = "**"))]
+    Exponential,
+}
+
+impl BinaryOperator {
+    #[must_use]
+    pub fn is_equality(self) -> bool {
+        matches!(
+            self,
+            Self::Equality | Self::Inequality | Self::StrictEquality | Self::StrictInequality
+        )
+    }
+
+    #[must_use]
+    pub fn is_compare(self) -> bool {
+        matches!(
+            self,
+            Self::LessThan | Self::LessEqualThan | Self::GreaterThan | Self::GreaterEqualThan
+        )
+    }
+
+    #[must_use]
+    pub fn is_arithmetic(self) -> bool {
+        matches!(
+            self,
+            Self::Addition
+                | Self::Subtraction
+                | Self::Multiplication
+                | Self::Division
+                | Self::Remainder
+                | Self::Exponential
+        )
+    }
+
+    #[must_use]
+    pub fn is_relational(self) -> bool {
+        matches!(self, Self::In | Self::Instanceof)
+    }
+
+    #[must_use]
+    pub fn is_bitwise(self) -> bool {
+        matches!(
+            self,
+            Self::BitwiseOR
+                | Self::BitwiseXOR
+                | Self::BitwiseAnd
+                | Self::ShiftLeft
+                | Self::ShiftRight
+                | Self::ShiftRightZeroFill,
+        )
+    }
+
+    #[must_use]
+    pub fn is_numeric_or_string_binary_operator(self) -> bool {
+        self.is_arithmetic() || self.is_bitwise()
+    }
+
+    #[must_use]
+    pub fn is_keyword(self) -> bool {
+        matches!(self, Self::In | Self::Instanceof)
+    }
+
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Equality => "==",
+            Self::Inequality => "!=",
+            Self::StrictEquality => "===",
+            Self::StrictInequality => "!==",
+            Self::LessThan => "<",
+            Self::LessEqualThan => "<=",
+            Self::GreaterThan => ">",
+            Self::GreaterEqualThan => ">=",
+            Self::ShiftLeft => "<<",
+            Self::ShiftRight => ">>",
+            Self::ShiftRightZeroFill => ">>>",
+            Self::Addition => "+",
+            Self::Subtraction => "-",
+            Self::Multiplication => "*",
+            Self::Division => "/",
+            Self::Remainder => "%",
+            Self::BitwiseOR => "|",
+            Self::BitwiseXOR => "^",
+            Self::BitwiseAnd => "&",
+            Self::In => "in",
+            Self::Instanceof => "instanceof",
+            Self::Exponential => "**",
+        }
+    }
+}
+
+impl fmt::Display for BinaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let operator = self.as_str();
+        write!(f, "{operator}")
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub enum LogicalOperator {
+    #[cfg_attr(feature = "serde", serde(rename = "||"))]
+    Or,
+    #[cfg_attr(feature = "serde", serde(rename = "&&"))]
+    And,
+    #[cfg_attr(feature = "serde", serde(rename = "??"))]
+    Coalesce,
+}
+
+impl LogicalOperator {
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Or => "||",
+            Self::And => "&&",
+            Self::Coalesce => "??",
+        }
+    }
+}
+
+impl fmt::Display for LogicalOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let operator = self.as_str();
+        write!(f, "{operator}")
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub enum UnaryOperator {
+    #[cfg_attr(feature = "serde", serde(rename = "-"))]
+    UnaryNegation,
+    #[cfg_attr(feature = "serde", serde(rename = "+"))]
+    UnaryPlus,
+    #[cfg_attr(feature = "serde", serde(rename = "!"))]
+    LogicalNot,
+    #[cfg_attr(feature = "serde", serde(rename = "~"))]
+    BitwiseNot,
+    #[cfg_attr(feature = "serde", serde(rename = "typeof"))]
+    Typeof,
+    #[cfg_attr(feature = "serde", serde(rename = "void"))]
+    Void,
+    #[cfg_attr(feature = "serde", serde(rename = "delete"))]
+    Delete,
+}
+
+impl UnaryOperator {
+    #[must_use]
+    pub fn operator(&self) -> Operator {
+        Operator::UnaryOperator(*self)
+    }
+
+    #[must_use]
+    pub fn is_arithmetic(self) -> bool {
+        matches!(self, Self::UnaryNegation | Self::UnaryPlus)
+    }
+
+    #[must_use]
+    pub fn is_bitwise(self) -> bool {
+        matches!(self, Self::BitwiseNot)
+    }
+
+    #[must_use]
+    pub fn is_keyword(self) -> bool {
+        matches!(self, Self::Typeof | Self::Void | Self::Delete)
+    }
+
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::UnaryNegation => "-",
+            Self::UnaryPlus => "+",
+            Self::LogicalNot => "!",
+            Self::BitwiseNot => "~",
+            Self::Typeof => "typeof",
+            Self::Void => "void",
+            Self::Delete => "delete",
+        }
+    }
+}
+
+impl fmt::Display for UnaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let operator = self.as_str();
+        write!(f, "{operator}")
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize))]
+pub enum UpdateOperator {
+    #[cfg_attr(feature = "serde", serde(rename = "++"))]
+    Increment,
+    #[cfg_attr(feature = "serde", serde(rename = "--"))]
+    Decrement,
+}
+
+impl UpdateOperator {
+    #[must_use]
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Increment => "++",
+            Self::Decrement => "--",
+        }
+    }
+}
+
+impl fmt::Display for UpdateOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let operator = self.as_str();
+        write!(f, "{operator}")
+    }
 }

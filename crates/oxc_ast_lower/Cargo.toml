@@ -1,5 +1,5 @@
 [package]
-name                  = "oxc_hir"
+name                  = "oxc_ast_lower"
 version               = "0.0.0"
 publish               = false
 authors.workspace     = true
@@ -12,16 +12,21 @@ repository.workspace  = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_span      = { workspace = true }
+oxc_ast       = { workspace = true }
+oxc_hir       = { workspace = true }
 
 bitflags      = { workspace = true }
 num-bigint    = { workspace = true }
 ordered-float = { workspace = true }
 
-serde      = { workspace = true, features = ["derive"], optional = true }
-serde_json = { workspace = true, optional = true }
-ryu-js     = { workspace = true, optional = true }
+serde = { workspace = true, features = ["derive"], optional = true }
 
 [features]
 default = []
-serde   = ["dep:serde", "dep:serde_json", "dep:ryu-js", "ordered-float/serde", "oxc_span/serde"]
+serde   = ["dep:serde", "oxc_hir/serde"]
+
+[dev_dependencies]
+oxc_allocator = { workspace = true }
+oxc_parser    = { workspace = true }
+oxc_hir       = { workspace = true, features = ["serde"] }
+serde_json    = { workspace = true }

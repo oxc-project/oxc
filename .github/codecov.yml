@@ -9,6 +9,7 @@ ignore:
   - "**/examples"
   - "tasks"
   - "crates/oxc_hir"
+  - "crates/oxc_ast_lower"
   - "crates/oxc_wasm" # Remove this once wasm is completed
   - "crates/oxc_parser/fuzz"
   - "crates/oxc_diagnostics"
