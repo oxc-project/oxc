@@ -21,7 +21,7 @@ oxc_ast       = { workspace = true, features = ["serde"] }
 serde_json = { workspace = true }
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 
-tokio       = { version = "1" }
+tokio       = { workspace = true }
 napi        = { version = "2", features = ["serde-json", "async"] }
 napi-derive = { version = "2" }
 

@@ -15,8 +15,8 @@ proc-macro = true
 doctest    = false
 
 [dependencies]
-syn          = "1.0.109"
-quote        = "1.0.26"
-proc-macro2  = "1.0.56"
-itertools    = "0.10.5"
-convert_case = "0.6.0"
+syn          = { workspace = true }
+quote        = { workspace = true }
+proc-macro2  = { workspace = true }
+itertools    = { workspace = true }
+convert_case = { workspace = true }

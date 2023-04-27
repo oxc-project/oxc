@@ -8,5 +8,5 @@ license.workspace = true
 [dependencies]
 project-root = { workspace = true }
 
-ureq = "2.6.2"
-url  = "2.3.1"
+ureq = { workspace = true, features = ["tls"] }
+url  = { workspace = true }

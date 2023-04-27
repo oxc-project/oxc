@@ -12,14 +12,11 @@ repository.workspace  = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
-oxc_ast = { workspace = true }
+oxc_ast       = { workspace = true }
 
 serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }
 
 [features]
 default = []
-serde = [
-  "dep:serde",
-  "dep:serde_json",
-]
+serde   = ["dep:serde", "dep:serde_json"]

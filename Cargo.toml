@@ -30,26 +30,44 @@ oxc_minifier = { version = "0.0.0", path = "crates/oxc_minifier" }
 
 oxc_tasks_common = { path = "tasks/common" }
 
-jemallocator = "0.5.0"
-mimalloc     = "0.1.36"
-bitflags     = "1.3.2"
-bumpalo      = "3.12.1"
-compact_str  = "0.7.0"
-miette       = "5.8.0"
-rayon        = "1.7.0"
-rustc-hash   = "1.1.0"
-serde        = "1.0.160"
-serde_json   = "1.0.96"
-thiserror    = "1.0.40"
-clap         = "4.2.4"
-indextree    = "4.6.0"
-glob         = "0.3.1"
-lazy_static  = "1.4.0"
-phf          = "0.11"
-once_cell    = "1.17.1"
-project-root = "0.2.2"
-pico-args    = "0.5.0"
-flate2       = "1.0.25"
+bitflags         = { version = "1.3.2" }
+bumpalo          = { version = "3.12.1" }
+clap             = { version = "4.2.4", default-features = false, features = ["std"] }
+compact_str      = { version = "0.7.0" }
+convert_case     = { version = "0.6.0" }
+criterion        = { version = "0.4.0", default-features = false }
+flate2           = { version = "1.0.25", default-features = false }
+glob             = { version = "0.3.1" }
+ignore           = { version = "0.4.20" }
+indextree        = { version = "4.6.0" }
+itertools        = { version = "0.10.5" }
+jemallocator     = { version = "0.5.0" }
+lazy_static      = { version = "1.4.0" }
+miette           = { version = "5.8.0" }
+mimalloc         = { version = "0.1.36" }
+num-bigint       = { version = "0.4.3" }
+num-traits       = { version = "0.2.15" }
+num_cpus         = { version = "1.15.0" }
+once_cell        = { version = "1.17.1" }
+ordered-float    = { version = "3.6.0" }
+phf              = { version = "0.11" }
+pico-args        = { version = "0.5.0" }
+proc-macro2      = { version = "1.0.56" }
+project-root     = { version = "0.2.2" }
+quote            = { version = "1.0.26" }
+rayon            = { version = "1.7.0" }
+regex            = { version = "1.8.1" }
+rustc-hash       = { version = "1.1.0", default-features = false, features = ["std"] }
+ryu-js           = { version = "0.2.2" }
+serde            = { version = "1.0.160" }
+serde_json       = { version = "1.0.96" }
+syn              = { version = "1.0.109" }
+thiserror        = { version = "1.0.40" }
+tokio            = { version = "1" }
+unicode-id-start = { version = "1.1.0" }
+ureq             = { version = "2.6.2", default-features = false }
+url              = { version = "2.3.1" }
+walkdir          = { version = "2.3.3" }
 
 [workspace.metadata.workspaces]
 allow_branch = "main"
