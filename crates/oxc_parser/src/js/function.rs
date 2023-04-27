@@ -1,6 +1,7 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, AstBuilder, GetSpan, Span};
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_diagnostics::Result;
+use oxc_span::{GetSpan, Span};
 
 use super::list::FormalParameterList;
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser, StatementContext};

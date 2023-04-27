@@ -1,6 +1,7 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, syntax_directed_operations::PropName, Span};
+use oxc_ast::{ast::*, syntax_directed_operations::PropName};
 use oxc_diagnostics::Result;
+use oxc_span::Span;
 
 use super::list::ClassElements;
 use crate::{diagnostics, lexer::Kind, list::NormalList, Parser, StatementContext};

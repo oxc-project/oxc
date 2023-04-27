@@ -1,12 +1,13 @@
 use oxc_ast::{
     ast::{Expression, MemberExpression},
-    AstKind, Atom, Span,
+    AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -47,7 +48,7 @@ declare_oxc_lint!(
 
 impl Rule for BadArrayMethodOnArguments {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::IdentifierReference(reference) = node.get().kind() 
+        if let AstKind::IdentifierReference(reference) = node.get().kind()
             && reference.name == "arguments"
             && let Some(parent_node) = ctx.parent_node(node)
             && let AstKind::MemberExpression(member_expr) = parent_node.get().kind()
@@ -75,14 +76,14 @@ impl Rule for BadArrayMethodOnArguments {
                         }
                         Expression::TemplateLiteral(template) => {
                             // only check template string like "arguments[`METHOD_NAME`]" for Deepscan compatible
-                            if template.expressions.is_empty() 
+                            if template.expressions.is_empty()
                                 && template.quasis.len() == 1
                                 && let Some(template_element) = template.quasis.get(0)
                                 && let Some(name) = template_element.value.cooked.as_deref()
                                 && ARRAY_METHODS.binary_search(&name).is_ok()
                             {
                                 ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                    Atom::new(name), 
+                                    Atom::new(name),
                                     expr.span,
                                 ));
                             }
@@ -100,22 +101,21 @@ impl Rule for BadArrayMethodOnArguments {
 #[rustfmt::skip]
 const ARRAY_METHODS: [&str; 32] = [
     "@@iterator",
-    "at", 
-    "concat", "copyWithin", 
-    "entries", "every", 
-    "fill", "filter", "find", "findIndex", "flat", "flatMap", "forEach", 
-    "includes", "indexOf", 
+    "at",
+    "concat", "copyWithin",
+    "entries", "every",
+    "fill", "filter", "find", "findIndex", "flat", "flatMap", "forEach",
+    "includes", "indexOf",
     "join",
-    "keys", 
-    "lastIndexOf", 
-    "map", 
+    "keys",
+    "lastIndexOf",
+    "map",
     "pop", "push", "push",
     "reduce", "reduceRight", "reverse",
-    "shift", "slice", "some", "sort", "splice", 
-    "unshift", 
-    "values", 
+    "shift", "slice", "some", "sort", "splice",
+    "unshift",
+    "values",
 ];
-
 
 #[test]
 fn test() {
@@ -186,10 +186,9 @@ fn test() {
     Tester::new(BadArrayMethodOnArguments::NAME, pass, fail).test_and_snapshot();
 }
 
-
 #[test]
 fn test_array_is_sorted() {
-    let mut sorted_array = ARRAY_METHODS.to_vec();    
+    let mut sorted_array = ARRAY_METHODS.to_vec();
     sorted_array.sort_unstable();
 
     assert_eq!(sorted_array, ARRAY_METHODS);

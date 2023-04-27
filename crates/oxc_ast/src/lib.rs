@@ -23,19 +23,14 @@ mod trivia;
 mod visit;
 mod visit_mut;
 
-use compact_str::CompactString;
 pub use num_bigint::BigUint;
 
 pub use crate::ast_builder::AstBuilder;
 pub use crate::ast_kind::AstKind;
 pub use crate::source_type::{Language, LanguageVariant, ModuleKind, SourceType, VALID_EXTENSIONS};
-pub use crate::span::{GetSpan, Span};
 pub use crate::trivia::Trivias;
 pub use crate::visit::Visit;
 pub use crate::visit_mut::VisitMut;
-
-/// Type alias for [`CompactString`]
-pub type Atom = CompactString;
 
 // After experimenting with two types of boxed enum variants:
 //   1.

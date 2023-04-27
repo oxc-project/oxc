@@ -3,13 +3,14 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{AstKind, SourceType, Span};
+use oxc_ast::{AstKind, SourceType};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use oxc_span::Span;
 
 // Instruction:
 // create a `test.js`,

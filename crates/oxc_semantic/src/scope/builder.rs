@@ -1,4 +1,5 @@
-use oxc_ast::{ast::ClassType, AstKind, Atom, SourceType};
+use oxc_ast::{ast::ClassType, AstKind, SourceType};
+use oxc_span::Atom;
 use rustc_hash::FxHashMap;
 
 use super::{Scope, ScopeFlags, ScopeId, ScopeTree};

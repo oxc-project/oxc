@@ -1,11 +1,12 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 
 use oxc_allocator::{Box, Vec};
+use oxc_span::{Atom, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, Atom, Span};
+use crate::ast::*;
 
 /// Enum Declaration
 ///

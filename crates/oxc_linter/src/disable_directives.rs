@@ -1,4 +1,5 @@
-use oxc_ast::{Span, Trivias};
+use oxc_ast::Trivias;
+use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
 

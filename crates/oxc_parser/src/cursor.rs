@@ -1,7 +1,7 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_ast::Span;
 use oxc_diagnostics::Result;
+use oxc_span::Span;
 
 use crate::lexer::{Kind, LexerCheckpoint, LexerContext, Token};
 use crate::{diagnostics, Context, Parser};

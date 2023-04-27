@@ -11,9 +11,9 @@ repository.workspace  = true
 
 [dependencies]
 oxc_allocator = { workspace = true }
+oxc_span      = { workspace = true }
 
 bitflags      = { workspace = true }
-compact_str   = { workspace = true }
 thiserror     = { workspace = true }
 miette        = { workspace = true }
 rustc-hash    = { workspace = true }
@@ -26,4 +26,4 @@ ryu-js     = { workspace = true, optional = true }
 
 [features]
 default = []
-serde   = ["dep:serde", "dep:serde_json", "dep:ryu-js", "compact_str/serde", "ordered-float/serde"]
+serde   = ["dep:serde", "dep:serde_json", "dep:ryu-js", "ordered-float/serde", "oxc_span/serde"]

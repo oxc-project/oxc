@@ -1,6 +1,7 @@
 use oxc_allocator::{Box, Vec};
-use oxc_ast::{ast::*, Span};
+use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_span::Span;
 
 use super::{
     declaration::{VariableDeclarationContext, VariableDeclarationParent},

@@ -1,10 +1,10 @@
-use oxc_ast::{Atom, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Symbol;
+use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule};
 

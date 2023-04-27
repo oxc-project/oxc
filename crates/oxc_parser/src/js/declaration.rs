@@ -1,6 +1,7 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, GetSpan, Span};
+use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_span::{GetSpan, Span};
 
 use crate::{diagnostics, lexer::Kind, Parser, StatementContext};
 

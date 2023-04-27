@@ -5,8 +5,8 @@ use oxc_ast::ast::{
     AssignmentOperator, BigintLiteral, BinaryOperator, BooleanLiteral, LogicalOperator,
     NullLiteral, NumberLiteral, RegExpLiteral, StringLiteral, UnaryOperator, UpdateOperator,
 };
-use oxc_ast::BigUint;
-use oxc_ast::{Atom, SourceType, Span};
+use oxc_ast::{BigUint, SourceType};
+use oxc_span::{Atom, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 

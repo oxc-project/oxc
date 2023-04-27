@@ -2,13 +2,14 @@ use std::hash::BuildHasherDefault;
 
 use oxc_ast::{
     ast::{ClassElement, MethodDefinitionKind},
-    AstKind, Atom, GetSpan, Span,
+    AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule, AstNode};

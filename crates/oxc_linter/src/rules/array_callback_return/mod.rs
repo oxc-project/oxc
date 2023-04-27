@@ -2,13 +2,14 @@ mod return_checker;
 
 use oxc_ast::{
     ast::{ChainElement, Expression},
-    AstKind, Atom, GetSpan, Span,
+    AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_span::{Atom, GetSpan, Span};
 use phf::phf_set;
 use serde_json::Value;
 

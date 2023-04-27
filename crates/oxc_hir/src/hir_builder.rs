@@ -5,7 +5,8 @@ use oxc_ast::ast::{
     AssignmentOperator, BigintLiteral, BinaryOperator, BooleanLiteral, LogicalOperator,
     NullLiteral, NumberLiteral, RegExpLiteral, StringLiteral, UnaryOperator, UpdateOperator,
 };
-use oxc_ast::{Atom, SourceType, Span};
+use oxc_ast::SourceType;
+use oxc_span::{Atom, Span};
 
 #[allow(clippy::wildcard_imports)]
 use crate::hir::*;

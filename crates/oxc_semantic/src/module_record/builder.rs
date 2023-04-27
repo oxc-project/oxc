@@ -1,7 +1,6 @@
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{
-    ast::*, module_record::*, syntax_directed_operations::BoundNames, Atom, GetSpan, Span,
-};
+use oxc_ast::{ast::*, module_record::*, syntax_directed_operations::BoundNames};
+use oxc_span::{Atom, GetSpan, Span};
 
 #[derive(Debug, Default)]
 pub struct ModuleRecordBuilder {

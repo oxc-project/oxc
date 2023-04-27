@@ -1,6 +1,7 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, Atom, Span};
+use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_span::{Atom, Span};
 
 use super::function::IsParenthesizedArrowFunction;
 use super::grammar::CoverGrammar;

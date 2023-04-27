@@ -3,7 +3,7 @@
 use std::num::NonZeroUsize;
 
 use bitflags::bitflags;
-use oxc_ast::Span;
+use oxc_span::Span;
 
 use super::SymbolId;
 use crate::node::AstNodeId;

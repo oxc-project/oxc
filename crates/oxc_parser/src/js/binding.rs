@@ -1,6 +1,7 @@
 use oxc_allocator::Box;
-use oxc_ast::{ast::*, Span};
+use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_span::Span;
 
 use super::list::{ArrayPatternList, ObjectPatternProperties};
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser};

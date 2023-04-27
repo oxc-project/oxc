@@ -24,6 +24,7 @@ oxc_printer     = { version = "0.0.6", path = "crates/oxc_printer" }
 oxc_semantic    = { version = "0.0.6", path = "crates/oxc_semantic" }
 
 # publish = false
+oxc_span     = { version = "0.0.0", path = "crates/oxc_span" }
 oxc_macros   = { version = "0.0.0", path = "crates/oxc_macros" }
 oxc_linter   = { version = "0.0.0", path = "crates/oxc_linter" }
 oxc_minifier = { version = "0.0.0", path = "crates/oxc_minifier" }

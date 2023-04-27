@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-use crate::Span;
+use oxc_span::Span;
 
 /// Trivias such as comments
 ///

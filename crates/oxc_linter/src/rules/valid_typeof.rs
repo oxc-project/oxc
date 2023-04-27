@@ -1,12 +1,13 @@
 use oxc_ast::{
     ast::{Expression, UnaryOperator},
-    AstKind, GetSpan, Span,
+    AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_span::{GetSpan, Span};
 use phf::{phf_map, Map};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
@@ -68,10 +69,10 @@ const VALID_TYPE: Map<&'static str, bool> = phf_map! {
 };
 impl Rule for ValidTypeof {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::UnaryExpression(unary) = node.get().kind() 
-            && unary.operator == UnaryOperator::Typeof 
-            && let AstKind::BinaryExpression(binary) = ctx.parent_kind(node) 
-            && binary.operator.is_equality() 
+        if let AstKind::UnaryExpression(unary) = node.get().kind()
+            && unary.operator == UnaryOperator::Typeof
+            && let AstKind::BinaryExpression(binary) = ctx.parent_kind(node)
+            && binary.operator.is_equality()
         {
             let (sibling,sibling_id) = if let Expression::UnaryExpression(left) = &binary.left && **left== *unary{
                 (&binary.right, node.next_sibling().unwrap())

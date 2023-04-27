@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
-use oxc_ast::Span;
 use oxc_diagnostics::Error;
+use oxc_span::Span;
 
 #[derive(Debug, Default)]
 pub struct Fix<'a> {
@@ -122,8 +122,8 @@ mod test {
     use std::borrow::Cow;
 
     use miette::{self, Diagnostic};
-    use oxc_ast::Span;
     use oxc_diagnostics::{thiserror::Error, Error};
+    use oxc_span::Span;
 
     use super::{Fix, FixResult, Fixer, Message};
 
