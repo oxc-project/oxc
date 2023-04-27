@@ -15,7 +15,6 @@ oxc_span      = { workspace = true }
 
 bitflags      = { workspace = true }
 thiserror     = { workspace = true }
-miette        = { workspace = true }
 rustc-hash    = { workspace = true }
 num-bigint    = { workspace = true }
 ordered-float = { workspace = true }
