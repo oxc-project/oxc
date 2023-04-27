@@ -1,12 +1,13 @@
 use oxc_ast::{
     ast::{AssignmentOperator, BinaryExpression, BinaryOperator, Expression, UnaryOperator},
-    AstKind, Span,
+    AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 

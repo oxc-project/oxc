@@ -1,5 +1,7 @@
+use oxc_span::{Atom, GetSpan, Span};
+
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, Atom, GetSpan, Span};
+use crate::ast::*;
 
 /// Untyped AST Node Kind
 #[derive(Debug, Clone, Copy, PartialEq)]

@@ -8,10 +8,9 @@ use std::{
 use bitflags::bitflags;
 use num_bigint::BigUint;
 use ordered_float::NotNan;
+use oxc_span::{Atom, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
-
-use crate::{Atom, Span};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]

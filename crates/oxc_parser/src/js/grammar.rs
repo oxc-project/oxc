@@ -1,7 +1,8 @@
 //! Cover Grammar for Destructuring Assignment
 
-use oxc_ast::{ast::*, GetSpan};
+use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
+use oxc_span::GetSpan;
 
 use crate::{diagnostics, Parser};
 

@@ -8,7 +8,7 @@ mod id;
 mod tree;
 
 use bitflags::bitflags;
-use oxc_ast::Atom;
+use oxc_span::Atom;
 use rustc_hash::FxHashMap;
 
 pub use self::{builder::ScopeBuilder, id::ScopeId, tree::ScopeTree};

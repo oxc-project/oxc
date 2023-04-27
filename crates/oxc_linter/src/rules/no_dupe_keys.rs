@@ -1,12 +1,13 @@
 use oxc_ast::{
     ast::{ObjectProperty, PropertyKind},
-    AstKind, GetSpan, Span,
+    AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
@@ -44,7 +45,7 @@ impl Rule for NoDupeKeys {
         if let AstKind::ObjectExpression(obj_expr) = node.get().kind() {
             let mut map = FxHashMap::default();
             for prop in obj_expr.properties.iter() {
-                if let ObjectProperty::Property(prop) = prop 
+                if let ObjectProperty::Property(prop) = prop
                     && let Some(key_name) = prop.key.static_name().as_ref() {
                     let hash = calculate_hash(key_name);
                     if let Some((prev_kind, prev_span)) = map.insert(hash, (prop.kind, prop.key.span())) {

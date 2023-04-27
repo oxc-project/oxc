@@ -1,8 +1,8 @@
-use oxc_ast::{Atom, Span};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
+use oxc_span::{Atom, Span};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Identifier `{0}` has already been declared")]

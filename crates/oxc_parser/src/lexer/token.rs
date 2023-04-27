@@ -1,7 +1,8 @@
 //! Token
 
 use num_bigint::BigUint;
-use oxc_ast::{ast::RegExpFlags, Span};
+use oxc_ast::ast::RegExpFlags;
+use oxc_span::Span;
 
 use super::kind::Kind;
 

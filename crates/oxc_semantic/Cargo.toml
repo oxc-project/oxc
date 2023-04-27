@@ -10,6 +10,7 @@ license.workspace     = true
 repository.workspace  = true
 
 [dependencies]
+oxc_span        = { workspace = true }
 oxc_ast         = { workspace = true }
 oxc_diagnostics = { workspace = true }
 

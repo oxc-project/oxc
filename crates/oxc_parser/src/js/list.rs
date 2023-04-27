@@ -1,10 +1,11 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, syntax_directed_operations::PrivateBoundIdentifiers, Atom, GetSpan, Span};
+use oxc_ast::{ast::*, syntax_directed_operations::PrivateBoundIdentifiers};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
     Result,
 };
+use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::diagnostics;

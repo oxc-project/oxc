@@ -3,7 +3,7 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use oxc_ast::{Atom, Span};
+use oxc_span::{Atom, Span};
 
 use super::{
     Mangler, Reference, ResolvedReference, ResolvedReferenceId, Symbol, SymbolFlags, SymbolId,

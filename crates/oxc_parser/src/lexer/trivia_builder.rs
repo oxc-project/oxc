@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
-use oxc_ast::{Span, Trivias};
+use oxc_ast::Trivias;
+use oxc_span::Span;
 
 #[derive(Debug, Default)]
 pub struct TriviaBuilder {

@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 
 pub use builder::JSDocBuilder;
 use once_cell::unsync::OnceCell;
-use oxc_ast::{GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use self::parser::JSDocParser;
 pub use self::parser::JSDocTag;

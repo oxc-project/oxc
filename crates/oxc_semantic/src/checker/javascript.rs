@@ -3,12 +3,13 @@ use oxc_ast::{
     ast::*,
     module_record::ExportLocalName,
     syntax_directed_operations::{BoundNames, IsSimpleParameterList, PropName},
-    AstKind, Atom, GetSpan, ModuleKind, Span,
+    AstKind, ModuleKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
+use oxc_span::{Atom, GetSpan, Span};
 use phf::{phf_set, Set};
 use rustc_hash::FxHashMap;
 

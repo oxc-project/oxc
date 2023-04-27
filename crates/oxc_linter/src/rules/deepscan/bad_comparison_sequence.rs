@@ -1,12 +1,13 @@
 use oxc_ast::{
-    ast::{Expression, BinaryExpression},
-    AstKind, Span,
+    ast::{BinaryExpression, Expression},
+    AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -44,9 +45,9 @@ declare_oxc_lint!(
 
 impl Rule for BadComparisonSequence {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::BinaryExpression(expr) = node.get().kind() 
-            && is_bad_comparison(expr) 
-            && has_no_bad_comparison_in_parents(node, ctx) 
+        if let AstKind::BinaryExpression(expr) = node.get().kind()
+            && is_bad_comparison(expr)
+            && has_no_bad_comparison_in_parents(node, ctx)
         {
             ctx.diagnostic(BadComparisonSequenceDiagnostic(expr.span));
         }
@@ -62,7 +63,7 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
         current_node = ctx.parent_node(current_node).unwrap();
         let kind = current_node.get().kind();
 
-        // `a === b === c === d === e` only produce one error, since `(a === b === c) === d === e` will produce two errors. 
+        // `a === b === c === d === e` only produce one error, since `(a === b === c) === d === e` will produce two errors.
         // So we should treat Parenthesized Expression as a boundary.
         if matches!(kind, AstKind::Root | AstKind::ParenthesizedExpression(_))
             || kind.is_declaration()
@@ -78,15 +79,15 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
 }
 
 fn is_bad_comparison(expr: &BinaryExpression) -> bool {
-    if expr.operator.is_equality() 
-        && let Expression::BinaryExpression(left_expr) = &expr.left 
+    if expr.operator.is_equality()
+        && let Expression::BinaryExpression(left_expr) = &expr.left
         && left_expr.operator.is_equality()
     {
         return true
     }
-    
-    if expr.operator.is_compare() 
-        && let Expression::BinaryExpression(left_expr) = &expr.left 
+
+    if expr.operator.is_compare()
+        && let Expression::BinaryExpression(left_expr) = &expr.left
         && left_expr.operator.is_compare()
     {
         return true

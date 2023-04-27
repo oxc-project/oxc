@@ -1,8 +1,7 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
+use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
-
-use crate::{Atom, Span};
 
 /// [Source Text Module Record](https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records)
 #[derive(Debug, Default)]

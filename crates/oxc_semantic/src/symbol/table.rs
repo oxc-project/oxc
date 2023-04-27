@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::ops::{Deref, Index, IndexMut};
 
 use oxc_ast::ast::IdentifierReference;
-use oxc_ast::Span;
+use oxc_span::Span;
 
 use super::{
     reference::{ResolvedReference, ResolvedReferenceId},

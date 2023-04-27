@@ -8,7 +8,7 @@ mod reference;
 mod table;
 
 use bitflags::bitflags;
-use oxc_ast::{Atom, Span};
+use oxc_span::{Atom, Span};
 
 use self::reference::ResolvedReferenceId;
 pub use self::{

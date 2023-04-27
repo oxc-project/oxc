@@ -2,11 +2,12 @@ use std::fmt::Display;
 
 use num_bigint::BigUint;
 use oxc_allocator::{Box, Vec};
+use oxc_span::{Atom, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, Atom, SourceType, Span};
+use crate::{ast::*, SourceType};
 
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]

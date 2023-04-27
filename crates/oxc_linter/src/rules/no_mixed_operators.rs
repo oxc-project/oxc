@@ -1,10 +1,11 @@
-use oxc_ast::{AstKind, GetSpan, Span};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
 

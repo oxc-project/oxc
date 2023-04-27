@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{
         BindingPatternKind, Class, ClassElement, Function, MethodDefinitionKind, PropertyDefinition,
     },
-    AstKind, GetSpan, Span,
+    AstKind,
 };
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -10,6 +10,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Symbol;
+use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::IsPrivate, context::LintContext, rule::Rule};
 

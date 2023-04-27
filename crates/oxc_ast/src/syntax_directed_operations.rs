@@ -1,7 +1,9 @@
 //! [ECMA262 Syntax-Directed Operations](https://tc39.es/ecma262/#sec-syntax-directed-operations)
 
+use oxc_span::Span;
+
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, Span};
+use crate::ast::*;
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
 pub trait BoundName {
