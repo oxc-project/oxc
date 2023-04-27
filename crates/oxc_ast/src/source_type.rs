@@ -2,7 +2,6 @@ use std::path::Path;
 
 #[cfg(feature = "serde")]
 use serde::Serialize;
-use thiserror::Error;
 
 /// Source Type for JavaScript vs TypeScript / Script vs Module / JSX
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -49,11 +48,8 @@ pub enum LanguageVariant {
     Jsx,
 }
 
-#[derive(Debug, Error)]
-pub enum SourceTypeError {
-    #[error("Unknown Extension: {0}")]
-    UnknownExtension(String),
-}
+#[derive(Debug)]
+pub struct UnknownExtension(pub String);
 
 impl Default for SourceType {
     fn default() -> Self {
@@ -161,11 +157,12 @@ impl SourceType {
     ///   * there is no file name
     ///   * the file extension is not one of "js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"
     /// # Errors
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, SourceTypeError> {
-        let file_name =
-            path.as_ref().file_name().and_then(std::ffi::OsStr::to_str).ok_or_else(|| {
-                SourceTypeError::UnknownExtension("Please provide a valid file name.".to_string())
-            })?;
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, UnknownExtension> {
+        let file_name = path
+            .as_ref()
+            .file_name()
+            .and_then(std::ffi::OsStr::to_str)
+            .ok_or_else(|| UnknownExtension("Please provide a valid file name.".to_string()))?;
 
         let extension = path
             .as_ref()
@@ -174,7 +171,7 @@ impl SourceType {
             .filter(|s| VALID_EXTENSIONS.contains(s))
             .ok_or_else(|| {
                 let path = path.as_ref().to_string_lossy();
-                SourceTypeError::UnknownExtension(
+                UnknownExtension(
                     format!("Please provide a valid file extension for {path}: .js, .mjs, .jsx or .cjs for JavaScript, or .ts, .mts, .cts or .tsx for TypeScript"),
                 )
             })?;

@@ -14,7 +14,6 @@ oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
 
 bitflags      = { workspace = true }
-thiserror     = { workspace = true }
 rustc-hash    = { workspace = true }
 num-bigint    = { workspace = true }
 ordered-float = { workspace = true }
