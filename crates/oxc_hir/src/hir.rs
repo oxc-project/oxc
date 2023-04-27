@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt;
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::{
@@ -951,8 +951,8 @@ impl VariableDeclarationKind {
     }
 }
 
-impl Display for VariableDeclarationKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for VariableDeclarationKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
             Self::Var => "var",
             Self::Const => "const",
@@ -1809,8 +1809,8 @@ pub enum ModuleExportName {
     StringLiteral(StringLiteral),
 }
 
-impl Display for ModuleExportName {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for ModuleExportName {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
             Self::Identifier(identifier) => identifier.name.to_string(),
             Self::StringLiteral(literal) => literal.value.to_string(),

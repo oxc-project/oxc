@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter, Result};
+use std::fmt;
 
 #[cfg(feature = "serde")]
 use serde::Serialize;
@@ -135,8 +135,8 @@ impl AssignmentOperator {
     }
 }
 
-impl Display for AssignmentOperator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl fmt::Display for AssignmentOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let operator = self.as_str();
         write!(f, "{operator}")
     }
@@ -278,8 +278,8 @@ impl BinaryOperator {
     }
 }
 
-impl Display for BinaryOperator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl fmt::Display for BinaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let operator = self.as_str();
         write!(f, "{operator}")
     }
@@ -307,8 +307,8 @@ impl LogicalOperator {
     }
 }
 
-impl Display for LogicalOperator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl fmt::Display for LogicalOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let operator = self.as_str();
         write!(f, "{operator}")
     }
@@ -368,8 +368,8 @@ impl UnaryOperator {
     }
 }
 
-impl Display for UnaryOperator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl fmt::Display for UnaryOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let operator = self.as_str();
         write!(f, "{operator}")
     }
@@ -394,8 +394,8 @@ impl UpdateOperator {
     }
 }
 
-impl Display for UpdateOperator {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+impl fmt::Display for UpdateOperator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let operator = self.as_str();
         write!(f, "{operator}")
     }

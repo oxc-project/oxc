@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{ser::Serializer, Serialize};
 
 use crate::ast::{Program, RegExpFlags};
@@ -29,7 +31,7 @@ impl<'a> Program<'a> {
 
 pub fn serialize_bigint<T, S>(value: &T, s: S) -> Result<S::Ok, S::Error>
 where
-    T: std::fmt::Display,
+    T: fmt::Display,
     S: serde::Serializer,
 {
     s.collect_str(&format_args!("{value}n"))

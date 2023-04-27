@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 use crate::project_root;
 
@@ -79,6 +79,6 @@ impl TestFile {
     }
 }
 
-fn err_to_string<E: std::fmt::Debug>(e: E) -> String {
+fn err_to_string<E: fmt::Debug>(e: E) -> String {
     format!("{e:?}")
 }

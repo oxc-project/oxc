@@ -1,10 +1,10 @@
-use std::fmt::{Debug, Display};
+use std::fmt;
 
 use oxc_semantic::Symbol;
 
 use crate::{context::LintContext, AstNode};
 
-pub trait Rule: Sized + Default + Debug {
+pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
     #[must_use]
     fn from_configuration(_value: serde_json::Value) -> Self {
@@ -54,8 +54,8 @@ impl RuleCategory {
     }
 }
 
-impl Display for RuleCategory {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for RuleCategory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Correctness => write!(f, "Correctness"),
             Self::Restriction => write!(f, "Restriction"),
