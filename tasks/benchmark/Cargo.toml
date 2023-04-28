@@ -21,6 +21,7 @@ oxc_ast          = { workspace = true }
 oxc_allocator    = { workspace = true }
 oxc_parser       = { workspace = true }
 oxc_semantic     = { workspace = true }
+oxc_ast_lower    = { workspace = true }
 oxc_tasks_common = { workspace = true }
 
 pico-args = { workspace = true }

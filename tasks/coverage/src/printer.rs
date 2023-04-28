@@ -2,6 +2,7 @@ use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_ast_lower::AstLower;
 use oxc_parser::Parser;
 use oxc_printer::{Printer, PrinterOptions};
 
@@ -107,8 +108,10 @@ impl Case for PrinterBabelCase {
 fn get_result(source_text: &str, source_type: SourceType, options: PrinterOptions) -> TestResult {
     let allocator = Allocator::default();
     let program1 = Parser::new(&allocator, source_text, source_type).parse().program;
+    let _ = AstLower::new(&allocator).build(&program1); // temporary Stub for testing ast_lower
     let source_text1 = Printer::new(source_text.len(), options).build(&program1);
     let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;
+    let _ = AstLower::new(&allocator).build(&program2); // temporary Stub for testing ast_lower
     let source_text2 = Printer::new(source_text1.len(), options).build(&program2);
     if source_text1 == source_text2 {
         TestResult::Passed

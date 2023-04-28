@@ -988,6 +988,7 @@ dependencies = [
  "oxc_ast",
  "oxc_hir",
  "oxc_parser",
+ "oxc_span",
  "serde",
  "serde_json",
 ]
@@ -1001,6 +1002,7 @@ dependencies = [
  "mimalloc",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_lower",
  "oxc_parser",
  "oxc_semantic",
  "oxc_tasks_common",
@@ -1038,6 +1040,7 @@ dependencies = [
  "miette",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_lower",
  "oxc_diagnostics",
  "oxc_minifier",
  "oxc_parser",
