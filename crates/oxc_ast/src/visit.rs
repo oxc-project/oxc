@@ -241,7 +241,7 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::CatchClause(clause);
         self.enter_node(kind);
         if let Some(param) = &clause.param {
-            self.visit_pattern(param);
+            self.visit_binding_pattern(param);
         }
         self.visit_statements(&clause.body.body);
         self.leave_node(kind);
@@ -291,7 +291,7 @@ pub trait Visit<'a>: Sized {
     fn visit_variable_declarator(&mut self, declarator: &'a VariableDeclarator<'a>) {
         let kind = AstKind::VariableDeclarator(declarator);
         self.enter_node(kind);
-        self.visit_pattern(&declarator.id);
+        self.visit_binding_pattern(&declarator.id);
         if let Some(init) = &declarator.init {
             self.visit_expression(init);
         }
@@ -344,7 +344,7 @@ pub trait Visit<'a>: Sized {
         for decorator in &param.decorators {
             self.visit_decorator(decorator);
         }
-        self.visit_pattern(&param.pattern);
+        self.visit_binding_pattern(&param.pattern);
         self.leave_node(kind);
     }
 
@@ -704,7 +704,7 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::PropertyValue(value);
         self.enter_node(kind);
         match value {
-            PropertyValue::Pattern(pat) => self.visit_pattern(pat),
+            PropertyValue::Pattern(pat) => self.visit_binding_pattern(pat),
             PropertyValue::Expression(expr) => self.visit_expression(expr),
         }
         self.leave_node(kind);
@@ -985,7 +985,7 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Pattern ---------- */
 
-    fn visit_pattern(&mut self, pat: &'a BindingPattern<'a>) {
+    fn visit_binding_pattern(&mut self, pat: &'a BindingPattern<'a>) {
         match &pat.kind {
             BindingPatternKind::BindingIdentifier(ident) => {
                 self.visit_binding_identifier(ident);
@@ -1026,7 +1026,7 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::ArrayPattern(pat);
         self.enter_node(kind);
         for pat in pat.elements.iter().flatten() {
-            self.visit_pattern(pat);
+            self.visit_binding_pattern(pat);
         }
         self.leave_node(kind);
     }
@@ -1034,14 +1034,14 @@ pub trait Visit<'a>: Sized {
     fn visit_rest_element(&mut self, pat: &'a RestElement<'a>) {
         let kind = AstKind::RestElement(pat);
         self.enter_node(kind);
-        self.visit_pattern(&pat.argument);
+        self.visit_binding_pattern(&pat.argument);
         self.leave_node(kind);
     }
 
     fn visit_assignment_pattern(&mut self, pat: &'a AssignmentPattern<'a>) {
         let kind = AstKind::AssignmentPattern(pat);
         self.enter_node(kind);
-        self.visit_pattern(&pat.left);
+        self.visit_binding_pattern(&pat.left);
         self.visit_expression(&pat.right);
         self.leave_node(kind);
     }

@@ -173,7 +173,7 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_catch_clause(&mut self, clause: &'b mut CatchClause<'a>) {
         if let Some(param) = &mut clause.param {
-            self.visit_pattern(param);
+            self.visit_binding_pattern(param);
         }
         self.visit_statements(&mut clause.body.body);
     }
@@ -205,7 +205,7 @@ pub trait VisitMut<'a, 'b>: Sized {
     }
 
     fn visit_variable_declarator(&mut self, declarator: &'b mut VariableDeclarator<'a>) {
-        self.visit_pattern(&mut declarator.id);
+        self.visit_binding_pattern(&mut declarator.id);
         if let Some(init) = &mut declarator.init {
             self.visit_expression(init);
         }
@@ -246,7 +246,7 @@ pub trait VisitMut<'a, 'b>: Sized {
         for decorator in param.decorators.iter_mut() {
             self.visit_decorator(decorator);
         }
-        self.visit_pattern(&mut param.pattern);
+        self.visit_binding_pattern(&mut param.pattern);
     }
 
     /* ----------  Class ---------- */
@@ -533,7 +533,7 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_property_value(&mut self, value: &'b mut PropertyValue<'a>) {
         match value {
-            PropertyValue::Pattern(pat) => self.visit_pattern(pat),
+            PropertyValue::Pattern(pat) => self.visit_binding_pattern(pat),
             PropertyValue::Expression(expr) => self.visit_expression(expr),
         }
     }
@@ -771,7 +771,7 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     /* ----------  Pattern ---------- */
 
-    fn visit_pattern(&mut self, pat: &'b mut BindingPattern<'a>) {
+    fn visit_binding_pattern(&mut self, pat: &'b mut BindingPattern<'a>) {
         match &mut pat.kind {
             BindingPatternKind::BindingIdentifier(ident) => {
                 self.visit_binding_identifier(ident);
@@ -803,16 +803,16 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_array_pattern(&mut self, pat: &'b mut ArrayPattern<'a>) {
         for pat in pat.elements.iter_mut().flatten() {
-            self.visit_pattern(pat);
+            self.visit_binding_pattern(pat);
         }
     }
 
     fn visit_rest_element(&mut self, pat: &'b mut RestElement<'a>) {
-        self.visit_pattern(&mut pat.argument);
+        self.visit_binding_pattern(&mut pat.argument);
     }
 
     fn visit_assignment_pattern(&mut self, pat: &'b mut AssignmentPattern<'a>) {
-        self.visit_pattern(&mut pat.left);
+        self.visit_binding_pattern(&mut pat.left);
         self.visit_expression(&mut pat.right);
     }
 
