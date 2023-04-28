@@ -1,11 +1,6 @@
 #![allow(clippy::unused_self, clippy::too_many_arguments)]
 
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_ast::ast::{
-    AssignmentOperator, BigintLiteral, BinaryOperator, BooleanLiteral, LogicalOperator,
-    NullLiteral, NumberLiteral, RegExpLiteral, StringLiteral, UnaryOperator, UpdateOperator,
-};
-use oxc_ast::SourceType;
 use oxc_span::{Atom, Span};
 
 #[allow(clippy::wildcard_imports)]
@@ -62,11 +57,10 @@ impl<'a> HirBuilder<'a> {
     pub fn program(
         &self,
         span: Span,
-        source_type: SourceType,
         directives: Vec<'a, Directive>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
-        Program { span, source_type, directives, body }
+        Program { span, directives, body }
     }
 
     /* ---------- Literals ---------- */
@@ -107,12 +101,30 @@ impl<'a> HirBuilder<'a> {
         Expression::BigintLiteral(self.alloc(literal))
     }
 
+    #[must_use]
+    #[inline]
+    pub fn literal_template_expression(&self, literal: TemplateLiteral<'a>) -> Expression<'a> {
+        Expression::TemplateLiteral(self.alloc(literal))
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn identifier_reference_expression(&self, ident: IdentifierReference) -> Expression<'a> {
+        Expression::Identifier(self.alloc(ident))
+    }
+
     /* ---------- Identifiers ---------- */
 
     #[must_use]
     #[inline]
     pub fn identifier_expression(&self, identifier: IdentifierReference) -> Expression<'a> {
         Expression::Identifier(self.alloc(identifier))
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn label_identifier(&self, span: Span, name: Atom) -> LabelIdentifier {
+        LabelIdentifier { span, name }
     }
 
     /* ---------- Statements ---------- */
@@ -136,10 +148,8 @@ impl<'a> HirBuilder<'a> {
 
     #[must_use]
     #[inline]
-    pub fn block_statement(&self, block: Box<'a, BlockStatement<'a>>) -> Statement<'a> {
-        Statement::BlockStatement(
-            self.alloc(BlockStatement { span: block.span, body: block.unbox().body }),
-        )
+    pub fn block_statement(&self, span: Span, body: Vec<'a, Statement<'a>>) -> Statement<'a> {
+        Statement::BlockStatement(self.block(span, body))
     }
 
     #[must_use]
