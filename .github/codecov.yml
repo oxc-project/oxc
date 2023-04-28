@@ -1,8 +1,14 @@
 coverage:
   status:
-    project: yes
-    patch: no
-    changes: no
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+    changes:
+      default:
+        informational: true
 
 ignore:
   - "**/main.rs"
