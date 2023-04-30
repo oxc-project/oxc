@@ -93,9 +93,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
                 if in_boolean_position {
                     return true;
                 }
-                expr.elements
-                    .iter()
-                    .all(|element| element.as_ref().map_or(true, |e| e.is_constant(false, ctx)))
+                expr.elements.iter().all(|element| element.is_constant(false, ctx))
             }
             Self::UnaryExpression(expr) => match expr.operator {
                 UnaryOperator::Void => true,

@@ -116,7 +116,7 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
         let element = match p.cur_kind() {
-            Kind::Comma => p.parse_elision(),
+            Kind::Comma => Ok(p.parse_elision()),
             Kind::Dot3 => p.parse_spread_element().map(ArrayExpressionElement::SpreadElement),
             _ => p.parse_assignment_expression_base().map(ArrayExpressionElement::Expression),
         };

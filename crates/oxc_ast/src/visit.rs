@@ -517,7 +517,7 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::ArrayExpression(expr);
         self.enter_node(kind);
         for elem in expr.elements.iter() {
-            self.visit_array_expression_element(elem)
+            self.visit_array_expression_element(elem);
         }
         self.leave_node(kind);
     }

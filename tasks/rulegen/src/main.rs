@@ -3,8 +3,8 @@ use std::borrow::Cow;
 use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
-    ArrayExpression, CallExpression, ExpressionStatement, ObjectExpression, Program, Property,
-    Statement, StringLiteral, TemplateLiteral,
+    ArrayExpression, ArrayExpressionElement, CallExpression, ExpressionStatement, ObjectExpression,
+    Program, Property, Statement, StringLiteral, TemplateLiteral,
 };
 use oxc_ast::{
     ast::{Argument, Expression, ObjectProperty, PropertyKey, PropertyValue},
@@ -28,9 +28,9 @@ struct TestCase<'a> {
 }
 
 impl<'a> TestCase<'a> {
-    fn new(source_text: &'a str, arg: &'a Argument<'a>) -> Option<Self> {
+    fn new(source_text: &'a str, arg: &'a ArrayExpressionElement<'a>) -> Option<Self> {
         let mut test_case = TestCase { source_text, code: None, test_code: None };
-        if let Argument::Expression(expr) = arg {
+        if let ArrayExpressionElement::Expression(expr) = arg {
             test_case.visit_expression(expr);
             return Some(test_case);
         }
@@ -69,7 +69,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
                 // ['class A {', '}'].join('\n')
                 let mut code = String::new();
                 for arg in &array_expr.elements {
-                    let Some(Argument::Expression(Expression::StringLiteral(lit))) = arg else { continue };
+                    let ArrayExpressionElement::Expression(Expression::StringLiteral(lit)) = arg else { continue };
                     code.push_str(lit.value.as_str());
                     code.push('\n');
                 }
@@ -149,7 +149,7 @@ impl<'a> State<'a> {
     fn pass_cases(&self) -> Vec<TestCase> {
         self.valid_tests
             .iter()
-            .flat_map(|array_expr| (&array_expr.elements).into_iter().flatten())
+            .flat_map(|array_expr| (&array_expr.elements).into_iter())
             .filter_map(|arg| TestCase::new(self.source_text, arg))
             .collect::<Vec<_>>()
     }
@@ -157,7 +157,7 @@ impl<'a> State<'a> {
     fn fail_cases(&self) -> Vec<TestCase> {
         self.invalid_tests
             .iter()
-            .flat_map(|array_expr| (&array_expr.elements).into_iter().flatten())
+            .flat_map(|array_expr| (&array_expr.elements).into_iter())
             .filter_map(|arg| TestCase::new(self.source_text, arg))
             .collect::<Vec<_>>()
     }
