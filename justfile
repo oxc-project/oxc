@@ -40,7 +40,7 @@ benchmark:
 
 # Create a new lint rule by providing the ESLint name. See `tasks/rulegen`
 new-rule name:
-  cargo run -p rulegen ${{name}}
+  cargo run -p rulegen {{name}}
 
 # We are ready, let's run the same CI commands
 ready:
