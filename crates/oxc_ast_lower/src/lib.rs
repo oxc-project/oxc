@@ -275,6 +275,13 @@ impl<'a> AstLower<'a> {
         todo!()
     }
 
+    fn lower_array_expression_element(
+        &mut self,
+        elem: &ast::ArrayExpressionElement<'a>,
+    ) -> hir::ArrayExpressionElement<'a> {
+        todo!()
+    }
+
     fn lower_argument(&mut self, arg: &ast::Argument<'a>) -> hir::Argument<'a> {
         todo!()
     }

@@ -255,7 +255,7 @@ impl NoConstantBinaryExpression {
                     || array_expr
                         .elements
                         .iter()
-                        .filter(|e| matches!(e, Some(Argument::Expression(_))))
+                        .filter(|e| matches!(e, ArrayExpressionElement::Expression(_)))
                         .count()
                         > 1
             }

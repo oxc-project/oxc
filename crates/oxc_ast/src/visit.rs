@@ -5,6 +5,7 @@
 //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)
 
 use oxc_allocator::Vec;
+use oxc_span::Span;
 
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, ast_kind::AstKind};
@@ -515,8 +516,19 @@ pub trait Visit<'a>: Sized {
     fn visit_array_expression(&mut self, expr: &'a ArrayExpression<'a>) {
         let kind = AstKind::ArrayExpression(expr);
         self.enter_node(kind);
-        for elem in expr.elements.iter().flatten() {
-            self.visit_argument(elem);
+        for elem in expr.elements.iter() {
+            self.visit_array_expression_element(elem)
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_array_expression_element(&mut self, arg: &'a ArrayExpressionElement<'a>) {
+        let kind = AstKind::ArrayExpressionElement(arg);
+        self.enter_node(kind);
+        match arg {
+            ArrayExpressionElement::SpreadElement(spread) => self.visit_spread_element(spread),
+            ArrayExpressionElement::Expression(expr) => self.visit_expression(expr),
+            ArrayExpressionElement::Elision(span) => self.visit_elision(*span),
         }
         self.leave_node(kind);
     }
@@ -535,6 +547,12 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::SpreadElement(elem);
         self.enter_node(kind);
         self.visit_expression(&elem.argument);
+        self.leave_node(kind);
+    }
+
+    fn visit_elision(&mut self, span: Span) {
+        let kind = AstKind::Elision(span);
+        self.enter_node(kind);
         self.leave_node(kind);
     }
 

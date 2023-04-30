@@ -455,8 +455,17 @@ pub struct ThisExpression {
 pub struct ArrayExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub elements: Vec<'a, Option<Argument<'a>>>,
+    pub elements: Vec<'a, ArrayExpressionElement<'a>>,
     pub trailing_comma: Option<Span>,
+}
+
+/// Array Expression Element
+#[derive(Debug, PartialEq, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
+pub enum ArrayExpressionElement<'a> {
+    SpreadElement(Box<'a, SpreadElement<'a>>),
+    Expression(Expression<'a>),
+    Elision(Span),
 }
 
 /// Object Expression

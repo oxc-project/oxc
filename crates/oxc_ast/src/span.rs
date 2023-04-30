@@ -227,6 +227,16 @@ impl<'a> GetSpan for Argument<'a> {
     }
 }
 
+impl<'a> GetSpan for ArrayExpressionElement<'a> {
+    fn span(&self) -> Span {
+        match self {
+            Self::SpreadElement(e) => e.span,
+            Self::Expression(expr) => expr.span(),
+            Self::Elision(span) => *span,
+        }
+    }
+}
+
 impl<'a> GetSpan for ForStatementInit<'a> {
     fn span(&self) -> Span {
         match self {

@@ -171,6 +171,16 @@ impl<'a, 'b> IsConstant<'a, 'b> for Argument<'a> {
     }
 }
 
+impl<'a, 'b> IsConstant<'a, 'b> for ArrayExpressionElement<'a> {
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
+        match self {
+            Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
+            Self::Expression(expr) => expr.is_constant(in_boolean_position, ctx),
+            Self::Elision(_) => true,
+        }
+    }
+}
+
 impl<'a, 'b> IsConstant<'a, 'b> for SpreadElement<'a> {
     fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         self.argument.is_constant(in_boolean_position, ctx)

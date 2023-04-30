@@ -71,25 +71,22 @@ impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
 
         let len = expr.elements.len();
         for (i, elem) in expr.elements.into_iter().enumerate() {
-            if let Some(argument) = elem {
-                match argument {
-                    Argument::Expression(expr) => {
-                        let target = AssignmentTargetMaybeDefault::cover(expr, p)?;
-                        elements.push(Some(target));
-                    }
-                    Argument::SpreadElement(elem) => {
-                        if i == len - 1 {
-                            rest = Some(AssignmentTarget::cover(elem.unbox().argument, p)?);
-                            if let Some(span) = expr.trailing_comma {
-                                p.error(diagnostics::RestElementTrailingComma(span));
-                            }
-                        } else {
-                            return Err(diagnostics::SpreadLastElement(elem.span).into());
+            match elem {
+                ArrayExpressionElement::Expression(expr) => {
+                    let target = AssignmentTargetMaybeDefault::cover(expr, p)?;
+                    elements.push(Some(target));
+                }
+                ArrayExpressionElement::SpreadElement(elem) => {
+                    if i == len - 1 {
+                        rest = Some(AssignmentTarget::cover(elem.unbox().argument, p)?);
+                        if let Some(span) = expr.trailing_comma {
+                            p.error(diagnostics::RestElementTrailingComma(span));
                         }
+                    } else {
+                        return Err(diagnostics::SpreadLastElement(elem.span).into());
                     }
                 }
-            } else {
-                elements.push(None);
+                ArrayExpressionElement::Elision(_) => elements.push(None),
             }
         }
 
