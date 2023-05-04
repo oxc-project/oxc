@@ -1,4 +1,4 @@
-#![allow(clippy::unused_self, clippy::too_many_arguments)]
+#![allow(clippy::unused_self, clippy::too_many_arguments, clippy::must_use_candidate)] // must_use_candidate is too annoying for this file
 
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_span::{Atom, Span};
@@ -6,7 +6,7 @@ use oxc_span::{Atom, Span};
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, SourceType};
 
-/// AST builder for creating AST spans
+/// AST builder for creating AST nodes
 pub struct AstBuilder<'a> {
     pub allocator: &'a Allocator,
 }
@@ -21,32 +21,28 @@ impl<'a> AstBuilder<'a> {
         Box(self.allocator.alloc(value))
     }
 
-    #[must_use]
     #[inline]
     pub fn new_vec<T>(&self) -> Vec<'a, T> {
         Vec::new_in(self.allocator)
     }
 
-    #[must_use]
+    #[inline]
     pub fn new_vec_with_capacity<T>(&self, capacity: usize) -> Vec<'a, T> {
         Vec::with_capacity_in(capacity, self.allocator)
     }
 
-    #[must_use]
+    #[inline]
     pub fn new_vec_single<T>(&self, value: T) -> Vec<'a, T> {
         let mut vec = self.new_vec_with_capacity(1);
         vec.push(value);
         vec
     }
 
-    #[must_use]
     #[inline]
     pub fn new_str(&self, value: &str) -> &'a str {
         String::from_str_in(value, self.allocator).into_bump_str()
     }
 
-    #[must_use]
-    #[inline]
     pub fn program(
         &self,
         span: Span,
@@ -59,54 +55,38 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Literals ---------- */
 
-    #[must_use]
-    #[inline]
     pub fn literal_string_expression(&self, literal: StringLiteral) -> Expression<'a> {
         Expression::StringLiteral(self.alloc(literal))
     }
 
-    #[must_use]
-    #[inline]
     pub fn literal_boolean_expression(&self, literal: BooleanLiteral) -> Expression<'a> {
         Expression::BooleanLiteral(self.alloc(literal))
     }
 
-    #[must_use]
-    #[inline]
     pub fn literal_null_expression(&self, literal: NullLiteral) -> Expression<'a> {
         Expression::NullLiteral(self.alloc(literal))
     }
 
-    #[must_use]
-    #[inline]
     pub fn literal_regexp_expression(&self, literal: RegExpLiteral) -> Expression<'a> {
         Expression::RegExpLiteral(self.alloc(literal))
     }
 
-    #[must_use]
-    #[inline]
     pub fn literal_number_expression(&self, literal: NumberLiteral<'a>) -> Expression<'a> {
         Expression::NumberLiteral(self.alloc(literal))
     }
 
-    #[must_use]
-    #[inline]
     pub fn literal_bigint_expression(&self, literal: BigintLiteral) -> Expression<'a> {
         Expression::BigintLiteral(self.alloc(literal))
     }
 
     /* ---------- Identifiers ---------- */
 
-    #[must_use]
-    #[inline]
     pub fn identifier_expression(&self, identifier: IdentifierReference) -> Expression<'a> {
         Expression::Identifier(self.alloc(identifier))
     }
 
     /* ---------- Statements ---------- */
 
-    #[must_use]
-    #[inline]
     pub fn directive(
         &self,
         span: Span,
@@ -116,40 +96,28 @@ impl<'a> AstBuilder<'a> {
         Directive { span, expression, directive }
     }
 
-    #[must_use]
-    #[inline]
     pub fn block(&self, span: Span, body: Vec<'a, Statement<'a>>) -> Box<'a, BlockStatement<'a>> {
         self.alloc(BlockStatement { span, body })
     }
 
-    #[must_use]
-    #[inline]
     pub fn block_statement(&self, block: Box<'a, BlockStatement<'a>>) -> Statement<'a> {
         Statement::BlockStatement(
             self.alloc(BlockStatement { span: block.span, body: block.unbox().body }),
         )
     }
 
-    #[must_use]
-    #[inline]
     pub fn break_statement(&self, span: Span, label: Option<LabelIdentifier>) -> Statement<'a> {
         Statement::BreakStatement(self.alloc(BreakStatement { span, label }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn continue_statement(&self, span: Span, label: Option<LabelIdentifier>) -> Statement<'a> {
         Statement::ContinueStatement(self.alloc(ContinueStatement { span, label }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn debugger_statement(&self, span: Span) -> Statement<'a> {
         Statement::DebuggerStatement(self.alloc(DebuggerStatement { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn do_while_statement(
         &self,
         span: Span,
@@ -159,20 +127,14 @@ impl<'a> AstBuilder<'a> {
         Statement::DoWhileStatement(self.alloc(DoWhileStatement { span, body, test }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn empty_statement(&self, span: Span) -> Statement<'a> {
         Statement::EmptyStatement(self.alloc(EmptyStatement { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn expression_statement(&self, span: Span, expression: Expression<'a>) -> Statement<'a> {
         Statement::ExpressionStatement(self.alloc(ExpressionStatement { span, expression }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn for_in_statement(
         &self,
         span: Span,
@@ -183,8 +145,6 @@ impl<'a> AstBuilder<'a> {
         Statement::ForInStatement(self.alloc(ForInStatement { span, left, right, body }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn for_of_statement(
         &self,
         span: Span,
@@ -196,8 +156,6 @@ impl<'a> AstBuilder<'a> {
         Statement::ForOfStatement(self.alloc(ForOfStatement { span, r#await, left, right, body }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn for_statement(
         &self,
         span: Span,
@@ -209,8 +167,6 @@ impl<'a> AstBuilder<'a> {
         Statement::ForStatement(self.alloc(ForStatement { span, init, test, update, body }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn if_statement(
         &self,
         span: Span,
@@ -221,8 +177,6 @@ impl<'a> AstBuilder<'a> {
         Statement::IfStatement(self.alloc(IfStatement { span, test, consequent, alternate }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn labeled_statement(
         &self,
         span: Span,
@@ -232,14 +186,10 @@ impl<'a> AstBuilder<'a> {
         Statement::LabeledStatement(self.alloc(LabeledStatement { span, label, body }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn return_statement(&self, span: Span, argument: Option<Expression<'a>>) -> Statement<'a> {
         Statement::ReturnStatement(self.alloc(ReturnStatement { span, argument }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn switch_statement(
         &self,
         span: Span,
@@ -249,8 +199,6 @@ impl<'a> AstBuilder<'a> {
         Statement::SwitchStatement(self.alloc(SwitchStatement { span, discriminant, cases }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn switch_case(
         &self,
         span: Span,
@@ -260,14 +208,10 @@ impl<'a> AstBuilder<'a> {
         SwitchCase { span, test, consequent }
     }
 
-    #[must_use]
-    #[inline]
     pub fn throw_statement(&self, span: Span, argument: Expression<'a>) -> Statement<'a> {
         Statement::ThrowStatement(self.alloc(ThrowStatement { span, argument }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn try_statement(
         &self,
         span: Span,
@@ -278,8 +222,6 @@ impl<'a> AstBuilder<'a> {
         Statement::TryStatement(self.alloc(TryStatement { span, block, handler, finalizer }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn catch_clause(
         &self,
         span: Span,
@@ -289,8 +231,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(CatchClause { span, param, body })
     }
 
-    #[must_use]
-    #[inline]
     pub fn while_statement(
         &self,
         span: Span,
@@ -300,8 +240,6 @@ impl<'a> AstBuilder<'a> {
         Statement::WhileStatement(self.alloc(WhileStatement { span, test, body }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn with_statement(
         &self,
         span: Span,
@@ -313,14 +251,10 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Expressions ---------- */
 
-    #[must_use]
-    #[inline]
     pub fn super_(&self, span: Span) -> Expression<'a> {
         Expression::Super(self.alloc(Super { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn meta_property(
         &self,
         span: Span,
@@ -330,8 +264,6 @@ impl<'a> AstBuilder<'a> {
         Expression::MetaProperty(self.alloc(MetaProperty { span, meta, property }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn array_expression(
         &self,
         span: Span,
@@ -341,8 +273,6 @@ impl<'a> AstBuilder<'a> {
         Expression::ArrayExpression(self.alloc(ArrayExpression { span, elements, trailing_comma }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn arrow_expression(
         &self,
         span: Span,
@@ -366,8 +296,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn assignment_expression(
         &self,
         span: Span,
@@ -383,14 +311,10 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn await_expression(&self, span: Span, argument: Expression<'a>) -> Expression<'a> {
         Expression::AwaitExpression(self.alloc(AwaitExpression { span, argument }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn binary_expression(
         &self,
         span: Span,
@@ -401,8 +325,6 @@ impl<'a> AstBuilder<'a> {
         Expression::BinaryExpression(self.alloc(BinaryExpression { span, left, operator, right }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn call_expression(
         &self,
         span: Span,
@@ -420,20 +342,14 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn chain_expression(&self, span: Span, expression: ChainElement<'a>) -> Expression<'a> {
         Expression::ChainExpression(self.alloc(ChainExpression { span, expression }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn class_expression(&self, class: Box<'a, Class<'a>>) -> Expression<'a> {
         Expression::ClassExpression(class)
     }
 
-    #[must_use]
-    #[inline]
     pub fn conditional_expression(
         &self,
         span: Span,
@@ -449,14 +365,10 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn function_expression(&self, function: Box<'a, Function<'a>>) -> Expression<'a> {
         Expression::FunctionExpression(function)
     }
 
-    #[must_use]
-    #[inline]
     pub fn import_expression(
         &self,
         span: Span,
@@ -466,8 +378,6 @@ impl<'a> AstBuilder<'a> {
         Expression::ImportExpression(self.alloc(ImportExpression { span, source, arguments }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn logical_expression(
         &self,
         span: Span,
@@ -478,8 +388,6 @@ impl<'a> AstBuilder<'a> {
         Expression::LogicalExpression(self.alloc(LogicalExpression { span, left, operator, right }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn computed_member_expression(
         &self,
         span: Span,
@@ -497,8 +405,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn static_member_expression(
         &self,
         span: Span,
@@ -516,8 +422,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn private_field_expression(
         &self,
         span: Span,
@@ -535,8 +439,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn new_expression(
         &self,
         span: Span,
@@ -552,8 +454,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn object_expression(
         &self,
         span: Span,
@@ -567,8 +467,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn parenthesized_expression(
         &self,
         span: Span,
@@ -579,8 +477,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    #[must_use]
-    #[inline]
     pub fn sequence_expression(
         &self,
         span: Span,
@@ -589,8 +485,6 @@ impl<'a> AstBuilder<'a> {
         Expression::SequenceExpression(self.alloc(SequenceExpression { span, expressions }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn tagged_template_expression(
         &self,
         span: Span,
@@ -606,8 +500,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn template_literal_expression(
         &self,
         template_literal: TemplateLiteral<'a>,
@@ -615,14 +507,10 @@ impl<'a> AstBuilder<'a> {
         Expression::TemplateLiteral(self.alloc(template_literal))
     }
 
-    #[must_use]
-    #[inline]
     pub fn this_expression(&self, span: Span) -> Expression<'a> {
         Expression::ThisExpression(self.alloc(ThisExpression { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn unary_expression(
         &self,
         span: Span,
@@ -638,8 +526,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn update_expression(
         &self,
         span: Span,
@@ -655,8 +541,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn yield_expression(
         &self,
         span: Span,
@@ -667,14 +551,10 @@ impl<'a> AstBuilder<'a> {
     }
 
     /* ---------- Functions ---------- */
-    #[must_use]
-    #[inline]
     pub fn function_declaration(&self, func: Box<'a, Function<'a>>) -> Statement<'a> {
         Statement::Declaration(Declaration::FunctionDeclaration(func))
     }
 
-    #[must_use]
-    #[inline]
     pub fn formal_parameters(
         &self,
         span: Span,
@@ -684,8 +564,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(FormalParameters { span, kind, items })
     }
 
-    #[must_use]
-    #[inline]
     pub fn formal_parameter(
         &self,
         span: Span,
@@ -697,8 +575,6 @@ impl<'a> AstBuilder<'a> {
         FormalParameter { span, pattern, accessibility, readonly, decorators }
     }
 
-    #[must_use]
-    #[inline]
     #[allow(clippy::fn_params_excessive_bools)]
     pub fn function(
         &self,
@@ -729,8 +605,6 @@ impl<'a> AstBuilder<'a> {
         })
     }
 
-    #[must_use]
-    #[inline]
     pub fn function_body(
         &self,
         span: Span,
@@ -742,8 +616,6 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Class ---------- */
 
-    #[must_use]
-    #[inline]
     pub fn class(
         &self,
         r#type: ClassType,
@@ -771,8 +643,6 @@ impl<'a> AstBuilder<'a> {
         })
     }
 
-    #[must_use]
-    #[inline]
     pub fn class_body(
         &self,
         span: Span,
@@ -781,20 +651,14 @@ impl<'a> AstBuilder<'a> {
         self.alloc(ClassBody { span, body })
     }
 
-    #[must_use]
-    #[inline]
     pub fn class_declaration(&self, class: Box<'a, Class<'a>>) -> Statement<'a> {
         Statement::Declaration(Declaration::ClassDeclaration(class))
     }
 
-    #[must_use]
-    #[inline]
     pub fn static_block(&self, span: Span, body: Vec<'a, Statement<'a>>) -> ClassElement<'a> {
         ClassElement::StaticBlock(self.alloc(StaticBlock { span, body }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn accessor_property(
         &self,
         span: Span,
@@ -814,8 +678,6 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Declarations ---------- */
 
-    #[must_use]
-    #[inline]
     pub fn variable_declaration(
         &self,
         span: Span,
@@ -826,8 +688,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(VariableDeclaration { span, kind, declarations, modifiers })
     }
 
-    #[must_use]
-    #[inline]
     pub fn variable_declarator(
         &self,
         span: Span,
@@ -841,8 +701,6 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Patterns ---------- */
 
-    #[must_use]
-    #[inline]
     pub fn binding_pattern(
         &self,
         kind: BindingPatternKind<'a>,
@@ -852,14 +710,10 @@ impl<'a> AstBuilder<'a> {
         BindingPattern { kind, type_annotation, optional }
     }
 
-    #[must_use]
-    #[inline]
     pub fn binding_identifier(&self, identifier: BindingIdentifier) -> BindingPatternKind<'a> {
         BindingPatternKind::BindingIdentifier(self.alloc(identifier))
     }
 
-    #[must_use]
-    #[inline]
     pub fn object_pattern(
         &self,
         span: Span,
@@ -868,8 +722,6 @@ impl<'a> AstBuilder<'a> {
         BindingPatternKind::ObjectPattern(self.alloc(ObjectPattern { span, properties }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn spread_element(
         &self,
         span: Span,
@@ -878,8 +730,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(SpreadElement { span, argument })
     }
 
-    #[must_use]
-    #[inline]
     pub fn property(
         &self,
         span: Span,
@@ -893,8 +743,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(Property { span, kind, key, value, method, shorthand, computed })
     }
 
-    #[must_use]
-    #[inline]
     pub fn array_pattern(
         &self,
         span: Span,
@@ -903,8 +751,6 @@ impl<'a> AstBuilder<'a> {
         BindingPatternKind::ArrayPattern(self.alloc(ArrayPattern { span, elements }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn assignment_pattern(
         &self,
         span: Span,
@@ -919,8 +765,6 @@ impl<'a> AstBuilder<'a> {
         }
     }
 
-    #[must_use]
-    #[inline]
     pub fn rest_element(
         &self,
         span: Span,
@@ -929,8 +773,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(RestElement { span, argument })
     }
 
-    #[must_use]
-    #[inline]
     pub fn rest_element_pattern(&self, elem: Box<'a, RestElement<'a>>) -> BindingPattern<'a> {
         BindingPattern {
             kind: BindingPatternKind::RestElement(elem),
@@ -941,14 +783,10 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Modules ---------- */
 
-    #[must_use]
-    #[inline]
     pub fn module_declaration(&self, span: Span, kind: ModuleDeclarationKind<'a>) -> Statement<'a> {
         Statement::ModuleDeclaration(self.alloc(ModuleDeclaration { span, kind }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn import_declaration(
         &self,
         specifiers: Vec<'a, ImportDeclarationSpecifier>,
@@ -959,8 +797,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(ImportDeclaration { specifiers, source, assertions, import_kind })
     }
 
-    #[must_use]
-    #[inline]
     pub fn export_all_declaration(
         &self,
         exported: Option<ModuleExportName>,
@@ -971,8 +807,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(ExportAllDeclaration { exported, source, assertions, export_kind })
     }
 
-    #[must_use]
-    #[inline]
     pub fn export_default_declaration(
         &self,
         declaration: ExportDefaultDeclarationKind<'a>,
@@ -981,8 +815,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(ExportDefaultDeclaration { declaration, exported })
     }
 
-    #[must_use]
-    #[inline]
     pub fn export_named_declaration(
         &self,
         declaration: Option<Declaration<'a>>,
@@ -994,8 +826,6 @@ impl<'a> AstBuilder<'a> {
     }
 
     /* ---------- JSX ----------------- */
-    #[must_use]
-    #[inline]
     pub fn jsx_element(
         &self,
         span: Span,
@@ -1006,8 +836,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXElement { span, opening_element, closing_element, children })
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_opening_element(
         &self,
         span: Span,
@@ -1019,8 +847,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXOpeningElement { span, self_closing, name, attributes, type_parameters })
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_closing_element(
         &self,
         span: Span,
@@ -1029,8 +855,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXClosingElement { span, name })
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_fragment(
         &self,
         span: Span,
@@ -1041,20 +865,14 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXFragment { span, opening_fragment, closing_fragment, children })
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_opening_fragment(&self, span: Span) -> JSXOpeningFragment {
         JSXOpeningFragment { span }
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_closing_fragment(&self, span: Span) -> JSXClosingFragment {
         JSXClosingFragment { span }
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_namespaced_name(
         &self,
         span: Span,
@@ -1064,8 +882,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXNamespacedName { span, namespace, property })
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_member_expression(
         &self,
         span: Span,
@@ -1075,8 +891,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXMemberExpression { span, object, property })
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_expression_container(
         &self,
         span: Span,
@@ -1085,20 +899,14 @@ impl<'a> AstBuilder<'a> {
         JSXExpressionContainer { span, expression }
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_spread_child(&self, span: Span, expression: Expression<'a>) -> JSXSpreadChild<'a> {
         JSXSpreadChild { span, expression }
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_empty_expression(&self, span: Span) -> JSXEmptyExpression {
         JSXEmptyExpression { span }
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_attribute(
         &self,
         span: Span,
@@ -1108,8 +916,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXAttribute { span, name, value })
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_spread_attribute(
         &self,
         span: Span,
@@ -1118,21 +924,15 @@ impl<'a> AstBuilder<'a> {
         self.alloc(JSXSpreadAttribute { span, argument })
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_identifier(&self, span: Span, name: Atom) -> JSXIdentifier {
         JSXIdentifier { span, name }
     }
 
-    #[must_use]
-    #[inline]
     pub fn jsx_text(&self, span: Span, value: Atom) -> JSXText {
         JSXText { span, value }
     }
 
     /* ---------- TypeScript ---------- */
-    #[must_use]
-    #[inline]
     pub fn ts_module_declaration(
         &self,
         span: Span,
@@ -1143,8 +943,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(TSModuleDeclaration { span, id, body, modifiers })
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_annotation(
         &self,
         span: Span,
@@ -1153,26 +951,18 @@ impl<'a> AstBuilder<'a> {
         self.alloc(TSTypeAnnotation { span, type_annotation })
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_literal_type(&self, span: Span, literal: TSLiteral<'a>) -> TSType<'a> {
         TSType::TSLiteralType(self.alloc(TSLiteralType { span, literal }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_union_type(&self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
         TSType::TSUnionType(self.alloc(TSUnionType { span, types }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_intersection_type(&self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
         TSType::TSIntersectionType(self.alloc(TSIntersectionType { span, types }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_operator_type(
         &self,
         span: Span,
@@ -1186,14 +976,10 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_array_type(&self, span: Span, element_type: TSType<'a>) -> TSType<'a> {
         TSType::TSArrayType(self.alloc(TSArrayType { span, element_type }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_indexed_access_type(
         &self,
         span: Span,
@@ -1207,8 +993,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_tuple_type(
         &self,
         span: Span,
@@ -1217,8 +1001,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSTupleType(self.alloc(TSTupleType { span, element_types }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_reference(
         &self,
         span: Span,
@@ -1228,14 +1010,10 @@ impl<'a> AstBuilder<'a> {
         TSType::TSTypeReference(self.alloc(TSTypeReference { span, type_name, type_parameters }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_literal(&self, span: Span, members: Vec<'a, TSSignature<'a>>) -> TSType<'a> {
         TSType::TSTypeLiteral(self.alloc(TSTypeLiteral { span, members }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_implement(
         &self,
         span: Span,
@@ -1245,8 +1023,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(TSClassImplements { span, expression, type_parameters })
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_parameter(
         &self,
         span: Span,
@@ -1259,8 +1035,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(TSTypeParameter { span, name, constraint, default, r#in, out })
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_parameters(
         &self,
         span: Span,
@@ -1269,8 +1043,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(TSTypeParameterDeclaration { span, params })
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_interface_heritages(
         &self,
         extends: Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>,
@@ -1283,8 +1055,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_interface_body(
         &self,
         span: Span,
@@ -1293,8 +1063,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(TSInterfaceBody { span, body })
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_index_signature(
         &self,
         span: Span,
@@ -1308,8 +1076,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_property_signature(
         &self,
         span: Span,
@@ -1329,8 +1095,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_call_signature_declaration(
         &self,
         span: Span,
@@ -1346,8 +1110,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_construct_signature_declaration(
         &self,
         span: Span,
@@ -1363,8 +1125,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_method_signature(
         &self,
         span: Span,
@@ -1388,8 +1148,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_module_block(
         &self,
         span: Span,
@@ -1398,8 +1156,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(TSModuleBlock { span, body })
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_arguments(
         &self,
         span: Span,
@@ -1408,8 +1164,6 @@ impl<'a> AstBuilder<'a> {
         self.alloc(TSTypeParameterInstantiation { span, params })
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_as_expression(
         &self,
         span: Span,
@@ -1419,8 +1173,6 @@ impl<'a> AstBuilder<'a> {
         Expression::TSAsExpression(self.alloc(TSAsExpression { span, expression, type_annotation }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_satisfies_expression(
         &self,
         span: Span,
@@ -1434,14 +1186,10 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_non_null_expression(&self, span: Span, expression: Expression<'a>) -> Expression<'a> {
         Expression::TSNonNullExpression(self.alloc(TSNonNullExpression { span, expression }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_assertion(
         &self,
         span: Span,
@@ -1455,8 +1203,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_import_equals_declaration(
         &self,
         span: Span,
@@ -1474,8 +1220,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_interface_declaration(
         &self,
         span: Span,
@@ -1495,8 +1239,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_alias_declaration(
         &self,
         span: Span,
@@ -1514,8 +1256,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_enum_declaration(
         &self,
         span: Span,
@@ -1531,92 +1271,62 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn decorator(&self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
         Decorator { span, expression }
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_void_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSVoidKeyword(self.alloc(TSVoidKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_this_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSThisKeyword(self.alloc(TSThisKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_any_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSAnyKeyword(self.alloc(TSAnyKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_unknown_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSUnknownKeyword(self.alloc(TSUnknownKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_number_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSNumberKeyword(self.alloc(TSNumberKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_boolean_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSBooleanKeyword(self.alloc(TSBooleanKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_object_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSObjectKeyword(self.alloc(TSObjectKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_string_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSStringKeyword(self.alloc(TSStringKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_bigint_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSBigIntKeyword(self.alloc(TSBigIntKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_symbol_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSSymbolKeyword(self.alloc(TSSymbolKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_null_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSNullKeyword(self.alloc(TSNullKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_undefined_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSUndefinedKeyword(self.alloc(TSUndefinedKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_never_keyword(&self, span: Span) -> TSType<'a> {
         TSType::TSNeverKeyword(self.alloc(TSNeverKeyword { span }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_template_literal_type(
         &self,
         span: Span,
@@ -1626,8 +1336,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSTemplateLiteralType(self.alloc(TSTemplateLiteralType { span, quasis, types }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_query_type(
         &self,
         span: Span,
@@ -1637,8 +1345,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSTypeQuery(self.alloc(TSTypeQuery { span, expr_name, type_parameters }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_conditional_type(
         &self,
         span: Span,
@@ -1656,8 +1362,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_mapped_type(
         &self,
         span: Span,
@@ -1677,8 +1381,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_import_type(
         &self,
         span: Span,
@@ -1696,8 +1398,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_constructor_type(
         &self,
         span: Span,
@@ -1715,8 +1415,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_function_type(
         &self,
         span: Span,
@@ -1732,8 +1430,6 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_infer_type(
         &self,
         span: Span,
@@ -1742,8 +1438,6 @@ impl<'a> AstBuilder<'a> {
         TSType::TSInferType(self.alloc(TSInferType { span, type_parameter }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn ts_type_predicate(
         &self,
         span: Span,
@@ -1760,8 +1454,6 @@ impl<'a> AstBuilder<'a> {
     }
 
     /* JSDoc */
-    #[must_use]
-    #[inline]
     pub fn js_doc_nullable_type(
         &self,
         span: Span,
@@ -1771,8 +1463,6 @@ impl<'a> AstBuilder<'a> {
         TSType::JSDocNullableType(self.alloc(JSDocNullableType { span, type_annotation, postfix }))
     }
 
-    #[must_use]
-    #[inline]
     pub fn js_doc_unknown_type(&self, span: Span) -> TSType<'a> {
         TSType::JSDocUnknownType(self.alloc(JSDocUnknownType { span }))
     }
