@@ -19,7 +19,7 @@ on:
 # cancel previous job runs for the same workflow + pr
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 jobs:
   cache: # Warm cache factory for all other CI jobs
