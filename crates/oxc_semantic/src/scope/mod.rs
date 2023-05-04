@@ -30,7 +30,7 @@ pub struct Scope {
 }
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct ScopeFlags: u16 {
         const Top              = 1 << 0;
         const Function         = 1 << 1;
@@ -40,8 +40,8 @@ bitflags! {
         const Constructor      = 1 << 6;
         const GetAccessor      = 1 << 7;
         const SetAccessor      = 1 << 8;
-        const VAR = Self::Top.bits | Self::Function.bits | Self::ClassStaticBlock.bits | Self::TsModuleBlock.bits;
-        const MODIFIERS = Self::Constructor.bits | Self::GetAccessor.bits | Self::SetAccessor.bits;
+        const VAR = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
+        const MODIFIERS = Self::Constructor.bits() | Self::GetAccessor.bits() | Self::SetAccessor.bits();
     }
 }
 

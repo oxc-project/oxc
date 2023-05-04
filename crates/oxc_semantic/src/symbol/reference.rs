@@ -17,11 +17,11 @@ pub struct Reference {
 }
 
 bitflags! {
-    #[derive(Default)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct ReferenceFlag: u8 {
         const Read = 1 << 0;
         const Write = 1 << 1;
-        const ReadWrite = Self::Read.bits | Self::Write.bits;
+        const ReadWrite = Self::Read.bits() | Self::Write.bits();
     }
 }
 

@@ -33,7 +33,7 @@ oxc_ast_lower = { version = "0.0.0", path = "crates/oxc_ast_lower" }
 
 oxc_tasks_common = { path = "tasks/common" }
 
-bitflags         = { version = "1.3.2" }
+bitflags         = { version = "2.2.1" }
 bumpalo          = { version = "3.12.1" }
 clap             = { version = "4.2.7", default-features = false, features = ["std"] }
 compact_str      = { version = "0.7.0" }

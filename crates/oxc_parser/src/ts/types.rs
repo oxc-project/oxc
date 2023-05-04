@@ -17,7 +17,7 @@ use crate::{
 bitflags! {
   /// Bitflag of modifiers and contextual modifiers.
   /// Useful to cheaply track all already seen modifiers of a member (instead of using a HashSet<ModifierKind>).
-  #[derive(Default)]
+  #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
   pub struct ModifierFlags: u16 {
       const DECLARE       = 1 << 0;
       const PRIVATE       = 1 << 1;
@@ -34,7 +34,7 @@ bitflags! {
       const EXPORT        = 1 << 12;
       const DEFAULT       = 1 << 13;
       const ACCESSOR      = 1 << 14;
-      const ACCESSIBILITY = Self::PRIVATE.bits | Self::PROTECTED.bits | Self::PUBLIC.bits;
+      const ACCESSIBILITY = Self::PRIVATE.bits() | Self::PROTECTED.bits() | Self::PUBLIC.bits();
   }
 }
 

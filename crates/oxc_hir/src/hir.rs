@@ -322,6 +322,7 @@ impl fmt::Display for RegExp {
 }
 
 bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct RegExpFlags: u8 {
         const G = 1 << 0;
         const I = 1 << 1;

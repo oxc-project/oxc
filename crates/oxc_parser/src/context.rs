@@ -10,6 +10,7 @@ bitflags! {
     /// “parameters” may be either a single name or a comma separated list of names.
     /// A parameterized production is shorthand for a set of productions defining all combinations of the parameter names,
     /// preceded by an underscore, appended to the parameterized nonterminal symbol.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct Context: u8 {
         /// [In] Flag, i.e. the [In] part in RelationalExpression[In, Yield, Await]
         /// Section 13.10 Relational Operators Note 2:

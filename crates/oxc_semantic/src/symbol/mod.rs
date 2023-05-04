@@ -41,6 +41,7 @@ fn symbol_size() {
 }
 
 bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct SymbolFlags: u16 {
         const None                    = 0;
         /// Variable (var) or parameter
@@ -56,18 +57,18 @@ bitflags! {
         const Class                   = 1 << 5;
         const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
 
-        const Variable = Self::FunctionScopedVariable.bits | Self::BlockScopedVariable.bits;
-        const Value = Self::Variable.bits | Self::Class.bits;
+        const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
+        const Value = Self::Variable.bits() | Self::Class.bits();
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
         /// same name, or any other value that is not a variable, e.g. ValueModule or Class
-        const FunctionScopedVariableExcludes = Self::Value.bits - Self::FunctionScopedVariable.bits;
+        const FunctionScopedVariableExcludes = Self::Value.bits() - Self::FunctionScopedVariable.bits();
 
         /// Block-scoped declarations are not allowed to be re-declared
         /// they can not merge with anything in the value space
-        const BlockScopedVariableExcludes = Self::Value.bits;
+        const BlockScopedVariableExcludes = Self::Value.bits();
 
-        const ClassExcludes = Self::Value.bits;
+        const ClassExcludes = Self::Value.bits();
     }
 }
 
