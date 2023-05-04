@@ -62,8 +62,11 @@ fn bench_parser(criterion: &mut Criterion, files: &TestFiles) {
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
             |b, source_text| {
-                let allocator = Allocator::default();
                 b.iter(|| {
+                    // Include the allocator drop time to make time measurement consistent.
+                    // Otherwise the allocator will allocate huge memory chunks (by power of two) from the
+                    // system allocator, which makes time measurement unequal during long runs.
+                    let allocator = Allocator::default();
                     let _drop =
                         Parser::new(&allocator, black_box(source_text), SourceType::default())
                             .parse();
