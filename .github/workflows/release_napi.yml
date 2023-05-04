@@ -7,10 +7,7 @@ on:
     branches:
       - main
     paths:
-      - npm/napi/package.json
-  workflow_run:
-    workflows: [ci]
-    types: [completed]
+      - npm/napi/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
