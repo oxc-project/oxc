@@ -108,7 +108,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for AssignmentTargetMaybeDefault<'a> {
             }
             expr => {
                 let target = AssignmentTarget::cover(expr, p)?;
-                Ok(AssignmentTargetMaybeDefault::AssignmentTarget(p.ast.alloc(target)))
+                Ok(AssignmentTargetMaybeDefault::AssignmentTarget(target))
             }
         }
     }

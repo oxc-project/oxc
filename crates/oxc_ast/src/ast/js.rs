@@ -741,7 +741,7 @@ pub struct ObjectAssignmentTarget<'a> {
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTargetMaybeDefault<'a> {
-    AssignmentTarget(Box<'a, AssignmentTarget<'a>>),
+    AssignmentTarget(AssignmentTarget<'a>),
     AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>),
 }
 

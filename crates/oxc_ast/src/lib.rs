@@ -68,6 +68,9 @@ fn no_bloat_enum_sizes() {
     assert_eq!(size_of::<ModuleDeclarationKind>(), 16);
     assert_eq!(size_of::<ClassElement>(), 16);
     assert_eq!(size_of::<ExportDefaultDeclarationKind>(), 16);
+    assert_eq!(size_of::<AssignmentTargetPattern>(), 16);
+    assert_eq!(size_of::<AssignmentTargetMaybeDefault>(), 24);
+    assert_eq!(size_of::<AssignmentTargetProperty>(), 16);
     assert_eq!(size_of::<TSLiteral>(), 16);
     assert_eq!(size_of::<TSType>(), 16);
 }
