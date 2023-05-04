@@ -13,7 +13,7 @@ on:
       - 'Cargo.lock'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: true
 
 jobs:
@@ -31,12 +31,6 @@ jobs:
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
-
-      - name: Cache Benchmark Files # This doesn't speed up things, it is just for saving some bandwidth
-        uses: actions/cache@v3
-        with:
-          path: './target/*.js'
-          key: benchmark-files-${{ hashFiles('./tasks/libs.txt') }}
 
       - name: Compile
         run: cargo build --release -p oxc_benchmark
