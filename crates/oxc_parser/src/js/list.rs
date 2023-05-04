@@ -95,9 +95,9 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
     }
 }
 
-/// ArrayExpression.elements, with optional element
+/// ArrayExpression.elements
 pub struct ArrayExpressionList<'a> {
-    pub elements: Vec<'a, Option<Argument<'a>>>,
+    pub elements: Vec<'a, ArrayExpressionElement<'a>>,
     pub trailing_comma: Option<Span>,
 }
 
@@ -116,9 +116,9 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
         let element = match p.cur_kind() {
-            Kind::Comma => Ok(None),
-            Kind::Dot3 => p.parse_spread_element().map(Argument::SpreadElement).map(Some),
-            _ => p.parse_assignment_expression_base().map(Argument::Expression).map(Some),
+            Kind::Comma => Ok(p.parse_elision()),
+            Kind::Dot3 => p.parse_spread_element().map(ArrayExpressionElement::SpreadElement),
+            _ => p.parse_assignment_expression_base().map(ArrayExpressionElement::Expression),
         };
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {

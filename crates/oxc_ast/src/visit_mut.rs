@@ -1,6 +1,7 @@
 //! Visit Mut Pattern
 
 use oxc_allocator::Vec;
+use oxc_span::Span;
 
 #[allow(clippy::wildcard_imports)]
 use crate::ast::*;
@@ -389,8 +390,16 @@ pub trait VisitMut<'a, 'b>: Sized {
     fn visit_meta_property(&mut self, _meta: &'b mut MetaProperty) {}
 
     fn visit_array_expression(&mut self, expr: &'b mut ArrayExpression<'a>) {
-        for elem in expr.elements.iter_mut().flatten() {
-            self.visit_argument(elem);
+        for elem in expr.elements.iter_mut() {
+            self.visit_array_expression_element(elem);
+        }
+    }
+
+    fn visit_array_expression_element(&mut self, arg: &'b mut ArrayExpressionElement<'a>) {
+        match arg {
+            ArrayExpressionElement::SpreadElement(spread) => self.visit_spread_element(spread),
+            ArrayExpressionElement::Expression(expr) => self.visit_expression(expr),
+            ArrayExpressionElement::Elision(span) => self.visit_elision(*span),
         }
     }
 
@@ -404,6 +413,8 @@ pub trait VisitMut<'a, 'b>: Sized {
     fn visit_spread_element(&mut self, elem: &'b mut SpreadElement<'a>) {
         self.visit_expression(&mut elem.argument);
     }
+
+    fn visit_elision(&mut self, _span: Span) {}
 
     fn visit_assignment_expression(&mut self, expr: &'b mut AssignmentExpression<'a>) {
         self.visit_assignment_target(&mut expr.left);

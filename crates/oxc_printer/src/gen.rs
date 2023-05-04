@@ -947,6 +947,16 @@ impl<'a> Gen for Argument<'a> {
     }
 }
 
+impl<'a> Gen for ArrayExpressionElement<'a> {
+    fn gen(&self, p: &mut Printer) {
+        match self {
+            Self::Expression(expr) => expr.gen(p),
+            Self::SpreadElement(elem) => elem.gen(p),
+            Self::Elision(_span) => {}
+        }
+    }
+}
+
 impl<'a> Gen for SpreadElement<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_ellipsis();

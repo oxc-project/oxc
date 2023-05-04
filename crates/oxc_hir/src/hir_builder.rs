@@ -357,7 +357,7 @@ impl<'a> HirBuilder<'a> {
     pub fn array_expression(
         &self,
         span: Span,
-        elements: Vec<'a, Option<Argument<'a>>>,
+        elements: Vec<'a, ArrayExpressionElement<'a>>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a> {
         Expression::ArrayExpression(self.alloc(ArrayExpression { span, elements, trailing_comma }))

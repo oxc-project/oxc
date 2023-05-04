@@ -331,6 +331,14 @@ impl<'a> Parser<'a> {
         Ok(self.ast.array_expression(self.end_span(span), list.elements, list.trailing_comma))
     }
 
+    /// Elision :
+    ///     ,
+    ///    Elision ,
+    pub(crate) fn parse_elision(&mut self) -> ArrayExpressionElement<'a> {
+        let span = self.start_span();
+        ArrayExpressionElement::Elision(self.end_span(span))
+    }
+
     /// Section [Template Literal](https://tc39.es/ecma262/#prod-TemplateLiteral)
     /// `TemplateLiteral`[Yield, Await, Tagged] :
     ///     `NoSubstitutionTemplate`
