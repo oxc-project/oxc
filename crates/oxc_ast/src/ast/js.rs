@@ -1658,7 +1658,7 @@ pub struct ImportDeclaration<'a> {
     pub specifiers: Vec<'a, ImportDeclarationSpecifier>,
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
-    pub import_kind: Option<ImportOrExportKind>,      // `import type { foo } from 'bar'`
+    pub import_kind: ImportOrExportKind,              // `import type { foo } from 'bar'`
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -1732,13 +1732,13 @@ pub struct ExportNamedDeclaration<'a> {
     pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier>,
     pub source: Option<StringLiteral>,
-    pub export_kind: Option<ImportOrExportKind>, // `export type { foo }`
+    pub export_kind: ImportOrExportKind, // `export type { foo }`
 }
 
 impl<'a> ExportNamedDeclaration<'a> {
     #[must_use]
     pub fn is_typescript_syntax(&self) -> bool {
-        self.export_kind == Some(ImportOrExportKind::Type)
+        self.export_kind == ImportOrExportKind::Type
             || self.declaration.as_ref().map_or(false, Declaration::is_typescript_syntax)
     }
 }
@@ -1760,7 +1760,7 @@ pub struct ExportAllDeclaration<'a> {
     pub exported: Option<ModuleExportName>,
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
-    pub export_kind: Option<ImportOrExportKind>,      // `export type *`
+    pub export_kind: ImportOrExportKind,              // `export type *`
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]

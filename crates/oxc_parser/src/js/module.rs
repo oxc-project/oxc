@@ -277,7 +277,7 @@ impl<'a> Parser<'a> {
             Some(declaration),
             self.ast.new_vec(),
             None,
-            None,
+            ImportOrExportKind::Value,
         ))
     }
 
@@ -407,11 +407,10 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn parse_import_or_export_kind(&mut self) -> Option<ImportOrExportKind> {
+    fn parse_import_or_export_kind(&mut self) -> ImportOrExportKind {
         if !self.ts_enabled() {
-            return None;
+            return ImportOrExportKind::Value;
         }
-
         // import type { bar } from 'foo';
         // import type * as React from 'react';
         // import type ident from 'foo';
@@ -419,9 +418,9 @@ impl<'a> Parser<'a> {
         if matches!(self.peek_kind(), Kind::LCurly | Kind::Star | Kind::Ident)
             && self.eat(Kind::Type)
         {
-            return Some(ImportOrExportKind::Type);
+            ImportOrExportKind::Type
+        } else {
+            ImportOrExportKind::Value
         }
-
-        Some(ImportOrExportKind::Value)
     }
 }

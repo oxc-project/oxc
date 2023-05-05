@@ -160,7 +160,7 @@ impl ModuleRecordBuilder {
     }
 
     fn visit_import_declaration(&mut self, decl: &ImportDeclaration) {
-        if decl.import_kind.map_or(false, |kind| kind.is_type()) {
+        if decl.import_kind.is_type() {
             return;
         }
         let module_request = NameSpan::new(decl.source.value.clone(), decl.source.span);
@@ -242,7 +242,7 @@ impl ModuleRecordBuilder {
     }
 
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration) {
-        if decl.export_kind.map_or(false, |kind| kind.is_type()) {
+        if decl.export_kind.is_type() {
             return;
         }
         // ignore all TypeScript syntax as they overload

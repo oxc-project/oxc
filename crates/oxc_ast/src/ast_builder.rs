@@ -793,7 +793,7 @@ impl<'a> AstBuilder<'a> {
         specifiers: Vec<'a, ImportDeclarationSpecifier>,
         source: StringLiteral,
         assertions: Option<Vec<'a, ImportAttribute>>,
-        import_kind: Option<ImportOrExportKind>,
+        import_kind: ImportOrExportKind,
     ) -> Box<'a, ImportDeclaration<'a>> {
         self.alloc(ImportDeclaration { span, specifiers, source, assertions, import_kind })
     }
@@ -803,8 +803,8 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         exported: Option<ModuleExportName>,
         source: StringLiteral,
-        assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
-        export_kind: Option<ImportOrExportKind>,
+        assertions: Option<Vec<'a, ImportAttribute>>,
+        export_kind: ImportOrExportKind,
     ) -> Box<'a, ExportAllDeclaration<'a>> {
         self.alloc(ExportAllDeclaration { span, exported, source, assertions, export_kind })
     }
@@ -824,7 +824,7 @@ impl<'a> AstBuilder<'a> {
         declaration: Option<Declaration<'a>>,
         specifiers: Vec<'a, ExportSpecifier>,
         source: Option<StringLiteral>,
-        export_kind: Option<ImportOrExportKind>, // `export type { foo }`
+        export_kind: ImportOrExportKind,
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
         self.alloc(ExportNamedDeclaration { span, declaration, specifiers, source, export_kind })
     }
