@@ -52,32 +52,26 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             code-target: win32-x64-msvc
-            file: oxc_napi.dll
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
             code-target: win32-arm64-msvc
-            file: oxc_napi.dll
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             code-target: linux-x64-gnu
-            file: liboxc_napi.so
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             code-target: linux-arm64-gnu
-            file: liboxc_napi.so
 
           - os: macos-latest
             target: x86_64-apple-darwin
             code-target: darwin-x64
-            file: liboxc_napi.dylib
 
           - os: macos-latest
             target: aarch64-apple-darwin
             code-target: darwin-arm64
-            file: liboxc_napi.dylib
 
     name: Package ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
@@ -96,11 +90,10 @@ jobs:
       - name: Move file on ${{ matrix.os }}
         shell: bash
         run: |
-          # See --crate-type=cdylib in https://doc.rust-lang.org/reference/linkage.html
-          export FROM=target/${{ matrix.target }}/release
-          ls ${FROM}
-          export DIST=crates/oxc_napi/napi.${{ matrix.code-target }}.node
-          mv ${FROM}/${{ matrix.file }} ${DIST}
+          shopt -s extglob
+          ls target/${{ matrix.target }}/release/*.@(so|dll|dylib)
+          mv target/${{ matrix.target }}/release/*.@(so|dll|dylib) crates/oxc_napi/napi.${{ matrix.code-target }}.node
+          ls crates/oxc_napi
 
       - name: Test
         working-directory: crates/oxc_napi
