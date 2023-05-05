@@ -141,21 +141,21 @@ impl ModuleRecordBuilder {
     }
 
     pub fn visit_module_declaration(&mut self, module_decl: &ModuleDeclaration) {
-        match &module_decl.kind {
-            ModuleDeclarationKind::ImportDeclaration(import_decl) => {
+        match module_decl {
+            ModuleDeclaration::ImportDeclaration(import_decl) => {
                 self.visit_import_declaration(import_decl);
             }
-            ModuleDeclarationKind::ExportAllDeclaration(export_all_decl) => {
+            ModuleDeclaration::ExportAllDeclaration(export_all_decl) => {
                 self.visit_export_all_declaration(export_all_decl);
             }
-            ModuleDeclarationKind::ExportDefaultDeclaration(export_default_decl) => {
+            ModuleDeclaration::ExportDefaultDeclaration(export_default_decl) => {
                 self.visit_export_default_declaration(export_default_decl);
             }
-            ModuleDeclarationKind::ExportNamedDeclaration(export_named_decl) => {
+            ModuleDeclaration::ExportNamedDeclaration(export_named_decl) => {
                 self.visit_export_named_declaration(export_named_decl);
             }
-            ModuleDeclarationKind::TSExportAssignment(_)
-            | ModuleDeclarationKind::TSNamespaceExportDeclaration(_) => { /* noop */ }
+            ModuleDeclaration::TSExportAssignment(_)
+            | ModuleDeclaration::TSNamespaceExportDeclaration(_) => { /* noop */ }
         }
     }
 

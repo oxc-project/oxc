@@ -392,7 +392,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn symbol_flag_from_module_declaration(module: &ModuleDeclaration) -> SymbolFlags {
-        if matches!(&module.kind, ModuleDeclarationKind::ImportDeclaration(_)) {
+        if matches!(module, ModuleDeclaration::ImportDeclaration(_)) {
             SymbolFlags::Import
         } else {
             SymbolFlags::Export

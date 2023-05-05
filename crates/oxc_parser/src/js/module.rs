@@ -58,16 +58,15 @@ impl<'a> Parser<'a> {
         let source = self.parse_literal_string()?;
         let assertions = self.parse_import_attributes()?;
         self.asi()?;
-
         let span = self.end_span(span);
-        let kind = ModuleDeclarationKind::ImportDeclaration(self.ast.import_declaration(
+        let decl = ModuleDeclaration::ImportDeclaration(self.ast.import_declaration(
+            span,
             specifiers,
             source,
             assertions,
             import_kind,
         ));
-
-        Ok(self.ast.module_declaration(span, kind))
+        Ok(self.ast.module_declaration(decl))
     }
 
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
@@ -176,36 +175,36 @@ impl<'a> Parser<'a> {
 
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
     pub(crate) fn parse_export_declaration(&mut self) -> Result<Statement<'a>> {
-        let start_span = self.start_span();
+        let span = self.start_span();
         self.bump_any(); // advance `export`
 
-        let kind = match self.cur_kind() {
+        let decl = match self.cur_kind() {
             Kind::Eq if self.ts_enabled() => self
                 .parse_ts_export_assignment_declaration()
-                .map(ModuleDeclarationKind::TSExportAssignment),
+                .map(ModuleDeclaration::TSExportAssignment),
             Kind::As if self.peek_at(Kind::Namespace) && self.ts_enabled() => self
                 .parse_ts_export_namespace()
-                .map(ModuleDeclarationKind::TSNamespaceExportDeclaration),
+                .map(ModuleDeclaration::TSNamespaceExportDeclaration),
             Kind::Default => self
-                .parse_export_default_declaration()
-                .map(ModuleDeclarationKind::ExportDefaultDeclaration),
+                .parse_export_default_declaration(span)
+                .map(ModuleDeclaration::ExportDefaultDeclaration),
             Kind::Star => {
-                self.parse_export_all_declaration().map(ModuleDeclarationKind::ExportAllDeclaration)
+                self.parse_export_all_declaration(span).map(ModuleDeclaration::ExportAllDeclaration)
             }
             Kind::LCurly => self
-                .parse_export_named_specifiers()
-                .map(ModuleDeclarationKind::ExportNamedDeclaration),
+                .parse_export_named_specifiers(span)
+                .map(ModuleDeclaration::ExportNamedDeclaration),
             Kind::Type if self.peek_at(Kind::LCurly) && self.ts_enabled() => self
-                .parse_export_named_specifiers()
-                .map(ModuleDeclarationKind::ExportNamedDeclaration),
+                .parse_export_named_specifiers(span)
+                .map(ModuleDeclaration::ExportNamedDeclaration),
             Kind::Type if self.peek_at(Kind::Star) => {
-                self.parse_export_all_declaration().map(ModuleDeclarationKind::ExportAllDeclaration)
+                self.parse_export_all_declaration(span).map(ModuleDeclaration::ExportAllDeclaration)
             }
             _ => self
-                .parse_export_named_declaration()
-                .map(ModuleDeclarationKind::ExportNamedDeclaration),
+                .parse_export_named_declaration(span)
+                .map(ModuleDeclaration::ExportNamedDeclaration),
         }?;
-        Ok(self.ast.module_declaration(self.end_span(start_span), kind))
+        Ok(self.ast.module_declaration(decl))
     }
 
     // export NamedExports ;
@@ -219,7 +218,10 @@ impl<'a> Parser<'a> {
     // ExportSpecifier :
     //   ModuleExportName
     //   ModuleExportName as ModuleExportName
-    fn parse_export_named_specifiers(&mut self) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
+    fn parse_export_named_specifiers(
+        &mut self,
+        span: Span,
+    ) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
         let export_kind = self.parse_import_or_export_kind();
 
         let ctx = self.ctx;
@@ -249,12 +251,16 @@ impl<'a> Parser<'a> {
         }
 
         self.asi()?;
-        Ok(self.ast.export_named_declaration(None, specifiers, source, export_kind))
+        let span = self.end_span(span);
+        Ok(self.ast.export_named_declaration(span, None, specifiers, source, export_kind))
     }
 
     // export Declaration
-    fn parse_export_named_declaration(&mut self) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
-        let start_span = self.start_span();
+    fn parse_export_named_declaration(
+        &mut self,
+        span: Span,
+    ) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
+        let decl_span = self.start_span();
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
@@ -264,8 +270,15 @@ impl<'a> Parser<'a> {
             Modifiers::empty()
         };
 
-        let declaration = self.parse_declaration(start_span, modifiers)?;
-        Ok(self.ast.export_named_declaration(Some(declaration), self.ast.new_vec(), None, None))
+        let declaration = self.parse_declaration(decl_span, modifiers)?;
+        let span = self.end_span(span);
+        Ok(self.ast.export_named_declaration(
+            span,
+            Some(declaration),
+            self.ast.new_vec(),
+            None,
+            None,
+        ))
     }
 
     // export default HoistableDeclaration[~Yield, +Await, +Default]
@@ -273,27 +286,28 @@ impl<'a> Parser<'a> {
     // export default AssignmentExpression[+In, ~Yield, +Await] ;
     fn parse_export_default_declaration(
         &mut self,
+        span: Span,
     ) -> Result<Box<'a, ExportDefaultDeclaration<'a>>> {
         let exported = self.parse_keyword_identifier(Kind::Default);
-        let start_span = self.start_span();
+        let decl_span = self.start_span();
         // For tc39/proposal-decorators
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
         let declaration = match self.cur_kind() {
             Kind::Class => self
-                .parse_class_declaration(start_span, /* modifiers */ Modifiers::empty())
+                .parse_class_declaration(decl_span, /* modifiers */ Modifiers::empty())
                 .map(ExportDefaultDeclarationKind::ClassDeclaration)?,
             _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.ts_enabled() => {
                 // eat the abstract modifier
                 let (_, modifiers) = self.eat_modifiers_before_declaration();
-                self.parse_class_declaration(start_span, modifiers)
+                self.parse_class_declaration(decl_span, modifiers)
                     .map(ExportDefaultDeclarationKind::ClassDeclaration)?
             }
             _ if self.at(Kind::Interface)
                 && !self.peek_token().is_on_new_line
                 && self.ts_enabled() =>
             {
-                self.parse_ts_interface_declaration(start_span, Modifiers::empty()).map(|decl| {
+                self.parse_ts_interface_declaration(decl_span, Modifiers::empty()).map(|decl| {
                     match decl {
                         Declaration::TSInterfaceDeclaration(decl) => {
                             ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
@@ -314,7 +328,8 @@ impl<'a> Parser<'a> {
             }
         };
         let exported = ModuleExportName::Identifier(exported);
-        Ok(self.ast.export_default_declaration(declaration, exported))
+        let span = self.end_span(span);
+        Ok(self.ast.export_default_declaration(span, declaration, exported))
     }
 
     // export ExportFromClause FromClause ;
@@ -322,7 +337,10 @@ impl<'a> Parser<'a> {
     //   *
     //   * as ModuleExportName
     //   NamedExports
-    fn parse_export_all_declaration(&mut self) -> Result<Box<'a, ExportAllDeclaration<'a>>> {
+    fn parse_export_all_declaration(
+        &mut self,
+        span: Span,
+    ) -> Result<Box<'a, ExportAllDeclaration<'a>>> {
         let export_kind = self.parse_import_or_export_kind();
         self.bump_any(); // bump `star`
         let exported = self.eat(Kind::As).then(|| self.parse_module_export_name()).transpose()?;
@@ -330,7 +348,8 @@ impl<'a> Parser<'a> {
         let source = self.parse_literal_string()?;
         let assertions = self.parse_import_attributes()?;
         self.asi()?;
-        Ok(self.ast.export_all_declaration(exported, source, assertions, export_kind))
+        let span = self.end_span(span);
+        Ok(self.ast.export_all_declaration(span, exported, source, assertions, export_kind))
     }
 
     // ImportSpecifier :

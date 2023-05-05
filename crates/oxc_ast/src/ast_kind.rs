@@ -336,7 +336,7 @@ impl<'a> GetSpan for AstKind<'a> {
 
             Self::Decorator(x) => x.span,
 
-            Self::ModuleDeclaration(x) => x.span,
+            Self::ModuleDeclaration(x) => x.span(),
 
             Self::JSXOpeningElement(x) => x.span,
             Self::JSXElementName(x) => x.span(),

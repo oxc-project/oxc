@@ -65,7 +65,7 @@ fn no_bloat_enum_sizes() {
     assert_eq!(size_of::<Expression>(), 16);
     assert_eq!(size_of::<Declaration>(), 16);
     assert_eq!(size_of::<BindingPatternKind>(), 16);
-    assert_eq!(size_of::<ModuleDeclarationKind>(), 16);
+    assert_eq!(size_of::<ModuleDeclaration>(), 16);
     assert_eq!(size_of::<ClassElement>(), 16);
     assert_eq!(size_of::<ExportDefaultDeclarationKind>(), 16);
     assert_eq!(size_of::<AssignmentTargetPattern>(), 16);

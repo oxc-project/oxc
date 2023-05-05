@@ -783,46 +783,50 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Modules ---------- */
 
-    pub fn module_declaration(&self, span: Span, kind: ModuleDeclarationKind<'a>) -> Statement<'a> {
-        Statement::ModuleDeclaration(self.alloc(ModuleDeclaration { span, kind }))
+    pub fn module_declaration(&self, decl: ModuleDeclaration<'a>) -> Statement<'a> {
+        Statement::ModuleDeclaration(self.alloc(decl))
     }
 
     pub fn import_declaration(
         &self,
+        span: Span,
         specifiers: Vec<'a, ImportDeclarationSpecifier>,
         source: StringLiteral,
         assertions: Option<Vec<'a, ImportAttribute>>,
         import_kind: Option<ImportOrExportKind>,
     ) -> Box<'a, ImportDeclaration<'a>> {
-        self.alloc(ImportDeclaration { specifiers, source, assertions, import_kind })
+        self.alloc(ImportDeclaration { span, specifiers, source, assertions, import_kind })
     }
 
     pub fn export_all_declaration(
         &self,
+        span: Span,
         exported: Option<ModuleExportName>,
         source: StringLiteral,
         assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
         export_kind: Option<ImportOrExportKind>,
     ) -> Box<'a, ExportAllDeclaration<'a>> {
-        self.alloc(ExportAllDeclaration { exported, source, assertions, export_kind })
+        self.alloc(ExportAllDeclaration { span, exported, source, assertions, export_kind })
     }
 
     pub fn export_default_declaration(
         &self,
+        span: Span,
         declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName,
     ) -> Box<'a, ExportDefaultDeclaration<'a>> {
-        self.alloc(ExportDefaultDeclaration { declaration, exported })
+        self.alloc(ExportDefaultDeclaration { span, declaration, exported })
     }
 
     pub fn export_named_declaration(
         &self,
+        span: Span,
         declaration: Option<Declaration<'a>>,
         specifiers: Vec<'a, ExportSpecifier>,
         source: Option<StringLiteral>,
         export_kind: Option<ImportOrExportKind>, // `export type { foo }`
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
-        self.alloc(ExportNamedDeclaration { declaration, specifiers, source, export_kind })
+        self.alloc(ExportNamedDeclaration { span, declaration, specifiers, source, export_kind })
     }
 
     /* ---------- JSX ----------------- */

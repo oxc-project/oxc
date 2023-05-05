@@ -1604,19 +1604,9 @@ pub struct StaticBlock<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
-/// Imports
-#[derive(Debug, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-pub struct ModuleDeclaration<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub kind: ModuleDeclarationKind<'a>,
-}
-
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-pub enum ModuleDeclarationKind<'a> {
+pub enum ModuleDeclaration<'a> {
     ImportDeclaration(Box<'a, ImportDeclaration<'a>>),
     ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>),
     ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>),
@@ -1626,7 +1616,7 @@ pub enum ModuleDeclarationKind<'a> {
     TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration>),
 }
 
-impl<'a> ModuleDeclarationKind<'a> {
+impl<'a> ModuleDeclaration<'a> {
     #[must_use]
     pub fn is_export(&self) -> bool {
         matches!(
@@ -1663,6 +1653,8 @@ pub struct ImportExpression<'a> {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct ImportDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
     pub specifiers: Vec<'a, ImportDeclarationSpecifier>,
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
@@ -1735,6 +1727,8 @@ impl ImportAttributeKey {
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportNamedDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
     pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier>,
     pub source: Option<StringLiteral>,
@@ -1752,6 +1746,8 @@ impl<'a> ExportNamedDeclaration<'a> {
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportDefaultDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
     pub declaration: ExportDefaultDeclarationKind<'a>,
     pub exported: ModuleExportName, // `default`
 }
@@ -1759,6 +1755,8 @@ pub struct ExportDefaultDeclaration<'a> {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportAllDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
     pub exported: Option<ModuleExportName>,
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion

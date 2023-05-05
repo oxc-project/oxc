@@ -41,7 +41,7 @@ impl EarlyErrorJavaScript {
             AstKind::Directive(dir) => check_directive(dir, node, ctx),
             AstKind::ModuleDeclaration(decl) => {
                 check_module_declaration(decl, node, ctx);
-                if let ModuleDeclarationKind::ImportDeclaration(import_decl) = &decl.kind {
+                if let ModuleDeclaration::ImportDeclaration(import_decl) = decl {
                     check_import_declaration(import_decl, ctx);
                 }
             }
@@ -452,15 +452,15 @@ fn check_module_declaration<'a>(
         return;
     }
 
-    let text = match decl.kind {
-        ModuleDeclarationKind::ImportDeclaration(_) => "import statement",
-        ModuleDeclarationKind::ExportAllDeclaration(_)
-        | ModuleDeclarationKind::ExportDefaultDeclaration(_)
-        | ModuleDeclarationKind::ExportNamedDeclaration(_)
-        | ModuleDeclarationKind::TSExportAssignment(_)
-        | ModuleDeclarationKind::TSNamespaceExportDeclaration(_) => "export statement",
+    let text = match decl {
+        ModuleDeclaration::ImportDeclaration(_) => "import statement",
+        ModuleDeclaration::ExportAllDeclaration(_)
+        | ModuleDeclaration::ExportDefaultDeclaration(_)
+        | ModuleDeclaration::ExportNamedDeclaration(_)
+        | ModuleDeclaration::TSExportAssignment(_)
+        | ModuleDeclaration::TSNamespaceExportDeclaration(_) => "export statement",
     };
-    let span = Span::new(decl.span.start, decl.span.start + 6);
+    let span = Span::new(decl.span().start, decl.span().start + 6);
     match ctx.source_type.module_kind() {
         ModuleKind::Script => {
             ctx.error(ModuleCode(text, span));

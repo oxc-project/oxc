@@ -24,7 +24,7 @@ impl<'a> GetSpan for Statement<'a> {
             Self::TryStatement(stmt) => stmt.span,
             Self::WhileStatement(stmt) => stmt.span,
             Self::WithStatement(stmt) => stmt.span,
-            Self::ModuleDeclaration(decl) => decl.span,
+            Self::ModuleDeclaration(decl) => decl.span(),
             Self::Declaration(decl) => decl.span(),
         }
     }
@@ -149,6 +149,19 @@ impl GetSpan for ModuleExportName {
         match self {
             Self::Identifier(identifier) => identifier.span,
             Self::StringLiteral(literal) => literal.span,
+        }
+    }
+}
+
+impl<'a> GetSpan for ModuleDeclaration<'a> {
+    fn span(&self) -> Span {
+        match self {
+            Self::ImportDeclaration(decl) => decl.span,
+            Self::ExportAllDeclaration(decl) => decl.span,
+            Self::ExportDefaultDeclaration(decl) => decl.span,
+            Self::ExportNamedDeclaration(decl) => decl.span,
+            Self::TSExportAssignment(decl) => decl.span,
+            Self::TSNamespaceExportDeclaration(decl) => decl.span,
         }
     }
 }

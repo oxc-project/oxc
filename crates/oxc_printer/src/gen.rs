@@ -421,12 +421,6 @@ impl Gen for DebuggerStatement {
 
 impl<'a> Gen for ModuleDeclaration<'a> {
     fn gen(&self, p: &mut Printer) {
-        self.kind.gen(p);
-    }
-}
-
-impl<'a> Gen for ModuleDeclarationKind<'a> {
-    fn gen(&self, p: &mut Printer) {
         match self {
             Self::ImportDeclaration(decl) => decl.gen(p),
             Self::ExportAllDeclaration(decl) => decl.gen(p),

@@ -865,23 +865,23 @@ pub trait VisitMut<'a, 'b>: Sized {
     /* ----------  Module ---------- */
 
     fn visit_module_declaration(&mut self, decl: &'b mut ModuleDeclaration<'a>) {
-        match &mut decl.kind {
-            ModuleDeclarationKind::ImportDeclaration(decl) => {
+        match decl {
+            ModuleDeclaration::ImportDeclaration(decl) => {
                 self.visit_import_declaration(decl);
             }
-            ModuleDeclarationKind::ExportAllDeclaration(decl) => {
+            ModuleDeclaration::ExportAllDeclaration(decl) => {
                 self.visit_export_all_declaration(decl);
             }
-            ModuleDeclarationKind::ExportDefaultDeclaration(decl) => {
+            ModuleDeclaration::ExportDefaultDeclaration(decl) => {
                 self.visit_export_default_declaration(decl);
             }
-            ModuleDeclarationKind::ExportNamedDeclaration(decl) => {
+            ModuleDeclaration::ExportNamedDeclaration(decl) => {
                 self.visit_export_named_declaration(decl);
             }
-            ModuleDeclarationKind::TSExportAssignment(decl) => {
+            ModuleDeclaration::TSExportAssignment(decl) => {
                 self.visit_expression(&mut decl.expression);
             }
-            ModuleDeclarationKind::TSNamespaceExportDeclaration(_) => {}
+            ModuleDeclaration::TSNamespaceExportDeclaration(_) => {}
         }
     }
 
