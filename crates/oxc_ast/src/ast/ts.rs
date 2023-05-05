@@ -866,6 +866,9 @@ impl<'a> Modifiers<'a> {
     }
 }
 
+/// Export Assignment in non-module files
+///
+/// `export = foo`
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSExportAssignment<'a> {
@@ -874,6 +877,9 @@ pub struct TSExportAssignment<'a> {
     pub expression: Expression<'a>,
 }
 
+/// Namespace Export Declaration in declaration files
+///
+/// `export as namespace foo`
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSNamespaceExportDeclaration {
