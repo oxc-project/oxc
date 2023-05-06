@@ -5,7 +5,7 @@ _default:
 
 # Initialize the project by installing all the necessary tools
 init:
-  cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack -y
+  cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
 
 # Format all files
 fmt:
@@ -31,8 +31,7 @@ coverage:
 
 # Get code coverage
 codecov:
-  cargo binstall cargo-llvm-cov -y
-  cargo codecov
+  cargo codecov --html
 
 # Run the benchmarks. See `tasks/benchmark`
 benchmark:
