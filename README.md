@@ -157,7 +157,7 @@ Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 ───────────────────────────────────────────────────────────────────────────────
 Language                     Files       Lines     Blanks    Comments      Code
 ───────────────────────────────────────────────────────────────────────────────
-Rust                           167       40405       4368        2727     33310
+Rust                           172       46389       5039        2935     38415
 ```
 
 ## Credits
@@ -176,7 +176,7 @@ This project was incubated with the assistance of these exceptional mentors and 
 
 ## Third Party Licenses
 
-Licenses are list in [THIRD-PARTY-LICENSE](./LICENSE-THIRD-PARTY-LICENSE)
+Licenses are listed in [THIRD-PARTY-LICENSE](./LICENSE-THIRD-PARTY-LICENSE)
 
 This project partially copies code from the following projects:
 
