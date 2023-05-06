@@ -1,4 +1,9 @@
-#![allow(clippy::unused_self, clippy::too_many_arguments, clippy::must_use_candidate)] // must_use_candidate is too annoying for this file
+#![allow(
+    clippy::fn_params_excessive_bools,
+    clippy::must_use_candidate, // must_use_candidate is too annoying for this file
+    clippy::too_many_arguments,
+    clippy::unused_self,
+)]
 
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_span::{Atom, Span};
@@ -575,7 +580,6 @@ impl<'a> AstBuilder<'a> {
         FormalParameter { span, pattern, accessibility, readonly, decorators }
     }
 
-    #[allow(clippy::fn_params_excessive_bools)]
     pub fn function(
         &self,
         r#type: FunctionType,

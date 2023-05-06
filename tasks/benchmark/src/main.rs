@@ -15,6 +15,7 @@ use std::time::Duration;
 use criterion::{BenchmarkId, Criterion, Throughput};
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_ast_lower::AstLower;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
@@ -49,6 +50,7 @@ pub fn main() -> Result<(), String> {
 
     bench_parser(&mut criterion, &files);
     bench_semantic(&mut criterion, &files);
+    bench_ast_lower(&mut criterion, &files);
     drop(criterion);
 
     Ok(())
@@ -92,6 +94,27 @@ fn bench_semantic(criterion: &mut Criterion, files: &TestFiles) {
                 b.iter(|| {
                     let _semantic = SemanticBuilder::new(source_text, source_type, &ret.trivias)
                         .build(black_box(program));
+                });
+            },
+        );
+    }
+    group.finish();
+}
+
+fn bench_ast_lower(criterion: &mut Criterion, files: &TestFiles) {
+    let mut group = criterion.benchmark_group("ast_lower");
+    for file in files.files() {
+        group.throughput(Throughput::Bytes(file.source_text.len() as u64));
+        group.bench_with_input(
+            BenchmarkId::from_parameter(&file.file_name),
+            &file.source_text,
+            |b, source_text| {
+                let allocator = Allocator::default();
+                let source_type = SourceType::from_path(&file.file_name).unwrap();
+                let ret = Parser::new(&allocator, source_text, source_type).parse();
+                let program = allocator.alloc(ret.program);
+                b.iter(|| {
+                    let _hir = AstLower::new(&allocator).build(black_box(program));
                 });
             },
         );

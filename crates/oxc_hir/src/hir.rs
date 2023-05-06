@@ -61,7 +61,6 @@ pub enum Expression<'a> {
     MemberExpression(Box<'a, MemberExpression<'a>>),
     NewExpression(Box<'a, NewExpression<'a>>),
     ObjectExpression(Box<'a, ObjectExpression<'a>>),
-    ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>),
     SequenceExpression(Box<'a, SequenceExpression<'a>>),
     TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>),
     ThisExpression(Box<'a, ThisExpression>),
@@ -72,12 +71,6 @@ pub enum Expression<'a> {
 
     JSXElement(Box<'a, JSXElement<'a>>),
     JSXFragment(Box<'a, JSXFragment<'a>>),
-
-    TSAsExpression(Box<'a, TSAsExpression<'a>>),
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
-    TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>),
 }
 
 impl<'a> Expression<'a> {
@@ -92,7 +85,6 @@ impl<'a> Expression<'a> {
                     | Self::ThisExpression(_)
                     | Self::FunctionExpression(_)
                     | Self::ClassExpression(_)
-                    | Self::ParenthesizedExpression(_)
                     | Self::ArrayExpression(_)
                     | Self::ObjectExpression(_)
             )
@@ -152,20 +144,9 @@ impl<'a> Expression<'a> {
         self.is_null() || self.evaluate_to_undefined()
     }
 
-    /// Remove nested parentheses from this expression.
-    #[must_use]
-    pub fn without_parenthesized(&self) -> &Self {
-        match self {
-            Expression::ParenthesizedExpression(Box(expr)) => {
-                expr.expression.without_parenthesized()
-            }
-            _ => self,
-        }
-    }
-
     #[must_use]
     pub fn is_specific_id(&self, name: &str) -> bool {
-        match self.get_inner_expression() {
+        match self {
             Expression::Identifier(ident) => ident.name == name,
             _ => false,
         }
@@ -173,7 +154,7 @@ impl<'a> Expression<'a> {
 
     #[must_use]
     pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
-        match self.get_inner_expression() {
+        match self {
             Expression::MemberExpression(expr) => expr.is_specific_member_access(object, property),
             Expression::ChainExpression(chain) => {
                 let ChainElement::MemberExpression(expr) = &chain.expression else {
@@ -186,21 +167,8 @@ impl<'a> Expression<'a> {
     }
 
     #[must_use]
-    pub fn get_inner_expression(&self) -> &Expression<'a> {
-        match self {
-            Expression::ParenthesizedExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSAsExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSSatisfiesExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSInstantiationExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSNonNullExpression(expr) => expr.expression.get_inner_expression(),
-            Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression(),
-            _ => self,
-        }
-    }
-
-    #[must_use]
     pub fn get_identifier_reference(&self) -> Option<&IdentifierReference> {
-        match self.get_inner_expression() {
+        match self {
             Expression::Identifier(ident) => Some(ident),
             _ => None,
         }
@@ -579,7 +547,6 @@ pub struct TaggedTemplateExpression<'a> {
     pub span: Span,
     pub tag: Expression<'a>,
     pub quasi: TemplateLiteral<'a>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -692,7 +659,6 @@ pub struct CallExpression<'a> {
     pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
     pub optional: bool, // for optional chaining
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 impl<'a> CallExpression<'a> {
@@ -748,7 +714,6 @@ pub struct NewExpression<'a> {
     pub span: Span,
     pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 /// Meta Property `new.target` | `import.meta`
@@ -818,7 +783,6 @@ pub struct PrivateInExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub left: PrivateIdentifier,
-    pub operator: BinaryOperator, // BinaryOperator::In
     pub right: Expression<'a>,
 }
 
@@ -875,23 +839,6 @@ impl<'a> AssignmentTarget<'a> {
 pub enum SimpleAssignmentTarget<'a> {
     AssignmentTargetIdentifier(Box<'a, IdentifierReference>),
     MemberAssignmentTarget(Box<'a, MemberExpression<'a>>),
-    TSAsExpression(Box<'a, TSAsExpression<'a>>),
-    TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>),
-    TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>),
-    TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>),
-}
-
-impl<'a> SimpleAssignmentTarget<'a> {
-    #[must_use]
-    pub fn get_expression(&self) -> Option<&Expression<'a>> {
-        match self {
-            Self::TSAsExpression(expr) => Some(&expr.expression),
-            Self::TSSatisfiesExpression(expr) => Some(&expr.expression),
-            Self::TSNonNullExpression(expr) => Some(&expr.expression),
-            Self::TSTypeAssertion(expr) => Some(&expr.expression),
-            _ => None,
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Hash)]
@@ -923,7 +870,7 @@ pub struct ObjectAssignmentTarget<'a> {
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTargetMaybeDefault<'a> {
-    AssignmentTarget(Box<'a, AssignmentTarget<'a>>),
+    AssignmentTarget(AssignmentTarget<'a>),
     AssignmentTargetWithDefault(Box<'a, AssignmentTargetWithDefault<'a>>),
 }
 
@@ -1088,23 +1035,8 @@ pub enum Declaration<'a> {
     FunctionDeclaration(Box<'a, Function<'a>>),
     ClassDeclaration(Box<'a, Class<'a>>),
 
-    TSTypeAliasDeclaration(Box<'a, TSTypeAliasDeclaration<'a>>),
-    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>),
     TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>),
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>),
     TSImportEqualsDeclaration(Box<'a, TSImportEqualsDeclaration<'a>>),
-}
-
-impl<'a> Declaration<'a> {
-    #[must_use]
-    pub fn is_typescript_syntax(&self) -> bool {
-        match self {
-            Self::VariableDeclaration(_) => false,
-            Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
-            Self::ClassDeclaration(class) => class.is_declare(),
-            _ => true,
-        }
-    }
 }
 
 /// Variable Declaration
@@ -1115,8 +1047,6 @@ pub struct VariableDeclaration<'a> {
     pub span: Span,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
-    /// Valid Modifiers: `export`, `declare`
-    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -1371,17 +1301,8 @@ pub struct DebuggerStatement {
 
 /// Destructuring Binding Patterns
 #[derive(Debug, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
-pub struct BindingPattern<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub kind: BindingPatternKind<'a>,
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    pub optional: bool,
-}
-
-#[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-pub enum BindingPatternKind<'a> {
+pub enum BindingPattern<'a> {
     BindingIdentifier(Box<'a, BindingIdentifier>),
     ObjectPattern(Box<'a, ObjectPattern<'a>>),
     ArrayPattern(Box<'a, ArrayPattern<'a>>),
@@ -1389,7 +1310,7 @@ pub enum BindingPatternKind<'a> {
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>),
 }
 
-impl<'a> BindingPatternKind<'a> {
+impl<'a> BindingPattern<'a> {
     #[must_use]
     pub fn is_destructuring_pattern(&self) -> bool {
         matches!(self, Self::ObjectPattern(_) | Self::ArrayPattern(_))
@@ -1455,18 +1376,9 @@ pub struct Function<'a> {
     pub r#async: bool,
     pub params: Box<'a, FormalParameters<'a>>,
     pub body: Option<Box<'a, FunctionBody<'a>>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    /// Valid modifiers: `export`, `default`, `async`
-    pub modifiers: Modifiers<'a>,
 }
 
 impl<'a> Function<'a> {
-    #[must_use]
-    pub fn is_typescript_syntax(&self) -> bool {
-        self.modifiers.contains(ModifierKind::Declare) || self.body.is_none()
-    }
-
     #[must_use]
     pub fn is_expression(&self) -> bool {
         self.r#type == FunctionType::FunctionExpression
@@ -1512,8 +1424,6 @@ pub struct FormalParameter<'a> {
     pub span: Span,
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub pattern: BindingPattern<'a>,
-    pub accessibility: Option<TSAccessibility>,
-    pub readonly: bool,
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
@@ -1563,9 +1473,6 @@ pub struct ArrowExpression<'a> {
     pub r#async: bool,
     pub params: Box<'a, FormalParameters<'a>>, // UniqueFormalParameters in spec
     pub body: Box<'a, FunctionBody<'a>>,
-
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }
 
 impl<'a> ArrowExpression<'a> {
@@ -1597,12 +1504,7 @@ pub struct Class<'a> {
     pub id: Option<BindingIdentifier>,
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    pub implements: Option<Vec<'a, Box<'a, TSClassImplements<'a>>>>,
     pub decorators: Vec<'a, Decorator<'a>>,
-    /// Valid Modifiers: `export`, `abstract`
-    pub modifiers: Modifiers<'a>,
 }
 
 impl<'a> Class<'a> {
@@ -1614,11 +1516,6 @@ impl<'a> Class<'a> {
     #[must_use]
     pub fn is_declaration(&self) -> bool {
         self.r#type == ClassType::ClassDeclaration
-    }
-
-    #[must_use]
-    pub fn is_declare(&self) -> bool {
-        self.modifiers.contains(ModifierKind::Declare)
     }
 }
 
@@ -1644,83 +1541,62 @@ pub enum ClassElement<'a> {
     MethodDefinition(Box<'a, MethodDefinition<'a>>),
     PropertyDefinition(Box<'a, PropertyDefinition<'a>>),
     AccessorProperty(Box<'a, AccessorProperty<'a>>),
-    TSAbstractMethodDefinition(Box<'a, TSAbstractMethodDefinition<'a>>),
-    TSAbstractPropertyDefinition(Box<'a, TSAbstractPropertyDefinition<'a>>),
-    TSIndexSignature(Box<'a, TSIndexSignature<'a>>),
 }
 
 impl<'a> ClassElement<'a> {
     #[must_use]
     pub fn r#static(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
+            Self::StaticBlock(_) => false,
             Self::MethodDefinition(def) => def.r#static,
             Self::PropertyDefinition(def) => def.r#static,
             Self::AccessorProperty(def) => def.r#static,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.r#static,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.r#static,
         }
     }
 
     #[must_use]
     pub fn computed(&self) -> bool {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
+            Self::StaticBlock(_) => false,
             Self::MethodDefinition(def) => def.computed,
             Self::PropertyDefinition(def) => def.computed,
             Self::AccessorProperty(def) => def.computed,
-            Self::TSAbstractMethodDefinition(def) => def.method_definition.computed,
-            Self::TSAbstractPropertyDefinition(def) => def.property_definition.computed,
         }
     }
 
     #[must_use]
     pub fn method_definition_kind(&self) -> Option<MethodDefinitionKind> {
         match self {
-            Self::TSIndexSignature(_)
-            | Self::StaticBlock(_)
-            | Self::PropertyDefinition(_)
-            | Self::AccessorProperty(_) => None,
+            Self::StaticBlock(_) | Self::PropertyDefinition(_) | Self::AccessorProperty(_) => None,
             Self::MethodDefinition(def) => Some(def.kind),
-            Self::TSAbstractMethodDefinition(def) => Some(def.method_definition.kind),
-            Self::TSAbstractPropertyDefinition(_def) => None,
         }
     }
 
     #[must_use]
     pub fn property_key(&self) -> Option<&PropertyKey<'a>> {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
+            Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => Some(&def.key),
             Self::PropertyDefinition(def) => Some(&def.key),
             Self::AccessorProperty(def) => Some(&def.key),
-            Self::TSAbstractMethodDefinition(def) => Some(&def.method_definition.key),
-            Self::TSAbstractPropertyDefinition(def) => Some(&def.property_definition.key),
         }
     }
 
     #[must_use]
     pub fn static_name(&self) -> Option<Atom> {
         match self {
-            Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
+            Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => def.key.static_name(),
             Self::PropertyDefinition(def) => def.key.static_name(),
             Self::AccessorProperty(def) => def.key.static_name(),
-            Self::TSAbstractMethodDefinition(_def) => None,
-            Self::TSAbstractPropertyDefinition(_def) => None,
         }
     }
 
     #[must_use]
     pub fn is_ts_empty_body_function(&self) -> bool {
         match self {
-            Self::PropertyDefinition(_)
-            | Self::StaticBlock(_)
-            | Self::AccessorProperty(_)
-            | Self::TSAbstractPropertyDefinition(_)
-            | Self::TSIndexSignature(_) => false,
+            Self::PropertyDefinition(_) | Self::StaticBlock(_) | Self::AccessorProperty(_) => false,
             Self::MethodDefinition(method) => method.value.body.is_none(),
-            Self::TSAbstractMethodDefinition(_) => true,
         }
     }
 }
@@ -1738,7 +1614,6 @@ pub struct MethodDefinition<'a> {
     pub r#static: bool,
     pub r#override: bool,
     pub optional: bool,
-    pub accessibility: Option<TSAccessibility>,
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
@@ -1757,8 +1632,6 @@ pub struct PropertyDefinition<'a> {
     pub optional: bool,
     pub definite: bool,
     pub readonly: bool,
-    pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    pub accessibility: Option<TSAccessibility>,
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
@@ -1787,29 +1660,16 @@ pub struct StaticBlock<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
-/// Imports
-#[derive(Debug, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-pub struct ModuleDeclaration<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub kind: ModuleDeclarationKind<'a>,
-}
-
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-pub enum ModuleDeclarationKind<'a> {
+pub enum ModuleDeclaration<'a> {
     ImportDeclaration(Box<'a, ImportDeclaration<'a>>),
     ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>),
     ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>),
     ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>),
-
-    TSExportAssignment(Box<'a, TSExportAssignment<'a>>),
-    TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration>),
 }
 
-impl<'a> ModuleDeclarationKind<'a> {
+impl<'a> ModuleDeclaration<'a> {
     #[must_use]
     pub fn is_export(&self) -> bool {
         matches!(
@@ -1817,8 +1677,6 @@ impl<'a> ModuleDeclarationKind<'a> {
             Self::ExportAllDeclaration(_)
                 | Self::ExportDefaultDeclaration(_)
                 | Self::ExportNamedDeclaration(_)
-                | Self::TSExportAssignment(_)
-                | Self::TSNamespaceExportDeclaration(_)
         )
     }
 }
@@ -1846,10 +1704,12 @@ pub struct ImportExpression<'a> {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct ImportDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
     pub specifiers: Vec<'a, ImportDeclarationSpecifier>,
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
-    pub import_kind: Option<ImportOrExportKind>,      // `import type { foo } from 'bar'`
+    pub import_kind: ImportOrExportKind,              // `import type { foo } from 'bar'`
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -1918,23 +1778,19 @@ impl ImportAttributeKey {
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportNamedDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
     pub declaration: Option<Declaration<'a>>,
     pub specifiers: Vec<'a, ExportSpecifier>,
     pub source: Option<StringLiteral>,
-    pub export_kind: Option<ImportOrExportKind>, // `export type { foo }`
-}
-
-impl<'a> ExportNamedDeclaration<'a> {
-    #[must_use]
-    pub fn is_typescript_syntax(&self) -> bool {
-        self.export_kind == Some(ImportOrExportKind::Type)
-            || self.declaration.as_ref().map_or(false, Declaration::is_typescript_syntax)
-    }
+    pub export_kind: ImportOrExportKind, // `export type { foo }`
 }
 
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportDefaultDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
     pub declaration: ExportDefaultDeclarationKind<'a>,
     pub exported: ModuleExportName, // `default`
 }
@@ -1942,10 +1798,12 @@ pub struct ExportDefaultDeclaration<'a> {
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportAllDeclaration<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
     pub exported: Option<ModuleExportName>,
     pub source: StringLiteral,
     pub assertions: Option<Vec<'a, ImportAttribute>>, // Some(vec![]) for empty assertion
-    pub export_kind: Option<ImportOrExportKind>,      // `export type *`
+    pub export_kind: ImportOrExportKind,              // `export type *`
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -1964,25 +1822,7 @@ pub enum ExportDefaultDeclarationKind<'a> {
     FunctionDeclaration(Box<'a, Function<'a>>),
     ClassDeclaration(Box<'a, Class<'a>>),
 
-    TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>),
     TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>),
-}
-
-impl<'a> ExportDefaultDeclarationKind<'a> {
-    #[inline]
-    #[must_use]
-    pub fn is_typescript_syntax(&self) -> bool {
-        match self {
-            ExportDefaultDeclarationKind::FunctionDeclaration(func)
-                if func.is_typescript_syntax() =>
-            {
-                true
-            }
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => true,
-            _ => false,
-        }
-    }
 }
 
 // es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
@@ -2029,8 +1869,6 @@ pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier,
     pub members: Vec<'a, TSEnumMember<'a>>,
-    /// Valid Modifiers: `const`, `export`, `declare`
-    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, PartialEq, Hash)]
@@ -2453,8 +2291,6 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub id: BindingIdentifier,
     pub type_annotation: TSType<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    /// Valid Modifiers: `declare`, `export`
-    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, PartialEq, Hash)]
@@ -2500,8 +2336,6 @@ pub struct TSInterfaceDeclaration<'a> {
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub extends: Option<Vec<'a, Box<'a, TSInterfaceHeritage<'a>>>>,
-    /// Valid Modifiers: `export`, `default`, `declare`
-    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, PartialEq, Hash)]
@@ -2627,8 +2461,6 @@ pub struct TSModuleDeclaration<'a> {
     pub span: Span,
     pub id: TSModuleDeclarationName,
     pub body: TSModuleDeclarationBody<'a>,
-    /// Valid Modifiers: `declare`, `export`
-    pub modifiers: Modifiers<'a>,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -2754,33 +2586,6 @@ pub struct TSTemplateLiteralType<'a> {
 
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-pub struct TSAsExpression<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    pub expression: Expression<'a>,
-    pub type_annotation: TSType<'a>,
-}
-
-#[derive(Debug, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-pub struct TSSatisfiesExpression<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    pub expression: Expression<'a>,
-    pub type_annotation: TSType<'a>,
-}
-
-#[derive(Debug, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-pub struct TSTypeAssertion<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    pub expression: Expression<'a>,
-    pub type_annotation: TSType<'a>,
-}
-
-#[derive(Debug, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSImportEqualsDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
@@ -2803,14 +2608,6 @@ pub struct TSExternalModuleReference {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub expression: StringLiteral,
-}
-
-#[derive(Debug, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-pub struct TSNonNullExpression<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    pub expression: Expression<'a>,
 }
 
 #[derive(Debug, PartialEq, Hash)]
@@ -2849,34 +2646,6 @@ pub struct Modifier {
     pub kind: ModifierKind,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Default)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(transparent))]
-pub struct Modifiers<'a>(Option<Vec<'a, Modifier>>);
-
-impl<'a> Modifiers<'a> {
-    #[must_use]
-    pub fn new(modifiers: Vec<'a, Modifier>) -> Self {
-        Self(Some(modifiers))
-    }
-
-    #[must_use]
-    pub fn empty() -> Self {
-        Self(None)
-    }
-
-    #[must_use]
-    pub fn is_none(&self) -> bool {
-        self.0.is_none()
-    }
-
-    #[must_use]
-    pub fn contains(&self, target: ModifierKind) -> bool {
-        self.0
-            .as_ref()
-            .map_or(false, |modifiers| modifiers.iter().any(|modifier| modifier.kind == target))
-    }
-}
-
 #[derive(Debug, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSExportAssignment<'a> {
@@ -2891,15 +2660,6 @@ pub struct TSNamespaceExportDeclaration {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub id: IdentifierName,
-}
-
-#[derive(Debug, PartialEq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
-pub struct TSInstantiationExpression<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    pub expression: Expression<'a>,
-    pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
