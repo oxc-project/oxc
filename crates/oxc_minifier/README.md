@@ -6,10 +6,6 @@ A JavaScript minifier has three components:
 2. mangler
 3. compressor
 
-## Printer
-
-The printer implementation resides in `oxc_printer`. It is responsible for removing whitespace.
-
 ## Mangler
 
 The mangler implementation is part of the `SymbolTable` residing in `oxc_semantic`.

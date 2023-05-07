@@ -6,8 +6,8 @@ use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
+use oxc_formatter::Gen;
 use oxc_macros::declare_oxc_lint;
-use oxc_printer::Gen;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
@@ -84,15 +84,15 @@ impl NoUnsafeNegation {
         let fix_producer = || {
             // modify `!a instance of B` to `!(a instanceof B)`
             let modified_code = {
-                let mut printer = ctx.printer();
-                printer.print(b'!');
+                let mut formatter = ctx.formatter();
+                formatter.print(b'!');
                 let Expression::UnaryExpression(left) = &expr.left else { unreachable!() };
-                printer.print(b'(');
-                left.argument.gen(&mut printer);
-                expr.operator.gen(&mut printer);
-                expr.right.gen(&mut printer);
-                printer.print(b')');
-                printer.into_code()
+                formatter.print(b'(');
+                left.argument.gen(&mut formatter);
+                expr.operator.gen(&mut formatter);
+                expr.right.gen(&mut formatter);
+                formatter.print(b')');
+                formatter.into_code()
             };
             Fix::new(modified_code, expr.span)
         };
