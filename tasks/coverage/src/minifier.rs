@@ -1,11 +1,7 @@
 use std::path::{Path, PathBuf};
 
-use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_minifier::{Minifier, MinifierOptions};
-use oxc_parser::Parser;
-use oxc_printer::{Printer, PrinterOptions};
-use oxc_semantic::SemanticBuilder;
 
 use crate::babel::BabelCase;
 use crate::suite::{Case, TestResult};
@@ -81,22 +77,9 @@ impl Case for MinifierBabelCase {
 }
 // Test minification by minifying twice because it is a idempotent
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    let allocator = Allocator::default();
-    let printer_options = PrinterOptions::default();
-    let minifier_options = MinifierOptions::default();
-
-    let ret1 = Parser::new(&allocator, source_text, source_type).parse();
-    let program1 = allocator.alloc(ret1.program);
-    Minifier::new(&allocator, minifier_options).build(program1);
-    let _semantic = SemanticBuilder::new(source_text, source_type, &ret1.trivias).build(program1);
-    let source_text1 = Printer::new(source_text.len(), printer_options).build(program1);
-
-    let ret2 = Parser::new(&allocator, &source_text1, source_type).parse();
-    let program2 = allocator.alloc(ret2.program);
-    Minifier::new(&allocator, minifier_options).build(program2);
-    let _semantic = SemanticBuilder::new(&source_text1, source_type, &ret2.trivias).build(program2);
-    let source_text2 = Printer::new(source_text1.len(), printer_options).build(program2);
-
+    let options = MinifierOptions::default();
+    let source_text1 = Minifier::new(source_text, source_type, options).build();
+    let source_text2 = Minifier::new(&source_text1, source_type, options).build();
     if source_text1 == source_text2 {
         TestResult::Passed
     } else {
