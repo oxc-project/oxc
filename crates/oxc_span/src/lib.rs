@@ -28,14 +28,9 @@ impl Span {
     }
 
     #[must_use]
-    pub fn len(&self) -> u32 {
+    pub fn size(&self) -> u32 {
         debug_assert!(self.start <= self.end);
         self.end - self.start
-    }
-
-    #[must_use]
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
     }
 
     #[must_use]
@@ -44,7 +39,6 @@ impl Span {
     }
 }
 
-// #[allow(clippy::derive_hash_xor_eq)]
 impl Hash for Span {
     fn hash<H: Hasher>(&self, _state: &mut H) {
         // hash to nothing so all ast spans can be comparible with hash
@@ -53,7 +47,7 @@ impl Hash for Span {
 
 impl From<Span> for SourceSpan {
     fn from(val: Span) -> Self {
-        Self::new(SourceOffset::from(val.start as usize), SourceOffset::from(val.len() as usize))
+        Self::new(SourceOffset::from(val.start as usize), SourceOffset::from(val.size() as usize))
     }
 }
 
