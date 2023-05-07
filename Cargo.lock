@@ -1124,8 +1124,9 @@ version = "0.0.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
+ "oxc_ast_lower",
+ "oxc_hir",
  "oxc_parser",
- "oxc_printer",
  "oxc_semantic",
  "oxc_span",
  "walkdir",
@@ -1137,12 +1138,8 @@ version = "0.0.0"
 dependencies = [
  "flate2",
  "humansize",
- "oxc_allocator",
  "oxc_ast",
- "oxc_diagnostics",
- "oxc_parser",
- "oxc_printer",
- "oxc_semantic",
+ "oxc_minifier",
  "oxc_tasks_common",
 ]
 
@@ -1233,7 +1230,6 @@ dependencies = [
  "oxc_ast",
  "oxc_diagnostics",
  "oxc_linter",
- "oxc_minifier",
  "oxc_parser",
  "oxc_printer",
  "oxc_semantic",

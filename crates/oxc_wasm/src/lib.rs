@@ -4,7 +4,6 @@ use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::Error;
 use oxc_linter::Linter;
-use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_printer::{Printer, PrinterOptions};
 use oxc_semantic::SemanticBuilder;
@@ -38,7 +37,6 @@ pub struct Oxc {
 pub struct OxcOptions {
     pub parser: Option<OxcParserOptions>,
     pub linter: Option<OxcLinterOptions>,
-    pub minifier: Option<OxcMinifierOptions>,
     pub printer: Option<OxcPrinterOptions>,
 }
 
@@ -52,10 +50,6 @@ pub struct OxcParserOptions {
 #[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
 pub struct OxcLinterOptions;
-
-#[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
-pub struct OxcMinifierOptions;
 
 #[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
@@ -128,11 +122,6 @@ impl Oxc {
         self.save_diagnostics(ret.errors);
 
         let program = allocator.alloc(ret.program);
-
-        if self.options.minifier.is_some() {
-            let minifier_options = MinifierOptions::default();
-            Minifier::new(&allocator, minifier_options).build(program);
-        }
 
         self.ast = program.serialize(&self.serializer)?;
 

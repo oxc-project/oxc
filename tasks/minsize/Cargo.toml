@@ -6,12 +6,8 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-oxc_allocator   = { workspace = true }
-oxc_parser      = { workspace = true }
 oxc_ast         = { workspace = true }
-oxc_printer     = { workspace = true }
-oxc_diagnostics = { workspace = true }
-oxc_semantic    = { workspace = true }
+oxc_minifier      = { workspace = true }
 
 oxc_tasks_common = { workspace = true }
 flate2           = { workspace = true, features = ["zlib"] }

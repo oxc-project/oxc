@@ -3,9 +3,8 @@
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, SourceType};
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, Minifier, MinifierOptions, PrinterOptions};
 use oxc_parser::Parser;
-use oxc_printer::{Printer, PrinterOptions};
 use walkdir::WalkDir;
 
 #[test]
@@ -66,14 +65,12 @@ impl TestCase {
             s.replace(char::is_whitespace, "")
         }
 
-        let allocator = Allocator::default();
         let source_type = SourceType::default();
-        let parser_return = Parser::new(&allocator, self.input.as_ref(), source_type).parse();
-        let program = allocator.alloc(parser_return.program);
-        let minifier_options = MinifierOptions { compress: self.compress_options };
-        Minifier::new(&allocator, minifier_options).build(program);
-        let printer_options = PrinterOptions::default();
-        let minified_source_text = Printer::new(self.input.len(), printer_options).build(program);
+        let options = MinifierOptions {
+            compress: self.compress_options,
+            print: PrinterOptions { minify_whitespace: false, ..PrinterOptions::default() },
+        };
+        let minified_source_text = Minifier::new(self.input.as_ref(), source_type, options).build();
         assert_eq!(
             remove_whitespace(minified_source_text.as_str()),
             remove_whitespace(self.expect.as_ref()),

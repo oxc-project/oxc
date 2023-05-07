@@ -2,7 +2,7 @@
 
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast;
-use oxc_hir::{hir, hir_builder::HirBuilder};
+use oxc_hir::{hir, HirBuilder};
 use oxc_span::GetSpan;
 
 pub struct AstLower<'a> {

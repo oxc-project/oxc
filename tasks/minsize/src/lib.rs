@@ -5,13 +5,9 @@ use std::{
 
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
-use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
-use oxc_parser::Parser;
-use oxc_printer::{Printer, PrinterOptions};
-use oxc_semantic::SemanticBuilder;
-use oxc_tasks_common::project_root;
-use oxc_tasks_common::{TestFile, TestFiles};
+use oxc_minifier::{Minifier, MinifierOptions};
+use oxc_tasks_common::{project_root, TestFile, TestFiles};
 
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
@@ -48,16 +44,9 @@ pub fn run() -> Result<(), io::Error> {
 }
 
 fn minify(file: &TestFile) -> String {
-    let allocator = Allocator::default();
     let source_type = SourceType::from_path(&file.file_name).unwrap();
-    let source_text = &file.source_text;
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = allocator.alloc(ret.program);
-    let semantic_ret = SemanticBuilder::new(source_text, source_type, &ret.trivias).build(program);
-    let printer_options = PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() };
-    Printer::new(source_text.len(), printer_options)
-        .with_symbol_table(&semantic_ret.semantic.symbols(), true)
-        .build(program)
+    let options = MinifierOptions::default();
+    Minifier::new(&file.source_text, source_type, options).build()
 }
 
 fn gzip_size(s: &str) -> usize {
