@@ -9595,34 +9595,34 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × The target of an object rest assignment must be a variable or a property access.
+  × The left-hand side of an assignment expression must be a variable or a property access.
    ╭─[typescript/cast/destructuring-assignent-rest-invalid/input.ts:1:1]
  1 │ 0, { ...{} as T} = b;
-   ·    ─────────────
+   ·         ───────
  2 │ [...[] as T] = b;
    ╰────
 
-  × The target of an object rest assignment must be a variable or a property access.
+  × The left-hand side of an assignment expression must be a variable or a property access.
    ╭─[typescript/cast/destructuring-assignent-rest-invalid/input.ts:1:1]
  1 │ 0, { ...{} as T} = b;
  2 │ [...[] as T] = b;
-   · ────────────
+   ·     ───────
  3 │ 
    ╰────
 
-  × The target of an object rest assignment must be a variable or a property access.
+  × The left-hand side of an assignment expression must be a variable or a property access.
    ╭─[typescript/cast/destructuring-assignent-rest-invalid/input.ts:3:1]
  3 │ 
  4 │ 0, { ...({} as T)} = b;
-   ·    ───────────────
+   ·          ───────
  5 │ [...([] as T)] = b;
    ╰────
 
-  × The target of an object rest assignment must be a variable or a property access.
+  × The left-hand side of an assignment expression must be a variable or a property access.
    ╭─[typescript/cast/destructuring-assignent-rest-invalid/input.ts:4:1]
  4 │ 0, { ...({} as T)} = b;
  5 │ [...([] as T)] = b;
-   · ──────────────
+   ·      ───────
    ╰────
 
   × Expected `=>` but found `;`
