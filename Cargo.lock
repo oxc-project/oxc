@@ -1042,9 +1042,9 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_lower",
  "oxc_diagnostics",
+ "oxc_formatter",
  "oxc_minifier",
  "oxc_parser",
- "oxc_printer",
  "oxc_semantic",
  "pico-args",
  "project-root",
@@ -1067,6 +1067,17 @@ dependencies = [
  "textwrap 0.16.0",
  "thiserror",
  "unicode-width",
+]
+
+[[package]]
+name = "oxc_formatter"
+version = "0.0.6"
+dependencies = [
+ "miette",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_parser",
+ "oxc_semantic",
 ]
 
 [[package]]
@@ -1096,9 +1107,9 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_formatter",
  "oxc_macros",
  "oxc_parser",
- "oxc_printer",
  "oxc_semantic",
  "oxc_span",
  "phf",
@@ -1175,17 +1186,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_printer"
-version = "0.0.6"
-dependencies = [
- "miette",
- "oxc_allocator",
- "oxc_ast",
- "oxc_parser",
- "oxc_semantic",
-]
-
-[[package]]
 name = "oxc_semantic"
 version = "0.0.6"
 dependencies = [
@@ -1229,9 +1229,9 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_formatter",
  "oxc_linter",
  "oxc_parser",
- "oxc_printer",
  "oxc_semantic",
  "serde",
  "serde-wasm-bindgen",

@@ -3,9 +3,9 @@ use std::{cell::RefCell, rc::Rc};
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::Error;
+use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::Linter;
 use oxc_parser::Parser;
-use oxc_printer::{Printer, PrinterOptions};
 use oxc_semantic::SemanticBuilder;
 use serde::ser::Serialize;
 use wasm_bindgen::prelude::*;
@@ -37,7 +37,7 @@ pub struct Oxc {
 pub struct OxcOptions {
     pub parser: Option<OxcParserOptions>,
     pub linter: Option<OxcLinterOptions>,
-    pub printer: Option<OxcPrinterOptions>,
+    pub formatter: Option<OxcFormatterOptions>,
 }
 
 #[wasm_bindgen]
@@ -53,7 +53,7 @@ pub struct OxcLinterOptions;
 
 #[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
-pub struct OxcPrinterOptions {
+pub struct OxcFormatterOptions {
     mangle: bool,
     #[wasm_bindgen(js_name = minifyWhitespace)]
     pub minify_whitespace: bool,
@@ -138,12 +138,12 @@ impl Oxc {
             self.save_diagnostics(diagnostics);
         }
 
-        if let Some(o) = &self.options.printer {
-            let printer_options = PrinterOptions {
+        if let Some(o) = &self.options.formatter {
+            let formatter_options = FormatterOptions {
                 minify_whitespace: o.minify_whitespace,
                 indentation: o.indentation,
             };
-            let printed = Printer::new(source_text.len(), printer_options)
+            let printed = Formatter::new(source_text.len(), formatter_options)
                 .with_symbol_table(&semantic.symbols(), o.mangle)
                 .build(program);
             self.printed_text = printed;

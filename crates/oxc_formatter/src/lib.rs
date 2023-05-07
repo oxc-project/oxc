@@ -1,5 +1,5 @@
-//! AST Printer with whitespace minification
-//! code adapted from [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
+//! AST Formatter with whitespace minification
+//! code adapted from [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_formatter/js_formatter.go)
 
 #![feature(let_chains)]
 
@@ -14,19 +14,19 @@ use oxc_semantic::SymbolTable;
 pub use crate::gen::Gen;
 
 #[derive(Debug, Clone, Copy)]
-pub struct PrinterOptions {
+pub struct FormatterOptions {
     pub minify_whitespace: bool,
     pub indentation: u8,
 }
 
-impl Default for PrinterOptions {
+impl Default for FormatterOptions {
     fn default() -> Self {
         Self { minify_whitespace: false, indentation: 4 }
     }
 }
 
-pub struct Printer {
-    options: PrinterOptions,
+pub struct Formatter {
+    options: FormatterOptions,
 
     /// Symbol Table for name mangling
     symbols: Rc<SymbolTable>,
@@ -51,9 +51,9 @@ pub enum Separator {
 }
 
 /// Codegen interface for pretty print or minification
-impl Printer {
+impl Formatter {
     #[must_use]
-    pub fn new(source_len: usize, options: PrinterOptions) -> Self {
+    pub fn new(source_len: usize, options: FormatterOptions) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half the original size,
         // so in fact no reallocation should happen at all.
