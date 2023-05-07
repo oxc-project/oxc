@@ -12,7 +12,7 @@ use oxc_span::{Atom, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BooleanLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -27,7 +27,7 @@ impl BooleanLiteral {
     }
 }
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct NullLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -40,13 +40,7 @@ impl Hash for NullLiteral {
     }
 }
 
-impl PartialEq for NullLiteral {
-    fn eq(&self, _other: &Self) -> bool {
-        true
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct NumberLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -73,7 +67,7 @@ impl<'a> Hash for NumberLiteral<'a> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BigintLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -82,7 +76,7 @@ pub struct BigintLiteral {
     pub value: BigUint,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct RegExpLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -93,7 +87,7 @@ pub struct RegExpLiteral {
     pub regex: RegExp,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct RegExp {
     pub pattern: Atom,
@@ -151,11 +145,11 @@ impl fmt::Display for RegExpFlags {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct EmptyObject;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct StringLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -183,7 +177,7 @@ impl StringLiteral {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, Hash)]
 pub enum NumberBase {
     Decimal,
     Binary,

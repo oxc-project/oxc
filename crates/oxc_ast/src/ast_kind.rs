@@ -4,7 +4,7 @@ use oxc_span::{Atom, GetSpan, Span};
 use crate::ast::*;
 
 /// Untyped AST Node Kind
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy)]
 pub enum AstKind<'a> {
     Root,
 

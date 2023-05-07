@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::ast::TSType;
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSDocNullableType<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -15,7 +15,7 @@ pub struct JSDocNullableType<'a> {
     pub postfix: bool,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSDocUnknownType {
     #[cfg_attr(feature = "serde", serde(flatten))]

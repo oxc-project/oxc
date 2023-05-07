@@ -11,7 +11,7 @@ use crate::ast::*;
 // 1.2 JSX Elements
 
 /// JSX Element
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSXElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -22,7 +22,7 @@ pub struct JSXElement<'a> {
 }
 
 /// JSX Opening Element
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSXOpeningElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -34,7 +34,7 @@ pub struct JSXOpeningElement<'a> {
 }
 
 /// JSX Closing Element
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXClosingElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -43,7 +43,7 @@ pub struct JSXClosingElement<'a> {
 }
 
 /// JSX Fragment
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSXFragment<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -53,14 +53,14 @@ pub struct JSXFragment<'a> {
     pub children: Vec<'a, JSXChild<'a>>,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXOpeningFragment {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXClosingFragment {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -68,7 +68,7 @@ pub struct JSXClosingFragment {
 }
 
 /// JSX Element Name
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXElementName<'a> {
     Identifier(JSXIdentifier),
@@ -77,7 +77,7 @@ pub enum JSXElementName<'a> {
 }
 
 /// JSX Namespaced Name
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXNamespacedName {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -87,7 +87,7 @@ pub struct JSXNamespacedName {
 }
 
 /// JSX Member Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXMemberExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -106,14 +106,14 @@ impl<'a> JSXMemberExpression<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXMemberExpressionObject<'a> {
     Identifier(JSXIdentifier),
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXExpressionContainer<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -121,14 +121,14 @@ pub struct JSXExpressionContainer<'a> {
     pub expression: JSXExpression<'a>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXExpression<'a> {
     Expression(Expression<'a>),
     EmptyExpression(JSXEmptyExpression),
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXEmptyExpression {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -138,7 +138,7 @@ pub struct JSXEmptyExpression {
 // 1.3 JSX Attributes
 
 /// JSX Attributes
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXAttributeItem<'a> {
     Attribute(Box<'a, JSXAttribute<'a>>),
@@ -146,7 +146,7 @@ pub enum JSXAttributeItem<'a> {
 }
 
 /// JSX Attribute
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXAttribute<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -156,7 +156,7 @@ pub struct JSXAttribute<'a> {
 }
 
 /// JSX Spread Attribute
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXSpreadAttribute<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -165,7 +165,7 @@ pub struct JSXSpreadAttribute<'a> {
 }
 
 /// JSX Attribute Name
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXAttributeName<'a> {
     Identifier(JSXIdentifier),
@@ -173,7 +173,7 @@ pub enum JSXAttributeName<'a> {
 }
 
 /// JSX Attribute Value
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXAttributeValue<'a> {
     StringLiteral(StringLiteral),
@@ -182,7 +182,7 @@ pub enum JSXAttributeValue<'a> {
     Fragment(Box<'a, JSXFragment<'a>>),
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -193,7 +193,7 @@ pub struct JSXIdentifier {
 // 1.4 JSX Children
 
 /// JSX Child
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXChild<'a> {
     Text(JSXText),
@@ -203,7 +203,7 @@ pub enum JSXChild<'a> {
     Spread(JSXSpreadChild<'a>),
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXSpreadChild<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -212,7 +212,7 @@ pub struct JSXSpreadChild<'a> {
 }
 
 /// JSX Text
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct JSXText {
     #[cfg_attr(feature = "serde", serde(flatten))]

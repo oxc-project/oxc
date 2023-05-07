@@ -145,7 +145,7 @@ pub fn get_array_method_name<'a>(
     ctx: &LintContext<'a>,
 ) -> Option<&'static str> {
     let mut current_node = node;
-    while current_node.get().kind() != AstKind::Root {
+    while !matches!(current_node.get().kind(), AstKind::Root) {
         let parent = ctx.parent_node(current_node).unwrap();
 
         match parent.get().kind() {

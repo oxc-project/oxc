@@ -9,7 +9,7 @@ use serde::Serialize;
 #[allow(clippy::wildcard_imports)]
 use crate::{ast::*, SourceType};
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct Program<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -27,7 +27,7 @@ impl<'a> Program<'a> {
 }
 
 /// Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
@@ -225,7 +225,7 @@ impl<'a> Expression<'a> {
 }
 
 /// Identifier Name
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IdentifierName {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -234,7 +234,7 @@ pub struct IdentifierName {
 }
 
 /// Identifier Reference
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IdentifierReference {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -243,7 +243,7 @@ pub struct IdentifierReference {
 }
 
 /// Binding Identifier
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BindingIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -252,7 +252,7 @@ pub struct BindingIdentifier {
 }
 
 /// Label Identifier
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct LabelIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -261,7 +261,7 @@ pub struct LabelIdentifier {
 }
 
 /// This Expression
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ThisExpression {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -269,7 +269,7 @@ pub struct ThisExpression {
 }
 
 /// Array Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ArrayExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -279,7 +279,7 @@ pub struct ArrayExpression<'a> {
 }
 
 /// Array Expression Element
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ArrayExpressionElement<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>),
@@ -288,7 +288,7 @@ pub enum ArrayExpressionElement<'a> {
 }
 
 /// Object Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ObjectExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -297,14 +297,14 @@ pub struct ObjectExpression<'a> {
     pub trailing_comma: Option<Span>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ObjectProperty<'a> {
     Property(Box<'a, Property<'a>>),
     SpreadProperty(Box<'a, SpreadElement<'a>>),
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct Property<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -317,7 +317,7 @@ pub struct Property<'a> {
     pub computed: bool,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum PropertyKey<'a> {
     Identifier(Box<'a, IdentifierName>),
@@ -351,7 +351,7 @@ impl<'a> PropertyKey<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum PropertyValue<'a> {
     // For AssignmentProperty in ObjectPattern <https://github.com/estree/estree/blob/master/es2015.md#objectpattern>
@@ -359,7 +359,7 @@ pub enum PropertyValue<'a> {
     Expression(Expression<'a>),
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
 pub enum PropertyKind {
     Init,
@@ -368,7 +368,7 @@ pub enum PropertyKind {
 }
 
 /// Template Literal
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TemplateLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -390,7 +390,7 @@ impl<'a> TemplateLiteral<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TaggedTemplateExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -400,7 +400,7 @@ pub struct TaggedTemplateExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TemplateElement {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -409,7 +409,7 @@ pub struct TemplateElement {
     pub value: TemplateElementValue,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct TemplateElementValue {
     pub raw: Atom,
@@ -417,7 +417,7 @@ pub struct TemplateElementValue {
 }
 
 /// Member Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum MemberExpression<'a> {
     ComputedMemberExpression(ComputedMemberExpression<'a>),
@@ -471,7 +471,7 @@ impl<'a> MemberExpression<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ComputedMemberExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -481,7 +481,7 @@ pub struct ComputedMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct StaticMemberExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -491,7 +491,7 @@ pub struct StaticMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct PrivateFieldExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -502,7 +502,7 @@ pub struct PrivateFieldExpression<'a> {
 }
 
 /// Call Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct CallExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -559,7 +559,7 @@ impl<'a> CallExpression<'a> {
 }
 
 /// New Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct NewExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -570,7 +570,7 @@ pub struct NewExpression<'a> {
 }
 
 /// Meta Property `new.target` | `import.meta`
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct MetaProperty {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -580,7 +580,7 @@ pub struct MetaProperty {
 }
 
 /// Spread Element
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SpreadElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -589,7 +589,7 @@ pub struct SpreadElement<'a> {
 }
 
 /// Argument
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Argument<'a> {
     SpreadElement(Box<'a, SpreadElement<'a>>),
@@ -597,7 +597,7 @@ pub enum Argument<'a> {
 }
 
 /// Update Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct UpdateExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -608,7 +608,7 @@ pub struct UpdateExpression<'a> {
 }
 
 /// Unary Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct UnaryExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -619,7 +619,7 @@ pub struct UnaryExpression<'a> {
 }
 
 /// Binary Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BinaryExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -630,7 +630,7 @@ pub struct BinaryExpression<'a> {
 }
 
 /// Private Identifier in Shift Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct PrivateInExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -641,7 +641,7 @@ pub struct PrivateInExpression<'a> {
 }
 
 /// Binary Logical Operators
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct LogicalExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -652,7 +652,7 @@ pub struct LogicalExpression<'a> {
 }
 
 /// Conditional Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ConditionalExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -663,7 +663,7 @@ pub struct ConditionalExpression<'a> {
 }
 
 /// Assignment Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -674,7 +674,7 @@ pub struct AssignmentExpression<'a> {
 }
 
 /// Destructuring Assignment
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTarget<'a> {
     SimpleAssignmentTarget(SimpleAssignmentTarget<'a>),
@@ -688,7 +688,7 @@ impl<'a> AssignmentTarget<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum SimpleAssignmentTarget<'a> {
     AssignmentTargetIdentifier(Box<'a, IdentifierReference>),
@@ -712,14 +712,14 @@ impl<'a> SimpleAssignmentTarget<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTargetPattern<'a> {
     ArrayAssignmentTarget(Box<'a, ArrayAssignmentTarget<'a>>),
     ObjectAssignmentTarget(Box<'a, ObjectAssignmentTarget<'a>>),
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ArrayAssignmentTarget<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -729,7 +729,7 @@ pub struct ArrayAssignmentTarget<'a> {
     pub trailing_comma: Option<Span>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ObjectAssignmentTarget<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -738,7 +738,7 @@ pub struct ObjectAssignmentTarget<'a> {
     pub rest: Option<AssignmentTarget<'a>>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTargetMaybeDefault<'a> {
     AssignmentTarget(AssignmentTarget<'a>),
@@ -764,7 +764,7 @@ impl<'a> AssignmentTargetMaybeDefault<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentTargetWithDefault<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -773,7 +773,7 @@ pub struct AssignmentTargetWithDefault<'a> {
     pub init: Expression<'a>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum AssignmentTargetProperty<'a> {
     AssignmentTargetPropertyIdentifier(Box<'a, AssignmentTargetPropertyIdentifier<'a>>),
@@ -781,7 +781,7 @@ pub enum AssignmentTargetProperty<'a> {
 }
 
 /// Assignment Property - Identifier Reference
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentTargetPropertyIdentifier<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -791,7 +791,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 }
 
 /// Assignment Property - Property Name
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentTargetPropertyProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -801,7 +801,7 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 }
 
 /// Sequence Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SequenceExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -809,7 +809,7 @@ pub struct SequenceExpression<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct Super {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -817,7 +817,7 @@ pub struct Super {
 }
 
 /// Await Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AwaitExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -825,7 +825,7 @@ pub struct AwaitExpression<'a> {
     pub argument: Expression<'a>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ChainExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -833,7 +833,7 @@ pub struct ChainExpression<'a> {
     pub expression: ChainElement<'a>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ChainElement<'a> {
     CallExpression(Box<'a, CallExpression<'a>>),
@@ -841,7 +841,7 @@ pub enum ChainElement<'a> {
 }
 
 /// Parenthesized Expression
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ParenthesizedExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -850,7 +850,7 @@ pub struct ParenthesizedExpression<'a> {
 }
 
 /// Statements
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Statement<'a> {
     // Statements
@@ -878,7 +878,7 @@ pub enum Statement<'a> {
 }
 
 /// Directive Prologue
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct Directive<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -889,7 +889,7 @@ pub struct Directive<'a> {
 }
 
 /// Block Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BlockStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -898,7 +898,7 @@ pub struct BlockStatement<'a> {
 }
 
 /// Declarations and the Variable Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum Declaration<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
@@ -925,7 +925,7 @@ impl<'a> Declaration<'a> {
 }
 
 /// Variable Declaration
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct VariableDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -967,7 +967,7 @@ impl fmt::Display for VariableDeclarationKind {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct VariableDeclarator<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -980,7 +980,7 @@ pub struct VariableDeclarator<'a> {
 }
 
 /// Empty Statement
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct EmptyStatement {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -988,7 +988,7 @@ pub struct EmptyStatement {
 }
 
 /// Expression Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExpressionStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -997,7 +997,7 @@ pub struct ExpressionStatement<'a> {
 }
 
 /// If Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IfStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1008,7 +1008,7 @@ pub struct IfStatement<'a> {
 }
 
 /// Do-While Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct DoWhileStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1018,7 +1018,7 @@ pub struct DoWhileStatement<'a> {
 }
 
 /// While Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct WhileStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1028,7 +1028,7 @@ pub struct WhileStatement<'a> {
 }
 
 /// For Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ForStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1039,7 +1039,7 @@ pub struct ForStatement<'a> {
     pub body: Statement<'a>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ForStatementInit<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
@@ -1047,7 +1047,7 @@ pub enum ForStatementInit<'a> {
 }
 
 /// For-In Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ForInStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1058,7 +1058,7 @@ pub struct ForInStatement<'a> {
 }
 
 /// For-Of Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ForOfStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1069,7 +1069,7 @@ pub struct ForOfStatement<'a> {
     pub body: Statement<'a>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
@@ -1077,7 +1077,7 @@ pub enum ForStatementLeft<'a> {
 }
 
 /// Continue Statement
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ContinueStatement {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1086,7 +1086,7 @@ pub struct ContinueStatement {
 }
 
 /// Break Statement
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BreakStatement {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1095,7 +1095,7 @@ pub struct BreakStatement {
 }
 
 /// Return Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ReturnStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1104,7 +1104,7 @@ pub struct ReturnStatement<'a> {
 }
 
 /// With Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct WithStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1114,7 +1114,7 @@ pub struct WithStatement<'a> {
 }
 
 /// Switch Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SwitchStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1123,7 +1123,7 @@ pub struct SwitchStatement<'a> {
     pub cases: Vec<'a, SwitchCase<'a>>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct SwitchCase<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1140,7 +1140,7 @@ impl<'a> SwitchCase<'a> {
 }
 
 /// Labelled Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct LabeledStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1150,7 +1150,7 @@ pub struct LabeledStatement<'a> {
 }
 
 /// Throw Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ThrowStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1159,7 +1159,7 @@ pub struct ThrowStatement<'a> {
 }
 
 /// Try Statement
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TryStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1169,7 +1169,7 @@ pub struct TryStatement<'a> {
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct CatchClause<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1179,7 +1179,7 @@ pub struct CatchClause<'a> {
 }
 
 /// Debugger Statement
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct DebuggerStatement {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1187,7 +1187,7 @@ pub struct DebuggerStatement {
 }
 
 /// Destructuring Binding Patterns
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub struct BindingPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1196,7 +1196,7 @@ pub struct BindingPattern<'a> {
     pub optional: bool,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum BindingPatternKind<'a> {
     BindingIdentifier(Box<'a, BindingIdentifier>),
@@ -1218,7 +1218,7 @@ impl<'a> BindingPatternKind<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AssignmentPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1227,7 +1227,7 @@ pub struct AssignmentPattern<'a> {
     pub right: Expression<'a>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ObjectPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1235,14 +1235,14 @@ pub struct ObjectPattern<'a> {
     pub properties: Vec<'a, ObjectPatternProperty<'a>>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ObjectPatternProperty<'a> {
     Property(Box<'a, Property<'a>>),
     RestElement(Box<'a, RestElement<'a>>),
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ArrayPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1250,7 +1250,7 @@ pub struct ArrayPattern<'a> {
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct RestElement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1259,7 +1259,7 @@ pub struct RestElement<'a> {
 }
 
 /// Function Definitions
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Function<'a> {
@@ -1313,7 +1313,7 @@ pub enum FunctionType {
     TSDeclareFunction,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct FormalParameters<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1322,7 +1322,7 @@ pub struct FormalParameters<'a> {
     pub items: Vec<'a, FormalParameter<'a>>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct FormalParameter<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1354,7 +1354,7 @@ impl<'a> FormalParameters<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct FunctionBody<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1371,7 +1371,7 @@ impl<'a> FunctionBody<'a> {
 }
 
 /// Arrow Function Definitions
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct ArrowExpression<'a> {
     pub span: Span,
@@ -1395,7 +1395,7 @@ impl<'a> ArrowExpression<'a> {
 }
 
 /// Generator Function Definitions
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct YieldExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1405,7 +1405,7 @@ pub struct YieldExpression<'a> {
 }
 
 /// Class Definitions
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
 pub struct Class<'a> {
     pub r#type: ClassType,
@@ -1446,7 +1446,7 @@ pub enum ClassType {
     ClassExpression,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ClassBody<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1454,7 +1454,7 @@ pub struct ClassBody<'a> {
     pub body: Vec<'a, ClassElement<'a>>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ClassElement<'a> {
     StaticBlock(Box<'a, StaticBlock<'a>>),
@@ -1542,7 +1542,7 @@ impl<'a> ClassElement<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 #[allow(clippy::struct_excessive_bools)]
 pub struct MethodDefinition<'a> {
@@ -1559,7 +1559,7 @@ pub struct MethodDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 #[allow(clippy::struct_excessive_bools)]
 pub struct PropertyDefinition<'a> {
@@ -1579,7 +1579,7 @@ pub struct PropertyDefinition<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "lowercase"))]
 pub enum MethodDefinitionKind {
     Constructor,
@@ -1588,7 +1588,7 @@ pub enum MethodDefinitionKind {
     Set,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct PrivateIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1596,7 +1596,7 @@ pub struct PrivateIdentifier {
     pub name: Atom,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct StaticBlock<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1604,7 +1604,7 @@ pub struct StaticBlock<'a> {
     pub body: Vec<'a, Statement<'a>>,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ModuleDeclaration<'a> {
     ImportDeclaration(Box<'a, ImportDeclaration<'a>>),
@@ -1630,7 +1630,7 @@ impl<'a> ModuleDeclaration<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct AccessorProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1641,7 +1641,7 @@ pub struct AccessorProperty<'a> {
     pub r#static: bool,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1650,7 +1650,7 @@ pub struct ImportExpression<'a> {
     pub arguments: Vec<'a, Expression<'a>>,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct ImportDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1661,7 +1661,7 @@ pub struct ImportDeclaration<'a> {
     pub import_kind: ImportOrExportKind,              // `import type { foo } from 'bar'`
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ImportDeclarationSpecifier {
     ImportSpecifier(ImportSpecifier),
@@ -1671,7 +1671,7 @@ pub enum ImportDeclarationSpecifier {
 
 // import {imported} from "source"
 // import {imported as local} from "source"
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportSpecifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1681,7 +1681,7 @@ pub struct ImportSpecifier {
 }
 
 // import local from "source"
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportDefaultSpecifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1690,7 +1690,7 @@ pub struct ImportDefaultSpecifier {
 }
 
 // import * as local from "source"
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportNamespaceSpecifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1698,7 +1698,7 @@ pub struct ImportNamespaceSpecifier {
     pub local: BindingIdentifier,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportAttribute {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1707,7 +1707,7 @@ pub struct ImportAttribute {
     pub value: StringLiteral,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ImportAttributeKey {
     Identifier(IdentifierName),
@@ -1724,7 +1724,7 @@ impl ImportAttributeKey {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportNamedDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1743,7 +1743,7 @@ impl<'a> ExportNamedDeclaration<'a> {
     }
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportDefaultDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1752,7 +1752,7 @@ pub struct ExportDefaultDeclaration<'a> {
     pub exported: ModuleExportName, // `default`
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportAllDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1763,7 +1763,7 @@ pub struct ExportAllDeclaration<'a> {
     pub export_kind: ImportOrExportKind,              // `export type *`
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ExportSpecifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -1772,7 +1772,7 @@ pub struct ExportSpecifier {
     pub exported: ModuleExportName,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ExportDefaultDeclarationKind<'a> {
     Expression(Expression<'a>),
@@ -1805,7 +1805,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 // support:
 //   import {"\0 any unicode" as foo} from "";
 //   export {foo as "\0 any unicode"};
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ModuleExportName {
     Identifier(IdentifierName),

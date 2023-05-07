@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_map, Map};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{ast_util::calculate_hash, context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum ValidTypeofDiagnostic {
@@ -74,7 +74,7 @@ impl Rule for ValidTypeof {
             && let AstKind::BinaryExpression(binary) = ctx.parent_kind(node)
             && binary.operator.is_equality()
         {
-            let (sibling,sibling_id) = if let Expression::UnaryExpression(left) = &binary.left && **left== *unary{
+            let (sibling, sibling_id) = if let Expression::UnaryExpression(left) = &binary.left && calculate_hash(left) == calculate_hash(unary) {
                 (&binary.right, node.next_sibling().unwrap())
             } else {
                 (&binary.left, node.previous_sibling().unwrap())
