@@ -11,7 +11,7 @@ use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{
     binder::Binder,
-    checker::EarlyErrorJavaScript,
+    checker::{EarlyErrorJavaScript, EarlyErrorTypeScript},
     diagnostics::Redeclaration,
     jsdoc::JSDocBuilder,
     module_record::ModuleRecordBuilder,
@@ -274,6 +274,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.check_syntax_error {
             let node = &self.nodes[*self.current_node_id];
             EarlyErrorJavaScript::run(node, self);
+            EarlyErrorTypeScript::run(node, self);
         }
         self.leave_kind(kind);
         self.pop_ast_node();
