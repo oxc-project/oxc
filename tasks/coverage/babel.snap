@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2065/2071 (99.71%)
 Positive Passed: 2062/2071 (99.57%)
-Negative Passed: 1327/1502 (88.35%)
+Negative Passed: 1328/1502 (88.42%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -49,7 +49,6 @@ Expect Syntax Error: "esprima/statement-if/.migrated_0003/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
 Expect Syntax Error: "typescript/arrow-function/async-rest-optional-parameter/input.ts"
-Expect Syntax Error: "typescript/cast/destructuring-assignent-rest-invalid/input.ts"
 Expect Syntax Error: "typescript/cast/satisfies-const-error/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-assert-and-assign/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-type-assertion-and-assign/input.ts"
@@ -9595,6 +9594,36 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·        ─
    ╰────
   help: Try insert a semicolon here
+
+  × The left-hand side of an assignment expression must be a variable or a property access.
+   ╭─[typescript/cast/destructuring-assignent-rest-invalid/input.ts:1:1]
+ 1 │ 0, { ...{} as T} = b;
+   ·         ───────
+ 2 │ [...[] as T] = b;
+   ╰────
+
+  × The left-hand side of an assignment expression must be a variable or a property access.
+   ╭─[typescript/cast/destructuring-assignent-rest-invalid/input.ts:1:1]
+ 1 │ 0, { ...{} as T} = b;
+ 2 │ [...[] as T] = b;
+   ·     ───────
+ 3 │ 
+   ╰────
+
+  × The left-hand side of an assignment expression must be a variable or a property access.
+   ╭─[typescript/cast/destructuring-assignent-rest-invalid/input.ts:3:1]
+ 3 │ 
+ 4 │ 0, { ...({} as T)} = b;
+   ·          ───────
+ 5 │ [...([] as T)] = b;
+   ╰────
+
+  × The left-hand side of an assignment expression must be a variable or a property access.
+   ╭─[typescript/cast/destructuring-assignent-rest-invalid/input.ts:4:1]
+ 4 │ 0, { ...({} as T)} = b;
+ 5 │ [...([] as T)] = b;
+   ·      ───────
+   ╰────
 
   × Expected `=>` but found `;`
    ╭─[typescript/cast/invalid/input.ts:1:1]
