@@ -1,6 +1,6 @@
 Minifier_Babel Summary:
 AST Parsed     : 1621/1621 (100.00%)
-Positive Passed: 1550/1621 (95.62%)
+Positive Passed: 1553/1621 (95.81%)
 Expect to Parse: "annex-b/enabled/3.3-function-in-if-body/input.js"
 Expect to Parse: "comments/basic/class-accessor-computed/input.js"
 Expect to Parse: "comments/basic/class-method/input.js"
@@ -12,7 +12,6 @@ Expect to Parse: "core/create-parenthesized-expressions/valid-parenthesized-expr
 Expect to Parse: "core/object/member-expression-after-property-initializer-1/input.js"
 Expect to Parse: "core/object/member-expression-after-property-initializer-2/input.js"
 Expect to Parse: "core/regression/use-strict-with-pre-semi/input.js"
-Expect to Parse: "core/uncategorised/318/input.js"
 Expect to Parse: "core/uncategorised/338/input.js"
 Expect to Parse: "core/uncategorised/540/input.js"
 Expect to Parse: "es2015/arrow-functions/in-logic-expression/input.js"
@@ -42,8 +41,6 @@ Expect to Parse: "es2019/json-strings/string-line-separator/input.js"
 Expect to Parse: "es2019/json-strings/string-paragraph-separator/input.js"
 Expect to Parse: "es2020/bigint/decimal-as-property-name/input.js"
 Expect to Parse: "es2020/bigint/hex-as-property-name/input.js"
-Expect to Parse: "esprima/directive-prolog/migrated_0000/input.js"
-Expect to Parse: "esprima/directive-prolog/migrated_0001/input.js"
 Expect to Parse: "esprima/es2015-destructuring-assignment-object-pattern/empty-object-pattern-assignment/input.js"
 Expect to Parse: "esprima/es2015-destructuring-assignment-object-pattern/object-pattern-assignment/input.js"
 Expect to Parse: "esprima/es2015-generator/generator-method-with-params/input.js"

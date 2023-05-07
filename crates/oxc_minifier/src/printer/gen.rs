@@ -894,6 +894,10 @@ impl<'a> Gen for PrivateFieldExpression<'a> {
 
 impl<'a> Gen for CallExpression<'a> {
     fn gen(&self, p: &mut Printer) {
+        let is_func_expr = matches!(self.callee, Expression::FunctionExpression(_));
+        if is_func_expr {
+            p.print(b'(');
+        }
         self.callee.gen(p);
 
         if self.optional {
@@ -902,6 +906,9 @@ impl<'a> Gen for CallExpression<'a> {
         p.print(b'(');
         p.print_list(&self.arguments);
         p.print(b')');
+        if is_func_expr {
+            p.print(b')');
+        }
     }
 }
 

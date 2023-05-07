@@ -16,7 +16,7 @@ fn main() {
 
     let options = MinifierOptions {
         compress: CompressOptions::default(),
-        print: PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() },
+        print: PrinterOptions { minify_whitespace: false, ..PrinterOptions::default() },
     };
 
     let printed = Minifier::new(&source_text, source_type, options).build();
