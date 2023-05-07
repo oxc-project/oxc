@@ -1243,10 +1243,6 @@ impl<'a> AstLower<'a> {
                 let decl = self.lower_ts_enum_declaration(decl)?;
                 Some(hir::Declaration::TSEnumDeclaration(decl))
             }
-            ast::Declaration::TSImportEqualsDeclaration(decl) => {
-                let decl = self.lower_ts_import_equals_declaration(decl)?;
-                Some(hir::Declaration::TSImportEqualsDeclaration(decl))
-            }
             _ => None,
         }
     }
@@ -1453,13 +1449,6 @@ impl<'a> AstLower<'a> {
         &mut self,
         _decl: &ast::TSEnumDeclaration<'a>,
     ) -> Option<Box<'a, hir::TSEnumDeclaration<'a>>> {
-        None
-    }
-
-    fn lower_ts_import_equals_declaration(
-        &mut self,
-        _decl: &ast::TSImportEqualsDeclaration<'a>,
-    ) -> Option<Box<'a, hir::TSImportEqualsDeclaration<'a>>> {
         None
     }
 
