@@ -307,12 +307,12 @@ impl<'a> AstLower<'a> {
             ast::Expression::Super(expr) => self.lower_super(expr),
             ast::Expression::JSXElement(elem) => {
                 // TODO: implement JSX
-                let ident = self.hir.identifier_reference(elem.span, "void".into());
+                let ident = self.hir.identifier_reference(elem.span, "undefined".into());
                 self.hir.identifier_reference_expression(ident)
             }
             ast::Expression::JSXFragment(elem) => {
                 // TODO: implement JSX
-                let ident = self.hir.identifier_reference(elem.span, "void".into());
+                let ident = self.hir.identifier_reference(elem.span, "undefined".into());
                 self.hir.identifier_reference_expression(ident)
             }
 
@@ -750,7 +750,11 @@ impl<'a> AstLower<'a> {
                 let member_expr = self.lower_member_expr(member_expr);
                 self.hir.member_assignment_target(member_expr)
             }
-            _ => unreachable!(),
+            expr => {
+                // return undefined because this is invalid syntax
+                let ident = self.hir.identifier_reference(expr.span(), "undefined".into());
+                self.hir.assignment_target_identifier(ident)
+            }
         }
     }
 

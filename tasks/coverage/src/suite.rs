@@ -11,6 +11,7 @@ use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_ast_lower::AstLower;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -272,6 +273,12 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         let parser_ret = Parser::new(&allocator, source_text, source_type)
             .allow_return_outside_function(self.allow_return_outside_function())
             .parse();
+
+        // Make sure serialization doesn't crash for ast and hir, also for code coverage.
+        serde_json::to_string(&parser_ret.program).unwrap();
+        let hir = AstLower::new(&allocator).build(&parser_ret.program);
+        serde_json::to_string(&hir).unwrap();
+
         let program = allocator.alloc(parser_ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type, &parser_ret.trivias)
             .with_module_record_builder(true)
