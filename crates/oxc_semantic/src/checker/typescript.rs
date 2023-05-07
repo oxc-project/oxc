@@ -2,12 +2,11 @@
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
-use super::javascript::{ClassStatickBlockAwait, ReservedKeyword, STRICT_MODE_NAMES};
-use crate::{builder::SemanticBuilder, scope::ScopeFlags, AstNode};
+use crate::{builder::SemanticBuilder, AstNode};
 
 pub struct EarlyErrorTypeScript;
 
@@ -15,6 +14,8 @@ impl EarlyErrorTypeScript {
     pub fn run<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         let kind = node.get().kind();
 
+        // should be removed when add more matches.
+        #[allow(clippy::single_match)]
         match kind {
             AstKind::SimpleAssignmentTarget(target) => check_simple_assignment_target(target, ctx),
             _ => {}
@@ -38,7 +39,7 @@ fn check_simple_assignment_target<'a>(
                 #[diagnostic()]
                 struct UnexpectedAssignmentTarget(#[label] Span);
 
-                return ctx.error(UnexpectedAssignmentTarget(expression.span()));
+                ctx.error(UnexpectedAssignmentTarget(expression.span()));
             }
         }
     }
