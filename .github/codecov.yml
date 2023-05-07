@@ -14,6 +14,7 @@ ignore:
   - "**/main.rs"
   - "**/examples"
   - "tasks"
+  - "crates/oxc_ast/src/visit_mut.rs"
   - "crates/oxc_wasm" # Remove this once wasm is completed
   - "crates/oxc_parser/fuzz"
   - "crates/oxc_diagnostics"
