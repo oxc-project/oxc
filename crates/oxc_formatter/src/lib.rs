@@ -15,13 +15,12 @@ pub use crate::gen::Gen;
 
 #[derive(Debug, Clone, Copy)]
 pub struct FormatterOptions {
-    pub minify_whitespace: bool,
     pub indentation: u8,
 }
 
 impl Default for FormatterOptions {
     fn default() -> Self {
-        Self { minify_whitespace: false, indentation: 4 }
+        Self { indentation: 4 }
     }
 }
 
@@ -54,14 +53,10 @@ pub enum Separator {
 impl Formatter {
     #[must_use]
     pub fn new(source_len: usize, options: FormatterOptions) -> Self {
-        // Initialize the output code buffer to reduce memory reallocation.
-        // Minification will reduce by at least half the original size,
-        // so in fact no reallocation should happen at all.
-        let capacity = if options.minify_whitespace { source_len / 2 } else { source_len };
         Self {
             options,
             symbols: Rc::new(SymbolTable::default()),
-            code: Vec::with_capacity(capacity),
+            code: Vec::with_capacity(source_len),
             indentation: 0,
             needs_semicolon: false,
             prev_op_end: 0,
@@ -109,16 +104,12 @@ impl Formatter {
 
     #[inline]
     pub fn print_space(&mut self) {
-        if !self.options.minify_whitespace {
-            self.code.push(b' ');
-        }
+        self.code.push(b' ');
     }
 
     #[inline]
     pub fn print_newline(&mut self) {
-        if !self.options.minify_whitespace {
-            self.code.push(b'\n');
-        }
+        self.code.push(b'\n');
     }
 
     #[inline]
@@ -174,12 +165,8 @@ impl Formatter {
     }
 
     fn print_semicolon_after_statement(&mut self) {
-        if self.options.minify_whitespace {
-            self.needs_semicolon = true;
-        } else {
-            self.print_semicolon();
-            self.print(b'\n');
-        }
+        self.print_semicolon();
+        self.print(b'\n');
     }
 
     fn print_semicolon_if_needed(&mut self) {
@@ -205,10 +192,8 @@ impl Formatter {
     }
 
     pub fn print_indent(&mut self) {
-        if !self.options.minify_whitespace {
-            for _ in 0..self.indentation {
-                self.print(b' ');
-            }
+        for _ in 0..self.indentation {
+            self.print(b' ');
         }
     }
 

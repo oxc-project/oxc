@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
-use oxc_ast_lower::AstLower;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_parser::Parser;
 
@@ -39,19 +38,7 @@ impl Case for FormatterTest262Case {
         let source_text = self.base.code();
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
         let source_type = SourceType::default().with_module(is_module);
-
-        // Test formatter
         let formatter_options = FormatterOptions::default();
-        let result = get_result(source_text, source_type, formatter_options);
-
-        if !matches!(result, TestResult::Passed) {
-            self.base.set_result(result);
-            return;
-        }
-
-        // Test whitespace minification
-        let formatter_options =
-            FormatterOptions { minify_whitespace: true, ..FormatterOptions::default() };
         let result = get_result(source_text, source_type, formatter_options);
         self.base.set_result(result);
     }
@@ -87,19 +74,7 @@ impl Case for FormatterBabelCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-
-        // Test formatter
         let formatter_options = FormatterOptions::default();
-        let result = get_result(source_text, source_type, formatter_options);
-
-        if !matches!(result, TestResult::Passed) {
-            self.base.set_result(result);
-            return;
-        }
-
-        // Test whitespace minification
-        let formatter_options =
-            FormatterOptions { minify_whitespace: true, ..FormatterOptions::default() };
         let result = get_result(source_text, source_type, formatter_options);
         self.base.set_result(result);
     }
@@ -108,10 +83,8 @@ impl Case for FormatterBabelCase {
 fn get_result(source_text: &str, source_type: SourceType, options: FormatterOptions) -> TestResult {
     let allocator = Allocator::default();
     let program1 = Parser::new(&allocator, source_text, source_type).parse().program;
-    let _ = AstLower::new(&allocator).build(&program1); // temporary Stub for testing ast_lower
     let source_text1 = Formatter::new(source_text.len(), options).build(&program1);
     let program2 = Parser::new(&allocator, &source_text1, source_type).parse().program;
-    let _ = AstLower::new(&allocator).build(&program2); // temporary Stub for testing ast_lower
     let source_text2 = Formatter::new(source_text1.len(), options).build(&program2);
     if source_text1 == source_text2 {
         TestResult::Passed
