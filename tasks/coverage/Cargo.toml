@@ -18,7 +18,6 @@ oxc_formatter   = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_minifier    = { workspace = true }
-oxc_ast_lower   = { workspace = true }
 
 serde        = { workspace = true, features = ["derive"] }
 serde_json   = { workspace = true }

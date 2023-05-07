@@ -54,9 +54,6 @@ pub struct OxcLinterOptions;
 #[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
 pub struct OxcFormatterOptions {
-    mangle: bool,
-    #[wasm_bindgen(js_name = minifyWhitespace)]
-    pub minify_whitespace: bool,
     pub indentation: u8,
 }
 
@@ -139,13 +136,8 @@ impl Oxc {
         }
 
         if let Some(o) = &self.options.formatter {
-            let formatter_options = FormatterOptions {
-                minify_whitespace: o.minify_whitespace,
-                indentation: o.indentation,
-            };
-            let printed = Formatter::new(source_text.len(), formatter_options)
-                .with_symbol_table(&semantic.symbols(), o.mangle)
-                .build(program);
+            let formatter_options = FormatterOptions { indentation: o.indentation };
+            let printed = Formatter::new(source_text.len(), formatter_options).build(program);
             self.printed_text = printed;
         }
 

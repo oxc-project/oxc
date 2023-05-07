@@ -985,12 +985,8 @@ impl<'a> Gen for ObjectExpression<'a> {
             if i != 0 {
                 p.print_comma();
             }
-            if p.options.minify_whitespace {
-                p.print_space();
-            } else {
-                p.print_newline();
-                p.print_indent();
-            }
+            p.print_newline();
+            p.print_indent();
             item.gen(p);
         }
         p.print_newline();
