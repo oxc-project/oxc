@@ -3,10 +3,9 @@ use std::{cell::RefCell, rc::Rc};
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
 use oxc_diagnostics::Error;
+use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::Linter;
-use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
-use oxc_printer::{Printer, PrinterOptions};
 use oxc_semantic::SemanticBuilder;
 use serde::ser::Serialize;
 use wasm_bindgen::prelude::*;
@@ -38,8 +37,7 @@ pub struct Oxc {
 pub struct OxcOptions {
     pub parser: Option<OxcParserOptions>,
     pub linter: Option<OxcLinterOptions>,
-    pub minifier: Option<OxcMinifierOptions>,
-    pub printer: Option<OxcPrinterOptions>,
+    pub formatter: Option<OxcFormatterOptions>,
 }
 
 #[wasm_bindgen]
@@ -55,14 +53,7 @@ pub struct OxcLinterOptions;
 
 #[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
-pub struct OxcMinifierOptions;
-
-#[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
-pub struct OxcPrinterOptions {
-    mangle: bool,
-    #[wasm_bindgen(js_name = minifyWhitespace)]
-    pub minify_whitespace: bool,
+pub struct OxcFormatterOptions {
     pub indentation: u8,
 }
 
@@ -129,11 +120,6 @@ impl Oxc {
 
         let program = allocator.alloc(ret.program);
 
-        if self.options.minifier.is_some() {
-            let minifier_options = MinifierOptions::default();
-            Minifier::new(&allocator, minifier_options).build(program);
-        }
-
         self.ast = program.serialize(&self.serializer)?;
 
         let semantic_ret = SemanticBuilder::new(source_text, source_type, &ret.trivias)
@@ -149,14 +135,9 @@ impl Oxc {
             self.save_diagnostics(diagnostics);
         }
 
-        if let Some(o) = &self.options.printer {
-            let printer_options = PrinterOptions {
-                minify_whitespace: o.minify_whitespace,
-                indentation: o.indentation,
-            };
-            let printed = Printer::new(source_text.len(), printer_options)
-                .with_symbol_table(&semantic.symbols(), o.mangle)
-                .build(program);
+        if let Some(o) = &self.options.formatter {
+            let formatter_options = FormatterOptions { indentation: o.indentation };
+            let printed = Formatter::new(source_text.len(), formatter_options).build(program);
             self.printed_text = printed;
         }
 

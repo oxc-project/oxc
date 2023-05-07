@@ -6,10 +6,14 @@ use std::num::NonZeroU32;
 mod serialize;
 
 pub mod hir;
-pub mod hir_builder;
+mod hir_builder;
+mod visit_mut;
 
 #[cfg(feature = "serde")]
 use serde::Serialize;
+
+pub use crate::hir_builder::HirBuilder;
+pub use crate::visit_mut::VisitMut;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]

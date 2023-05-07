@@ -50,7 +50,7 @@ pub fn main() -> Result<(), String> {
 
     bench_parser(&mut criterion, &files);
     bench_semantic(&mut criterion, &files);
-    bench_ast_lower(&mut criterion, &files);
+    // bench_ast_lower(&mut criterion, &files);
     drop(criterion);
 
     Ok(())
@@ -101,6 +101,7 @@ fn bench_semantic(criterion: &mut Criterion, files: &TestFiles) {
     group.finish();
 }
 
+#[allow(unused)]
 fn bench_ast_lower(criterion: &mut Criterion, files: &TestFiles) {
     let mut group = criterion.benchmark_group("ast_lower");
     for file in files.files() {

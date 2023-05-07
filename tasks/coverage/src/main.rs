@@ -17,7 +17,7 @@ fn main() {
         "js" | "test262" => args.run_test262(),
         "babel" => args.run_babel(),
         "ts" | "typescript" => args.run_typescript(),
-        "printer" => args.run_printer(),
+        "formatter" => args.run_formatter(),
         _ => args.run_all(),
     };
 }

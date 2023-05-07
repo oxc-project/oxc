@@ -3,23 +3,23 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_semantic::Symbol;
 
-use crate::{Printer, Separator};
+use crate::{Formatter, Separator};
 
 pub trait Gen {
-    fn gen(&self, p: &mut Printer);
+    fn gen(&self, p: &mut Formatter);
 }
 
 impl<'a, T> Gen for Box<'a, T>
 where
     T: Gen,
 {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         (**self).gen(p);
     }
 }
 
 impl<'a> Gen for Program<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         for directive in &self.directives {
             directive.gen(p);
         }
@@ -31,7 +31,7 @@ impl<'a> Gen for Program<'a> {
 }
 
 impl<'a> Gen for Directive<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print(b'"');
         p.print_str(self.directive.as_bytes());
@@ -42,7 +42,7 @@ impl<'a> Gen for Directive<'a> {
 }
 
 impl<'a> Gen for Statement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::BlockStatement(stmt) => stmt.gen(p),
             Self::BreakStatement(stmt) => stmt.gen(p),
@@ -69,7 +69,7 @@ impl<'a> Gen for Statement<'a> {
 }
 
 impl<'a> Gen for ExpressionStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         self.expression.gen(p);
         if let Expression::Identifier(ident) = &self.expression
@@ -82,7 +82,7 @@ impl<'a> Gen for ExpressionStatement<'a> {
 }
 
 impl Gen for EmptyStatement {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_semicolon();
         p.print_newline();
@@ -90,13 +90,13 @@ impl Gen for EmptyStatement {
 }
 
 impl<'a> Gen for IfStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         print_if(self, p);
     }
 }
 
-fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
+fn print_if(if_stmt: &IfStatement<'_>, p: &mut Formatter) {
     p.print_str(b"if");
     p.print_space();
     p.print(b'(');
@@ -144,7 +144,7 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
 }
 
 impl<'a> Gen for BlockStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_block1(self);
         p.print_newline();
@@ -152,7 +152,7 @@ impl<'a> Gen for BlockStatement<'a> {
 }
 
 impl<'a> Gen for ForStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"for");
         p.print_space();
@@ -185,7 +185,7 @@ impl<'a> Gen for ForStatement<'a> {
 }
 
 impl<'a> Gen for ForInStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"for");
         gen_for_statement_brack_content(&self.left, &self.right, &self.body, b"in", p);
@@ -193,7 +193,7 @@ impl<'a> Gen for ForInStatement<'a> {
 }
 
 impl<'a> Gen for ForOfStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"for");
         if self.r#await {
@@ -208,7 +208,7 @@ fn gen_for_statement_brack_content<'a>(
     right: &Expression<'a>,
     body: &Statement,
     key: &[u8],
-    p: &mut Printer,
+    p: &mut Formatter,
 ) {
     p.print_space();
     p.print(b'(');
@@ -222,7 +222,7 @@ fn gen_for_statement_brack_content<'a>(
 }
 
 impl<'a> Gen for ForStatementLeft<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match &self {
             ForStatementLeft::VariableDeclaration(var) => var.gen(p),
             ForStatementLeft::AssignmentTarget(target) => target.gen(p),
@@ -231,7 +231,7 @@ impl<'a> Gen for ForStatementLeft<'a> {
 }
 
 impl<'a> Gen for WhileStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"while");
         p.print_space();
@@ -243,7 +243,7 @@ impl<'a> Gen for WhileStatement<'a> {
 }
 
 impl<'a> Gen for DoWhileStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"do");
         p.print(b' ');
@@ -269,7 +269,7 @@ impl<'a> Gen for DoWhileStatement<'a> {
 }
 
 impl Gen for ContinueStatement {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"continue");
         if let Some(label) = &self.label {
@@ -281,7 +281,7 @@ impl Gen for ContinueStatement {
 }
 
 impl Gen for BreakStatement {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"break");
         if let Some(label) = &self.label {
@@ -293,7 +293,7 @@ impl Gen for BreakStatement {
 }
 
 impl<'a> Gen for SwitchStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"switch");
         p.print_space();
@@ -316,7 +316,7 @@ impl<'a> Gen for SwitchStatement<'a> {
 }
 
 impl<'a> Gen for SwitchCase<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_semicolon_if_needed();
         p.print_indent();
         match &self.test {
@@ -339,7 +339,7 @@ impl<'a> Gen for SwitchCase<'a> {
 }
 
 impl<'a> Gen for ReturnStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"return");
         if let Some(arg) = &self.argument {
@@ -351,7 +351,7 @@ impl<'a> Gen for ReturnStatement<'a> {
 }
 
 impl<'a> Gen for LabeledStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         self.label.gen(p);
         p.print_colon();
@@ -361,7 +361,7 @@ impl<'a> Gen for LabeledStatement<'a> {
 }
 
 impl<'a> Gen for TryStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"try");
         p.print_space();
@@ -389,7 +389,7 @@ impl<'a> Gen for TryStatement<'a> {
 }
 
 impl<'a> Gen for ThrowStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"throw");
         p.print(b' ');
@@ -399,7 +399,7 @@ impl<'a> Gen for ThrowStatement<'a> {
 }
 
 impl<'a> Gen for WithStatement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"with");
         p.print_space();
@@ -412,7 +412,7 @@ impl<'a> Gen for WithStatement<'a> {
 }
 
 impl Gen for DebuggerStatement {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"debugger");
         p.print_semicolon_after_statement();
@@ -420,7 +420,7 @@ impl Gen for DebuggerStatement {
 }
 
 impl<'a> Gen for ModuleDeclaration<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::ImportDeclaration(decl) => decl.gen(p),
             Self::ExportAllDeclaration(decl) => decl.gen(p),
@@ -432,7 +432,7 @@ impl<'a> Gen for ModuleDeclaration<'a> {
 }
 
 impl<'a> Gen for Declaration<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::VariableDeclaration(stmt) => {
                 p.print_indent();
@@ -458,7 +458,7 @@ impl<'a> Gen for Declaration<'a> {
 }
 
 impl<'a> Gen for VariableDeclaration<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(match self.kind {
             VariableDeclarationKind::Const => b"const",
             VariableDeclarationKind::Let => b"let",
@@ -470,7 +470,7 @@ impl<'a> Gen for VariableDeclaration<'a> {
 }
 
 impl<'a> Gen for VariableDeclarator<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.id.gen(p);
         if let Some(init) = &self.init {
             p.print_space();
@@ -482,7 +482,7 @@ impl<'a> Gen for VariableDeclarator<'a> {
 }
 
 impl<'a> Gen for Function<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if self.r#async {
             p.print_str(b"async");
             p.print(b' ');
@@ -509,7 +509,7 @@ impl<'a> Gen for Function<'a> {
 }
 
 impl<'a> Gen for FunctionBody<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'{');
         p.indent();
         p.print_newline();
@@ -529,19 +529,19 @@ impl<'a> Gen for FunctionBody<'a> {
 }
 
 impl<'a> Gen for FormalParameter<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.pattern.gen(p);
     }
 }
 
 impl<'a> Gen for FormalParameters<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_list(&self.items);
     }
 }
 
 impl<'a> Gen for ImportDeclaration<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"import ");
         if self.specifiers.is_empty() {
             p.print(b'\'');
@@ -625,7 +625,7 @@ impl<'a> Gen for ImportDeclaration<'a> {
 }
 
 impl<'a> Gen for Option<Vec<'a, ImportAttribute>> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if let Some(assertions) = &self {
             p.print_space();
             p.print_str(b"assert");
@@ -636,7 +636,7 @@ impl<'a> Gen for Option<Vec<'a, ImportAttribute>> {
 }
 
 impl Gen for ImportAttribute {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match &self.key {
             ImportAttributeKey::Identifier(identifier) => {
                 p.print_str(identifier.name.as_bytes());
@@ -650,7 +650,7 @@ impl Gen for ImportAttribute {
 }
 
 impl<'a> Gen for ExportNamedDeclaration<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"export ");
         match &self.declaration {
             Some(decl) => decl.gen(p),
@@ -675,7 +675,7 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
 }
 
 impl Gen for ExportSpecifier {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.local.gen(p);
         if self.local.name() != self.exported.name() {
             p.print_str(b" as ");
@@ -685,7 +685,7 @@ impl Gen for ExportSpecifier {
 }
 
 impl Gen for ModuleExportName {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Identifier(identifier) => {
                 p.print_str(identifier.name.as_bytes());
@@ -696,7 +696,7 @@ impl Gen for ModuleExportName {
 }
 
 impl<'a> Gen for ExportAllDeclaration<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"export");
         p.print_space();
         p.print(b'*');
@@ -717,13 +717,13 @@ impl<'a> Gen for ExportAllDeclaration<'a> {
 }
 
 impl<'a> Gen for ExportDefaultDeclaration<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"export default ");
         self.declaration.gen(p);
     }
 }
 impl<'a> Gen for ExportDefaultDeclarationKind<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Expression(expr) => {
                 expr.gen(p);
@@ -737,7 +737,7 @@ impl<'a> Gen for ExportDefaultDeclarationKind<'a> {
 }
 
 impl<'a> Gen for Expression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::BooleanLiteral(lit) => lit.gen(p),
             Self::NullLiteral(lit) => lit.gen(p),
@@ -784,7 +784,7 @@ impl<'a> Gen for Expression<'a> {
 }
 
 impl Gen for IdentifierReference {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         let symbols = &p.symbols;
         let slot = symbols
             .get_resolved_reference_for_id(self)
@@ -800,13 +800,13 @@ impl Gen for IdentifierReference {
 }
 
 impl Gen for IdentifierName {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(self.name.as_bytes());
     }
 }
 
 impl Gen for BindingIdentifier {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         let symbols = &p.symbols;
         let slot =
             symbols.get_symbol_by_span(self.span).map(Symbol::slot).filter(|slot| slot.is_some());
@@ -820,38 +820,38 @@ impl Gen for BindingIdentifier {
 }
 
 impl Gen for LabelIdentifier {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(self.name.as_bytes());
     }
 }
 
 impl Gen for BooleanLiteral {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(self.as_str().as_bytes());
     }
 }
 
 impl Gen for NullLiteral {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"null");
     }
 }
 
 impl<'a> Gen for NumberLiteral<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(self.raw.as_bytes());
     }
 }
 
 impl Gen for BigintLiteral {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(self.value.to_string().as_bytes());
         p.print(b'n');
     }
 }
 
 impl Gen for RegExpLiteral {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'/');
         p.print_str(self.regex.pattern.as_bytes());
         p.print(b'/');
@@ -860,7 +860,7 @@ impl Gen for RegExpLiteral {
 }
 
 impl Gen for StringLiteral {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'\'');
         for c in self.value.chars() {
             p.print_str(c.escape_default().to_string().as_bytes());
@@ -870,13 +870,13 @@ impl Gen for StringLiteral {
 }
 
 impl Gen for ThisExpression {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"this");
     }
 }
 
 impl<'a> Gen for MemberExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::ComputedMemberExpression(expr) => expr.gen(p),
             Self::StaticMemberExpression(expr) => expr.gen(p),
@@ -886,7 +886,7 @@ impl<'a> Gen for MemberExpression<'a> {
 }
 
 impl<'a> Gen for ComputedMemberExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.object.gen(p);
         if self.optional {
             p.print_str(b"?.");
@@ -898,7 +898,7 @@ impl<'a> Gen for ComputedMemberExpression<'a> {
 }
 
 impl<'a> Gen for StaticMemberExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.object.gen(p);
         if self.optional {
             p.print(b'?');
@@ -909,7 +909,7 @@ impl<'a> Gen for StaticMemberExpression<'a> {
 }
 
 impl<'a> Gen for PrivateFieldExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.object.gen(p);
         if self.optional {
             p.print_str(b"?");
@@ -920,7 +920,7 @@ impl<'a> Gen for PrivateFieldExpression<'a> {
 }
 
 impl<'a> Gen for CallExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.callee.gen(p);
 
         if self.optional {
@@ -933,7 +933,7 @@ impl<'a> Gen for CallExpression<'a> {
 }
 
 impl<'a> Gen for Argument<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::SpreadElement(elem) => elem.gen(p),
             Self::Expression(elem) => elem.gen(p),
@@ -942,7 +942,7 @@ impl<'a> Gen for Argument<'a> {
 }
 
 impl<'a> Gen for ArrayExpressionElement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Expression(expr) => expr.gen(p),
             Self::SpreadElement(elem) => elem.gen(p),
@@ -952,14 +952,14 @@ impl<'a> Gen for ArrayExpressionElement<'a> {
 }
 
 impl<'a> Gen for SpreadElement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_ellipsis();
         self.argument.gen(p);
     }
 }
 
 impl<'a> Gen for ArrayExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'[');
         p.print_list(&self.elements);
         if self.trailing_comma.is_some() {
@@ -970,7 +970,7 @@ impl<'a> Gen for ArrayExpression<'a> {
 }
 
 impl<'a> Gen for Option<Argument<'a>> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if let Some(arg) = self {
             arg.gen(p);
         }
@@ -978,19 +978,15 @@ impl<'a> Gen for Option<Argument<'a>> {
 }
 
 impl<'a> Gen for ObjectExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'{');
         p.indent();
         for (i, item) in self.properties.iter().enumerate() {
             if i != 0 {
                 p.print_comma();
             }
-            if p.options.minify_whitespace {
-                p.print_space();
-            } else {
-                p.print_newline();
-                p.print_indent();
-            }
+            p.print_newline();
+            p.print_indent();
             item.gen(p);
         }
         p.print_newline();
@@ -1001,7 +997,7 @@ impl<'a> Gen for ObjectExpression<'a> {
 }
 
 impl<'a> Gen for ObjectProperty<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Property(prop) => prop.gen(p),
             Self::SpreadProperty(elem) => elem.gen(p),
@@ -1010,7 +1006,7 @@ impl<'a> Gen for ObjectProperty<'a> {
 }
 
 impl<'a> Gen for Property<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if let PropertyValue::Expression(Expression::FunctionExpression(func)) = &self.value {
             let is_accessor = match &self.kind {
                 PropertyKind::Init => false,
@@ -1073,7 +1069,7 @@ impl<'a> Gen for Property<'a> {
 }
 
 impl<'a> Gen for PropertyKey<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Identifier(ident) => ident.gen(p),
             Self::PrivateIdentifier(ident) => ident.gen(p),
@@ -1083,7 +1079,7 @@ impl<'a> Gen for PropertyKey<'a> {
 }
 
 impl<'a> Gen for PropertyValue<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Pattern(pattern) => pattern.gen(p),
             Self::Expression(expr) => expr.gen(p),
@@ -1092,7 +1088,7 @@ impl<'a> Gen for PropertyValue<'a> {
 }
 
 impl<'a> Gen for ArrowExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if self.r#async {
             p.print_str(b"async");
             p.print_space();
@@ -1114,7 +1110,7 @@ impl<'a> Gen for ArrowExpression<'a> {
 }
 
 impl<'a> Gen for YieldExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"yield");
         if self.delegate {
             p.print_space();
@@ -1129,7 +1125,7 @@ impl<'a> Gen for YieldExpression<'a> {
 }
 
 impl<'a> Gen for UpdateExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         let operator = self.operator.as_str().as_bytes();
         if self.prefix {
             p.print_space_before_operator(self.operator.into());
@@ -1147,7 +1143,7 @@ impl<'a> Gen for UpdateExpression<'a> {
 }
 
 impl<'a> Gen for UnaryExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         let operator = self.operator.as_str().as_bytes();
         if self.operator.is_keyword() {
             p.print_str(operator);
@@ -1163,7 +1159,7 @@ impl<'a> Gen for UnaryExpression<'a> {
 }
 
 impl<'a> Gen for BinaryExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.left.gen(p);
         self.operator.gen(p);
         self.right.gen(p);
@@ -1171,7 +1167,7 @@ impl<'a> Gen for BinaryExpression<'a> {
 }
 
 impl Gen for BinaryOperator {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         let operator = self.as_str().as_bytes();
         if self.is_keyword() {
             p.print(b' ');
@@ -1188,7 +1184,7 @@ impl Gen for BinaryOperator {
 }
 
 impl<'a> Gen for PrivateInExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.left.gen(p);
         p.print(b' ');
         p.print_str(self.operator.as_str().as_bytes());
@@ -1198,7 +1194,7 @@ impl<'a> Gen for PrivateInExpression<'a> {
 }
 
 impl<'a> Gen for LogicalExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.left.gen(p);
         p.print_space();
         p.print_str(self.operator.as_str().as_bytes());
@@ -1208,7 +1204,7 @@ impl<'a> Gen for LogicalExpression<'a> {
 }
 
 impl<'a> Gen for ConditionalExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.test.gen(p);
         p.print_space();
         p.print(b'?');
@@ -1222,7 +1218,7 @@ impl<'a> Gen for ConditionalExpression<'a> {
 }
 
 impl<'a> Gen for AssignmentExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.left.gen(p);
         p.print_space();
         p.print_str(self.operator.as_str().as_bytes());
@@ -1232,7 +1228,7 @@ impl<'a> Gen for AssignmentExpression<'a> {
 }
 
 impl<'a> Gen for AssignmentTarget<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::SimpleAssignmentTarget(target) => target.gen(p),
             Self::AssignmentTargetPattern(pat) => pat.gen(p),
@@ -1241,7 +1237,7 @@ impl<'a> Gen for AssignmentTarget<'a> {
 }
 
 impl<'a> Gen for SimpleAssignmentTarget<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.gen(p),
             Self::MemberAssignmentTarget(member_expr) => member_expr.gen(p),
@@ -1254,7 +1250,7 @@ impl<'a> Gen for SimpleAssignmentTarget<'a> {
 }
 
 impl<'a> Gen for AssignmentTargetPattern<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::ArrayAssignmentTarget(target) => target.gen(p),
             Self::ObjectAssignmentTarget(target) => target.gen(p),
@@ -1263,7 +1259,7 @@ impl<'a> Gen for AssignmentTargetPattern<'a> {
 }
 
 impl<'a> Gen for ArrayAssignmentTarget<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'[');
         p.print_list(&self.elements);
         if let Some(target) = &self.rest {
@@ -1279,7 +1275,7 @@ impl<'a> Gen for ArrayAssignmentTarget<'a> {
 }
 
 impl<'a> Gen for Option<AssignmentTargetMaybeDefault<'a>> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if let Some(arg) = self {
             arg.gen(p);
         }
@@ -1287,7 +1283,7 @@ impl<'a> Gen for Option<AssignmentTargetMaybeDefault<'a>> {
 }
 
 impl<'a> Gen for ObjectAssignmentTarget<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'{');
         p.print_list(&self.properties);
         if let Some(target) = &self.rest {
@@ -1302,7 +1298,7 @@ impl<'a> Gen for ObjectAssignmentTarget<'a> {
 }
 
 impl<'a> Gen for AssignmentTargetMaybeDefault<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::AssignmentTarget(target) => target.gen(p),
             Self::AssignmentTargetWithDefault(target) => target.gen(p),
@@ -1311,7 +1307,7 @@ impl<'a> Gen for AssignmentTargetMaybeDefault<'a> {
 }
 
 impl<'a> Gen for AssignmentTargetWithDefault<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.binding.gen(p);
         p.print_equal();
         self.init.gen(p);
@@ -1319,7 +1315,7 @@ impl<'a> Gen for AssignmentTargetWithDefault<'a> {
 }
 
 impl<'a> Gen for AssignmentTargetProperty<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::AssignmentTargetPropertyIdentifier(ident) => ident.gen(p),
             Self::AssignmentTargetPropertyProperty(prop) => prop.gen(p),
@@ -1328,7 +1324,7 @@ impl<'a> Gen for AssignmentTargetProperty<'a> {
 }
 
 impl<'a> Gen for AssignmentTargetPropertyIdentifier<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.binding.gen(p);
         if let Some(expr) = &self.init {
             p.print_space();
@@ -1340,7 +1336,7 @@ impl<'a> Gen for AssignmentTargetPropertyIdentifier<'a> {
 }
 
 impl<'a> Gen for AssignmentTargetPropertyProperty<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match &self.name {
             PropertyKey::Identifier(ident) => {
                 ident.gen(p);
@@ -1361,13 +1357,13 @@ impl<'a> Gen for AssignmentTargetPropertyProperty<'a> {
 }
 
 impl<'a> Gen for SequenceExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_list(&self.expressions);
     }
 }
 
 impl<'a> Gen for ParenthesizedExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'(');
         self.expression.gen(p);
         p.print(b')');
@@ -1375,7 +1371,7 @@ impl<'a> Gen for ParenthesizedExpression<'a> {
 }
 
 impl<'a> Gen for ImportExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"import(");
         self.source.gen(p);
         if !self.arguments.is_empty() {
@@ -1388,7 +1384,7 @@ impl<'a> Gen for ImportExpression<'a> {
 }
 
 impl<'a> Gen for TemplateLiteral<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'`');
         let mut expressions = self.expressions.iter();
 
@@ -1407,27 +1403,27 @@ impl<'a> Gen for TemplateLiteral<'a> {
 }
 
 impl<'a> Gen for TaggedTemplateExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.tag.gen(p);
         self.quasi.gen(p);
     }
 }
 
 impl Gen for Super {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"super");
     }
 }
 
 impl<'a> Gen for AwaitExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"await ");
         self.argument.gen(p);
     }
 }
 
 impl<'a> Gen for ChainExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match &self.expression {
             ChainElement::CallExpression(expr) => expr.gen(p),
             ChainElement::MemberExpression(expr) => expr.gen(p),
@@ -1436,7 +1432,7 @@ impl<'a> Gen for ChainExpression<'a> {
 }
 
 impl<'a> Gen for NewExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"new ");
         self.callee.gen(p);
         p.print(b'(');
@@ -1446,7 +1442,7 @@ impl<'a> Gen for NewExpression<'a> {
 }
 
 impl Gen for MetaProperty {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.meta.gen(p);
         p.print(b'.');
         self.property.gen(p);
@@ -1454,7 +1450,7 @@ impl Gen for MetaProperty {
 }
 
 impl<'a> Gen for Class<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"class");
         if let Some(id) = &self.id {
             p.print(b' ');
@@ -1489,7 +1485,7 @@ impl<'a> Gen for Class<'a> {
 }
 
 impl<'a> Gen for ClassElement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::StaticBlock(elem) => elem.gen(p),
             Self::MethodDefinition(elem) => elem.gen(p),
@@ -1503,13 +1499,13 @@ impl<'a> Gen for ClassElement<'a> {
 }
 
 impl Gen for JSXIdentifier {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(self.name.as_bytes());
     }
 }
 
 impl<'a> Gen for JSXMemberExpressionObject<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Identifier(ident) => ident.gen(p),
             Self::MemberExpression(member_expr) => member_expr.gen(p),
@@ -1518,7 +1514,7 @@ impl<'a> Gen for JSXMemberExpressionObject<'a> {
 }
 
 impl<'a> Gen for JSXMemberExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.object.gen(p);
         p.print(b'.');
         self.property.gen(p);
@@ -1526,7 +1522,7 @@ impl<'a> Gen for JSXMemberExpression<'a> {
 }
 
 impl<'a> Gen for JSXElementName<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Identifier(identifier) => identifier.gen(p),
             Self::NamespacedName(namespaced_name) => namespaced_name.gen(p),
@@ -1536,7 +1532,7 @@ impl<'a> Gen for JSXElementName<'a> {
 }
 
 impl Gen for JSXNamespacedName {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.namespace.gen(p);
         p.print(b'.');
         self.property.gen(p);
@@ -1544,7 +1540,7 @@ impl Gen for JSXNamespacedName {
 }
 
 impl<'a> Gen for JSXAttributeName<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Identifier(ident) => ident.gen(p),
             Self::NamespacedName(namespaced_name) => namespaced_name.gen(p),
@@ -1553,7 +1549,7 @@ impl<'a> Gen for JSXAttributeName<'a> {
 }
 
 impl<'a> Gen for JSXAttribute<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.name.gen(p);
         p.print(b'=');
         if let Some(value) = &self.value {
@@ -1563,11 +1559,11 @@ impl<'a> Gen for JSXAttribute<'a> {
 }
 
 impl Gen for JSXEmptyExpression {
-    fn gen(&self, _: &mut Printer) {}
+    fn gen(&self, _: &mut Formatter) {}
 }
 
 impl<'a> Gen for JSXExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Expression(expr) => expr.gen(p),
             Self::EmptyExpression(expr) => expr.gen(p),
@@ -1576,7 +1572,7 @@ impl<'a> Gen for JSXExpression<'a> {
 }
 
 impl<'a> Gen for JSXExpressionContainer<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'{');
         self.expression.gen(p);
         p.print(b'}');
@@ -1584,7 +1580,7 @@ impl<'a> Gen for JSXExpressionContainer<'a> {
 }
 
 impl<'a> Gen for JSXAttributeValue<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Fragment(fragment) => fragment.gen(p),
             Self::Element(el) => el.gen(p),
@@ -1595,13 +1591,13 @@ impl<'a> Gen for JSXAttributeValue<'a> {
 }
 
 impl<'a> Gen for JSXSpreadAttribute<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.argument.gen(p);
     }
 }
 
 impl<'a> Gen for JSXAttributeItem<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Attribute(attr) => attr.gen(p),
             Self::SpreadAttribute(spread_attr) => spread_attr.gen(p),
@@ -1610,7 +1606,7 @@ impl<'a> Gen for JSXAttributeItem<'a> {
 }
 
 impl<'a> Gen for JSXOpeningElement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"<");
         self.name.gen(p);
         for attr in &self.attributes {
@@ -1626,7 +1622,7 @@ impl<'a> Gen for JSXOpeningElement<'a> {
 }
 
 impl<'a> Gen for JSXClosingElement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"</");
         self.name.gen(p);
         p.print(b'>');
@@ -1634,7 +1630,7 @@ impl<'a> Gen for JSXClosingElement<'a> {
 }
 
 impl<'a> Gen for JSXElement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.opening_element.gen(p);
         for child in &self.children {
             child.gen(p);
@@ -1646,32 +1642,32 @@ impl<'a> Gen for JSXElement<'a> {
 }
 
 impl Gen for JSXOpeningFragment {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"<>");
     }
 }
 
 impl Gen for JSXClosingFragment {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"</>");
     }
 }
 
 impl Gen for JSXText {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(self.value.as_bytes());
     }
 }
 
 impl<'a> Gen for JSXSpreadChild<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"...");
         self.expression.gen(p);
     }
 }
 
 impl<'a> Gen for JSXChild<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Fragment(fragment) => fragment.gen(p),
             Self::Element(el) => el.gen(p),
@@ -1683,7 +1679,7 @@ impl<'a> Gen for JSXChild<'a> {
 }
 
 impl<'a> Gen for JSXFragment<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.opening_fragment.gen(p);
         for child in &self.children {
             child.gen(p);
@@ -1693,7 +1689,7 @@ impl<'a> Gen for JSXFragment<'a> {
 }
 
 impl<'a> Gen for StaticBlock<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_str(b"static");
         p.print_space();
         p.print(b'{');
@@ -1711,7 +1707,7 @@ impl<'a> Gen for StaticBlock<'a> {
 }
 
 impl<'a> Gen for MethodDefinition<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if self.r#static {
             p.print_str(b"static ");
         }
@@ -1748,7 +1744,7 @@ impl<'a> Gen for MethodDefinition<'a> {
 }
 
 impl<'a> Gen for PropertyDefinition<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if self.r#static {
             p.print_str(b"static ");
         }
@@ -1769,7 +1765,7 @@ impl<'a> Gen for PropertyDefinition<'a> {
 }
 
 impl<'a> Gen for AccessorProperty<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if self.r#static {
             p.print_str(b"static ");
         }
@@ -1791,14 +1787,14 @@ impl<'a> Gen for AccessorProperty<'a> {
 }
 
 impl Gen for PrivateIdentifier {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'#');
         p.print_str(self.name.as_bytes());
     }
 }
 
 impl<'a> Gen for BindingPattern<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match &self.kind {
             BindingPatternKind::BindingIdentifier(ident) => ident.gen(p),
             BindingPatternKind::ObjectPattern(pattern) => pattern.gen(p),
@@ -1810,7 +1806,7 @@ impl<'a> Gen for BindingPattern<'a> {
 }
 
 impl<'a> Gen for ObjectPattern<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'{');
         p.print_space();
         p.print_list(&self.properties);
@@ -1820,7 +1816,7 @@ impl<'a> Gen for ObjectPattern<'a> {
 }
 
 impl<'a> Gen for ObjectPatternProperty<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         match self {
             Self::Property(prop) => prop.gen(p),
             Self::RestElement(elem) => elem.gen(p),
@@ -1829,14 +1825,14 @@ impl<'a> Gen for ObjectPatternProperty<'a> {
 }
 
 impl<'a> Gen for RestElement<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print_ellipsis();
         self.argument.gen(p);
     }
 }
 
 impl<'a> Gen for ArrayPattern<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         p.print(b'[');
         p.print_list(&self.elements);
         if let Some(elem) = self.elements.last() {
@@ -1849,7 +1845,7 @@ impl<'a> Gen for ArrayPattern<'a> {
 }
 
 impl<'a> Gen for Option<BindingPattern<'a>> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         if let Some(pattern) = self {
             pattern.gen(p);
         }
@@ -1857,7 +1853,7 @@ impl<'a> Gen for Option<BindingPattern<'a>> {
 }
 
 impl<'a> Gen for AssignmentPattern<'a> {
-    fn gen(&self, p: &mut Printer) {
+    fn gen(&self, p: &mut Formatter) {
         self.left.gen(p);
         p.print_space();
         p.print_equal();

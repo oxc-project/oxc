@@ -11,14 +11,14 @@ license.workspace     = true
 repository.workspace  = true
 
 [dependencies]
-oxc_allocator   = { workspace = true }
-oxc_parser      = { workspace = true }
-oxc_ast         = { workspace = true }
-oxc_printer     = { workspace = true }
-oxc_diagnostics = { workspace = true }
-oxc_semantic    = { workspace = true }
-oxc_minifier    = { workspace = true }
-oxc_ast_lower   = { workspace = true }
+oxc_allocator    = { workspace = true }
+oxc_parser       = { workspace = true }
+oxc_ast          = { workspace = true, features = ["serde"] }
+oxc_formatter    = { workspace = true }
+oxc_diagnostics  = { workspace = true }
+oxc_semantic     = { workspace = true }
+oxc_minifier     = { workspace = true }
+oxc_ast_lower    = { workspace = true , features = ["serde"] }
 
 serde        = { workspace = true, features = ["derive"] }
 serde_json   = { workspace = true }

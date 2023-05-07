@@ -1,17 +1,17 @@
-//! AST Printer with whitespace minification
+//! Printer with whitespace minification
 //! code adapted from [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
 
-#![feature(let_chains)]
+#![allow(unused)]
 
 mod gen;
 
 use std::rc::Rc;
 
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::ast::*;
+use oxc_hir::hir::*;
 use oxc_semantic::SymbolTable;
 
-pub use crate::gen::Gen;
+use self::gen::Gen;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PrinterOptions {
@@ -21,7 +21,7 @@ pub struct PrinterOptions {
 
 impl Default for PrinterOptions {
     fn default() -> Self {
-        Self { minify_whitespace: false, indentation: 4 }
+        Self { minify_whitespace: true, indentation: 4 }
     }
 }
 
@@ -85,7 +85,6 @@ impl Printer {
     }
 
     #[must_use]
-    #[inline]
     pub fn into_code(self) -> String {
         unsafe { String::from_utf8_unchecked(self.code) }
     }
@@ -96,47 +95,39 @@ impl Printer {
     }
 
     /// Push a single character into the buffer
-    #[inline]
     pub fn print(&mut self, ch: u8) {
         self.code.push(ch);
     }
 
     /// Push a string into the buffer
-    #[inline]
     pub fn print_str(&mut self, s: &[u8]) {
         self.code.extend_from_slice(s);
     }
 
-    #[inline]
     pub fn print_space(&mut self) {
         if !self.options.minify_whitespace {
             self.code.push(b' ');
         }
     }
 
-    #[inline]
     pub fn print_newline(&mut self) {
         if !self.options.minify_whitespace {
             self.code.push(b'\n');
         }
     }
 
-    #[inline]
     pub fn indent(&mut self) {
         self.indentation += self.options.indentation;
     }
 
-    #[inline]
     pub fn dedent(&mut self) {
         self.indentation -= self.options.indentation;
     }
 
-    #[inline]
     pub fn print_semicolon(&mut self) {
         self.print(b';');
     }
 
-    #[inline]
     pub fn print_comma(&mut self) {
         self.print(b',');
     }
@@ -189,17 +180,14 @@ impl Printer {
         }
     }
 
-    #[inline]
     pub fn print_ellipsis(&mut self) {
         self.print_str(b"...");
     }
 
-    #[inline]
     pub fn print_colon(&mut self) {
         self.print(b':');
     }
 
-    #[inline]
     pub fn print_equal(&mut self) {
         self.print(b'=');
     }
@@ -212,7 +200,6 @@ impl Printer {
         }
     }
 
-    #[inline]
     pub fn print_sequence<T: Gen>(&mut self, items: &[T], separator: Separator) {
         let len = items.len();
         for (index, item) in items.iter().enumerate() {
@@ -228,7 +215,6 @@ impl Printer {
         }
     }
 
-    #[inline]
     pub fn print_body(&mut self, stmt: &Statement<'_>) {
         if let Statement::BlockStatement(block) = stmt {
             self.print_space();
@@ -242,7 +228,6 @@ impl Printer {
         }
     }
 
-    #[inline]
     pub fn print_block1(&mut self, stmt: &BlockStatement<'_>) {
         self.print(b'{');
         self.print_newline();
@@ -257,7 +242,6 @@ impl Printer {
         self.print(b'}');
     }
 
-    #[inline]
     pub fn print_block<T: Gen>(&mut self, items: &[T], separator: Separator) {
         self.print(b'{');
         self.indent();
@@ -272,7 +256,6 @@ impl Printer {
         self.print(b'}');
     }
 
-    #[inline]
     pub fn print_list<T: Gen>(&mut self, items: &[T]) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {

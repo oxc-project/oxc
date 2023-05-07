@@ -2,7 +2,7 @@
 
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast;
-use oxc_hir::{hir, hir_builder::HirBuilder};
+use oxc_hir::{hir, HirBuilder};
 use oxc_span::GetSpan;
 
 pub struct AstLower<'a> {
@@ -307,12 +307,12 @@ impl<'a> AstLower<'a> {
             ast::Expression::Super(expr) => self.lower_super(expr),
             ast::Expression::JSXElement(elem) => {
                 // TODO: implement JSX
-                let ident = self.hir.identifier_reference(elem.span, "void".into());
+                let ident = self.hir.identifier_reference(elem.span, "undefined".into());
                 self.hir.identifier_reference_expression(ident)
             }
             ast::Expression::JSXFragment(elem) => {
                 // TODO: implement JSX
-                let ident = self.hir.identifier_reference(elem.span, "void".into());
+                let ident = self.hir.identifier_reference(elem.span, "undefined".into());
                 self.hir.identifier_reference_expression(ident)
             }
 
@@ -750,7 +750,11 @@ impl<'a> AstLower<'a> {
                 let member_expr = self.lower_member_expr(member_expr);
                 self.hir.member_assignment_target(member_expr)
             }
-            _ => unreachable!(),
+            expr => {
+                // return undefined because this is invalid syntax
+                let ident = self.hir.identifier_reference(expr.span(), "undefined".into());
+                self.hir.assignment_target_identifier(ident)
+            }
         }
     }
 
@@ -1243,10 +1247,6 @@ impl<'a> AstLower<'a> {
                 let decl = self.lower_ts_enum_declaration(decl)?;
                 Some(hir::Declaration::TSEnumDeclaration(decl))
             }
-            ast::Declaration::TSImportEqualsDeclaration(decl) => {
-                let decl = self.lower_ts_import_equals_declaration(decl)?;
-                Some(hir::Declaration::TSImportEqualsDeclaration(decl))
-            }
             _ => None,
         }
     }
@@ -1453,13 +1453,6 @@ impl<'a> AstLower<'a> {
         &mut self,
         _decl: &ast::TSEnumDeclaration<'a>,
     ) -> Option<Box<'a, hir::TSEnumDeclaration<'a>>> {
-        None
-    }
-
-    fn lower_ts_import_equals_declaration(
-        &mut self,
-        _decl: &ast::TSImportEqualsDeclaration<'a>,
-    ) -> Option<Box<'a, hir::TSImportEqualsDeclaration<'a>>> {
         None
     }
 

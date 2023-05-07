@@ -3,7 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use indextree::{Ancestors, NodeId};
 use oxc_ast::{ast::IdentifierReference, AstKind, SourceType};
 use oxc_diagnostics::Error;
-use oxc_printer::{Printer, PrinterOptions};
+use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_semantic::{AstNodes, JSDocComment, Scope, ScopeTree, Semantic, SemanticNode, SymbolTable};
 
 use crate::{
@@ -147,8 +147,8 @@ impl<'a> LintContext<'a> {
     }
 
     #[allow(clippy::unused_self)]
-    pub fn printer(&self) -> Printer {
-        Printer::new(0, PrinterOptions::default())
+    pub fn formatter(&self) -> Formatter {
+        Formatter::new(0, FormatterOptions::default())
     }
 
     /* JSDoc */

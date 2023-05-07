@@ -1054,9 +1054,8 @@ impl<'a> HirBuilder<'a> {
         self_closing: bool,
         name: JSXElementName<'a>,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
-        type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> Box<'a, JSXOpeningElement<'a>> {
-        self.alloc(JSXOpeningElement { span, self_closing, name, attributes, type_parameters })
+        self.alloc(JSXOpeningElement { span, self_closing, name, attributes })
     }
 
     pub fn jsx_closing_element(
@@ -1146,23 +1145,6 @@ impl<'a> HirBuilder<'a> {
 
     pub fn jsx_text(&mut self, span: Span, value: Atom) -> JSXText {
         JSXText { span, value }
-    }
-
-    pub fn ts_import_equals_declaration(
-        &mut self,
-        span: Span,
-        id: BindingIdentifier,
-        module_reference: TSModuleReference<'a>,
-        is_export: bool,
-        import_kind: ImportOrExportKind,
-    ) -> Declaration<'a> {
-        Declaration::TSImportEqualsDeclaration(self.alloc(TSImportEqualsDeclaration {
-            span,
-            id,
-            module_reference: self.alloc(module_reference),
-            is_export,
-            import_kind,
-        }))
     }
 
     pub fn ts_enum_declaration(

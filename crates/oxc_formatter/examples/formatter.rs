@@ -2,13 +2,13 @@ use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::SourceType;
+use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_parser::Parser;
-use oxc_printer::{Printer, PrinterOptions};
 
 // Instruction:
 // create a `test.js`,
-// run `cargo run -p oxc_printer --example printer`
-// or `cargo watch -x "run -p oxc_printer --example printer"`
+// run `cargo run -p oxc_formatter --example formatter`
+// or `cargo watch -x "run -p oxc_formatter --example formatter"`
 
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
@@ -26,7 +26,7 @@ fn main() {
         return;
     }
 
-    let printer_options = PrinterOptions::default();
-    let printed = Printer::new(source_text.len(), printer_options).build(&ret.program);
+    let formatter_options = FormatterOptions::default();
+    let printed = Formatter::new(source_text.len(), formatter_options).build(&ret.program);
     println!("{printed}");
 }

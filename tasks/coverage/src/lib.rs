@@ -1,8 +1,8 @@
 #![feature(let_chains)]
 
 mod babel;
+mod formatter;
 mod minifier;
-mod printer;
 mod suite;
 mod test262;
 mod typescript;
@@ -10,8 +10,8 @@ mod typescript;
 use std::path::PathBuf;
 
 use crate::babel::{BabelCase, BabelSuite};
+use crate::formatter::{FormatterBabelCase, FormatterTest262Case};
 use crate::minifier::{MinifierBabelCase, MinifierTest262Case};
-use crate::printer::{PrinterBabelCase, PrinterTest262Case};
 use crate::suite::Suite;
 use crate::test262::{Test262Case, Test262Suite};
 use crate::typescript::{TypeScriptCase, TypeScriptSuite};
@@ -40,7 +40,7 @@ impl AppArgs {
         self.run_test262();
         self.run_babel();
         self.run_typescript();
-        self.run_printer();
+        self.run_formatter();
         self.run_minifier();
     }
 
@@ -56,9 +56,9 @@ impl AppArgs {
         TypeScriptSuite::<TypeScriptCase>::new().run("TypeScript", self);
     }
 
-    pub fn run_printer(&self) {
-        Test262Suite::<PrinterTest262Case>::new().run("Printer_Test262", self);
-        BabelSuite::<PrinterBabelCase>::new().run("Printer_Babel", self);
+    pub fn run_formatter(&self) {
+        Test262Suite::<FormatterTest262Case>::new().run("Formatter_Test262", self);
+        BabelSuite::<FormatterBabelCase>::new().run("Formatter_Babel", self);
     }
 
     pub fn run_minifier(&self) {

@@ -1,6 +1,6 @@
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, AstBuilder, VisitMut};
+use oxc_hir::{hir::*, HirBuilder, VisitMut};
 use oxc_span::Span;
 
 #[allow(clippy::struct_excessive_bools)]
@@ -34,7 +34,7 @@ impl Default for CompressOptions {
 }
 
 pub struct Compressor<'a> {
-    ast: AstBuilder<'a>,
+    hir: HirBuilder<'a>,
     options: CompressOptions,
 }
 
@@ -42,7 +42,7 @@ const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
     pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
-        Self { ast: AstBuilder::new(allocator), options }
+        Self { hir: HirBuilder::new(allocator), options }
     }
 
     pub fn build<'b>(mut self, program: &'b mut Program<'a>) {
@@ -51,14 +51,14 @@ impl<'a> Compressor<'a> {
 
     /* Utilities */
 
-    fn create_void_0(&self) -> Expression<'a> {
-        let num = self.ast.literal_number_expression(NumberLiteral::new(
+    fn create_void_0(&mut self) -> Expression<'a> {
+        let num = self.hir.literal_number_expression(NumberLiteral::new(
             SPAN,
             0.0,
             "0",
             NumberBase::Decimal,
         ));
-        self.ast.unary_expression(SPAN, UnaryOperator::Void, true, num)
+        self.hir.unary_expression(SPAN, UnaryOperator::Void, true, num)
     }
 
     /* Statements */
@@ -105,7 +105,7 @@ impl<'a> Compressor<'a> {
         }
 
         // Reconstruct the stmts array by joining consecutive ranges
-        let mut new_stmts = self.ast.new_vec_with_capacity(stmts.len() - capacity);
+        let mut new_stmts = self.hir.new_vec_with_capacity(stmts.len() - capacity);
         for (i, stmt) in stmts.drain(..).enumerate() {
             if i > 0
                 && ranges.iter().any(|range| range.contains(&i))
@@ -123,11 +123,11 @@ impl<'a> Compressor<'a> {
     fn compress_while<'b>(&mut self, stmt: &'b mut Statement<'a>) {
         if let Statement::WhileStatement(while_stmt) = stmt
             && self.options.loops {
-            let dummy_test = self.ast.this_expression(SPAN);
+            let dummy_test = self.hir.this_expression(SPAN);
             let test = std::mem::replace(&mut while_stmt.test, dummy_test);
-            let dummy_body = self.ast.empty_statement(SPAN);
+            let dummy_body = self.hir.empty_statement(SPAN);
             let body = std::mem::replace(&mut while_stmt.body, dummy_body);
-            *stmt = self.ast.for_statement(SPAN, None, Some(test), None, body);
+            *stmt = self.hir.for_statement(SPAN, None, Some(test), None, body);
         }
     }
 
@@ -147,13 +147,13 @@ impl<'a> Compressor<'a> {
     fn compress_boolean<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         if let Expression::BooleanLiteral(lit) = expr
         && self.options.booleans {
-            let num = self.ast.literal_number_expression(NumberLiteral::new(
+            let num = self.hir.literal_number_expression(NumberLiteral::new(
                 SPAN,
                 if lit.value { 0.0 } else { 1.0 },
                 if lit.value { "0" } else { "1" },
                 NumberBase::Decimal,
             ));
-            *expr = self.ast.unary_expression(SPAN, UnaryOperator::LogicalNot, true, num);
+            *expr = self.hir.unary_expression(SPAN, UnaryOperator::LogicalNot, true, num);
             return true;
         }
         false
@@ -169,7 +169,7 @@ impl<'a> Compressor<'a> {
             && let Expression::Identifier(ident) = &unary_expr.argument
             && let Expression::StringLiteral(s) = &expr.right
             && s.value == "undefined" {
-            let left = self.ast.identifier_expression((*ident).clone());
+            let left = self.hir.identifier_reference_expression((*ident).clone());
             let right = self.create_void_0();
             let operator = BinaryOperator::StrictEquality;
             *expr = BinaryExpression {span: SPAN, left, operator, right};
