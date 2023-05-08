@@ -1,6 +1,9 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
+use oxc_syntax::operator::{
+    AssignmentOperator, BinaryOperator, LogicalOperator, Operator, UnaryOperator, UpdateOperator,
+};
 
 use super::{Printer, Separator};
 

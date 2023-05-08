@@ -10,6 +10,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_span::{Atom, GetSpan, Span};
+use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator};
 use phf::{phf_set, Set};
 use rustc_hash::FxHashMap;
 

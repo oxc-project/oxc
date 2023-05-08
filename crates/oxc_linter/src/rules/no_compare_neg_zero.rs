@@ -1,13 +1,11 @@
-use oxc_ast::{
-    ast::{BinaryOperator, Expression, UnaryOperator},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 

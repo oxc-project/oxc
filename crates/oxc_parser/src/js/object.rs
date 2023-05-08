@@ -2,6 +2,7 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
+use oxc_syntax::operator::AssignmentOperator;
 
 use super::list::ObjectExpressionProperties;
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Parser};

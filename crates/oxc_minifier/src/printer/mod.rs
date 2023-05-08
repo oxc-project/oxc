@@ -10,6 +10,9 @@ use std::rc::Rc;
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_semantic::SymbolTable;
+use oxc_syntax::operator::{
+    AssignmentOperator, BinaryOperator, LogicalOperator, Operator, UnaryOperator, UpdateOperator,
+};
 
 use self::gen::Gen;
 

@@ -16,7 +16,8 @@ oxc_ast         = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_macros      = { workspace = true }
 oxc_semantic    = { workspace = true }
-oxc_formatter     = { workspace = true }
+oxc_syntax      = { workspace = true }
+oxc_formatter   = { workspace = true }
 
 lazy_static = { workspace = true }
 serde_json  = { workspace = true }

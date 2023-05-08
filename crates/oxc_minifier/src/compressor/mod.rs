@@ -2,6 +2,7 @@ use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::{hir::*, HirBuilder, VisitMut};
 use oxc_span::Span;
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]

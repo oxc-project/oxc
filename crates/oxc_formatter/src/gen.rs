@@ -2,6 +2,7 @@ use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_semantic::Symbol;
+use oxc_syntax::operator::{BinaryOperator, Operator};
 
 use crate::{Formatter, Separator};
 

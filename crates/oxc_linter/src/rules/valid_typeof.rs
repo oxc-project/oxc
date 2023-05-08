@@ -1,13 +1,11 @@
-use oxc_ast::{
-    ast::{Expression, UnaryOperator},
-    AstKind,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::operator::UnaryOperator;
 use phf::{phf_map, Map};
 
 use crate::{ast_util::calculate_hash, context::LintContext, fixer::Fix, rule::Rule, AstNode};
