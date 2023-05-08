@@ -1,8 +1,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_semantic::Symbol;
-use oxc_syntax::operator::{BinaryOperator, Operator};
+use oxc_syntax::operator::BinaryOperator;
 
 use crate::{Formatter, Separator};
 
@@ -123,9 +122,9 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Formatter) {
     }
     if let Some(alternate) = if_stmt.alternate.as_ref() {
         p.print_semicolon_if_needed();
-        p.print(b' ');
+        p.print_space();
         p.print_str(b"else");
-        p.print(b' ');
+        p.print_space();
         match alternate {
             Statement::BlockStatement(block) => {
                 p.print_block1(block);
@@ -214,9 +213,9 @@ fn gen_for_statement_brack_content<'a>(
     p.print_space();
     p.print(b'(');
     left.gen(p);
-    p.print(b' ');
+    p.print_space();
     p.print_str(key);
-    p.print(b' ');
+    p.print_space();
     right.gen(p);
     p.print(b')');
     p.print_body(body);
@@ -247,7 +246,7 @@ impl<'a> Gen for DoWhileStatement<'a> {
     fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"do");
-        p.print(b' ');
+        p.print_space();
         if let Statement::BlockStatement(block) = &self.body {
             p.print_space();
             p.print_block1(block);
@@ -323,7 +322,7 @@ impl<'a> Gen for SwitchCase<'a> {
         match &self.test {
             Some(test) => {
                 p.print_str(b"case");
-                p.print(b' ');
+                p.print_space();
                 test.gen(p);
             }
             None => p.print_str(b"default"),
@@ -344,7 +343,7 @@ impl<'a> Gen for ReturnStatement<'a> {
         p.print_indent();
         p.print_str(b"return");
         if let Some(arg) = &self.argument {
-            p.print(b' ');
+            p.print_space();
             arg.gen(p);
         }
         p.print_semicolon_after_statement();
@@ -393,7 +392,7 @@ impl<'a> Gen for ThrowStatement<'a> {
     fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print_str(b"throw");
-        p.print(b' ');
+        p.print_space();
         self.argument.gen(p);
         p.print_semicolon_after_statement();
     }
@@ -465,7 +464,7 @@ impl<'a> Gen for VariableDeclaration<'a> {
             VariableDeclarationKind::Let => b"let",
             VariableDeclarationKind::Var => b"var",
         });
-        p.print(b' ');
+        p.print_space();
         p.print_list(&self.declarations);
     }
 }
@@ -486,7 +485,7 @@ impl<'a> Gen for Function<'a> {
     fn gen(&self, p: &mut Formatter) {
         if self.r#async {
             p.print_str(b"async");
-            p.print(b' ');
+            p.print_space();
         }
         p.print_str(b"function");
         if self.generator {
@@ -494,7 +493,7 @@ impl<'a> Gen for Function<'a> {
         }
         if let Some(id) = &self.id {
             if !self.generator {
-                p.print(b' ');
+                p.print_space();
             }
             id.gen(p);
             p.print_space();
@@ -786,17 +785,7 @@ impl<'a> Gen for Expression<'a> {
 
 impl Gen for IdentifierReference {
     fn gen(&self, p: &mut Formatter) {
-        let symbols = &p.symbols;
-        let slot = symbols
-            .get_resolved_reference_for_id(self)
-            .map(|r| symbols[r.resolved_symbol_id].slot())
-            .filter(|slot| slot.is_some());
-        if let Some(slot) = slot {
-            let name = symbols.mangler().mangled_name(slot);
-            p.print_str(name.as_bytes());
-        } else {
-            p.print_str(self.name.as_bytes());
-        }
+        p.print_str(self.name.as_bytes());
     }
 }
 
@@ -808,15 +797,7 @@ impl Gen for IdentifierName {
 
 impl Gen for BindingIdentifier {
     fn gen(&self, p: &mut Formatter) {
-        let symbols = &p.symbols;
-        let slot =
-            symbols.get_symbol_by_span(self.span).map(Symbol::slot).filter(|slot| slot.is_some());
-        if let Some(slot) = slot {
-            let name = symbols.mangler().mangled_name(slot);
-            p.print_str(name.as_bytes());
-        } else {
-            p.print_str(self.name.as_bytes());
-        }
+        p.print_str(self.name.as_bytes());
     }
 }
 
@@ -1119,7 +1100,7 @@ impl<'a> Gen for YieldExpression<'a> {
         }
 
         if let Some(argument) = self.argument.as_ref() {
-            p.print(b' ');
+            p.print_space();
             argument.gen(p);
         }
     }
@@ -1129,16 +1110,12 @@ impl<'a> Gen for UpdateExpression<'a> {
     fn gen(&self, p: &mut Formatter) {
         let operator = self.operator.as_str().as_bytes();
         if self.prefix {
-            p.print_space_before_operator(self.operator.into());
+            p.print_space();
             p.print_str(operator);
-            p.prev_op = Some(self.operator.into());
-            p.prev_op_end = p.code().len();
             self.argument.gen(p);
         } else {
             self.argument.gen(p);
             p.print_str(operator);
-            p.prev_op = Some(self.operator.into());
-            p.prev_op_end = p.code().len();
         }
     }
 }
@@ -1148,12 +1125,10 @@ impl<'a> Gen for UnaryExpression<'a> {
         let operator = self.operator.as_str().as_bytes();
         if self.operator.is_keyword() {
             p.print_str(operator);
-            p.print(b' ');
+            p.print_space();
         } else {
-            p.print_space_before_operator(self.operator.into());
+            p.print_space();
             p.print_str(operator);
-            p.prev_op = Some(self.operator.into());
-            p.prev_op_end = p.code().len();
         }
         self.argument.gen(p);
     }
@@ -1171,25 +1146,19 @@ impl Gen for BinaryOperator {
     fn gen(&self, p: &mut Formatter) {
         let operator = self.as_str().as_bytes();
         if self.is_keyword() {
-            p.print(b' ');
-            p.print_str(operator);
-            p.print(b' ');
-        } else {
-            let op: Operator = (*self).into();
-            p.print_space_before_operator(op);
-            p.print_str(operator);
-            p.prev_op = Some(op);
-            p.prev_op_end = p.code().len();
+            p.print_space();
         }
+        p.print_str(operator);
+        p.print_space();
     }
 }
 
 impl<'a> Gen for PrivateInExpression<'a> {
     fn gen(&self, p: &mut Formatter) {
         self.left.gen(p);
-        p.print(b' ');
+        p.print_space();
         p.print_str(self.operator.as_str().as_bytes());
-        p.print(b' ');
+        p.print_space();
         self.right.gen(p);
     }
 }
@@ -1454,7 +1423,7 @@ impl<'a> Gen for Class<'a> {
     fn gen(&self, p: &mut Formatter) {
         p.print_str(b"class");
         if let Some(id) = &self.id {
-            p.print(b' ');
+            p.print_space();
             id.gen(p);
         }
         if let Some(super_class) = self.super_class.as_ref() {

@@ -5,12 +5,8 @@
 
 mod gen;
 
-use std::rc::Rc;
-
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_semantic::SymbolTable;
-use oxc_syntax::operator::{BinaryOperator, Operator, UnaryOperator, UpdateOperator};
 
 pub use crate::gen::Gen;
 
@@ -28,9 +24,6 @@ impl Default for FormatterOptions {
 pub struct Formatter {
     options: FormatterOptions,
 
-    /// Symbol Table for name mangling
-    symbols: Rc<SymbolTable>,
-
     /// Output Code
     code: Vec<u8>,
 
@@ -39,8 +32,6 @@ pub struct Formatter {
 
     // states
     needs_semicolon: bool,
-    prev_op_end: usize,
-    prev_op: Option<Operator>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -56,22 +47,10 @@ impl Formatter {
     pub fn new(source_len: usize, options: FormatterOptions) -> Self {
         Self {
             options,
-            symbols: Rc::new(SymbolTable::default()),
             code: Vec::with_capacity(source_len),
             indentation: 0,
             needs_semicolon: false,
-            prev_op_end: 0,
-            prev_op: None,
         }
-    }
-
-    #[must_use]
-    pub fn with_symbol_table(mut self, symbols: &Rc<SymbolTable>, yes: bool) -> Self {
-        if yes {
-            symbols.mangle();
-            self.symbols = Rc::clone(symbols);
-        }
-        self
     }
 
     #[must_use]
@@ -131,38 +110,6 @@ impl Formatter {
     #[inline]
     pub fn print_comma(&mut self) {
         self.print(b',');
-    }
-
-    fn print_space_before_operator(&mut self, next: Operator) {
-        if self.prev_op_end != self.code.len() {
-            return;
-        }
-        let Some(prev) = self.prev_op else { return };
-        // "+ + y" => "+ +y"
-        // "+ ++ y" => "+ ++y"
-        // "x + + y" => "x+ +y"
-        // "x ++ + y" => "x+++y"
-        // "x + ++ y" => "x+ ++y"
-        // "-- >" => "-- >"
-        // "< ! --" => "<! --"
-        let bin_op_add = Operator::BinaryOperator(BinaryOperator::Addition);
-        let bin_op_sub = Operator::BinaryOperator(BinaryOperator::Subtraction);
-        let un_op_pos = Operator::UnaryOperator(UnaryOperator::UnaryPlus);
-        let un_op_pre_inc = Operator::UpdateOperator(UpdateOperator::Increment);
-        let un_op_neg = Operator::UnaryOperator(UnaryOperator::UnaryNegation);
-        let un_op_pre_dec = Operator::UpdateOperator(UpdateOperator::Decrement);
-        let un_op_post_dec = Operator::UpdateOperator(UpdateOperator::Decrement);
-        let bin_op_gt = Operator::BinaryOperator(BinaryOperator::GreaterThan);
-        let un_op_not = Operator::UnaryOperator(UnaryOperator::LogicalNot);
-        if ((prev == bin_op_add || prev == un_op_pos)
-            && (next == bin_op_add || next == un_op_pos || next == un_op_pre_inc))
-            || ((prev == bin_op_sub || prev == un_op_neg)
-                && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
-            || (prev == un_op_post_dec && next == bin_op_gt)
-            || (prev == un_op_not && next == un_op_pre_dec && self.code().len() > 1/*&& p.js[len(p.js)-2] == '<'*/)
-        {
-            self.print(b' ');
-        }
     }
 
     fn print_semicolon_after_statement(&mut self) {
