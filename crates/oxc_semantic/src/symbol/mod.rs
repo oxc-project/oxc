@@ -34,10 +34,12 @@ pub struct Symbol {
 }
 
 #[cfg(target_pointer_width = "64")]
-#[test]
-fn symbol_size() {
-    use std::mem::size_of;
-    assert_eq!(size_of::<Symbol>(), 96);
+mod size_asserts {
+    use oxc_index::static_assert_size;
+
+    use super::Symbol;
+
+    static_assert_size!(Symbol, 96);
 }
 
 bitflags! {
