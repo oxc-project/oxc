@@ -1,8 +1,7 @@
 #![allow(non_upper_case_globals)]
 
-use std::num::NonZeroUsize;
-
 use bitflags::bitflags;
+use oxc_index::Idx;
 use oxc_span::Span;
 
 use super::SymbolId;
@@ -86,23 +85,15 @@ impl ResolvedReference {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ResolvedReferenceId(NonZeroUsize);
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct ResolvedReferenceId(usize);
 
-impl Default for ResolvedReferenceId {
-    fn default() -> Self {
-        Self::new(1)
-    }
-}
-
-impl ResolvedReferenceId {
-    #[must_use]
-    pub fn new(n: usize) -> Self {
-        unsafe { Self(NonZeroUsize::new_unchecked(n)) }
+impl Idx for ResolvedReferenceId {
+    fn new(idx: usize) -> Self {
+        Self(idx)
     }
 
-    #[must_use]
-    pub(crate) fn index0(self) -> usize {
-        self.0.get() - 1
+    fn index(self) -> usize {
+        self.0
     }
 }

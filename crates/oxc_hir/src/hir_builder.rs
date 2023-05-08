@@ -8,6 +8,7 @@
 use num_bigint::BigUint;
 use ordered_float::NotNan;
 use oxc_allocator::{Allocator, Box, String, Vec};
+use oxc_index::Idx;
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -24,11 +25,11 @@ pub struct HirBuilder<'a> {
 
 impl<'a> HirBuilder<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
-        Self { allocator, hir_id: HirId::default() }
+        Self { allocator, hir_id: HirId::new(0) }
     }
 
     fn next_id(&mut self) -> HirId {
-        self.hir_id = self.hir_id.increment();
+        self.hir_id.increment();
         self.hir_id
     }
 

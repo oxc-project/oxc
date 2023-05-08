@@ -3,6 +3,7 @@ use std::{
     ops::{Index, IndexMut},
 };
 
+use oxc_index::Idx;
 use oxc_span::{Atom, Span};
 
 use super::{
@@ -30,13 +31,13 @@ impl Index<SymbolId> for SymbolTableBuilder {
     type Output = Symbol;
 
     fn index(&self, index: SymbolId) -> &Self::Output {
-        &self.symbols[index.index0()]
+        &self.symbols[index.index()]
     }
 }
 
 impl IndexMut<SymbolId> for SymbolTableBuilder {
     fn index_mut(&mut self, index: SymbolId) -> &mut Self::Output {
-        &mut self.symbols[index.index0()]
+        &mut self.symbols[index.index()]
     }
 }
 
@@ -49,7 +50,7 @@ impl SymbolTableBuilder {
         span: Span,
         flags: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id = SymbolId::new(self.symbols.len() + 1);
+        let symbol_id = SymbolId::new(self.symbols.len());
         let symbol = Symbol::new(symbol_id, declaration, name, span, flags);
         self.symbols.push(symbol);
         self.symbol_index.insert(span, symbol_id);
@@ -59,14 +60,13 @@ impl SymbolTableBuilder {
     /// Resolve all `references` to `symbol_id`
     pub fn resolve_reference(&mut self, references: Vec<Reference>, symbol_id: SymbolId) {
         let additional_len = references.len();
-        let symbol = &mut self.symbols[symbol_id];
+        let symbol = &mut self.symbols[symbol_id.index()];
 
         self.resolved_references.reserve(additional_len);
         symbol.references.reserve(additional_len);
 
         for reference in references {
-            let resolved_reference_id =
-                ResolvedReferenceId::new(self.resolved_references.len() + 1);
+            let resolved_reference_id = ResolvedReferenceId::new(self.resolved_references.len());
             self.resolved_references_index.insert(reference.span, resolved_reference_id);
 
             let resolved_reference = reference.resolve_to(symbol_id);
@@ -78,7 +78,7 @@ impl SymbolTableBuilder {
 
     pub fn update_slot(&mut self, symbol_id: SymbolId) {
         let next_slot = self.mangler.next_slot();
-        self.symbols[symbol_id].slot = next_slot;
+        self.symbols[symbol_id.index()].slot = next_slot;
     }
 
     pub fn build(self) -> SymbolTable {
