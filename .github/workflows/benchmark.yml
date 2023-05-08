@@ -44,9 +44,6 @@ jobs:
           clean: false
           ref: main
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
-
       - name: Compile
         run: cargo build --release -p oxc_benchmark
 
@@ -57,11 +54,6 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: benchmark-results-${{ matrix.os }}
-          path: ./target/criterion
-
-      - name: Remove Criterion Artifact
-        uses: JesseTG/rm@v1.0.3
-        with:
           path: ./target/criterion
 
   benchmark-compare:
