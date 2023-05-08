@@ -1091,12 +1091,17 @@ dependencies = [
  "num-bigint",
  "ordered-float",
  "oxc_allocator",
+ "oxc_index",
  "oxc_span",
  "oxc_syntax",
  "ryu-js",
  "serde",
  "serde_json",
 ]
+
+[[package]]
+name = "oxc_index"
+version = "0.0.0"
 
 [[package]]
 name = "oxc_linter"
@@ -1203,6 +1208,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_index",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",

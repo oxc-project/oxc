@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 use std::ops::{Deref, Index, IndexMut};
 
 use oxc_ast::ast::IdentifierReference;
+use oxc_index::Idx;
 use oxc_span::Span;
 
 use super::{
@@ -33,13 +34,13 @@ impl Index<SymbolId> for SymbolTable {
     type Output = Symbol;
 
     fn index(&self, index: SymbolId) -> &Self::Output {
-        &self.symbols[index.index0()]
+        &self.symbols[index.index()]
     }
 }
 
 impl IndexMut<SymbolId> for SymbolTable {
     fn index_mut(&mut self, index: SymbolId) -> &mut Self::Output {
-        &mut self.symbols[index.index0()]
+        &mut self.symbols[index.index()]
     }
 }
 
@@ -47,13 +48,13 @@ impl Index<ResolvedReferenceId> for SymbolTable {
     type Output = ResolvedReference;
 
     fn index(&self, index: ResolvedReferenceId) -> &Self::Output {
-        &self.resolved_references[index.index0()]
+        &self.resolved_references[index.index()]
     }
 }
 
 impl IndexMut<ResolvedReferenceId> for SymbolTable {
     fn index_mut(&mut self, index: ResolvedReferenceId) -> &mut Self::Output {
-        &mut self.resolved_references[index.index0()]
+        &mut self.resolved_references[index.index()]
     }
 }
 
@@ -93,7 +94,7 @@ impl SymbolTable {
 
     #[must_use]
     pub fn get_symbol(&self, id: SymbolId) -> Option<&Symbol> {
-        self.symbols.get(id.index0())
+        self.symbols.get(id.index())
     }
 
     #[must_use]
@@ -103,7 +104,7 @@ impl SymbolTable {
 
     #[must_use]
     pub fn get_resolved_reference(&self, id: ResolvedReferenceId) -> Option<&ResolvedReference> {
-        self.resolved_references.get(id.index0())
+        self.resolved_references.get(id.index())
     }
 
     #[must_use]
@@ -113,11 +114,11 @@ impl SymbolTable {
     ) -> Option<&ResolvedReference> {
         self.resolved_references_index
             .get(&id.span)
-            .map(|ref_id| &self.resolved_references[ref_id.index0()])
+            .map(|ref_id| &self.resolved_references[ref_id.index()])
     }
 
     #[must_use]
     pub fn get_symbol_by_span(&self, span: Span) -> Option<&Symbol> {
-        self.symbol_index.get(&span).map(|symbol_id| &self.symbols[*symbol_id])
+        self.symbol_index.get(&span).map(|symbol_id| &self.symbols[symbol_id.index()])
     }
 }

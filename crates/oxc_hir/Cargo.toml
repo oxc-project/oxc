@@ -14,6 +14,7 @@ repository.workspace  = true
 oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_syntax    = { workspace = true }
+oxc_index     = { workspace = true }
 
 bitflags      = { workspace = true }
 num-bigint    = { workspace = true }

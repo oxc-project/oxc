@@ -1,40 +1,16 @@
-use std::{
-    hash::Hash,
-    num::NonZeroUsize,
-    ops::{Index, IndexMut},
-};
+use std::hash::Hash;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct SymbolId(NonZeroUsize);
+use oxc_index::Idx;
 
-impl Default for SymbolId {
-    fn default() -> Self {
-        Self::new(1)
-    }
-}
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct SymbolId(usize);
 
-impl<T> Index<SymbolId> for Vec<T> {
-    type Output = T;
-
-    fn index(&self, id: SymbolId) -> &Self::Output {
-        &self[id.index0()]
-    }
-}
-
-impl<T> IndexMut<SymbolId> for Vec<T> {
-    fn index_mut(&mut self, id: SymbolId) -> &mut T {
-        &mut self[id.index0()]
-    }
-}
-
-impl SymbolId {
-    #[must_use]
-    pub fn new(n: usize) -> Self {
-        unsafe { Self(NonZeroUsize::new_unchecked(n)) }
+impl Idx for SymbolId {
+    fn new(idx: usize) -> Self {
+        Self(idx)
     }
 
-    #[must_use]
-    pub(crate) fn index0(self) -> usize {
-        self.0.get() - 1
+    fn index(self) -> usize {
+        self.0
     }
 }

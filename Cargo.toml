@@ -31,6 +31,7 @@ oxc_minifier  = { version = "0.0.0", path = "crates/oxc_minifier" }
 oxc_hir       = { version = "0.0.0", path = "crates/oxc_hir" }
 oxc_ast_lower = { version = "0.0.0", path = "crates/oxc_ast_lower" }
 oxc_syntax    = { version = "0.0.0", path = "crates/oxc_syntax" }
+oxc_index     = { version = "0.0.0", path = "crates/oxc_index" }
 
 oxc_tasks_common = { path = "tasks/common" }
 
