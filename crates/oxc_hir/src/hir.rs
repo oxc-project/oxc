@@ -226,12 +226,6 @@ impl Hash for NullLiteral {
     }
 }
 
-impl PartialEq for NullLiteral {
-    fn eq(&self, _other: &Self) -> bool {
-        true
-    }
-}
-
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct NumberLiteral<'a> {
