@@ -3,6 +3,7 @@ use std::hash::{Hash, Hasher};
 use oxc_ast::AstKind;
 use oxc_semantic::AstNode;
 use oxc_span::GetSpan;
+use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHasher;
 
 pub fn calculate_hash<T: Hash>(t: &T) -> u64 {

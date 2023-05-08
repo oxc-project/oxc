@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{BinaryExpression, BinaryOperator, Expression, UnaryOperator},
+    ast::{BinaryExpression, Expression},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -9,6 +9,7 @@ use oxc_diagnostics::{
 use oxc_formatter::Gen;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 

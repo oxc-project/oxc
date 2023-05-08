@@ -971,6 +971,7 @@ dependencies = [
  "ordered-float",
  "oxc_allocator",
  "oxc_span",
+ "oxc_syntax",
  "rustc-hash",
  "ryu-js",
  "serde",
@@ -989,6 +990,7 @@ dependencies = [
  "oxc_hir",
  "oxc_parser",
  "oxc_span",
+ "oxc_syntax",
  "serde",
  "serde_json",
 ]
@@ -1078,6 +1080,7 @@ dependencies = [
  "oxc_ast",
  "oxc_parser",
  "oxc_semantic",
+ "oxc_syntax",
 ]
 
 [[package]]
@@ -1089,6 +1092,7 @@ dependencies = [
  "ordered-float",
  "oxc_allocator",
  "oxc_span",
+ "oxc_syntax",
  "ryu-js",
  "serde",
  "serde_json",
@@ -1112,6 +1116,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
+ "oxc_syntax",
  "phf",
  "rust-lapper",
  "rustc-hash",
@@ -1140,6 +1145,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
+ "oxc_syntax",
  "walkdir",
 ]
 
@@ -1180,6 +1186,7 @@ dependencies = [
  "oxc_ast",
  "oxc_diagnostics",
  "oxc_span",
+ "oxc_syntax",
  "rustc-hash",
  "serde_json",
  "unicode-id-start",
@@ -1198,6 +1205,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_parser",
  "oxc_span",
+ "oxc_syntax",
  "phf",
  "rustc-hash",
 ]
@@ -1208,6 +1216,13 @@ version = "0.0.0"
 dependencies = [
  "compact_str",
  "miette",
+ "serde",
+]
+
+[[package]]
+name = "oxc_syntax"
+version = "0.0.0"
+dependencies = [
  "serde",
 ]
 

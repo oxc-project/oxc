@@ -384,29 +384,9 @@ impl<'a> AstLower<'a> {
         &mut self,
         expr: &ast::AssignmentExpression<'a>,
     ) -> hir::Expression<'a> {
-        let operator = match expr.operator {
-            ast::AssignmentOperator::Assign => hir::AssignmentOperator::Assign,
-            ast::AssignmentOperator::Addition => hir::AssignmentOperator::Addition,
-            ast::AssignmentOperator::Subtraction => hir::AssignmentOperator::Subtraction,
-            ast::AssignmentOperator::Multiplication => hir::AssignmentOperator::Multiplication,
-            ast::AssignmentOperator::Division => hir::AssignmentOperator::Division,
-            ast::AssignmentOperator::Remainder => hir::AssignmentOperator::Remainder,
-            ast::AssignmentOperator::ShiftLeft => hir::AssignmentOperator::ShiftLeft,
-            ast::AssignmentOperator::ShiftRight => hir::AssignmentOperator::ShiftRight,
-            ast::AssignmentOperator::ShiftRightZeroFill => {
-                hir::AssignmentOperator::ShiftRightZeroFill
-            }
-            ast::AssignmentOperator::BitwiseOR => hir::AssignmentOperator::BitwiseOR,
-            ast::AssignmentOperator::BitwiseXOR => hir::AssignmentOperator::BitwiseXOR,
-            ast::AssignmentOperator::BitwiseAnd => hir::AssignmentOperator::BitwiseAnd,
-            ast::AssignmentOperator::LogicalAnd => hir::AssignmentOperator::LogicalAnd,
-            ast::AssignmentOperator::LogicalOr => hir::AssignmentOperator::LogicalOr,
-            ast::AssignmentOperator::LogicalNullish => hir::AssignmentOperator::LogicalNullish,
-            ast::AssignmentOperator::Exponential => hir::AssignmentOperator::Exponential,
-        };
         let left = self.lower_assignment_target(&expr.left);
         let right = self.lower_expression(&expr.right);
-        self.hir.assignment_expression(expr.span, operator, left, right)
+        self.hir.assignment_expression(expr.span, expr.operator, left, right)
     }
 
     fn lower_arrow_expression(&mut self, expr: &ast::ArrowExpression<'a>) -> hir::Expression<'a> {
@@ -429,32 +409,8 @@ impl<'a> AstLower<'a> {
 
     fn lower_binary_expression(&mut self, expr: &ast::BinaryExpression<'a>) -> hir::Expression<'a> {
         let left = self.lower_expression(&expr.left);
-        let operator = match expr.operator {
-            ast::BinaryOperator::Equality => hir::BinaryOperator::Equality,
-            ast::BinaryOperator::Inequality => hir::BinaryOperator::Inequality,
-            ast::BinaryOperator::StrictEquality => hir::BinaryOperator::StrictEquality,
-            ast::BinaryOperator::StrictInequality => hir::BinaryOperator::StrictInequality,
-            ast::BinaryOperator::LessThan => hir::BinaryOperator::LessThan,
-            ast::BinaryOperator::LessEqualThan => hir::BinaryOperator::LessEqualThan,
-            ast::BinaryOperator::GreaterThan => hir::BinaryOperator::GreaterThan,
-            ast::BinaryOperator::GreaterEqualThan => hir::BinaryOperator::GreaterEqualThan,
-            ast::BinaryOperator::ShiftLeft => hir::BinaryOperator::ShiftLeft,
-            ast::BinaryOperator::ShiftRight => hir::BinaryOperator::ShiftRight,
-            ast::BinaryOperator::ShiftRightZeroFill => hir::BinaryOperator::ShiftRightZeroFill,
-            ast::BinaryOperator::Addition => hir::BinaryOperator::Addition,
-            ast::BinaryOperator::Subtraction => hir::BinaryOperator::Subtraction,
-            ast::BinaryOperator::Multiplication => hir::BinaryOperator::Multiplication,
-            ast::BinaryOperator::Division => hir::BinaryOperator::Division,
-            ast::BinaryOperator::Remainder => hir::BinaryOperator::Remainder,
-            ast::BinaryOperator::BitwiseOR => hir::BinaryOperator::BitwiseOR,
-            ast::BinaryOperator::BitwiseXOR => hir::BinaryOperator::BitwiseXOR,
-            ast::BinaryOperator::BitwiseAnd => hir::BinaryOperator::BitwiseAnd,
-            ast::BinaryOperator::In => hir::BinaryOperator::In,
-            ast::BinaryOperator::Instanceof => hir::BinaryOperator::Instanceof,
-            ast::BinaryOperator::Exponential => hir::BinaryOperator::Exponential,
-        };
         let right = self.lower_expression(&expr.right);
-        self.hir.binary_expression(expr.span, left, operator, right)
+        self.hir.binary_expression(expr.span, left, expr.operator, right)
     }
 
     fn lower_call_expression(&mut self, expr: &ast::CallExpression<'a>) -> hir::Expression<'a> {
@@ -512,13 +468,8 @@ impl<'a> AstLower<'a> {
         expr: &ast::LogicalExpression<'a>,
     ) -> hir::Expression<'a> {
         let left = self.lower_expression(&expr.left);
-        let operator = match expr.operator {
-            ast::LogicalOperator::Or => hir::LogicalOperator::Or,
-            ast::LogicalOperator::And => hir::LogicalOperator::And,
-            ast::LogicalOperator::Coalesce => hir::LogicalOperator::Coalesce,
-        };
         let right = self.lower_expression(&expr.right);
-        self.hir.logical_expression(expr.span, left, operator, right)
+        self.hir.logical_expression(expr.span, left, expr.operator, right)
     }
 
     fn lower_member_expr(&mut self, expr: &ast::MemberExpression<'a>) -> hir::MemberExpression<'a> {
@@ -660,26 +611,13 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_unary_expression(&mut self, expr: &ast::UnaryExpression<'a>) -> hir::Expression<'a> {
-        let operator = match expr.operator {
-            ast::UnaryOperator::UnaryNegation => hir::UnaryOperator::UnaryNegation,
-            ast::UnaryOperator::UnaryPlus => hir::UnaryOperator::UnaryPlus,
-            ast::UnaryOperator::LogicalNot => hir::UnaryOperator::LogicalNot,
-            ast::UnaryOperator::BitwiseNot => hir::UnaryOperator::BitwiseNot,
-            ast::UnaryOperator::Typeof => hir::UnaryOperator::Typeof,
-            ast::UnaryOperator::Void => hir::UnaryOperator::Void,
-            ast::UnaryOperator::Delete => hir::UnaryOperator::Delete,
-        };
         let argument = self.lower_expression(&expr.argument);
-        self.hir.unary_expression(expr.span, operator, expr.prefix, argument)
+        self.hir.unary_expression(expr.span, expr.operator, expr.prefix, argument)
     }
 
     fn lower_update_expression(&mut self, expr: &ast::UpdateExpression<'a>) -> hir::Expression<'a> {
-        let operator = match expr.operator {
-            ast::UpdateOperator::Increment => hir::UpdateOperator::Increment,
-            ast::UpdateOperator::Decrement => hir::UpdateOperator::Decrement,
-        };
         let argument = self.lower_simple_assignment_target(&expr.argument);
-        self.hir.update_expression(expr.span, operator, expr.prefix, argument)
+        self.hir.update_expression(expr.span, expr.operator, expr.prefix, argument)
     }
 
     fn lower_yield_expression(&mut self, expr: &ast::YieldExpression<'a>) -> hir::Expression<'a> {

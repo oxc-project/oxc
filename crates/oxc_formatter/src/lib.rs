@@ -10,6 +10,7 @@ use std::rc::Rc;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_semantic::SymbolTable;
+use oxc_syntax::operator::{BinaryOperator, Operator, UnaryOperator, UpdateOperator};
 
 pub use crate::gen::Gen;
 

@@ -2,6 +2,7 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
+use oxc_syntax::operator::BinaryOperator;
 
 use super::function::IsParenthesizedArrowFunction;
 use super::grammar::CoverGrammar;

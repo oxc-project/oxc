@@ -1,4 +1,6 @@
-use oxc_ast::ast::*;
+use oxc_syntax::operator::{
+    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+};
 
 use crate::lexer::Kind;
 

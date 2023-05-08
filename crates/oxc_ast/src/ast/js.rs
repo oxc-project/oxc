@@ -3,6 +3,9 @@ use std::fmt;
 use num_bigint::BigUint;
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
+use oxc_syntax::operator::{
+    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+};
 #[cfg(feature = "serde")]
 use serde::Serialize;
 

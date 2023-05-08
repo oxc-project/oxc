@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        AssignmentExpression, AssignmentOperator, AssignmentTarget, BinaryOperator, Expression,
-        IdentifierReference, SimpleAssignmentTarget, UnaryOperator, UpdateOperator,
+        AssignmentExpression, AssignmentTarget, Expression, IdentifierReference,
+        SimpleAssignmentTarget,
     },
     AstKind,
 };
@@ -11,6 +11,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 

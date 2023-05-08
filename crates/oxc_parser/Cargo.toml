@@ -17,6 +17,7 @@ doctest = false
 oxc_allocator   = { workspace = true }
 oxc_span        = { workspace = true }
 oxc_ast         = { workspace = true }
+oxc_syntax      = { workspace = true }
 oxc_diagnostics = { workspace = true }
 
 bitflags         = { workspace = true }
