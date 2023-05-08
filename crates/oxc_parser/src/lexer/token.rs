@@ -27,10 +27,12 @@ pub struct Token<'a> {
 }
 
 #[cfg(target_pointer_width = "64")]
-#[test]
-fn no_bloat_token() {
-    use std::mem::size_of;
-    assert_eq!(size_of::<Token>(), 48);
+mod size_asserts {
+    use oxc_index::static_assert_size;
+
+    use super::Token;
+
+    static_assert_size!(Token, 48);
 }
 
 impl<'a> Token<'a> {

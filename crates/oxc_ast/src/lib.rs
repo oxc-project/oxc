@@ -55,22 +55,22 @@ pub use crate::visit_mut::VisitMut;
 //  The following test make sure all enum variants are boxed, resulting 16 bytes for each enum.
 //  Read `https://nnethercote.github.io/perf-book/type-sizes.html` for more details.
 #[cfg(target_pointer_width = "64")]
-#[test]
-fn no_bloat_enum_sizes() {
-    use std::mem::size_of;
+mod size_asserts {
+    use oxc_index::static_assert_size;
 
     #[allow(clippy::wildcard_imports)]
     use crate::ast::*;
-    assert_eq!(size_of::<Statement>(), 16);
-    assert_eq!(size_of::<Expression>(), 16);
-    assert_eq!(size_of::<Declaration>(), 16);
-    assert_eq!(size_of::<BindingPatternKind>(), 16);
-    assert_eq!(size_of::<ModuleDeclaration>(), 16);
-    assert_eq!(size_of::<ClassElement>(), 16);
-    assert_eq!(size_of::<ExportDefaultDeclarationKind>(), 16);
-    assert_eq!(size_of::<AssignmentTargetPattern>(), 16);
-    assert_eq!(size_of::<AssignmentTargetMaybeDefault>(), 24);
-    assert_eq!(size_of::<AssignmentTargetProperty>(), 16);
-    assert_eq!(size_of::<TSLiteral>(), 16);
-    assert_eq!(size_of::<TSType>(), 16);
+
+    static_assert_size!(Statement, 16);
+    static_assert_size!(Expression, 16);
+    static_assert_size!(Declaration, 16);
+    static_assert_size!(BindingPatternKind, 16);
+    static_assert_size!(ModuleDeclaration, 16);
+    static_assert_size!(ClassElement, 16);
+    static_assert_size!(ExportDefaultDeclarationKind, 16);
+    static_assert_size!(AssignmentTargetPattern, 16);
+    static_assert_size!(AssignmentTargetMaybeDefault, 24);
+    static_assert_size!(AssignmentTargetProperty, 16);
+    static_assert_size!(TSLiteral, 16);
+    static_assert_size!(TSType, 16);
 }
