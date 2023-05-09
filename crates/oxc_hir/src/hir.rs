@@ -966,15 +966,6 @@ pub enum ChainElement<'a> {
     MemberExpression(Box<'a, MemberExpression<'a>>),
 }
 
-/// Parenthesized Expression
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct ParenthesizedExpression<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-    pub expression: Expression<'a>,
-}
-
 /// Statements
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]

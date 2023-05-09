@@ -949,14 +949,6 @@ impl<'a> Gen for ArrayExpression<'a> {
     }
 }
 
-impl<'a> Gen for Option<Argument<'a>> {
-    fn gen(&self, p: &mut Printer) {
-        if let Some(arg) = self {
-            arg.gen(p);
-        }
-    }
-}
-
 impl<'a> Gen for ObjectExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print(b'{');
@@ -1338,14 +1330,6 @@ impl<'a> Gen for AssignmentTargetPropertyProperty<'a> {
 impl<'a> Gen for SequenceExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_list(&self.expressions);
-    }
-}
-
-impl<'a> Gen for ParenthesizedExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        p.print(b'(');
-        self.expression.gen(p);
-        p.print(b')');
     }
 }
 

@@ -951,14 +951,6 @@ impl<'a> Gen for ArrayExpression<'a> {
     }
 }
 
-impl<'a> Gen for Option<Argument<'a>> {
-    fn gen(&self, p: &mut Formatter) {
-        if let Some(arg) = self {
-            arg.gen(p);
-        }
-    }
-}
-
 impl<'a> Gen for ObjectExpression<'a> {
     fn gen(&self, p: &mut Formatter) {
         p.print(b'{');

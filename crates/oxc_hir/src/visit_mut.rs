@@ -506,10 +506,6 @@ pub trait VisitMut<'a, 'b>: Sized {
         }
     }
 
-    fn visit_parenthesized_expression(&mut self, expr: &'b mut ParenthesizedExpression<'a>) {
-        self.visit_expression(&mut expr.expression);
-    }
-
     fn visit_private_in_expression(&mut self, expr: &'b mut PrivateInExpression<'a>) {
         self.visit_private_identifier(&mut expr.left);
         self.visit_expression(&mut expr.right);
