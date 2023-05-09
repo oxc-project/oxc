@@ -20,7 +20,7 @@ oxc_diagnostics = { workspace = true }
 oxc_parser      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_linter      = { workspace = true }
-oxc_formatter     = { workspace = true }
+oxc_formatter   = { workspace = true }
 
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 serde      = { workspace = true }

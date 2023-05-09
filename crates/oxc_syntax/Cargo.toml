@@ -10,9 +10,9 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
-[dependencies]
-serde = { workspace = true, features = ["derive"], optional = true }
-
 [features]
 default = []
 serde   = ["dep:serde"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive"], optional = true }

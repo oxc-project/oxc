@@ -10,12 +10,12 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
+[features]
+default = []
+serde   = ["dep:serde", "compact_str/serde"]
+
 [dependencies]
 miette      = { workspace = true }
 compact_str = { workspace = true }
 
 serde = { workspace = true, features = ["derive"], optional = true }
-
-[features]
-default = []
-serde   = ["dep:serde", "compact_str/serde"]
