@@ -12,7 +12,7 @@ repository.workspace  = true
 
 [features]
 default = []
-serde   = ["dep:serde", "oxc_hir/serde"]
+serde   = ["dep:serde", "oxc_hir/serde", "oxc_syntax/serde"]
 
 [dependencies]
 oxc_allocator = { workspace = true }
