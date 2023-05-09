@@ -4,6 +4,7 @@
 #![allow(unused)]
 
 mod gen;
+mod operator;
 
 use std::rc::Rc;
 
@@ -11,10 +12,11 @@ use std::rc::Rc;
 use oxc_hir::hir::*;
 use oxc_semantic::SymbolTable;
 use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, Operator, UnaryOperator, UpdateOperator,
+    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
 
 use self::gen::Gen;
+use self::operator::Operator;
 
 #[derive(Debug, Clone, Copy)]
 pub struct PrinterOptions {
@@ -147,15 +149,15 @@ impl Printer {
         // "x + ++ y" => "x+ ++y"
         // "-- >" => "-- >"
         // "< ! --" => "<! --"
-        let bin_op_add = Operator::BinaryOperator(BinaryOperator::Addition);
-        let bin_op_sub = Operator::BinaryOperator(BinaryOperator::Subtraction);
-        let un_op_pos = Operator::UnaryOperator(UnaryOperator::UnaryPlus);
-        let un_op_pre_inc = Operator::UpdateOperator(UpdateOperator::Increment);
-        let un_op_neg = Operator::UnaryOperator(UnaryOperator::UnaryNegation);
-        let un_op_pre_dec = Operator::UpdateOperator(UpdateOperator::Decrement);
-        let un_op_post_dec = Operator::UpdateOperator(UpdateOperator::Decrement);
-        let bin_op_gt = Operator::BinaryOperator(BinaryOperator::GreaterThan);
-        let un_op_not = Operator::UnaryOperator(UnaryOperator::LogicalNot);
+        let bin_op_add = Operator::Binary(BinaryOperator::Addition);
+        let bin_op_sub = Operator::Binary(BinaryOperator::Subtraction);
+        let un_op_pos = Operator::Unary(UnaryOperator::UnaryPlus);
+        let un_op_pre_inc = Operator::Update(UpdateOperator::Increment);
+        let un_op_neg = Operator::Unary(UnaryOperator::UnaryNegation);
+        let un_op_pre_dec = Operator::Update(UpdateOperator::Decrement);
+        let un_op_post_dec = Operator::Update(UpdateOperator::Decrement);
+        let bin_op_gt = Operator::Binary(BinaryOperator::GreaterThan);
+        let un_op_not = Operator::Unary(UnaryOperator::LogicalNot);
         if ((prev == bin_op_add || prev == un_op_pos)
             && (next == bin_op_add || next == un_op_pos || next == un_op_pre_inc))
             || ((prev == bin_op_sub || prev == un_op_neg)

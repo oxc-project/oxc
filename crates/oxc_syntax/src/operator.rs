@@ -1,47 +1,5 @@
-use std::fmt;
-
 #[cfg(feature = "serde")]
 use serde::Serialize;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
-pub enum Operator {
-    AssignmentOperator(AssignmentOperator),
-    BinaryOperator(BinaryOperator),
-    LogicalOperator(LogicalOperator),
-    UnaryOperator(UnaryOperator),
-    UpdateOperator(UpdateOperator),
-}
-
-impl From<AssignmentOperator> for Operator {
-    fn from(op: AssignmentOperator) -> Self {
-        Self::AssignmentOperator(op)
-    }
-}
-
-impl From<BinaryOperator> for Operator {
-    fn from(op: BinaryOperator) -> Self {
-        Self::BinaryOperator(op)
-    }
-}
-
-impl From<LogicalOperator> for Operator {
-    fn from(op: LogicalOperator) -> Self {
-        Self::LogicalOperator(op)
-    }
-}
-
-impl From<UnaryOperator> for Operator {
-    fn from(op: UnaryOperator) -> Self {
-        Self::UnaryOperator(op)
-    }
-}
-
-impl From<UpdateOperator> for Operator {
-    fn from(op: UpdateOperator) -> Self {
-        Self::UpdateOperator(op)
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
@@ -132,13 +90,6 @@ impl AssignmentOperator {
             Self::LogicalNullish => "??=",
             Self::Exponential => "**=",
         }
-    }
-}
-
-impl fmt::Display for AssignmentOperator {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let operator = self.as_str();
-        write!(f, "{operator}")
     }
 }
 
@@ -278,13 +229,6 @@ impl BinaryOperator {
     }
 }
 
-impl fmt::Display for BinaryOperator {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let operator = self.as_str();
-        write!(f, "{operator}")
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum LogicalOperator {
@@ -304,13 +248,6 @@ impl LogicalOperator {
             Self::And => "&&",
             Self::Coalesce => "??",
         }
-    }
-}
-
-impl fmt::Display for LogicalOperator {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let operator = self.as_str();
-        write!(f, "{operator}")
     }
 }
 
@@ -334,11 +271,6 @@ pub enum UnaryOperator {
 }
 
 impl UnaryOperator {
-    #[must_use]
-    pub fn operator(&self) -> Operator {
-        Operator::UnaryOperator(*self)
-    }
-
     #[must_use]
     pub fn is_arithmetic(self) -> bool {
         matches!(self, Self::UnaryNegation | Self::UnaryPlus)
@@ -368,13 +300,6 @@ impl UnaryOperator {
     }
 }
 
-impl fmt::Display for UnaryOperator {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let operator = self.as_str();
-        write!(f, "{operator}")
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum UpdateOperator {
@@ -391,12 +316,5 @@ impl UpdateOperator {
             Self::Increment => "++",
             Self::Decrement => "--",
         }
-    }
-}
-
-impl fmt::Display for UpdateOperator {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let operator = self.as_str();
-        write!(f, "{operator}")
     }
 }

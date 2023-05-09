@@ -2,10 +2,10 @@ use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, Operator, UnaryOperator, UpdateOperator,
+    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
 
-use super::{Printer, Separator};
+use super::{Operator, Printer, Separator};
 
 pub trait Gen {
     fn gen(&self, p: &mut Printer);

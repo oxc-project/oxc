@@ -66,7 +66,7 @@ struct NoConstantBinaryExpressionDiagnostic(#[label] pub Span);
 #[diagnostic(severity(warning))]
 struct ConstantShortCircuit(
     &'static str, // property
-    String,       // operator
+    &'static str, // operator
     #[label("This expression always evaluates to the constant on the left-hand side")] Span,
 );
 
@@ -75,7 +75,7 @@ struct ConstantShortCircuit(
 #[diagnostic(severity(warning))]
 struct ConstantBinaryOperand(
     &'static str, // otherSide
-    String,       // operator
+    &'static str, // operator
     #[label("This compares constantly with the {0}-hand side of the `{1}`")] Span,
 );
 
@@ -98,7 +98,7 @@ impl Rule for NoConstantBinaryExpression {
                 LogicalOperator::Or | LogicalOperator::And if expr.left.is_constant(true, ctx) => {
                     ctx.diagnostic(ConstantShortCircuit(
                         "truthiness",
-                        expr.operator.to_string(),
+                        expr.operator.as_str(),
                         expr.span,
                     ));
                 }
@@ -107,7 +107,7 @@ impl Rule for NoConstantBinaryExpression {
                 {
                     ctx.diagnostic(ConstantShortCircuit(
                         "nullishness",
-                        expr.operator.to_string(),
+                        expr.operator.as_str(),
                         expr.span,
                     ));
                 }
@@ -125,12 +125,12 @@ impl Rule for NoConstantBinaryExpression {
                     Self::find_binary_expression_constant_operand(right, left, operator, ctx);
 
                 if right_constant_operand.is_some() {
-                    ctx.diagnostic(ConstantBinaryOperand("left", operator.to_string(), expr.span));
+                    ctx.diagnostic(ConstantBinaryOperand("left", operator.as_str(), expr.span));
                     return;
                 }
 
                 if left_constant_operand.is_some() {
-                    ctx.diagnostic(ConstantBinaryOperand("right", operator.to_string(), expr.span));
+                    ctx.diagnostic(ConstantBinaryOperand("right", operator.as_str(), expr.span));
                     return;
                 }
 
