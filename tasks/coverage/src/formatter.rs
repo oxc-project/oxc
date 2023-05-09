@@ -66,9 +66,7 @@ impl Case for FormatterBabelCase {
     }
 
     fn skip_test_case(&self) -> bool {
-        self.base.skip_test_case()
-            || self.base.should_fail()
-            || self.base.source_type().is_typescript()
+        self.base.skip_test_case() || self.base.should_fail()
     }
 
     fn run(&mut self) {
