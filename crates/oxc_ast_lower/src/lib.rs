@@ -1,22 +1,29 @@
 #![allow(clippy::unused_self)]
 
+mod scope;
+
 use oxc_allocator::{Allocator, Box, Vec};
-use oxc_ast::ast;
+use oxc_ast::{ast, SourceType};
 use oxc_hir::{hir, HirBuilder};
 use oxc_span::GetSpan;
 
+use crate::scope::{ScopeFlags, ScopeTreeBuilder};
+
 pub struct AstLower<'a> {
     hir: HirBuilder<'a>,
+    scope: ScopeTreeBuilder,
 }
 
 impl<'a> AstLower<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
-        Self { hir: HirBuilder::new(allocator) }
+    pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
+        Self { hir: HirBuilder::new(allocator), scope: ScopeTreeBuilder::new(source_type) }
     }
 
     #[must_use]
     pub fn build(mut self, program: &ast::Program<'a>) -> hir::Program<'a> {
-        self.lower_program(program)
+        let program = self.lower_program(program);
+        self.scope.build();
+        program
     }
 
     #[must_use]
@@ -96,7 +103,9 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_block_statement(&mut self, stmt: &ast::BlockStatement<'a>) -> hir::Statement<'a> {
+        self.scope.enter(ScopeFlags::empty());
         let body = self.lower_statements(&stmt.body);
+        self.scope.leave();
         self.hir.block_statement(stmt.span, body)
     }
 
@@ -228,8 +237,8 @@ impl<'a> AstLower<'a> {
         &mut self,
         clause: &ast::CatchClause<'a>,
     ) -> Box<'a, hir::CatchClause<'a>> {
-        let body = self.lower_block(&clause.body);
         let param = clause.param.as_ref().map(|pat| self.lower_binding_pattern(pat));
+        let body = self.lower_block(&clause.body);
         self.hir.catch_clause(clause.span, param, body)
     }
 
@@ -1241,8 +1250,10 @@ impl<'a> AstLower<'a> {
         &mut self,
         body: &ast::FunctionBody<'a>,
     ) -> Box<'a, hir::FunctionBody<'a>> {
+        self.scope.enter(ScopeFlags::Function);
         let directives = self.lower_vec(&body.directives, Self::lower_directive);
         let statements = self.lower_statements(&body.statements);
+        self.scope.leave();
         self.hir.function_body(body.span, directives, statements)
     }
 
@@ -1326,7 +1337,9 @@ impl<'a> AstLower<'a> {
         &mut self,
         block: &ast::StaticBlock<'a>,
     ) -> Box<'a, hir::StaticBlock<'a>> {
+        self.scope.enter(ScopeFlags::ClassStaticBlock);
         let body = self.lower_statements(&block.body);
+        self.scope.leave();
         self.hir.static_block(block.span, body)
     }
 

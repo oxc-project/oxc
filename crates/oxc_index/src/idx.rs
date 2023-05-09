@@ -4,7 +4,7 @@ use std::hash::Hash;
 /// Represents some newtyped `usize` wrapper.
 ///
 /// Purpose: avoid mixing indexes for different bitvector domains.
-pub trait Idx: Copy + 'static + Eq + PartialEq + Debug + Hash {
+pub trait Idx: 'static + Copy + Eq + PartialEq + Debug + Hash {
     fn new(idx: usize) -> Self;
 
     fn index(self) -> usize;

@@ -56,8 +56,8 @@ pub fn main() -> Result<(), String> {
     }
 
     bench_parser(&mut criterion, &files);
-    bench_semantic(&mut criterion, &files);
-    // bench_ast_lower(&mut criterion, &files);
+    // bench_semantic(&mut criterion, &files);
+    bench_ast_lower(&mut criterion, &files);
     drop(criterion);
 
     Ok(())
@@ -86,6 +86,7 @@ fn bench_parser(criterion: &mut Criterion, files: &[&TestFile]) {
     group.finish();
 }
 
+#[allow(unused)]
 fn bench_semantic(criterion: &mut Criterion, files: &[&TestFile]) {
     let mut group = criterion.benchmark_group("semantic");
     for file in files {
@@ -108,10 +109,9 @@ fn bench_semantic(criterion: &mut Criterion, files: &[&TestFile]) {
     group.finish();
 }
 
-#[allow(unused)]
-fn bench_ast_lower(criterion: &mut Criterion, files: &TestFiles) {
+fn bench_ast_lower(criterion: &mut Criterion, files: &[&TestFile]) {
     let mut group = criterion.benchmark_group("ast_lower");
-    for file in files.files() {
+    for file in files {
         group.throughput(Throughput::Bytes(file.source_text.len() as u64));
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
@@ -122,7 +122,7 @@ fn bench_ast_lower(criterion: &mut Criterion, files: &TestFiles) {
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(ret.program);
                 b.iter(|| {
-                    let _hir = AstLower::new(&allocator).build(black_box(program));
+                    let _hir = AstLower::new(&allocator, source_type).build(black_box(program));
                 });
             },
         );
