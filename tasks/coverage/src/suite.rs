@@ -276,7 +276,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
         // Make sure serialization doesn't crash for ast and hir, also for code coverage.
         let _json = parser_ret.program.to_json();
-        let hir = AstLower::new(&allocator).build(&parser_ret.program);
+        let hir = AstLower::new(&allocator, source_type).build(&parser_ret.program);
         let _json = hir.to_json();
 
         let program = allocator.alloc(parser_ret.program);

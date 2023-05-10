@@ -983,9 +983,11 @@ dependencies = [
 name = "oxc_ast_lower"
 version = "0.0.0"
 dependencies = [
+ "bitflags 2.2.1",
  "oxc_allocator",
  "oxc_ast",
  "oxc_hir",
+ "oxc_index",
  "oxc_parser",
  "oxc_span",
  "serde_json",
