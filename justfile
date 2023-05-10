@@ -14,7 +14,7 @@ fmt:
 
 # Run cargo check
 check:
-  cargo check --workspace --all-targets --all-features --locked
+  cargo ck
 
 # Run all the tests
 test:

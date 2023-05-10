@@ -18,13 +18,20 @@ use oxc_ast::SourceType;
 use oxc_ast_lower::AstLower;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_tasks_common::TestFiles;
+use oxc_tasks_common::{TestFile, TestFiles};
 use pico_args::Arguments;
 
 /// # Errors
 /// # Panics
 pub fn main() -> Result<(), String> {
     let files = TestFiles::new();
+    let files = files
+        .files()
+        .iter()
+        .filter(|file| {
+            ["react", "vue", "babylon", "typescript"].iter().any(|f| file.file_name.contains(f))
+        })
+        .collect::<Vec<_>>();
     let mut args = Arguments::from_env();
 
     let baseline: Option<String> = args.opt_value_from_str("--save-baseline").unwrap();
@@ -35,7 +42,7 @@ pub fn main() -> Result<(), String> {
     }
 
     // Check files
-    for file in files.files() {
+    for file in &files {
         let allocator = Allocator::default();
         let ret =
             Parser::new(&allocator, black_box(&file.source_text), SourceType::default()).parse();
@@ -56,9 +63,9 @@ pub fn main() -> Result<(), String> {
     Ok(())
 }
 
-fn bench_parser(criterion: &mut Criterion, files: &TestFiles) {
+fn bench_parser(criterion: &mut Criterion, files: &[&TestFile]) {
     let mut group = criterion.benchmark_group("parser");
-    for file in files.files() {
+    for file in files {
         group.throughput(Throughput::Bytes(file.source_text.len() as u64));
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
@@ -79,9 +86,9 @@ fn bench_parser(criterion: &mut Criterion, files: &TestFiles) {
     group.finish();
 }
 
-fn bench_semantic(criterion: &mut Criterion, files: &TestFiles) {
+fn bench_semantic(criterion: &mut Criterion, files: &[&TestFile]) {
     let mut group = criterion.benchmark_group("semantic");
-    for file in files.files() {
+    for file in files {
         group.throughput(Throughput::Bytes(file.source_text.len() as u64));
         group.bench_with_input(
             BenchmarkId::from_parameter(&file.file_name),
