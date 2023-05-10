@@ -182,9 +182,9 @@ impl<'a> Compressor<'a> {
 
 impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
-        if stmts.len() > 1 {
-            stmts.retain(|stmt| !self.drop_empty(stmt) && !self.drop_debugger(stmt));
-        }
+        let only_one_stmt = stmts.len() == 1;
+
+        stmts.retain(|stmt| (only_one_stmt || !self.drop_empty(stmt)) && !self.drop_debugger(stmt));
 
         self.join_vars(stmts);
 
