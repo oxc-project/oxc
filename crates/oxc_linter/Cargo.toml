@@ -19,11 +19,10 @@ oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_formatter   = { workspace = true }
 
-lazy_static = { workspace = true }
+lazy_static = { workspace = true } # used in oxc_macros
 serde_json  = { workspace = true }
 indextree   = { workspace = true }
 rustc-hash  = { workspace = true }
-bitflags    = { workspace = true }
 phf         = { workspace = true, features = ["macros"] }
 num-traits  = { workspace = true }
 

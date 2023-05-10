@@ -983,16 +983,11 @@ dependencies = [
 name = "oxc_ast_lower"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.2.1",
- "num-bigint",
- "ordered-float",
  "oxc_allocator",
  "oxc_ast",
  "oxc_hir",
  "oxc_parser",
  "oxc_span",
- "oxc_syntax",
- "serde",
  "serde_json",
 ]
 
@@ -1046,6 +1041,7 @@ dependencies = [
  "oxc_ast_lower",
  "oxc_diagnostics",
  "oxc_formatter",
+ "oxc_hir",
  "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
@@ -1107,7 +1103,6 @@ version = "0.0.0"
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
- "bitflags 2.2.1",
  "indextree",
  "insta",
  "lazy_static",
@@ -1257,7 +1252,6 @@ dependencies = [
  "oxc_semantic",
  "serde",
  "serde-wasm-bindgen",
- "serde_json",
  "wasm-bindgen",
  "wasm-bindgen-test",
 ]
