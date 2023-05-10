@@ -3,12 +3,7 @@ name: CI
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - 'crates/**'
-      - 'tasks/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'rust-toolchain.toml'
+    paths-ignore:
       - '!**/*.md'
   push:
     branches:
@@ -16,9 +11,8 @@ on:
     paths-ignore:
       - '**/*.md'
 
-# cancel previous job runs for the same workflow + pr
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 jobs:
@@ -48,13 +42,15 @@ jobs:
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os == 'Windows'
         run: |
-          cargo check --workspace --all-targets --all-features --locked
+          cargo ck --release # for benchmark
+          cargo ck
           cargo test run --workspace --all-targets --all-features --no-run
 
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os != 'Windows'
         run: |
-          cargo check --workspace --all-targets --all-features --locked
+          cargo ck --release # for benchmark
+          cargo ck
           cargo nextest run --workspace --all-targets --all-features --no-run
 
   typos:
