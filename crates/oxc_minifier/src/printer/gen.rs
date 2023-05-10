@@ -106,16 +106,21 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
     p.print(b')');
     p.print_space();
     if let Statement::BlockStatement(block) = &if_stmt.consequent {
-        p.print_block1(block);
+        p.print_block1(block, true);
     } else {
-        p.print(b'{');
+        let omit_braces = matches!(if_stmt.consequent, Statement::EmptyStatement(_));
+        if !omit_braces {
+            p.print(b'{');
+        }
         p.print_newline();
         p.indent();
         if_stmt.consequent.gen(p);
         p.dedent();
         p.needs_semicolon = false;
         p.print_indent();
-        p.print(b'}');
+        if !omit_braces {
+            p.print(b'}');
+        }
     }
     if if_stmt.alternate.is_some() {
         p.print_space();
@@ -129,7 +134,7 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
         p.print(b' ');
         match alternate {
             Statement::BlockStatement(block) => {
-                p.print_block1(block);
+                p.print_block1(block, true);
                 p.print_newline();
             }
             Statement::IfStatement(if_stmt) => {
@@ -148,7 +153,7 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
 impl<'a> Gen for BlockStatement<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_indent();
-        p.print_block1(self);
+        p.print_block1(self, false);
         p.print_newline();
     }
 }
@@ -251,7 +256,7 @@ impl<'a> Gen for DoWhileStatement<'a> {
         p.print(b' ');
         if let Statement::BlockStatement(block) = &self.body {
             p.print_space();
-            p.print_block1(block);
+            p.print_block1(block, false);
             p.print_space();
         } else {
             p.print_newline();
@@ -367,7 +372,7 @@ impl<'a> Gen for TryStatement<'a> {
         p.print_indent();
         p.print_str(b"try");
         p.print_space();
-        p.print_block1(&self.block);
+        p.print_block1(&self.block, false);
         if let Some(handler) = &self.handler {
             p.print_space();
             p.print_str(b"catch");
@@ -378,13 +383,13 @@ impl<'a> Gen for TryStatement<'a> {
                 p.print_str(b")");
             }
             p.print_space();
-            p.print_block1(&handler.body);
+            p.print_block1(&handler.body, false);
         }
         if let Some(finalizer) = &self.finalizer {
             p.print_space();
             p.print_str(b"finally");
             p.print_space();
-            p.print_block1(finalizer);
+            p.print_block1(finalizer, false);
         }
         p.print_newline();
     }

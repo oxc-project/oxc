@@ -223,7 +223,7 @@ impl Printer {
     pub fn print_body(&mut self, stmt: &Statement<'_>) {
         if let Statement::BlockStatement(block) = stmt {
             self.print_space();
-            self.print_block1(block);
+            self.print_block1(block, false);
             self.print_newline();
         } else {
             self.print_newline();
@@ -233,8 +233,13 @@ impl Printer {
         }
     }
 
-    pub fn print_block1(&mut self, stmt: &BlockStatement<'_>) {
-        self.print(b'{');
+    pub fn print_block1(&mut self, stmt: &BlockStatement<'_>, can_omit_braces: bool) {
+        let omit_braces = can_omit_braces
+            && (stmt.body.len() == 1 && matches!(stmt.body[0], Statement::EmptyStatement(_)));
+
+        if !omit_braces {
+            self.print(b'{');
+        }
         self.print_newline();
         self.indent();
         for item in &stmt.body {
@@ -244,7 +249,9 @@ impl Printer {
         self.dedent();
         self.needs_semicolon = false;
         self.print_indent();
-        self.print(b'}');
+        if !omit_braces {
+            self.print(b'}');
+        }
     }
 
     pub fn print_block<T: Gen>(&mut self, items: &[T], separator: Separator) {
