@@ -117,12 +117,12 @@ fn bench_ast_lower(criterion: &mut Criterion, files: &[&TestFile]) {
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
             |b, source_text| {
-                let allocator = Allocator::default();
                 let source_type = SourceType::from_path(&file.file_name).unwrap();
-                let ret = Parser::new(&allocator, source_text, source_type).parse();
-                let program = allocator.alloc(ret.program);
                 b.iter(|| {
-                    let _hir = AstLower::new(&allocator, source_type).build(black_box(program));
+                    let allocator = Allocator::default();
+                    let ret = Parser::new(&allocator, source_text, source_type).parse();
+                    let _hir =
+                        AstLower::new(&allocator, source_type).build(black_box(&ret.program));
                 });
             },
         );
