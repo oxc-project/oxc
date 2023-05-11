@@ -43,7 +43,6 @@ pub enum Separator {
 
 /// Codegen interface for pretty print or minification
 impl Formatter {
-    #[must_use]
     pub fn new(source_len: usize, options: FormatterOptions) -> Self {
         Self {
             options,
@@ -53,19 +52,16 @@ impl Formatter {
         }
     }
 
-    #[must_use]
     pub fn build(mut self, program: &Program<'_>) -> String {
         program.gen(&mut self);
         self.into_code()
     }
 
-    #[must_use]
     #[inline]
     pub fn into_code(self) -> String {
         unsafe { String::from_utf8_unchecked(self.code) }
     }
 
-    #[must_use]
     pub fn code(&self) -> &Vec<u8> {
         &self.code
     }
@@ -216,7 +212,6 @@ impl Formatter {
         }
     }
 
-    #[must_use]
     pub fn last_char(&self) -> Option<&u8> {
         self.code.last()
     }

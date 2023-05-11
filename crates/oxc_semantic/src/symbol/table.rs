@@ -67,7 +67,6 @@ impl Deref for SymbolTable {
 }
 
 impl SymbolTable {
-    #[must_use]
     pub fn new(
         symbols: Vec<Symbol>,
         mangler: Mangler,
@@ -82,32 +81,26 @@ impl SymbolTable {
         self.mangler.compute_slot_frequency(&self.symbols);
     }
 
-    #[must_use]
     pub fn symbols(&self) -> &Vec<Symbol> {
         &self.symbols
     }
 
-    #[must_use]
     pub fn mangler(&self) -> &Mangler {
         &self.mangler
     }
 
-    #[must_use]
     pub fn get_symbol(&self, id: SymbolId) -> Option<&Symbol> {
         self.symbols.get(id.index())
     }
 
-    #[must_use]
     pub fn resolved_references(&self) -> &Vec<ResolvedReference> {
         &self.resolved_references
     }
 
-    #[must_use]
     pub fn get_resolved_reference(&self, id: ResolvedReferenceId) -> Option<&ResolvedReference> {
         self.resolved_references.get(id.index())
     }
 
-    #[must_use]
     pub fn get_resolved_reference_for_id(
         &self,
         id: &IdentifierReference,
@@ -117,7 +110,6 @@ impl SymbolTable {
             .map(|ref_id| &self.resolved_references[ref_id.index()])
     }
 
-    #[must_use]
     pub fn get_symbol_by_span(&self, span: Span) -> Option<&Symbol> {
         self.symbol_index.get(&span).map(|symbol_id| &self.symbols[symbol_id.index()])
     }

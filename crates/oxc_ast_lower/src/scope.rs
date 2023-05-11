@@ -50,17 +50,14 @@ impl Scope {
         Self { parent_id, flags }
     }
 
-    #[must_use]
     pub fn parent_id(&self) -> Option<ScopeId> {
         self.parent_id
     }
 
-    #[must_use]
     fn is_strict_mode(&self) -> bool {
         self.flags.contains(ScopeFlags::StrictMode)
     }
 
-    #[must_use]
     pub fn is_function(&self) -> bool {
         self.flags.intersects(ScopeFlags::Function)
     }
@@ -74,17 +71,14 @@ impl ScopeTree {
         Self(IndexVec::new())
     }
 
-    #[must_use]
     pub fn get_scope(&self, scope_id: ScopeId) -> &Scope {
         &self.0[scope_id]
     }
 
-    #[must_use]
     pub fn root_scope(&self) -> &Scope {
         self.get_scope(ScopeId::new(0))
     }
 
-    #[must_use]
     pub fn add_scope(&mut self, scope: Scope) -> ScopeId {
         self.0.push(scope)
     }
@@ -110,7 +104,6 @@ impl ScopeTreeBuilder {
         self.scope_tree
     }
 
-    #[must_use]
     fn current_scope(&self) -> &Scope {
         self.scope_tree.get_scope(self.current_scope_id)
     }

@@ -21,7 +21,6 @@ pub struct BooleanLiteral {
 }
 
 impl BooleanLiteral {
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         if self.value { "true" } else { "false" }
     }
@@ -53,7 +52,6 @@ pub struct NumberLiteral<'a> {
 }
 
 impl<'a> NumberLiteral<'a> {
-    #[must_use]
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
         let value = unsafe { NotNan::new_unchecked(value) };
         Self { span, value, raw, base }
@@ -160,7 +158,6 @@ pub struct StringLiteral {
 impl StringLiteral {
     /// Static Semantics: `IsStringWellFormedUnicode`
     /// test for \uD800-\uDFFF
-    #[must_use]
     pub fn is_string_well_formed_unicode(&self) -> bool {
         let mut chars = self.value.chars();
         while let Some(c) = chars.next() {

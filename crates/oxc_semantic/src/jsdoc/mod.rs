@@ -26,12 +26,10 @@ pub struct JSDocComment<'a> {
 }
 
 impl<'a> JSDoc<'a> {
-    #[must_use]
     pub fn new(docs: BTreeMap<Span, JSDocComment<'a>>) -> Self {
         Self { docs }
     }
 
-    #[must_use]
     pub fn get_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
         if !node.get().has_jsdoc() {
             return None;
@@ -40,14 +38,12 @@ impl<'a> JSDoc<'a> {
         self.get_by_span(span)
     }
 
-    #[must_use]
     pub fn get_by_span<'b>(&'b self, span: Span) -> Option<JSDocComment<'a>> {
         self.docs.get(&span).cloned()
     }
 }
 
 impl<'a> JSDocComment<'a> {
-    #[must_use]
     pub fn new(comment: &'a str) -> JSDocComment<'a> {
         Self { comment, tags: OnceCell::new() }
     }

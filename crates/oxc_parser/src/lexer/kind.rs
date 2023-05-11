@@ -191,22 +191,18 @@ pub enum Kind {
 use self::Kind::*;
 
 impl Kind {
-    #[must_use]
     pub fn is_eof(self) -> bool {
         matches!(self, Eof)
     }
 
-    #[must_use]
     pub fn is_trivia(self) -> bool {
         matches!(self, WhiteSpace | NewLine | Comment | MultiLineComment)
     }
 
-    #[must_use]
     pub fn is_number(self) -> bool {
         matches!(self, Float | Decimal | Binary | Octal | Hex)
     }
 
-    #[must_use]
     pub fn matches_number_char(self, c: char) -> bool {
         match self {
             Decimal => c.is_ascii_digit(),
@@ -219,39 +215,33 @@ impl Kind {
 
     /// [Identifiers](https://tc39.es/ecma262/#sec-identifiers)
     /// `IdentifierReference`
-    #[must_use]
     pub fn is_identifier_reference(self, r#yield: bool, r#await: bool) -> bool {
         self.is_identifier() || (!r#yield && self == Yield) || (!r#await && self == Await)
     }
 
     /// `BindingIdentifier`
-    #[must_use]
     pub fn is_binding_identifier(self) -> bool {
         self.is_identifier() || matches!(self, Yield | Await)
     }
 
     /// `LabelIdentifier`
-    #[must_use]
     pub fn is_label_identifier(self, r#yield: bool, r#await: bool) -> bool {
         self.is_identifier() || (!r#yield && self == Yield) || (!r#await && self == Await)
     }
 
     /// Identifier
     /// `IdentifierName` but not `ReservedWord`
-    #[must_use]
     pub fn is_identifier(self) -> bool {
         self.is_identifier_name() && !self.is_reserved_keyword()
     }
 
     /// `IdentifierName`
-    #[must_use]
     pub fn is_identifier_name(self) -> bool {
         matches!(self, Ident) || self.is_all_keyword()
     }
 
     /// Check the succeeding token of a `let` keyword
     // let { a, b } = c, let [a, b] = c, let ident
-    #[must_use]
     pub fn is_after_let(self) -> bool {
         self != Self::In && (matches!(self, LCurly | LBrack | Ident) || self.is_all_keyword())
     }
@@ -262,12 +252,10 @@ impl Kind {
     ///     `BooleanLiteral`
     ///     `NumericLiteral`
     ///     `StringLiteral`
-    #[must_use]
     pub fn is_literal(self) -> bool {
         matches!(self, Null | True | False | Str | RegExp) || self.is_number()
     }
 
-    #[must_use]
     pub fn is_after_await_or_yield(self) -> bool {
         !self.is_binary_operator() && (self.is_literal() || self.is_identifier_name())
     }
@@ -277,12 +265,10 @@ impl Kind {
     ///     `IdentifierName`
     ///     `StringLiteral`
     ///     `NumericLiteral`
-    #[must_use]
     pub fn is_literal_property_name(self) -> bool {
         self.is_identifier_name() || self == Str || self.is_number()
     }
 
-    #[must_use]
     pub fn is_variable_declaration(self) -> bool {
         matches!(self, Var | Let | Const)
     }
@@ -294,12 +280,10 @@ impl Kind {
     /// `PropertyName`[Yield, Await] :
     ///   `LiteralPropertyName`
     ///   `ComputedPropertyName`[?Yield, ?Await]
-    #[must_use]
     pub fn is_class_element_name_start(self) -> bool {
         self.is_literal_property_name() || matches!(self, LBrack | PrivateIdentifier)
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_assignment_operator(self) -> bool {
         matches!(self, Eq | PlusEq | MinusEq | StarEq | SlashEq | PercentEq | ShiftLeftEq | ShiftRightEq
@@ -307,7 +291,6 @@ impl Kind {
             | Star2Eq)
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_binary_operator(self) -> bool {
         matches!(self, Eq2 | Neq | Eq3 | Neq2 | LAngle | LtEq | RAngle | GtEq | ShiftLeft | ShiftRight
@@ -315,23 +298,19 @@ impl Kind {
             | Instanceof | Star2)
     }
 
-    #[must_use]
     pub fn is_logical_operator(self) -> bool {
         matches!(self, Pipe2 | Amp2 | Question2)
     }
 
-    #[must_use]
     pub fn is_unary_operator(self) -> bool {
         matches!(self, Minus | Plus | Bang | Tilde | Typeof | Void | Delete)
     }
 
-    #[must_use]
     pub fn is_update_operator(self) -> bool {
         matches!(self, Plus2 | Minus2)
     }
 
     /// [Keywords and Reserved Words](https://tc39.es/ecma262/#sec-keywords-and-reserved-words)
-    #[must_use]
     pub fn is_all_keyword(self) -> bool {
         self.is_reserved_keyword()
             || self.is_contextual_keyword()
@@ -339,7 +318,6 @@ impl Kind {
             || self.is_future_reserved_keyword()
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_reserved_keyword(self) -> bool {
         matches!(self, Await | Break | Case | Catch | Class | Const | Continue | Debugger | Default
@@ -348,13 +326,11 @@ impl Kind {
             | True | Try | Typeof | Var | Void | While | With | Yield)
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_strict_mode_contextual_keyword(self) -> bool {
         matches!(self, Let | Static | Implements | Interface | Package | Private | Protected | Public)
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_contextual_keyword(self) -> bool {
         matches!(self, Async | From | Get | Meta | Of | Set | Target | Accessor | Abstract | As | Asserts
@@ -363,13 +339,11 @@ impl Kind {
             | Symbol | Type | Undefined | Unique | Unknown | Global | BigInt | Override)
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_future_reserved_keyword(self) -> bool {
         matches!(self, Implements | Interface | Package | Private | Protected | Public | Static)
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_at_expression(self) -> bool {
         self.is_unary_operator()
@@ -380,19 +354,16 @@ impl Kind {
                 | Slash | SlashEq | TemplateHead | NoSubstitutionTemplate | PrivateIdentifier | Ident | Async)
     }
 
-    #[must_use]
     pub fn is_template_start_of_tagged_template(self) -> bool {
         matches!(self, NoSubstitutionTemplate | TemplateHead)
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_modifier_kind(self) -> bool {
         matches!(self, Abstract | Accessor | Async | Const | Declare | Default
           | Export | In | Out | Public | Private | Protected | Readonly | Static | Override)
     }
 
-    #[must_use]
     pub fn match_keyword(s: &str) -> Self {
         let len = s.len();
         if len == 1 || len >= 12 {
@@ -501,7 +472,6 @@ impl Kind {
     }
 
     #[allow(clippy::too_many_lines)]
-    #[must_use]
     pub fn to_str(self) -> &'static str {
         match self {
             Undetermined => "Unknown",
@@ -668,7 +638,6 @@ impl Kind {
         }
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn can_follow_type_arguments_in_expr(self) -> bool {
         matches!(self, Self::LParen | Self::NoSubstitutionTemplate | Self::TemplateHead

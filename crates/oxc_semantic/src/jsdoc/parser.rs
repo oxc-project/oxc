@@ -66,7 +66,6 @@ pub struct JSDocTag<'a> {
 }
 
 impl<'a> JSDocTag<'a> {
-    #[must_use]
     pub fn is_deprecated(&self) -> bool {
         matches!(self.kind, JSDocTagKind::Deprecated)
     }

@@ -36,7 +36,6 @@ mod size_asserts {
 }
 
 impl<'a> Token<'a> {
-    #[must_use]
     pub fn span(&self) -> Span {
         Span::new(self.start, self.end)
     }
@@ -64,7 +63,6 @@ impl<'a> Default for TokenValue<'a> {
 }
 
 impl<'a> TokenValue<'a> {
-    #[must_use]
     pub fn as_number(&self) -> f64 {
         match self {
             Self::Number(s) => *s,
@@ -72,7 +70,6 @@ impl<'a> TokenValue<'a> {
         }
     }
 
-    #[must_use]
     pub fn as_bigint(&self) -> BigUint {
         match self {
             Self::BigInt(s) => s.clone(),
@@ -80,7 +77,6 @@ impl<'a> TokenValue<'a> {
         }
     }
 
-    #[must_use]
     pub fn as_regex(&self) -> &RegExp<'a> {
         match self {
             Self::RegExp(regex) => regex,
@@ -88,7 +84,6 @@ impl<'a> TokenValue<'a> {
         }
     }
 
-    #[must_use]
     pub fn get_string(&self) -> Option<&str> {
         match self {
             Self::String(s) => Some(s),

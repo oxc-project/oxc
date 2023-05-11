@@ -97,7 +97,6 @@ pub struct JSXMemberExpression<'a> {
 }
 
 impl<'a> JSXMemberExpression<'a> {
-    #[must_use]
     pub fn get_object_identifier(&self) -> &JSXIdentifier {
         match &self.object {
             JSXMemberExpressionObject::Identifier(ident) => ident,

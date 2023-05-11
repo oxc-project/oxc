@@ -20,7 +20,6 @@ impl serde_json::ser::Formatter for EcmaFormatter {
 
 impl<'a> Program<'a> {
     /// # Panics
-    #[must_use]
     pub fn to_json(&self) -> String {
         let buf = std::vec::Vec::new();
         let mut ser = serde_json::Serializer::with_formatter(buf, crate::serialize::EcmaFormatter);

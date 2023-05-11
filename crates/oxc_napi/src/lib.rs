@@ -29,7 +29,6 @@ pub struct ParseResult {
 /// * File extension is invalid
 /// * Serde JSON serialization
 #[allow(clippy::needless_pass_by_value)]
-#[must_use]
 #[napi]
 pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseResult {
     let options = options.unwrap_or_default();
@@ -66,7 +65,6 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
 /// # Panics
 /// * Tokio crashes
 #[allow(clippy::needless_pass_by_value)]
-#[must_use]
 #[napi]
 pub async fn parse_async(source_text: String, options: Option<ParserOptions>) -> ParseResult {
     tokio::spawn(async move { parse_sync(source_text, options) }).await.unwrap()

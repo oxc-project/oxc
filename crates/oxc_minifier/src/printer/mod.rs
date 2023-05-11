@@ -57,7 +57,6 @@ pub enum Separator {
 
 /// Codegen interface for pretty print or minification
 impl Printer {
-    #[must_use]
     pub fn new(source_len: usize, options: PrinterOptions) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half the original size,
@@ -74,7 +73,6 @@ impl Printer {
         }
     }
 
-    #[must_use]
     pub fn with_symbol_table(mut self, symbols: &Rc<SymbolTable>, yes: bool) -> Self {
         if yes {
             symbols.mangle();
@@ -83,18 +81,15 @@ impl Printer {
         self
     }
 
-    #[must_use]
     pub fn build(mut self, program: &Program<'_>) -> String {
         program.gen(&mut self);
         self.into_code()
     }
 
-    #[must_use]
     pub fn into_code(self) -> String {
         unsafe { String::from_utf8_unchecked(self.code) }
     }
 
-    #[must_use]
     pub fn code(&self) -> &Vec<u8> {
         &self.code
     }
@@ -271,7 +266,6 @@ impl Printer {
         }
     }
 
-    #[must_use]
     pub fn last_char(&self) -> Option<&u8> {
         self.code.last()
     }

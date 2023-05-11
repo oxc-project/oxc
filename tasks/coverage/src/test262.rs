@@ -78,7 +78,6 @@ impl<T: Case> Default for Test262Suite<T> {
 }
 
 impl<T: Case> Test262Suite<T> {
-    #[must_use]
     pub fn new() -> Self {
         Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
     }
@@ -115,7 +114,6 @@ pub struct Test262Case {
 }
 
 impl Test262Case {
-    #[must_use]
     pub fn meta(&self) -> &MetaData {
         &self.meta
     }

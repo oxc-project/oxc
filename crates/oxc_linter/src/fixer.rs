@@ -37,7 +37,6 @@ pub struct Message<'a> {
 
 impl<'a> Message<'a> {
     #[allow(clippy::cast_possible_truncation)] // for `as u32`
-    #[must_use]
     pub fn new(error: Error, fix: Option<Fix<'a>>) -> Self {
         let labels = error.labels().map_or(vec![], Iterator::collect);
         let start =
@@ -49,12 +48,10 @@ impl<'a> Message<'a> {
         Self { error, start, end, fix, fixed: false }
     }
 
-    #[must_use]
     pub fn start(&self) -> u32 {
         self.start
     }
 
-    #[must_use]
     pub fn end(&self) -> u32 {
         self.end
     }
@@ -68,12 +65,10 @@ pub struct Fixer<'a> {
 }
 
 impl<'a> Fixer<'a> {
-    #[must_use]
     pub fn new(source_text: &'a str, messages: Vec<Message<'a>>) -> Self {
         Self { source_text, messages }
     }
 
-    #[must_use]
     /// # Panics
     pub fn fix(mut self) -> FixResult<'a> {
         let source_text = self.source_text;

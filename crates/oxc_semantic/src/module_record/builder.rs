@@ -23,7 +23,6 @@ impl ModuleRecordBuilder {
         self.resolve_export_entries();
     }
 
-    #[must_use]
     pub fn build(self) -> ModuleRecord {
         self.module_record
     }

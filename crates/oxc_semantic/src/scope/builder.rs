@@ -15,7 +15,6 @@ pub struct ScopeBuilder {
 }
 
 impl ScopeBuilder {
-    #[must_use]
     pub fn new(source_type: SourceType) -> Self {
         // Module code is always strict mode code.
         let strict_mode = source_type.is_module() || source_type.always_strict();
@@ -24,17 +23,14 @@ impl ScopeBuilder {
         Self { scopes, current_scope_id }
     }
 
-    #[must_use]
     pub fn current_scope(&self) -> &Scope {
         &self.scopes[self.current_scope_id]
     }
 
-    #[must_use]
     pub fn current_scope_mut(&mut self) -> &mut Scope {
         &mut self.scopes[self.current_scope_id]
     }
 
-    #[must_use]
     pub fn node_scope(&self, node: &AstNode) -> &Scope {
         self.scopes[node.get().scope_id().indextree_id()].get()
     }
@@ -101,7 +97,6 @@ impl ScopeBuilder {
             .push(reference);
     }
 
-    #[must_use]
     pub fn scope_flags_from_ast_kind(kind: AstKind) -> Option<ScopeFlags> {
         match kind {
             AstKind::Function(_) => Some(ScopeFlags::Function),

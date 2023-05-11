@@ -32,7 +32,6 @@ impl<T: Case> Default for TypeScriptSuite<T> {
 }
 
 impl<T: Case> TypeScriptSuite<T> {
-    #[must_use]
     pub fn new() -> Self {
         Self { test_root: project_root().join(TESTS_ROOT).join("cases"), test_cases: vec![] }
     }

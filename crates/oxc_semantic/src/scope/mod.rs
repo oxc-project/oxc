@@ -46,7 +46,6 @@ bitflags! {
 }
 
 impl Scope {
-    #[must_use]
     pub fn new(flags: ScopeFlags, strict_mode: bool) -> Self {
         Self {
             strict_mode,
@@ -56,47 +55,38 @@ impl Scope {
         }
     }
 
-    #[must_use]
     pub fn get_variable_symbol_id(&self, name: &Atom) -> Option<SymbolId> {
         self.variables.get(name).copied()
     }
 
-    #[must_use]
     pub fn strict_mode(&self) -> bool {
         self.strict_mode
     }
 
-    #[must_use]
     pub fn is_top(&self) -> bool {
         self.flags.intersects(ScopeFlags::Top)
     }
 
-    #[must_use]
     pub fn is_ts_module(&self) -> bool {
         self.flags.intersects(ScopeFlags::TsModuleBlock)
     }
 
-    #[must_use]
     pub fn is_function(&self) -> bool {
         self.flags.intersects(ScopeFlags::Function)
     }
 
-    #[must_use]
     pub fn is_static_block(&self) -> bool {
         self.flags.intersects(ScopeFlags::ClassStaticBlock)
     }
 
-    #[must_use]
     pub fn is_constructor(&self) -> bool {
         self.flags.intersects(ScopeFlags::Constructor)
     }
 
-    #[must_use]
     pub fn is_get_accessor(&self) -> bool {
         self.flags.intersects(ScopeFlags::GetAccessor)
     }
 
-    #[must_use]
     pub fn is_set_accessor(&self) -> bool {
         self.flags.intersects(ScopeFlags::SetAccessor)
     }

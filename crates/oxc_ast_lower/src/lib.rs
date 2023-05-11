@@ -19,14 +19,12 @@ impl<'a> AstLower<'a> {
         Self { hir: HirBuilder::new(allocator), scope: ScopeTreeBuilder::new(source_type) }
     }
 
-    #[must_use]
     pub fn build(mut self, program: &ast::Program<'a>) -> hir::Program<'a> {
         let program = self.lower_program(program);
         self.scope.build();
         program
     }
 
-    #[must_use]
     pub fn lower_vec<T, R, F>(&mut self, items: &Vec<'a, T>, cb: F) -> Vec<'a, R>
     where
         F: Fn(&mut Self, &T) -> R,
@@ -38,7 +36,6 @@ impl<'a> AstLower<'a> {
         vec
     }
 
-    #[must_use]
     pub fn lower_statements(
         &mut self,
         stmts: &Vec<'a, ast::Statement<'a>>,

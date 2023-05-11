@@ -29,34 +29,28 @@ pub enum CommentKind {
 }
 
 impl Comment {
-    #[must_use]
     pub fn new(end: u32, kind: CommentKind) -> Self {
         Self { kind, end }
     }
 
-    #[must_use]
     pub fn end(self) -> u32 {
         self.end
     }
 
-    #[must_use]
     pub fn is_single_line(self) -> bool {
         matches!(self.kind, CommentKind::SingleLine)
     }
 
-    #[must_use]
     pub fn is_multi_line(self) -> bool {
         matches!(self.kind, CommentKind::MultiLine)
     }
 }
 
 impl Trivias {
-    #[must_use]
     pub fn comments(&self) -> &BTreeMap<u32, Comment> {
         &self.comments
     }
 
-    #[must_use]
     pub fn has_comments_between(&self, span: Span) -> bool {
         self.comments.range(span.start..span.end).count() > 0
     }

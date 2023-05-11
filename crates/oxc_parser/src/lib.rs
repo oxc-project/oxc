@@ -135,7 +135,6 @@ pub struct Parser<'a> {
 
 impl<'a> Parser<'a> {
     /// Create a new parser
-    #[must_use]
     pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
         Self {
             lexer: Lexer::new(allocator, source_text, source_type),
@@ -150,11 +149,11 @@ impl<'a> Parser<'a> {
         }
     }
 
-    #[must_use]
     /// Allow return outside of function
     ///
     /// By default, a return statement at the top level raises an error.
     /// Set this to true to accept such code.
+    #[must_use]
     pub fn allow_return_outside_function(mut self, allow: bool) -> Self {
         self.ctx = self.ctx.and_return(allow);
         self
@@ -164,7 +163,6 @@ impl<'a> Parser<'a> {
     ///
     /// Returns an empty `Program` on unrecoverable error,
     /// Recoverable errors are stored inside `errors`.
-    #[must_use]
     pub fn parse(mut self) -> ParserReturn<'a> {
         let (program, panicked) = match self.parse_program() {
             Ok(program) => (program, false),
@@ -196,7 +194,6 @@ impl<'a> Parser<'a> {
         Ok(self.ast.program(span, self.source_type, directives, statements))
     }
 
-    #[must_use]
     fn default_context(source_type: SourceType) -> Context {
         let ctx = Context::default().and_ambient(source_type.is_typescript_definition());
         match source_type.module_kind() {
@@ -237,7 +234,6 @@ impl<'a> Parser<'a> {
         self.errors.push(error.into());
     }
 
-    #[must_use]
     fn ts_enabled(&self) -> bool {
         self.source_type.is_typescript()
     }

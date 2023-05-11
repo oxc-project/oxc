@@ -82,7 +82,6 @@ impl<'a> Binder for Class<'a> {
 // unless the source text matched by this production is not strict mode code
 // and the duplicate entries are only bound by FunctionDeclarations.
 // https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
-#[must_use]
 fn function_as_var(scope: &Scope, source_type: SourceType) -> bool {
     scope.flags.intersects(ScopeFlags::Function)
         || (source_type.is_script() && scope.flags.intersects(ScopeFlags::Top))

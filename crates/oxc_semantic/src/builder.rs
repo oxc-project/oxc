@@ -68,7 +68,6 @@ pub struct SemanticBuilderReturn<'a> {
 }
 
 impl<'a> SemanticBuilder<'a> {
-    #[must_use]
     pub fn new(source_text: &'a str, source_type: SourceType, trivias: &Rc<Trivias>) -> Self {
         let scope = ScopeBuilder::new(source_type);
         let mut nodes = AstNodes::default();
@@ -106,7 +105,6 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
-    #[must_use]
     pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         // First AST pass
         if !self.source_type.is_typescript_definition() {
@@ -146,7 +144,6 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     /// The parent of `AstKind::Program` is `AstKind::Root`,
     /// it is logic error if this panics.
-    #[must_use]
     pub fn parent_kind(&self) -> AstKind<'a> {
         let parent_id = self.nodes[*self.current_node_id].parent().unwrap();
         let parent_node = self.nodes[parent_id].get();
@@ -196,7 +193,6 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    #[must_use]
     pub fn strict_mode(&self) -> bool {
         self.scope.current_scope().strict_mode()
             || self.current_node_flags.contains(NodeFlags::Class)

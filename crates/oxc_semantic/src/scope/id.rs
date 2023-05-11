@@ -6,7 +6,6 @@ use indextree::NodeId;
 pub struct ScopeId(NodeId);
 
 impl ScopeId {
-    #[must_use]
     pub fn indextree_id(&self) -> NodeId {
         self.0
     }

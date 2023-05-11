@@ -37,7 +37,6 @@ pub struct LintRunner {
 pub struct MinifiedFileError(pub PathBuf);
 
 impl LintRunner {
-    #[must_use]
     pub fn new(options: LintOptions) -> Self {
         let linter = Linter::from_rules(Self::derive_rules(&options)).with_fix(options.fix);
         Self { options, linter: Arc::new(linter) }
@@ -97,7 +96,6 @@ impl LintRunner {
     /// # Panics
     ///
     /// * When `mpsc::channel` fails to send.
-    #[must_use]
     pub fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
 

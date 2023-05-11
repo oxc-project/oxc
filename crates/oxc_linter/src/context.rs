@@ -38,17 +38,14 @@ impl<'a> LintContext<'a> {
         }
     }
 
-    #[must_use]
     pub fn semantic(&self) -> &Semantic<'a> {
         &self.semantic
     }
 
-    #[must_use]
     pub fn source_text(&self) -> &'a str {
         self.semantic().source_text()
     }
 
-    #[must_use]
     pub fn source_type(&self) -> &SourceType {
         self.semantic().source_type()
     }
@@ -87,54 +84,44 @@ impl<'a> LintContext<'a> {
 
     /* Nodes */
 
-    #[must_use]
     pub fn nodes(&self) -> &AstNodes<'a> {
         self.semantic().nodes()
     }
 
-    #[must_use]
     pub fn kind(&self, node_id: NodeId) -> AstKind<'a> {
         self.nodes().kind(node_id)
     }
 
-    #[must_use]
     pub fn parent_kind(&self, node: &AstNode<'a>) -> AstKind<'a> {
         self.nodes().parent_kind(node)
     }
 
-    #[must_use]
     pub fn parent_node(&self, node: &AstNode<'a>) -> Option<&AstNode<'a>> {
         node.parent().and_then(|node_id| self.nodes().get(node_id))
     }
 
-    #[must_use]
     pub fn ancestors(&self, node: &AstNode<'a>) -> Ancestors<'_, SemanticNode<'a>> {
         self.nodes().ancestors(node)
     }
 
     /* Scopes */
 
-    #[must_use]
     pub fn scopes(&self) -> &ScopeTree {
         self.semantic().scopes()
     }
 
-    #[must_use]
     pub fn scope(&self, node: &AstNode) -> &Scope {
         self.semantic().scopes().node_scope(node)
     }
 
-    #[must_use]
     pub fn scope_ancestors(&self, node: &AstNode) -> Ancestors<'_, Scope> {
         self.semantic().scopes().ancestors(node.get().scope_id())
     }
 
-    #[must_use]
     pub fn symbols(&self) -> Rc<SymbolTable> {
         Rc::clone(&self.semantic().symbols())
     }
 
-    #[must_use]
     pub fn strict_mode(&self, node: &AstNode) -> bool {
         let scope = self.scope(node);
         node.get().strict_mode(scope)

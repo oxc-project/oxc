@@ -14,13 +14,11 @@ pub struct ParserCheckpoint<'a> {
 }
 
 impl<'a> Parser<'a> {
-    #[must_use]
     pub(crate) fn start_span(&self) -> Span {
         let token = self.cur_token();
         Span::new(token.start, 0)
     }
 
-    #[must_use]
     pub(crate) fn end_span(&self, span: Span) -> Span {
         let mut span = span;
         span.end = self.prev_token_end;
@@ -28,44 +26,37 @@ impl<'a> Parser<'a> {
     }
 
     /// Get current token
-    #[must_use]
     pub(crate) fn cur_token(&self) -> &Token<'a> {
         &self.token
     }
 
     /// Get current Kind
-    #[must_use]
     pub(crate) fn cur_kind(&self) -> Kind {
         self.token.kind
     }
 
     /// Get current source text
-    #[must_use]
     pub(crate) fn cur_src(&self) -> &'a str {
         let range = self.cur_token().span();
         unsafe { self.source_text.get_unchecked(range.start as usize..range.end as usize) }
     }
 
     /// Get current string
-    #[must_use]
     pub(crate) fn cur_string(&self) -> Option<&str> {
         self.cur_token().value.get_string()
     }
 
     /// Peek next token, returns EOF for final peek
-    #[must_use]
     pub(crate) fn peek_token(&mut self) -> &Token {
         self.lexer.lookahead(1)
     }
 
     /// Peek next kind, returns EOF for final peek
-    #[must_use]
     pub(crate) fn peek_kind(&mut self) -> Kind {
         self.peek_token().kind
     }
 
     /// Peek at kind
-    #[must_use]
     pub(crate) fn peek_at(&mut self, kind: Kind) -> bool {
         self.peek_token().kind == kind
     }
@@ -89,7 +80,6 @@ impl<'a> Parser<'a> {
     }
 
     /// Checks if the current index has token `Kind`
-    #[must_use]
     pub(crate) fn at(&self, kind: Kind) -> bool {
         self.cur_kind() == kind
     }
@@ -122,7 +112,6 @@ impl<'a> Parser<'a> {
     }
 
     /// Advance and return true if we are at `Kind`, return false otherwise
-    #[must_use]
     pub(crate) fn eat(&mut self, kind: Kind) -> bool {
         if self.at(kind) {
             self.advance(kind);
@@ -161,7 +150,6 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    #[must_use]
     pub(crate) fn can_insert_semicolon(&self) -> bool {
         let kind = self.cur_kind();
         if kind == Kind::Semicolon {
@@ -240,7 +228,6 @@ impl<'a> Parser<'a> {
         }
     }
 
-    #[must_use]
     pub(crate) fn checkpoint(&self) -> ParserCheckpoint<'a> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),

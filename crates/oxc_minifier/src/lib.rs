@@ -28,12 +28,10 @@ pub struct Minifier<'a> {
 }
 
 impl<'a> Minifier<'a> {
-    #[must_use]
     pub fn new(source_text: &'a str, source_type: SourceType, options: MinifierOptions) -> Self {
         Self { source_text, source_type, options }
     }
 
-    #[must_use]
     pub fn build(self) -> String {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, self.source_text, self.source_type).parse();

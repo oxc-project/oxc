@@ -18,7 +18,6 @@ use crate::typescript::{TypeScriptCase, TypeScriptSuite};
 
 /// # Panics
 /// Invalid Project Root
-#[must_use]
 pub fn project_root() -> PathBuf {
     project_root::get_project_root().unwrap()
 }

@@ -42,7 +42,6 @@ impl IndexMut<SymbolId> for SymbolTableBuilder {
 }
 
 impl SymbolTableBuilder {
-    #[must_use]
     pub fn create(
         &mut self,
         declaration: AstNodeId,

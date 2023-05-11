@@ -11,7 +11,6 @@ pub struct Walk {
 
 impl Walk {
     /// # Panics
-    #[must_use]
     pub fn new(options: &LintOptions) -> Self {
         let mut inner = WalkBuilder::new(&options.paths[0]);
 

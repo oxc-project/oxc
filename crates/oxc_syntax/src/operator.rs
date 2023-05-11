@@ -39,12 +39,10 @@ pub enum AssignmentOperator {
 }
 
 impl AssignmentOperator {
-    #[must_use]
     pub fn is_logical_operator(self) -> bool {
         matches!(self, Self::LogicalAnd | Self::LogicalOr | Self::LogicalNullish)
     }
 
-    #[must_use]
     pub fn is_arithmetic(self) -> bool {
         matches!(
             self,
@@ -57,7 +55,6 @@ impl AssignmentOperator {
         )
     }
 
-    #[must_use]
     pub fn is_bitwise(self) -> bool {
         matches!(
             self,
@@ -70,7 +67,6 @@ impl AssignmentOperator {
         )
     }
 
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Assign => "=",
@@ -143,7 +139,6 @@ pub enum BinaryOperator {
 }
 
 impl BinaryOperator {
-    #[must_use]
     pub fn is_equality(self) -> bool {
         matches!(
             self,
@@ -151,7 +146,6 @@ impl BinaryOperator {
         )
     }
 
-    #[must_use]
     pub fn is_compare(self) -> bool {
         matches!(
             self,
@@ -159,7 +153,6 @@ impl BinaryOperator {
         )
     }
 
-    #[must_use]
     pub fn is_arithmetic(self) -> bool {
         matches!(
             self,
@@ -172,12 +165,10 @@ impl BinaryOperator {
         )
     }
 
-    #[must_use]
     pub fn is_relational(self) -> bool {
         matches!(self, Self::In | Self::Instanceof)
     }
 
-    #[must_use]
     pub fn is_bitwise(self) -> bool {
         matches!(
             self,
@@ -190,17 +181,14 @@ impl BinaryOperator {
         )
     }
 
-    #[must_use]
     pub fn is_numeric_or_string_binary_operator(self) -> bool {
         self.is_arithmetic() || self.is_bitwise()
     }
 
-    #[must_use]
     pub fn is_keyword(self) -> bool {
         matches!(self, Self::In | Self::Instanceof)
     }
 
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Equality => "==",
@@ -241,7 +229,6 @@ pub enum LogicalOperator {
 }
 
 impl LogicalOperator {
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Or => "||",
@@ -271,22 +258,18 @@ pub enum UnaryOperator {
 }
 
 impl UnaryOperator {
-    #[must_use]
     pub fn is_arithmetic(self) -> bool {
         matches!(self, Self::UnaryNegation | Self::UnaryPlus)
     }
 
-    #[must_use]
     pub fn is_bitwise(self) -> bool {
         matches!(self, Self::BitwiseNot)
     }
 
-    #[must_use]
     pub fn is_keyword(self) -> bool {
         matches!(self, Self::Typeof | Self::Void | Self::Delete)
     }
 
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::UnaryNegation => "-",
@@ -310,7 +293,6 @@ pub enum UpdateOperator {
 }
 
 impl UpdateOperator {
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Increment => "++",

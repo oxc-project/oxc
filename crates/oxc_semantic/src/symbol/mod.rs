@@ -75,14 +75,12 @@ bitflags! {
 }
 
 impl SymbolFlags {
-    #[must_use]
     pub fn is_variable(&self) -> bool {
         self.intersects(Self::Variable)
     }
 }
 
 impl Symbol {
-    #[must_use]
     pub fn new(
         id: SymbolId,
         declaration: AstNodeId,
@@ -93,52 +91,42 @@ impl Symbol {
         Self { id, declaration, name, span, flags, slot: Slot::default(), references: vec![] }
     }
 
-    #[must_use]
     pub fn id(&self) -> SymbolId {
         self.id
     }
 
-    #[must_use]
     pub fn name(&self) -> &Atom {
         &self.name
     }
 
-    #[must_use]
     pub fn span(&self) -> Span {
         self.span
     }
 
-    #[must_use]
     pub fn flags(&self) -> SymbolFlags {
         self.flags
     }
 
-    #[must_use]
     pub fn slot(&self) -> Slot {
         self.slot
     }
 
-    #[must_use]
     pub fn is_const(&self) -> bool {
         self.flags.contains(SymbolFlags::ConstVariable)
     }
 
-    #[must_use]
     pub fn is_class(&self) -> bool {
         self.flags.contains(SymbolFlags::Class)
     }
 
-    #[must_use]
     pub fn is_export(&self) -> bool {
         self.flags.contains(SymbolFlags::Export)
     }
 
-    #[must_use]
     pub fn references(&self) -> &[ResolvedReferenceId] {
         &self.references
     }
 
-    #[must_use]
     pub fn declaration(&self) -> AstNodeId {
         self.declaration
     }

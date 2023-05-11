@@ -12,7 +12,6 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
-    #[must_use]
     pub fn new(root_strict_mode: bool) -> Self {
         let mut scopes = Arena::new();
         let root_scope = Scope::new(ScopeFlags::Top, root_strict_mode);
@@ -20,22 +19,18 @@ impl ScopeTree {
         Self { scopes, root_scope_id }
     }
 
-    #[must_use]
     pub fn root_scope_id(&self) -> ScopeId {
         self.root_scope_id
     }
 
-    #[must_use]
     pub fn ancestors(&self, scope_id: ScopeId) -> Ancestors<'_, Scope> {
         scope_id.ancestors(&self.scopes)
     }
 
-    #[must_use]
     pub fn node_scope(&self, node: &AstNode) -> &Scope {
         self.scopes[node.get().scope_id().indextree_id()].get()
     }
 
-    #[must_use]
     pub fn node_scope_ancestors(&self, node: &AstNode) -> Ancestors<'_, Scope> {
         self.ancestors(node.get().scope_id())
     }
@@ -43,24 +38,20 @@ impl ScopeTree {
     /// # Panics
     /// When parent scope cannot be found, but this will not happen because
     /// scopes are never removed.
-    #[must_use]
     pub fn parent_node_id(&self, scope_id: ScopeId) -> NodeId {
         self.scopes[*scope_id].parent().unwrap()
     }
 
-    #[must_use]
     pub fn parent_scope(&self, scope_id: ScopeId) -> &Scope {
         let parent_id = self.parent_node_id(scope_id);
         self.scopes[parent_id].get()
     }
 
-    #[must_use]
     pub fn parent_scope_mut(&mut self, scope_id: ScopeId) -> &mut Scope {
         let parent_id = self.parent_node_id(scope_id);
         self.scopes[parent_id].get_mut()
     }
 
-    #[must_use]
     pub fn strict_mode(&self, node: &AstNode) -> bool {
         let scope = self.node_scope(node);
         node.get().strict_mode(scope)

@@ -60,13 +60,11 @@ pub struct Mangler {
 pub struct Slot(usize);
 
 impl Slot {
-    #[must_use]
     #[inline]
     pub fn index(self) -> usize {
         self.0 - 1
     }
 
-    #[must_use]
     #[inline]
     pub fn is_some(self) -> bool {
         self.0 != 0
@@ -79,7 +77,6 @@ impl Slot {
 }
 
 impl Mangler {
-    #[must_use]
     pub fn next_slot(&mut self) -> Slot {
         let slot = self.current_slot;
         self.current_slot.increment();
@@ -93,7 +90,6 @@ impl Mangler {
         self.current_slot = Slot(1);
     }
 
-    #[must_use]
     pub fn mangled_name(&self, slot: Slot) -> CompactString {
         self.mangled_names.borrow()[slot.index()].clone()
     }

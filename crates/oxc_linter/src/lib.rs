@@ -33,7 +33,6 @@ pub struct Linter {
 }
 
 impl Linter {
-    #[must_use]
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let rules = RULES
@@ -44,17 +43,14 @@ impl Linter {
         Self::from_rules(rules)
     }
 
-    #[must_use]
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
         Self { rules, fix: false }
     }
 
-    #[must_use]
     pub fn has_fix(&self) -> bool {
         self.fix
     }
 
-    #[must_use]
     pub fn number_of_rules(&self) -> usize {
         self.rules.len()
     }
@@ -65,7 +61,6 @@ impl Linter {
         self
     }
 
-    #[must_use]
     pub fn from_json_str(s: &str) -> Self {
         let rules = serde_json::from_str(s)
             .ok()
@@ -87,7 +82,6 @@ impl Linter {
         Self::from_rules(rules)
     }
 
-    #[must_use]
     pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>) -> Vec<Message<'a>> {
         let mut ctx = LintContext::new(semantic, self.fix);
         for node in semantic.nodes().iter() {

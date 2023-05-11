@@ -18,7 +18,6 @@ use crate::Allocator;
 pub struct Box<'alloc, T: ?Sized>(pub &'alloc mut T);
 
 impl<'alloc, T> Box<'alloc, T> {
-    #[must_use]
     pub fn unbox(self) -> T {
         // This pointer read is safe because the reference `self.0` is
         // guaranteed to be unique--not just now, but we're guaranteed it's not

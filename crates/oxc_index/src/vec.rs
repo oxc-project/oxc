@@ -17,19 +17,16 @@ pub struct IndexVec<I: Idx, T> {
 }
 
 impl<I: Idx, T> IndexVec<I, T> {
-    #[must_use]
     #[inline]
     pub fn new() -> Self {
         Self { raw: Vec::new(), _marker: PhantomData }
     }
 
-    #[must_use]
     #[inline]
     pub fn len(&self) -> usize {
         self.raw.len()
     }
 
-    #[must_use]
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.raw.is_empty()
@@ -48,7 +45,6 @@ impl<I: Idx, T> IndexVec<I, T> {
     /// Manual bounds checks can be done using `idx < slice.next_index()`
     /// (as opposed to `idx.index() < slice.len()`).
     #[inline]
-    #[must_use]
     pub fn next_index(&self) -> I {
         I::new(self.len())
     }

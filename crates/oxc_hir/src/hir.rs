@@ -26,7 +26,6 @@ pub struct Program<'a> {
 }
 
 impl<'a> Program<'a> {
-    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.body.is_empty() && self.directives.is_empty()
     }
@@ -79,7 +78,6 @@ pub enum Expression<'a> {
 impl<'a> Expression<'a> {
     /// `PrimaryExpression`
     /// [tc39/ecma262#prod-PrimaryExpression](https://tc39.es/ecma262/#prod-PrimaryExpression)
-    #[must_use]
     pub fn is_primary_expression(&self) -> bool {
         self.is_literal_expression()
             || matches!(
@@ -93,7 +91,6 @@ impl<'a> Expression<'a> {
             )
     }
 
-    #[must_use]
     pub fn is_literal_expression(&self) -> bool {
         matches!(
             self,
@@ -106,48 +103,40 @@ impl<'a> Expression<'a> {
         )
     }
 
-    #[must_use]
     pub fn is_string_literal(&self) -> bool {
         matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
     }
 
     /// Determines whether the given expr is a `null` literal
-    #[must_use]
     pub fn is_null(&self) -> bool {
         matches!(self, Expression::NullLiteral(_))
     }
 
     /// Determines whether the given expr is a `undefined` literal
-    #[must_use]
     pub fn is_undefined(&self) -> bool {
         matches!(self, Self::Identifier(ident) if ident.name == "undefined")
     }
 
     /// Determines whether the given expr is a `void 0`
-    #[must_use]
     pub fn is_void_0(&self) -> bool {
         matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void)
     }
 
     /// Determines whether the given expr is a `0`
-    #[must_use]
     pub fn is_number_0(&self) -> bool {
         matches!(self, Self::NumberLiteral(lit) if lit.value == 0.0)
     }
 
     /// Determines whether the given expr evaluate to `undefined`
-    #[must_use]
     pub fn evaluate_to_undefined(&self) -> bool {
         self.is_undefined() || self.is_void_0()
     }
 
     /// Determines whether the given expr is a `null` or `undefined` or `void 0`
-    #[must_use]
     pub fn is_null_or_undefined(&self) -> bool {
         self.is_null() || self.evaluate_to_undefined()
     }
 
-    #[must_use]
     pub fn is_specific_id(&self, name: &str) -> bool {
         match self {
             Expression::Identifier(ident) => ident.name == name,
@@ -155,7 +144,6 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[must_use]
     pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
         match self {
             Expression::MemberExpression(expr) => expr.is_specific_member_access(object, property),
@@ -169,7 +157,6 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[must_use]
     pub fn get_identifier_reference(&self) -> Option<&IdentifierReference> {
         match self {
             Expression::Identifier(ident) => Some(ident),
@@ -177,14 +164,12 @@ impl<'a> Expression<'a> {
         }
     }
 
-    #[must_use]
     pub fn is_function(&self) -> bool {
         matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
     }
 
     /// Returns literal's value converted to the Boolean type
     /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
-    #[must_use]
     pub fn get_boolean_value(&self) -> Option<bool> {
         match self {
             Self::BooleanLiteral(lit) => Some(lit.value),
@@ -207,7 +192,6 @@ pub struct BooleanLiteral {
 }
 
 impl BooleanLiteral {
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         if self.value { "true" } else { "false" }
     }
@@ -239,7 +223,6 @@ pub struct NumberLiteral<'a> {
 }
 
 impl<'a> NumberLiteral<'a> {
-    #[must_use]
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
         let value = unsafe { NotNan::new_unchecked(value) };
         Self { span, value, raw, base }
@@ -346,7 +329,6 @@ pub struct StringLiteral {
 impl StringLiteral {
     /// Static Semantics: `IsStringWellFormedUnicode`
     /// test for \uD800-\uDFFF
-    #[must_use]
     pub fn is_string_well_formed_unicode(&self) -> bool {
         let mut chars = self.value.chars();
         while let Some(c) = chars.next() {
@@ -473,7 +455,6 @@ pub enum PropertyKey<'a> {
 }
 
 impl<'a> PropertyKey<'a> {
-    #[must_use]
     pub fn static_name(&self) -> Option<Atom> {
         match self {
             Self::Identifier(ident) => Some(ident.name.clone()),
@@ -492,7 +473,6 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
-    #[must_use]
     pub fn is_private_identifier(&self) -> bool {
         matches!(self, Self::PrivateIdentifier(_))
     }
@@ -525,13 +505,11 @@ pub struct TemplateLiteral<'a> {
 }
 
 impl<'a> TemplateLiteral<'a> {
-    #[must_use]
     pub fn is_no_substitution_template(&self) -> bool {
         self.expressions.is_empty() && self.quasis.len() == 1
     }
 
     /// Get single quasi from `template`
-    #[must_use]
     pub fn quasi(&self) -> Option<&Atom> {
         self.quasis.first().and_then(|quasi| quasi.value.cooked.as_ref())
     }
@@ -572,7 +550,6 @@ pub enum MemberExpression<'a> {
 }
 
 impl<'a> MemberExpression<'a> {
-    #[must_use]
     pub fn optional(&self) -> bool {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => expr.optional,
@@ -581,7 +558,6 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    #[must_use]
     pub fn object(&self) -> &Expression<'a> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => &expr.object,
@@ -590,7 +566,6 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    #[must_use]
     pub fn static_property_name(&'a self) -> Option<&'a str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
@@ -610,7 +585,6 @@ impl<'a> MemberExpression<'a> {
     }
 
     /// Whether it is a static member access `object.property`
-    #[must_use]
     pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
         self.object().is_specific_id(object)
             && self.static_property_name().is_some_and(|p| p == property)
@@ -659,7 +633,6 @@ pub struct CallExpression<'a> {
 }
 
 impl<'a> CallExpression<'a> {
-    #[must_use]
     pub fn is_require_call(&self) -> bool {
         if self.arguments.len() != 1 {
             return false;
@@ -677,7 +650,6 @@ impl<'a> CallExpression<'a> {
         }
     }
 
-    #[must_use]
     pub fn is_symbol_or_symbol_for_call(&'a self) -> bool {
         // TODO: is 'Symbol' reference to global object
         match &self.callee {
@@ -690,7 +662,6 @@ impl<'a> CallExpression<'a> {
         }
     }
 
-    #[must_use]
     pub fn common_js_require(&self) -> Option<&StringLiteral> {
         if let Expression::Identifier(ident) = &self.callee
             && ident.name =="require"
@@ -825,7 +796,6 @@ pub enum AssignmentTarget<'a> {
 }
 
 impl<'a> AssignmentTarget<'a> {
-    #[must_use]
     pub fn is_destructuring_pattern(&self) -> bool {
         matches!(self, Self::AssignmentTargetPattern(_))
     }
@@ -872,7 +842,6 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 }
 
 impl<'a> AssignmentTargetMaybeDefault<'a> {
-    #[must_use]
     pub fn name(&self) -> Option<Atom> {
         let target = match self {
             Self::AssignmentTarget(target) => target,
@@ -1046,12 +1015,10 @@ pub enum VariableDeclarationKind {
 }
 
 impl VariableDeclarationKind {
-    #[must_use]
     pub fn is_const(&self) -> bool {
         matches!(self, Self::Const)
     }
 
-    #[must_use]
     pub fn is_lexical(&self) -> bool {
         matches!(self, Self::Const | Self::Let)
     }
@@ -1234,7 +1201,6 @@ pub struct SwitchCase<'a> {
 }
 
 impl<'a> SwitchCase<'a> {
-    #[must_use]
     pub fn is_default_case(&self) -> bool {
         self.test.is_none()
     }
@@ -1299,12 +1265,10 @@ pub enum BindingPattern<'a> {
 }
 
 impl<'a> BindingPattern<'a> {
-    #[must_use]
     pub fn is_destructuring_pattern(&self) -> bool {
         matches!(self, Self::ObjectPattern(_) | Self::ArrayPattern(_))
     }
 
-    #[must_use]
     pub fn is_rest_element(&self) -> bool {
         matches!(self, Self::RestElement(_))
     }
@@ -1367,22 +1331,18 @@ pub struct Function<'a> {
 }
 
 impl<'a> Function<'a> {
-    #[must_use]
     pub fn is_expression(&self) -> bool {
         self.r#type == FunctionType::FunctionExpression
     }
 
-    #[must_use]
     pub fn is_function_declaration(&self) -> bool {
         matches!(self.r#type, FunctionType::FunctionDeclaration)
     }
 
-    #[must_use]
     pub fn is_ts_declare_function(&self) -> bool {
         matches!(self.r#type, FunctionType::TSDeclareFunction)
     }
 
-    #[must_use]
     pub fn is_declaration(&self) -> bool {
         matches!(self.r#type, FunctionType::FunctionDeclaration | FunctionType::TSDeclareFunction)
     }
@@ -1429,7 +1389,6 @@ pub enum FormalParameterKind {
 }
 
 impl<'a> FormalParameters<'a> {
-    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
@@ -1445,7 +1404,6 @@ pub struct FunctionBody<'a> {
 }
 
 impl<'a> FunctionBody<'a> {
-    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.directives.is_empty() && self.statements.is_empty()
     }
@@ -1466,7 +1424,6 @@ pub struct ArrowExpression<'a> {
 impl<'a> ArrowExpression<'a> {
     /// Is of form () => x without curly braces.
     #[inline]
-    #[must_use]
     pub fn is_single_expression(&self) -> bool {
         self.expression
     }
@@ -1496,12 +1453,10 @@ pub struct Class<'a> {
 }
 
 impl<'a> Class<'a> {
-    #[must_use]
     pub fn is_expression(&self) -> bool {
         self.r#type == ClassType::ClassExpression
     }
 
-    #[must_use]
     pub fn is_declaration(&self) -> bool {
         self.r#type == ClassType::ClassDeclaration
     }
@@ -1532,7 +1487,6 @@ pub enum ClassElement<'a> {
 }
 
 impl<'a> ClassElement<'a> {
-    #[must_use]
     pub fn r#static(&self) -> bool {
         match self {
             Self::StaticBlock(_) => false,
@@ -1542,7 +1496,6 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[must_use]
     pub fn computed(&self) -> bool {
         match self {
             Self::StaticBlock(_) => false,
@@ -1552,7 +1505,6 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[must_use]
     pub fn method_definition_kind(&self) -> Option<MethodDefinitionKind> {
         match self {
             Self::StaticBlock(_) | Self::PropertyDefinition(_) | Self::AccessorProperty(_) => None,
@@ -1560,7 +1512,6 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[must_use]
     pub fn property_key(&self) -> Option<&PropertyKey<'a>> {
         match self {
             Self::StaticBlock(_) => None,
@@ -1570,7 +1521,6 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[must_use]
     pub fn static_name(&self) -> Option<Atom> {
         match self {
             Self::StaticBlock(_) => None,
@@ -1580,7 +1530,6 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    #[must_use]
     pub fn is_ts_empty_body_function(&self) -> bool {
         match self {
             Self::PropertyDefinition(_) | Self::StaticBlock(_) | Self::AccessorProperty(_) => false,
@@ -1658,7 +1607,6 @@ pub enum ModuleDeclaration<'a> {
 }
 
 impl<'a> ModuleDeclaration<'a> {
-    #[must_use]
     pub fn is_export(&self) -> bool {
         matches!(
             self,
@@ -1754,7 +1702,6 @@ pub enum ImportAttributeKey {
 }
 
 impl ImportAttributeKey {
-    #[must_use]
     pub fn as_atom(&self) -> Atom {
         match self {
             Self::Identifier(identifier) => identifier.name.clone(),
@@ -1836,7 +1783,6 @@ impl fmt::Display for ModuleExportName {
 }
 
 impl ModuleExportName {
-    #[must_use]
     pub fn name(&self) -> &Atom {
         match self {
             Self::Identifier(identifier) => &identifier.name,
@@ -1887,12 +1833,10 @@ pub enum ImportOrExportKind {
 }
 
 impl ImportOrExportKind {
-    #[must_use]
     pub fn is_value(&self) -> bool {
         matches!(self, Self::Value)
     }
 
-    #[must_use]
     pub fn is_type(&self) -> bool {
         matches!(self, Self::Type)
     }
@@ -1984,7 +1928,6 @@ pub struct JSXMemberExpression<'a> {
 }
 
 impl<'a> JSXMemberExpression<'a> {
-    #[must_use]
     pub fn get_object_identifier(&self) -> &JSXIdentifier {
         match &self.object {
             JSXMemberExpressionObject::Identifier(ident) => ident,

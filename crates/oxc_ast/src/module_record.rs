@@ -45,17 +45,14 @@ pub struct NameSpan {
 }
 
 impl NameSpan {
-    #[must_use]
     pub fn new(name: Atom, span: Span) -> Self {
         Self { name, span }
     }
 
-    #[must_use]
     pub fn name(&self) -> &Atom {
         &self.name
     }
 
-    #[must_use]
     pub fn span(&self) -> Span {
         self.span
     }
@@ -83,12 +80,10 @@ pub enum ImportImportName {
 }
 
 impl ImportImportName {
-    #[must_use]
     pub fn is_default(&self) -> bool {
         matches!(self, Self::Default(_))
     }
 
-    #[must_use]
     pub fn is_namespace_object(&self) -> bool {
         matches!(self, Self::NamespaceObject)
     }
@@ -132,12 +127,10 @@ pub enum ExportImportName {
 }
 
 impl ExportImportName {
-    #[must_use]
     pub fn is_all(&self) -> bool {
         matches!(self, Self::All)
     }
 
-    #[must_use]
     pub fn is_all_but_default(&self) -> bool {
         matches!(self, Self::AllButDefault)
     }
@@ -153,12 +146,10 @@ pub enum ExportExportName {
 }
 
 impl ExportExportName {
-    #[must_use]
     pub fn is_default(&self) -> bool {
         matches!(self, Self::Default(_))
     }
 
-    #[must_use]
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }
@@ -174,7 +165,6 @@ pub enum ExportLocalName {
 }
 
 impl ExportLocalName {
-    #[must_use]
     pub fn name(&self) -> Option<&Atom> {
         match self {
             Self::Name(ns) => Some(ns.name()),
@@ -182,12 +172,10 @@ impl ExportLocalName {
         }
     }
 
-    #[must_use]
     pub fn is_default(&self) -> bool {
         matches!(self, Self::Default(_))
     }
 
-    #[must_use]
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }

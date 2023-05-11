@@ -66,42 +66,34 @@ impl Default for SourceType {
 pub const VALID_EXTENSIONS: [&str; 8] = ["js", "mjs", "cjs", "jsx", "ts", "mts", "cts", "tsx"];
 
 impl SourceType {
-    #[must_use]
     pub fn is_script(self) -> bool {
         self.module_kind == ModuleKind::Script
     }
 
-    #[must_use]
     pub fn is_module(self) -> bool {
         self.module_kind == ModuleKind::Module
     }
 
-    #[must_use]
     pub fn module_kind(self) -> ModuleKind {
         self.module_kind
     }
 
-    #[must_use]
     pub fn is_javascript(self) -> bool {
         matches!(self.language, Language::JavaScript)
     }
 
-    #[must_use]
     pub fn is_typescript(self) -> bool {
         matches!(self.language, Language::TypeScript { .. })
     }
 
-    #[must_use]
     pub fn is_typescript_definition(self) -> bool {
         matches!(self.language, Language::TypeScript { is_definition_file: true })
     }
 
-    #[must_use]
     pub fn is_jsx(self) -> bool {
         self.variant == LanguageVariant::Jsx
     }
 
-    #[must_use]
     pub fn always_strict(self) -> bool {
         self.always_strict
     }

@@ -15,7 +15,6 @@ impl Default for TestFiles {
 impl TestFiles {
     /// # Panics
     /// Fails to read file
-    #[must_use]
     pub fn new() -> Self {
         let root = project_root();
         let files = std::fs::read_to_string(root.join("./tasks/libs.txt"))
@@ -26,7 +25,6 @@ impl TestFiles {
         Self { files }
     }
 
-    #[must_use]
     pub fn files(&self) -> &Vec<TestFile> {
         &self.files
     }

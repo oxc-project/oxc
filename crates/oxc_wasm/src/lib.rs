@@ -60,7 +60,6 @@ pub struct OxcFormatterOptions {
 #[wasm_bindgen]
 impl Oxc {
     #[wasm_bindgen(constructor)]
-    #[must_use]
     pub fn new() -> Self {
         Self { serializer: serde_wasm_bindgen::Serializer::json_compatible(), ..Self::default() }
     }

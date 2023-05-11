@@ -114,7 +114,6 @@ pub enum TSType<'a> {
 }
 
 impl<'a> TSType<'a> {
-    #[must_use]
     pub fn is_const_type_reference(&self) -> bool {
         matches!(self, TSType::TSTypeReference(reference) if reference.type_name.is_const())
     }
@@ -177,7 +176,6 @@ pub enum TSTypeOperator {
 }
 
 impl TSTypeOperator {
-    #[must_use]
     pub fn from_src(src: &str) -> Option<Self> {
         match src {
             "keyof" => Some(Self::Keyof),
@@ -368,7 +366,6 @@ pub enum TSTypeName<'a> {
 }
 
 impl<'a> TSTypeName<'a> {
-    #[must_use]
     pub fn get_first_name(name: &TSTypeName) -> IdentifierName {
         match name {
             TSTypeName::IdentifierName(name) => (*name).clone(),
@@ -376,7 +373,6 @@ impl<'a> TSTypeName<'a> {
         }
     }
 
-    #[must_use]
     pub fn is_const(&self) -> bool {
         if let TSTypeName::IdentifierName(ident) = self {
             if ident.name == "const" {
@@ -386,12 +382,10 @@ impl<'a> TSTypeName<'a> {
         false
     }
 
-    #[must_use]
     pub fn is_identifier(&self) -> bool {
         matches!(self, Self::IdentifierName(_))
     }
 
-    #[must_use]
     pub fn is_qualified_name(&self) -> bool {
         matches!(self, Self::QualifiedName(_))
     }
@@ -628,7 +622,6 @@ pub enum TSModuleDeclarationName {
 }
 
 impl TSModuleDeclarationName {
-    #[must_use]
     pub fn name(&self) -> &Atom {
         match self {
             Self::Identifier(ident) => &ident.name,
@@ -843,22 +836,18 @@ pub struct Modifier {
 pub struct Modifiers<'a>(Option<Vec<'a, Modifier>>);
 
 impl<'a> Modifiers<'a> {
-    #[must_use]
     pub fn new(modifiers: Vec<'a, Modifier>) -> Self {
         Self(Some(modifiers))
     }
 
-    #[must_use]
     pub fn empty() -> Self {
         Self(None)
     }
 
-    #[must_use]
     pub fn is_none(&self) -> bool {
         self.0.is_none()
     }
 
-    #[must_use]
     pub fn contains(&self, target: ModifierKind) -> bool {
         self.0
             .as_ref()
@@ -905,12 +894,10 @@ pub enum ImportOrExportKind {
 }
 
 impl ImportOrExportKind {
-    #[must_use]
     pub fn is_value(&self) -> bool {
         matches!(self, Self::Value)
     }
 
-    #[must_use]
     pub fn is_type(&self) -> bool {
         matches!(self, Self::Type)
     }

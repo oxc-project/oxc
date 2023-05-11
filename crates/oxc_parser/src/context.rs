@@ -55,91 +55,76 @@ impl Default for Context {
 }
 
 impl Context {
-    #[must_use]
     #[inline]
     pub(crate) fn has_in(self) -> bool {
         self.contains(Self::In)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn has_yield(self) -> bool {
         self.contains(Self::Yield)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn has_await(self) -> bool {
         self.contains(Self::Await)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn has_return(self) -> bool {
         self.contains(Self::Return)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn has_disallow_conditional_types(self) -> bool {
         self.contains(Self::DisallowConditionalTypes)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn has_ambient(self) -> bool {
         self.contains(Self::Ambient)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn union_await_if(self, include: bool) -> Self {
         self.union_if(Self::Await, include)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn union_yield_if(self, include: bool) -> Self {
         self.union_if(Self::Yield, include)
     }
 
-    #[must_use]
     #[inline]
     fn union_if(self, other: Self, include: bool) -> Self {
         if include { self.union(other) } else { self }
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn and_in(self, include: bool) -> Self {
         self.and(Self::In, include)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn and_yield(self, include: bool) -> Self {
         self.and(Self::Yield, include)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn and_await(self, include: bool) -> Self {
         self.and(Self::Await, include)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn and_return(self, include: bool) -> Self {
         self.and(Self::Return, include)
     }
 
-    #[must_use]
     #[inline]
     pub(crate) fn and_ambient(self, include: bool) -> Self {
         self.and(Self::Ambient, include)
     }
 
-    #[must_use]
     #[inline]
     fn and(self, flag: Self, set: bool) -> Self {
         if set { self | flag } else { self - flag }
@@ -158,7 +143,6 @@ pub enum StatementContext {
 }
 
 impl StatementContext {
-    #[must_use]
     pub(crate) fn is_single_statement(self) -> bool {
         self != Self::StatementList
     }

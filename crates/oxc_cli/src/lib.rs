@@ -12,7 +12,6 @@ pub use crate::{
     walk::Walk,
 };
 
-#[must_use]
 pub fn command() -> Command {
     Command::new("oxc")
         .bin_name("oxc")

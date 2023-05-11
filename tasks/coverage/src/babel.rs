@@ -43,7 +43,6 @@ impl<T: Case> Default for BabelSuite<T> {
 }
 
 impl<T: Case> BabelSuite<T> {
-    #[must_use]
     pub fn new() -> Self {
         Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
     }
@@ -189,7 +188,6 @@ impl BabelCase {
     }
 
     /// # Panics
-    #[must_use]
     pub fn source_type(&self) -> SourceType {
         SourceType::from_path(self.path())
             .unwrap()

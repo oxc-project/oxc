@@ -6,7 +6,6 @@ use indextree::NodeId;
 pub struct AstNodeId(NodeId);
 
 impl AstNodeId {
-    #[must_use]
     pub fn indextree_id(&self) -> NodeId {
         self.0
     }

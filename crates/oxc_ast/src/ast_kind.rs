@@ -151,7 +151,6 @@ unsafe impl<'a> Send for AstKind<'a> {}
 unsafe impl<'a> Sync for AstKind<'a> {}
 
 impl<'a> AstKind<'a> {
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_statement(self) -> bool {
         self.is_iteration_statement()
@@ -162,7 +161,6 @@ impl<'a> AstKind<'a> {
                     | Self::IfStatement(_) | Self::VariableDeclaration(_))
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
@@ -173,14 +171,12 @@ impl<'a> AstKind<'a> {
         )
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_iteration_statement(self) -> bool {
         matches!(self, Self::DoWhileStatement(_) | Self::WhileStatement(_) | Self::ForInStatement(_)
                 | Self::ForOfStatement(_) | Self::ForStatement(_))
     }
 
-    #[must_use]
     #[rustfmt::skip]
     pub fn is_identifier(self) -> bool {
         matches!(self, Self::BindingIdentifier(_)
@@ -188,7 +184,6 @@ impl<'a> AstKind<'a> {
                 | Self::LabelIdentifier(_))
     }
 
-    #[must_use]
     pub fn is_type(self) -> bool {
         matches!(
             self,
@@ -199,7 +194,6 @@ impl<'a> AstKind<'a> {
         )
     }
 
-    #[must_use]
     pub fn is_literal(self) -> bool {
         matches!(
             self,
@@ -213,12 +207,10 @@ impl<'a> AstKind<'a> {
         )
     }
 
-    #[must_use]
     pub fn is_function_like(self) -> bool {
         matches!(self, Self::Function(_) | Self::ArrowExpression(_))
     }
 
-    #[must_use]
     pub fn identifier_name(self) -> Option<Atom> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name.clone()),
@@ -229,7 +221,6 @@ impl<'a> AstKind<'a> {
         }
     }
 
-    #[must_use]
     pub fn is_jsx(self) -> bool {
         matches!(self, Self::JSXOpeningElement(_) | Self::JSXElementName(_))
     }

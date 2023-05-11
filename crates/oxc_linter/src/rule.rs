@@ -6,7 +6,6 @@ use crate::{context::LintContext, AstNode};
 
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
-    #[must_use]
     fn from_configuration(_value: serde_json::Value) -> Self {
         Self::default()
     }
@@ -21,7 +20,6 @@ pub trait RuleMeta {
 
     const CATEGORY: RuleCategory;
 
-    #[must_use]
     fn documentation() -> Option<&'static str> {
         None
     }
@@ -43,7 +41,6 @@ pub enum RuleCategory {
 }
 
 impl RuleCategory {
-    #[must_use]
     pub fn from(input: &str) -> Option<Self> {
         match input {
             "correctness" => Some(Self::Correctness),

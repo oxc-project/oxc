@@ -16,7 +16,6 @@ pub struct AstNodes<'a> {
 
 impl<'a> AstNodes<'a> {
     /// # Panics
-    #[must_use]
     pub fn ancestors(&self, node: &AstNode<'a>) -> Ancestors<'_, SemanticNode<'a>> {
         let node_id = self.nodes.get_node_id(node).unwrap();
         node_id.ancestors(&self.nodes)
@@ -66,12 +65,10 @@ impl<'a> DerefMut for AstNodes<'a> {
 }
 
 impl<'a> AstNodes<'a> {
-    #[must_use]
     pub fn kind<T: Into<NodeId>>(&self, id: T) -> AstKind<'a> {
         self.nodes[id.into()].get().kind
     }
 
-    #[must_use]
     pub fn parent_kind(&self, node: &AstNode<'a>) -> AstKind<'a> {
         node.parent().map_or(AstKind::Root, |node_id| self.kind(node_id))
     }

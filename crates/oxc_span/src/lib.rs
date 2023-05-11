@@ -21,19 +21,16 @@ pub struct Span {
 }
 
 impl Span {
-    #[must_use]
     #[inline]
     pub const fn new(start: u32, end: u32) -> Self {
         Self { start, end }
     }
 
-    #[must_use]
     pub fn size(&self) -> u32 {
         debug_assert!(self.start <= self.end);
         self.end - self.start
     }
 
-    #[must_use]
     pub fn source_text<'a>(&self, source_text: &'a str) -> &'a str {
         &source_text[self.start as usize..self.end as usize]
     }
@@ -53,6 +50,5 @@ impl From<Span> for SourceSpan {
 
 /// Get the span for an AST node
 pub trait GetSpan {
-    #[must_use]
     fn span(&self) -> Span;
 }

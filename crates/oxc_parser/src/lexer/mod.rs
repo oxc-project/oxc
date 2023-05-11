@@ -72,7 +72,6 @@ pub struct Lexer<'a> {
 
 #[allow(clippy::unused_self)]
 impl<'a> Lexer<'a> {
-    #[must_use]
     pub fn new(allocator: &'a Allocator, source: &'a str, source_type: SourceType) -> Self {
         let token = Token {
             // the first token is at the start of file, so is allows on a new line
@@ -93,14 +92,12 @@ impl<'a> Lexer<'a> {
     }
 
     /// Remaining string from `Chars`
-    #[must_use]
     pub fn remaining(&self) -> &'a str {
         self.current.chars.as_str()
     }
 
     /// Creates a checkpoint storing the current lexer state.
     /// Use `rewind` to restore the lexer to the state stored in the checkpoint.
-    #[must_use]
     pub fn checkpoint(&self) -> LexerCheckpoint<'a> {
         LexerCheckpoint {
             chars: self.current.chars.clone(),
@@ -476,7 +473,6 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.4 Single Line Comment
-    #[must_use]
     fn skip_single_line_comment(&mut self) -> Kind {
         while let Some(c) = self.current.chars.next().as_ref() {
             if is_line_terminator(*c) {
@@ -489,7 +485,6 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.4 Multi Line Comment
-    #[must_use]
     fn skip_multi_line_comment(&mut self) -> Kind {
         let remaining = self.remaining().as_bytes();
         let newline = self.current.token.is_on_new_line;
