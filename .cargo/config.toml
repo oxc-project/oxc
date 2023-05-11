@@ -58,6 +58,11 @@ rustflags = [
   # This rule is too pedantic, I don't want to force this because naming things are hard.
   "-Aclippy::module_name_repetitions",
 
+  # #[must_use] is creating too much noise for this codebase, it does not add much value execept nagging
+  # the programmer to add a #[must_use] after clippy has been run.
+  # Having #[must_use] every where also hinders readability.
+  "-Aclippy::must_use_candidate",
+
   # nursery
 
   # `const` functions do not make sense for our project because this is not a `const` library.
