@@ -105,18 +105,7 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
     if_stmt.test.gen(p);
     p.print(b')');
     p.print_space();
-    if let Statement::BlockStatement(block) = &if_stmt.consequent {
-        p.print_block1(block);
-    } else {
-        p.print(b'{');
-        p.print_newline();
-        p.indent();
-        if_stmt.consequent.gen(p);
-        p.dedent();
-        p.needs_semicolon = false;
-        p.print_indent();
-        p.print(b'}');
-    }
+    if_stmt.consequent.gen(p);
     if if_stmt.alternate.is_some() {
         p.print_space();
     } else {

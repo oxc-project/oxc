@@ -14,12 +14,21 @@ fn main() {
     let source_text = std::fs::read_to_string(path).expect("{name} not found");
     let source_type = SourceType::from_path(path).unwrap();
 
+    println!("------------------------------");
     let options = MinifierOptions {
         compress: CompressOptions::default(),
         print: PrinterOptions { minify_whitespace: false, ..PrinterOptions::default() },
     };
-
     let printed = Minifier::new(&source_text, source_type, options).build();
-
     println!("{printed}");
+    println!("------------------------------\n");
+
+    println!("------ Minify Whitespace -----");
+    let options = MinifierOptions {
+        compress: CompressOptions::default(),
+        print: PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() },
+    };
+    let printed = Minifier::new(&source_text, source_type, options).build();
+    println!("{printed}");
+    println!("------------------------------");
 }
