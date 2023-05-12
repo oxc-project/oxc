@@ -68,8 +68,8 @@ impl<'a> JSDocBuilder<'a> {
 #[cfg(test)]
 mod test {
     use oxc_allocator::Allocator;
-    use oxc_ast::SourceType;
     use oxc_parser::Parser;
+    use oxc_span::SourceType;
     use oxc_span::Span;
 
     use crate::{jsdoc::JSDocComment, SemanticBuilder};

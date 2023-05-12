@@ -1,12 +1,12 @@
 use std::{cell::RefCell, rc::Rc};
 
 use oxc_allocator::Allocator;
-use oxc_ast::SourceType;
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::Linter;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use oxc_span::SourceType;
 use serde::ser::Serialize;
 use wasm_bindgen::prelude::*;
 

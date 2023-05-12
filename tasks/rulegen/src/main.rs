@@ -8,10 +8,10 @@ use oxc_ast::ast::{
 };
 use oxc_ast::{
     ast::{Argument, Expression, ObjectProperty, PropertyKey, PropertyValue},
-    SourceType, Visit,
+    Visit,
 };
 use oxc_parser::Parser;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, SourceType};
 use serde::Serialize;
 use ureq::Response;
 

@@ -245,11 +245,9 @@ pub fn check_block_statement(block: &BlockStatement) -> StatementReturnStatus {
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
-    use oxc_ast::{
-        ast::{Declaration, Program},
-        SourceType,
-    };
+    use oxc_ast::ast::{Declaration, Program};
     use oxc_parser::Parser;
+    use oxc_span::SourceType;
 
     use super::*;
 

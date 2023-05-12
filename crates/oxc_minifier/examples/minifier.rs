@@ -1,7 +1,7 @@
 use std::{env, path::Path};
 
-use oxc_ast::SourceType;
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions, PrinterOptions};
+use oxc_span::SourceType;
 
 // Instruction:
 // create a `test.js`,

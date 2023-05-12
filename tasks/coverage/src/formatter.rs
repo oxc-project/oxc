@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_ast::SourceType;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_parser::Parser;
+use oxc_span::SourceType;
 
 use crate::babel::BabelCase;
 use crate::suite::{Case, TestResult};

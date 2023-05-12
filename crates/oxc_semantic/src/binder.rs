@@ -2,7 +2,8 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::{syntax_directed_operations::BoundNames, AstKind, SourceType};
+use oxc_ast::{syntax_directed_operations::BoundNames, AstKind};
+use oxc_span::SourceType;
 
 use crate::{
     scope::{Scope, ScopeFlags, ScopeId},

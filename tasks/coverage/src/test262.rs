@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_ast::SourceType;
+use oxc_span::SourceType;
 use serde::Deserialize;
 
 use crate::project_root;

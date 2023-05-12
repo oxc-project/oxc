@@ -17,6 +17,7 @@ crate-type = ["cdylib"]
 oxc_allocator = { workspace = true }
 oxc_parser    = { workspace = true }
 oxc_ast       = { workspace = true, features = ["serde"] }
+oxc_span      = { workspace = true }
 
 serde_json = { workspace = true }
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }

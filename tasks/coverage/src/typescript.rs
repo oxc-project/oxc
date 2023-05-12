@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_ast::SourceType;
+use oxc_span::SourceType;
 use regex::Regex;
 
 use crate::{

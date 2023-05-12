@@ -1,7 +1,7 @@
 #![no_main]
 
 use oxc_allocator::Allocator;
-use oxc_ast::SourceType;
+use oxc_span::SourceType;
 use oxc_parser::Parser;
 
 libfuzzer_sys::fuzz_target!(|data: &[u8]| {

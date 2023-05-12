@@ -6,9 +6,9 @@ pub use builder::ModuleRecordBuilder;
 mod module_record_tests {
     use oxc_allocator::Allocator;
     #[allow(clippy::wildcard_imports)]
-    use oxc_ast::{module_record::*, SourceType};
+    use oxc_ast::module_record::*;
     use oxc_parser::Parser;
-    use oxc_span::Span;
+    use oxc_span::{SourceType, Span};
 
     use crate::SemanticBuilder;
 

@@ -3,9 +3,9 @@
 mod scope;
 
 use oxc_allocator::{Allocator, Box, Vec};
-use oxc_ast::{ast, SourceType};
+use oxc_ast::ast;
 use oxc_hir::{hir, HirBuilder};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, SourceType};
 
 use crate::scope::{ScopeFlags, ScopeTreeBuilder};
 

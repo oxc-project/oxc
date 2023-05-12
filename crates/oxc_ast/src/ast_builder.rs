@@ -6,13 +6,13 @@
 )]
 
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
 
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, SourceType};
+use crate::ast::*;
 
 /// AST builder for creating AST nodes
 pub struct AstBuilder<'a> {

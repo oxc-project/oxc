@@ -14,10 +14,10 @@ use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput};
 use oxc_allocator::Allocator;
-use oxc_ast::SourceType;
 use oxc_ast_lower::AstLower;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles};
 use pico_args::Arguments;
 

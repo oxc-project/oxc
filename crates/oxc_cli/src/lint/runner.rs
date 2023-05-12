@@ -11,7 +11,6 @@ use std::{
 
 use miette::NamedSource;
 use oxc_allocator::Allocator;
-use oxc_ast::SourceType;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -20,6 +19,7 @@ use oxc_diagnostics::{
 use oxc_linter::{Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use oxc_span::SourceType;
 use rustc_hash::FxHashSet;
 
 use super::{AllowWarnDeny, LintOptions};

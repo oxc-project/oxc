@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use ignore::{overrides::OverrideBuilder, DirEntry, WalkBuilder};
-use oxc_ast::VALID_EXTENSIONS;
+use oxc_span::VALID_EXTENSIONS;
 
 use crate::LintOptions;
 
