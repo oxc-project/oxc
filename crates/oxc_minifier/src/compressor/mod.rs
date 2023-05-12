@@ -109,7 +109,7 @@ impl<'a> Compressor<'a> {
         let mut new_stmts = self.hir.new_vec_with_capacity(stmts.len() - capacity);
         for (i, stmt) in stmts.drain(..).enumerate() {
             if i > 0
-                && ranges.iter().any(|range| range.contains(&i))
+                && ranges.iter().any(|range| range.contains(&(i-1)) && range.contains(&i))
                 && let Statement::Declaration(Declaration::VariableDeclaration(prev_decl)) = new_stmts.last_mut().unwrap()
                 && let Statement::Declaration(Declaration::VariableDeclaration(mut cur_decl)) = stmt {
                 prev_decl.declarations.append(&mut cur_decl.declarations);
