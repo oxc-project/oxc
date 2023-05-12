@@ -48,6 +48,13 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn next_index(&self) -> I {
         I::new(self.len())
     }
+
+    #[inline]
+    pub fn iter_enumerated(
+        &self,
+    ) -> impl DoubleEndedIterator<Item = (I, &T)> + ExactSizeIterator + '_ {
+        self.raw.iter().enumerate().map(|(n, t)| (I::new(n), t))
+    }
 }
 
 impl<I: Idx, T> Index<I> for IndexVec<I, T> {

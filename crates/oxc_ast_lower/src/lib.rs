@@ -1,28 +1,30 @@
 #![allow(clippy::unused_self)]
 
-mod scope;
-
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast;
 use oxc_hir::{hir, HirBuilder};
+use oxc_semantic2::{scope::ScopeFlags, Semantic, SemanticBuilder};
 use oxc_span::{GetSpan, SourceType};
 
-use crate::scope::{ScopeFlags, ScopeTreeBuilder};
+pub struct AstLowerReturn<'a> {
+    pub program: hir::Program<'a>,
+    pub semantic: Semantic,
+}
 
 pub struct AstLower<'a> {
     hir: HirBuilder<'a>,
-    scope: ScopeTreeBuilder,
+    semantic: SemanticBuilder,
 }
 
 impl<'a> AstLower<'a> {
     pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
-        Self { hir: HirBuilder::new(allocator), scope: ScopeTreeBuilder::new(source_type) }
+        Self { hir: HirBuilder::new(allocator), semantic: SemanticBuilder::new(source_type) }
     }
 
-    pub fn build(mut self, program: &ast::Program<'a>) -> hir::Program<'a> {
+    pub fn build(mut self, program: &ast::Program<'a>) -> AstLowerReturn<'a> {
         let program = self.lower_program(program);
-        self.scope.build();
-        program
+        let semantic = self.semantic.build();
+        AstLowerReturn { program, semantic }
     }
 
     pub fn lower_vec<T, R, F>(&mut self, items: &Vec<'a, T>, cb: F) -> Vec<'a, R>
@@ -100,9 +102,9 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_block_statement(&mut self, stmt: &ast::BlockStatement<'a>) -> hir::Statement<'a> {
-        self.scope.enter(ScopeFlags::empty());
+        self.semantic.enter_scope(ScopeFlags::empty());
         let body = self.lower_statements(&stmt.body);
-        self.scope.leave();
+        self.semantic.leave_scope();
         self.hir.block_statement(stmt.span, body)
     }
 
@@ -1247,10 +1249,10 @@ impl<'a> AstLower<'a> {
         &mut self,
         body: &ast::FunctionBody<'a>,
     ) -> Box<'a, hir::FunctionBody<'a>> {
-        self.scope.enter(ScopeFlags::Function);
+        self.semantic.enter_scope(ScopeFlags::Function);
         let directives = self.lower_vec(&body.directives, Self::lower_directive);
         let statements = self.lower_statements(&body.statements);
-        self.scope.leave();
+        self.semantic.leave_scope();
         self.hir.function_body(body.span, directives, statements)
     }
 
@@ -1334,9 +1336,9 @@ impl<'a> AstLower<'a> {
         &mut self,
         block: &ast::StaticBlock<'a>,
     ) -> Box<'a, hir::StaticBlock<'a>> {
-        self.scope.enter(ScopeFlags::ClassStaticBlock);
+        self.semantic.enter_scope(ScopeFlags::ClassStaticBlock);
         let body = self.lower_statements(&block.body);
-        self.scope.leave();
+        self.semantic.leave_scope();
         self.hir.static_block(block.span, body)
     }
 

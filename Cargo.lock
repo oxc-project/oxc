@@ -989,6 +989,7 @@ dependencies = [
  "oxc_hir",
  "oxc_index",
  "oxc_parser",
+ "oxc_semantic2",
  "oxc_span",
  "serde_json",
 ]
@@ -1213,6 +1214,16 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
+ "rustc-hash",
+]
+
+[[package]]
+name = "oxc_semantic2"
+version = "0.0.0"
+dependencies = [
+ "bitflags 2.2.1",
+ "oxc_index",
+ "oxc_span",
  "rustc-hash",
 ]
 
