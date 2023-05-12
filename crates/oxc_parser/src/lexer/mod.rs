@@ -16,9 +16,9 @@ mod trivia_builder;
 use std::{collections::VecDeque, str::Chars};
 
 use oxc_allocator::{Allocator, String};
-use oxc_ast::{ast::RegExpFlags, SourceType};
+use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::Error;
-use oxc_span::Span;
+use oxc_span::{SourceType, Span};
 use simd::{SkipMultilineComment, SkipWhitespace};
 pub use token::{RegExp, Token, TokenValue};
 

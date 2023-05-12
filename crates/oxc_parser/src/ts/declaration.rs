@@ -77,7 +77,7 @@ impl<'a> Parser<'a> {
 #[cfg(test)]
 mod test_is_declaration {
     use oxc_allocator::Allocator;
-    use oxc_ast::SourceType;
+    use oxc_span::SourceType;
 
     use super::*;
 

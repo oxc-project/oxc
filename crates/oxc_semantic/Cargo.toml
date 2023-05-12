@@ -16,11 +16,11 @@ oxc_syntax      = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
 
-indextree   = { workspace = true }
-bitflags    = { workspace = true }
-rustc-hash  = { workspace = true }
-once_cell   = { workspace = true }
-phf         = { workspace = true, features = ["macros"] }
+indextree  = { workspace = true }
+bitflags   = { workspace = true }
+rustc-hash = { workspace = true }
+once_cell  = { workspace = true }
+phf        = { workspace = true, features = ["macros"] }
 
 [dev_dependencies]
 oxc_parser    = { workspace = true }

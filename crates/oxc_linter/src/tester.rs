@@ -1,10 +1,10 @@
 use std::{path::PathBuf, rc::Rc};
 
 use oxc_allocator::Allocator;
-use oxc_ast::SourceType;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
+use oxc_span::SourceType;
 use serde_json::Value;
 
 use crate::{rules::RULES, Linter};

@@ -2,9 +2,10 @@
 
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, SourceType};
+use oxc_ast::ast::*;
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions, PrinterOptions};
 use oxc_parser::Parser;
+use oxc_span::SourceType;
 use walkdir::WalkDir;
 
 #[test]

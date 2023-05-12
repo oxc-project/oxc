@@ -1,9 +1,9 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_ast::SourceType;
 use oxc_ast_lower::AstLower;
 use oxc_parser::Parser;
+use oxc_span::SourceType;
 
 // Instruction:
 // create a `test.js`,

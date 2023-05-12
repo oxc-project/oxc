@@ -16,9 +16,8 @@ pub use builder::SemanticBuilder;
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
 use node::AstNodeId;
 pub use node::{AstNode, AstNodes, SemanticNode};
-use oxc_ast::{
-    ast::IdentifierReference, module_record::ModuleRecord, AstKind, SourceType, Trivias,
-};
+use oxc_ast::{ast::IdentifierReference, module_record::ModuleRecord, AstKind, Trivias};
+use oxc_span::SourceType;
 use scope::ScopeId;
 pub use scope::{Scope, ScopeFlags, ScopeTree};
 use symbol::SymbolId;
@@ -108,7 +107,8 @@ impl<'a> Semantic<'a> {
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
-    use oxc_ast::{AstKind, SourceType};
+    use oxc_ast::AstKind;
+    use oxc_span::SourceType;
 
     use crate::SemanticBuilder;
 
@@ -127,7 +127,7 @@ mod tests {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let parse =
-            oxc_parser::Parser::new(&allocator, source, oxc_ast::SourceType::default()).parse();
+            oxc_parser::Parser::new(&allocator, source, oxc_span::SourceType::default()).parse();
         assert!(parse.errors.is_empty());
         let program = allocator.alloc(parse.program);
 

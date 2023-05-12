@@ -80,9 +80,9 @@ use std::rc::Rc;
 
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, AstBuilder, ModuleKind, SourceType, Trivias};
+use oxc_ast::{ast::Program, AstBuilder, Trivias};
 use oxc_diagnostics::{Error, Result};
-use oxc_span::Span;
+use oxc_span::{ModuleKind, SourceType, Span};
 
 use crate::{
     lexer::{Kind, Lexer, Token},

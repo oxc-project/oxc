@@ -6,8 +6,8 @@ use miette::NamedSource;
 use napi_derive::napi;
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
-use oxc_ast::SourceType;
 use oxc_parser::Parser;
+use oxc_span::SourceType;
 
 /// Babel Parser Options
 ///

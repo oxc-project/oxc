@@ -1001,10 +1001,10 @@ dependencies = [
  "jemallocator",
  "mimalloc",
  "oxc_allocator",
- "oxc_ast",
  "oxc_ast_lower",
  "oxc_parser",
  "oxc_semantic",
+ "oxc_span",
  "oxc_tasks_common",
  "pico-args",
 ]
@@ -1020,11 +1020,11 @@ dependencies = [
  "mimalloc",
  "num_cpus",
  "oxc_allocator",
- "oxc_ast",
  "oxc_diagnostics",
  "oxc_linter",
  "oxc_parser",
  "oxc_semantic",
+ "oxc_span",
  "rayon",
  "rustc-hash",
 ]
@@ -1047,6 +1047,7 @@ dependencies = [
  "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
+ "oxc_span",
  "pico-args",
  "project-root",
  "rayon",
@@ -1078,6 +1079,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
+ "oxc_span",
  "oxc_syntax",
 ]
 
@@ -1157,8 +1159,8 @@ version = "0.0.0"
 dependencies = [
  "flate2",
  "humansize",
- "oxc_ast",
  "oxc_minifier",
+ "oxc_span",
  "oxc_tasks_common",
 ]
 
@@ -1173,6 +1175,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_parser",
+ "oxc_span",
  "serde_json",
  "tokio",
 ]
@@ -1245,12 +1248,12 @@ dependencies = [
  "console_error_panic_hook",
  "miette",
  "oxc_allocator",
- "oxc_ast",
  "oxc_diagnostics",
  "oxc_formatter",
  "oxc_linter",
  "oxc_parser",
  "oxc_semantic",
+ "oxc_span",
  "serde",
  "serde-wasm-bindgen",
  "wasm-bindgen",

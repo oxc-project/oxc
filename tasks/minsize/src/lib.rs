@@ -5,8 +5,8 @@ use std::{
 
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
-use oxc_ast::SourceType;
 use oxc_minifier::{Minifier, MinifierOptions};
+use oxc_span::SourceType;
 use oxc_tasks_common::{project_root, TestFile, TestFiles};
 
 #[test]

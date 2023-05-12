@@ -1,8 +1,8 @@
 #![allow(non_upper_case_globals)]
 
 use bitflags::bitflags;
-use oxc_ast::SourceType;
 use oxc_index::{Idx, IndexVec};
+use oxc_span::SourceType;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ScopeId(usize);

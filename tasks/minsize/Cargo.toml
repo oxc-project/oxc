@@ -6,7 +6,7 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-oxc_ast      = { workspace = true }
+oxc_span     = { workspace = true }
 oxc_minifier = { workspace = true }
 
 oxc_tasks_common = { workspace = true }

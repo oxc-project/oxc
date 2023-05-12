@@ -5,9 +5,9 @@
 use std::{cell::RefCell, rc::Rc};
 
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, module_record::ModuleRecord, AstKind, SourceType, Trivias, Visit};
+use oxc_ast::{ast::*, module_record::ModuleRecord, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 
 use crate::{
     binder::Binder,

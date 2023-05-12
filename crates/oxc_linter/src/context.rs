@@ -1,10 +1,11 @@
 use std::{cell::RefCell, rc::Rc};
 
 use indextree::{Ancestors, NodeId};
-use oxc_ast::{ast::IdentifierReference, AstKind, SourceType};
+use oxc_ast::{ast::IdentifierReference, AstKind};
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_semantic::{AstNodes, JSDocComment, Scope, ScopeTree, Semantic, SemanticNode, SymbolTable};
+use oxc_span::SourceType;
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},

@@ -2,7 +2,7 @@ use std::fmt;
 
 use num_bigint::BigUint;
 use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
@@ -10,7 +10,7 @@ use oxc_syntax::operator::{
 use serde::Serialize;
 
 #[allow(clippy::wildcard_imports)]
-use crate::{ast::*, SourceType};
+use crate::ast::*;
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]

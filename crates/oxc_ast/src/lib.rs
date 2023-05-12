@@ -16,7 +16,6 @@ pub mod ast;
 mod ast_builder;
 mod ast_kind;
 pub mod module_record;
-mod source_type;
 mod span;
 pub mod syntax_directed_operations;
 mod trivia;
@@ -27,7 +26,6 @@ pub use num_bigint::BigUint;
 
 pub use crate::ast_builder::AstBuilder;
 pub use crate::ast_kind::AstKind;
-pub use crate::source_type::{Language, LanguageVariant, ModuleKind, SourceType, VALID_EXTENSIONS};
 pub use crate::trivia::Trivias;
 pub use crate::visit::Visit;
 pub use crate::visit_mut::VisitMut;
