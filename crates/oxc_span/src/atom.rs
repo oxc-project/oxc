@@ -9,10 +9,29 @@ use serde::Serialize;
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct Atom(CompactString);
 
+const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789";
+
 impl Atom {
     #[inline]
     pub fn as_str(&self) -> &str {
         self.0.as_str()
+    }
+
+    /// Get the shortest mangled name for a given n.
+    /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
+    pub fn base54(n: usize) -> Self {
+        let mut num = n;
+        let base = 54usize;
+        let mut ret = CompactString::default();
+        ret.push(BASE54_CHARS[num % base] as char);
+        num /= base;
+        let base = 64usize;
+        while num > 0 {
+            num -= 1;
+            ret.push(BASE54_CHARS[num % base] as char);
+            num /= base;
+        }
+        Self(ret)
     }
 }
 

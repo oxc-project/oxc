@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use compact_str::CompactString;
+use oxc_span::Atom;
 
 use super::Symbol;
 
@@ -52,7 +52,7 @@ pub struct Mangler {
     max_slot: Slot,
 
     /// Mangled names, indexed by slot, length by `max_slot`.
-    mangled_names: RefCell<Vec<CompactString>>,
+    mangled_names: RefCell<Vec<Atom>>,
 }
 
 /// A slot is the occurrence index of a binding identifier inside a scope.
@@ -90,7 +90,7 @@ impl Mangler {
         self.current_slot = Slot(1);
     }
 
-    pub fn mangled_name(&self, slot: Slot) -> CompactString {
+    pub fn mangled_name(&self, slot: Slot) -> Atom {
         self.mangled_names.borrow()[slot.index()].clone()
     }
 
@@ -105,11 +105,11 @@ impl Mangler {
             }
         }
         frequencies.sort_by_key(|x| std::cmp::Reverse(x.1));
-        let mut mangled_names = vec![CompactString::default(); self.max_slot.index()];
+        let mut mangled_names = vec![Atom::from(""); self.max_slot.index()];
         let mut i = 0;
         for freq in &frequencies {
             let keyword = loop {
-                let keyword = Self::base54(i);
+                let keyword = Atom::base54(i);
                 i += 1;
                 if !Self::is_keyword(keyword.as_str()) {
                     break keyword;
@@ -118,24 +118,6 @@ impl Mangler {
             mangled_names[freq.0] = keyword;
         }
         *self.mangled_names.borrow_mut() = mangled_names;
-    }
-
-    /// Get the shortest mangled name for a given slot.
-    /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
-    fn base54(slot: usize) -> CompactString {
-        let mut num = slot;
-        let chars = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789";
-        let base = 54usize;
-        let mut ret = CompactString::default();
-        ret.push(chars[num % base] as char);
-        num /= base;
-        let base = 64usize;
-        while num > 0 {
-            num -= 1;
-            ret.push(chars[num % base] as char);
-            num /= base;
-        }
-        ret
     }
 
     #[rustfmt::skip]

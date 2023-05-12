@@ -20,7 +20,6 @@ indextree   = { workspace = true }
 bitflags    = { workspace = true }
 rustc-hash  = { workspace = true }
 once_cell   = { workspace = true }
-compact_str = { workspace = true }
 phf         = { workspace = true, features = ["macros"] }
 
 [dev_dependencies]

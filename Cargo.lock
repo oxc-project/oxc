@@ -1200,7 +1200,6 @@ name = "oxc_semantic"
 version = "0.0.6"
 dependencies = [
  "bitflags 2.2.1",
- "compact_str",
  "indextree",
  "once_cell",
  "oxc_allocator",
