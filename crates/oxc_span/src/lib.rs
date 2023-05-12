@@ -1,12 +1,10 @@
+mod atom;
 use std::hash::{Hash, Hasher};
 
-use compact_str::CompactString;
+pub use atom::Atom;
 use miette::{SourceOffset, SourceSpan};
 #[cfg(feature = "serde")]
 use serde::Serialize;
-
-/// Type alias for [`CompactString`]
-pub type Atom = CompactString;
 
 /// Newtype for working with text ranges
 ///

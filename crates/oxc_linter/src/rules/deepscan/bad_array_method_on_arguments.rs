@@ -83,7 +83,7 @@ impl Rule for BadArrayMethodOnArguments {
                                 && ARRAY_METHODS.binary_search(&name).is_ok()
                             {
                                 ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                    Atom::new(name),
+                                    Atom::from(name),
                                     expr.span,
                                 ));
                             }
