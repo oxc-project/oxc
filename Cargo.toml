@@ -36,7 +36,7 @@ oxc_index     = { version = "0.0.0", path = "crates/oxc_index" }
 oxc_tasks_common = { path = "tasks/common" }
 
 bitflags         = { version = "2.2.1" }
-bumpalo          = { version = "3.12.1" }
+bumpalo          = { version = "3.12.2" }
 clap             = { version = "4.2.7", default-features = false, features = ["std"] }
 compact_str      = { version = "0.7.0" }
 convert_case     = { version = "0.6.0" }
@@ -59,12 +59,12 @@ phf              = { version = "0.11" }
 pico-args        = { version = "0.5.0" }
 proc-macro2      = { version = "1.0.56" }
 project-root     = { version = "0.2.2" }
-quote            = { version = "1.0.26" }
+quote            = { version = "1.0.27" }
 rayon            = { version = "1.7.0" }
 regex            = { version = "1.8.1" }
 rustc-hash       = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js           = { version = "0.2.2" }
-serde            = { version = "1.0.160" }
+serde            = { version = "1.0.163" }
 serde_json       = { version = "1.0.96" }
 syn              = { version = "1.0.109" }
 thiserror        = { version = "1.0.40" }
