@@ -72,8 +72,15 @@ impl<'a> Gen for Statement<'a> {
 
 impl<'a> Gen for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Printer) {
+        let is_object_expression = matches!(self.expression, Expression::ObjectExpression(_));
         p.print_indent();
+        if is_object_expression {
+            p.print(b'(');
+        }
         self.expression.gen(p);
+        if is_object_expression {
+            p.print(b')');
+        }
         if let Expression::Identifier(ident) = &self.expression
         && ident.name == "let" {
             p.print_semicolon();
@@ -1318,7 +1325,9 @@ impl<'a> Gen for AssignmentTargetPropertyProperty<'a> {
 
 impl<'a> Gen for SequenceExpression<'a> {
     fn gen(&self, p: &mut Printer) {
+        p.print(b'(');
         p.print_list(&self.expressions);
+        p.print(b')');
     }
 }
 
