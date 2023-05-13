@@ -35,7 +35,8 @@ impl<'a> Minifier<'a> {
     pub fn build(self) -> String {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, self.source_text, self.source_type).parse();
-        let mut program = AstLower::new(&allocator, self.source_type).build(&ret.program);
+        let ret = AstLower::new(&allocator, self.source_type).build(&ret.program);
+        let mut program = ret.program;
         Compressor::new(&allocator, self.options.compress).build(&mut program);
         Printer::new(self.source_text.len(), self.options.print).build(&program)
     }
