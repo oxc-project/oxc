@@ -33,7 +33,6 @@ pub struct Linter {
 }
 
 impl Linter {
-    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         let rules = RULES
             .iter()

@@ -831,7 +831,7 @@ pub struct Modifier {
     pub kind: ModifierKind,
 }
 
-#[derive(Debug, Hash, Default)]
+#[derive(Debug, Default, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(transparent))]
 pub struct Modifiers<'a>(Option<Vec<'a, Modifier>>);
 
