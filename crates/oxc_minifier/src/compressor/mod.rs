@@ -170,7 +170,8 @@ impl<'a> Compressor<'a> {
             && let Expression::Identifier(ident) = &unary_expr.argument
             && let Expression::StringLiteral(s) = &expr.right
             && s.value == "undefined" {
-            let left = self.hir.identifier_reference_expression((*ident).clone());
+            let mut left = self.hir.identifier_reference_expression((*ident).clone());
+            self.visit_expression(&mut left);
             let right = self.create_void_0();
             let operator = BinaryOperator::StrictEquality;
             *expr = BinaryExpression {span: SPAN, left, operator, right};

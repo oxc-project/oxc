@@ -1,6 +1,6 @@
 Minifier_Test262 Summary:
 AST Parsed     : 44676/44676 (100.00%)
-Positive Passed: 44439/44676 (99.47%)
+Positive Passed: 44441/44676 (99.47%)
 Expect to Parse: "annexB/language/expressions/assignment/dstr/object-pattern-emulates-undefined.js"
 Expect to Parse: "built-ins/AsyncGeneratorPrototype/throw/return-rejected-promise.js"
 Expect to Parse: "built-ins/Function/prototype/apply/S15.3.4.3_A3_T6.js"
@@ -27,7 +27,6 @@ Expect to Parse: "built-ins/Number/prototype/toPrecision/this-is-0-precision-is-
 Expect to Parse: "built-ins/Number/prototype/toPrecision/undefined-precision-arg.js"
 Expect to Parse: "built-ins/Object/prototype/toLocaleString/primitive_this_value.js"
 Expect to Parse: "built-ins/Object/prototype/toLocaleString/primitive_this_value_getter.js"
-Expect to Parse: "built-ins/undefined/S15.1.1.3_A1.js"
 Expect to Parse: "intl402/Number/prototype/toLocaleString/throws-same-exceptions-as-NumberFormat.js"
 Expect to Parse: "intl402/NumberFormat/prototype/format/units.js"
 Expect to Parse: "language/asi/S7.9_A10_T3.js"
@@ -235,6 +234,5 @@ Expect to Parse: "language/statements/generators/yield-as-generator-declaration-
 Expect to Parse: "language/statements/variable/S12.2_A1.js"
 Expect to Parse: "language/types/reference/get-value-prop-base-primitive.js"
 Expect to Parse: "language/types/reference/put-value-prop-base-primitive.js"
-Expect to Parse: "language/types/undefined/S8.1_A1_T2.js"
 Expect to Parse: "staging/Temporal/Duration/old/total.js"
 Expect to Parse: "staging/Temporal/UserCalendar/old/trivial-subclass.js"
