@@ -18,6 +18,7 @@ fn main() {
         "babel" => args.run_babel(),
         "ts" | "typescript" => args.run_typescript(),
         "formatter" => args.run_formatter(),
+        "minifier" => args.run_minifier(),
         _ => args.run_all(),
     };
 }

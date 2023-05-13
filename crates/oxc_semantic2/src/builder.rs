@@ -86,9 +86,13 @@ impl SemanticBuilder {
 }
 
 impl SemanticBuilder {
-    pub fn enter_binding_identifier(&mut self, span: Span, name: &Atom) -> SymbolId {
-        let includes = SymbolFlags::FunctionScopedVariable;
-        let excludes = SymbolFlags::FunctionScopedVariableExcludes;
+    pub fn enter_binding_identifier(
+        &mut self,
+        span: Span,
+        name: &Atom,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> SymbolId {
         self.declare_symbol(span, name, includes, excludes)
     }
 
@@ -104,11 +108,11 @@ impl SemanticBuilder {
         self.leave_scope();
     }
 
-    pub fn enter_function_body(&mut self) {
+    pub fn enter_function_scope(&mut self) {
         self.enter_scope(ScopeFlags::Function);
     }
 
-    pub fn leave_function_body(&mut self) {
+    pub fn leave_function_scope(&mut self) {
         self.leave_scope();
     }
 

@@ -25,7 +25,7 @@ fn main() {
     println!("------ Mangle ----------------");
     let options = MinifierOptions {
         mangle: true,
-        print: PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() },
+        print: PrinterOptions { minify_whitespace: false, ..PrinterOptions::default() },
         ..MinifierOptions::default()
     };
     let printed = Minifier::new(&source_text, source_type, options).build();

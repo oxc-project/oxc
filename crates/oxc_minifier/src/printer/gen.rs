@@ -72,13 +72,18 @@ impl<'a> Gen for Statement<'a> {
 
 impl<'a> Gen for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        let is_object_expression = matches!(self.expression, Expression::ObjectExpression(_));
+        let is_parenthesized_expr = matches!(
+            self.expression,
+            Expression::ObjectExpression(_)
+                | Expression::FunctionExpression(_)
+                | Expression::ClassExpression(_)
+        );
         p.print_indent();
-        if is_object_expression {
+        if is_parenthesized_expr {
             p.print(b'(');
         }
         self.expression.gen(p);
-        if is_object_expression {
+        if is_parenthesized_expr {
             p.print(b')');
         }
         if let Expression::Identifier(ident) = &self.expression
@@ -1023,23 +1028,17 @@ impl<'a> Gen for Property<'a> {
         if self.computed {
             p.print(b'[');
         }
-        self.key.gen(p);
+        if !self.shorthand {
+            self.key.gen(p);
+        }
         if self.computed {
             p.print(b']');
         }
-        if self.shorthand {
-            if let PropertyValue::Pattern(BindingPattern::AssignmentPattern(pattern)) = &self.value
-            {
-                p.print_space();
-                p.print_equal();
-                p.print_space();
-                pattern.right.gen(p);
-            }
-        } else {
+        if !self.shorthand {
             p.print_colon();
             p.print_space();
-            self.value.gen(p);
         }
+        self.value.gen(p);
     }
 }
 

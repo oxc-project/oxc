@@ -77,7 +77,7 @@ impl Case for MinifierBabelCase {
 }
 // Test minification by minifying twice because it is a idempotent
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    let options = MinifierOptions::default();
+    let options = MinifierOptions { mangle: true, ..MinifierOptions::default() };
     let source_text1 = Minifier::new(source_text, source_type, options).build();
     let source_text2 = Minifier::new(&source_text1, source_type, options).build();
     if source_text1 == source_text2 {

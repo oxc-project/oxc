@@ -20,7 +20,6 @@ impl Idx for SymbolId {
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct SymbolFlags: u16 {
-        const None                    = 0;
         /// Variable (var) or parameter
         const FunctionScopedVariable  = 1 << 0;
         /// A block-scoped variable (let or const)
@@ -81,10 +80,31 @@ impl SymbolTable {
     }
 
     pub fn mangle(&mut self) {
+        let mut offset = 0;
         for (symbol_id, flag) in self.flags.iter_enumerated() {
             if flag.is_variable() {
-                self.names[symbol_id] = Atom::base54(symbol_id.index());
+                let name = loop {
+                    let name = Atom::base54(symbol_id.index() + offset);
+                    if Self::is_keyword(&name) {
+                        offset += 1;
+                    } else {
+                        break name;
+                    }
+                };
+                self.names[symbol_id] = name;
             }
         }
+    }
+
+    #[rustfmt::skip]
+    fn is_keyword(s: &str) -> bool {
+        let len = s.len();
+        if len == 1 {
+            return false;
+        }
+        matches!(s, "as" | "do" | "if" | "in" | "is" | "of" | "any" | "for" | "get"
+                | "let" | "new" | "out" | "set" | "try" | "var" | "case" | "else"
+                | "enum" | "from" | "meta" | "null" | "this" | "true" | "type"
+                | "void" | "with")
     }
 }

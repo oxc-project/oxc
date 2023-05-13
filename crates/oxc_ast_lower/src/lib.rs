@@ -3,7 +3,7 @@
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast;
 use oxc_hir::{hir, HirBuilder};
-use oxc_semantic2::{Semantic, SemanticBuilder};
+use oxc_semantic2::{symbol::SymbolFlags, Semantic, SemanticBuilder};
 use oxc_span::{GetSpan, SourceType};
 
 pub struct AstLowerReturn<'a> {
@@ -236,7 +236,13 @@ impl<'a> AstLower<'a> {
         &mut self,
         clause: &ast::CatchClause<'a>,
     ) -> Box<'a, hir::CatchClause<'a>> {
-        let param = clause.param.as_ref().map(|pat| self.lower_binding_pattern(pat));
+        let param = clause.param.as_ref().map(|pat| {
+            self.lower_binding_pattern(
+                pat,
+                SymbolFlags::CatchVariable | SymbolFlags::BlockScopedVariable,
+                SymbolFlags::BlockScopedVariableExcludes,
+            )
+        });
         let body = self.lower_block(&clause.body);
         self.hir.catch_clause(clause.span, param, body)
     }
@@ -398,8 +404,10 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_arrow_expression(&mut self, expr: &ast::ArrowExpression<'a>) -> hir::Expression<'a> {
+        self.semantic.enter_function_scope();
         let params = self.lower_formal_parameters(&expr.params);
         let body = self.lower_function_body(&expr.body);
+        self.semantic.leave_function_scope();
         self.hir.arrow_expression(
             expr.span,
             expr.expression,
@@ -540,7 +548,8 @@ impl<'a> AstLower<'a> {
     fn lower_object_property(&mut self, prop: &ast::ObjectProperty<'a>) -> hir::ObjectProperty<'a> {
         match prop {
             ast::ObjectProperty::Property(property) => {
-                let property = self.lower_property(property);
+                let property =
+                    self.lower_property(property, SymbolFlags::empty(), SymbolFlags::empty());
                 hir::ObjectProperty::Property(property)
             }
             ast::ObjectProperty::SpreadProperty(spread_element) => {
@@ -550,14 +559,19 @@ impl<'a> AstLower<'a> {
         }
     }
 
-    fn lower_property(&mut self, prop: &ast::Property<'a>) -> Box<'a, hir::Property<'a>> {
+    fn lower_property(
+        &mut self,
+        prop: &ast::Property<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> Box<'a, hir::Property<'a>> {
         let kind = match prop.kind {
             ast::PropertyKind::Init => hir::PropertyKind::Init,
             ast::PropertyKind::Get => hir::PropertyKind::Get,
             ast::PropertyKind::Set => hir::PropertyKind::Set,
         };
         let key = self.lower_property_key(&prop.key);
-        let value = self.lower_property_value(&prop.value);
+        let value = self.lower_property_value(&prop.value, includes, excludes);
         self.hir.property(prop.span, kind, key, value, prop.method, prop.shorthand, prop.computed)
     }
 
@@ -577,10 +591,15 @@ impl<'a> AstLower<'a> {
         }
     }
 
-    fn lower_property_value(&mut self, value: &ast::PropertyValue<'a>) -> hir::PropertyValue<'a> {
+    fn lower_property_value(
+        &mut self,
+        value: &ast::PropertyValue<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> hir::PropertyValue<'a> {
         match value {
             ast::PropertyValue::Pattern(pat) => {
-                hir::PropertyValue::Pattern(self.lower_binding_pattern(pat))
+                hir::PropertyValue::Pattern(self.lower_binding_pattern(pat, includes, excludes))
             }
             ast::PropertyValue::Expression(expr) => {
                 hir::PropertyValue::Expression(self.lower_expression(expr))
@@ -851,60 +870,94 @@ impl<'a> AstLower<'a> {
 
     /* ----------  Pattern ---------- */
 
-    fn lower_binding_pattern(&mut self, pat: &ast::BindingPattern<'a>) -> hir::BindingPattern<'a> {
+    fn lower_binding_pattern(
+        &mut self,
+        pat: &ast::BindingPattern<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> hir::BindingPattern<'a> {
         match &pat.kind {
             ast::BindingPatternKind::BindingIdentifier(ident) => {
-                let ident = self.lower_binding_identifier(ident);
+                let ident = self.lower_binding_identifier(ident, includes, excludes);
                 self.hir.binding_identifier_pattern(ident)
             }
-            ast::BindingPatternKind::ObjectPattern(pat) => self.lower_object_pattern(pat),
-            ast::BindingPatternKind::ArrayPattern(pat) => self.lower_array_pattern(pat),
+            ast::BindingPatternKind::ObjectPattern(pat) => {
+                self.lower_object_pattern(pat, includes, excludes)
+            }
+            ast::BindingPatternKind::ArrayPattern(pat) => {
+                self.lower_array_pattern(pat, includes, excludes)
+            }
             ast::BindingPatternKind::RestElement(elem) => {
-                let rest_element = self.lower_rest_element(elem);
+                let rest_element = self.lower_rest_element(elem, includes, excludes);
                 hir::BindingPattern::RestElement(rest_element)
             }
-            ast::BindingPatternKind::AssignmentPattern(pat) => self.lower_assignment_pattern(pat),
+            ast::BindingPatternKind::AssignmentPattern(pat) => {
+                self.lower_assignment_pattern(pat, includes, excludes)
+            }
         }
     }
 
-    fn lower_object_pattern(&mut self, pat: &ast::ObjectPattern<'a>) -> hir::BindingPattern<'a> {
-        let properties = self.lower_vec(&pat.properties, Self::lower_object_pattern_property);
+    fn lower_object_pattern(
+        &mut self,
+        pat: &ast::ObjectPattern<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> hir::BindingPattern<'a> {
+        let properties = self.lower_vec(&pat.properties, |p, prop| {
+            p.lower_object_pattern_property(prop, includes, excludes)
+        });
         self.hir.object_pattern(pat.span, properties)
     }
 
     fn lower_object_pattern_property(
         &mut self,
         prop: &ast::ObjectPatternProperty<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
     ) -> hir::ObjectPatternProperty<'a> {
         match prop {
             ast::ObjectPatternProperty::Property(prop) => {
-                hir::ObjectPatternProperty::Property(self.lower_property(prop))
+                hir::ObjectPatternProperty::Property(self.lower_property(prop, includes, excludes))
             }
             ast::ObjectPatternProperty::RestElement(elem) => {
-                hir::ObjectPatternProperty::RestElement(self.lower_rest_element(elem))
+                hir::ObjectPatternProperty::RestElement(
+                    self.lower_rest_element(elem, includes, excludes),
+                )
             }
         }
     }
 
-    fn lower_array_pattern(&mut self, pat: &ast::ArrayPattern<'a>) -> hir::BindingPattern<'a> {
+    fn lower_array_pattern(
+        &mut self,
+        pat: &ast::ArrayPattern<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> hir::BindingPattern<'a> {
         let mut elements = self.hir.new_vec_with_capacity(pat.elements.len());
         for elem in &pat.elements {
-            let elem = elem.as_ref().map(|pat| self.lower_binding_pattern(pat));
+            let elem = elem.as_ref().map(|pat| self.lower_binding_pattern(pat, includes, excludes));
             elements.push(elem);
         }
         self.hir.array_pattern(pat.span, elements)
     }
 
-    fn lower_rest_element(&mut self, pat: &ast::RestElement<'a>) -> Box<'a, hir::RestElement<'a>> {
-        let argument = self.lower_binding_pattern(&pat.argument);
+    fn lower_rest_element(
+        &mut self,
+        pat: &ast::RestElement<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> Box<'a, hir::RestElement<'a>> {
+        let argument = self.lower_binding_pattern(&pat.argument, includes, excludes);
         self.hir.rest_element(pat.span, argument)
     }
 
     fn lower_assignment_pattern(
         &mut self,
         pat: &ast::AssignmentPattern<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
     ) -> hir::BindingPattern<'a> {
-        let left = self.lower_binding_pattern(&pat.left);
+        let left = self.lower_binding_pattern(&pat.left, includes, excludes);
         let right = self.lower_expression(&pat.right);
         self.hir.assignment_pattern(pat.span, left, right)
     }
@@ -937,8 +990,11 @@ impl<'a> AstLower<'a> {
     fn lower_binding_identifier(
         &mut self,
         ident: &ast::BindingIdentifier,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
     ) -> hir::BindingIdentifier {
-        let symbol_id = self.semantic.enter_binding_identifier(ident.span, &ident.name);
+        let symbol_id =
+            self.semantic.enter_binding_identifier(ident.span, &ident.name, includes, excludes);
         self.hir.binding_identifier(ident.span, ident.name.clone(), symbol_id)
     }
 
@@ -1094,7 +1150,11 @@ impl<'a> AstLower<'a> {
 
     fn lower_import_specifier(&mut self, specifier: &ast::ImportSpecifier) -> hir::ImportSpecifier {
         let imported = self.lower_module_export_name(&specifier.imported);
-        let local = self.lower_binding_identifier(&specifier.local);
+        let local = self.lower_binding_identifier(
+            &specifier.local,
+            SymbolFlags::Import,
+            SymbolFlags::empty(),
+        );
         self.hir.import_specifier(specifier.span, imported, local)
     }
 
@@ -1102,7 +1162,11 @@ impl<'a> AstLower<'a> {
         &mut self,
         specifier: &ast::ImportDefaultSpecifier,
     ) -> hir::ImportDefaultSpecifier {
-        let local = self.lower_binding_identifier(&specifier.local);
+        let local = self.lower_binding_identifier(
+            &specifier.local,
+            SymbolFlags::Import,
+            SymbolFlags::empty(),
+        );
         self.hir.import_default_specifier(specifier.span, local)
     }
 
@@ -1110,7 +1174,11 @@ impl<'a> AstLower<'a> {
         &mut self,
         specifier: &ast::ImportNamespaceSpecifier,
     ) -> hir::ImportNamespaceSpecifier {
-        let local = self.lower_binding_identifier(&specifier.local);
+        let local = self.lower_binding_identifier(
+            &specifier.local,
+            SymbolFlags::Import,
+            SymbolFlags::empty(),
+        );
         self.hir.import_namespace_specifier(specifier.span, local)
     }
 
@@ -1221,7 +1289,14 @@ impl<'a> AstLower<'a> {
             ast::VariableDeclarationKind::Const => hir::VariableDeclarationKind::Const,
             ast::VariableDeclarationKind::Let => hir::VariableDeclarationKind::Let,
         };
-        let id = self.lower_binding_pattern(&decl.id);
+
+        let (includes, excludes) = if decl.kind.is_lexical() {
+            (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
+        } else {
+            (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
+        };
+
+        let id = self.lower_binding_pattern(&decl.id, includes, excludes);
         let init = decl.init.as_ref().map(|expr| self.lower_expression(expr));
         self.hir.variable_declarator(decl.span, kind, id, init, decl.definite)
     }
@@ -1232,9 +1307,17 @@ impl<'a> AstLower<'a> {
             ast::FunctionType::FunctionExpression => hir::FunctionType::FunctionExpression,
             ast::FunctionType::TSDeclareFunction => hir::FunctionType::TSDeclareFunction,
         };
-        let id = func.id.as_ref().map(|ident| self.lower_binding_identifier(ident));
+        let (includes, excludes) = if func.r#type == ast::FunctionType::FunctionDeclaration {
+            (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
+        } else {
+            (SymbolFlags::empty(), SymbolFlags::empty())
+        };
+        let id =
+            func.id.as_ref().map(|ident| self.lower_binding_identifier(ident, includes, excludes));
+        self.semantic.enter_function_scope();
         let params = self.lower_formal_parameters(&func.params);
         let body = func.body.as_ref().map(|body| self.lower_function_body(body));
+        self.semantic.leave_function_scope();
         self.hir.function(
             r#type,
             func.span,
@@ -1251,10 +1334,8 @@ impl<'a> AstLower<'a> {
         &mut self,
         body: &ast::FunctionBody<'a>,
     ) -> Box<'a, hir::FunctionBody<'a>> {
-        self.semantic.enter_function_body();
         let directives = self.lower_vec(&body.directives, Self::lower_directive);
         let statements = self.lower_statements(&body.statements);
-        self.semantic.leave_function_body();
         self.hir.function_body(body.span, directives, statements)
     }
 
@@ -1280,7 +1361,11 @@ impl<'a> AstLower<'a> {
         &mut self,
         param: &ast::FormalParameter<'a>,
     ) -> hir::FormalParameter<'a> {
-        let pattern = self.lower_binding_pattern(&param.pattern);
+        let pattern = self.lower_binding_pattern(
+            &param.pattern,
+            SymbolFlags::BlockScopedVariable,
+            SymbolFlags::BlockScopedVariableExcludes,
+        );
         let decorators = self.lower_vec(&param.decorators, Self::lower_decorator);
         self.hir.formal_parameter(param.span, pattern, decorators)
     }
@@ -1290,7 +1375,13 @@ impl<'a> AstLower<'a> {
             ast::ClassType::ClassDeclaration => hir::ClassType::ClassDeclaration,
             ast::ClassType::ClassExpression => hir::ClassType::ClassExpression,
         };
-        let id = class.id.as_ref().map(|ident| self.lower_binding_identifier(ident));
+        let (includes, excludes) = if class.r#type == ast::ClassType::ClassDeclaration {
+            (SymbolFlags::Class | SymbolFlags::BlockScopedVariable, SymbolFlags::ClassExcludes)
+        } else {
+            (SymbolFlags::empty(), SymbolFlags::empty())
+        };
+        let id =
+            class.id.as_ref().map(|ident| self.lower_binding_identifier(ident, includes, excludes));
         let super_class = class.super_class.as_ref().map(|expr| self.lower_expression(expr));
         let body = self.lower_class_body(&class.body);
         let decorators = self.lower_vec(&class.decorators, Self::lower_decorator);
