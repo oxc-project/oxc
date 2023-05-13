@@ -10,7 +10,8 @@ use std::rc::Rc;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
-use oxc_semantic2::symbol::SymbolTable;
+use oxc_semantic2::symbol::{SymbolId, SymbolTable};
+use oxc_span::Atom;
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
@@ -34,7 +35,8 @@ pub struct Printer {
     options: PrinterOptions,
 
     /// Symbol Table for name mangling
-    symbols: SymbolTable,
+    mangle: bool,
+    symbol_table: SymbolTable,
 
     /// Output Code
     code: Vec<u8>,
@@ -43,8 +45,8 @@ pub struct Printer {
     indentation: u8,
 
     // states
-    needs_semicolon: bool,
     prev_op_end: usize,
+    needs_semicolon: bool,
     prev_op: Option<Operator>,
 }
 
@@ -64,7 +66,8 @@ impl Printer {
         let capacity = if options.minify_whitespace { source_len / 2 } else { source_len };
         Self {
             options,
-            symbols: SymbolTable::new(),
+            mangle: false,
+            symbol_table: SymbolTable::new(),
             code: Vec::with_capacity(capacity),
             indentation: 0,
             needs_semicolon: false,
@@ -73,11 +76,12 @@ impl Printer {
         }
     }
 
-    pub fn with_symbol_table(mut self, symbols: SymbolTable, yes: bool) -> Self {
+    pub fn with_mangle(mut self, symbols: SymbolTable, yes: bool) -> Self {
         if yes {
             let mut symbols = symbols;
             symbols.mangle();
-            self.symbols = symbols;
+            self.symbol_table = symbols;
+            self.mangle = true;
         }
         self
     }
@@ -264,6 +268,15 @@ impl Printer {
                 self.print_space();
             }
             item.gen(self);
+        }
+    }
+
+    pub fn print_symbol(&mut self, symbol_id: SymbolId, fallback: &Atom) {
+        if self.mangle {
+            let name = self.symbol_table.get_name(symbol_id).clone();
+            self.print_str(name.as_bytes());
+        } else {
+            self.print_str(fallback.as_bytes());
         }
     }
 

@@ -937,7 +937,8 @@ impl<'a> AstLower<'a> {
         &mut self,
         ident: &ast::BindingIdentifier,
     ) -> hir::BindingIdentifier {
-        self.hir.binding_identifier(ident.span, ident.name.clone())
+        let symbol_id = self.semantic.enter_binding_identifier(ident.span, &ident.name);
+        self.hir.binding_identifier(ident.span, ident.name.clone(), symbol_id)
     }
 
     /* ----------  Literal ---------- */

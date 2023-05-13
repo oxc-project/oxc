@@ -40,7 +40,7 @@ impl<'a> Minifier<'a> {
         let mut program = ret.program;
         Compressor::new(&allocator, self.options.compress).build(&mut program);
         Printer::new(self.source_text.len(), self.options.print)
-            .with_symbol_table(ret.semantic.symbol_table, self.options.mangle)
+            .with_mangle(ret.semantic.symbol_table, self.options.mangle)
             .build(&program)
     }
 }

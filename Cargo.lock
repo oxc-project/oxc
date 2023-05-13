@@ -1093,6 +1093,7 @@ dependencies = [
  "ordered-float",
  "oxc_allocator",
  "oxc_index",
+ "oxc_semantic2",
  "oxc_span",
  "oxc_syntax",
  "ryu-js",

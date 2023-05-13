@@ -784,7 +784,7 @@ impl Gen for IdentifierName {
 
 impl Gen for BindingIdentifier {
     fn gen(&self, p: &mut Printer) {
-        p.print_str(self.name.as_bytes());
+        p.print_symbol(self.symbol_id, &self.name);
     }
 }
 

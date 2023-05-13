@@ -9,6 +9,7 @@ use num_bigint::BigUint;
 use ordered_float::NotNan;
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_index::Idx;
+use oxc_semantic2::symbol::SymbolId;
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -177,8 +178,13 @@ impl<'a> HirBuilder<'a> {
         IdentifierReference { span, name }
     }
 
-    pub fn binding_identifier(&mut self, span: Span, name: Atom) -> BindingIdentifier {
-        BindingIdentifier { span, name }
+    pub fn binding_identifier(
+        &mut self,
+        span: Span,
+        name: Atom,
+        symbol_id: SymbolId,
+    ) -> BindingIdentifier {
+        BindingIdentifier { span, name, symbol_id }
     }
 
     pub fn label_identifier(&mut self, span: Span, name: Atom) -> LabelIdentifier {

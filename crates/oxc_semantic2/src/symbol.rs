@@ -70,6 +70,10 @@ impl SymbolTable {
         Self { names: IndexVec::new(), spans: IndexVec::new(), flags: IndexVec::new() }
     }
 
+    pub fn get_name(&self, symbol_id: SymbolId) -> &Atom {
+        &self.names[symbol_id]
+    }
+
     pub fn add_symbol(&mut self, name: Atom, span: Span, flag: SymbolFlags) -> SymbolId {
         let _ = self.names.push(name);
         let _ = self.spans.push(span);

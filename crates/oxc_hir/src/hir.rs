@@ -7,6 +7,7 @@ use bitflags::bitflags;
 use num_bigint::BigUint;
 use ordered_float::NotNan;
 use oxc_allocator::{Box, Vec};
+use oxc_semantic2::symbol::SymbolId;
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -378,6 +379,7 @@ pub struct BindingIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
+    pub symbol_id: SymbolId,
 }
 
 /// Label Identifier
