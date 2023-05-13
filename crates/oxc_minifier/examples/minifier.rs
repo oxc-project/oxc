@@ -1,6 +1,6 @@
 use std::{env, path::Path};
 
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions, PrinterOptions};
+use oxc_minifier::{Minifier, MinifierOptions, PrinterOptions};
 use oxc_span::SourceType;
 
 // Instruction:
@@ -16,17 +16,25 @@ fn main() {
 
     println!("------------------------------");
     let options = MinifierOptions {
-        compress: CompressOptions::default(),
         print: PrinterOptions { minify_whitespace: false, ..PrinterOptions::default() },
+        ..MinifierOptions::default()
     };
     let printed = Minifier::new(&source_text, source_type, options).build();
     println!("{printed}");
-    println!("------------------------------\n");
+
+    println!("------ Mangle ----------------");
+    let options = MinifierOptions {
+        mangle: true,
+        print: PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() },
+        ..MinifierOptions::default()
+    };
+    let printed = Minifier::new(&source_text, source_type, options).build();
+    println!("{printed}");
 
     println!("------ Minify Whitespace -----");
     let options = MinifierOptions {
-        compress: CompressOptions::default(),
         print: PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() },
+        ..MinifierOptions::default()
     };
     let printed = Minifier::new(&source_text, source_type, options).build();
     println!("{printed}");

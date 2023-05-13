@@ -17,6 +17,7 @@ pub use crate::printer::PrinterOptions;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct MinifierOptions {
+    pub mangle: bool,
     pub compress: CompressOptions,
     pub print: PrinterOptions,
 }
@@ -38,6 +39,8 @@ impl<'a> Minifier<'a> {
         let ret = AstLower::new(&allocator, self.source_type).build(&ret.program);
         let mut program = ret.program;
         Compressor::new(&allocator, self.options.compress).build(&mut program);
-        Printer::new(self.source_text.len(), self.options.print).build(&program)
+        Printer::new(self.source_text.len(), self.options.print)
+            .with_symbol_table(ret.semantic.symbol_table, self.options.mangle)
+            .build(&program)
     }
 }

@@ -1148,7 +1148,7 @@ dependencies = [
  "oxc_ast_lower",
  "oxc_hir",
  "oxc_parser",
- "oxc_semantic",
+ "oxc_semantic2",
  "oxc_span",
  "oxc_syntax",
  "walkdir",

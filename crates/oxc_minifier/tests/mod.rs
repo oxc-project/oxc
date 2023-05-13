@@ -68,6 +68,7 @@ impl TestCase {
 
         let source_type = SourceType::default();
         let options = MinifierOptions {
+            mangle: false,
             compress: self.compress_options,
             print: PrinterOptions { minify_whitespace: false, ..PrinterOptions::default() },
         };

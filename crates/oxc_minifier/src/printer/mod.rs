@@ -10,7 +10,7 @@ use std::rc::Rc;
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
-use oxc_semantic::SymbolTable;
+use oxc_semantic2::symbol::SymbolTable;
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
@@ -34,7 +34,7 @@ pub struct Printer {
     options: PrinterOptions,
 
     /// Symbol Table for name mangling
-    symbols: Rc<SymbolTable>,
+    symbols: SymbolTable,
 
     /// Output Code
     code: Vec<u8>,
@@ -64,7 +64,7 @@ impl Printer {
         let capacity = if options.minify_whitespace { source_len / 2 } else { source_len };
         Self {
             options,
-            symbols: Rc::new(SymbolTable::default()),
+            symbols: SymbolTable::new(),
             code: Vec::with_capacity(capacity),
             indentation: 0,
             needs_semicolon: false,
@@ -73,10 +73,11 @@ impl Printer {
         }
     }
 
-    pub fn with_symbol_table(mut self, symbols: &Rc<SymbolTable>, yes: bool) -> Self {
+    pub fn with_symbol_table(mut self, symbols: SymbolTable, yes: bool) -> Self {
         if yes {
+            let mut symbols = symbols;
             symbols.mangle();
-            self.symbols = Rc::clone(symbols);
+            self.symbols = symbols;
         }
         self
     }
