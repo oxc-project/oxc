@@ -3,7 +3,7 @@
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast;
 use oxc_hir::{hir, HirBuilder};
-use oxc_semantic2::{scope::ScopeFlags, Semantic, SemanticBuilder};
+use oxc_semantic2::{Semantic, SemanticBuilder};
 use oxc_span::{GetSpan, SourceType};
 
 pub struct AstLowerReturn<'a> {
@@ -102,9 +102,9 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_block_statement(&mut self, stmt: &ast::BlockStatement<'a>) -> hir::Statement<'a> {
-        self.semantic.enter_scope(ScopeFlags::empty());
+        self.semantic.enter_block();
         let body = self.lower_statements(&stmt.body);
-        self.semantic.leave_scope();
+        self.semantic.leave_block();
         self.hir.block_statement(stmt.span, body)
     }
 
@@ -1251,10 +1251,10 @@ impl<'a> AstLower<'a> {
         &mut self,
         body: &ast::FunctionBody<'a>,
     ) -> Box<'a, hir::FunctionBody<'a>> {
-        self.semantic.enter_scope(ScopeFlags::Function);
+        self.semantic.enter_function_body();
         let directives = self.lower_vec(&body.directives, Self::lower_directive);
         let statements = self.lower_statements(&body.statements);
-        self.semantic.leave_scope();
+        self.semantic.leave_function_body();
         self.hir.function_body(body.span, directives, statements)
     }
 
@@ -1338,9 +1338,9 @@ impl<'a> AstLower<'a> {
         &mut self,
         block: &ast::StaticBlock<'a>,
     ) -> Box<'a, hir::StaticBlock<'a>> {
-        self.semantic.enter_scope(ScopeFlags::ClassStaticBlock);
+        self.semantic.enter_static_block();
         let body = self.lower_statements(&block.body);
-        self.semantic.leave_scope();
+        self.semantic.leave_static_block();
         self.hir.static_block(block.span, body)
     }
 

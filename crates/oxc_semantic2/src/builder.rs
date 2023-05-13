@@ -31,7 +31,7 @@ impl SemanticBuilder {
         self.scope_tree.get_scope(self.current_scope_id)
     }
 
-    pub fn enter_scope(&mut self, flags: ScopeFlags) {
+    fn enter_scope(&mut self, flags: ScopeFlags) {
         let mut flags = flags;
         // Inherit strict mode for functions
         // https://tc39.es/ecma262/#sec-strict-mode-code
@@ -94,5 +94,29 @@ impl SemanticBuilder {
 
     pub fn enter_identifier_reference(&mut self, name: &Atom) -> Option<SymbolId> {
         self.resolve_reference(name)
+    }
+
+    pub fn enter_block(&mut self) {
+        self.enter_scope(ScopeFlags::empty());
+    }
+
+    pub fn leave_block(&mut self) {
+        self.leave_scope();
+    }
+
+    pub fn enter_function_body(&mut self) {
+        self.enter_scope(ScopeFlags::Function);
+    }
+
+    pub fn leave_function_body(&mut self) {
+        self.leave_scope();
+    }
+
+    pub fn enter_static_block(&mut self) {
+        self.enter_scope(ScopeFlags::ClassStaticBlock);
+    }
+
+    pub fn leave_static_block(&mut self) {
+        self.leave_scope();
     }
 }
