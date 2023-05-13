@@ -62,11 +62,11 @@ impl SemanticBuilder {
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
     ///
-    /// includes: the SymbolFlags that node has in addition to its declaration type (eg: export, ambient, etc.)
+    /// includes: the `SymbolFlags` that node has in addition to its declaration type (eg: export, ambient, etc.)
     /// excludes: the flags which node cannot be declared alongside in a symbol table. Used to report forbidden declarations.
     ///
     /// Reports errors for conflicting identifier names.
-    pub fn declare_symbol(
+    fn declare_symbol(
         &mut self,
         span: Span,
         name: &Atom,
@@ -77,6 +77,12 @@ impl SemanticBuilder {
         self.scope_tree.get_scope_mut(self.current_scope_id).add_symbol(name.clone(), symbol_id);
         symbol_id
     }
+
+    fn resolve_reference(&mut self, name: &Atom) -> Option<SymbolId> {
+        self.scope_tree
+            .ancestors(self.current_scope_id)
+            .find_map(|scope_id| self.scope_tree.get_scope(scope_id).get_binding(name))
+    }
 }
 
 impl SemanticBuilder {
@@ -84,5 +90,9 @@ impl SemanticBuilder {
         let includes = SymbolFlags::FunctionScopedVariable;
         let excludes = SymbolFlags::FunctionScopedVariableExcludes;
         self.declare_symbol(span, name, includes, excludes)
+    }
+
+    pub fn enter_identifier_reference(&mut self, name: &Atom) -> Option<SymbolId> {
+        self.resolve_reference(name)
     }
 }

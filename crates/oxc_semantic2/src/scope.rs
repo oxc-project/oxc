@@ -77,6 +77,10 @@ impl Scope {
         self.flags.intersects(ScopeFlags::Function)
     }
 
+    pub fn get_binding(&self, name: &Atom) -> Option<SymbolId> {
+        self.bindings.get(name).copied()
+    }
+
     pub fn bindings_entry(&mut self, name: Atom) -> Entry<Atom, SymbolId> {
         self.bindings.entry(name)
     }
@@ -94,12 +98,12 @@ impl ScopeTree {
         Self(IndexVec::new())
     }
 
-    pub fn get_scope(&self, scope_id: ScopeId) -> &Scope {
-        &self.0[scope_id]
-    }
-
     pub fn root_scope(&self) -> &Scope {
         self.get_scope(ScopeId::new(0))
+    }
+
+    pub fn get_scope(&self, scope_id: ScopeId) -> &Scope {
+        &self.0[scope_id]
     }
 
     pub fn get_scope_mut(&mut self, scope_id: ScopeId) -> &mut Scope {
@@ -108,5 +112,9 @@ impl ScopeTree {
 
     pub fn add_scope(&mut self, scope: Scope) -> ScopeId {
         self.0.push(scope)
+    }
+
+    pub fn ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
+        std::iter::successors(Some(scope_id), |scope_id| self.get_scope(*scope_id).parent_id())
     }
 }

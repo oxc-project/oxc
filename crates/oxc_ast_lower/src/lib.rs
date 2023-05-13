@@ -315,12 +315,12 @@ impl<'a> AstLower<'a> {
             ast::Expression::Super(expr) => self.lower_super(expr),
             ast::Expression::JSXElement(elem) => {
                 // TODO: implement JSX
-                let ident = self.hir.identifier_reference(elem.span, "undefined".into());
+                let ident = self.hir.identifier_reference(elem.span, "undefined".into(), None);
                 self.hir.identifier_reference_expression(ident)
             }
             ast::Expression::JSXFragment(elem) => {
                 // TODO: implement JSX
-                let ident = self.hir.identifier_reference(elem.span, "undefined".into());
+                let ident = self.hir.identifier_reference(elem.span, "undefined".into(), None);
                 self.hir.identifier_reference_expression(ident)
             }
 
@@ -698,7 +698,7 @@ impl<'a> AstLower<'a> {
             }
             expr => {
                 // return undefined because this is invalid syntax
-                let ident = self.hir.identifier_reference(expr.span(), "undefined".into());
+                let ident = self.hir.identifier_reference(expr.span(), "undefined".into(), None);
                 self.hir.assignment_target_identifier(ident)
             }
         }
@@ -915,7 +915,8 @@ impl<'a> AstLower<'a> {
         &mut self,
         ident: &ast::IdentifierReference,
     ) -> hir::IdentifierReference {
-        self.hir.identifier_reference(ident.span, ident.name.clone())
+        let symbol_id = self.semantic.enter_identifier_reference(&ident.name);
+        self.hir.identifier_reference(ident.span, ident.name.clone(), symbol_id)
     }
 
     fn lower_private_identifier(

@@ -174,8 +174,13 @@ impl<'a> HirBuilder<'a> {
         IdentifierName { span, name }
     }
 
-    pub fn identifier_reference(&mut self, span: Span, name: Atom) -> IdentifierReference {
-        IdentifierReference { span, name }
+    pub fn identifier_reference(
+        &mut self,
+        span: Span,
+        name: Atom,
+        symbol_id: Option<SymbolId>,
+    ) -> IdentifierReference {
+        IdentifierReference { span, name, symbol_id }
     }
 
     pub fn binding_identifier(

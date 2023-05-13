@@ -772,7 +772,11 @@ impl<'a> Gen for Expression<'a> {
 
 impl Gen for IdentifierReference {
     fn gen(&self, p: &mut Printer) {
-        p.print_str(self.name.as_bytes());
+        if let Some(symbol_id) = self.symbol_id {
+            p.print_symbol(symbol_id, &self.name);
+        } else {
+            p.print_str(self.name.as_bytes());
+        }
     }
 }
 

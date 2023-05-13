@@ -370,6 +370,8 @@ pub struct IdentifierReference {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub symbol_id: Option<SymbolId>,
 }
 
 /// Binding Identifier
@@ -379,6 +381,7 @@ pub struct BindingIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub symbol_id: SymbolId,
 }
 
