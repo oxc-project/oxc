@@ -313,6 +313,9 @@ impl<'a> AstLower<'a> {
             ast::Expression::MemberExpression(expr) => self.lower_member_expression(expr),
             ast::Expression::NewExpression(expr) => self.lower_new_expression(expr),
             ast::Expression::ObjectExpression(expr) => self.lower_object_expression(expr),
+            ast::Expression::ParenthesizedExpression(expr) => {
+                self.lower_parenthesized_expression(expr)
+            }
             ast::Expression::PrivateInExpression(expr) => self.lower_private_in_expression(expr),
             ast::Expression::SequenceExpression(expr) => self.lower_sequence_expression(expr),
             ast::Expression::TaggedTemplateExpression(expr) => {
@@ -333,11 +336,7 @@ impl<'a> AstLower<'a> {
                 let ident = self.hir.identifier_reference(elem.span, "undefined".into(), None);
                 self.hir.identifier_reference_expression(ident)
             }
-
             // Syntax trimmed for the following expressions
-            ast::Expression::ParenthesizedExpression(expr) => {
-                self.lower_expression(&expr.expression)
-            }
             ast::Expression::TSAsExpression(expr) => self.lower_expression(&expr.expression),
             ast::Expression::TSSatisfiesExpression(expr) => self.lower_expression(&expr.expression),
             ast::Expression::TSNonNullExpression(expr) => self.lower_expression(&expr.expression),
@@ -547,6 +546,14 @@ impl<'a> AstLower<'a> {
     fn lower_object_expression(&mut self, expr: &ast::ObjectExpression<'a>) -> hir::Expression<'a> {
         let properties = self.lower_vec(&expr.properties, Self::lower_object_property);
         self.hir.object_expression(expr.span, properties, expr.trailing_comma)
+    }
+
+    fn lower_parenthesized_expression(
+        &mut self,
+        expr: &ast::ParenthesizedExpression<'a>,
+    ) -> hir::Expression<'a> {
+        let expression = self.lower_expression(&expr.expression);
+        self.hir.parenthesized_expression(expr.span, expression)
     }
 
     fn lower_object_property(&mut self, prop: &ast::ObjectProperty<'a>) -> hir::ObjectProperty<'a> {

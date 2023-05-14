@@ -72,20 +72,8 @@ impl<'a> Gen for Statement<'a> {
 
 impl<'a> Gen for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        let is_parenthesized_expr = matches!(
-            self.expression,
-            Expression::ObjectExpression(_)
-                | Expression::FunctionExpression(_)
-                | Expression::ClassExpression(_)
-        );
         p.print_indent();
-        if is_parenthesized_expr {
-            p.print(b'(');
-        }
         self.expression.gen(p);
-        if is_parenthesized_expr {
-            p.print(b')');
-        }
         if let Expression::Identifier(ident) = &self.expression
         && ident.name == "let" {
             p.print_semicolon();
@@ -750,6 +738,7 @@ impl<'a> Gen for Expression<'a> {
             Self::CallExpression(expr) => expr.gen(p),
             Self::ArrayExpression(expr) => expr.gen(p),
             Self::ObjectExpression(expr) => expr.gen(p),
+            Self::ParenthesizedExpression(expr) => expr.gen(p),
             Self::FunctionExpression(expr) => expr.gen(p),
             Self::ArrowFunctionExpression(expr) => expr.gen(p),
             Self::YieldExpression(expr) => expr.gen(p),
@@ -900,10 +889,6 @@ impl<'a> Gen for PrivateFieldExpression<'a> {
 
 impl<'a> Gen for CallExpression<'a> {
     fn gen(&self, p: &mut Printer) {
-        let is_func_expr = matches!(self.callee, Expression::FunctionExpression(_));
-        if is_func_expr {
-            p.print(b'(');
-        }
         self.callee.gen(p);
 
         if self.optional {
@@ -912,9 +897,6 @@ impl<'a> Gen for CallExpression<'a> {
         p.print(b'(');
         p.print_list(&self.arguments);
         p.print(b')');
-        if is_func_expr {
-            p.print(b')');
-        }
     }
 }
 
@@ -1055,6 +1037,14 @@ impl<'a> Gen for PropertyValue<'a> {
             Self::Pattern(pattern) => pattern.gen(p),
             Self::Expression(expr) => expr.gen(p),
         }
+    }
+}
+
+impl<'a> Gen for ParenthesizedExpression<'a> {
+    fn gen(&self, p: &mut Printer) {
+        p.print(b'(');
+        self.expression.gen(p);
+        p.print(b')');
     }
 }
 
@@ -1325,9 +1315,7 @@ impl<'a> Gen for AssignmentTargetPropertyProperty<'a> {
 
 impl<'a> Gen for SequenceExpression<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print(b'(');
         p.print_list(&self.expressions);
-        p.print(b')');
     }
 }
 

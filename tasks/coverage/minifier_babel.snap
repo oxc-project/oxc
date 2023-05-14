@@ -1,21 +1,4 @@
 Minifier_Babel Summary:
 AST Parsed     : 1621/1621 (100.00%)
-Positive Passed: 1603/1621 (98.89%)
-Expect to Parse: "comments/basic/object-method-async-generator/input.js"
-Expect to Parse: "core/categorized/02-regex/input.js"
-Expect to Parse: "core/categorized/not-directive/input.js"
-Expect to Parse: "core/create-parenthesized-expressions/valid-parenthesized-expression/input.js"
-Expect to Parse: "core/object/member-expression-after-property-initializer-1/input.js"
-Expect to Parse: "core/object/member-expression-after-property-initializer-2/input.js"
+Positive Passed: 1620/1621 (99.94%)
 Expect to Parse: "core/regression/use-strict-with-pre-semi/input.js"
-Expect to Parse: "core/uncategorised/540/input.js"
-Expect to Parse: "es2015/arrow-functions/in-logic-expression/input.js"
-Expect to Parse: "es2015/destructuring/duplicate-proto-1/input.js"
-Expect to Parse: "es2015/destructuring/lhs-parenthesized-assignment/input.js"
-Expect to Parse: "es2015/destructuring/lhs-parenthesized-object/input.js"
-Expect to Parse: "es2015/modules/export-default-class-expression/input.js"
-Expect to Parse: "es2015/uncategorised/307/input.js"
-Expect to Parse: "es2019/json-strings/string-line-separator/input.js"
-Expect to Parse: "es2019/json-strings/string-paragraph-separator/input.js"
-Expect to Parse: "esprima/es2015-destructuring-assignment-object-pattern/empty-object-pattern-assignment/input.js"
-Expect to Parse: "esprima/es2015-destructuring-assignment-object-pattern/object-pattern-assignment/input.js"

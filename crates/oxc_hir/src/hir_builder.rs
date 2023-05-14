@@ -581,6 +581,16 @@ impl<'a> HirBuilder<'a> {
         ObjectProperty::Property(self.alloc(property))
     }
 
+    pub fn parenthesized_expression(
+        &self,
+        span: Span,
+        expression: Expression<'a>,
+    ) -> Expression<'a> {
+        Expression::ParenthesizedExpression(
+            self.alloc(ParenthesizedExpression { span, expression }),
+        )
+    }
+
     pub fn private_in_expression(
         &mut self,
         span: Span,

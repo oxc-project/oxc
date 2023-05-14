@@ -338,6 +338,7 @@ pub trait VisitMut<'a, 'b>: Sized {
             Expression::MemberExpression(expr) => self.visit_member_expression(expr),
             Expression::NewExpression(expr) => self.visit_new_expression(expr),
             Expression::ObjectExpression(expr) => self.visit_object_expression(expr),
+            Expression::ParenthesizedExpression(expr) => self.visit_parenthesized_expression(expr),
             Expression::PrivateInExpression(expr) => self.visit_private_in_expression(expr),
             Expression::SequenceExpression(expr) => self.visit_sequence_expression(expr),
             Expression::TaggedTemplateExpression(expr) => {
@@ -504,6 +505,10 @@ pub trait VisitMut<'a, 'b>: Sized {
             PropertyValue::Pattern(pat) => self.visit_binding_pattern(pat),
             PropertyValue::Expression(expr) => self.visit_expression(expr),
         }
+    }
+
+    fn visit_parenthesized_expression(&mut self, expr: &'b mut ParenthesizedExpression<'a>) {
+        self.visit_expression(&mut expr.expression);
     }
 
     fn visit_private_in_expression(&mut self, expr: &'b mut PrivateInExpression<'a>) {
