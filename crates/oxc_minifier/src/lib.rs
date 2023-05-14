@@ -15,11 +15,21 @@ use crate::compressor::Compressor;
 use crate::printer::Printer;
 pub use crate::printer::PrinterOptions;
 
-#[derive(Debug, Default, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {
     pub mangle: bool,
     pub compress: CompressOptions,
     pub print: PrinterOptions,
+}
+
+impl Default for MinifierOptions {
+    fn default() -> Self {
+        Self {
+            mangle: true,
+            compress: CompressOptions::default(),
+            print: PrinterOptions::default(),
+        }
+    }
 }
 
 pub struct Minifier<'a> {

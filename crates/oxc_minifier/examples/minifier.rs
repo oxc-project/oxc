@@ -16,6 +16,7 @@ fn main() {
 
     println!("------------------------------");
     let options = MinifierOptions {
+        mangle: false,
         print: PrinterOptions { minify_whitespace: false, ..PrinterOptions::default() },
         ..MinifierOptions::default()
     };
@@ -24,7 +25,6 @@ fn main() {
 
     println!("------ Mangle ----------------");
     let options = MinifierOptions {
-        mangle: true,
         print: PrinterOptions { minify_whitespace: false, ..PrinterOptions::default() },
         ..MinifierOptions::default()
     };
@@ -33,6 +33,7 @@ fn main() {
 
     println!("------ Minify Whitespace -----");
     let options = MinifierOptions {
+        mangle: false,
         print: PrinterOptions { minify_whitespace: true, ..PrinterOptions::default() },
         ..MinifierOptions::default()
     };
