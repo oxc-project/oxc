@@ -110,12 +110,13 @@ impl SymbolTable {
     pub fn mangle(&mut self) {
         let frequencies = self.mangler.tally_slot_frequency(self);
         let mut i = 0;
+        let unresolved_references =
+            self.unresolved_references.values().filter(|name| name.len() < 5).collect::<Vec<_>>();
         for freq in &frequencies {
             let name = loop {
                 let name = Atom::base54(i);
                 i += 1;
-                if !Mangler::is_keyword(&name)
-                    && !self.unresolved_references.values().any(|n| name == n)
+                if !Mangler::is_keyword(&name) && !unresolved_references.iter().any(|n| **n == name)
                 {
                     break name;
                 }
