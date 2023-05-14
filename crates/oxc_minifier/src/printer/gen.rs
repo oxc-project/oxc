@@ -1029,16 +1029,12 @@ impl<'a> Gen for Property<'a> {
         if self.computed {
             p.print(b'[');
         }
-        if !self.shorthand {
-            self.key.gen(p);
-        }
+        self.key.gen(p);
         if self.computed {
             p.print(b']');
         }
-        if !self.shorthand {
-            p.print_colon();
-            p.print_space();
-        }
+        p.print_colon();
+        p.print_space();
         self.value.gen(p);
     }
 }

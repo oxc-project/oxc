@@ -1,10 +1,12 @@
 #![allow(non_upper_case_globals)]
 
+use std::collections::BTreeMap;
+
 use bitflags::bitflags;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::{Atom, Span};
 
-use crate::reference::Reference;
+use crate::{mangler::Mangler, reference::Reference};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SymbolId(usize);
@@ -61,19 +63,24 @@ impl SymbolFlags {
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug)]
 pub struct SymbolTable {
-    names: IndexVec<SymbolId, Atom>,
-    spans: IndexVec<SymbolId, Span>,
-    flags: IndexVec<SymbolId, SymbolFlags>,
-    references: IndexVec<SymbolId, Vec<Reference>>,
+    pub(crate) spans: IndexVec<SymbolId, Span>,
+    pub(crate) names: IndexVec<SymbolId, Atom>,
+    pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
+    pub(crate) references: IndexVec<SymbolId, Vec<Reference>>,
+    pub(crate) unresolved_references: BTreeMap<Span, Atom>,
+
+    pub(crate) mangler: Mangler,
 }
 
 impl SymbolTable {
     pub fn new() -> Self {
         Self {
-            names: IndexVec::new(),
             spans: IndexVec::new(),
+            names: IndexVec::new(),
             flags: IndexVec::new(),
             references: IndexVec::new(),
+            unresolved_references: BTreeMap::default(),
+            mangler: Mangler::default(),
         }
     }
 
@@ -81,9 +88,13 @@ impl SymbolTable {
         &self.names[symbol_id]
     }
 
-    pub fn add_symbol(&mut self, name: Atom, span: Span, flag: SymbolFlags) -> SymbolId {
-        let _ = self.names.push(name);
+    pub fn get_flag(&self, symbol_id: SymbolId) -> SymbolFlags {
+        self.flags[symbol_id]
+    }
+
+    pub fn add_symbol(&mut self, span: Span, name: Atom, flag: SymbolFlags) -> SymbolId {
         let _ = self.spans.push(span);
+        let _ = self.names.push(name);
         let _ = self.references.push(vec![]);
         self.flags.push(flag)
     }
@@ -92,32 +103,26 @@ impl SymbolTable {
         self.references[reference.symbol_id()].push(reference);
     }
 
-    pub fn mangle(&mut self) {
-        let mut offset = 0;
-        for (symbol_id, flag) in self.flags.iter_enumerated() {
-            if flag.is_variable() {
-                let name = loop {
-                    let name = Atom::base54(symbol_id.index() + offset);
-                    if Self::is_keyword(&name) {
-                        offset += 1;
-                    } else {
-                        break name;
-                    }
-                };
-                self.names[symbol_id] = name;
-            }
-        }
+    pub fn add_unresolved_reference(&mut self, span: Span, name: Atom) {
+        self.unresolved_references.insert(span, name);
     }
 
-    #[rustfmt::skip]
-    fn is_keyword(s: &str) -> bool {
-        let len = s.len();
-        if len == 1 {
-            return false;
+    pub fn mangle(&mut self) {
+        let frequencies = self.mangler.tally_slot_frequency(self);
+        let mut i = 0;
+        for freq in &frequencies {
+            let name = loop {
+                let name = Atom::base54(i);
+                i += 1;
+                if !Mangler::is_keyword(&name)
+                    && !self.unresolved_references.values().any(|n| name == n)
+                {
+                    break name;
+                }
+            };
+            for symbol_id in &freq.symbol_ids {
+                self.names[*symbol_id] = name.clone();
+            }
         }
-        matches!(s, "as" | "do" | "if" | "in" | "is" | "of" | "any" | "for" | "get"
-                | "let" | "new" | "out" | "set" | "try" | "var" | "case" | "else"
-                | "enum" | "from" | "meta" | "null" | "this" | "true" | "type"
-                | "void" | "with")
     }
 }

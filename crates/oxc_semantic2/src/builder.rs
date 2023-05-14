@@ -32,6 +32,10 @@ impl SemanticBuilder {
         self.scope_tree.get_scope(self.current_scope_id)
     }
 
+    fn current_scope_mut(&mut self) -> &mut Scope {
+        self.scope_tree.get_scope_mut(self.current_scope_id)
+    }
+
     fn enter_scope(&mut self, flags: ScopeFlags) {
         let mut flags = flags;
         // Inherit strict mode for functions
@@ -56,6 +60,7 @@ impl SemanticBuilder {
     }
 
     pub fn leave_scope(&mut self) {
+        self.symbol_table.mangler.decrease_slot(self.current_scope().bindings().len());
         if let Some(parent_id) = self.current_scope().parent_id() {
             self.current_scope_id = parent_id;
         }
@@ -72,20 +77,44 @@ impl SemanticBuilder {
         span: Span,
         name: &Atom,
         includes: SymbolFlags,
-        _excludes: SymbolFlags,
+        excludes: SymbolFlags,
     ) -> SymbolId {
-        let symbol_id = self.symbol_table.add_symbol(name.clone(), span, includes);
-        self.scope_tree.get_scope_mut(self.current_scope_id).add_symbol(name.clone(), symbol_id);
+        if let Some(symbol_id) = self.check_redeclaration(span, name, excludes) {
+            return symbol_id;
+        }
+        let symbol_id = self.symbol_table.add_symbol(span, name.clone(), includes);
+        if includes.is_variable() {
+            self.current_scope_mut().add_binding(name.clone(), symbol_id);
+            self.symbol_table.mangler.add_slot(symbol_id);
+        }
         symbol_id
     }
 
-    fn resolve_reference(&mut self, name: &Atom) -> Option<SymbolId> {
-        let symbol_id = self
+    fn check_redeclaration(
+        &mut self,
+        _span: Span,
+        name: &Atom,
+        _excludes: SymbolFlags,
+    ) -> Option<SymbolId> {
+        self.current_scope().bindings().get(name).copied()
+        // TODO: redeclaration error
+        // if self.symbol_table.get_flag(symbol_id).intersects(excludes) {
+        // self.error(Redeclaration(name.clone(), symbol.span(), span));
+        // }
+    }
+
+    fn resolve_reference(&mut self, span: Span, name: &Atom) -> Option<SymbolId> {
+        if let Some(symbol_id) = self
             .scope_tree
             .ancestors(self.current_scope_id)
-            .find_map(|scope_id| self.scope_tree.get_scope(scope_id).get_binding(name))?;
-        self.symbol_table.add_reference(Reference::new_read(symbol_id));
-        Some(symbol_id)
+            .find_map(|scope_id| self.scope_tree.get_scope(scope_id).get_binding(name))
+        {
+            self.symbol_table.add_reference(Reference::new_read(symbol_id));
+            Some(symbol_id)
+        } else {
+            self.symbol_table.add_unresolved_reference(span, name.clone());
+            None
+        }
     }
 }
 
@@ -100,15 +129,15 @@ impl SemanticBuilder {
         self.declare_symbol(span, name, includes, excludes)
     }
 
-    pub fn enter_identifier_reference(&mut self, name: &Atom) -> Option<SymbolId> {
-        self.resolve_reference(name)
+    pub fn enter_identifier_reference(&mut self, span: Span, name: &Atom) -> Option<SymbolId> {
+        self.resolve_reference(span, name)
     }
 
-    pub fn enter_block(&mut self) {
+    pub fn enter_block_statement(&mut self) {
         self.enter_scope(ScopeFlags::empty());
     }
 
-    pub fn leave_block(&mut self) {
+    pub fn leave_block_statement(&mut self) {
         self.leave_scope();
     }
 
@@ -125,6 +154,14 @@ impl SemanticBuilder {
     }
 
     pub fn leave_static_block(&mut self) {
+        self.leave_scope();
+    }
+
+    pub fn enter_catch_clause(&mut self) {
+        self.enter_scope(ScopeFlags::empty());
+    }
+
+    pub fn leave_catch_clause(&mut self) {
         self.leave_scope();
     }
 }

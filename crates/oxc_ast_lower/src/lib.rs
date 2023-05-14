@@ -69,7 +69,10 @@ impl<'a> AstLower<'a> {
 
     fn lower_statement(&mut self, statement: &ast::Statement<'a>) -> Option<hir::Statement<'a>> {
         match statement {
-            ast::Statement::BlockStatement(stmt) => Some(self.lower_block_statement(stmt)),
+            ast::Statement::BlockStatement(stmt) => {
+                let block = self.lower_block_statement(stmt);
+                Some(hir::Statement::BlockStatement(block))
+            }
             ast::Statement::BreakStatement(stmt) => Some(self.lower_break_statement(stmt)),
             ast::Statement::ContinueStatement(stmt) => Some(self.lower_continue_statement(stmt)),
             ast::Statement::DebuggerStatement(stmt) => Some(self.lower_debugger_statement(stmt)),
@@ -96,16 +99,14 @@ impl<'a> AstLower<'a> {
         }
     }
 
-    fn lower_block(&mut self, stmt: &ast::BlockStatement<'a>) -> Box<'a, hir::BlockStatement<'a>> {
+    fn lower_block_statement(
+        &mut self,
+        stmt: &ast::BlockStatement<'a>,
+    ) -> Box<'a, hir::BlockStatement<'a>> {
+        self.semantic.enter_block_statement();
         let body = self.lower_statements(&stmt.body);
+        self.semantic.leave_block_statement();
         self.hir.block(stmt.span, body)
-    }
-
-    fn lower_block_statement(&mut self, stmt: &ast::BlockStatement<'a>) -> hir::Statement<'a> {
-        self.semantic.enter_block();
-        let body = self.lower_statements(&stmt.body);
-        self.semantic.leave_block();
-        self.hir.block_statement(stmt.span, body)
     }
 
     fn lower_break_statement(&mut self, stmt: &ast::BreakStatement) -> hir::Statement<'a> {
@@ -226,9 +227,9 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_try_statement(&mut self, stmt: &ast::TryStatement<'a>) -> hir::Statement<'a> {
-        let block = self.lower_block(&stmt.block);
+        let block = self.lower_block_statement(&stmt.block);
         let handler = stmt.handler.as_ref().map(|clause| self.lower_catch_clause(clause));
-        let finalizer = stmt.finalizer.as_ref().map(|stmt| self.lower_block(stmt));
+        let finalizer = stmt.finalizer.as_ref().map(|stmt| self.lower_block_statement(stmt));
         self.hir.try_statement(stmt.span, block, handler, finalizer)
     }
 
@@ -236,6 +237,7 @@ impl<'a> AstLower<'a> {
         &mut self,
         clause: &ast::CatchClause<'a>,
     ) -> Box<'a, hir::CatchClause<'a>> {
+        self.semantic.enter_catch_clause();
         let param = clause.param.as_ref().map(|pat| {
             self.lower_binding_pattern(
                 pat,
@@ -243,7 +245,9 @@ impl<'a> AstLower<'a> {
                 SymbolFlags::BlockScopedVariableExcludes,
             )
         });
-        let body = self.lower_block(&clause.body);
+        let body = self.lower_statements(&clause.body.body);
+        let body = self.hir.block(clause.body.span, body);
+        self.semantic.leave_catch_clause();
         self.hir.catch_clause(clause.span, param, body)
     }
 
@@ -968,7 +972,7 @@ impl<'a> AstLower<'a> {
         &mut self,
         ident: &ast::IdentifierReference,
     ) -> hir::IdentifierReference {
-        let symbol_id = self.semantic.enter_identifier_reference(&ident.name);
+        let symbol_id = self.semantic.enter_identifier_reference(ident.span, &ident.name);
         self.hir.identifier_reference(ident.span, ident.name.clone(), symbol_id)
     }
 
@@ -1363,8 +1367,8 @@ impl<'a> AstLower<'a> {
     ) -> hir::FormalParameter<'a> {
         let pattern = self.lower_binding_pattern(
             &param.pattern,
-            SymbolFlags::BlockScopedVariable,
-            SymbolFlags::BlockScopedVariableExcludes,
+            SymbolFlags::FunctionScopedVariable,
+            SymbolFlags::FunctionScopedVariableExcludes,
         );
         let decorators = self.lower_vec(&param.decorators, Self::lower_decorator);
         self.hir.formal_parameter(param.span, pattern, decorators)

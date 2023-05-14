@@ -1,7 +1,5 @@
 #![allow(non_upper_case_globals)]
 
-use std::collections::hash_map::Entry;
-
 use bitflags::bitflags;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Atom;
@@ -57,12 +55,16 @@ impl Scope {
         Self { parent_id, flags, bindings: FxHashMap::default() }
     }
 
+    pub fn parent_id(&self) -> Option<ScopeId> {
+        self.parent_id
+    }
+
     pub fn flags(&self) -> ScopeFlags {
         self.flags
     }
 
-    pub fn parent_id(&self) -> Option<ScopeId> {
-        self.parent_id
+    pub fn bindings(&self) -> &FxHashMap<Atom, SymbolId> {
+        &self.bindings
     }
 
     pub fn is_strict_mode(&self) -> bool {
@@ -81,11 +83,7 @@ impl Scope {
         self.bindings.get(name).copied()
     }
 
-    pub fn bindings_entry(&mut self, name: Atom) -> Entry<Atom, SymbolId> {
-        self.bindings.entry(name)
-    }
-
-    pub fn add_symbol(&mut self, name: Atom, symbol_id: SymbolId) {
+    pub fn add_binding(&mut self, name: Atom, symbol_id: SymbolId) {
         self.bindings.insert(name, symbol_id);
     }
 }
