@@ -24,7 +24,7 @@ struct Redeclaration(
 
 /// ObjectExpression.properties
 pub struct ObjectExpressionProperties<'a> {
-    pub elements: Vec<'a, ObjectProperty<'a>>,
+    pub elements: Vec<'a, ObjectPropertyKind<'a>>,
     pub trailing_comma: Option<Span>,
 }
 
@@ -43,8 +43,8 @@ impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
         let element = match p.cur_kind() {
-            Kind::Dot3 => p.parse_spread_element().map(ObjectProperty::SpreadProperty),
-            _ => p.parse_property_definition().map(ObjectProperty::Property),
+            Kind::Dot3 => p.parse_spread_element().map(ObjectPropertyKind::SpreadProperty),
+            _ => p.parse_property_definition().map(ObjectPropertyKind::ObjectProperty),
         }?;
 
         if p.at(Kind::Comma) && p.peek_at(self.close()) {
@@ -58,12 +58,13 @@ impl<'a> SeparatedList<'a> for ObjectExpressionProperties<'a> {
 
 /// ObjectPattern.properties
 pub struct ObjectPatternProperties<'a> {
-    pub elements: Vec<'a, ObjectPatternProperty<'a>>,
+    pub elements: Vec<'a, BindingProperty<'a>>,
+    pub rest: Option<oxc_allocator::Box<'a, RestElement<'a>>>,
 }
 
 impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
     fn new(p: &Parser<'a>) -> Self {
-        Self { elements: p.ast.new_vec() }
+        Self { elements: p.ast.new_vec(), rest: None }
     }
 
     fn open(&self) -> Kind {
@@ -75,22 +76,18 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
     }
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
-        let element = match p.cur_kind() {
-            Kind::Dot3 => {
-                let rest_element = p.parse_rest_element()?;
-
-                if !matches!(rest_element.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
-                    p.error(diagnostics::InvalidRestArgument(rest_element.span));
-                }
-
-                ObjectPatternProperty::RestElement(rest_element)
+        if p.cur_kind() == Kind::Dot3 {
+            let rest = p.parse_rest_element()?;
+            if !matches!(&rest.argument.kind, BindingPatternKind::BindingIdentifier(_)) {
+                p.error(diagnostics::InvalidRestElement(rest.argument.span()));
             }
-            _ => p
-                .parse_object_pattern_property()
-                .map(|prop| p.ast.alloc(prop))
-                .map(ObjectPatternProperty::Property)?,
-        };
-        self.elements.push(element);
+            if let Some(r) = self.rest.replace(rest) {
+                p.error(diagnostics::RestElementLast(r.span));
+            }
+        } else {
+            let prop = p.parse_object_pattern_property()?;
+            self.elements.push(prop);
+        }
         Ok(())
     }
 }

@@ -428,25 +428,25 @@ pub enum ArrayExpressionElement<'a> {
 pub struct ObjectExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub properties: Vec<'a, ObjectProperty<'a>>,
+    pub properties: Vec<'a, ObjectPropertyKind<'a>>,
     pub trailing_comma: Option<Span>,
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-pub enum ObjectProperty<'a> {
-    Property(Box<'a, Property<'a>>),
+pub enum ObjectPropertyKind<'a> {
+    ObjectProperty(Box<'a, ObjectProperty<'a>>),
     SpreadProperty(Box<'a, SpreadElement<'a>>),
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct Property<'a> {
+pub struct ObjectProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
-    pub value: PropertyValue<'a>,
+    pub value: Expression<'a>,
     pub method: bool,
     pub shorthand: bool,
     pub computed: bool,
@@ -949,6 +949,7 @@ pub struct ParenthesizedExpression<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
 }
+
 /// Statements
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
@@ -1302,14 +1303,21 @@ pub struct AssignmentPattern<'a> {
 pub struct ObjectPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub properties: Vec<'a, ObjectPatternProperty<'a>>,
+    pub properties: Vec<'a, BindingProperty<'a>>,
+    pub rest: Option<Box<'a, RestElement<'a>>>,
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-pub enum ObjectPatternProperty<'a> {
-    Property(Box<'a, Property<'a>>),
-    RestElement(Box<'a, RestElement<'a>>),
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct BindingProperty<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub kind: PropertyKind,
+    pub key: PropertyKey<'a>,
+    pub value: BindingPattern<'a>,
+    pub method: bool,
+    pub shorthand: bool,
+    pub computed: bool,
 }
 
 #[derive(Debug, Hash)]

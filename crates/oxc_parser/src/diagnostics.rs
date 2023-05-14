@@ -134,9 +134,9 @@ pub struct SpreadLastElement(#[label] pub Span);
 pub struct RestElementTrailingComma(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Invalid rest argument")]
-#[diagnostic(help("Expected identifier in rest argument"))]
-pub struct InvalidRestArgument(#[label] pub Span);
+#[error("Invalid rest element")]
+#[diagnostic(help("Expected identifier in rest element"))]
+pub struct InvalidRestElement(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Cannot assign to this expression")]

@@ -465,7 +465,7 @@ impl<'a> AstBuilder<'a> {
     pub fn object_expression(
         &self,
         span: Span,
-        properties: Vec<'a, ObjectProperty<'a>>,
+        properties: Vec<'a, ObjectPropertyKind<'a>>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a> {
         Expression::ObjectExpression(self.alloc(ObjectExpression {
@@ -724,9 +724,10 @@ impl<'a> AstBuilder<'a> {
     pub fn object_pattern(
         &self,
         span: Span,
-        properties: Vec<'a, ObjectPatternProperty<'a>>,
+        properties: Vec<'a, BindingProperty<'a>>,
+        rest: Option<Box<'a, RestElement<'a>>>,
     ) -> BindingPatternKind<'a> {
-        BindingPatternKind::ObjectPattern(self.alloc(ObjectPattern { span, properties }))
+        BindingPatternKind::ObjectPattern(self.alloc(ObjectPattern { span, properties, rest }))
     }
 
     pub fn spread_element(
@@ -742,12 +743,13 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         kind: PropertyKind,
         key: PropertyKey<'a>,
-        value: PropertyValue<'a>,
+        value: Expression<'a>,
+        init: Option<Expression<'a>>,
         method: bool,
         shorthand: bool,
         computed: bool,
-    ) -> Box<'a, Property<'a>> {
-        self.alloc(Property { span, kind, key, value, method, shorthand, computed })
+    ) -> Box<'a, ObjectProperty<'a>> {
+        self.alloc(ObjectProperty { span, kind, key, value, init, method, shorthand, computed })
     }
 
     pub fn array_pattern(

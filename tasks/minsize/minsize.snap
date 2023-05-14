@@ -1,14 +1,14 @@
 Original   -> Minified   -> Gzip
-72.14 kB   -> 24.93 kB   -> 9.40 kB    react.development.js
-173.90 kB  -> 66.04 kB   -> 23.15 kB   moment.js
-287.63 kB  -> 97.61 kB   -> 35.10 kB   jquery.js
-342.15 kB  -> 136.68 kB  -> 53.06 kB   vue.js
-544.10 kB  -> 86.48 kB   -> 34.98 kB   lodash.js
-555.77 kB  -> 305.80 kB  -> 112.23 kB  d3.js
-905.11 kB  -> 444.04 kB  -> 127.11 kB  bundle.min.js
-1.25 MB    -> 711.21 kB  -> 185.77 kB  three.js
-2.14 MB    -> 760.08 kB  -> 187.71 kB  victory.js
-3.20 MB    -> 1.15 MB    -> 399.07 kB  echarts.js
-6.69 MB    -> 2.42 MB    -> 501.33 kB  antd.js
+72.14 kB   -> 25.02 kB   -> 9.42 kB    react.development.js
+173.90 kB  -> 66.07 kB   -> 23.16 kB   moment.js
+287.63 kB  -> 98.18 kB   -> 35.21 kB   jquery.js
+342.15 kB  -> 136.89 kB  -> 53.13 kB   vue.js
+544.10 kB  -> 86.47 kB   -> 34.98 kB   lodash.js
+555.77 kB  -> 305.93 kB  -> 112.28 kB  d3.js
+905.11 kB  -> 444.54 kB  -> 127.19 kB  bundle.min.js
+1.25 MB    -> 714.65 kB  -> 186.22 kB  three.js
+2.14 MB    -> 779.36 kB  -> 189.01 kB  victory.js
+3.20 MB    -> 1.15 MB    -> 399.67 kB  echarts.js
+6.69 MB    -> 2.48 MB    -> 504.90 kB  antd.js
 8.11 MB    -> 3.52 MB    -> 1.04 MB    typescript.js
 4.44 MB    -> 4.62 MB    -> 1.05 MB    babylon.js

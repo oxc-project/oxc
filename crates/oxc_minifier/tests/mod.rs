@@ -126,12 +126,11 @@ impl TestCase {
     fn parse_options<'a>(object_expr: &'a ObjectExpression<'a>) -> CompressOptions {
         let mut options = CompressOptions::default();
         for object_property in &object_expr.properties {
-            if let ObjectProperty::Property(property) = object_property
-                && let PropertyValue::Expression(value_expr) = &property.value
+            if let ObjectPropertyKind::ObjectProperty(property) = object_property
                 && let Some(name) = property.key.static_name() {
                 match name.as_str() {
                     "drop_debugger" => {
-                        options.drop_debugger = Self::get_boolean(value_expr);
+                        options.drop_debugger = Self::get_boolean(&property.value);
                     }
                     _ => {}
                 }

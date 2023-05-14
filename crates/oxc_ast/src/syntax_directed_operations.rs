@@ -43,14 +43,10 @@ impl<'a> BoundNames for ArrayPattern<'a> {
 impl<'a> BoundNames for ObjectPattern<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
         for p in &self.properties {
-            match p {
-                ObjectPatternProperty::Property(property) => {
-                    if let PropertyValue::Pattern(pattern) = &property.value {
-                        pattern.bound_names(f);
-                    }
-                }
-                ObjectPatternProperty::RestElement(rest) => rest.argument.bound_names(f),
-            }
+            p.value.bound_names(f);
+        }
+        if let Some(rest) = &self.rest {
+            rest.bound_names(f);
         }
     }
 }
@@ -172,16 +168,16 @@ pub trait PropName {
     fn prop_name(&self) -> Option<(&str, Span)>;
 }
 
-impl<'a> PropName for ObjectProperty<'a> {
+impl<'a> PropName for ObjectPropertyKind<'a> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         match self {
-            ObjectProperty::Property(prop) => prop.prop_name(),
-            ObjectProperty::SpreadProperty(_) => None,
+            ObjectPropertyKind::ObjectProperty(prop) => prop.prop_name(),
+            ObjectPropertyKind::SpreadProperty(_) => None,
         }
     }
 }
 
-impl<'a> PropName for Property<'a> {
+impl<'a> PropName for ObjectProperty<'a> {
     fn prop_name(&self) -> Option<(&str, Span)> {
         if self.kind != PropertyKind::Init || self.method || self.shorthand || self.computed {
             return None;

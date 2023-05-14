@@ -4,10 +4,10 @@ use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
 use oxc_ast::ast::{
     ArrayExpression, ArrayExpressionElement, CallExpression, ExpressionStatement, ObjectExpression,
-    Program, Property, Statement, StringLiteral, TemplateLiteral,
+    ObjectProperty, Program, Statement, StringLiteral, TemplateLiteral,
 };
 use oxc_ast::{
-    ast::{Argument, Expression, ObjectProperty, PropertyKey, PropertyValue},
+    ast::{Argument, Expression, ObjectPropertyKind, PropertyKey},
     Visit,
 };
 use oxc_parser::Parser;
@@ -82,16 +82,13 @@ impl<'a> Visit<'a> for TestCase<'a> {
     fn visit_object_expression(&mut self, expr: &'a ObjectExpression<'a>) {
         for obj_prop in &expr.properties {
             match obj_prop {
-                ObjectProperty::Property(prop) => match &prop.key {
-                    PropertyKey::Identifier(ident) if ident.name == "code" => match &prop.value {
-                        PropertyValue::Expression(expr) => {
-                            let Expression::StringLiteral(s) = expr else {
-                                    continue;
-                                  };
-                            self.code = Some(Cow::Borrowed(s.value.as_str()));
-                        }
-                        PropertyValue::Pattern(_) => continue,
-                    },
+                ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
+                    PropertyKey::Identifier(ident) if ident.name == "code" => {
+                        let Expression::StringLiteral(s) = &prop.value else {
+                            continue;
+                        };
+                        self.code = Some(Cow::Borrowed(s.value.as_str()));
+                    }
                     PropertyKey::Identifier(ident) if ident.name == "options" => {
                         let span = prop.value.span();
                         let option_text = &self.source_text[span.start as usize..span.end as usize];
@@ -100,7 +97,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
                     }
                     _ => continue,
                 },
-                ObjectProperty::SpreadProperty(_) => continue,
+                ObjectPropertyKind::SpreadProperty(_) => continue,
             }
         }
     }
@@ -191,26 +188,22 @@ impl<'a> Visit<'a> for State<'a> {
     fn visit_argument(&mut self, arg: &'a Argument<'a>) {
         if let Argument::Expression(Expression::ObjectExpression(obj_expr)) = arg {
             for obj_prop in &obj_expr.properties {
-                let ObjectProperty::Property(prop) = obj_prop else { return };
-                self.visit_property(prop);
+                let ObjectPropertyKind::ObjectProperty(prop) = obj_prop else { return };
+                self.visit_object_property(prop);
             }
         }
     }
 
-    fn visit_property(&mut self, prop: &'a Property<'a>) {
+    fn visit_object_property(&mut self, prop: &'a ObjectProperty<'a>) {
         let PropertyKey::Identifier(ident) = &prop.key else { return };
         match ident.name.as_str() {
             "valid" => {
-                if let PropertyValue::Expression(Expression::ArrayExpression(array_expr)) =
-                    &prop.value
-                {
+                if let Expression::ArrayExpression(array_expr) = &prop.value {
                     self.valid_tests.push(array_expr);
                 }
             }
             "invalid" => {
-                if let PropertyValue::Expression(Expression::ArrayExpression(array_expr)) =
-                    &prop.value
-                {
+                if let Expression::ArrayExpression(array_expr) = &prop.value {
                     self.invalid_tests.push(array_expr);
                 }
             }

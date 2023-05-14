@@ -960,18 +960,18 @@ impl<'a> Gen for ObjectExpression<'a> {
     }
 }
 
-impl<'a> Gen for ObjectProperty<'a> {
+impl<'a> Gen for ObjectPropertyKind<'a> {
     fn gen(&self, p: &mut Printer) {
         match self {
-            Self::Property(prop) => prop.gen(p),
+            Self::ObjectProperty(prop) => prop.gen(p),
             Self::SpreadProperty(elem) => elem.gen(p),
         }
     }
 }
 
-impl<'a> Gen for Property<'a> {
+impl<'a> Gen for ObjectProperty<'a> {
     fn gen(&self, p: &mut Printer) {
-        if let PropertyValue::Expression(Expression::FunctionExpression(func)) = &self.value {
+        if let Expression::FunctionExpression(func) = &self.value {
             let is_accessor = match &self.kind {
                 PropertyKind::Init => false,
                 PropertyKind::Get => {
@@ -1007,7 +1007,6 @@ impl<'a> Gen for Property<'a> {
                 return;
             }
         }
-
         if self.computed {
             p.print(b'[');
         }
@@ -1760,17 +1759,29 @@ impl<'a> Gen for ObjectPattern<'a> {
         p.print(b'{');
         p.print_space();
         p.print_list(&self.properties);
+        if let Some(rest) = &self.rest {
+            if !self.properties.is_empty() {
+                p.print(b',');
+            }
+            rest.gen(p);
+        }
         p.print_space();
         p.print(b'}');
     }
 }
 
-impl<'a> Gen for ObjectPatternProperty<'a> {
+impl<'a> Gen for BindingProperty<'a> {
     fn gen(&self, p: &mut Printer) {
-        match self {
-            Self::Property(prop) => prop.gen(p),
-            Self::RestElement(elem) => elem.gen(p),
+        if self.computed {
+            p.print(b'[');
         }
+        self.key.gen(p);
+        if self.computed {
+            p.print(b']');
+        }
+        p.print(b':');
+        p.print_space();
+        self.value.gen(p);
     }
 }
 

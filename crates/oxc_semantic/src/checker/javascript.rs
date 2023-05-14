@@ -58,7 +58,7 @@ impl EarlyErrorJavaScript {
 
             AstKind::Class(class) => check_class(class, ctx),
             AstKind::Super(sup) => check_super(sup, node, ctx),
-            AstKind::Property(prop) => check_property(prop, ctx),
+            AstKind::ObjectProperty(prop) => check_object_property(prop, ctx),
 
             AstKind::FormalParameters(params) => check_formal_parameters(params, node, ctx),
             AstKind::FormalParameter(param) => check_formal_parameter(param, ctx),
@@ -898,12 +898,10 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
                 }
                 break;
             }
-            AstKind::PropertyValue(value) => {
-                if let PropertyValue::Expression(
-                    Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_),
-                ) = value
-                {
-                    if let Some(super_call_span) = super_call_span {
+            AstKind::ObjectProperty(prop) => {
+                if prop.value.is_function() {
+                    if let Some(super_call_span) = super_call_span
+                    && super_call_span.start > prop.key.span().end {
                         return ctx.error(UnexpectedSuperCall(super_call_span));
                     }
                     break;
@@ -931,7 +929,7 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     }
 }
 
-fn check_property(prop: &Property, ctx: &SemanticBuilder) {
+fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder) {
     #[derive(Debug, Error, Diagnostic)]
     #[error("Invalid assignment in object literal")]
     #[diagnostic(help(
@@ -941,10 +939,8 @@ fn check_property(prop: &Property, ctx: &SemanticBuilder) {
 
     // PropertyDefinition : CoverInitializedName
     // It is a Syntax Error if any source text is matched by this production.
-    if prop.shorthand {
-        if let PropertyValue::Expression(Expression::AssignmentExpression(expr)) = &prop.value {
-            ctx.error(CoverInitializedName(expr.span));
-        }
+    if let Some(expr) = &prop.init {
+        ctx.error(CoverInitializedName(expr.span()));
     }
 }
 
