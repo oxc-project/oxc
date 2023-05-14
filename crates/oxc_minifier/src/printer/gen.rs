@@ -528,6 +528,7 @@ impl<'a> Gen for FunctionBody<'a> {
 
 impl<'a> Gen for FormalParameter<'a> {
     fn gen(&self, p: &mut Printer) {
+        self.decorators.gen(p);
         self.pattern.gen(p);
     }
 }
@@ -1415,6 +1416,7 @@ impl Gen for MetaProperty {
 
 impl<'a> Gen for Class<'a> {
     fn gen(&self, p: &mut Printer) {
+        self.decorators.gen(p);
         p.print_str(b"class");
         if let Some(id) = &self.id {
             p.print(b' ');
@@ -1669,6 +1671,8 @@ impl<'a> Gen for StaticBlock<'a> {
 
 impl<'a> Gen for MethodDefinition<'a> {
     fn gen(&self, p: &mut Printer) {
+        self.decorators.gen(p);
+
         if self.r#static {
             p.print_str(b"static ");
         }
@@ -1706,6 +1710,7 @@ impl<'a> Gen for MethodDefinition<'a> {
 
 impl<'a> Gen for PropertyDefinition<'a> {
     fn gen(&self, p: &mut Printer) {
+        self.decorators.gen(p);
         if self.r#static {
             p.print_str(b"static ");
         }
@@ -1820,5 +1825,21 @@ impl<'a> Gen for AssignmentPattern<'a> {
         p.print_equal();
         p.print_space();
         self.right.gen(p);
+    }
+}
+
+impl<'a> Gen for Vec<'a, Decorator<'a>> {
+    fn gen(&self, p: &mut Printer) {
+        for decorator in self {
+            decorator.gen(p);
+            p.print(b' ');
+        }
+    }
+}
+
+impl<'a> Gen for Decorator<'a> {
+    fn gen(&self, p: &mut Printer) {
+        p.print(b'@');
+        self.expression.gen(p);
     }
 }
