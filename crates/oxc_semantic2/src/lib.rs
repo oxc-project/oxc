@@ -1,4 +1,5 @@
 mod builder;
+pub mod reference;
 pub mod scope;
 pub mod symbol;
 

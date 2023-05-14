@@ -1,6 +1,7 @@
 use oxc_span::{Atom, SourceType, Span};
 
 use crate::{
+    reference::Reference,
     scope::{Scope, ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     Semantic,
@@ -79,9 +80,12 @@ impl SemanticBuilder {
     }
 
     fn resolve_reference(&mut self, name: &Atom) -> Option<SymbolId> {
-        self.scope_tree
+        let symbol_id = self
+            .scope_tree
             .ancestors(self.current_scope_id)
-            .find_map(|scope_id| self.scope_tree.get_scope(scope_id).get_binding(name))
+            .find_map(|scope_id| self.scope_tree.get_scope(scope_id).get_binding(name))?;
+        self.symbol_table.add_reference(Reference::new_read(symbol_id));
+        Some(symbol_id)
     }
 }
 

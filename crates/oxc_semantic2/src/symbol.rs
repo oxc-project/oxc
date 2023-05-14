@@ -4,6 +4,8 @@ use bitflags::bitflags;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::{Atom, Span};
 
+use crate::reference::Reference;
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SymbolId(usize);
 
@@ -62,11 +64,17 @@ pub struct SymbolTable {
     names: IndexVec<SymbolId, Atom>,
     spans: IndexVec<SymbolId, Span>,
     flags: IndexVec<SymbolId, SymbolFlags>,
+    references: IndexVec<SymbolId, Vec<Reference>>,
 }
 
 impl SymbolTable {
     pub fn new() -> Self {
-        Self { names: IndexVec::new(), spans: IndexVec::new(), flags: IndexVec::new() }
+        Self {
+            names: IndexVec::new(),
+            spans: IndexVec::new(),
+            flags: IndexVec::new(),
+            references: IndexVec::new(),
+        }
     }
 
     pub fn get_name(&self, symbol_id: SymbolId) -> &Atom {
@@ -76,7 +84,12 @@ impl SymbolTable {
     pub fn add_symbol(&mut self, name: Atom, span: Span, flag: SymbolFlags) -> SymbolId {
         let _ = self.names.push(name);
         let _ = self.spans.push(span);
+        let _ = self.references.push(vec![]);
         self.flags.push(flag)
+    }
+
+    pub fn add_reference(&mut self, reference: Reference) {
+        self.references[reference.symbol_id()].push(reference);
     }
 
     pub fn mangle(&mut self) {
