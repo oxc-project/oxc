@@ -65,9 +65,9 @@ As of now, Oxc has a fully working parser and a prototype for the linter.
 
 The current objectives are:
 
-* [HIR - High-Level Intermediate Representation](https://github.com/Boshen/oxc/issues/315) for the compiler 
+* [HIR - High-Level Intermediate Representation](https://github.com/Boshen/oxc/issues/315) for the compiler
 * A prototype for the minifier.
-* A MVP (Most Viable Product) for the linter.
+* A MVP (Minimal Viable Product) for the linter.
 
 ## Contributing
 
