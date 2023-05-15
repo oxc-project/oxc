@@ -502,7 +502,13 @@ impl<'a> Gen for FunctionBody<'a> {
         for directive in &self.directives {
             directive.gen(p);
         }
-        p.needs_semicolon = false;
+        p.needs_semicolon =
+            if let Some(Statement::ExpressionStatement(expr_stmt)) = self.statements.get(0) 
+            && let Expression::StringLiteral(_) = &expr_stmt.expression {
+                true
+            } else {
+                false
+            };
         for stmt in &self.statements {
             p.print_semicolon_if_needed();
             stmt.gen(p);
