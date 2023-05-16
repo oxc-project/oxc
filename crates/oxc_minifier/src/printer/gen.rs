@@ -34,12 +34,10 @@ impl<'a> Gen for Program<'a> {
 
 impl<'a> Gen for Directive<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print(b'"');
         p.print_str(self.directive.as_bytes());
         p.print(b'"');
         p.print_semicolon();
-        p.print_newline();
     }
 }
 
@@ -72,7 +70,6 @@ impl<'a> Gen for Statement<'a> {
 
 impl<'a> Gen for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         self.expression.gen(p);
         if let Expression::Identifier(ident) = &self.expression
         && ident.name == "let" {
@@ -85,32 +82,22 @@ impl<'a> Gen for ExpressionStatement<'a> {
 
 impl Gen for EmptyStatement {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_semicolon();
-        p.print_newline();
     }
 }
 
 impl<'a> Gen for IfStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         print_if(self, p);
     }
 }
 
 fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
     p.print_str(b"if");
-    p.print_space();
     p.print(b'(');
     if_stmt.test.gen(p);
     p.print(b')');
-    p.print_space();
     if_stmt.consequent.gen(p);
-    if if_stmt.alternate.is_some() {
-        p.print_space();
-    } else {
-        p.print_newline();
-    }
     if let Some(alternate) = if_stmt.alternate.as_ref() {
         p.print_semicolon_if_needed();
         p.print(b' ');
@@ -119,16 +106,12 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
         match alternate {
             Statement::BlockStatement(block) => {
                 p.print_block1(block);
-                p.print_newline();
             }
             Statement::IfStatement(if_stmt) => {
                 print_if(if_stmt, p);
             }
             _ => {
-                p.print_newline();
-                p.indent();
                 alternate.gen(p);
-                p.dedent();
             }
         }
     }
@@ -136,17 +119,13 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
 
 impl<'a> Gen for BlockStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_block1(self);
-        p.print_newline();
     }
 }
 
 impl<'a> Gen for ForStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"for");
-        p.print_space();
         p.print(b'(');
 
         if let Some(init) = self.init.as_ref() {
@@ -157,14 +136,12 @@ impl<'a> Gen for ForStatement<'a> {
         }
 
         p.print_semicolon();
-        p.print_space();
 
         if let Some(test) = self.test.as_ref() {
             test.gen(p);
         }
 
         p.print_semicolon();
-        p.print_space();
 
         if let Some(update) = self.update.as_ref() {
             update.gen(p);
@@ -177,7 +154,6 @@ impl<'a> Gen for ForStatement<'a> {
 
 impl<'a> Gen for ForInStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"for");
         gen_for_statement_brack_content(&self.left, &self.right, &self.body, b"in", p);
     }
@@ -185,7 +161,6 @@ impl<'a> Gen for ForInStatement<'a> {
 
 impl<'a> Gen for ForOfStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"for");
         if self.r#await {
             p.print_str(b" await");
@@ -201,7 +176,6 @@ fn gen_for_statement_brack_content<'a>(
     key: &[u8],
     p: &mut Printer,
 ) {
-    p.print_space();
     p.print(b'(');
     left.gen(p);
     p.print(b' ');
@@ -223,9 +197,7 @@ impl<'a> Gen for ForStatementLeft<'a> {
 
 impl<'a> Gen for WhileStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"while");
-        p.print_space();
         p.print(b'(');
         self.test.gen(p);
         p.print(b')');
@@ -235,23 +207,15 @@ impl<'a> Gen for WhileStatement<'a> {
 
 impl<'a> Gen for DoWhileStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"do");
         p.print(b' ');
         if let Statement::BlockStatement(block) = &self.body {
-            p.print_space();
             p.print_block1(block);
-            p.print_space();
         } else {
-            p.print_newline();
-            p.indent();
             self.body.gen(p);
             p.print_semicolon_if_needed();
-            p.dedent();
-            p.print_indent();
         }
         p.print_str(b"while");
-        p.print_space();
         p.print(b'(');
         self.test.gen(p);
         p.print(b')');
@@ -261,10 +225,8 @@ impl<'a> Gen for DoWhileStatement<'a> {
 
 impl Gen for ContinueStatement {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"continue");
         if let Some(label) = &self.label {
-            p.print_space();
             label.gen(p);
         }
         p.print_semicolon_after_statement();
@@ -273,10 +235,8 @@ impl Gen for ContinueStatement {
 
 impl Gen for BreakStatement {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"break");
         if let Some(label) = &self.label {
-            p.print_space();
             label.gen(p);
         }
         p.print_semicolon_after_statement();
@@ -285,23 +245,15 @@ impl Gen for BreakStatement {
 
 impl<'a> Gen for SwitchStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"switch");
-        p.print_space();
         p.print(b'(');
         self.discriminant.gen(p);
         p.print(b')');
-        p.print_space();
         p.print(b'{');
-        p.print_newline();
-        p.indent();
         for case in &self.cases {
             case.gen(p);
         }
-        p.dedent();
-        p.print_indent();
         p.print(b'}');
-        p.print_newline();
         p.needs_semicolon = false;
     }
 }
@@ -309,7 +261,6 @@ impl<'a> Gen for SwitchStatement<'a> {
 impl<'a> Gen for SwitchCase<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_semicolon_if_needed();
-        p.print_indent();
         match &self.test {
             Some(test) => {
                 p.print_str(b"case");
@@ -319,19 +270,15 @@ impl<'a> Gen for SwitchCase<'a> {
             None => p.print_str(b"default"),
         }
         p.print_colon();
-        p.print_newline();
-        p.indent();
         for item in &self.consequent {
             p.print_semicolon_if_needed();
             item.gen(p);
         }
-        p.dedent();
     }
 }
 
 impl<'a> Gen for ReturnStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"return");
         if let Some(arg) = &self.argument {
             p.print(b' ');
@@ -343,45 +290,34 @@ impl<'a> Gen for ReturnStatement<'a> {
 
 impl<'a> Gen for LabeledStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         self.label.gen(p);
         p.print_colon();
-        p.print_newline();
         self.body.gen(p);
     }
 }
 
 impl<'a> Gen for TryStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"try");
-        p.print_space();
         p.print_block1(&self.block);
         if let Some(handler) = &self.handler {
-            p.print_space();
             p.print_str(b"catch");
             if let Some(param) = &handler.param {
-                p.print_space();
                 p.print_str(b"(");
                 param.gen(p);
                 p.print_str(b")");
             }
-            p.print_space();
             p.print_block1(&handler.body);
         }
         if let Some(finalizer) = &self.finalizer {
-            p.print_space();
             p.print_str(b"finally");
-            p.print_space();
             p.print_block1(finalizer);
         }
-        p.print_newline();
     }
 }
 
 impl<'a> Gen for ThrowStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"throw");
         p.print(b' ');
         self.argument.gen(p);
@@ -391,20 +327,16 @@ impl<'a> Gen for ThrowStatement<'a> {
 
 impl<'a> Gen for WithStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"with");
-        p.print_space();
         p.print(b'(');
         self.object.gen(p);
         p.print(b')');
-        p.print_space();
         self.body.gen(p);
     }
 }
 
 impl Gen for DebuggerStatement {
     fn gen(&self, p: &mut Printer) {
-        p.print_indent();
         p.print_str(b"debugger");
         p.print_semicolon_after_statement();
     }
@@ -425,18 +357,14 @@ impl<'a> Gen for Declaration<'a> {
     fn gen(&self, p: &mut Printer) {
         match self {
             Self::VariableDeclaration(stmt) => {
-                p.print_indent();
                 stmt.gen(p);
                 p.print_semicolon_after_statement();
             }
             Self::FunctionDeclaration(stmt) => {
-                p.print_indent();
                 stmt.gen(p);
-                p.print_newline();
             }
             Self::ClassDeclaration(declaration) => {
                 declaration.gen(p);
-                p.print_newline();
             }
             Self::TSEnumDeclaration(_) => {}
         }
@@ -459,9 +387,7 @@ impl<'a> Gen for VariableDeclarator<'a> {
     fn gen(&self, p: &mut Printer) {
         self.id.gen(p);
         if let Some(init) = &self.init {
-            p.print_space();
             p.print_equal();
-            p.print_space();
             init.gen(p);
         }
     }
@@ -482,12 +408,10 @@ impl<'a> Gen for Function<'a> {
                 p.print(b' ');
             }
             id.gen(p);
-            p.print_space();
         }
         p.print(b'(');
         self.params.gen(p);
         p.print(b')');
-        p.print_space();
         if let Some(body) = &self.body {
             body.gen(p);
         }
@@ -497,8 +421,6 @@ impl<'a> Gen for Function<'a> {
 impl<'a> Gen for FunctionBody<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print(b'{');
-        p.indent();
-        p.print_newline();
         for directive in &self.directives {
             directive.gen(p);
         }
@@ -512,8 +434,6 @@ impl<'a> Gen for FunctionBody<'a> {
             p.print_semicolon_if_needed();
             stmt.gen(p);
         }
-        p.dedent();
-        p.print_indent();
         p.print(b'}');
         p.needs_semicolon = false;
     }
@@ -555,25 +475,19 @@ impl<'a> Gen for ImportDeclaration<'a> {
             match specifier {
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(spec) => {
                     if in_block {
-                        p.print_space();
                         p.print_str(b"},");
-                        p.print_space();
                         in_block = false;
                     } else if index != 0 {
                         p.print_comma();
-                        p.print_space();
                     }
                     spec.local.gen(p);
                 }
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(spec) => {
                     if in_block {
-                        p.print_space();
                         p.print_str(b"},");
-                        p.print_space();
                         in_block = false;
                     } else if index != 0 {
                         p.print_comma();
-                        p.print_space();
                     }
                     p.print_str(b"* as ");
                     spec.local.gen(p);
@@ -584,12 +498,10 @@ impl<'a> Gen for ImportDeclaration<'a> {
                     } else {
                         if index != 0 {
                             p.print_comma();
-                            p.print_space();
                         }
                         in_block = true;
                         p.print(b'{');
                     }
-                    p.print_space();
 
                     let imported_name = match &spec.imported {
                         ModuleExportName::Identifier(identifier) => {
@@ -612,7 +524,6 @@ impl<'a> Gen for ImportDeclaration<'a> {
             }
         }
         if in_block {
-            p.print_space();
             p.print(b'}');
         }
         p.print_str(b" from ");
@@ -625,9 +536,7 @@ impl<'a> Gen for ImportDeclaration<'a> {
 impl<'a> Gen for Option<Vec<'a, ImportAttribute>> {
     fn gen(&self, p: &mut Printer) {
         if let Some(assertions) = &self {
-            p.print_space();
             p.print_str(b"assert");
-            p.print_space();
             p.print_block(assertions, Separator::Comma);
         };
     }
@@ -642,7 +551,6 @@ impl Gen for ImportAttribute {
             ImportAttributeKey::StringLiteral(literal) => literal.gen(p),
         };
         p.print_colon();
-        p.print_space();
         self.value.gen(p);
     }
 }
@@ -655,15 +563,11 @@ impl<'a> Gen for ExportNamedDeclaration<'a> {
             None => {
                 p.print(b'{');
                 if !self.specifiers.is_empty() {
-                    p.print_space();
                     p.print_list(&self.specifiers);
-                    p.print_space();
                 }
                 p.print(b'}');
                 if let Some(source) = &self.source {
-                    p.print_space();
                     p.print_str(b"from");
-                    p.print_space();
                     source.gen(p);
                 }
                 p.print_semicolon_after_statement();
@@ -696,17 +600,14 @@ impl Gen for ModuleExportName {
 impl<'a> Gen for ExportAllDeclaration<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"export");
-        p.print_space();
         p.print(b'*');
 
         if let Some(exported) = &self.exported {
-            p.print_space();
             p.print_str(b"as ");
             exported.gen(p);
         }
 
         p.print_str(b" from");
-        p.print_space();
         self.source.gen(p);
         self.assertions.gen(p);
 
@@ -951,22 +852,12 @@ impl<'a> Gen for ArrayExpression<'a> {
 impl<'a> Gen for ObjectExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print(b'{');
-        p.indent();
         for (i, item) in self.properties.iter().enumerate() {
             if i != 0 {
                 p.print_comma();
             }
-            if p.options.minify_whitespace {
-                p.print_space();
-            } else {
-                p.print_newline();
-                p.print_indent();
-            }
             item.gen(p);
         }
-        p.print_newline();
-        p.dedent();
-        p.print_indent();
         p.print(b'}');
     }
 }
@@ -1011,7 +902,6 @@ impl<'a> Gen for ObjectProperty<'a> {
                 p.print(b'(');
                 func.params.gen(p);
                 p.print(b')');
-                p.print_space();
                 if let Some(body) = &func.body {
                     body.gen(p);
                 }
@@ -1026,7 +916,6 @@ impl<'a> Gen for ObjectProperty<'a> {
             p.print(b']');
         }
         p.print_colon();
-        p.print_space();
         self.value.gen(p);
     }
 }
@@ -1062,14 +951,11 @@ impl<'a> Gen for ArrowExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         if self.r#async {
             p.print_str(b"async");
-            p.print_space();
         }
         p.print(b'(');
         self.params.gen(p);
         p.print(b')');
-        p.print_space();
         p.print_str(b"=>");
-        p.print_space();
         if self.expression {
             if let Statement::ExpressionStatement(stmt) = &self.body.statements[0] {
                 stmt.expression.gen(p);
@@ -1084,7 +970,6 @@ impl<'a> Gen for YieldExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"yield");
         if self.delegate {
-            p.print_space();
             p.print(b'*');
         }
 
@@ -1167,9 +1052,7 @@ impl<'a> Gen for PrivateInExpression<'a> {
 impl<'a> Gen for LogicalExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         self.left.gen(p);
-        p.print_space();
         p.print_str(self.operator.as_str().as_bytes());
-        p.print_space();
         self.right.gen(p);
     }
 }
@@ -1177,13 +1060,9 @@ impl<'a> Gen for LogicalExpression<'a> {
 impl<'a> Gen for ConditionalExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         self.test.gen(p);
-        p.print_space();
         p.print(b'?');
-        p.print_space();
         self.consequent.gen(p);
-        p.print_space();
         p.print(b':');
-        p.print_space();
         self.alternate.gen(p);
     }
 }
@@ -1191,9 +1070,7 @@ impl<'a> Gen for ConditionalExpression<'a> {
 impl<'a> Gen for AssignmentExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         self.left.gen(p);
-        p.print_space();
         p.print_str(self.operator.as_str().as_bytes());
-        p.print_space();
         self.right.gen(p);
     }
 }
@@ -1294,9 +1171,7 @@ impl<'a> Gen for AssignmentTargetPropertyIdentifier<'a> {
     fn gen(&self, p: &mut Printer) {
         self.binding.gen(p);
         if let Some(expr) = &self.init {
-            p.print_space();
             p.print_equal();
-            p.print_space();
             expr.gen(p);
         }
     }
@@ -1318,7 +1193,6 @@ impl<'a> Gen for AssignmentTargetPropertyProperty<'a> {
             }
         }
         p.print_colon();
-        p.print_space();
         self.binding.gen(p);
     }
 }
@@ -1335,7 +1209,6 @@ impl<'a> Gen for ImportExpression<'a> {
         self.source.gen(p);
         if !self.arguments.is_empty() {
             p.print_comma();
-            p.print_space();
             p.print_list(&self.arguments);
         }
         p.print(b')');
@@ -1420,13 +1293,9 @@ impl<'a> Gen for Class<'a> {
             p.print_str(b" extends ");
             super_class.gen(p);
         }
-        p.print_space();
         p.print(b'{');
-        p.print_newline();
-        p.indent();
         for item in &self.body.body {
             p.print_semicolon_if_needed();
-            p.print_indent();
             item.gen(p);
             if matches!(
                 item,
@@ -1434,12 +1303,9 @@ impl<'a> Gen for Class<'a> {
             ) {
                 p.print_semicolon_after_statement();
             } else {
-                p.print_newline();
             }
         }
         p.needs_semicolon = false;
-        p.dedent();
-        p.print_indent();
         p.print(b'}');
     }
 }
@@ -1570,7 +1436,6 @@ impl<'a> Gen for JSXOpeningElement<'a> {
             attr.gen(p);
         }
         if self.self_closing {
-            p.print_space();
             p.print_str(b"/>");
         } else {
             p.print(b'>');
@@ -1648,17 +1513,12 @@ impl<'a> Gen for JSXFragment<'a> {
 impl<'a> Gen for StaticBlock<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"static");
-        p.print_space();
         p.print(b'{');
-        p.print_newline();
-        p.indent();
         for stmt in &self.body {
             p.print_semicolon_if_needed();
             stmt.gen(p);
         }
-        p.dedent();
         p.needs_semicolon = false;
-        p.print_indent();
         p.print(b'}');
     }
 }
@@ -1695,7 +1555,6 @@ impl<'a> Gen for MethodDefinition<'a> {
         p.print(b'(');
         self.value.params.gen(p);
         p.print(b')');
-        p.print_space();
         if let Some(body) = &self.value.body {
             body.gen(p);
         }
@@ -1716,9 +1575,7 @@ impl<'a> Gen for PropertyDefinition<'a> {
             p.print(b']');
         }
         if let Some(value) = &self.value {
-            p.print_space();
             p.print_equal();
-            p.print_space();
             value.gen(p);
         }
     }
@@ -1738,9 +1595,7 @@ impl<'a> Gen for AccessorProperty<'a> {
             p.print(b']');
         }
         if let Some(value) = &self.value {
-            p.print_space();
             p.print_equal();
-            p.print_space();
             value.gen(p);
         }
     }
@@ -1768,7 +1623,6 @@ impl<'a> Gen for BindingPattern<'a> {
 impl<'a> Gen for ObjectPattern<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print(b'{');
-        p.print_space();
         p.print_list(&self.properties);
         if let Some(rest) = &self.rest {
             if !self.properties.is_empty() {
@@ -1776,7 +1630,6 @@ impl<'a> Gen for ObjectPattern<'a> {
             }
             rest.gen(p);
         }
-        p.print_space();
         p.print(b'}');
     }
 }
@@ -1791,7 +1644,6 @@ impl<'a> Gen for BindingProperty<'a> {
             p.print(b']');
         }
         p.print(b':');
-        p.print_space();
         self.value.gen(p);
     }
 }
@@ -1827,9 +1679,7 @@ impl<'a> Gen for ArrayPattern<'a> {
 impl<'a> Gen for AssignmentPattern<'a> {
     fn gen(&self, p: &mut Printer) {
         self.left.gen(p);
-        p.print_space();
         p.print_equal();
-        p.print_space();
         self.right.gen(p);
     }
 }
