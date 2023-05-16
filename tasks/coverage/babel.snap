@@ -1,7 +1,7 @@
 Babel Summary:
 AST Parsed     : 2065/2071 (99.71%)
 Positive Passed: 2062/2071 (99.57%)
-Negative Passed: 1328/1502 (88.42%)
+Negative Passed: 1330/1502 (88.55%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -113,8 +113,6 @@ Expect Syntax Error: "typescript/interface/abstract/input.ts"
 Expect Syntax Error: "typescript/interface/export-abstract-interface/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-reset-parameter/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-property/input.ts"
@@ -1278,7 +1276,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·               ─
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[core/uncategorised/396/input.js:1:1]
  1 │ function t(...rest, b) { }
    ·            ───────
@@ -2124,7 +2122,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·              ─
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[core/uncategorised/555/input.js:2:1]
  2 │     first,
  3 │     ...second,
@@ -2156,7 +2154,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ────
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[es2015/arrow-functions/comma-after-rest-param/input.js:1:1]
  1 │ (...rest,) => {}
    ·  ───────
@@ -2218,7 +2216,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[es2015/arrow-functions/invalid-rest-in-params/input.js:2:1]
  2 │     first,
  3 │     ...second,
@@ -3826,7 +3824,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·       ─
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[es2015/uncategorised/277/input.js:1:1]
  1 │ function f(a, ...b, c) { }
    ·               ────
@@ -3853,7 +3851,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                                 ╰── `a` has already been declared here
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[es2015/uncategorised/283/input.js:1:1]
  1 │ (...a, b) => {}
    ·  ────
@@ -5031,7 +5029,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[es2017/async-functions/params-invalid-rest-trailing-comma/input.js:1:1]
  1 │ async (...a,) => {};
    ·        ────
@@ -5268,25 +5266,25 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Expected identifier in rest element
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[es2018/object-rest-spread/7/input.js:1:1]
  1 │ let { ...x, y, z } = obj;
    ·       ────
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[es2018/object-rest-spread/8/input.js:1:1]
  1 │ let { x, y, ...z, } = obj;
    ·             ────
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[es2018/object-rest-spread/9/input.js:1:1]
  1 │ let { x, ...y, ...z } = obj;
    ·          ────
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[es2018/object-rest-spread/9/input.js:1:1]
  1 │ let { x, ...y, ...z } = obj;
    ·          ────
@@ -6788,7 +6786,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·     ╰── `,` expected
    ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
+   ╭─[esprima/es2015-arrow-function/arrow-with-multiple-rest/input.js:1:1]
+ 1 │ (...a, ...b) => 0
+   ·  ────
+   ╰────
+
+  × A rest parameter must be last in a parameter list
    ╭─[esprima/es2015-arrow-function/arrow-with-multiple-rest/input.js:1:1]
  1 │ (...a, ...b) => 0
    ·  ────
@@ -9263,7 +9267,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
    ╭─[esprima/invalid-syntax/migrated_0258/input.js:1:1]
  1 │ function f(a, ...b, c){}
    ·               ────
@@ -9272,7 +9276,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × A rest parameter cannot have an initializer
    ╭─[esprima/invalid-syntax/migrated_0260/input.js:1:1]
  1 │ function x(...a = 1){}
-   ·            ────────
+   ·               ─────
    ╰────
 
   × Expected `{` but found `EOF`
@@ -9387,10 +9391,10 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                  ──────
    ╰────
 
-  × A 'set' accessor function argument must not be a rest parameter
+  × A 'set' accessor must have exactly one parameter.
    ╭─[esprima/rest-parameter/invalid-setter-rest/input.js:1:1]
  1 │ x = { set f(...y) {} }
-   ·             ────
+   ·            ──────
    ╰────
 
   × Invalid Unicode escape sequence
@@ -9806,6 +9810,22 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │   set foo();
    ·          ──
  4 │ }
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:1:1]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·          ──────
+ 3 │ }
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[typescript/interface/get-set-invalid-reset-parameter/input.ts:1:1]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·          ──────
+ 3 │ }
    ╰────
 
   × TS1095: A 'set' accessor cannot have a return type annotation

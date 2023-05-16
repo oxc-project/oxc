@@ -1671,7 +1671,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/arrow-function/dflt-params-rest.js:61:1]
  61 │ 
  62 │ 0, (...x = []) => {
-    ·     ─────────
+    ·        ──────
  63 │   
     ╰────
 
@@ -1679,7 +1679,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-init-ary.js:51:1]
  51 │ var f;
  52 │ f = ([...[ x ] = []]) => {
-    ·       ─────────────
+    ·          ──────────
  53 │   
     ╰────
 
@@ -1687,7 +1687,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-init-id.js:51:1]
  51 │ var f;
  52 │ f = ([...x = []]) => {
-    ·       ─────────
+    ·          ──────
  53 │   
     ╰────
 
@@ -1695,11 +1695,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-init-obj.js:51:1]
  51 │ var f;
  52 │ f = ([...{ x } = []]) => {
-    ·       ─────────────
+    ·          ──────────
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ var f;
  52 │ f = ([...[x], y]) => {
@@ -1707,7 +1707,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-id.js:51:1]
  51 │ var f;
  52 │ f = ([...x, y]) => {
@@ -1715,7 +1715,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/arrow-function/dstr/ary-ptrn-rest-not-final-obj.js:51:1]
  51 │ var f;
  52 │ f = ([...{ x }, y]) => {
@@ -1727,7 +1727,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js:51:1]
  51 │ var f;
  52 │ f = ([...[ x ] = []] = []) => {
-    ·       ─────────────
+    ·          ──────────
  53 │   
     ╰────
 
@@ -1735,7 +1735,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js:51:1]
  51 │ var f;
  52 │ f = ([...x = []] = []) => {
-    ·       ─────────
+    ·          ──────
  53 │   
     ╰────
 
@@ -1743,11 +1743,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js:51:1]
  51 │ var f;
  52 │ f = ([...{ x } = []] = []) => {
-    ·       ─────────────
+    ·          ──────────
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ var f;
  52 │ f = ([...[x], y] = [1, 2, 3]) => {
@@ -1755,7 +1755,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-not-final-id.js:51:1]
  51 │ var f;
  52 │ f = ([...x, y] = [1, 2, 3]) => {
@@ -1763,7 +1763,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-not-final-obj.js:51:1]
  51 │ var f;
  52 │ f = ([...{ x }, y] = [1, 2, 3]) => {
@@ -2127,7 +2127,7 @@ Negative Passed: 3915/3915 (100.00%)
  131 │ };
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:53:1]
  53 │ 
  54 │ 0, (...a,) => {
@@ -5243,7 +5243,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-arrow-function/dflt-params-rest.js:53:1]
  53 │ 
  54 │ (async (...x = []) => {
-    ·         ─────────
+    ·            ──────
  55 │   
     ╰────
 
@@ -5365,7 +5365,7 @@ Negative Passed: 3915/3915 (100.00%)
  123 │ });
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:45:1]
  45 │ 
  46 │ (async (...a,) => {
@@ -5608,7 +5608,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-function/named-dflt-params-rest.js:39:1]
  39 │ 
  40 │ (async function f(...x = []) {
-    ·                   ─────────
+    ·                      ──────
  41 │   
     ╰────
 
@@ -5628,7 +5628,7 @@ Negative Passed: 3915/3915 (100.00%)
  109 │ });
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:32:1]
  32 │ 
  33 │ (async function f(...a,) {
@@ -5658,7 +5658,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-function/nameless-dflt-params-rest.js:39:1]
  39 │ 
  40 │ (async function(...x = []) {
-    ·                 ─────────
+    ·                    ──────
  41 │   
     ╰────
 
@@ -5678,7 +5678,7 @@ Negative Passed: 3915/3915 (100.00%)
  109 │ });
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:32:1]
  32 │ 
  33 │ (async function(...a,) {
@@ -5772,7 +5772,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dflt-params-rest.js:42:1]
  42 │ 
  43 │ 0, async function*(...x = []) {
-    ·                    ─────────
+    ·                       ──────
  44 │   
     ╰────
 
@@ -5780,7 +5780,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-init-ary.js:32:1]
  32 │ var f;
  33 │ f = async function*([...[ x ] = []]) {
-    ·                      ─────────────
+    ·                         ──────────
  34 │   
     ╰────
 
@@ -5788,7 +5788,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-init-id.js:32:1]
  32 │ var f;
  33 │ f = async function*([...x = []]) {
-    ·                      ─────────
+    ·                         ──────
  34 │   
     ╰────
 
@@ -5796,11 +5796,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-init-obj.js:32:1]
  32 │ var f;
  33 │ f = async function*([...{ x } = []]) {
-    ·                      ─────────────
+    ·                         ──────────
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-not-final-ary.js:32:1]
  32 │ var f;
  33 │ f = async function*([...[x], y]) {
@@ -5808,7 +5808,7 @@ Negative Passed: 3915/3915 (100.00%)
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-not-final-id.js:32:1]
  32 │ var f;
  33 │ f = async function*([...x, y]) {
@@ -5816,7 +5816,7 @@ Negative Passed: 3915/3915 (100.00%)
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/ary-ptrn-rest-not-final-obj.js:32:1]
  32 │ var f;
  33 │ f = async function*([...{ x }, y]) {
@@ -5828,7 +5828,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js:32:1]
  32 │ var f;
  33 │ f = async function*([...[ x ] = []] = []) {
-    ·                      ─────────────
+    ·                         ──────────
  34 │   
     ╰────
 
@@ -5836,7 +5836,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js:32:1]
  32 │ var f;
  33 │ f = async function*([...x = []] = []) {
-    ·                      ─────────
+    ·                         ──────
  34 │   
     ╰────
 
@@ -5844,11 +5844,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js:32:1]
  32 │ var f;
  33 │ f = async function*([...{ x } = []] = []) {
-    ·                      ─────────────
+    ·                         ──────────
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-not-final-ary.js:32:1]
  32 │ var f;
  33 │ f = async function*([...[x], y] = [1, 2, 3]) {
@@ -5856,7 +5856,7 @@ Negative Passed: 3915/3915 (100.00%)
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-not-final-id.js:32:1]
  32 │ var f;
  33 │ f = async function*([...x, y] = [1, 2, 3]) {
@@ -5864,7 +5864,7 @@ Negative Passed: 3915/3915 (100.00%)
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-not-final-obj.js:32:1]
  32 │ var f;
  33 │ f = async function*([...{ x }, y] = [1, 2, 3]) {
@@ -5876,7 +5876,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-ary.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...[ x ] = []]) {
-    ·                        ─────────────
+    ·                           ──────────
  34 │   
     ╰────
 
@@ -5884,7 +5884,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-id.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...x = []]) {
-    ·                        ─────────
+    ·                           ──────
  34 │   
     ╰────
 
@@ -5892,11 +5892,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-obj.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...{ x } = []]) {
-    ·                        ─────────────
+    ·                           ──────────
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-not-final-ary.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...[x], y]) {
@@ -5904,7 +5904,7 @@ Negative Passed: 3915/3915 (100.00%)
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-not-final-id.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...x, y]) {
@@ -5912,7 +5912,7 @@ Negative Passed: 3915/3915 (100.00%)
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/named-ary-ptrn-rest-not-final-obj.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...{ x }, y]) {
@@ -5924,7 +5924,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-ary.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...[ x ] = []] = []) {
-    ·                        ─────────────
+    ·                           ──────────
  34 │   
     ╰────
 
@@ -5932,7 +5932,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-id.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...x = []] = []) {
-    ·                        ─────────
+    ·                           ──────
  34 │   
     ╰────
 
@@ -5940,11 +5940,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-obj.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...{ x } = []] = []) {
-    ·                        ─────────────
+    ·                           ──────────
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-not-final-ary.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...[x], y] = [1, 2, 3]) {
@@ -5952,7 +5952,7 @@ Negative Passed: 3915/3915 (100.00%)
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-not-final-id.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...x, y] = [1, 2, 3]) {
@@ -5960,7 +5960,7 @@ Negative Passed: 3915/3915 (100.00%)
  34 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-not-final-obj.js:32:1]
  32 │ var f;
  33 │ f = async function* h([...{ x }, y] = [1, 2, 3]) {
@@ -6236,7 +6236,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/async-generator/named-dflt-params-rest.js:42:1]
  42 │ 
  43 │ 0, async function* g(...x = []) {
-    ·                      ─────────
+    ·                         ──────
  44 │   
     ╰────
 
@@ -6256,7 +6256,7 @@ Negative Passed: 3915/3915 (100.00%)
  112 │ };
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:35:1]
  35 │ 
  36 │ 0, async function* g(...a,) {
@@ -6386,7 +6386,7 @@ Negative Passed: 3915/3915 (100.00%)
  112 │ };
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/async-generator/rest-params-trailing-comma-early-error.js:35:1]
  35 │ 
  36 │ 0, async function*(...a,) {
@@ -6617,7 +6617,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/async-gen-method-static/dflt-params-rest.js:66:1]
  66 │ 0, class {
  67 │   static async *method(...x = []) {
-    ·                        ─────────
+    ·                           ──────
  68 │     
     ╰────
 
@@ -6637,7 +6637,7 @@ Negative Passed: 3915/3915 (100.00%)
  136 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
  59 │ 0, class {
  60 │   static async *method(...a,) {
@@ -6837,7 +6837,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/async-gen-method/dflt-params-rest.js:66:1]
  66 │ 0, class {
  67 │   async *method(...x = []) {
-    ·                 ─────────
+    ·                    ──────
  68 │     
     ╰────
 
@@ -6857,7 +6857,7 @@ Negative Passed: 3915/3915 (100.00%)
  136 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:59:1]
  59 │ 0, class {
  60 │   async *method(...a,) {
@@ -7057,7 +7057,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/async-method-static/dflt-params-rest.js:64:1]
  64 │ var C = class {
  65 │   static async method(...x = []) {
-    ·                       ─────────
+    ·                          ──────
  66 │     
     ╰────
 
@@ -7077,7 +7077,7 @@ Negative Passed: 3915/3915 (100.00%)
  134 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:56:1]
  56 │ var C = class {
  57 │   static async method(...a,) {
@@ -7171,7 +7171,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/async-method/dflt-params-rest.js:64:1]
  64 │ var C = class {
  65 │   static async method(...x = []) {
-    ·                       ─────────
+    ·                          ──────
  66 │     
     ╰────
 
@@ -7191,7 +7191,7 @@ Negative Passed: 3915/3915 (100.00%)
  134 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:56:1]
  56 │ var C = class {
  57 │   static async method(...a,) {
@@ -7273,7 +7273,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:56:1]
  56 │ var C = class {
  57 │   async *method([...[ x ] = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  58 │     
     ╰────
 
@@ -7281,7 +7281,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:56:1]
  56 │ var C = class {
  57 │   async *method([...x = []]) {
-    ·                  ─────────
+    ·                     ──────
  58 │     
     ╰────
 
@@ -7289,11 +7289,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:56:1]
  56 │ var C = class {
  57 │   async *method([...{ x } = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
  57 │   async *method([...[x], y]) {
@@ -7301,7 +7301,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-not-final-id.js:56:1]
  56 │ var C = class {
  57 │   async *method([...x, y]) {
@@ -7309,7 +7309,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-not-final-obj.js:56:1]
  56 │ var C = class {
  57 │   async *method([...{ x }, y]) {
@@ -7321,7 +7321,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:56:1]
  56 │ var C = class {
  57 │   async *method([...[ x ] = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  58 │     
     ╰────
 
@@ -7329,7 +7329,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:56:1]
  56 │ var C = class {
  57 │   async *method([...x = []] = []) {
-    ·                  ─────────
+    ·                     ──────
  58 │     
     ╰────
 
@@ -7337,11 +7337,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:56:1]
  56 │ var C = class {
  57 │   async *method([...{ x } = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
  57 │   async *method([...[x], y] = [1, 2, 3]) {
@@ -7349,7 +7349,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-not-final-id.js:56:1]
  56 │ var C = class {
  57 │   async *method([...x, y] = [1, 2, 3]) {
@@ -7357,7 +7357,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:56:1]
  56 │ var C = class {
  57 │   async *method([...{ x }, y] = [1, 2, 3]) {
@@ -7369,7 +7369,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...[ x ] = []]) {
-    ·                         ─────────────
+    ·                            ──────────
  58 │     
     ╰────
 
@@ -7377,7 +7377,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...x = []]) {
-    ·                         ─────────
+    ·                            ──────
  58 │     
     ╰────
 
@@ -7385,11 +7385,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...{ x } = []]) {
-    ·                         ─────────────
+    ·                            ──────────
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...[x], y]) {
@@ -7397,7 +7397,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-not-final-id.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...x, y]) {
@@ -7405,7 +7405,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-not-final-obj.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...{ x }, y]) {
@@ -7417,7 +7417,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...[ x ] = []] = []) {
-    ·                         ─────────────
+    ·                            ──────────
  58 │     
     ╰────
 
@@ -7425,7 +7425,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...x = []] = []) {
-    ·                         ─────────
+    ·                            ──────
  58 │     
     ╰────
 
@@ -7433,11 +7433,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...{ x } = []] = []) {
-    ·                         ─────────────
+    ·                            ──────────
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...[x], y] = [1, 2, 3]) {
@@ -7445,7 +7445,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-not-final-id.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...x, y] = [1, 2, 3]) {
@@ -7453,7 +7453,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:56:1]
  56 │ var C = class {
  57 │   static async *method([...{ x }, y] = [1, 2, 3]) {
@@ -7465,7 +7465,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...[ x ] = []]) {
-    ·                    ─────────────
+    ·                       ──────────
  58 │     
     ╰────
 
@@ -7473,7 +7473,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...x = []]) {
-    ·                    ─────────
+    ·                       ──────
  58 │     
     ╰────
 
@@ -7481,11 +7481,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...{ x } = []]) {
-    ·                    ─────────────
+    ·                       ──────────
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...[x], y]) {
@@ -7493,7 +7493,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-not-final-id.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...x, y]) {
@@ -7501,7 +7501,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-not-final-obj.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...{ x }, y]) {
@@ -7513,7 +7513,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...[ x ] = []] = []) {
-    ·                    ─────────────
+    ·                       ──────────
  58 │     
     ╰────
 
@@ -7521,7 +7521,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...x = []] = []) {
-    ·                    ─────────
+    ·                       ──────
  58 │     
     ╰────
 
@@ -7529,11 +7529,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...{ x } = []] = []) {
-    ·                    ─────────────
+    ·                       ──────────
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...[x], y] = [1, 2, 3]) {
@@ -7541,7 +7541,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-not-final-id.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...x, y] = [1, 2, 3]) {
@@ -7549,7 +7549,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:56:1]
  56 │ var C = class {
  57 │   async * #method([...{ x }, y] = [1, 2, 3]) {
@@ -7561,7 +7561,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...[ x ] = []]) {
-    ·                           ─────────────
+    ·                              ──────────
  58 │     
     ╰────
 
@@ -7569,7 +7569,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...x = []]) {
-    ·                           ─────────
+    ·                              ──────
  58 │     
     ╰────
 
@@ -7577,11 +7577,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...{ x } = []]) {
-    ·                           ─────────────
+    ·                              ──────────
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...[x], y]) {
@@ -7589,7 +7589,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-not-final-id.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...x, y]) {
@@ -7597,7 +7597,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-not-final-obj.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...{ x }, y]) {
@@ -7609,7 +7609,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...[ x ] = []] = []) {
-    ·                           ─────────────
+    ·                              ──────────
  58 │     
     ╰────
 
@@ -7617,7 +7617,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...x = []] = []) {
-    ·                           ─────────
+    ·                              ──────
  58 │     
     ╰────
 
@@ -7625,11 +7625,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...{ x } = []] = []) {
-    ·                           ─────────────
+    ·                              ──────────
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...[x], y] = [1, 2, 3]) {
@@ -7637,7 +7637,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-not-final-id.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...x, y] = [1, 2, 3]) {
@@ -7645,7 +7645,7 @@ Negative Passed: 3915/3915 (100.00%)
  58 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:56:1]
  56 │ var C = class {
  57 │   static async * #method([...{ x }, y] = [1, 2, 3]) {
@@ -7657,7 +7657,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js:75:1]
  75 │ var C = class {
  76 │   *method([...[ x ] = []]) {
-    ·            ─────────────
+    ·               ──────────
  77 │     
     ╰────
 
@@ -7665,7 +7665,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-id.js:75:1]
  75 │ var C = class {
  76 │   *method([...x = []]) {
-    ·            ─────────
+    ·               ──────
  77 │     
     ╰────
 
@@ -7673,11 +7673,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js:75:1]
  75 │ var C = class {
  76 │   *method([...{ x } = []]) {
-    ·            ─────────────
+    ·               ──────────
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
  76 │   *method([...[x], y]) {
@@ -7685,7 +7685,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-not-final-id.js:75:1]
  75 │ var C = class {
  76 │   *method([...x, y]) {
@@ -7693,7 +7693,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-ary-ptrn-rest-not-final-obj.js:75:1]
  75 │ var C = class {
  76 │   *method([...{ x }, y]) {
@@ -7705,7 +7705,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:75:1]
  75 │ var C = class {
  76 │   *method([...[ x ] = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  77 │     
     ╰────
 
@@ -7713,7 +7713,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:75:1]
  75 │ var C = class {
  76 │   *method([...x = []] = []) {
-    ·            ─────────
+    ·               ──────
  77 │     
     ╰────
 
@@ -7721,11 +7721,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:75:1]
  75 │ var C = class {
  76 │   *method([...{ x } = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
  76 │   *method([...[x], y] = [1, 2, 3]) {
@@ -7733,7 +7733,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-not-final-id.js:75:1]
  75 │ var C = class {
  76 │   *method([...x, y] = [1, 2, 3]) {
@@ -7741,7 +7741,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:75:1]
  75 │ var C = class {
  76 │   *method([...{ x }, y] = [1, 2, 3]) {
@@ -7753,7 +7753,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js:75:1]
  75 │ var C = class {
  76 │   static *method([...[ x ] = []]) {
-    ·                   ─────────────
+    ·                      ──────────
  77 │     
     ╰────
 
@@ -7761,7 +7761,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js:75:1]
  75 │ var C = class {
  76 │   static *method([...x = []]) {
-    ·                   ─────────
+    ·                      ──────
  77 │     
     ╰────
 
@@ -7769,11 +7769,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js:75:1]
  75 │ var C = class {
  76 │   static *method([...{ x } = []]) {
-    ·                   ─────────────
+    ·                      ──────────
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
  76 │   static *method([...[x], y]) {
@@ -7781,7 +7781,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-not-final-id.js:75:1]
  75 │ var C = class {
  76 │   static *method([...x, y]) {
@@ -7789,7 +7789,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-not-final-obj.js:75:1]
  75 │ var C = class {
  76 │   static *method([...{ x }, y]) {
@@ -7801,7 +7801,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:75:1]
  75 │ var C = class {
  76 │   static *method([...[ x ] = []] = []) {
-    ·                   ─────────────
+    ·                      ──────────
  77 │     
     ╰────
 
@@ -7809,7 +7809,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js:75:1]
  75 │ var C = class {
  76 │   static *method([...x = []] = []) {
-    ·                   ─────────
+    ·                      ──────
  77 │     
     ╰────
 
@@ -7817,11 +7817,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:75:1]
  75 │ var C = class {
  76 │   static *method([...{ x } = []] = []) {
-    ·                   ─────────────
+    ·                      ──────────
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
  76 │   static *method([...[x], y] = [1, 2, 3]) {
@@ -7829,7 +7829,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-not-final-id.js:75:1]
  75 │ var C = class {
  76 │   static *method([...x, y] = [1, 2, 3]) {
@@ -7837,7 +7837,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:75:1]
  75 │ var C = class {
  76 │   static *method([...{ x }, y] = [1, 2, 3]) {
@@ -7849,7 +7849,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-init-ary.js:72:1]
  72 │ var C = class {
  73 │   method([...[ x ] = []]) {
-    ·           ─────────────
+    ·              ──────────
  74 │     
     ╰────
 
@@ -7857,7 +7857,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-init-id.js:72:1]
  72 │ var C = class {
  73 │   method([...x = []]) {
-    ·           ─────────
+    ·              ──────
  74 │     
     ╰────
 
@@ -7865,11 +7865,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-init-obj.js:72:1]
  72 │ var C = class {
  73 │   method([...{ x } = []]) {
-    ·           ─────────────
+    ·              ──────────
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
  73 │   method([...[x], y]) {
@@ -7877,7 +7877,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-not-final-id.js:72:1]
  72 │ var C = class {
  73 │   method([...x, y]) {
@@ -7885,7 +7885,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-ary-ptrn-rest-not-final-obj.js:72:1]
  72 │ var C = class {
  73 │   method([...{ x }, y]) {
@@ -7897,7 +7897,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:72:1]
  72 │ var C = class {
  73 │   method([...[ x ] = []] = []) {
-    ·           ─────────────
+    ·              ──────────
  74 │     
     ╰────
 
@@ -7905,7 +7905,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js:72:1]
  72 │ var C = class {
  73 │   method([...x = []] = []) {
-    ·           ─────────
+    ·              ──────
  74 │     
     ╰────
 
@@ -7913,11 +7913,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:72:1]
  72 │ var C = class {
  73 │   method([...{ x } = []] = []) {
-    ·           ─────────────
+    ·              ──────────
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
  73 │   method([...[x], y] = [1, 2, 3]) {
@@ -7925,7 +7925,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-not-final-id.js:72:1]
  72 │ var C = class {
  73 │   method([...x, y] = [1, 2, 3]) {
@@ -7933,7 +7933,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-not-final-obj.js:72:1]
  72 │ var C = class {
  73 │   method([...{ x }, y] = [1, 2, 3]) {
@@ -7945,7 +7945,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-ary.js:72:1]
  72 │ var C = class {
  73 │   static method([...[ x ] = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  74 │     
     ╰────
 
@@ -7953,7 +7953,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-id.js:72:1]
  72 │ var C = class {
  73 │   static method([...x = []]) {
-    ·                  ─────────
+    ·                     ──────
  74 │     
     ╰────
 
@@ -7961,11 +7961,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-obj.js:72:1]
  72 │ var C = class {
  73 │   static method([...{ x } = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
  73 │   static method([...[x], y]) {
@@ -7973,7 +7973,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-not-final-id.js:72:1]
  72 │ var C = class {
  73 │   static method([...x, y]) {
@@ -7981,7 +7981,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-static-ary-ptrn-rest-not-final-obj.js:72:1]
  72 │ var C = class {
  73 │   static method([...{ x }, y]) {
@@ -7993,7 +7993,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js:72:1]
  72 │ var C = class {
  73 │   static method([...[ x ] = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  74 │     
     ╰────
 
@@ -8001,7 +8001,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js:72:1]
  72 │ var C = class {
  73 │   static method([...x = []] = []) {
-    ·                  ─────────
+    ·                     ──────
  74 │     
     ╰────
 
@@ -8009,11 +8009,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js:72:1]
  72 │ var C = class {
  73 │   static method([...{ x } = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
  73 │   static method([...[x], y] = [1, 2, 3]) {
@@ -8021,7 +8021,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-not-final-id.js:72:1]
  72 │ var C = class {
  73 │   static method([...x, y] = [1, 2, 3]) {
@@ -8029,7 +8029,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-not-final-obj.js:72:1]
  72 │ var C = class {
  73 │   static method([...{ x }, y] = [1, 2, 3]) {
@@ -8041,7 +8041,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js:75:1]
  75 │ var C = class {
  76 │   * #method([...[ x ] = []]) {
-    ·              ─────────────
+    ·                 ──────────
  77 │     
     ╰────
 
@@ -8049,7 +8049,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js:75:1]
  75 │ var C = class {
  76 │   * #method([...x = []]) {
-    ·              ─────────
+    ·                 ──────
  77 │     
     ╰────
 
@@ -8057,11 +8057,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js:75:1]
  75 │ var C = class {
  76 │   * #method([...{ x } = []]) {
-    ·              ─────────────
+    ·                 ──────────
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
  76 │   * #method([...[x], y]) {
@@ -8069,7 +8069,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-not-final-id.js:75:1]
  75 │ var C = class {
  76 │   * #method([...x, y]) {
@@ -8077,7 +8077,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-not-final-obj.js:75:1]
  75 │ var C = class {
  76 │   * #method([...{ x }, y]) {
@@ -8089,7 +8089,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:75:1]
  75 │ var C = class {
  76 │   * #method([...[ x ] = []] = []) {
-    ·              ─────────────
+    ·                 ──────────
  77 │     
     ╰────
 
@@ -8097,7 +8097,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js:75:1]
  75 │ var C = class {
  76 │   * #method([...x = []] = []) {
-    ·              ─────────
+    ·                 ──────
  77 │     
     ╰────
 
@@ -8105,11 +8105,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:75:1]
  75 │ var C = class {
  76 │   * #method([...{ x } = []] = []) {
-    ·              ─────────────
+    ·                 ──────────
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
  76 │   * #method([...[x], y] = [1, 2, 3]) {
@@ -8117,7 +8117,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-not-final-id.js:75:1]
  75 │ var C = class {
  76 │   * #method([...x, y] = [1, 2, 3]) {
@@ -8125,7 +8125,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:75:1]
  75 │ var C = class {
  76 │   * #method([...{ x }, y] = [1, 2, 3]) {
@@ -8137,7 +8137,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...[ x ] = []]) {
-    ·                     ─────────────
+    ·                        ──────────
  77 │     
     ╰────
 
@@ -8145,7 +8145,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...x = []]) {
-    ·                     ─────────
+    ·                        ──────
  77 │     
     ╰────
 
@@ -8153,11 +8153,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...{ x } = []]) {
-    ·                     ─────────────
+    ·                        ──────────
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...[x], y]) {
@@ -8165,7 +8165,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-not-final-id.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...x, y]) {
@@ -8173,7 +8173,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-not-final-obj.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...{ x }, y]) {
@@ -8185,7 +8185,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...[ x ] = []] = []) {
-    ·                     ─────────────
+    ·                        ──────────
  77 │     
     ╰────
 
@@ -8193,7 +8193,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...x = []] = []) {
-    ·                     ─────────
+    ·                        ──────
  77 │     
     ╰────
 
@@ -8201,11 +8201,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...{ x } = []] = []) {
-    ·                     ─────────────
+    ·                        ──────────
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...[x], y] = [1, 2, 3]) {
@@ -8213,7 +8213,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-not-final-id.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...x, y] = [1, 2, 3]) {
@@ -8221,7 +8221,7 @@ Negative Passed: 3915/3915 (100.00%)
  77 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:75:1]
  75 │ var C = class {
  76 │   static * #method([...{ x }, y] = [1, 2, 3]) {
@@ -8233,7 +8233,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-ary.js:72:1]
  72 │ var C = class {
  73 │   #method([...[ x ] = []]) {
-    ·            ─────────────
+    ·               ──────────
  74 │     
     ╰────
 
@@ -8241,7 +8241,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-id.js:72:1]
  72 │ var C = class {
  73 │   #method([...x = []]) {
-    ·            ─────────
+    ·               ──────
  74 │     
     ╰────
 
@@ -8249,11 +8249,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-obj.js:72:1]
  72 │ var C = class {
  73 │   #method([...{ x } = []]) {
-    ·            ─────────────
+    ·               ──────────
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
  73 │   #method([...[x], y]) {
@@ -8261,7 +8261,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-not-final-id.js:72:1]
  72 │ var C = class {
  73 │   #method([...x, y]) {
@@ -8269,7 +8269,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-ary-ptrn-rest-not-final-obj.js:72:1]
  72 │ var C = class {
  73 │   #method([...{ x }, y]) {
@@ -8281,7 +8281,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js:72:1]
  72 │ var C = class {
  73 │   #method([...[ x ] = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  74 │     
     ╰────
 
@@ -8289,7 +8289,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js:72:1]
  72 │ var C = class {
  73 │   #method([...x = []] = []) {
-    ·            ─────────
+    ·               ──────
  74 │     
     ╰────
 
@@ -8297,11 +8297,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js:72:1]
  72 │ var C = class {
  73 │   #method([...{ x } = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
  73 │   #method([...[x], y] = [1, 2, 3]) {
@@ -8309,7 +8309,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-not-final-id.js:72:1]
  72 │ var C = class {
  73 │   #method([...x, y] = [1, 2, 3]) {
@@ -8317,7 +8317,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-not-final-obj.js:72:1]
  72 │ var C = class {
  73 │   #method([...{ x }, y] = [1, 2, 3]) {
@@ -8329,7 +8329,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js:72:1]
  72 │ var C = class {
  73 │   static #method([...[ x ] = []]) {
-    ·                   ─────────────
+    ·                      ──────────
  74 │     
     ╰────
 
@@ -8337,7 +8337,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js:72:1]
  72 │ var C = class {
  73 │   static #method([...x = []]) {
-    ·                   ─────────
+    ·                      ──────
  74 │     
     ╰────
 
@@ -8345,11 +8345,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js:72:1]
  72 │ var C = class {
  73 │   static #method([...{ x } = []]) {
-    ·                   ─────────────
+    ·                      ──────────
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
  73 │   static #method([...[x], y]) {
@@ -8357,7 +8357,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-not-final-id.js:72:1]
  72 │ var C = class {
  73 │   static #method([...x, y]) {
@@ -8365,7 +8365,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-not-final-obj.js:72:1]
  72 │ var C = class {
  73 │   static #method([...{ x }, y]) {
@@ -8377,7 +8377,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js:72:1]
  72 │ var C = class {
  73 │   static #method([...[ x ] = []] = []) {
-    ·                   ─────────────
+    ·                      ──────────
  74 │     
     ╰────
 
@@ -8385,7 +8385,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js:72:1]
  72 │ var C = class {
  73 │   static #method([...x = []] = []) {
-    ·                   ─────────
+    ·                      ──────
  74 │     
     ╰────
 
@@ -8393,11 +8393,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js:72:1]
  72 │ var C = class {
  73 │   static #method([...{ x } = []] = []) {
-    ·                   ─────────────
+    ·                      ──────────
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:72:1]
  72 │ var C = class {
  73 │   static #method([...[x], y] = [1, 2, 3]) {
@@ -8405,7 +8405,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-not-final-id.js:72:1]
  72 │ var C = class {
  73 │   static #method([...x, y] = [1, 2, 3]) {
@@ -8413,7 +8413,7 @@ Negative Passed: 3915/3915 (100.00%)
  74 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:72:1]
  72 │ var C = class {
  73 │   static #method([...{ x }, y] = [1, 2, 3]) {
@@ -12251,7 +12251,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/gen-method-static/dflt-params-rest.js:87:1]
  87 │ 0, class {
  88 │   static *method(...x = []) {
-    ·                  ─────────
+    ·                     ──────
  89 │     
     ╰────
 
@@ -12271,7 +12271,7 @@ Negative Passed: 3915/3915 (100.00%)
  157 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:80:1]
  80 │ 0, class {
  81 │   static *method(...a,) {
@@ -12407,7 +12407,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/gen-method/dflt-params-rest.js:87:1]
  87 │ 0, class {
  88 │   *method(...x = []) {
-    ·           ─────────
+    ·              ──────
  89 │     
     ╰────
 
@@ -12427,7 +12427,7 @@ Negative Passed: 3915/3915 (100.00%)
  157 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:80:1]
  80 │ 0, class {
  81 │   *method(...a,) {
@@ -12578,7 +12578,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/method-static/dflt-params-rest.js:83:1]
  83 │ 0, class {
  84 │   static method(...x = []) {
-    ·                 ─────────
+    ·                    ──────
  85 │     
     ╰────
 
@@ -12598,7 +12598,7 @@ Negative Passed: 3915/3915 (100.00%)
  153 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:75:1]
  75 │ 0, class {
  76 │   static method(...a,) {
@@ -12628,7 +12628,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/class/method/dflt-params-rest.js:83:1]
  83 │ 0, class {
  84 │   method(...x = []) {
-    ·          ─────────
+    ·             ──────
  85 │     
     ╰────
 
@@ -12648,7 +12648,7 @@ Negative Passed: 3915/3915 (100.00%)
  153 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/method/rest-params-trailing-comma-early-error.js:75:1]
  75 │ 0, class {
  76 │   method(...a,) {
@@ -13865,7 +13865,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/function/dflt-params-rest.js:62:1]
  62 │ 
  63 │ 0, function(...x = []) {
-    ·             ─────────
+    ·                ──────
  64 │   
     ╰────
 
@@ -13873,7 +13873,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-init-ary.js:52:1]
  52 │ var f;
  53 │ f = function([...[ x ] = []]) {
-    ·               ─────────────
+    ·                  ──────────
  54 │   
     ╰────
 
@@ -13881,7 +13881,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-init-id.js:52:1]
  52 │ var f;
  53 │ f = function([...x = []]) {
-    ·               ─────────
+    ·                  ──────
  54 │   
     ╰────
 
@@ -13889,11 +13889,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-init-obj.js:52:1]
  52 │ var f;
  53 │ f = function([...{ x } = []]) {
-    ·               ─────────────
+    ·                  ──────────
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var f;
  53 │ f = function([...[x], y]) {
@@ -13901,7 +13901,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-not-final-id.js:52:1]
  52 │ var f;
  53 │ f = function([...x, y]) {
@@ -13909,7 +13909,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/function/dstr/ary-ptrn-rest-not-final-obj.js:52:1]
  52 │ var f;
  53 │ f = function([...{ x }, y]) {
@@ -13921,7 +13921,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/function/dstr/dflt-ary-ptrn-rest-init-ary.js:52:1]
  52 │ var f;
  53 │ f = function([...[ x ] = []] = []) {
-    ·               ─────────────
+    ·                  ──────────
  54 │   
     ╰────
 
@@ -13929,7 +13929,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/function/dstr/dflt-ary-ptrn-rest-init-id.js:52:1]
  52 │ var f;
  53 │ f = function([...x = []] = []) {
-    ·               ─────────
+    ·                  ──────
  54 │   
     ╰────
 
@@ -13937,11 +13937,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/function/dstr/dflt-ary-ptrn-rest-init-obj.js:52:1]
  52 │ var f;
  53 │ f = function([...{ x } = []] = []) {
-    ·               ─────────────
+    ·                  ──────────
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/function/dstr/dflt-ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var f;
  53 │ f = function([...[x], y] = [1, 2, 3]) {
@@ -13949,7 +13949,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/function/dstr/dflt-ary-ptrn-rest-not-final-id.js:52:1]
  52 │ var f;
  53 │ f = function([...x, y] = [1, 2, 3]) {
@@ -13957,7 +13957,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/function/dstr/dflt-ary-ptrn-rest-not-final-obj.js:52:1]
  52 │ var f;
  53 │ f = function([...{ x }, y] = [1, 2, 3]) {
@@ -14158,7 +14158,7 @@ Negative Passed: 3915/3915 (100.00%)
  132 │ };
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/function/rest-params-trailing-comma-early-error.js:54:1]
  54 │ 
  55 │ 0, function(...a,) {
@@ -14196,7 +14196,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/generators/dflt-params-rest.js:63:1]
  63 │ 
  64 │ 0, function*(...x = []) {
-    ·              ─────────
+    ·                 ──────
  65 │   
     ╰────
 
@@ -14204,7 +14204,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/generators/dstr/ary-ptrn-rest-init-ary.js:52:1]
  52 │ var f;
  53 │ f = function*([...[ x ] = []]) {
-    ·                ─────────────
+    ·                   ──────────
  54 │   
     ╰────
 
@@ -14212,7 +14212,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/generators/dstr/ary-ptrn-rest-init-id.js:52:1]
  52 │ var f;
  53 │ f = function*([...x = []]) {
-    ·                ─────────
+    ·                   ──────
  54 │   
     ╰────
 
@@ -14220,11 +14220,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/generators/dstr/ary-ptrn-rest-init-obj.js:52:1]
  52 │ var f;
  53 │ f = function*([...{ x } = []]) {
-    ·                ─────────────
+    ·                   ──────────
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/generators/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var f;
  53 │ f = function*([...[x], y]) {
@@ -14232,7 +14232,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/generators/dstr/ary-ptrn-rest-not-final-id.js:52:1]
  52 │ var f;
  53 │ f = function*([...x, y]) {
@@ -14240,7 +14240,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/generators/dstr/ary-ptrn-rest-not-final-obj.js:52:1]
  52 │ var f;
  53 │ f = function*([...{ x }, y]) {
@@ -14252,7 +14252,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-ary.js:52:1]
  52 │ var f;
  53 │ f = function*([...[ x ] = []] = []) {
-    ·                ─────────────
+    ·                   ──────────
  54 │   
     ╰────
 
@@ -14260,7 +14260,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-id.js:52:1]
  52 │ var f;
  53 │ f = function*([...x = []] = []) {
-    ·                ─────────
+    ·                   ──────
  54 │   
     ╰────
 
@@ -14268,11 +14268,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-obj.js:52:1]
  52 │ var f;
  53 │ f = function*([...{ x } = []] = []) {
-    ·                ─────────────
+    ·                   ──────────
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/generators/dstr/dflt-ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var f;
  53 │ f = function*([...[x], y] = [1, 2, 3]) {
@@ -14280,7 +14280,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/generators/dstr/dflt-ary-ptrn-rest-not-final-id.js:52:1]
  52 │ var f;
  53 │ f = function*([...x, y] = [1, 2, 3]) {
@@ -14288,7 +14288,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/generators/dstr/dflt-ary-ptrn-rest-not-final-obj.js:52:1]
  52 │ var f;
  53 │ f = function*([...{ x }, y] = [1, 2, 3]) {
@@ -14426,7 +14426,7 @@ Negative Passed: 3915/3915 (100.00%)
  133 │ };
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/generators/rest-params-trailing-comma-early-error.js:56:1]
  56 │ 
  57 │ 0, function*(...a,) {
@@ -14897,7 +14897,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:37:1]
  37 │ var obj = {
  38 │   async *method([...[ x ] = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  39 │     
     ╰────
 
@@ -14905,7 +14905,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:37:1]
  37 │ var obj = {
  38 │   async *method([...x = []]) {
-    ·                  ─────────
+    ·                     ──────
  39 │     
     ╰────
 
@@ -14913,11 +14913,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:37:1]
  37 │ var obj = {
  38 │   async *method([...{ x } = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  39 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-not-final-ary.js:37:1]
  37 │ var obj = {
  38 │   async *method([...[x], y]) {
@@ -14925,7 +14925,7 @@ Negative Passed: 3915/3915 (100.00%)
  39 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-not-final-id.js:37:1]
  37 │ var obj = {
  38 │   async *method([...x, y]) {
@@ -14933,7 +14933,7 @@ Negative Passed: 3915/3915 (100.00%)
  39 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-not-final-obj.js:37:1]
  37 │ var obj = {
  38 │   async *method([...{ x }, y]) {
@@ -14945,7 +14945,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:37:1]
  37 │ var obj = {
  38 │   async *method([...[ x ] = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  39 │     
     ╰────
 
@@ -14953,7 +14953,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:37:1]
  37 │ var obj = {
  38 │   async *method([...x = []] = []) {
-    ·                  ─────────
+    ·                     ──────
  39 │     
     ╰────
 
@@ -14961,11 +14961,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:37:1]
  37 │ var obj = {
  38 │   async *method([...{ x } = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  39 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:37:1]
  37 │ var obj = {
  38 │   async *method([...[x], y] = [1, 2, 3]) {
@@ -14973,7 +14973,7 @@ Negative Passed: 3915/3915 (100.00%)
  39 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-not-final-id.js:37:1]
  37 │ var obj = {
  38 │   async *method([...x, y] = [1, 2, 3]) {
@@ -14981,7 +14981,7 @@ Negative Passed: 3915/3915 (100.00%)
  39 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:37:1]
  37 │ var obj = {
  38 │   async *method([...{ x }, y] = [1, 2, 3]) {
@@ -14993,7 +14993,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-ary.js:57:1]
  57 │ var obj = {
  58 │   *method([...[ x ] = []]) {
-    ·            ─────────────
+    ·               ──────────
  59 │     
     ╰────
 
@@ -15001,7 +15001,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-id.js:57:1]
  57 │ var obj = {
  58 │   *method([...x = []]) {
-    ·            ─────────
+    ·               ──────
  59 │     
     ╰────
 
@@ -15009,11 +15009,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-obj.js:57:1]
  57 │ var obj = {
  58 │   *method([...{ x } = []]) {
-    ·            ─────────────
+    ·               ──────────
  59 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-not-final-ary.js:57:1]
  57 │ var obj = {
  58 │   *method([...[x], y]) {
@@ -15021,7 +15021,7 @@ Negative Passed: 3915/3915 (100.00%)
  59 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-not-final-id.js:57:1]
  57 │ var obj = {
  58 │   *method([...x, y]) {
@@ -15029,7 +15029,7 @@ Negative Passed: 3915/3915 (100.00%)
  59 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/gen-meth-ary-ptrn-rest-not-final-obj.js:57:1]
  57 │ var obj = {
  58 │   *method([...{ x }, y]) {
@@ -15041,7 +15041,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:57:1]
  57 │ var obj = {
  58 │   *method([...[ x ] = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  59 │     
     ╰────
 
@@ -15049,7 +15049,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:57:1]
  57 │ var obj = {
  58 │   *method([...x = []] = []) {
-    ·            ─────────
+    ·               ──────
  59 │     
     ╰────
 
@@ -15057,11 +15057,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:57:1]
  57 │ var obj = {
  58 │   *method([...{ x } = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  59 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:57:1]
  57 │ var obj = {
  58 │   *method([...[x], y] = [1, 2, 3]) {
@@ -15069,7 +15069,7 @@ Negative Passed: 3915/3915 (100.00%)
  59 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-not-final-id.js:57:1]
  57 │ var obj = {
  58 │   *method([...x, y] = [1, 2, 3]) {
@@ -15077,7 +15077,7 @@ Negative Passed: 3915/3915 (100.00%)
  59 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:57:1]
  57 │ var obj = {
  58 │   *method([...{ x }, y] = [1, 2, 3]) {
@@ -15089,7 +15089,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-init-ary.js:54:1]
  54 │ var obj = {
  55 │   method([...[ x ] = []]) {
-    ·           ─────────────
+    ·              ──────────
  56 │     
     ╰────
 
@@ -15097,7 +15097,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-init-id.js:54:1]
  54 │ var obj = {
  55 │   method([...x = []]) {
-    ·           ─────────
+    ·              ──────
  56 │     
     ╰────
 
@@ -15105,11 +15105,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-init-obj.js:54:1]
  54 │ var obj = {
  55 │   method([...{ x } = []]) {
-    ·           ─────────────
+    ·              ──────────
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-not-final-ary.js:54:1]
  54 │ var obj = {
  55 │   method([...[x], y]) {
@@ -15117,7 +15117,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-not-final-id.js:54:1]
  54 │ var obj = {
  55 │   method([...x, y]) {
@@ -15125,7 +15125,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/meth-ary-ptrn-rest-not-final-obj.js:54:1]
  54 │ var obj = {
  55 │   method([...{ x }, y]) {
@@ -15137,7 +15137,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:54:1]
  54 │ var obj = {
  55 │   method([...[ x ] = []] = []) {
-    ·           ─────────────
+    ·              ──────────
  56 │     
     ╰────
 
@@ -15145,7 +15145,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-id.js:54:1]
  54 │ var obj = {
  55 │   method([...x = []] = []) {
-    ·           ─────────
+    ·              ──────
  56 │     
     ╰────
 
@@ -15153,11 +15153,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:54:1]
  54 │ var obj = {
  55 │   method([...{ x } = []] = []) {
-    ·           ─────────────
+    ·              ──────────
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-not-final-ary.js:54:1]
  54 │ var obj = {
  55 │   method([...[x], y] = [1, 2, 3]) {
@@ -15165,7 +15165,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-not-final-id.js:54:1]
  54 │ var obj = {
  55 │   method([...x, y] = [1, 2, 3]) {
@@ -15173,7 +15173,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-not-final-obj.js:54:1]
  54 │ var obj = {
  55 │   method([...{ x }, y] = [1, 2, 3]) {
@@ -15456,7 +15456,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js:47:1]
  47 │ 0, {
  48 │   async *method(...x = []) {
-    ·                 ─────────
+    ·                    ──────
  49 │     
     ╰────
 
@@ -15484,7 +15484,7 @@ Negative Passed: 3915/3915 (100.00%)
  117 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:40:1]
  40 │ 0, {
  41 │   async *method(...a,) {
@@ -15620,7 +15620,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/method-definition/async-meth-dflt-params-rest.js:40:1]
  40 │ ({
  41 │   async *method(...x = []) {
-    ·                 ─────────
+    ·                    ──────
  42 │     
     ╰────
 
@@ -15648,7 +15648,7 @@ Negative Passed: 3915/3915 (100.00%)
  110 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:33:1]
  33 │ ({
  34 │   async *method(...a,) {
@@ -15838,7 +15838,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/method-definition/gen-meth-dflt-params-rest.js:69:1]
  69 │ 0, {
  70 │   *method(...x = []) {
-    ·           ─────────
+    ·              ──────
  71 │     
     ╰────
 
@@ -15858,7 +15858,7 @@ Negative Passed: 3915/3915 (100.00%)
  139 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:62:1]
  62 │ 0, {
  63 │   *method(...a,) {
@@ -16061,7 +16061,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/expressions/object/method-definition/meth-dflt-params-rest.js:65:1]
  65 │ 0, {
  66 │   method(...x = []) {
-    ·          ─────────
+    ·             ──────
  67 │     
     ╰────
 
@@ -16081,7 +16081,7 @@ Negative Passed: 3915/3915 (100.00%)
  135 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:57:1]
  57 │ 0, {
  58 │   method(...a,) {
@@ -20911,7 +20911,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╰────
   help: Try insert a semicolon here
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/rest-parameters/position-invalid.js:12:1]
  12 │ $DONOTEVALUATE();
  13 │ function f(a, ...b, c) {}
@@ -21004,7 +21004,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/async-function/dflt-params-rest.js:39:1]
  39 │ 
  40 │ async function f(...x = []) {
-    ·                  ─────────
+    ·                     ──────
  41 │   
     ╰────
 
@@ -21149,7 +21149,7 @@ Negative Passed: 3915/3915 (100.00%)
  109 │ }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/async-function/rest-params-trailing-comma-early-error.js:32:1]
  32 │ 
  33 │ async function f(...a,) {
@@ -21243,7 +21243,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/async-generator/dflt-params-rest.js:42:1]
  42 │ 
  43 │ async function* f(...x = []) {
-    ·                   ─────────
+    ·                      ──────
  44 │   
     ╰────
 
@@ -21251,7 +21251,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-init-ary.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...[ x ] = []]) {
-    ·                    ─────────────
+    ·                       ──────────
  33 │   
     ╰────
 
@@ -21259,7 +21259,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-init-id.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...x = []]) {
-    ·                    ─────────
+    ·                       ──────
  33 │   
     ╰────
 
@@ -21267,11 +21267,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-init-obj.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...{ x } = []]) {
-    ·                    ─────────────
+    ·                       ──────────
  33 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-not-final-ary.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...[x], y]) {
@@ -21279,7 +21279,7 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-not-final-id.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...x, y]) {
@@ -21287,7 +21287,7 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/async-generator/dstr/ary-ptrn-rest-not-final-obj.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...{ x }, y]) {
@@ -21299,7 +21299,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...[ x ] = []] = []) {
-    ·                    ─────────────
+    ·                       ──────────
  33 │   
     ╰────
 
@@ -21307,7 +21307,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...x = []] = []) {
-    ·                    ─────────
+    ·                       ──────
  33 │   
     ╰────
 
@@ -21315,11 +21315,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...{ x } = []] = []) {
-    ·                    ─────────────
+    ·                       ──────────
  33 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/async-generator/dstr/dflt-ary-ptrn-rest-not-final-ary.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...[x], y] = [1, 2, 3]) {
@@ -21327,7 +21327,7 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/async-generator/dstr/dflt-ary-ptrn-rest-not-final-id.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...x, y] = [1, 2, 3]) {
@@ -21335,7 +21335,7 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/async-generator/dstr/dflt-ary-ptrn-rest-not-final-obj.js:31:1]
  31 │ var callCount = 0;
  32 │ async function* f([...{ x }, y] = [1, 2, 3]) {
@@ -21366,7 +21366,7 @@ Negative Passed: 3915/3915 (100.00%)
  112 │ }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/async-generator/rest-params-trailing-comma-early-error.js:35:1]
  35 │ 
  36 │ async function* f(...a,) {
@@ -21802,7 +21802,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/async-gen-method-static/dflt-params-rest.js:66:1]
  66 │ class C {
  67 │   static async *method(...x = []) {
-    ·                        ─────────
+    ·                           ──────
  68 │     
     ╰────
 
@@ -21822,7 +21822,7 @@ Negative Passed: 3915/3915 (100.00%)
  136 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
  59 │ class C {
  60 │   static async *method(...a,) {
@@ -22022,7 +22022,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/async-gen-method/dflt-params-rest.js:65:1]
  65 │ class C {
  66 │   async *method(...x = []) {
-    ·                 ─────────
+    ·                    ──────
  67 │     
     ╰────
 
@@ -22042,7 +22042,7 @@ Negative Passed: 3915/3915 (100.00%)
  135 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:58:1]
  58 │ class C {
  59 │   async *method(...a,) {
@@ -22250,7 +22250,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/async-method-static/dflt-params-rest.js:63:1]
  63 │ class C {
  64 │   static async method(...x = []) {
-    ·                       ─────────
+    ·                          ──────
  65 │     
     ╰────
 
@@ -22270,7 +22270,7 @@ Negative Passed: 3915/3915 (100.00%)
  133 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:55:1]
  55 │ class C {
  56 │   static async method(...a,) {
@@ -22364,7 +22364,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/async-method/dflt-params-rest.js:64:1]
  64 │ class C {
  65 │   async method(...x = []) {
-    ·                ─────────
+    ·                   ──────
  66 │     
     ╰────
 
@@ -22384,7 +22384,7 @@ Negative Passed: 3915/3915 (100.00%)
  134 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/async-method/rest-params-trailing-comma-early-error.js:56:1]
  56 │ class C {
  57 │   async method(...a,) {
@@ -22618,7 +22618,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:55:1]
  55 │ class C {
  56 │   async *method([...[ x ] = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  57 │     
     ╰────
 
@@ -22626,7 +22626,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:55:1]
  55 │ class C {
  56 │   async *method([...x = []]) {
-    ·                  ─────────
+    ·                     ──────
  57 │     
     ╰────
 
@@ -22634,11 +22634,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:55:1]
  55 │ class C {
  56 │   async *method([...{ x } = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
  56 │   async *method([...[x], y]) {
@@ -22646,7 +22646,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-not-final-id.js:55:1]
  55 │ class C {
  56 │   async *method([...x, y]) {
@@ -22654,7 +22654,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-not-final-obj.js:55:1]
  55 │ class C {
  56 │   async *method([...{ x }, y]) {
@@ -22666,7 +22666,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:55:1]
  55 │ class C {
  56 │   async *method([...[ x ] = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  57 │     
     ╰────
 
@@ -22674,7 +22674,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:55:1]
  55 │ class C {
  56 │   async *method([...x = []] = []) {
-    ·                  ─────────
+    ·                     ──────
  57 │     
     ╰────
 
@@ -22682,11 +22682,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:55:1]
  55 │ class C {
  56 │   async *method([...{ x } = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
  56 │   async *method([...[x], y] = [1, 2, 3]) {
@@ -22694,7 +22694,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-not-final-id.js:55:1]
  55 │ class C {
  56 │   async *method([...x, y] = [1, 2, 3]) {
@@ -22702,7 +22702,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:55:1]
  55 │ class C {
  56 │   async *method([...{ x }, y] = [1, 2, 3]) {
@@ -22714,7 +22714,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js:55:1]
  55 │ class C {
  56 │   static async *method([...[ x ] = []]) {
-    ·                         ─────────────
+    ·                            ──────────
  57 │     
     ╰────
 
@@ -22722,7 +22722,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js:55:1]
  55 │ class C {
  56 │   static async *method([...x = []]) {
-    ·                         ─────────
+    ·                            ──────
  57 │     
     ╰────
 
@@ -22730,11 +22730,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js:55:1]
  55 │ class C {
  56 │   static async *method([...{ x } = []]) {
-    ·                         ─────────────
+    ·                            ──────────
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
  56 │   static async *method([...[x], y]) {
@@ -22742,7 +22742,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-not-final-id.js:55:1]
  55 │ class C {
  56 │   static async *method([...x, y]) {
@@ -22750,7 +22750,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-not-final-obj.js:55:1]
  55 │ class C {
  56 │   static async *method([...{ x }, y]) {
@@ -22762,7 +22762,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:55:1]
  55 │ class C {
  56 │   static async *method([...[ x ] = []] = []) {
-    ·                         ─────────────
+    ·                            ──────────
  57 │     
     ╰────
 
@@ -22770,7 +22770,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:55:1]
  55 │ class C {
  56 │   static async *method([...x = []] = []) {
-    ·                         ─────────
+    ·                            ──────
  57 │     
     ╰────
 
@@ -22778,11 +22778,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:55:1]
  55 │ class C {
  56 │   static async *method([...{ x } = []] = []) {
-    ·                         ─────────────
+    ·                            ──────────
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
  56 │   static async *method([...[x], y] = [1, 2, 3]) {
@@ -22790,7 +22790,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-not-final-id.js:55:1]
  55 │ class C {
  56 │   static async *method([...x, y] = [1, 2, 3]) {
@@ -22798,7 +22798,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:55:1]
  55 │ class C {
  56 │   static async *method([...{ x }, y] = [1, 2, 3]) {
@@ -22810,7 +22810,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js:55:1]
  55 │ class C {
  56 │   async * #method([...[ x ] = []]) {
-    ·                    ─────────────
+    ·                       ──────────
  57 │     
     ╰────
 
@@ -22818,7 +22818,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js:55:1]
  55 │ class C {
  56 │   async * #method([...x = []]) {
-    ·                    ─────────
+    ·                       ──────
  57 │     
     ╰────
 
@@ -22826,11 +22826,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js:55:1]
  55 │ class C {
  56 │   async * #method([...{ x } = []]) {
-    ·                    ─────────────
+    ·                       ──────────
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
  56 │   async * #method([...[x], y]) {
@@ -22838,7 +22838,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-not-final-id.js:55:1]
  55 │ class C {
  56 │   async * #method([...x, y]) {
@@ -22846,7 +22846,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-not-final-obj.js:55:1]
  55 │ class C {
  56 │   async * #method([...{ x }, y]) {
@@ -22858,7 +22858,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:55:1]
  55 │ class C {
  56 │   async * #method([...[ x ] = []] = []) {
-    ·                    ─────────────
+    ·                       ──────────
  57 │     
     ╰────
 
@@ -22866,7 +22866,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js:55:1]
  55 │ class C {
  56 │   async * #method([...x = []] = []) {
-    ·                    ─────────
+    ·                       ──────
  57 │     
     ╰────
 
@@ -22874,11 +22874,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:55:1]
  55 │ class C {
  56 │   async * #method([...{ x } = []] = []) {
-    ·                    ─────────────
+    ·                       ──────────
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
  56 │   async * #method([...[x], y] = [1, 2, 3]) {
@@ -22886,7 +22886,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-not-final-id.js:55:1]
  55 │ class C {
  56 │   async * #method([...x, y] = [1, 2, 3]) {
@@ -22894,7 +22894,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:55:1]
  55 │ class C {
  56 │   async * #method([...{ x }, y] = [1, 2, 3]) {
@@ -22906,7 +22906,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js:55:1]
  55 │ class C {
  56 │   static async * #method([...[ x ] = []]) {
-    ·                           ─────────────
+    ·                              ──────────
  57 │     
     ╰────
 
@@ -22914,7 +22914,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js:55:1]
  55 │ class C {
  56 │   static async * #method([...x = []]) {
-    ·                           ─────────
+    ·                              ──────
  57 │     
     ╰────
 
@@ -22922,11 +22922,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js:55:1]
  55 │ class C {
  56 │   static async * #method([...{ x } = []]) {
-    ·                           ─────────────
+    ·                              ──────────
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
  56 │   static async * #method([...[x], y]) {
@@ -22934,7 +22934,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-not-final-id.js:55:1]
  55 │ class C {
  56 │   static async * #method([...x, y]) {
@@ -22942,7 +22942,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-not-final-obj.js:55:1]
  55 │ class C {
  56 │   static async * #method([...{ x }, y]) {
@@ -22954,7 +22954,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:55:1]
  55 │ class C {
  56 │   static async * #method([...[ x ] = []] = []) {
-    ·                           ─────────────
+    ·                              ──────────
  57 │     
     ╰────
 
@@ -22962,7 +22962,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:55:1]
  55 │ class C {
  56 │   static async * #method([...x = []] = []) {
-    ·                           ─────────
+    ·                              ──────
  57 │     
     ╰────
 
@@ -22970,11 +22970,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:55:1]
  55 │ class C {
  56 │   static async * #method([...{ x } = []] = []) {
-    ·                           ─────────────
+    ·                              ──────────
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:55:1]
  55 │ class C {
  56 │   static async * #method([...[x], y] = [1, 2, 3]) {
@@ -22982,7 +22982,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-not-final-id.js:55:1]
  55 │ class C {
  56 │   static async * #method([...x, y] = [1, 2, 3]) {
@@ -22990,7 +22990,7 @@ Negative Passed: 3915/3915 (100.00%)
  57 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:55:1]
  55 │ class C {
  56 │   static async * #method([...{ x }, y] = [1, 2, 3]) {
@@ -23002,7 +23002,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js:73:1]
  73 │ class C {
  74 │   *method([...[ x ] = []]) {
-    ·            ─────────────
+    ·               ──────────
  75 │     
     ╰────
 
@@ -23010,7 +23010,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-id.js:73:1]
  73 │ class C {
  74 │   *method([...x = []]) {
-    ·            ─────────
+    ·               ──────
  75 │     
     ╰────
 
@@ -23018,11 +23018,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js:73:1]
  73 │ class C {
  74 │   *method([...{ x } = []]) {
-    ·            ─────────────
+    ·               ──────────
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
  74 │   *method([...[x], y]) {
@@ -23030,7 +23030,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-not-final-id.js:73:1]
  73 │ class C {
  74 │   *method([...x, y]) {
@@ -23038,7 +23038,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-ary-ptrn-rest-not-final-obj.js:73:1]
  73 │ class C {
  74 │   *method([...{ x }, y]) {
@@ -23050,7 +23050,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:73:1]
  73 │ class C {
  74 │   *method([...[ x ] = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  75 │     
     ╰────
 
@@ -23058,7 +23058,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:73:1]
  73 │ class C {
  74 │   *method([...x = []] = []) {
-    ·            ─────────
+    ·               ──────
  75 │     
     ╰────
 
@@ -23066,11 +23066,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:73:1]
  73 │ class C {
  74 │   *method([...{ x } = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
  74 │   *method([...[x], y] = [1, 2, 3]) {
@@ -23078,7 +23078,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-not-final-id.js:73:1]
  73 │ class C {
  74 │   *method([...x, y] = [1, 2, 3]) {
@@ -23086,7 +23086,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:73:1]
  73 │ class C {
  74 │   *method([...{ x }, y] = [1, 2, 3]) {
@@ -23098,7 +23098,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js:73:1]
  73 │ class C {
  74 │   static *method([...[ x ] = []]) {
-    ·                   ─────────────
+    ·                      ──────────
  75 │     
     ╰────
 
@@ -23106,7 +23106,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js:73:1]
  73 │ class C {
  74 │   static *method([...x = []]) {
-    ·                   ─────────
+    ·                      ──────
  75 │     
     ╰────
 
@@ -23114,11 +23114,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js:73:1]
  73 │ class C {
  74 │   static *method([...{ x } = []]) {
-    ·                   ─────────────
+    ·                      ──────────
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
  74 │   static *method([...[x], y]) {
@@ -23126,7 +23126,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-not-final-id.js:73:1]
  73 │ class C {
  74 │   static *method([...x, y]) {
@@ -23134,7 +23134,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-not-final-obj.js:73:1]
  73 │ class C {
  74 │   static *method([...{ x }, y]) {
@@ -23146,7 +23146,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:73:1]
  73 │ class C {
  74 │   static *method([...[ x ] = []] = []) {
-    ·                   ─────────────
+    ·                      ──────────
  75 │     
     ╰────
 
@@ -23154,7 +23154,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js:73:1]
  73 │ class C {
  74 │   static *method([...x = []] = []) {
-    ·                   ─────────
+    ·                      ──────
  75 │     
     ╰────
 
@@ -23162,11 +23162,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:73:1]
  73 │ class C {
  74 │   static *method([...{ x } = []] = []) {
-    ·                   ─────────────
+    ·                      ──────────
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
  74 │   static *method([...[x], y] = [1, 2, 3]) {
@@ -23174,7 +23174,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-not-final-id.js:73:1]
  73 │ class C {
  74 │   static *method([...x, y] = [1, 2, 3]) {
@@ -23182,7 +23182,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:73:1]
  73 │ class C {
  74 │   static *method([...{ x }, y] = [1, 2, 3]) {
@@ -23194,7 +23194,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-init-ary.js:71:1]
  71 │ class C {
  72 │   method([...[ x ] = []]) {
-    ·           ─────────────
+    ·              ──────────
  73 │     
     ╰────
 
@@ -23202,7 +23202,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-init-id.js:71:1]
  71 │ class C {
  72 │   method([...x = []]) {
-    ·           ─────────
+    ·              ──────
  73 │     
     ╰────
 
@@ -23210,11 +23210,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-init-obj.js:71:1]
  71 │ class C {
  72 │   method([...{ x } = []]) {
-    ·           ─────────────
+    ·              ──────────
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
  72 │   method([...[x], y]) {
@@ -23222,7 +23222,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-not-final-id.js:71:1]
  71 │ class C {
  72 │   method([...x, y]) {
@@ -23230,7 +23230,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-ary-ptrn-rest-not-final-obj.js:71:1]
  71 │ class C {
  72 │   method([...{ x }, y]) {
@@ -23242,7 +23242,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:71:1]
  71 │ class C {
  72 │   method([...[ x ] = []] = []) {
-    ·           ─────────────
+    ·              ──────────
  73 │     
     ╰────
 
@@ -23250,7 +23250,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js:71:1]
  71 │ class C {
  72 │   method([...x = []] = []) {
-    ·           ─────────
+    ·              ──────
  73 │     
     ╰────
 
@@ -23258,11 +23258,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:71:1]
  71 │ class C {
  72 │   method([...{ x } = []] = []) {
-    ·           ─────────────
+    ·              ──────────
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-dflt-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
  72 │   method([...[x], y] = [1, 2, 3]) {
@@ -23270,7 +23270,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-dflt-ary-ptrn-rest-not-final-id.js:71:1]
  71 │ class C {
  72 │   method([...x, y] = [1, 2, 3]) {
@@ -23278,7 +23278,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-dflt-ary-ptrn-rest-not-final-obj.js:71:1]
  71 │ class C {
  72 │   method([...{ x }, y] = [1, 2, 3]) {
@@ -23290,7 +23290,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-init-ary.js:71:1]
  71 │ class C {
  72 │   static method([...[ x ] = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  73 │     
     ╰────
 
@@ -23298,7 +23298,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-init-id.js:71:1]
  71 │ class C {
  72 │   static method([...x = []]) {
-    ·                  ─────────
+    ·                     ──────
  73 │     
     ╰────
 
@@ -23306,11 +23306,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-init-obj.js:71:1]
  71 │ class C {
  72 │   static method([...{ x } = []]) {
-    ·                  ─────────────
+    ·                     ──────────
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
  72 │   static method([...[x], y]) {
@@ -23318,7 +23318,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-not-final-id.js:71:1]
  71 │ class C {
  72 │   static method([...x, y]) {
@@ -23326,7 +23326,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-static-ary-ptrn-rest-not-final-obj.js:71:1]
  71 │ class C {
  72 │   static method([...{ x }, y]) {
@@ -23338,7 +23338,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js:71:1]
  71 │ class C {
  72 │   static method([...[ x ] = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  73 │     
     ╰────
 
@@ -23346,7 +23346,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js:71:1]
  71 │ class C {
  72 │   static method([...x = []] = []) {
-    ·                  ─────────
+    ·                     ──────
  73 │     
     ╰────
 
@@ -23354,11 +23354,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js:71:1]
  71 │ class C {
  72 │   static method([...{ x } = []] = []) {
-    ·                  ─────────────
+    ·                     ──────────
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
  72 │   static method([...[x], y] = [1, 2, 3]) {
@@ -23366,7 +23366,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-not-final-id.js:71:1]
  71 │ class C {
  72 │   static method([...x, y] = [1, 2, 3]) {
@@ -23374,7 +23374,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-not-final-obj.js:71:1]
  71 │ class C {
  72 │   static method([...{ x }, y] = [1, 2, 3]) {
@@ -23386,7 +23386,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js:73:1]
  73 │ class C {
  74 │   * #method([...[ x ] = []]) {
-    ·              ─────────────
+    ·                 ──────────
  75 │     
     ╰────
 
@@ -23394,7 +23394,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js:73:1]
  73 │ class C {
  74 │   * #method([...x = []]) {
-    ·              ─────────
+    ·                 ──────
  75 │     
     ╰────
 
@@ -23402,11 +23402,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js:73:1]
  73 │ class C {
  74 │   * #method([...{ x } = []]) {
-    ·              ─────────────
+    ·                 ──────────
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
  74 │   * #method([...[x], y]) {
@@ -23414,7 +23414,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-not-final-id.js:73:1]
  73 │ class C {
  74 │   * #method([...x, y]) {
@@ -23422,7 +23422,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-not-final-obj.js:73:1]
  73 │ class C {
  74 │   * #method([...{ x }, y]) {
@@ -23434,7 +23434,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:73:1]
  73 │ class C {
  74 │   * #method([...[ x ] = []] = []) {
-    ·              ─────────────
+    ·                 ──────────
  75 │     
     ╰────
 
@@ -23442,7 +23442,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js:73:1]
  73 │ class C {
  74 │   * #method([...x = []] = []) {
-    ·              ─────────
+    ·                 ──────
  75 │     
     ╰────
 
@@ -23450,11 +23450,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:73:1]
  73 │ class C {
  74 │   * #method([...{ x } = []] = []) {
-    ·              ─────────────
+    ·                 ──────────
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
  74 │   * #method([...[x], y] = [1, 2, 3]) {
@@ -23462,7 +23462,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-not-final-id.js:73:1]
  73 │ class C {
  74 │   * #method([...x, y] = [1, 2, 3]) {
@@ -23470,7 +23470,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-not-final-obj.js:73:1]
  73 │ class C {
  74 │   * #method([...{ x }, y] = [1, 2, 3]) {
@@ -23482,7 +23482,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js:73:1]
  73 │ class C {
  74 │   static * #method([...[ x ] = []]) {
-    ·                     ─────────────
+    ·                        ──────────
  75 │     
     ╰────
 
@@ -23490,7 +23490,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js:73:1]
  73 │ class C {
  74 │   static * #method([...x = []]) {
-    ·                     ─────────
+    ·                        ──────
  75 │     
     ╰────
 
@@ -23498,11 +23498,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js:73:1]
  73 │ class C {
  74 │   static * #method([...{ x } = []]) {
-    ·                     ─────────────
+    ·                        ──────────
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
  74 │   static * #method([...[x], y]) {
@@ -23510,7 +23510,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-not-final-id.js:73:1]
  73 │ class C {
  74 │   static * #method([...x, y]) {
@@ -23518,7 +23518,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-not-final-obj.js:73:1]
  73 │ class C {
  74 │   static * #method([...{ x }, y]) {
@@ -23530,7 +23530,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:73:1]
  73 │ class C {
  74 │   static * #method([...[ x ] = []] = []) {
-    ·                     ─────────────
+    ·                        ──────────
  75 │     
     ╰────
 
@@ -23538,7 +23538,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:73:1]
  73 │ class C {
  74 │   static * #method([...x = []] = []) {
-    ·                     ─────────
+    ·                        ──────
  75 │     
     ╰────
 
@@ -23546,11 +23546,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:73:1]
  73 │ class C {
  74 │   static * #method([...{ x } = []] = []) {
-    ·                     ─────────────
+    ·                        ──────────
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:73:1]
  73 │ class C {
  74 │   static * #method([...[x], y] = [1, 2, 3]) {
@@ -23558,7 +23558,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-not-final-id.js:73:1]
  73 │ class C {
  74 │   static * #method([...x, y] = [1, 2, 3]) {
@@ -23566,7 +23566,7 @@ Negative Passed: 3915/3915 (100.00%)
  75 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:73:1]
  73 │ class C {
  74 │   static * #method([...{ x }, y] = [1, 2, 3]) {
@@ -23578,7 +23578,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-init-ary.js:71:1]
  71 │ class C {
  72 │   #method([...[ x ] = []]) {
-    ·            ─────────────
+    ·               ──────────
  73 │     
     ╰────
 
@@ -23586,7 +23586,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-init-id.js:71:1]
  71 │ class C {
  72 │   #method([...x = []]) {
-    ·            ─────────
+    ·               ──────
  73 │     
     ╰────
 
@@ -23594,11 +23594,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-init-obj.js:71:1]
  71 │ class C {
  72 │   #method([...{ x } = []]) {
-    ·            ─────────────
+    ·               ──────────
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
  72 │   #method([...[x], y]) {
@@ -23606,7 +23606,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-not-final-id.js:71:1]
  71 │ class C {
  72 │   #method([...x, y]) {
@@ -23614,7 +23614,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-ary-ptrn-rest-not-final-obj.js:71:1]
  71 │ class C {
  72 │   #method([...{ x }, y]) {
@@ -23626,7 +23626,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js:71:1]
  71 │ class C {
  72 │   #method([...[ x ] = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  73 │     
     ╰────
 
@@ -23634,7 +23634,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js:71:1]
  71 │ class C {
  72 │   #method([...x = []] = []) {
-    ·            ─────────
+    ·               ──────
  73 │     
     ╰────
 
@@ -23642,11 +23642,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js:71:1]
  71 │ class C {
  72 │   #method([...{ x } = []] = []) {
-    ·            ─────────────
+    ·               ──────────
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
  72 │   #method([...[x], y] = [1, 2, 3]) {
@@ -23654,7 +23654,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-not-final-id.js:71:1]
  71 │ class C {
  72 │   #method([...x, y] = [1, 2, 3]) {
@@ -23662,7 +23662,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-not-final-obj.js:71:1]
  71 │ class C {
  72 │   #method([...{ x }, y] = [1, 2, 3]) {
@@ -23674,7 +23674,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js:71:1]
  71 │ class C {
  72 │   static #method([...[ x ] = []]) {
-    ·                   ─────────────
+    ·                      ──────────
  73 │     
     ╰────
 
@@ -23682,7 +23682,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js:71:1]
  71 │ class C {
  72 │   static #method([...x = []]) {
-    ·                   ─────────
+    ·                      ──────
  73 │     
     ╰────
 
@@ -23690,11 +23690,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js:71:1]
  71 │ class C {
  72 │   static #method([...{ x } = []]) {
-    ·                   ─────────────
+    ·                      ──────────
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
  72 │   static #method([...[x], y]) {
@@ -23702,7 +23702,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-not-final-id.js:71:1]
  71 │ class C {
  72 │   static #method([...x, y]) {
@@ -23710,7 +23710,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-static-ary-ptrn-rest-not-final-obj.js:71:1]
  71 │ class C {
  72 │   static #method([...{ x }, y]) {
@@ -23722,7 +23722,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js:71:1]
  71 │ class C {
  72 │   static #method([...[ x ] = []] = []) {
-    ·                   ─────────────
+    ·                      ──────────
  73 │     
     ╰────
 
@@ -23730,7 +23730,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js:71:1]
  71 │ class C {
  72 │   static #method([...x = []] = []) {
-    ·                   ─────────
+    ·                      ──────
  73 │     
     ╰────
 
@@ -23738,11 +23738,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js:71:1]
  71 │ class C {
  72 │   static #method([...{ x } = []] = []) {
-    ·                   ─────────────
+    ·                      ──────────
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-not-final-ary.js:71:1]
  71 │ class C {
  72 │   static #method([...[x], y] = [1, 2, 3]) {
@@ -23750,7 +23750,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-not-final-id.js:71:1]
  71 │ class C {
  72 │   static #method([...x, y] = [1, 2, 3]) {
@@ -23758,7 +23758,7 @@ Negative Passed: 3915/3915 (100.00%)
  73 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-not-final-obj.js:71:1]
  71 │ class C {
  72 │   static #method([...{ x }, y] = [1, 2, 3]) {
@@ -27657,7 +27657,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/gen-method-static/dflt-params-rest.js:85:1]
  85 │ class C {
  86 │   static *method(...x = []) {
-    ·                  ─────────
+    ·                     ──────
  87 │     
     ╰────
 
@@ -27677,7 +27677,7 @@ Negative Passed: 3915/3915 (100.00%)
  155 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:78:1]
  78 │ class C {
  79 │   static *method(...a,) {
@@ -27813,7 +27813,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/gen-method/dflt-params-rest.js:85:1]
  85 │ class C {
  86 │   *method(...x = []) {
-    ·           ─────────
+    ·              ──────
  87 │     
     ╰────
 
@@ -27833,7 +27833,7 @@ Negative Passed: 3915/3915 (100.00%)
  155 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:78:1]
  78 │ class C {
  79 │   *method(...a,) {
@@ -27984,7 +27984,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/method-static/dflt-params-rest.js:82:1]
  82 │ class C {
  83 │   static method(...x = []) {
-    ·                 ─────────
+    ·                    ──────
  84 │     
     ╰────
 
@@ -28004,7 +28004,7 @@ Negative Passed: 3915/3915 (100.00%)
  152 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/method-static/rest-params-trailing-comma-early-error.js:74:1]
  74 │ class C {
  75 │   static method(...a,) {
@@ -28034,7 +28034,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/class/method/dflt-params-rest.js:82:1]
  82 │ class C {
  83 │   method(...x = []) {
-    ·          ─────────
+    ·             ──────
  84 │     
     ╰────
 
@@ -28054,7 +28054,7 @@ Negative Passed: 3915/3915 (100.00%)
  152 │   }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/class/method/rest-params-trailing-comma-early-error.js:74:1]
  74 │ class C {
  75 │   method(...a,) {
@@ -28277,7 +28277,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/const/dstr/ary-ptrn-rest-init-ary.js:29:1]
  29 │ 
  30 │ const [...[ x ] = []] = [];
-    ·        ─────────────
+    ·           ──────────
  31 │ 
     ╰────
 
@@ -28285,7 +28285,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/const/dstr/ary-ptrn-rest-init-id.js:29:1]
  29 │ 
  30 │ const [...x = []] = [];
-    ·        ─────────
+    ·           ──────
  31 │ 
     ╰────
 
@@ -28293,11 +28293,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/const/dstr/ary-ptrn-rest-init-obj.js:29:1]
  29 │ 
  30 │ const [...{ x } = []] = [];
-    ·        ─────────────
+    ·           ──────────
  31 │ 
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/const/dstr/ary-ptrn-rest-not-final-ary.js:29:1]
  29 │ 
  30 │ const [...[x], y] = [1, 2, 3];
@@ -28305,7 +28305,7 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ 
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/const/dstr/ary-ptrn-rest-not-final-id.js:29:1]
  29 │ 
  30 │ const [...x, y] = [1, 2, 3];
@@ -28313,7 +28313,7 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ 
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/const/dstr/ary-ptrn-rest-not-final-obj.js:29:1]
  29 │ 
  30 │ const [...{ x }, y] = [1, 2, 3];
@@ -28876,7 +28876,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js:51:1]
  51 │ async function fn() {
  52 │   for await (const [...[ x ] = []] of [[]]) {
-    ·                     ─────────────
+    ·                        ──────────
  53 │     
     ╰────
 
@@ -28884,7 +28884,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-id.js:51:1]
  51 │ async function fn() {
  52 │   for await (const [...x = []] of [[]]) {
-    ·                     ─────────
+    ·                        ──────
  53 │     
     ╰────
 
@@ -28892,11 +28892,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-obj.js:51:1]
  51 │ async function fn() {
  52 │   for await (const [...{ x } = []] of [[]]) {
-    ·                     ─────────────
+    ·                        ──────────
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ async function fn() {
  52 │   for await (const [...[x], y] of [[1, 2, 3]]) {
@@ -28904,7 +28904,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-not-final-id.js:51:1]
  51 │ async function fn() {
  52 │   for await (const [...x, y] of [[1, 2, 3]]) {
@@ -28912,7 +28912,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-not-final-obj.js:51:1]
  51 │ async function fn() {
  52 │   for await (const [...{ x }, y] of [[1, 2, 3]]) {
@@ -28924,7 +28924,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-ary.js:54:1]
  54 │ async function fn() {
  55 │   for await (const [...[ x ] = []] of asyncIter) {
-    ·                     ─────────────
+    ·                        ──────────
  56 │     
     ╰────
 
@@ -28932,7 +28932,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-id.js:54:1]
  54 │ async function fn() {
  55 │   for await (const [...x = []] of asyncIter) {
-    ·                     ─────────
+    ·                        ──────
  56 │     
     ╰────
 
@@ -28940,11 +28940,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-obj.js:54:1]
  54 │ async function fn() {
  55 │   for await (const [...{ x } = []] of asyncIter) {
-    ·                     ─────────────
+    ·                        ──────────
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-not-final-ary.js:54:1]
  54 │ async function fn() {
  55 │   for await (const [...[x], y] of asyncIter) {
@@ -28952,7 +28952,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-not-final-id.js:54:1]
  54 │ async function fn() {
  55 │   for await (const [...x, y] of asyncIter) {
@@ -28960,7 +28960,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-not-final-obj.js:54:1]
  54 │ async function fn() {
  55 │   for await (const [...{ x }, y] of asyncIter) {
@@ -28972,7 +28972,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-ary.js:51:1]
  51 │ async function fn() {
  52 │   for await (let [...[ x ] = []] of [[]]) {
-    ·                   ─────────────
+    ·                      ──────────
  53 │     
     ╰────
 
@@ -28980,7 +28980,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-id.js:51:1]
  51 │ async function fn() {
  52 │   for await (let [...x = []] of [[]]) {
-    ·                   ─────────
+    ·                      ──────
  53 │     
     ╰────
 
@@ -28988,11 +28988,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-obj.js:51:1]
  51 │ async function fn() {
  52 │   for await (let [...{ x } = []] of [[]]) {
-    ·                   ─────────────
+    ·                      ──────────
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ async function fn() {
  52 │   for await (let [...[x], y] of [[1, 2, 3]]) {
@@ -29000,7 +29000,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-not-final-id.js:51:1]
  51 │ async function fn() {
  52 │   for await (let [...x, y] of [[1, 2, 3]]) {
@@ -29008,7 +29008,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-not-final-obj.js:51:1]
  51 │ async function fn() {
  52 │   for await (let [...{ x }, y] of [[1, 2, 3]]) {
@@ -29020,7 +29020,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-ary.js:54:1]
  54 │ async function fn() {
  55 │   for await (let [...[ x ] = []] of asyncIter) {
-    ·                   ─────────────
+    ·                      ──────────
  56 │     
     ╰────
 
@@ -29028,7 +29028,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-id.js:54:1]
  54 │ async function fn() {
  55 │   for await (let [...x = []] of asyncIter) {
-    ·                   ─────────
+    ·                      ──────
  56 │     
     ╰────
 
@@ -29036,11 +29036,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-obj.js:54:1]
  54 │ async function fn() {
  55 │   for await (let [...{ x } = []] of asyncIter) {
-    ·                   ─────────────
+    ·                      ──────────
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-not-final-ary.js:54:1]
  54 │ async function fn() {
  55 │   for await (let [...[x], y] of asyncIter) {
@@ -29048,7 +29048,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-not-final-id.js:54:1]
  54 │ async function fn() {
  55 │   for await (let [...x, y] of asyncIter) {
@@ -29056,7 +29056,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-not-final-obj.js:54:1]
  54 │ async function fn() {
  55 │   for await (let [...{ x }, y] of asyncIter) {
@@ -29068,7 +29068,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-ary.js:48:1]
  48 │ async function fn() {
  49 │   for await (var [...[ x ] = []] of [[]]) {
-    ·                   ─────────────
+    ·                      ──────────
  50 │     
     ╰────
 
@@ -29076,7 +29076,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-id.js:48:1]
  48 │ async function fn() {
  49 │   for await (var [...x = []] of [[]]) {
-    ·                   ─────────
+    ·                      ──────
  50 │     
     ╰────
 
@@ -29084,11 +29084,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-obj.js:48:1]
  48 │ async function fn() {
  49 │   for await (var [...{ x } = []] of [[]]) {
-    ·                   ─────────────
+    ·                      ──────────
  50 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-not-final-ary.js:48:1]
  48 │ async function fn() {
  49 │   for await (var [...[x], y] of [[1, 2, 3]]) {
@@ -29096,7 +29096,7 @@ Negative Passed: 3915/3915 (100.00%)
  50 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-not-final-id.js:48:1]
  48 │ async function fn() {
  49 │   for await (var [...x, y] of [[1, 2, 3]]) {
@@ -29104,7 +29104,7 @@ Negative Passed: 3915/3915 (100.00%)
  50 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-not-final-obj.js:48:1]
  48 │ async function fn() {
  49 │   for await (var [...{ x }, y] of [[1, 2, 3]]) {
@@ -29116,7 +29116,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-ary.js:54:1]
  54 │ async function fn() {
  55 │   for await (var [...[ x ] = []] of asyncIter) {
-    ·                   ─────────────
+    ·                      ──────────
  56 │     
     ╰────
 
@@ -29124,7 +29124,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-id.js:54:1]
  54 │ async function fn() {
  55 │   for await (var [...x = []] of asyncIter) {
-    ·                   ─────────
+    ·                      ──────
  56 │     
     ╰────
 
@@ -29132,11 +29132,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-obj.js:54:1]
  54 │ async function fn() {
  55 │   for await (var [...{ x } = []] of asyncIter) {
-    ·                   ─────────────
+    ·                      ──────────
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-not-final-ary.js:54:1]
  54 │ async function fn() {
  55 │   for await (var [...[x], y] of asyncIter) {
@@ -29144,7 +29144,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-not-final-id.js:54:1]
  54 │ async function fn() {
  55 │   for await (var [...x, y] of asyncIter) {
@@ -29152,7 +29152,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-not-final-obj.js:54:1]
  54 │ async function fn() {
  55 │   for await (var [...{ x }, y] of asyncIter) {
@@ -29172,7 +29172,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-ary.js:51:1]
  51 │ async function *fn() {
  52 │   for await (const [...[ x ] = []] of [[]]) {
-    ·                     ─────────────
+    ·                        ──────────
  53 │     
     ╰────
 
@@ -29180,7 +29180,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-id.js:51:1]
  51 │ async function *fn() {
  52 │   for await (const [...x = []] of [[]]) {
-    ·                     ─────────
+    ·                        ──────
  53 │     
     ╰────
 
@@ -29188,11 +29188,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-obj.js:51:1]
  51 │ async function *fn() {
  52 │   for await (const [...{ x } = []] of [[]]) {
-    ·                     ─────────────
+    ·                        ──────────
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ async function *fn() {
  52 │   for await (const [...[x], y] of [[1, 2, 3]]) {
@@ -29200,7 +29200,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-not-final-id.js:51:1]
  51 │ async function *fn() {
  52 │   for await (const [...x, y] of [[1, 2, 3]]) {
@@ -29208,7 +29208,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-not-final-obj.js:51:1]
  51 │ async function *fn() {
  52 │   for await (const [...{ x }, y] of [[1, 2, 3]]) {
@@ -29220,7 +29220,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-ary.js:54:1]
  54 │ async function *fn() {
  55 │   for await (const [...[ x ] = []] of asyncIter) {
-    ·                     ─────────────
+    ·                        ──────────
  56 │     
     ╰────
 
@@ -29228,7 +29228,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-id.js:54:1]
  54 │ async function *fn() {
  55 │   for await (const [...x = []] of asyncIter) {
-    ·                     ─────────
+    ·                        ──────
  56 │     
     ╰────
 
@@ -29236,11 +29236,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-obj.js:54:1]
  54 │ async function *fn() {
  55 │   for await (const [...{ x } = []] of asyncIter) {
-    ·                     ─────────────
+    ·                        ──────────
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-not-final-ary.js:54:1]
  54 │ async function *fn() {
  55 │   for await (const [...[x], y] of asyncIter) {
@@ -29248,7 +29248,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-not-final-id.js:54:1]
  54 │ async function *fn() {
  55 │   for await (const [...x, y] of asyncIter) {
@@ -29256,7 +29256,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-not-final-obj.js:54:1]
  54 │ async function *fn() {
  55 │   for await (const [...{ x }, y] of asyncIter) {
@@ -29284,7 +29284,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-ary.js:51:1]
  51 │ async function *fn() {
  52 │   for await (let [...[ x ] = []] of [[]]) {
-    ·                   ─────────────
+    ·                      ──────────
  53 │     
     ╰────
 
@@ -29292,7 +29292,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-id.js:51:1]
  51 │ async function *fn() {
  52 │   for await (let [...x = []] of [[]]) {
-    ·                   ─────────
+    ·                      ──────
  53 │     
     ╰────
 
@@ -29300,11 +29300,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-obj.js:51:1]
  51 │ async function *fn() {
  52 │   for await (let [...{ x } = []] of [[]]) {
-    ·                   ─────────────
+    ·                      ──────────
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ async function *fn() {
  52 │   for await (let [...[x], y] of [[1, 2, 3]]) {
@@ -29312,7 +29312,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-not-final-id.js:51:1]
  51 │ async function *fn() {
  52 │   for await (let [...x, y] of [[1, 2, 3]]) {
@@ -29320,7 +29320,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-not-final-obj.js:51:1]
  51 │ async function *fn() {
  52 │   for await (let [...{ x }, y] of [[1, 2, 3]]) {
@@ -29332,7 +29332,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-ary.js:54:1]
  54 │ async function *fn() {
  55 │   for await (let [...[ x ] = []] of asyncIter) {
-    ·                   ─────────────
+    ·                      ──────────
  56 │     
     ╰────
 
@@ -29340,7 +29340,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-id.js:54:1]
  54 │ async function *fn() {
  55 │   for await (let [...x = []] of asyncIter) {
-    ·                   ─────────
+    ·                      ──────
  56 │     
     ╰────
 
@@ -29348,11 +29348,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-obj.js:54:1]
  54 │ async function *fn() {
  55 │   for await (let [...{ x } = []] of asyncIter) {
-    ·                   ─────────────
+    ·                      ──────────
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-not-final-ary.js:54:1]
  54 │ async function *fn() {
  55 │   for await (let [...[x], y] of asyncIter) {
@@ -29360,7 +29360,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-not-final-id.js:54:1]
  54 │ async function *fn() {
  55 │   for await (let [...x, y] of asyncIter) {
@@ -29368,7 +29368,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-not-final-obj.js:54:1]
  54 │ async function *fn() {
  55 │   for await (let [...{ x }, y] of asyncIter) {
@@ -29396,7 +29396,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-ary.js:48:1]
  48 │ async function *fn() {
  49 │   for await (var [...[ x ] = []] of [[]]) {
-    ·                   ─────────────
+    ·                      ──────────
  50 │     
     ╰────
 
@@ -29404,7 +29404,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-id.js:48:1]
  48 │ async function *fn() {
  49 │   for await (var [...x = []] of [[]]) {
-    ·                   ─────────
+    ·                      ──────
  50 │     
     ╰────
 
@@ -29412,11 +29412,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-obj.js:48:1]
  48 │ async function *fn() {
  49 │   for await (var [...{ x } = []] of [[]]) {
-    ·                   ─────────────
+    ·                      ──────────
  50 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-not-final-ary.js:48:1]
  48 │ async function *fn() {
  49 │   for await (var [...[x], y] of [[1, 2, 3]]) {
@@ -29424,7 +29424,7 @@ Negative Passed: 3915/3915 (100.00%)
  50 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-not-final-id.js:48:1]
  48 │ async function *fn() {
  49 │   for await (var [...x, y] of [[1, 2, 3]]) {
@@ -29432,7 +29432,7 @@ Negative Passed: 3915/3915 (100.00%)
  50 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-not-final-obj.js:48:1]
  48 │ async function *fn() {
  49 │   for await (var [...{ x }, y] of [[1, 2, 3]]) {
@@ -29444,7 +29444,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-ary.js:54:1]
  54 │ async function *fn() {
  55 │   for await (var [...[ x ] = []] of asyncIter) {
-    ·                   ─────────────
+    ·                      ──────────
  56 │     
     ╰────
 
@@ -29452,7 +29452,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-id.js:54:1]
  54 │ async function *fn() {
  55 │   for await (var [...x = []] of asyncIter) {
-    ·                   ─────────
+    ·                      ──────
  56 │     
     ╰────
 
@@ -29460,11 +29460,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-obj.js:54:1]
  54 │ async function *fn() {
  55 │   for await (var [...{ x } = []] of asyncIter) {
-    ·                   ─────────────
+    ·                      ──────────
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-not-final-ary.js:54:1]
  54 │ async function *fn() {
  55 │   for await (var [...[x], y] of asyncIter) {
@@ -29472,7 +29472,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-not-final-id.js:54:1]
  54 │ async function *fn() {
  55 │   for await (var [...x, y] of asyncIter) {
@@ -29480,7 +29480,7 @@ Negative Passed: 3915/3915 (100.00%)
  56 │     
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-not-final-obj.js:54:1]
  54 │ async function *fn() {
  55 │   for await (var [...{ x }, y] of asyncIter) {
@@ -30276,7 +30276,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js:50:1]
  50 │ 
  51 │ for (const [...[ x ] = []] of [[]]) {
-    ·             ─────────────
+    ·                ──────────
  52 │   
     ╰────
 
@@ -30284,7 +30284,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js:50:1]
  50 │ 
  51 │ for (const [...x = []] of [[]]) {
-    ·             ─────────
+    ·                ──────
  52 │   
     ╰────
 
@@ -30292,11 +30292,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-init-obj.js:50:1]
  50 │ 
  51 │ for (const [...{ x } = []] of [[]]) {
-    ·             ─────────────
+    ·                ──────────
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-not-final-ary.js:50:1]
  50 │ 
  51 │ for (const [...[x], y] of [[1, 2, 3]]) {
@@ -30304,7 +30304,7 @@ Negative Passed: 3915/3915 (100.00%)
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-not-final-id.js:50:1]
  50 │ 
  51 │ for (const [...x, y] of [[1, 2, 3]]) {
@@ -30312,7 +30312,7 @@ Negative Passed: 3915/3915 (100.00%)
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-of/dstr/const-ary-ptrn-rest-not-final-obj.js:50:1]
  50 │ 
  51 │ for (const [...{ x }, y] of [[1, 2, 3]]) {
@@ -30338,7 +30338,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-init-ary.js:50:1]
  50 │ 
  51 │ for (let [...[ x ] = []] of [[]]) {
-    ·           ─────────────
+    ·              ──────────
  52 │   
     ╰────
 
@@ -30346,7 +30346,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-init-id.js:50:1]
  50 │ 
  51 │ for (let [...x = []] of [[]]) {
-    ·           ─────────
+    ·              ──────
  52 │   
     ╰────
 
@@ -30354,11 +30354,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj.js:50:1]
  50 │ 
  51 │ for (let [...{ x } = []] of [[]]) {
-    ·           ─────────────
+    ·              ──────────
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-not-final-ary.js:50:1]
  50 │ 
  51 │ for (let [...[x], y] of [[1, 2, 3]]) {
@@ -30366,7 +30366,7 @@ Negative Passed: 3915/3915 (100.00%)
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-not-final-id.js:50:1]
  50 │ 
  51 │ for (let [...x, y] of [[1, 2, 3]]) {
@@ -30374,7 +30374,7 @@ Negative Passed: 3915/3915 (100.00%)
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-of/dstr/let-ary-ptrn-rest-not-final-obj.js:50:1]
  50 │ 
  51 │ for (let [...{ x }, y] of [[1, 2, 3]]) {
@@ -30503,7 +30503,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js:47:1]
  47 │ 
  48 │ for (var [...[ x ] = []] of [[]]) {
-    ·           ─────────────
+    ·              ──────────
  49 │   
     ╰────
 
@@ -30511,7 +30511,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js:47:1]
  47 │ 
  48 │ for (var [...x = []] of [[]]) {
-    ·           ─────────
+    ·              ──────
  49 │   
     ╰────
 
@@ -30519,11 +30519,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj.js:47:1]
  47 │ 
  48 │ for (var [...{ x } = []] of [[]]) {
-    ·           ─────────────
+    ·              ──────────
  49 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-not-final-ary.js:47:1]
  47 │ 
  48 │ for (var [...[x], y] of [[1, 2, 3]]) {
@@ -30531,7 +30531,7 @@ Negative Passed: 3915/3915 (100.00%)
  49 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-not-final-id.js:47:1]
  47 │ 
  48 │ for (var [...x, y] of [[1, 2, 3]]) {
@@ -30539,7 +30539,7 @@ Negative Passed: 3915/3915 (100.00%)
  49 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for-of/dstr/var-ary-ptrn-rest-not-final-obj.js:47:1]
  47 │ 
  48 │ for (var [...{ x }, y] of [[1, 2, 3]]) {
@@ -30977,7 +30977,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js:50:1]
  50 │ 
  51 │ for (const [...[ x ] = []] = []; iterCount < 1; ) {
-    ·             ─────────────
+    ·                ──────────
  52 │   
     ╰────
 
@@ -30985,7 +30985,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-id.js:50:1]
  50 │ 
  51 │ for (const [...x = []] = []; iterCount < 1; ) {
-    ·             ─────────
+    ·                ──────
  52 │   
     ╰────
 
@@ -30993,11 +30993,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-obj.js:50:1]
  50 │ 
  51 │ for (const [...{ x } = []] = []; iterCount < 1; ) {
-    ·             ─────────────
+    ·                ──────────
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-ary.js:50:1]
  50 │ 
  51 │ for (const [...[x], y] = [1, 2, 3]; iterCount < 1; ) {
@@ -31005,7 +31005,7 @@ Negative Passed: 3915/3915 (100.00%)
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-id.js:50:1]
  50 │ 
  51 │ for (const [...x, y] = [1, 2, 3]; iterCount < 1; ) {
@@ -31013,7 +31013,7 @@ Negative Passed: 3915/3915 (100.00%)
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-obj.js:50:1]
  50 │ 
  51 │ for (const [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
@@ -31025,7 +31025,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-ary.js:50:1]
  50 │ 
  51 │ for (let [...[ x ] = []] = []; iterCount < 1; ) {
-    ·           ─────────────
+    ·              ──────────
  52 │   
     ╰────
 
@@ -31033,7 +31033,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-id.js:50:1]
  50 │ 
  51 │ for (let [...x = []] = []; iterCount < 1; ) {
-    ·           ─────────
+    ·              ──────
  52 │   
     ╰────
 
@@ -31041,11 +31041,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js:50:1]
  50 │ 
  51 │ for (let [...{ x } = []] = []; iterCount < 1; ) {
-    ·           ─────────────
+    ·              ──────────
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for/dstr/let-ary-ptrn-rest-not-final-ary.js:50:1]
  50 │ 
  51 │ for (let [...[x], y] = [1, 2, 3]; iterCount < 1; ) {
@@ -31053,7 +31053,7 @@ Negative Passed: 3915/3915 (100.00%)
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for/dstr/let-ary-ptrn-rest-not-final-id.js:50:1]
  50 │ 
  51 │ for (let [...x, y] = [1, 2, 3]; iterCount < 1; ) {
@@ -31061,7 +31061,7 @@ Negative Passed: 3915/3915 (100.00%)
  52 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for/dstr/let-ary-ptrn-rest-not-final-obj.js:50:1]
  50 │ 
  51 │ for (let [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
@@ -31073,7 +31073,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js:44:1]
  44 │ 
  45 │ for (var [...[ x ] = []] = []; iterCount < 1; ) {
-    ·           ─────────────
+    ·              ──────────
  46 │   
     ╰────
 
@@ -31081,7 +31081,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-id.js:44:1]
  44 │ 
  45 │ for (var [...x = []] = []; iterCount < 1; ) {
-    ·           ─────────
+    ·              ──────
  46 │   
     ╰────
 
@@ -31089,11 +31089,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js:44:1]
  44 │ 
  45 │ for (var [...{ x } = []] = []; iterCount < 1; ) {
-    ·           ─────────────
+    ·              ──────────
  46 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for/dstr/var-ary-ptrn-rest-not-final-ary.js:44:1]
  44 │ 
  45 │ for (var [...[x], y] = [1, 2, 3]; iterCount < 1; ) {
@@ -31101,7 +31101,7 @@ Negative Passed: 3915/3915 (100.00%)
  46 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for/dstr/var-ary-ptrn-rest-not-final-id.js:44:1]
  44 │ 
  45 │ for (var [...x, y] = [1, 2, 3]; iterCount < 1; ) {
@@ -31109,7 +31109,7 @@ Negative Passed: 3915/3915 (100.00%)
  46 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/for/dstr/var-ary-ptrn-rest-not-final-obj.js:44:1]
  44 │ 
  45 │ for (var [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
@@ -31270,7 +31270,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/function/dflt-params-rest.js:63:1]
  63 │ 
  64 │ function f(...x = []) {
-    ·            ─────────
+    ·               ──────
  65 │   
     ╰────
 
@@ -31278,7 +31278,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/function/dstr/ary-ptrn-rest-init-ary.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...[ x ] = []]) {
-    ·             ─────────────
+    ·                ──────────
  54 │   
     ╰────
 
@@ -31286,7 +31286,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/function/dstr/ary-ptrn-rest-init-id.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...x = []]) {
-    ·             ─────────
+    ·                ──────
  54 │   
     ╰────
 
@@ -31294,11 +31294,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/function/dstr/ary-ptrn-rest-init-obj.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...{ x } = []]) {
-    ·             ─────────────
+    ·                ──────────
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/function/dstr/ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...[x], y]) {
@@ -31306,7 +31306,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/function/dstr/ary-ptrn-rest-not-final-id.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...x, y]) {
@@ -31314,7 +31314,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/function/dstr/ary-ptrn-rest-not-final-obj.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...{ x }, y]) {
@@ -31326,7 +31326,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/function/dstr/dflt-ary-ptrn-rest-init-ary.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...[ x ] = []] = []) {
-    ·             ─────────────
+    ·                ──────────
  54 │   
     ╰────
 
@@ -31334,7 +31334,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/function/dstr/dflt-ary-ptrn-rest-init-id.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...x = []] = []) {
-    ·             ─────────
+    ·                ──────
  54 │   
     ╰────
 
@@ -31342,11 +31342,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/function/dstr/dflt-ary-ptrn-rest-init-obj.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...{ x } = []] = []) {
-    ·             ─────────────
+    ·                ──────────
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/function/dstr/dflt-ary-ptrn-rest-not-final-ary.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...[x], y] = [1, 2, 3]) {
@@ -31354,7 +31354,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/function/dstr/dflt-ary-ptrn-rest-not-final-id.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...x, y] = [1, 2, 3]) {
@@ -31362,7 +31362,7 @@ Negative Passed: 3915/3915 (100.00%)
  54 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/function/dstr/dflt-ary-ptrn-rest-not-final-obj.js:52:1]
  52 │ var callCount = 0;
  53 │ function f([...{ x }, y] = [1, 2, 3]) {
@@ -31661,7 +31661,7 @@ Negative Passed: 3915/3915 (100.00%)
  133 │ }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/function/rest-params-trailing-comma-early-error.js:55:1]
  55 │ 
  56 │ function f(...a,) {
@@ -31707,7 +31707,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/generators/dflt-params-rest.js:63:1]
  63 │ 
  64 │ function* f(...x = []) {
-    ·             ─────────
+    ·                ──────
  65 │   
     ╰────
 
@@ -31715,7 +31715,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/generators/dstr/ary-ptrn-rest-init-ary.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...[ x ] = []]) {
-    ·              ─────────────
+    ·                 ──────────
  53 │   
     ╰────
 
@@ -31723,7 +31723,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/generators/dstr/ary-ptrn-rest-init-id.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...x = []]) {
-    ·              ─────────
+    ·                 ──────
  53 │   
     ╰────
 
@@ -31731,11 +31731,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/generators/dstr/ary-ptrn-rest-init-obj.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...{ x } = []]) {
-    ·              ─────────────
+    ·                 ──────────
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/generators/dstr/ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...[x], y]) {
@@ -31743,7 +31743,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/generators/dstr/ary-ptrn-rest-not-final-id.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...x, y]) {
@@ -31751,7 +31751,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/generators/dstr/ary-ptrn-rest-not-final-obj.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...{ x }, y]) {
@@ -31763,7 +31763,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/generators/dstr/dflt-ary-ptrn-rest-init-ary.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...[ x ] = []] = []) {
-    ·              ─────────────
+    ·                 ──────────
  53 │   
     ╰────
 
@@ -31771,7 +31771,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/generators/dstr/dflt-ary-ptrn-rest-init-id.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...x = []] = []) {
-    ·              ─────────
+    ·                 ──────
  53 │   
     ╰────
 
@@ -31779,11 +31779,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/generators/dstr/dflt-ary-ptrn-rest-init-obj.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...{ x } = []] = []) {
-    ·              ─────────────
+    ·                 ──────────
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/generators/dstr/dflt-ary-ptrn-rest-not-final-ary.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...[x], y] = [1, 2, 3]) {
@@ -31791,7 +31791,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/generators/dstr/dflt-ary-ptrn-rest-not-final-id.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...x, y] = [1, 2, 3]) {
@@ -31799,7 +31799,7 @@ Negative Passed: 3915/3915 (100.00%)
  53 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/generators/dstr/dflt-ary-ptrn-rest-not-final-obj.js:51:1]
  51 │ var callCount = 0;
  52 │ function* f([...{ x }, y] = [1, 2, 3]) {
@@ -31831,7 +31831,7 @@ Negative Passed: 3915/3915 (100.00%)
  133 │ }
      ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/generators/rest-params-trailing-comma-early-error.js:56:1]
  56 │ 
  57 │ function* f(...a,) {
@@ -32626,7 +32626,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/let/dstr/ary-ptrn-rest-init-ary.js:29:1]
  29 │ 
  30 │ let [...[ x ] = []] = [];
-    ·      ─────────────
+    ·         ──────────
  31 │ 
     ╰────
 
@@ -32634,7 +32634,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/let/dstr/ary-ptrn-rest-init-id.js:29:1]
  29 │ 
  30 │ let [...x = []] = [];
-    ·      ─────────
+    ·         ──────
  31 │ 
     ╰────
 
@@ -32642,11 +32642,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/let/dstr/ary-ptrn-rest-init-obj.js:29:1]
  29 │ 
  30 │ let [...{ x } = []] = [];
-    ·      ─────────────
+    ·         ──────────
  31 │ 
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/let/dstr/ary-ptrn-rest-not-final-ary.js:29:1]
  29 │ 
  30 │ let [...[x], y] = [1, 2, 3];
@@ -32654,7 +32654,7 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ 
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/let/dstr/ary-ptrn-rest-not-final-id.js:29:1]
  29 │ 
  30 │ let [...x, y] = [1, 2, 3];
@@ -32662,7 +32662,7 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ 
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/let/dstr/ary-ptrn-rest-not-final-obj.js:29:1]
  29 │ 
  30 │ let [...{ x }, y] = [1, 2, 3];
@@ -33697,7 +33697,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/try/dstr/ary-ptrn-rest-init-ary.js:31:1]
  31 │   throw [];
  32 │ } catch ([...[ x ] = []]) {
-    ·           ─────────────
+    ·              ──────────
  33 │   
     ╰────
 
@@ -33705,7 +33705,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/try/dstr/ary-ptrn-rest-init-id.js:31:1]
  31 │   throw [];
  32 │ } catch ([...x = []]) {
-    ·           ─────────
+    ·              ──────
  33 │   
     ╰────
 
@@ -33713,11 +33713,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/try/dstr/ary-ptrn-rest-init-obj.js:31:1]
  31 │   throw [];
  32 │ } catch ([...{ x } = []]) {
-    ·           ─────────────
+    ·              ──────────
  33 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/try/dstr/ary-ptrn-rest-not-final-ary.js:31:1]
  31 │   throw [1, 2, 3];
  32 │ } catch ([...[x], y]) {
@@ -33725,7 +33725,7 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/try/dstr/ary-ptrn-rest-not-final-id.js:31:1]
  31 │   throw [1, 2, 3];
  32 │ } catch ([...x, y]) {
@@ -33733,7 +33733,7 @@ Negative Passed: 3915/3915 (100.00%)
  33 │   
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/try/dstr/ary-ptrn-rest-not-final-obj.js:31:1]
  31 │   throw [1, 2, 3];
  32 │ } catch ([...{ x }, y]) {
@@ -34042,7 +34042,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/variable/dstr/ary-ptrn-rest-init-ary.js:28:1]
  28 │ 
  29 │ var [...[ x ] = []] = [];
-    ·      ─────────────
+    ·         ──────────
  30 │ 
     ╰────
 
@@ -34050,7 +34050,7 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/variable/dstr/ary-ptrn-rest-init-id.js:28:1]
  28 │ 
  29 │ var [...x = []] = [];
-    ·      ─────────
+    ·         ──────
  30 │ 
     ╰────
 
@@ -34058,11 +34058,11 @@ Negative Passed: 3915/3915 (100.00%)
     ╭─[language/statements/variable/dstr/ary-ptrn-rest-init-obj.js:28:1]
  28 │ 
  29 │ var [...{ x } = []] = [];
-    ·      ─────────────
+    ·         ──────────
  30 │ 
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/variable/dstr/ary-ptrn-rest-not-final-ary.js:28:1]
  28 │ 
  29 │ var [...[x], y] = [1, 2, 3];
@@ -34070,7 +34070,7 @@ Negative Passed: 3915/3915 (100.00%)
  30 │ 
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/variable/dstr/ary-ptrn-rest-not-final-id.js:28:1]
  28 │ 
  29 │ var [...x, y] = [1, 2, 3];
@@ -34078,7 +34078,7 @@ Negative Passed: 3915/3915 (100.00%)
  30 │ 
     ╰────
 
-  × Rest element must be last element
+  × A rest element must be last in a destructuring pattern
     ╭─[language/statements/variable/dstr/ary-ptrn-rest-not-final-obj.js:28:1]
  28 │ 
  29 │ var [...{ x }, y] = [1, 2, 3];

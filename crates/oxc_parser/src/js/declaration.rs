@@ -82,7 +82,7 @@ impl<'a> Parser<'a> {
     ) -> Result<VariableDeclarator<'a>> {
         let span = self.start_span();
 
-        let (id, definite) = self.parse_binding_pattern()?;
+        let (id, definite) = self.parse_binding()?;
 
         let init =
             self.eat(Kind::Eq).then(|| self.parse_assignment_expression_base()).transpose()?;

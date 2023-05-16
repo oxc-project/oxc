@@ -21,7 +21,6 @@ impl<'a> BoundNames for BindingPattern<'a> {
             BindingPatternKind::ArrayPattern(array) => array.bound_names(f),
             BindingPatternKind::ObjectPattern(object) => object.bound_names(f),
             BindingPatternKind::AssignmentPattern(assignment) => assignment.bound_names(f),
-            BindingPatternKind::RestElement(rest) => rest.argument.bound_names(f),
         }
     }
 }
@@ -36,6 +35,9 @@ impl<'a> BoundNames for ArrayPattern<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
         for elem in self.elements.iter().flatten() {
             elem.bound_names(f);
+        }
+        if let Some(rest) = &self.rest {
+            rest.bound_names(f);
         }
     }
 }
@@ -67,6 +69,9 @@ impl<'a> BoundNames for FormalParameters<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier)>(&self, f: &mut F) {
         for item in &self.items {
             item.bound_names(f);
+        }
+        if let Some(rest) = &self.rest {
+            rest.bound_names(f);
         }
     }
 }
@@ -157,9 +162,7 @@ pub trait IsSimpleParameterList {
 
 impl<'a> IsSimpleParameterList for FormalParameters<'a> {
     fn is_simple_parameter_list(&self) -> bool {
-        self.items
-            .iter()
-            .all(|pat| matches!(pat.pattern.kind, BindingPatternKind::BindingIdentifier(_)))
+        self.items.iter().all(|pat| pat.pattern.kind.is_binding_identifier()) && self.rest.is_none()
     }
 }
 

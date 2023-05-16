@@ -68,8 +68,8 @@ impl<'a> Parser<'a> {
         params_kind: FormalParameterKind,
     ) -> Result<Box<'a, FormalParameters<'a>>> {
         let span = self.start_span();
-        let elements = FormalParameterList::parse(self)?.elements;
-        Ok(self.ast.formal_parameters(self.end_span(span), params_kind, elements))
+        let list = FormalParameterList::parse(self)?;
+        Ok(self.ast.formal_parameters(self.end_span(span), params_kind, list.elements, list.rest))
     }
 
     pub(crate) fn parse_function(
@@ -227,6 +227,7 @@ impl<'a> Parser<'a> {
             params_span,
             FormalParameterKind::ArrowFormalParameters,
             self.ast.new_vec_single(formal_parameter),
+            None,
         );
 
         self.expect(Kind::Arrow)?;

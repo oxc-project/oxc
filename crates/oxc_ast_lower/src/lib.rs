@@ -890,10 +890,6 @@ impl<'a> AstLower<'a> {
             ast::BindingPatternKind::ArrayPattern(pat) => {
                 self.lower_array_pattern(pat, includes, excludes)
             }
-            ast::BindingPatternKind::RestElement(elem) => {
-                let rest_element = self.lower_rest_element(elem, includes, excludes);
-                hir::BindingPattern::RestElement(rest_element)
-            }
             ast::BindingPatternKind::AssignmentPattern(pat) => {
                 self.lower_assignment_pattern(pat, includes, excludes)
             }
@@ -935,7 +931,8 @@ impl<'a> AstLower<'a> {
             let elem = elem.as_ref().map(|pat| self.lower_binding_pattern(pat, includes, excludes));
             elements.push(elem);
         }
-        self.hir.array_pattern(pat.span, elements)
+        let rest = pat.rest.as_ref().map(|rest| self.lower_rest_element(rest, includes, excludes));
+        self.hir.array_pattern(pat.span, elements, rest)
     }
 
     fn lower_rest_element(
@@ -1351,7 +1348,14 @@ impl<'a> AstLower<'a> {
             ast::FormalParameterKind::Signature => hir::FormalParameterKind::Signature,
         };
         let items = self.lower_vec(&params.items, Self::lower_formal_parameter);
-        self.hir.formal_parameters(params.span, kind, items)
+        let rest = params.rest.as_ref().map(|rest| {
+            self.lower_rest_element(
+                rest,
+                SymbolFlags::FunctionScopedVariable,
+                SymbolFlags::FunctionScopedVariableExcludes,
+            )
+        });
+        self.hir.formal_parameters(params.span, kind, items, rest)
     }
 
     fn lower_formal_parameter(

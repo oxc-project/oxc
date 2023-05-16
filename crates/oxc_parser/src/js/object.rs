@@ -245,12 +245,6 @@ impl<'a> Parser<'a> {
             self.error(diagnostics::SetterParameters(method.params.span));
         }
 
-        if method.params.items.len() == 1 {
-            if let BindingPatternKind::RestElement(elem) = &method.params.items[0].pattern.kind {
-                self.error(diagnostics::SetterParametersRestPattern(elem.span));
-            }
-        }
-
         Ok(self.ast.object_property(
             self.end_span(span),
             PropertyKind::Set,

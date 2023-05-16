@@ -582,8 +582,9 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         kind: FormalParameterKind,
         items: Vec<'a, FormalParameter<'a>>,
+        rest: Option<Box<'a, RestElement<'a>>>,
     ) -> Box<'a, FormalParameters<'a>> {
-        self.alloc(FormalParameters { span, kind, items })
+        self.alloc(FormalParameters { span, kind, items, rest })
     }
 
     pub fn formal_parameter(
@@ -767,8 +768,9 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         elements: Vec<'a, Option<BindingPattern<'a>>>,
+        rest: Option<Box<'a, RestElement<'a>>>,
     ) -> BindingPatternKind<'a> {
-        BindingPatternKind::ArrayPattern(self.alloc(ArrayPattern { span, elements }))
+        BindingPatternKind::ArrayPattern(self.alloc(ArrayPattern { span, elements, rest }))
     }
 
     pub fn assignment_pattern(
@@ -791,14 +793,6 @@ impl<'a> AstBuilder<'a> {
         argument: BindingPattern<'a>,
     ) -> Box<'a, RestElement<'a>> {
         self.alloc(RestElement { span, argument })
-    }
-
-    pub fn rest_element_pattern(&self, elem: Box<'a, RestElement<'a>>) -> BindingPattern<'a> {
-        BindingPattern {
-            kind: BindingPatternKind::RestElement(elem),
-            type_annotation: None,
-            optional: false,
-        }
     }
 
     /* ---------- Modules ---------- */

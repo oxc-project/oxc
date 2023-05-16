@@ -360,16 +360,8 @@ impl<'a> Parser<'a> {
             self.error(diagnostics::GetterParameters(value.params.span));
         }
 
-        if kind == MethodDefinitionKind::Set {
-            if value.params.items.len() != 1 {
-                self.error(diagnostics::SetterParameters(value.params.span));
-            }
-
-            if value.params.items.len() == 1 {
-                if let BindingPatternKind::RestElement(elem) = &value.params.items[0].pattern.kind {
-                    self.error(diagnostics::SetterParametersRestPattern(elem.span));
-                }
-            }
+        if kind == MethodDefinitionKind::Set && value.params.items.len() != 1 {
+            self.error(diagnostics::SetterParameters(value.params.span));
         }
 
         let method_definition = MethodDefinition {

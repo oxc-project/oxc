@@ -529,6 +529,12 @@ impl<'a> Gen for FormalParameter<'a> {
 impl<'a> Gen for FormalParameters<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_list(&self.items);
+        if let Some(rest) = &self.rest {
+            if !self.items.is_empty() {
+                p.print_comma();
+            }
+            rest.gen(p);
+        }
     }
 }
 
@@ -1766,7 +1772,7 @@ impl<'a> Gen for ObjectPattern<'a> {
         p.print_list(&self.properties);
         if let Some(rest) = &self.rest {
             if !self.properties.is_empty() {
-                p.print(b',');
+                p.print_comma();
             }
             rest.gen(p);
         }
@@ -1800,21 +1806,21 @@ impl<'a> Gen for RestElement<'a> {
 impl<'a> Gen for ArrayPattern<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print(b'[');
-        p.print_list(&self.elements);
-        if let Some(elem) = self.elements.last() {
-            if elem.is_none() {
+        for (index, item) in self.elements.iter().enumerate() {
+            if index != 0 {
+                p.print_comma();
+            }
+            if let Some(item) = item {
+                item.gen(p);
+            }
+            if index == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
                 p.print_comma();
             }
         }
-        p.print(b']');
-    }
-}
-
-impl<'a> Gen for Option<BindingPattern<'a>> {
-    fn gen(&self, p: &mut Printer) {
-        if let Some(pattern) = self {
-            pattern.gen(p);
+        if let Some(rest) = &self.rest {
+            rest.gen(p);
         }
+        p.print(b']');
     }
 }
 

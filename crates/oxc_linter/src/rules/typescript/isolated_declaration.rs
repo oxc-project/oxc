@@ -94,9 +94,6 @@ impl IsolatedDeclaration {
                 BindingPatternKind::AssignmentPattern(pat) => {
                     pat.left.type_annotation.is_none().then(|| pat.left.span())
                 }
-                BindingPatternKind::RestElement(elem) => {
-                    elem.argument.type_annotation.is_none().then(|| elem.argument.span())
-                }
                 _ => param.pattern.type_annotation.is_none().then_some(param.span),
             };
             if let Some(span) = span {

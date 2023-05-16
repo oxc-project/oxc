@@ -127,14 +127,15 @@ impl<'a> SeparatedList<'a> for ArrayExpressionList<'a> {
     }
 }
 
-/// ArrayPattern.elements, with optional element
+/// ArrayPattern.elements
 pub struct ArrayPatternList<'a> {
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
+    pub rest: Option<oxc_allocator::Box<'a, RestElement<'a>>>,
 }
 
 impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
     fn new(p: &Parser<'a>) -> Self {
-        Self { elements: p.ast.new_vec() }
+        Self { elements: p.ast.new_vec(), rest: None }
     }
 
     fn open(&self) -> Kind {
@@ -146,14 +147,21 @@ impl<'a> SeparatedList<'a> for ArrayPatternList<'a> {
     }
 
     fn parse_element(&mut self, p: &mut Parser<'a>) -> Result<()> {
-        let element = match p.cur_kind() {
-            Kind::Comma => None,
-            Kind::Dot3 => {
-                p.parse_rest_element().map(|rest| p.ast.rest_element_pattern(rest)).map(Some)?
+        match p.cur_kind() {
+            Kind::Comma => {
+                self.elements.push(None);
             }
-            _ => p.parse_binding_element().map(Some)?,
-        };
-        self.elements.push(element);
+            Kind::Dot3 => {
+                let rest = p.parse_rest_element()?;
+                if let Some(r) = self.rest.replace(rest) {
+                    p.error(diagnostics::RestElementLast(r.span));
+                }
+            }
+            _ => {
+                let element = p.parse_binding_pattern()?;
+                self.elements.push(Some(element));
+            }
+        }
         Ok(())
     }
 }
@@ -223,11 +231,12 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
 /// Function Parameters
 pub struct FormalParameterList<'a> {
     pub elements: Vec<'a, FormalParameter<'a>>,
+    pub rest: Option<oxc_allocator::Box<'a, RestElement<'a>>>,
 }
 
 impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
     fn new(p: &Parser<'a>) -> Self {
-        Self { elements: p.ast.new_vec() }
+        Self { elements: p.ast.new_vec(), rest: None }
     }
 
     fn open(&self) -> Kind {
@@ -247,20 +256,31 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
         let accessibility = modifiers.accessibility();
         let readonly = modifiers.readonly();
 
-        let pattern = match p.cur_kind() {
-            Kind::Dot3 => p.parse_rest_element().map(|rest| p.ast.rest_element_pattern(rest))?,
+        match p.cur_kind() {
             Kind::This if p.ts_enabled() => {
                 p.parse_ts_this_parameter()?;
                 // don't add this to ast fow now, the ast span shouldn't be in BindingIdentifier
                 return Ok(());
             }
-            _ => p.parse_binding_element()?,
-        };
-
-        let decorators = p.state.consume_decorators();
-        let formal_parameter =
-            p.ast.formal_parameter(p.end_span(span), pattern, accessibility, readonly, decorators);
-        self.elements.push(formal_parameter);
+            Kind::Dot3 => {
+                let rest = p.parse_rest_element()?;
+                if let Some(r) = self.rest.replace(rest) {
+                    p.error(diagnostics::RestParameterLast(r.span));
+                }
+            }
+            _ => {
+                let pattern = p.parse_binding_pattern()?;
+                let decorators = p.state.consume_decorators();
+                let formal_parameter = p.ast.formal_parameter(
+                    p.end_span(span),
+                    pattern,
+                    accessibility,
+                    readonly,
+                    decorators,
+                );
+                self.elements.push(formal_parameter);
+            }
+        }
 
         Ok(())
     }

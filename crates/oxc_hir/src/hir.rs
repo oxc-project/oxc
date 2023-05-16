@@ -1324,6 +1324,7 @@ pub struct ArrayPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
+    pub rest: Option<Box<'a, RestElement<'a>>>,
 }
 
 #[derive(Debug, Hash)]
@@ -1383,6 +1384,7 @@ pub struct FormalParameters<'a> {
     pub span: Span,
     pub kind: FormalParameterKind,
     pub items: Vec<'a, FormalParameter<'a>>,
+    pub rest: Option<Box<'a, RestElement<'a>>>,
 }
 
 #[derive(Debug, Hash)]

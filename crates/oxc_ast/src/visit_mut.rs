@@ -241,6 +241,9 @@ pub trait VisitMut<'a, 'b>: Sized {
         for param in params.items.iter_mut() {
             self.visit_formal_parameter(param);
         }
+        if let Some(rest) = &mut params.rest {
+            self.visit_rest_element(rest);
+        }
     }
 
     fn visit_formal_parameter(&mut self, param: &'b mut FormalParameter<'a>) {
@@ -782,7 +785,6 @@ pub trait VisitMut<'a, 'b>: Sized {
             }
             BindingPatternKind::ObjectPattern(pat) => self.visit_object_pattern(pat),
             BindingPatternKind::ArrayPattern(pat) => self.visit_array_pattern(pat),
-            BindingPatternKind::RestElement(pat) => self.visit_rest_element(pat),
             BindingPatternKind::AssignmentPattern(pat) => self.visit_assignment_pattern(pat),
         }
         if let Some(type_annotation) = &mut pat.type_annotation {
@@ -806,6 +808,9 @@ pub trait VisitMut<'a, 'b>: Sized {
     fn visit_array_pattern(&mut self, pat: &'b mut ArrayPattern<'a>) {
         for pat in pat.elements.iter_mut().flatten() {
             self.visit_binding_pattern(pat);
+        }
+        if let Some(rest) = &mut pat.rest {
+            self.visit_rest_element(rest);
         }
     }
 

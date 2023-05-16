@@ -61,9 +61,7 @@ impl EarlyErrorJavaScript {
             AstKind::ObjectProperty(prop) => check_object_property(prop, ctx),
 
             AstKind::FormalParameters(params) => check_formal_parameters(params, node, ctx),
-            AstKind::FormalParameter(param) => check_formal_parameter(param, ctx),
             AstKind::ArrayPattern(pat) => check_array_pattern(pat, ctx),
-
             AstKind::ObjectExpression(expr) => check_object_expression(expr, ctx),
             AstKind::BinaryExpression(expr) => check_binary_expression(expr, ctx),
             AstKind::LogicalExpression(expr) => check_logical_expression(expr, ctx),
@@ -944,11 +942,21 @@ fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder) {
     }
 }
 
+#[derive(Debug, Error, Diagnostic)]
+#[error("A rest parameter cannot have an initializer")]
+#[diagnostic()]
+struct ARestParameterCannotHaveAnInitializer(#[label] Span);
+
 fn check_formal_parameters<'a>(
     params: &FormalParameters,
     _node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
+    if let Some(rest) = &params.rest
+    && let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
+        ctx.error(ARestParameterCannotHaveAnInitializer(pat.span));
+    }
+
     if params.is_empty() {
         return;
     }
@@ -964,39 +972,12 @@ fn check_formal_parameters<'a>(
     check_duplicate_bound_names(params, ctx);
 }
 
-fn check_formal_parameter(param: &FormalParameter, ctx: &SemanticBuilder) {
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("A rest parameter cannot have an initializer")]
-    #[diagnostic()]
-    struct ARestParameterCannotHaveAnInitializer(#[label] Span);
-
-    match &param.pattern.kind {
-        BindingPatternKind::RestElement(pat)
-            if matches!(pat.argument.kind, BindingPatternKind::AssignmentPattern(_)) =>
-        {
-            ctx.error(ARestParameterCannotHaveAnInitializer(param.span));
-        }
-        _ => {}
-    }
-}
-
 fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder) {
-    #[derive(Debug, Error, Diagnostic)]
-    #[error("A rest parameter cannot have an initializer")]
-    #[diagnostic()]
-    struct ARestParameterCannotHaveAnInitializer(#[label] Span);
-
-    for elem in pattern.elements.iter().flatten() {
-        match &elem.kind {
-            // function foo([...x = []]) { }
-            //                    ^^^^ A rest element cannot have an initializer
-            BindingPatternKind::RestElement(pat)
-                if matches!(pat.argument.kind, BindingPatternKind::AssignmentPattern(_)) =>
-            {
-                ctx.error(ARestParameterCannotHaveAnInitializer(elem.span()));
-            }
-            _ => {}
-        }
+    // function foo([...x = []]) { }
+    //                    ^^^^ A rest element cannot have an initializer
+    if let Some(rest) = &pattern.rest
+    && let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
+        ctx.error(ARestParameterCannotHaveAnInitializer(pat.span));
     }
 }
 

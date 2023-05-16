@@ -1163,7 +1163,6 @@ pub enum BindingPatternKind<'a> {
     BindingIdentifier(Box<'a, BindingIdentifier>),
     ObjectPattern(Box<'a, ObjectPattern<'a>>),
     ArrayPattern(Box<'a, ArrayPattern<'a>>),
-    RestElement(Box<'a, RestElement<'a>>),
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>),
 }
 
@@ -1172,8 +1171,8 @@ impl<'a> BindingPatternKind<'a> {
         matches!(self, Self::ObjectPattern(_) | Self::ArrayPattern(_))
     }
 
-    pub fn is_rest_element(&self) -> bool {
-        matches!(self, Self::RestElement(_))
+    pub fn is_binding_identifier(&self) -> bool {
+        matches!(self, Self::BindingIdentifier(_))
     }
 }
 
@@ -1212,6 +1211,7 @@ pub struct ArrayPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
+    pub rest: Option<Box<'a, RestElement<'a>>>,
 }
 
 #[derive(Debug, Hash)]
@@ -1279,6 +1279,7 @@ pub struct FormalParameters<'a> {
     pub span: Span,
     pub kind: FormalParameterKind,
     pub items: Vec<'a, FormalParameter<'a>>,
+    pub rest: Option<Box<'a, RestElement<'a>>>,
 }
 
 #[derive(Debug, Hash)]

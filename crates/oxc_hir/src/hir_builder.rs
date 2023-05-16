@@ -750,8 +750,9 @@ impl<'a> HirBuilder<'a> {
         span: Span,
         kind: FormalParameterKind,
         items: Vec<'a, FormalParameter<'a>>,
+        rest: Option<Box<'a, RestElement<'a>>>,
     ) -> Box<'a, FormalParameters<'a>> {
-        self.alloc(FormalParameters { span, kind, items })
+        self.alloc(FormalParameters { span, kind, items, rest })
     }
 
     pub fn formal_parameter(
@@ -953,8 +954,9 @@ impl<'a> HirBuilder<'a> {
         &mut self,
         span: Span,
         elements: Vec<'a, Option<BindingPattern<'a>>>,
+        rest: Option<Box<'a, RestElement<'a>>>,
     ) -> BindingPattern<'a> {
-        BindingPattern::ArrayPattern(self.alloc(ArrayPattern { span, elements }))
+        BindingPattern::ArrayPattern(self.alloc(ArrayPattern { span, elements, rest }))
     }
 
     pub fn assignment_pattern(

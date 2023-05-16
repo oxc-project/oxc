@@ -119,9 +119,14 @@ pub struct YieldExpression(#[label] pub Span);
 pub struct ClassDeclaration(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("Rest element must be last element")]
+#[error("A rest element must be last in a destructuring pattern")]
 #[diagnostic()]
 pub struct RestElementLast(#[label] pub Span);
+
+#[derive(Debug, Error, Diagnostic)]
+#[error("A rest parameter must be last in a parameter list")]
+#[diagnostic()]
+pub struct RestParameterLast(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Spread must be last element")]
@@ -246,11 +251,6 @@ pub struct GetterParameters(#[label] pub Span);
 #[error("A 'set' accessor must have exactly one parameter.")]
 #[diagnostic()]
 pub struct SetterParameters(#[label] pub Span);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("A 'set' accessor function argument must not be a rest parameter")]
-#[diagnostic()]
-pub struct SetterParametersRestPattern(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("'super' can only be used with function calls or in property accesses")]

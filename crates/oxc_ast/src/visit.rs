@@ -336,6 +336,9 @@ pub trait Visit<'a>: Sized {
         for param in &params.items {
             self.visit_formal_parameter(param);
         }
+        if let Some(rest) = &params.rest {
+            self.visit_rest_element(rest);
+        }
         self.leave_node(kind);
     }
 
@@ -1000,7 +1003,6 @@ pub trait Visit<'a>: Sized {
             }
             BindingPatternKind::ObjectPattern(pat) => self.visit_object_pattern(pat),
             BindingPatternKind::ArrayPattern(pat) => self.visit_array_pattern(pat),
-            BindingPatternKind::RestElement(pat) => self.visit_rest_element(pat),
             BindingPatternKind::AssignmentPattern(pat) => self.visit_assignment_pattern(pat),
         }
         if let Some(type_annotation) = &pat.type_annotation {
@@ -1036,6 +1038,9 @@ pub trait Visit<'a>: Sized {
         self.enter_node(kind);
         for pat in pat.elements.iter().flatten() {
             self.visit_binding_pattern(pat);
+        }
+        if let Some(rest) = &pat.rest {
+            self.visit_rest_element(rest);
         }
         self.leave_node(kind);
     }

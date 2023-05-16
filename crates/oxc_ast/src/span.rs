@@ -83,7 +83,6 @@ impl<'a> GetSpan for BindingPatternKind<'a> {
             Self::BindingIdentifier(ident) => ident.span,
             Self::ObjectPattern(pat) => pat.span,
             Self::ArrayPattern(pat) => pat.span,
-            Self::RestElement(elem) => elem.span,
             Self::AssignmentPattern(pat) => pat.span,
         }
     }
@@ -95,7 +94,6 @@ impl<'a> GetSpan for BindingPattern<'a> {
             BindingPatternKind::BindingIdentifier(ident) => ident.span,
             BindingPatternKind::ObjectPattern(pat) => pat.span,
             BindingPatternKind::ArrayPattern(pat) => pat.span,
-            BindingPatternKind::RestElement(pat) => pat.span,
             BindingPatternKind::AssignmentPattern(pat) => pat.span,
         }
     }
