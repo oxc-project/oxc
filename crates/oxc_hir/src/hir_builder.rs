@@ -567,7 +567,7 @@ impl<'a> HirBuilder<'a> {
     pub fn object_expression(
         &mut self,
         span: Span,
-        properties: Vec<'a, ObjectProperty<'a>>,
+        properties: Vec<'a, ObjectPropertyKind<'a>>,
         trailing_comma: Option<Span>,
     ) -> Expression<'a> {
         Expression::ObjectExpression(self.alloc(ObjectExpression {
@@ -577,8 +577,17 @@ impl<'a> HirBuilder<'a> {
         }))
     }
 
-    pub fn object_property_property(&mut self, property: Property<'a>) -> ObjectProperty<'a> {
-        ObjectProperty::Property(self.alloc(property))
+    pub fn object_property(
+        &mut self,
+        span: Span,
+        kind: PropertyKind,
+        key: PropertyKey<'a>,
+        value: Expression<'a>,
+        method: bool,
+        shorthand: bool,
+        computed: bool,
+    ) -> Box<'a, ObjectProperty<'a>> {
+        self.alloc(ObjectProperty { span, kind, key, value, method, shorthand, computed })
     }
 
     pub fn parenthesized_expression(
@@ -907,9 +916,23 @@ impl<'a> HirBuilder<'a> {
     pub fn object_pattern(
         &mut self,
         span: Span,
-        properties: Vec<'a, ObjectPatternProperty<'a>>,
+        properties: Vec<'a, BindingProperty<'a>>,
+        rest: Option<Box<'a, RestElement<'a>>>,
     ) -> BindingPattern<'a> {
-        BindingPattern::ObjectPattern(self.alloc(ObjectPattern { span, properties }))
+        BindingPattern::ObjectPattern(self.alloc(ObjectPattern { span, properties, rest }))
+    }
+
+    pub fn binding_property(
+        &mut self,
+        span: Span,
+        kind: PropertyKind,
+        key: PropertyKey<'a>,
+        value: BindingPattern<'a>,
+        method: bool,
+        shorthand: bool,
+        computed: bool,
+    ) -> BindingProperty<'a> {
+        BindingProperty { span, kind, key, value, method, shorthand, computed }
     }
 
     pub fn spread_element(
@@ -918,19 +941,6 @@ impl<'a> HirBuilder<'a> {
         argument: Expression<'a>,
     ) -> Box<'a, SpreadElement<'a>> {
         self.alloc(SpreadElement { span, argument })
-    }
-
-    pub fn property(
-        &mut self,
-        span: Span,
-        kind: PropertyKind,
-        key: PropertyKey<'a>,
-        value: PropertyValue<'a>,
-        method: bool,
-        shorthand: bool,
-        computed: bool,
-    ) -> Box<'a, Property<'a>> {
-        self.alloc(Property { span, kind, key, value, method, shorthand, computed })
     }
 
     pub fn property_key_identifier(&mut self, ident: IdentifierName) -> PropertyKey<'a> {

@@ -1,0 +1,6 @@
+# For cargo-watch
+*/tasks/coverage/test262/**/*
+*/tasks/coverage/babel/**/*
+*/tasks/coverage/typescript/**/*
+*/target/**/*
+*/node_modules/**/*

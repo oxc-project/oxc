@@ -74,9 +74,8 @@ pub enum AstKind<'a> {
     UpdateExpression(&'a UpdateExpression<'a>),
     YieldExpression(&'a YieldExpression<'a>),
 
-    Property(&'a Property<'a>),
+    ObjectProperty(&'a ObjectProperty<'a>),
     PropertyKey(&'a PropertyKey<'a>),
-    PropertyValue(&'a PropertyValue<'a>),
     Argument(&'a Argument<'a>),
     AssignmentTarget(&'a AssignmentTarget<'a>),
     SimpleAssignmentTarget(&'a SimpleAssignmentTarget<'a>),
@@ -298,9 +297,8 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::UpdateExpression(x) => x.span,
             Self::YieldExpression(x) => x.span,
 
-            Self::Property(x) => x.span,
+            Self::ObjectProperty(x) => x.span,
             Self::PropertyKey(x) => x.span(),
-            Self::PropertyValue(x) => x.span(),
             Self::Argument(x) => x.span(),
             Self::ArrayExpressionElement(x) => x.span(),
             Self::AssignmentTarget(x) => x.span(),

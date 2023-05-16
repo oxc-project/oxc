@@ -544,7 +544,7 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_object_expression(&mut self, expr: &ast::ObjectExpression<'a>) -> hir::Expression<'a> {
-        let properties = self.lower_vec(&expr.properties, Self::lower_object_property);
+        let properties = self.lower_vec(&expr.properties, Self::lower_object_property_kind);
         self.hir.object_expression(expr.span, properties, expr.trailing_comma)
     }
 
@@ -556,34 +556,42 @@ impl<'a> AstLower<'a> {
         self.hir.parenthesized_expression(expr.span, expression)
     }
 
-    fn lower_object_property(&mut self, prop: &ast::ObjectProperty<'a>) -> hir::ObjectProperty<'a> {
+    fn lower_object_property_kind(
+        &mut self,
+        prop: &ast::ObjectPropertyKind<'a>,
+    ) -> hir::ObjectPropertyKind<'a> {
         match prop {
-            ast::ObjectProperty::Property(property) => {
-                let property =
-                    self.lower_property(property, SymbolFlags::empty(), SymbolFlags::empty());
-                hir::ObjectProperty::Property(property)
+            ast::ObjectPropertyKind::ObjectProperty(property) => {
+                let property = self.lower_object_property(property);
+                hir::ObjectPropertyKind::ObjectProperty(property)
             }
-            ast::ObjectProperty::SpreadProperty(spread_element) => {
+            ast::ObjectPropertyKind::SpreadProperty(spread_element) => {
                 let spread_element = self.lower_spread_element(spread_element);
-                hir::ObjectProperty::SpreadProperty(spread_element)
+                hir::ObjectPropertyKind::SpreadProperty(spread_element)
             }
         }
     }
 
-    fn lower_property(
+    fn lower_object_property(
         &mut self,
-        prop: &ast::Property<'a>,
-        includes: SymbolFlags,
-        excludes: SymbolFlags,
-    ) -> Box<'a, hir::Property<'a>> {
+        prop: &ast::ObjectProperty<'a>,
+    ) -> Box<'a, hir::ObjectProperty<'a>> {
         let kind = match prop.kind {
             ast::PropertyKind::Init => hir::PropertyKind::Init,
             ast::PropertyKind::Get => hir::PropertyKind::Get,
             ast::PropertyKind::Set => hir::PropertyKind::Set,
         };
         let key = self.lower_property_key(&prop.key);
-        let value = self.lower_property_value(&prop.value, includes, excludes);
-        self.hir.property(prop.span, kind, key, value, prop.method, prop.shorthand, prop.computed)
+        let value = self.lower_expression(&prop.value);
+        self.hir.object_property(
+            prop.span,
+            kind,
+            key,
+            value,
+            prop.method,
+            prop.shorthand,
+            prop.computed,
+        )
     }
 
     fn lower_property_key(&mut self, key: &ast::PropertyKey<'a>) -> hir::PropertyKey<'a> {
@@ -598,22 +606,6 @@ impl<'a> AstLower<'a> {
             }
             ast::PropertyKey::Expression(expr) => {
                 hir::PropertyKey::Expression(self.lower_expression(expr))
-            }
-        }
-    }
-
-    fn lower_property_value(
-        &mut self,
-        value: &ast::PropertyValue<'a>,
-        includes: SymbolFlags,
-        excludes: SymbolFlags,
-    ) -> hir::PropertyValue<'a> {
-        match value {
-            ast::PropertyValue::Pattern(pat) => {
-                hir::PropertyValue::Pattern(self.lower_binding_pattern(pat, includes, excludes))
-            }
-            ast::PropertyValue::Expression(expr) => {
-                hir::PropertyValue::Expression(self.lower_expression(expr))
             }
         }
     }
@@ -915,27 +907,34 @@ impl<'a> AstLower<'a> {
         excludes: SymbolFlags,
     ) -> hir::BindingPattern<'a> {
         let properties = self.lower_vec(&pat.properties, |p, prop| {
-            p.lower_object_pattern_property(prop, includes, excludes)
+            p.lower_binding_property(prop, includes, excludes)
         });
-        self.hir.object_pattern(pat.span, properties)
+        let rest = pat.rest.as_ref().map(|rest| self.lower_rest_element(rest, includes, excludes));
+        self.hir.object_pattern(pat.span, properties, rest)
     }
 
-    fn lower_object_pattern_property(
+    fn lower_binding_property(
         &mut self,
-        prop: &ast::ObjectPatternProperty<'a>,
+        prop: &ast::BindingProperty<'a>,
         includes: SymbolFlags,
         excludes: SymbolFlags,
-    ) -> hir::ObjectPatternProperty<'a> {
-        match prop {
-            ast::ObjectPatternProperty::Property(prop) => {
-                hir::ObjectPatternProperty::Property(self.lower_property(prop, includes, excludes))
-            }
-            ast::ObjectPatternProperty::RestElement(elem) => {
-                hir::ObjectPatternProperty::RestElement(
-                    self.lower_rest_element(elem, includes, excludes),
-                )
-            }
-        }
+    ) -> hir::BindingProperty<'a> {
+        let kind = match prop.kind {
+            ast::PropertyKind::Init => hir::PropertyKind::Init,
+            ast::PropertyKind::Get => hir::PropertyKind::Get,
+            ast::PropertyKind::Set => hir::PropertyKind::Set,
+        };
+        let key = self.lower_property_key(&prop.key);
+        let value = self.lower_binding_pattern(&prop.value, includes, excludes);
+        self.hir.binding_property(
+            prop.span,
+            kind,
+            key,
+            value,
+            prop.method,
+            prop.shorthand,
+            prop.computed,
+        )
     }
 
     fn lower_array_pattern(

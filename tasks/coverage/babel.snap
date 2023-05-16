@@ -5206,33 +5206,33 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                                ╰── It cannot be redeclared here
    ╰────
 
-  × Invalid rest argument
+  × Invalid rest element
    ╭─[es2018/object-rest-spread/16/input.js:1:1]
  1 │ var {...{z}} = { z: 1};
-   ·      ──────
+   ·         ───
    ╰────
-  help: Expected identifier in rest argument
+  help: Expected identifier in rest element
 
-  × Invalid rest argument
+  × Invalid rest element
    ╭─[es2018/object-rest-spread/17/input.js:1:1]
  1 │ var { ...{ x = 5 } } = {x : 1};
-   ·       ────────────
+   ·          ─────────
    ╰────
-  help: Expected identifier in rest argument
+  help: Expected identifier in rest element
 
-  × Invalid rest argument
+  × Invalid rest element
    ╭─[es2018/object-rest-spread/19/input.js:1:1]
  1 │ function test({...{}}) {}
-   ·                ─────
+   ·                   ──
    ╰────
-  help: Expected identifier in rest argument
+  help: Expected identifier in rest element
 
-  × Invalid rest argument
+  × Invalid rest element
    ╭─[es2018/object-rest-spread/20/input.js:1:1]
  1 │ function test({...{a}}) {}
-   ·                ──────
+   ·                   ───
    ╰────
-  help: Expected identifier in rest argument
+  help: Expected identifier in rest element
 
   × Cannot assign to this expression
    ╭─[es2018/object-rest-spread/21/input.js:1:1]
@@ -5240,33 +5240,33 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·      ─────
    ╰────
 
-  × Invalid rest argument
+  × Invalid rest element
    ╭─[es2018/object-rest-spread/22/input.js:1:1]
  1 │ var {...x = 1} = {}
-   ·      ────────
+   ·         ─────
    ╰────
-  help: Expected identifier in rest argument
+  help: Expected identifier in rest element
 
-  × Invalid rest argument
+  × Invalid rest element
    ╭─[es2018/object-rest-spread/23/input.js:1:1]
  1 │ function test({...x = 1}) {}
-   ·                ────────
+   ·                   ─────
    ╰────
-  help: Expected identifier in rest argument
+  help: Expected identifier in rest element
 
-  × Invalid rest argument
+  × Invalid rest element
    ╭─[es2018/object-rest-spread/25/input.js:1:1]
  1 │ var {...[]} = {}
-   ·      ─────
+   ·         ──
    ╰────
-  help: Expected identifier in rest argument
+  help: Expected identifier in rest element
 
-  × Invalid rest argument
+  × Invalid rest element
    ╭─[es2018/object-rest-spread/26/input.js:1:1]
  1 │ function test({...[]}) {}
-   ·                ─────
+   ·                   ──
    ╰────
-  help: Expected identifier in rest argument
+  help: Expected identifier in rest element
 
   × Rest element must be last element
    ╭─[es2018/object-rest-spread/7/input.js:1:1]
@@ -5278,6 +5278,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2018/object-rest-spread/8/input.js:1:1]
  1 │ let { x, y, ...z, } = obj;
    ·             ────
+   ╰────
+
+  × Rest element must be last element
+   ╭─[es2018/object-rest-spread/9/input.js:1:1]
+ 1 │ let { x, ...y, ...z } = obj;
+   ·          ────
    ╰────
 
   × Rest element must be last element

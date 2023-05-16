@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ObjectProperty, PropertyKind},
+    ast::{ObjectPropertyKind, PropertyKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -45,7 +45,7 @@ impl Rule for NoDupeKeys {
         if let AstKind::ObjectExpression(obj_expr) = node.get().kind() {
             let mut map = FxHashMap::default();
             for prop in obj_expr.properties.iter() {
-                if let ObjectProperty::Property(prop) = prop
+                if let ObjectPropertyKind::ObjectProperty(prop) = prop
                     && let Some(key_name) = prop.key.static_name().as_ref() {
                     let hash = calculate_hash(key_name);
                     if let Some((prev_kind, prev_span)) = map.insert(hash, (prop.kind, prop.key.span())) {
