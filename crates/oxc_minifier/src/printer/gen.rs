@@ -1,5 +1,3 @@
-use std::matches;
-
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
