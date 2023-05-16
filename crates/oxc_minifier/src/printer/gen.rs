@@ -1,3 +1,5 @@
+use std::matches;
+
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
@@ -878,7 +880,14 @@ impl<'a> Gen for ComputedMemberExpression<'a> {
 
 impl<'a> Gen for StaticMemberExpression<'a> {
     fn gen(&self, p: &mut Printer) {
+        let is_unary_expr = matches!(self.object, Expression::UnaryExpression(_));
+        if is_unary_expr {
+            p.print(b'(');
+        }
         self.object.gen(p);
+        if is_unary_expr {
+            p.print(b')');
+        }
         if self.optional {
             p.print(b'?');
         }

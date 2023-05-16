@@ -9,6 +9,6 @@ Original   -> Minified   -> Gzip
 1.25 MB    -> 711.21 kB  -> 185.77 kB  three.js
 2.14 MB    -> 760.08 kB  -> 187.71 kB  victory.js
 3.20 MB    -> 1.15 MB    -> 399.07 kB  echarts.js
-6.69 MB    -> 2.42 MB    -> 501.33 kB  antd.js
+6.69 MB    -> 2.42 MB    -> 501.34 kB  antd.js
 8.11 MB    -> 3.52 MB    -> 1.04 MB    typescript.js
 4.44 MB    -> 4.62 MB    -> 1.05 MB    babylon.js

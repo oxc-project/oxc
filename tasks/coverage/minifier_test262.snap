@@ -1,11 +1,5 @@
 Minifier_Test262 Summary:
 AST Parsed     : 44676/44676 (100.00%)
-Positive Passed: 44668/44676 (99.98%)
-Expect to Parse: "built-ins/Object/prototype/toLocaleString/primitive_this_value.js"
-Expect to Parse: "built-ins/Object/prototype/toLocaleString/primitive_this_value_getter.js"
+Positive Passed: 44674/44676 (100.00%)
 Expect to Parse: "language/expressions/new/S11.2.2_A3_T1.js"
 Expect to Parse: "language/expressions/new/S11.2.2_A3_T4.js"
-Expect to Parse: "language/expressions/property-accessors/S11.2.1_A3_T1.js"
-Expect to Parse: "language/expressions/property-accessors/S11.2.1_A3_T4.js"
-Expect to Parse: "language/types/reference/get-value-prop-base-primitive.js"
-Expect to Parse: "language/types/reference/put-value-prop-base-primitive.js"
