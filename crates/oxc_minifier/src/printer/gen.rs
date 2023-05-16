@@ -1409,7 +1409,6 @@ fn with_parens_if_unary_expr(expr: &Expression, p: &mut Printer) {
         p.print(b'(');
     }
     expr.gen(p);
-
     if is_unary_expr {
         p.print(b')');
     }
