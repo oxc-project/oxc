@@ -925,14 +925,12 @@ impl<'a> HirBuilder<'a> {
     pub fn binding_property(
         &mut self,
         span: Span,
-        kind: PropertyKind,
         key: PropertyKey<'a>,
         value: BindingPattern<'a>,
-        method: bool,
         shorthand: bool,
         computed: bool,
     ) -> BindingProperty<'a> {
-        BindingProperty { span, kind, key, value, method, shorthand, computed }
+        BindingProperty { span, key, value, shorthand, computed }
     }
 
     pub fn spread_element(

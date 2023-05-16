@@ -475,6 +475,20 @@ impl<'a> AstBuilder<'a> {
         }))
     }
 
+    pub fn object_property(
+        &self,
+        span: Span,
+        kind: PropertyKind,
+        key: PropertyKey<'a>,
+        value: Expression<'a>,
+        init: Option<Expression<'a>>,
+        method: bool,
+        shorthand: bool,
+        computed: bool,
+    ) -> Box<'a, ObjectProperty<'a>> {
+        self.alloc(ObjectProperty { span, kind, key, value, init, method, shorthand, computed })
+    }
+
     pub fn parenthesized_expression(
         &self,
         span: Span,
@@ -730,26 +744,23 @@ impl<'a> AstBuilder<'a> {
         BindingPatternKind::ObjectPattern(self.alloc(ObjectPattern { span, properties, rest }))
     }
 
+    pub fn binding_property(
+        &self,
+        span: Span,
+        key: PropertyKey<'a>,
+        value: BindingPattern<'a>,
+        shorthand: bool,
+        computed: bool,
+    ) -> BindingProperty<'a> {
+        BindingProperty { span, key, value, shorthand, computed }
+    }
+
     pub fn spread_element(
         &self,
         span: Span,
         argument: Expression<'a>,
     ) -> Box<'a, SpreadElement<'a>> {
         self.alloc(SpreadElement { span, argument })
-    }
-
-    pub fn property(
-        &self,
-        span: Span,
-        kind: PropertyKind,
-        key: PropertyKey<'a>,
-        value: Expression<'a>,
-        init: Option<Expression<'a>>,
-        method: bool,
-        shorthand: bool,
-        computed: bool,
-    ) -> Box<'a, ObjectProperty<'a>> {
-        self.alloc(ObjectProperty { span, kind, key, value, init, method, shorthand, computed })
     }
 
     pub fn array_pattern(

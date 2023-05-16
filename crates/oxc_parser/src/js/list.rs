@@ -85,7 +85,7 @@ impl<'a> SeparatedList<'a> for ObjectPatternProperties<'a> {
                 p.error(diagnostics::RestElementLast(r.span));
             }
         } else {
-            let prop = p.parse_object_pattern_property()?;
+            let prop = p.parse_binding_property()?;
             self.elements.push(prop);
         }
         Ok(())

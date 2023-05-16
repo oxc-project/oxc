@@ -1200,10 +1200,8 @@ pub struct ObjectPattern<'a> {
 pub struct BindingProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
     pub value: BindingPattern<'a>,
-    pub method: bool,
     pub shorthand: bool,
     pub computed: bool,
 }

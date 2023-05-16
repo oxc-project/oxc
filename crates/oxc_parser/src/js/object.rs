@@ -68,7 +68,7 @@ impl<'a> Parser<'a> {
 
                 if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::ShiftLeft) {
                     let method = self.parse_method(false, false)?;
-                    return Ok(self.ast.property(
+                    return Ok(self.ast.object_property(
                         self.end_span(span),
                         PropertyKind::Init,
                         key,
@@ -119,7 +119,7 @@ impl<'a> Parser<'a> {
         } else {
             None
         };
-        Ok(self.ast.property(
+        Ok(self.ast.object_property(
             self.end_span(span),
             PropertyKind::Init,
             PropertyKey::Identifier(key),
@@ -141,7 +141,7 @@ impl<'a> Parser<'a> {
     ) -> Result<Box<'a, ObjectProperty<'a>>> {
         self.bump_any(); // bump `:`
         let value = self.parse_assignment_expression_base()?;
-        Ok(self.ast.property(
+        Ok(self.ast.object_property(
             self.end_span(span),
             PropertyKind::Init,
             key,
@@ -198,7 +198,7 @@ impl<'a> Parser<'a> {
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(r#async, generator)?;
         let value = self.ast.function_expression(method);
-        Ok(self.ast.property(
+        Ok(self.ast.object_property(
             self.end_span(span),
             PropertyKind::Init,
             key,
@@ -221,7 +221,7 @@ impl<'a> Parser<'a> {
             self.error(diagnostics::GetterParameters(method.params.span));
         }
         let value = self.ast.function_expression(method);
-        Ok(self.ast.property(
+        Ok(self.ast.object_property(
             self.end_span(span),
             PropertyKind::Get,
             key,
@@ -251,7 +251,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        Ok(self.ast.property(
+        Ok(self.ast.object_property(
             self.end_span(span),
             PropertyKind::Set,
             key,

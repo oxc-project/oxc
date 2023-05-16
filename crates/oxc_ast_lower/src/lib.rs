@@ -919,22 +919,9 @@ impl<'a> AstLower<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> hir::BindingProperty<'a> {
-        let kind = match prop.kind {
-            ast::PropertyKind::Init => hir::PropertyKind::Init,
-            ast::PropertyKind::Get => hir::PropertyKind::Get,
-            ast::PropertyKind::Set => hir::PropertyKind::Set,
-        };
         let key = self.lower_property_key(&prop.key);
         let value = self.lower_binding_pattern(&prop.value, includes, excludes);
-        self.hir.binding_property(
-            prop.span,
-            kind,
-            key,
-            value,
-            prop.method,
-            prop.shorthand,
-            prop.computed,
-        )
+        self.hir.binding_property(prop.span, key, value, prop.shorthand, prop.computed)
     }
 
     fn lower_array_pattern(

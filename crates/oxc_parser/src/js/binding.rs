@@ -74,9 +74,10 @@ impl<'a> Parser<'a> {
         self.with_context(Context::In, |p| p.parse_initializer(span, pattern))
     }
 
-    // object pattern property only has kind: init and method: false
-    // <https://github.com/estree/estree/blob/master/es2015.md#objectpattern
-    pub(crate) fn parse_object_pattern_property(&mut self) -> Result<BindingProperty<'a>> {
+    /// `BindingProperty`[Yield, Await] :
+    ///     `SingleNameBinding`[?Yield, ?Await]
+    ///     `PropertyName`[?Yield, ?Await] : `BindingElement`[?Yield, ?Await]
+    pub(crate) fn parse_binding_property(&mut self) -> Result<BindingProperty<'a>> {
         let span = self.start_span();
 
         let mut shorthand = false;
@@ -104,15 +105,7 @@ impl<'a> Parser<'a> {
             self.parse_binding_element()?
         };
 
-        Ok(BindingProperty {
-            span: self.end_span(span),
-            key,
-            value,
-            kind: PropertyKind::Init,
-            method: false,
-            shorthand,
-            computed,
-        })
+        Ok(self.ast.binding_property(self.end_span(span), key, value, shorthand, computed))
     }
 
     /// Initializer[In, Yield, Await] :
