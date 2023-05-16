@@ -70,7 +70,7 @@ impl TestCase {
         let options = MinifierOptions {
             mangle: false,
             compress: self.compress_options,
-            print: PrinterOptions { minify_whitespace: false, ..PrinterOptions::default() },
+            print: PrinterOptions,
         };
         let minified_source_text = Minifier::new(self.input.as_ref(), source_type, options).build();
         assert_eq!(
