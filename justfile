@@ -7,6 +7,12 @@ _default:
 init:
   cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
 
+# Run `cargo watch`
+watch command:
+  # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
+  # use .ignore file getting the ignore list
+  cargo watch --no-vcs-ignores -x '{{command}}'
+
 # Format all files
 fmt:
   cargo fmt
