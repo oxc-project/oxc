@@ -1,5 +1,3 @@
 Minifier_Test262 Summary:
 AST Parsed     : 44676/44676 (100.00%)
-Positive Passed: 44674/44676 (100.00%)
-Expect to Parse: "language/expressions/new/S11.2.2_A3_T1.js"
-Expect to Parse: "language/expressions/new/S11.2.2_A3_T4.js"
+Positive Passed: 44676/44676 (100.00%)
