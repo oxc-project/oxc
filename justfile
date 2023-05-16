@@ -28,7 +28,7 @@ test:
 
 # Lint the whole project
 lint:
-  cargo lint
+  cargo lint -- --deny warnings
 
 # Run all the conformance tests. See `tasks/coverage`, `tasks/minsize`
 coverage:
