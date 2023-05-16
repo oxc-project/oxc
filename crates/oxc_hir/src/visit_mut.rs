@@ -476,20 +476,20 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_object_expression(&mut self, expr: &'b mut ObjectExpression<'a>) {
         for prop in expr.properties.iter_mut() {
-            self.visit_object_property(prop);
+            self.visit_object_property_kind(prop);
+        }
+    }
+
+    fn visit_object_property_kind(&mut self, prop: &'b mut ObjectPropertyKind<'a>) {
+        match prop {
+            ObjectPropertyKind::ObjectProperty(prop) => self.visit_object_property(prop),
+            ObjectPropertyKind::SpreadProperty(elem) => self.visit_spread_element(elem),
         }
     }
 
     fn visit_object_property(&mut self, prop: &'b mut ObjectProperty<'a>) {
-        match prop {
-            ObjectProperty::Property(prop) => self.visit_property(prop),
-            ObjectProperty::SpreadProperty(elem) => self.visit_spread_element(elem),
-        }
-    }
-
-    fn visit_property(&mut self, prop: &'b mut Property<'a>) {
         self.visit_property_key(&mut prop.key);
-        self.visit_property_value(&mut prop.value);
+        self.visit_expression(&mut prop.value);
     }
 
     fn visit_property_key(&mut self, key: &'b mut PropertyKey<'a>) {
@@ -497,13 +497,6 @@ pub trait VisitMut<'a, 'b>: Sized {
             PropertyKey::Identifier(ident) => self.visit_identifier_name(ident),
             PropertyKey::PrivateIdentifier(ident) => self.visit_private_identifier(ident),
             PropertyKey::Expression(expr) => self.visit_expression(expr),
-        }
-    }
-
-    fn visit_property_value(&mut self, value: &'b mut PropertyValue<'a>) {
-        match value {
-            PropertyValue::Pattern(pat) => self.visit_binding_pattern(pat),
-            PropertyValue::Expression(expr) => self.visit_expression(expr),
         }
     }
 
@@ -744,15 +737,13 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_object_pattern(&mut self, pat: &'b mut ObjectPattern<'a>) {
         for prop in pat.properties.iter_mut() {
-            self.visit_object_pattern_property(prop);
+            self.visit_binding_property(prop);
         }
     }
 
-    fn visit_object_pattern_property(&mut self, prop: &'b mut ObjectPatternProperty<'a>) {
-        match prop {
-            ObjectPatternProperty::Property(prop) => self.visit_property(prop),
-            ObjectPatternProperty::RestElement(prop) => self.visit_rest_element(prop),
-        }
+    fn visit_binding_property(&mut self, prop: &'b mut BindingProperty<'a>) {
+        self.visit_property_key(&mut prop.key);
+        self.visit_binding_pattern(&mut prop.value);
     }
 
     fn visit_array_pattern(&mut self, pat: &'b mut ArrayPattern<'a>) {

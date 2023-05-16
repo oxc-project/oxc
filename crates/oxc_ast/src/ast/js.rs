@@ -279,25 +279,26 @@ pub enum ArrayExpressionElement<'a> {
 pub struct ObjectExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub properties: Vec<'a, ObjectProperty<'a>>,
+    pub properties: Vec<'a, ObjectPropertyKind<'a>>,
     pub trailing_comma: Option<Span>,
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-pub enum ObjectProperty<'a> {
-    Property(Box<'a, Property<'a>>),
+pub enum ObjectPropertyKind<'a> {
+    ObjectProperty(Box<'a, ObjectProperty<'a>>),
     SpreadProperty(Box<'a, SpreadElement<'a>>),
 }
 
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct Property<'a> {
+pub struct ObjectProperty<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub kind: PropertyKind,
     pub key: PropertyKey<'a>,
-    pub value: PropertyValue<'a>,
+    pub value: Expression<'a>,
+    pub init: Option<Expression<'a>>, // for `CoverInitializedName`
     pub method: bool,
     pub shorthand: bool,
     pub computed: bool,
@@ -333,14 +334,6 @@ impl<'a> PropertyKey<'a> {
     pub fn is_private_identifier(&self) -> bool {
         matches!(self, Self::PrivateIdentifier(_))
     }
-}
-
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-pub enum PropertyValue<'a> {
-    // For AssignmentProperty in ObjectPattern <https://github.com/estree/estree/blob/master/es2015.md#objectpattern>
-    Pattern(BindingPattern<'a>),
-    Expression(Expression<'a>),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -1198,14 +1191,21 @@ pub struct AssignmentPattern<'a> {
 pub struct ObjectPattern<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub properties: Vec<'a, ObjectPatternProperty<'a>>,
+    pub properties: Vec<'a, BindingProperty<'a>>,
+    pub rest: Option<Box<'a, RestElement<'a>>>,
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
-pub enum ObjectPatternProperty<'a> {
-    Property(Box<'a, Property<'a>>),
-    RestElement(Box<'a, RestElement<'a>>),
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct BindingProperty<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub kind: PropertyKind,
+    pub key: PropertyKey<'a>,
+    pub value: BindingPattern<'a>,
+    pub method: bool,
+    pub shorthand: bool,
+    pub computed: bool,
 }
 
 #[derive(Debug, Hash)]

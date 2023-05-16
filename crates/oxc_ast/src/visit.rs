@@ -687,23 +687,23 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::ObjectExpression(expr);
         self.enter_node(kind);
         for prop in &expr.properties {
-            self.visit_object_property(prop);
+            self.visit_object_property_kind(prop);
         }
         self.leave_node(kind);
     }
 
-    fn visit_object_property(&mut self, prop: &'a ObjectProperty<'a>) {
+    fn visit_object_property_kind(&mut self, prop: &'a ObjectPropertyKind<'a>) {
         match prop {
-            ObjectProperty::Property(prop) => self.visit_property(prop),
-            ObjectProperty::SpreadProperty(elem) => self.visit_spread_element(elem),
+            ObjectPropertyKind::ObjectProperty(prop) => self.visit_object_property(prop),
+            ObjectPropertyKind::SpreadProperty(elem) => self.visit_spread_element(elem),
         }
     }
 
-    fn visit_property(&mut self, prop: &'a Property<'a>) {
-        let kind = AstKind::Property(prop);
+    fn visit_object_property(&mut self, prop: &'a ObjectProperty<'a>) {
+        let kind = AstKind::ObjectProperty(prop);
         self.enter_node(kind);
         self.visit_property_key(&prop.key);
-        self.visit_property_value(&prop.value);
+        self.visit_expression(&prop.value);
         self.leave_node(kind);
     }
 
@@ -714,16 +714,6 @@ pub trait Visit<'a>: Sized {
             PropertyKey::Identifier(ident) => self.visit_identifier_name(ident),
             PropertyKey::PrivateIdentifier(ident) => self.visit_private_identifier(ident),
             PropertyKey::Expression(expr) => self.visit_expression(expr),
-        }
-        self.leave_node(kind);
-    }
-
-    fn visit_property_value(&mut self, value: &'a PropertyValue<'a>) {
-        let kind = AstKind::PropertyValue(value);
-        self.enter_node(kind);
-        match value {
-            PropertyValue::Pattern(pat) => self.visit_binding_pattern(pat),
-            PropertyValue::Expression(expr) => self.visit_expression(expr),
         }
         self.leave_node(kind);
     }
@@ -1028,16 +1018,17 @@ pub trait Visit<'a>: Sized {
         let kind = AstKind::ObjectPattern(pat);
         self.enter_node(kind);
         for prop in &pat.properties {
-            self.visit_object_pattern_property(prop);
+            self.visit_binding_property(prop);
+        }
+        if let Some(rest) = &pat.rest {
+            self.visit_rest_element(rest);
         }
         self.leave_node(kind);
     }
 
-    fn visit_object_pattern_property(&mut self, prop: &'a ObjectPatternProperty<'a>) {
-        match prop {
-            ObjectPatternProperty::Property(prop) => self.visit_property(prop),
-            ObjectPatternProperty::RestElement(prop) => self.visit_rest_element(prop),
-        }
+    fn visit_binding_property(&mut self, prop: &'a BindingProperty<'a>) {
+        self.visit_property_key(&prop.key);
+        self.visit_binding_pattern(&prop.value);
     }
 
     fn visit_array_pattern(&mut self, pat: &'a ArrayPattern<'a>) {

@@ -128,11 +128,11 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
         let len = expr.properties.len();
         for (i, elem) in expr.properties.into_iter().enumerate() {
             match elem {
-                ObjectProperty::Property(property) => {
+                ObjectPropertyKind::ObjectProperty(property) => {
                     let target = AssignmentTargetProperty::cover(property.unbox(), p)?;
                     properties.push(target);
                 }
-                ObjectProperty::SpreadProperty(spread) => {
+                ObjectPropertyKind::SpreadProperty(spread) => {
                     if i == len - 1 {
                         rest = Some(AssignmentTarget::cover(spread.unbox().argument, p)?);
                     } else {
@@ -146,8 +146,8 @@ impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
     }
 }
 
-impl<'a> CoverGrammar<'a, Property<'a>> for AssignmentTargetProperty<'a> {
-    fn cover(property: Property<'a>, p: &mut Parser<'a>) -> Result<Self> {
+impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
+    fn cover(property: ObjectProperty<'a>, p: &mut Parser<'a>) -> Result<Self> {
         if property.shorthand {
             let binding = match property.key {
                 PropertyKey::Identifier(ident) => {
@@ -155,8 +155,9 @@ impl<'a> CoverGrammar<'a, Property<'a>> for AssignmentTargetProperty<'a> {
                 }
                 _ => return Err(p.unexpected()),
             };
-            let init = match property.value {
-                PropertyValue::Expression(Expression::AssignmentExpression(assignment_expr)) => {
+            // convert `CoverInitializedName`
+            let init = match property.init {
+                Some(Expression::AssignmentExpression(assignment_expr)) => {
                     Some(assignment_expr.unbox().right)
                 }
                 _ => None,
@@ -164,12 +165,7 @@ impl<'a> CoverGrammar<'a, Property<'a>> for AssignmentTargetProperty<'a> {
             let target = AssignmentTargetPropertyIdentifier { span: property.span, binding, init };
             Ok(AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(p.ast.alloc(target)))
         } else {
-            let binding = match property.value {
-                PropertyValue::Expression(expr) => AssignmentTargetMaybeDefault::cover(expr, p)?,
-                PropertyValue::Pattern(_) => {
-                    return Err(diagnostics::InvalidAssignment(property.value.span()).into());
-                }
-            };
+            let binding = AssignmentTargetMaybeDefault::cover(property.value, p)?;
             let target = AssignmentTargetPropertyProperty {
                 span: property.span,
                 name: property.key,

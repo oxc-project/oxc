@@ -190,20 +190,11 @@ impl GetSpan for TSModuleDeclarationName {
     }
 }
 
-impl<'a> GetSpan for ObjectProperty<'a> {
+impl<'a> GetSpan for ObjectPropertyKind<'a> {
     fn span(&self) -> Span {
         match self {
-            Self::Property(p) => p.span,
+            Self::ObjectProperty(p) => p.span,
             Self::SpreadProperty(p) => p.span,
-        }
-    }
-}
-
-impl<'a> GetSpan for ObjectPatternProperty<'a> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Property(p) => p.span,
-            Self::RestElement(e) => e.span,
         }
     }
 }
@@ -218,15 +209,6 @@ impl<'a> GetSpan for AssignmentTarget<'a> {
             Self::AssignmentTargetPattern(AssignmentTargetPattern::ObjectAssignmentTarget(pat)) => {
                 pat.span
             }
-        }
-    }
-}
-
-impl<'a> GetSpan for PropertyValue<'a> {
-    fn span(&self) -> Span {
-        match self {
-            Self::Pattern(pat) => pat.span(),
-            Self::Expression(expr) => expr.span(),
         }
     }
 }

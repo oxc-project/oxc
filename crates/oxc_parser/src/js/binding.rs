@@ -36,8 +36,8 @@ impl<'a> Parser<'a> {
     /// Section 14.3.3 Object Binding Pattern
     fn parse_object_binding_pattern(&mut self) -> Result<BindingPatternKind<'a>> {
         let span = self.start_span();
-        let properties = ObjectPatternProperties::parse(self)?.elements;
-        Ok(self.ast.object_pattern(self.end_span(span), properties))
+        let props = ObjectPatternProperties::parse(self)?;
+        Ok(self.ast.object_pattern(self.end_span(span), props.elements, props.rest))
     }
 
     /// Section 14.3.3 Array Binding Pattern
@@ -76,7 +76,7 @@ impl<'a> Parser<'a> {
 
     // object pattern property only has kind: init and method: false
     // <https://github.com/estree/estree/blob/master/es2015.md#objectpattern
-    pub(crate) fn parse_object_pattern_property(&mut self) -> Result<Property<'a>> {
+    pub(crate) fn parse_object_pattern_property(&mut self) -> Result<BindingProperty<'a>> {
         let span = self.start_span();
 
         let mut shorthand = false;
@@ -93,7 +93,7 @@ impl<'a> Parser<'a> {
                     BindingIdentifier { span: ident.span, name: ident.name.clone() };
                 let identifier = self.ast.binding_identifier(binding_identifier);
                 let left = self.ast.binding_pattern(identifier, None, false);
-                PropertyValue::Pattern(self.parse_initializer(span, left)?)
+                self.parse_initializer(span, left)?
             } else {
                 return Err(self.unexpected());
             }
@@ -101,10 +101,10 @@ impl<'a> Parser<'a> {
             // let { a: b } = c
             //       ^ IdentifierReference
             self.expect(Kind::Colon)?;
-            PropertyValue::Pattern(self.parse_binding_element()?)
+            self.parse_binding_element()?
         };
 
-        Ok(Property {
+        Ok(BindingProperty {
             span: self.end_span(span),
             key,
             value,
