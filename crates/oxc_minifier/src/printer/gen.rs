@@ -779,7 +779,7 @@ impl<'a> Gen for ComputedMemberExpression<'a> {
 
 impl<'a> Gen for StaticMemberExpression<'a> {
     fn gen(&self, p: &mut Printer) {
-        self.object.gen(p);
+        with_parens_if_unary_expr(&self.object, p);
         if self.optional {
             p.print(b'?');
         }
@@ -1266,9 +1266,21 @@ impl<'a> Gen for ChainExpression<'a> {
 impl<'a> Gen for NewExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"new ");
-        self.callee.gen(p);
+        with_parens_if_unary_expr(&self.callee, p);
         p.print(b'(');
         p.print_list(&self.arguments);
+        p.print(b')');
+    }
+}
+
+fn with_parens_if_unary_expr(expr: &Expression, p: &mut Printer) {
+    let is_unary_expr = matches!(expr, Expression::UnaryExpression(_));
+
+    if is_unary_expr {
+        p.print(b'(');
+    }
+    expr.gen(p);
+    if is_unary_expr {
         p.print(b')');
     }
 }
