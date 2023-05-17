@@ -60,7 +60,6 @@ impl SemanticBuilder {
     }
 
     pub fn leave_scope(&mut self) {
-        self.symbol_table.mangler.decrease_slot(self.current_scope().bindings().len());
         if let Some(parent_id) = self.current_scope().parent_id() {
             self.current_scope_id = parent_id;
         }
@@ -85,7 +84,6 @@ impl SemanticBuilder {
         let symbol_id = self.symbol_table.add_symbol(span, name.clone(), includes);
         if includes.is_variable() {
             self.current_scope_mut().add_binding(name.clone(), symbol_id);
-            self.symbol_table.mangler.add_slot(symbol_id);
         }
         symbol_id
     }

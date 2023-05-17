@@ -48,9 +48,13 @@ impl<'a> Minifier<'a> {
         let ret = Parser::new(&allocator, self.source_text, self.source_type).parse();
         let ret = AstLower::new(&allocator, self.source_type).build(&ret.program);
         let mut program = ret.program;
+        let mut semantic = ret.semantic;
         Compressor::new(&allocator, self.options.compress).build(&mut program);
+        if self.options.mangle {
+            semantic.mangle();
+        }
         Printer::new(self.source_text.len(), self.options.print)
-            .with_mangle(ret.semantic.symbol_table, self.options.mangle)
+            .with_mangle(semantic.symbol_table, self.options.mangle)
             .build(&program)
     }
 }

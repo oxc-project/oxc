@@ -15,3 +15,4 @@ oxc_index = { workspace = true }
 
 bitflags   = { workspace = true }
 rustc-hash = { workspace = true }
+indexmap   = { workspace = true }

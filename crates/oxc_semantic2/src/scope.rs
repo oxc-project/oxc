@@ -1,9 +1,14 @@
 #![allow(non_upper_case_globals)]
 
+use std::hash::BuildHasherDefault;
+
 use bitflags::bitflags;
+use indexmap::IndexMap;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Atom;
-use rustc_hash::FxHashMap;
+use rustc_hash::FxHasher;
+
+type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 use crate::symbol::SymbolId;
 
@@ -47,12 +52,12 @@ impl ScopeFlags {
 pub struct Scope {
     parent_id: Option<ScopeId>,
     flags: ScopeFlags,
-    bindings: FxHashMap<Atom, SymbolId>,
+    bindings: FxIndexMap<Atom, SymbolId>,
 }
 
 impl Scope {
     pub fn new(parent_id: Option<ScopeId>, flags: ScopeFlags) -> Self {
-        Self { parent_id, flags, bindings: FxHashMap::default() }
+        Self { parent_id, flags, bindings: FxIndexMap::default() }
     }
 
     pub fn parent_id(&self) -> Option<ScopeId> {
@@ -63,7 +68,7 @@ impl Scope {
         self.flags
     }
 
-    pub fn bindings(&self) -> &FxHashMap<Atom, SymbolId> {
+    pub fn bindings(&self) -> &FxIndexMap<Atom, SymbolId> {
         &self.bindings
     }
 
@@ -96,6 +101,14 @@ impl ScopeTree {
         Self(IndexVec::new())
     }
 
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.len() == 0
+    }
+
     pub fn root_scope(&self) -> &Scope {
         self.get_scope(ScopeId::new(0))
     }
@@ -114,5 +127,9 @@ impl ScopeTree {
 
     pub fn ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
         std::iter::successors(Some(scope_id), |scope_id| self.get_scope(*scope_id).parent_id())
+    }
+
+    pub fn descendants(&self) -> impl Iterator<Item = (ScopeId, &Scope)> + '_ {
+        self.0.iter_enumerated()
     }
 }

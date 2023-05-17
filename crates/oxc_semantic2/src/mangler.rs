@@ -1,22 +1,10 @@
-use std::collections::BTreeMap;
+use oxc_index::{Idx, IndexVec};
+use oxc_span::Atom;
 
-use oxc_index::Idx;
-
-use crate::symbol::{SymbolId, SymbolTable};
-
-/// A slot is the occurrence index of a binding identifier inside a scope.
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Slot(usize);
-
-impl Idx for Slot {
-    fn new(idx: usize) -> Self {
-        Self(idx)
-    }
-
-    fn index(self) -> usize {
-        self.0
-    }
-}
+use crate::{
+    symbol::{SymbolId, SymbolTable},
+    Semantic,
+};
 
 /// # Name Mangler / Symbol Minification
 ///
@@ -28,93 +16,142 @@ impl Idx for Slot {
 /// Visually, a slot is the index position for binding identifiers:
 ///
 /// ```javascript
-/// function x(slot0, slot1) {
-///     function y(slot2, slot3) {
-///         slot0 = 1;
-///     }
+/// function slot0(slot2, slot3, slot4) {
+///     slot2 = 1;
 /// }
-/// function z(slot0, slot1, slot3, slot4) {
-///     slot0 = 1;
+/// function slot1(slot2, slot3) {
+///     function slot4() {
+///         slot2 = 1;
+///     }
 /// }
 /// ```
 ///
-/// Occurrences of slots and their corresponding newly assigned short identifiers (mangled names) are:
-/// - slot0: 4 - a
-/// - slot1: 2 - b
-/// - slot3: 2 - c
-/// - slot2: 1 - d
-/// - slot4: 1 - e
+/// The slot number for a new scope starts after the maximum slot of the parent scope.
 ///
-/// After swapping out the mangled names, the functions become:
+/// Occurrences of slots and their corresponding newly assigned short identifiers are:
+/// - slot2: 4 - a
+/// - slot3: 2 - b
+/// - slot4: 2 - c
+/// - slot0: 1 - d
+/// - slot1: 1 - e
+///
+/// After swapping out the mangled names:
 ///
 /// ```javascript
-/// function x(a, b) {
-///     function y(d, c) {
+/// function d(a, b, c) {
+///     a = 1;
+/// }
+/// function e(a, b) {
+///     function c() {
 ///         a = 1;
 ///     }
 /// }
-/// function z(a, b, c, e) {
-///     a = 1;
-/// }
 /// ```
 #[derive(Debug, Default)]
-pub struct Mangler {
-    /// The current slot used by semantic builder
-    pub(crate) current_slot: Slot,
+pub struct Mangler;
 
-    /// The maximum slot of all scopes.
-    pub(crate) max_slot: Slot,
+type Slot = usize;
 
-    pub(crate) slots: BTreeMap<SymbolId, Slot>,
+impl Mangler {
+    /// Mangle the symbol table by computing slots from the scope tree.
+    /// A slot is the occurrence index of a binding identifier inside a scope.
+    pub fn mangle(semantic: &mut Semantic) {
+        // Total number of slots for all scopes
+        let mut total_number_of_slots: Slot = 0;
+
+        // All symbols with their assigned slots
+        let mut slots: IndexVec<SymbolId, Slot> =
+            IndexVec::from_raw(vec![0; semantic.symbol_table.len()]);
+
+        // Keep track of the maximum slot number for each scope
+        let mut max_slot_for_scope = vec![0; semantic.scope_tree.len()];
+
+        // Walk the scope tree and compute the slot number for each scope
+        for (scope_id, scope) in semantic.scope_tree.descendants() {
+            // Skip if the scope is empty
+            if scope.bindings().is_empty() {
+                continue;
+            }
+
+            // The current slot number is continued by the maximum slot from the parent scope
+            let parent_max_slot = scope
+                .parent_id()
+                .map_or(0, |parent_scope_id| max_slot_for_scope[parent_scope_id.index()]);
+
+            let mut slot = parent_max_slot;
+
+            // `bindings` are stored in order, traverse and increment slot
+            for symbol_id in scope.bindings().values() {
+                slots[*symbol_id] = slot;
+                slot += 1;
+            }
+
+            max_slot_for_scope[scope_id.index()] = slot;
+
+            if slot > total_number_of_slots {
+                total_number_of_slots = slot;
+            }
+        }
+
+        let frequencies =
+            Self::tally_slot_frequencies(&semantic.symbol_table, total_number_of_slots, &slots);
+
+        let unresolved_references = semantic
+            .symbol_table
+            .unresolved_references
+            .values()
+            .filter(|name| name.len() < 5)
+            .collect::<Vec<_>>();
+
+        // Compute short identifiers by slot frequency
+        let mut count = 0;
+        for freq in &frequencies {
+            let name = loop {
+                let name = Atom::base54(count);
+                count += 1;
+                // Do not mangle keywords and unresolved references
+                if !is_keyword(&name) && !unresolved_references.iter().any(|n| **n == name) {
+                    break name;
+                }
+            };
+            // All symbols for the same frequency gets the same
+            for symbol_id in &freq.symbol_ids {
+                semantic.symbol_table.names[*symbol_id] = name.clone();
+            }
+        }
+    }
+
+    fn tally_slot_frequencies(
+        symbol_table: &SymbolTable,
+        total_number_of_slots: usize,
+        slots: &IndexVec<SymbolId, Slot>,
+    ) -> Vec<SlotFrequency> {
+        let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
+        for (symbol_id, slot) in slots.iter_enumerated() {
+            if !symbol_table.get_flag(symbol_id).is_variable() {
+                continue;
+            }
+            let index = slot.index();
+            frequencies[index].slot = *slot;
+            frequencies[index].frequency += symbol_table.references[symbol_id].len();
+            frequencies[index].symbol_ids.push(symbol_id);
+        }
+        frequencies.sort_by_key(|x| (std::cmp::Reverse(x.frequency)));
+        frequencies
+    }
 }
 
-#[derive(Debug, Clone)]
-pub struct SlotFrequency {
+#[derive(Debug, Default, Clone)]
+struct SlotFrequency {
     pub slot: Slot,
     pub frequency: usize,
     pub symbol_ids: Vec<SymbolId>,
 }
 
-impl SlotFrequency {
-    fn new() -> Self {
-        Self { slot: Slot::new(0), frequency: 0, symbol_ids: vec![] }
-    }
-}
-
-impl Mangler {
-    pub fn add_slot(&mut self, symbol_id: SymbolId) {
-        self.slots.insert(symbol_id, self.current_slot);
-        self.current_slot.increment();
-        if self.current_slot > self.max_slot {
-            self.max_slot = self.current_slot;
-        }
-    }
-
-    pub fn decrease_slot(&mut self, n: usize) {
-        self.current_slot = Slot::new(self.current_slot.index() - n);
-    }
-
-    pub fn tally_slot_frequency(&self, symbol_table: &SymbolTable) -> Vec<SlotFrequency> {
-        let mut frequencies = vec![SlotFrequency::new(); self.max_slot.index()];
-        for (symbol_id, slot) in &self.slots {
-            let index = slot.index();
-            frequencies[index].slot = *slot;
-            frequencies[index].frequency += symbol_table.references[*symbol_id].len();
-            frequencies[index].symbol_ids.push(*symbol_id);
-        }
-        frequencies.sort_by_key(|x| std::cmp::Reverse(x.frequency));
-        frequencies
-    }
-
-    #[rustfmt::skip]
-    pub(crate) fn is_keyword(s: &str) -> bool {
-        let len = s.len();
-        if len == 1 {
-            return false;
-        }
+#[rustfmt::skip]
+    fn is_keyword(s: &str) -> bool {
         matches!(s, "as" | "do" | "if" | "in" | "is" | "of" | "any" | "for" | "get"
                 | "let" | "new" | "out" | "set" | "try" | "var" | "case" | "else"
                 | "enum" | "from" | "meta" | "null" | "this" | "true" | "type"
                 | "void" | "with")
     }
-}

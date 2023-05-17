@@ -6,9 +6,9 @@ use bitflags::bitflags;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::{Atom, Span};
 
-use crate::{mangler::Mangler, reference::Reference};
+use crate::reference::Reference;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SymbolId(usize);
 
 impl Idx for SymbolId {
@@ -68,8 +68,6 @@ pub struct SymbolTable {
     pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
     pub(crate) references: IndexVec<SymbolId, Vec<Reference>>,
     pub(crate) unresolved_references: BTreeMap<Span, Atom>,
-
-    pub(crate) mangler: Mangler,
 }
 
 impl SymbolTable {
@@ -80,8 +78,15 @@ impl SymbolTable {
             flags: IndexVec::new(),
             references: IndexVec::new(),
             unresolved_references: BTreeMap::default(),
-            mangler: Mangler::default(),
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.spans.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn get_name(&self, symbol_id: SymbolId) -> &Atom {
@@ -105,25 +110,5 @@ impl SymbolTable {
 
     pub fn add_unresolved_reference(&mut self, span: Span, name: Atom) {
         self.unresolved_references.insert(span, name);
-    }
-
-    pub fn mangle(&mut self) {
-        let frequencies = self.mangler.tally_slot_frequency(self);
-        let mut i = 0;
-        let unresolved_references =
-            self.unresolved_references.values().filter(|name| name.len() < 5).collect::<Vec<_>>();
-        for freq in &frequencies {
-            let name = loop {
-                let name = Atom::base54(i);
-                i += 1;
-                if !Mangler::is_keyword(&name) && !unresolved_references.iter().any(|n| **n == name)
-                {
-                    break name;
-                }
-            };
-            for symbol_id in &freq.symbol_ids {
-                self.names[*symbol_id] = name.clone();
-            }
-        }
     }
 }
