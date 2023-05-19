@@ -48,9 +48,7 @@ fn minify(file: &TestFile) -> String {
     let options = MinifierOptions::default();
     let source_text1 = Minifier::new(&file.source_text, source_type, options).build();
     let source_text2 = Minifier::new(&source_text1, source_type, options).build();
-    if source_text1 != source_text2 {
-        panic!("Minification failed for {}", &file.file_name);
-    }
+    assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);
     source_text2
 }
 

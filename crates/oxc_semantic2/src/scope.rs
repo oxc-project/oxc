@@ -6,11 +6,11 @@ use bitflags::bitflags;
 use indexmap::IndexMap;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Atom;
-use rustc_hash::FxHasher;
+use rustc_hash::{FxHashMap, FxHasher};
+
+use crate::{reference::ReferenceId, symbol::SymbolId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
-
-use crate::symbol::SymbolId;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ScopeId(usize);
@@ -52,12 +52,18 @@ impl ScopeFlags {
 pub struct Scope {
     parent_id: Option<ScopeId>,
     flags: ScopeFlags,
-    bindings: FxIndexMap<Atom, SymbolId>,
+    pub(crate) bindings: FxIndexMap<Atom, SymbolId>,
+    pub(crate) unresolved_references: FxHashMap<Atom, Vec<ReferenceId>>,
 }
 
 impl Scope {
     pub fn new(parent_id: Option<ScopeId>, flags: ScopeFlags) -> Self {
-        Self { parent_id, flags, bindings: FxIndexMap::default() }
+        Self {
+            parent_id,
+            flags,
+            bindings: FxIndexMap::default(),
+            unresolved_references: FxHashMap::default(),
+        }
     }
 
     pub fn parent_id(&self) -> Option<ScopeId> {
@@ -90,6 +96,10 @@ impl Scope {
 
     pub fn add_binding(&mut self, name: Atom, symbol_id: SymbolId) {
         self.bindings.insert(name, symbol_id);
+    }
+
+    pub fn add_unresolved_reference(&mut self, name: Atom, reference_id: ReferenceId) {
+        self.unresolved_references.entry(name).or_default().push(reference_id);
     }
 }
 

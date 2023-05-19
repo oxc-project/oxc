@@ -23,7 +23,7 @@ impl<I: Idx, T> IndexVec<I, T> {
     }
 
     #[inline]
-    pub const fn from_raw(raw: Vec<T>) -> Self {
+    pub fn from_raw(raw: Vec<T>) -> Self {
         Self { raw, _marker: PhantomData }
     }
 

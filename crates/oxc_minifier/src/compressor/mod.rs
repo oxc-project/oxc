@@ -1,6 +1,7 @@
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::{hir::*, HirBuilder, VisitMut};
+use oxc_semantic2::Semantic;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
@@ -36,18 +37,20 @@ impl Default for CompressOptions {
 
 pub struct Compressor<'a> {
     hir: HirBuilder<'a>,
+    semantic: Semantic,
     options: CompressOptions,
 }
 
 const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
-    pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
-        Self { hir: HirBuilder::new(allocator), options }
+    pub fn new(allocator: &'a Allocator, semantic: Semantic, options: CompressOptions) -> Self {
+        Self { hir: HirBuilder::new(allocator), semantic, options }
     }
 
-    pub fn build<'b>(mut self, program: &'b mut Program<'a>) {
+    pub fn build<'b>(mut self, program: &'b mut Program<'a>) -> Semantic {
         self.visit_program(program);
+        self.semantic
     }
 
     /* Utilities */
@@ -136,7 +139,9 @@ impl<'a> Compressor<'a> {
 
     /// Transforms `undefined` => `void 0`
     fn compress_undefined<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
-        if expr.is_undefined() {
+        if let Expression::Identifier(ident) = expr
+        && ident.name == "undefined"
+        && self.semantic.symbol_table.is_global_reference(ident.reference_id) {
             *expr = self.create_void_0();
             return true;
         }

@@ -1,12 +1,10 @@
 #![allow(non_upper_case_globals)]
 
-use std::collections::BTreeMap;
-
 use bitflags::bitflags;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::{Atom, Span};
 
-use crate::reference::Reference;
+use crate::reference::{Reference, ReferenceId};
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SymbolId(usize);
@@ -36,6 +34,7 @@ bitflags! {
         const Export                  = 1 << 4;
         const Class                   = 1 << 5;
         const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
+        const Function                = 1 << 7;
 
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
         const Value = Self::Variable.bits() | Self::Class.bits();
@@ -56,6 +55,18 @@ impl SymbolFlags {
     pub fn is_variable(&self) -> bool {
         self.intersects(Self::Variable)
     }
+
+    pub fn is_function(&self) -> bool {
+        self.contains(Self::Function)
+    }
+
+    pub fn is_catch_variable(&self) -> bool {
+        self.contains(Self::CatchVariable)
+    }
+
+    pub fn is_function_scoped_declaration(&self) -> bool {
+        self.contains(Self::FunctionScopedVariable)
+    }
 }
 
 /// Symbol Table
@@ -66,8 +77,8 @@ pub struct SymbolTable {
     pub(crate) spans: IndexVec<SymbolId, Span>,
     pub(crate) names: IndexVec<SymbolId, Atom>,
     pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
-    pub(crate) references: IndexVec<SymbolId, Vec<Reference>>,
-    pub(crate) unresolved_references: BTreeMap<Span, Atom>,
+    pub(crate) resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
+    pub(crate) references: IndexVec<ReferenceId, Reference>,
 }
 
 impl SymbolTable {
@@ -76,8 +87,8 @@ impl SymbolTable {
             spans: IndexVec::new(),
             names: IndexVec::new(),
             flags: IndexVec::new(),
+            resolved_references: IndexVec::new(),
             references: IndexVec::new(),
-            unresolved_references: BTreeMap::default(),
         }
     }
 
@@ -97,18 +108,22 @@ impl SymbolTable {
         self.flags[symbol_id]
     }
 
-    pub fn add_symbol(&mut self, span: Span, name: Atom, flag: SymbolFlags) -> SymbolId {
+    pub fn create_symbol(&mut self, span: Span, name: Atom, flag: SymbolFlags) -> SymbolId {
         let _ = self.spans.push(span);
         let _ = self.names.push(name);
-        let _ = self.references.push(vec![]);
+        let _ = self.resolved_references.push(vec![]);
         self.flags.push(flag)
     }
 
-    pub fn add_reference(&mut self, reference: Reference) {
-        self.references[reference.symbol_id()].push(reference);
+    pub fn create_reference(&mut self, _span: Span, name: Atom) -> ReferenceId {
+        self.references.push(Reference::new(name))
     }
 
-    pub fn add_unresolved_reference(&mut self, span: Span, name: Atom) {
-        self.unresolved_references.insert(span, name);
+    pub fn get_reference(&self, reference_id: ReferenceId) -> &Reference {
+        &self.references[reference_id]
+    }
+
+    pub fn is_global_reference(&self, reference_id: ReferenceId) -> bool {
+        self.references[reference_id].symbol_id.is_none()
     }
 }

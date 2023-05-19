@@ -97,9 +97,12 @@ impl Mangler {
             Self::tally_slot_frequencies(&semantic.symbol_table, total_number_of_slots, &slots);
 
         let unresolved_references = semantic
-            .symbol_table
+            .scope_tree
+            .root_scope()
             .unresolved_references
-            .values()
+            .keys()
+            // .map(|reference_id| semantic.symbol_table.get_reference(*reference_id).name.clone())
+            // It is unlike to get a 5 letter mangled identifier, which is a lot of slots.
             .filter(|name| name.len() < 5)
             .collect::<Vec<_>>();
 
@@ -133,7 +136,7 @@ impl Mangler {
             }
             let index = slot.index();
             frequencies[index].slot = *slot;
-            frequencies[index].frequency += symbol_table.references[symbol_id].len();
+            frequencies[index].frequency += symbol_table.resolved_references[symbol_id].len();
             frequencies[index].symbol_ids.push(symbol_id);
         }
         frequencies.sort_by_key(|x| (std::cmp::Reverse(x.frequency)));
