@@ -25,12 +25,6 @@ pub struct TypeScriptSuite<T: Case> {
     test_cases: Vec<T>,
 }
 
-impl<T: Case> Default for TypeScriptSuite<T> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<T: Case> TypeScriptSuite<T> {
     pub fn new() -> Self {
         Self { test_root: project_root().join(TESTS_ROOT).join("cases"), test_cases: vec![] }

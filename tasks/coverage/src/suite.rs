@@ -59,7 +59,9 @@ pub trait Suite<T: Case> {
 
     fn get_test_root(&self) -> &Path;
 
-    fn skip_test_path(&self, path: &Path) -> bool;
+    fn skip_test_path(&self, _path: &Path) -> bool {
+        false
+    }
 
     fn save_test_cases(&mut self, cases: Vec<T>);
 

@@ -14,9 +14,7 @@ fn main() {
     let task = command.as_deref().unwrap_or("default");
 
     match task {
-        "js" | "test262" => args.run_test262(),
-        "babel" => args.run_babel(),
-        "ts" | "typescript" => args.run_typescript(),
+        "parser" => args.run_parser(),
         "formatter" => args.run_formatter(),
         "minifier" => args.run_minifier(),
         _ => args.run_all(),

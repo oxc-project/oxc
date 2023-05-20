@@ -36,12 +36,6 @@ pub struct BabelSuite<T: Case> {
     test_cases: Vec<T>,
 }
 
-impl<T: Case> Default for BabelSuite<T> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<T: Case> BabelSuite<T> {
     pub fn new() -> Self {
         Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }

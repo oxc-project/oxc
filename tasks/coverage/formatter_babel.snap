@@ -1,4 +1,4 @@
-Formatter_Babel Summary:
+formatter_babel Summary:
 AST Parsed     : 2071/2071 (100.00%)
 Positive Passed: 2048/2071 (98.89%)
 Expect to Parse: "typescript/cast/nested-parenthesized-assert-and-assign/input.ts"

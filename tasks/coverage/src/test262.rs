@@ -6,8 +6,10 @@ use std::{
 use oxc_span::SourceType;
 use serde::Deserialize;
 
-use crate::project_root;
-use crate::suite::{Case, Suite, TestResult};
+use crate::{
+    project_root,
+    suite::{Case, Suite, TestResult},
+};
 
 const FIXTURES_PATH: &str = "tasks/coverage/test262/test";
 
@@ -69,12 +71,6 @@ pub enum Phase {
 pub struct Test262Suite<T: Case> {
     test_root: PathBuf,
     test_cases: Vec<T>,
-}
-
-impl<T: Case> Default for Test262Suite<T> {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl<T: Case> Test262Suite<T> {

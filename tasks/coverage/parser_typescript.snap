@@ -1,4 +1,4 @@
-TypeScript Summary:
+parser_typescript Summary:
 AST Parsed     : 5043/5047 (99.92%)
 Positive Passed: 5036/5047 (99.78%)
 Negative Passed: 990/4741 (20.88%)

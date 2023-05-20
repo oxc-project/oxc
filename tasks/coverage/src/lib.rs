@@ -3,18 +3,22 @@
 mod babel;
 mod formatter;
 mod minifier;
+mod misc;
 mod suite;
 mod test262;
 mod typescript;
 
 use std::path::PathBuf;
 
-use crate::babel::{BabelCase, BabelSuite};
-use crate::formatter::{FormatterBabelCase, FormatterTest262Case};
-use crate::minifier::{MinifierBabelCase, MinifierTest262Case};
-use crate::suite::Suite;
-use crate::test262::{Test262Case, Test262Suite};
-use crate::typescript::{TypeScriptCase, TypeScriptSuite};
+use crate::{
+    babel::{BabelCase, BabelSuite},
+    formatter::{FormatterBabelCase, FormatterTest262Case},
+    minifier::{MinifierBabelCase, MinifierTest262Case},
+    misc::{MiscCase, MiscSuite},
+    suite::Suite,
+    test262::{Test262Case, Test262Suite},
+    typescript::{TypeScriptCase, TypeScriptSuite},
+};
 
 /// # Panics
 /// Invalid Project Root
@@ -36,33 +40,26 @@ impl AppArgs {
     }
 
     pub fn run_all(&self) {
-        self.run_test262();
-        self.run_babel();
-        self.run_typescript();
+        self.run_parser();
         self.run_formatter();
         self.run_minifier();
     }
 
-    pub fn run_test262(&self) {
-        Test262Suite::<Test262Case>::new().run("Test262", self);
-    }
-
-    pub fn run_babel(&self) {
-        BabelSuite::<BabelCase>::new().run("Babel", self);
-    }
-
-    pub fn run_typescript(&self) {
-        TypeScriptSuite::<TypeScriptCase>::new().run("TypeScript", self);
+    pub fn run_parser(&self) {
+        MiscSuite::<MiscCase>::new().run("parser_misc", self);
+        Test262Suite::<Test262Case>::new().run("parser_test262", self);
+        BabelSuite::<BabelCase>::new().run("parser_babel", self);
+        TypeScriptSuite::<TypeScriptCase>::new().run("parser_typescript", self);
     }
 
     pub fn run_formatter(&self) {
-        Test262Suite::<FormatterTest262Case>::new().run("Formatter_Test262", self);
-        BabelSuite::<FormatterBabelCase>::new().run("Formatter_Babel", self);
+        Test262Suite::<FormatterTest262Case>::new().run("formatter_test262", self);
+        BabelSuite::<FormatterBabelCase>::new().run("formatter_babel", self);
     }
 
     pub fn run_minifier(&self) {
-        Test262Suite::<MinifierTest262Case>::new().run("Minifier_Test262", self);
-        BabelSuite::<MinifierBabelCase>::new().run("Minifier_Babel", self);
+        Test262Suite::<MinifierTest262Case>::new().run("minifier_test262", self);
+        BabelSuite::<MinifierBabelCase>::new().run("minifier_babel", self);
     }
 }
 
