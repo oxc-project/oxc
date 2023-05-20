@@ -1223,6 +1223,7 @@ name = "oxc_semantic2"
 version = "0.0.0"
 dependencies = [
  "bitflags 2.2.1",
+ "indexmap",
  "oxc_index",
  "oxc_span",
  "rustc-hash",

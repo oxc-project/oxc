@@ -46,7 +46,10 @@ pub fn run() -> Result<(), io::Error> {
 fn minify(file: &TestFile) -> String {
     let source_type = SourceType::from_path(&file.file_name).unwrap();
     let options = MinifierOptions::default();
-    Minifier::new(&file.source_text, source_type, options).build()
+    let source_text1 = Minifier::new(&file.source_text, source_type, options).build();
+    let source_text2 = Minifier::new(&source_text1, source_type, options).build();
+    assert!(source_text1 == source_text2, "Minification failed for {}", &file.file_name);
+    source_text2
 }
 
 fn gzip_size(s: &str) -> usize {

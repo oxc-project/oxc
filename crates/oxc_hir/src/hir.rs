@@ -7,7 +7,7 @@ use bitflags::bitflags;
 use num_bigint::BigUint;
 use ordered_float::NotNan;
 use oxc_allocator::{Box, Vec};
-use oxc_semantic2::symbol::SymbolId;
+use oxc_semantic2::{reference::ReferenceId, symbol::SymbolId};
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -372,7 +372,7 @@ pub struct IdentifierReference {
     pub span: Span,
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub symbol_id: Option<SymbolId>,
+    pub reference_id: ReferenceId,
 }
 
 /// Binding Identifier

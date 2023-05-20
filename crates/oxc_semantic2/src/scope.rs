@@ -1,11 +1,16 @@
 #![allow(non_upper_case_globals)]
 
+use std::hash::BuildHasherDefault;
+
 use bitflags::bitflags;
+use indexmap::IndexMap;
 use oxc_index::{Idx, IndexVec};
 use oxc_span::Atom;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHasher};
 
-use crate::symbol::SymbolId;
+use crate::{reference::ReferenceId, symbol::SymbolId};
+
+type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ScopeId(usize);
@@ -47,12 +52,18 @@ impl ScopeFlags {
 pub struct Scope {
     parent_id: Option<ScopeId>,
     flags: ScopeFlags,
-    bindings: FxHashMap<Atom, SymbolId>,
+    pub(crate) bindings: FxIndexMap<Atom, SymbolId>,
+    pub(crate) unresolved_references: FxHashMap<Atom, Vec<ReferenceId>>,
 }
 
 impl Scope {
     pub fn new(parent_id: Option<ScopeId>, flags: ScopeFlags) -> Self {
-        Self { parent_id, flags, bindings: FxHashMap::default() }
+        Self {
+            parent_id,
+            flags,
+            bindings: FxIndexMap::default(),
+            unresolved_references: FxHashMap::default(),
+        }
     }
 
     pub fn parent_id(&self) -> Option<ScopeId> {
@@ -63,7 +74,7 @@ impl Scope {
         self.flags
     }
 
-    pub fn bindings(&self) -> &FxHashMap<Atom, SymbolId> {
+    pub fn bindings(&self) -> &FxIndexMap<Atom, SymbolId> {
         &self.bindings
     }
 
@@ -86,6 +97,10 @@ impl Scope {
     pub fn add_binding(&mut self, name: Atom, symbol_id: SymbolId) {
         self.bindings.insert(name, symbol_id);
     }
+
+    pub fn add_unresolved_reference(&mut self, name: Atom, reference_id: ReferenceId) {
+        self.unresolved_references.entry(name).or_default().push(reference_id);
+    }
 }
 
 #[derive(Debug)]
@@ -94,6 +109,14 @@ pub struct ScopeTree(IndexVec<ScopeId, Scope>);
 impl ScopeTree {
     pub fn new() -> Self {
         Self(IndexVec::new())
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.len() == 0
     }
 
     pub fn root_scope(&self) -> &Scope {
@@ -114,5 +137,9 @@ impl ScopeTree {
 
     pub fn ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
         std::iter::successors(Some(scope_id), |scope_id| self.get_scope(*scope_id).parent_id())
+    }
+
+    pub fn descendants(&self) -> impl Iterator<Item = (ScopeId, &Scope)> + '_ {
+        self.0.iter_enumerated()
     }
 }

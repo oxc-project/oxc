@@ -63,11 +63,9 @@ impl Printer {
         }
     }
 
-    pub fn with_mangle(mut self, symbols: SymbolTable, yes: bool) -> Self {
+    pub fn with_mangle(mut self, symbol_table: SymbolTable, yes: bool) -> Self {
         if yes {
-            let mut symbols = symbols;
-            symbols.mangle();
-            self.symbol_table = symbols;
+            self.symbol_table = symbol_table;
             self.mangle = true;
         }
         self

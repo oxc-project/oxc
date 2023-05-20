@@ -328,12 +328,18 @@ impl<'a> AstLower<'a> {
             ast::Expression::Super(expr) => self.lower_super(expr),
             ast::Expression::JSXElement(elem) => {
                 // TODO: implement JSX
-                let ident = self.hir.identifier_reference(elem.span, "undefined".into(), None);
+                let ident = self.lower_identifier_reference(&ast::IdentifierReference {
+                    span: elem.span,
+                    name: "undefined".into(),
+                });
                 self.hir.identifier_reference_expression(ident)
             }
             ast::Expression::JSXFragment(elem) => {
                 // TODO: implement JSX
-                let ident = self.hir.identifier_reference(elem.span, "undefined".into(), None);
+                let ident = self.lower_identifier_reference(&ast::IdentifierReference {
+                    span: elem.span,
+                    name: "undefined".into(),
+                });
                 self.hir.identifier_reference_expression(ident)
             }
             // Syntax trimmed for the following expressions
@@ -720,7 +726,10 @@ impl<'a> AstLower<'a> {
             }
             expr => {
                 // return undefined because this is invalid syntax
-                let ident = self.hir.identifier_reference(expr.span(), "undefined".into(), None);
+                let ident = self.lower_identifier_reference(&ast::IdentifierReference {
+                    span: expr.span(),
+                    name: "undefined".into(),
+                });
                 self.hir.assignment_target_identifier(ident)
             }
         }
@@ -962,8 +971,8 @@ impl<'a> AstLower<'a> {
         &mut self,
         ident: &ast::IdentifierReference,
     ) -> hir::IdentifierReference {
-        let symbol_id = self.semantic.enter_identifier_reference(ident.span, &ident.name);
-        self.hir.identifier_reference(ident.span, ident.name.clone(), symbol_id)
+        let reference_id = self.semantic.enter_identifier_reference(ident.span, &ident.name);
+        self.hir.identifier_reference(ident.span, ident.name.clone(), reference_id)
     }
 
     fn lower_private_identifier(
@@ -1306,6 +1315,7 @@ impl<'a> AstLower<'a> {
         } else {
             (SymbolFlags::empty(), SymbolFlags::empty())
         };
+        let includes = includes | SymbolFlags::Function;
         let id =
             func.id.as_ref().map(|ident| self.lower_binding_identifier(ident, includes, excludes));
         self.semantic.enter_function_scope();

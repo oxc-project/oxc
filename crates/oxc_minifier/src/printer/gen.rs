@@ -227,6 +227,7 @@ impl Gen for ContinueStatement {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"continue");
         if let Some(label) = &self.label {
+            p.print(b' ');
             label.gen(p);
         }
         p.print_semicolon_after_statement();
@@ -679,7 +680,7 @@ impl<'a> Gen for Expression<'a> {
 
 impl Gen for IdentifierReference {
     fn gen(&self, p: &mut Printer) {
-        if let Some(symbol_id) = self.symbol_id {
+        if p.mangle && let Some(symbol_id) = p.symbol_table.get_reference(self.reference_id).symbol_id {
             p.print_symbol(symbol_id, &self.name);
         } else {
             p.print_str(self.name.as_bytes());

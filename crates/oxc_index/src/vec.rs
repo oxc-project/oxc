@@ -23,6 +23,16 @@ impl<I: Idx, T> IndexVec<I, T> {
     }
 
     #[inline]
+    pub fn from_raw(raw: Vec<T>) -> Self {
+        Self { raw, _marker: PhantomData }
+    }
+
+    #[inline]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self::from_raw(Vec::with_capacity(capacity))
+    }
+
+    #[inline]
     pub fn len(&self) -> usize {
         self.raw.len()
     }
@@ -47,6 +57,11 @@ impl<I: Idx, T> IndexVec<I, T> {
     #[inline]
     pub fn next_index(&self) -> I {
         I::new(self.len())
+    }
+
+    #[inline]
+    pub fn iter(&self) -> std::slice::Iter<'_, T> {
+        self.raw.iter()
     }
 
     #[inline]
