@@ -56,32 +56,35 @@ impl Mangler {
     /// Mangle the symbol table by computing slots from the scope tree.
     /// A slot is the occurrence index of a binding identifier inside a scope.
     pub fn mangle(semantic: &mut Semantic) {
+        let symbol_table = &semantic.symbol_table;
+        let scope_tree = &semantic.scope_tree;
+
         // Total number of slots for all scopes
         let mut total_number_of_slots: Slot = 0;
 
         // All symbols with their assigned slots
-        let mut slots: IndexVec<SymbolId, Slot> =
-            IndexVec::from_raw(vec![0; semantic.symbol_table.len()]);
+        let mut slots: IndexVec<SymbolId, Slot> = IndexVec::from_raw(vec![0; symbol_table.len()]);
 
         // Keep track of the maximum slot number for each scope
-        let mut max_slot_for_scope = vec![0; semantic.scope_tree.len()];
+        let mut max_slot_for_scope = vec![0; scope_tree.len()];
 
         // Walk the scope tree and compute the slot number for each scope
-        for (scope_id, scope) in semantic.scope_tree.descendants() {
+        for scope_id in scope_tree.descendants() {
+            let bindings = scope_tree.get_bindings(scope_id);
             // Skip if the scope is empty
-            if scope.bindings().is_empty() {
+            if bindings.is_empty() {
                 continue;
             }
 
             // The current slot number is continued by the maximum slot from the parent scope
-            let parent_max_slot = scope
-                .parent_id()
+            let parent_max_slot = scope_tree
+                .get_parent_id(scope_id)
                 .map_or(0, |parent_scope_id| max_slot_for_scope[parent_scope_id.index()]);
 
             let mut slot = parent_max_slot;
 
             // `bindings` are stored in order, traverse and increment slot
-            for symbol_id in scope.bindings().values() {
+            for symbol_id in bindings.values() {
                 slots[*symbol_id] = slot;
                 slot += 1;
             }
@@ -96,10 +99,8 @@ impl Mangler {
         let frequencies =
             Self::tally_slot_frequencies(&semantic.symbol_table, total_number_of_slots, &slots);
 
-        let unresolved_references = semantic
-            .scope_tree
-            .root_scope()
-            .unresolved_references
+        let unresolved_references = scope_tree
+            .root_unresolved_references()
             .keys()
             // .map(|reference_id| semantic.symbol_table.get_reference(*reference_id).name.clone())
             // It is unlike to get a 5 letter mangled identifier, which is a lot of slots.

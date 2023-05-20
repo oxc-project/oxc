@@ -30,7 +30,7 @@ mod size_asserts {
 }
 
 bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct ScopeFlags: u8 {
         const StrictMode       = 1 << 0;
         const Top              = 1 << 1;
@@ -46,103 +46,113 @@ bitflags! {
 }
 
 impl ScopeFlags {
+    pub fn is_strict_mode(&self) -> bool {
+        self.contains(Self::StrictMode)
+    }
+
+    pub fn is_function(&self) -> bool {
+        self.contains(Self::Function)
+    }
+
+    pub fn is_var(&self) -> bool {
+        self.intersects(Self::Var)
+    }
+
     pub(crate) fn with_strict_mode(self, yes: bool) -> Self {
         if yes { self | Self::StrictMode } else { self }
     }
 }
 
-#[derive(Debug)]
-pub struct Scope {
-    parent_id: Option<ScopeId>,
-    flags: ScopeFlags,
-    pub(crate) bindings: FxIndexMap<Atom, SymbolId>,
-    pub(crate) unresolved_references: FxHashMap<Atom, Vec<ReferenceId>>,
+type Bindings = FxIndexMap<Atom, SymbolId>;
+type UnresolvedReferences = FxHashMap<Atom, Vec<ReferenceId>>;
+
+/// Scope Tree
+///
+/// `SoA` (Struct of Arrays) for memory efficiency.
+#[derive(Debug, Default)]
+pub struct ScopeTree {
+    parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
+    flags: IndexVec<ScopeId, ScopeFlags>,
+    bindings: IndexVec<ScopeId, Bindings>,
+    unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
 }
-
-impl Scope {
-    pub fn new(parent_id: Option<ScopeId>, flags: ScopeFlags) -> Self {
-        Self {
-            parent_id,
-            flags,
-            bindings: FxIndexMap::default(),
-            unresolved_references: FxHashMap::default(),
-        }
-    }
-
-    pub fn parent_id(&self) -> Option<ScopeId> {
-        self.parent_id
-    }
-
-    pub fn flags(&self) -> ScopeFlags {
-        self.flags
-    }
-
-    pub fn bindings(&self) -> &FxIndexMap<Atom, SymbolId> {
-        &self.bindings
-    }
-
-    pub fn is_strict_mode(&self) -> bool {
-        self.flags.contains(ScopeFlags::StrictMode)
-    }
-
-    pub fn is_var_scope(&self) -> bool {
-        self.flags.intersects(ScopeFlags::Var)
-    }
-
-    pub fn is_function(&self) -> bool {
-        self.flags.intersects(ScopeFlags::Function)
-    }
-
-    pub fn get_binding(&self, name: &Atom) -> Option<SymbolId> {
-        self.bindings.get(name).copied()
-    }
-
-    pub fn add_binding(&mut self, name: Atom, symbol_id: SymbolId) {
-        self.bindings.insert(name, symbol_id);
-    }
-
-    pub fn add_unresolved_reference(&mut self, name: Atom, reference_id: ReferenceId) {
-        self.unresolved_references.entry(name).or_default().push(reference_id);
-    }
-}
-
-#[derive(Debug)]
-pub struct ScopeTree(IndexVec<ScopeId, Scope>);
 
 impl ScopeTree {
-    pub fn new() -> Self {
-        Self(IndexVec::new())
-    }
-
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.parent_ids.len()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.0.len() == 0
-    }
-
-    pub fn root_scope(&self) -> &Scope {
-        self.get_scope(ScopeId::new(0))
-    }
-
-    pub fn get_scope(&self, scope_id: ScopeId) -> &Scope {
-        &self.0[scope_id]
-    }
-
-    pub fn get_scope_mut(&mut self, scope_id: ScopeId) -> &mut Scope {
-        &mut self.0[scope_id]
-    }
-
-    pub fn add_scope(&mut self, scope: Scope) -> ScopeId {
-        self.0.push(scope)
+        self.len() == 0
     }
 
     pub fn ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {
-        std::iter::successors(Some(scope_id), |scope_id| self.get_scope(*scope_id).parent_id())
+        std::iter::successors(Some(scope_id), |scope_id| self.parent_ids[*scope_id])
     }
 
-    pub fn descendants(&self) -> impl Iterator<Item = (ScopeId, &Scope)> + '_ {
-        self.0.iter_enumerated()
+    pub fn descendants(&self) -> impl Iterator<Item = ScopeId> + '_ {
+        self.parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
+    }
+
+    pub fn root_flags(&self) -> ScopeFlags {
+        self.flags[ScopeId::new(0)]
+    }
+
+    pub fn root_unresolved_references(&self) -> &UnresolvedReferences {
+        &self.unresolved_references[ScopeId::new(0)]
+    }
+
+    pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
+        self.flags[scope_id]
+    }
+
+    pub fn get_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
+        self.parent_ids[scope_id]
+    }
+
+    pub fn get_binding(&self, scope_id: ScopeId, name: &Atom) -> Option<SymbolId> {
+        self.bindings[scope_id].get(name).copied()
+    }
+
+    pub fn get_bindings(&self, scope_id: ScopeId) -> &Bindings {
+        &self.bindings[scope_id]
+    }
+
+    pub(crate) fn add_scope(&mut self, parent_id: Option<ScopeId>, flags: ScopeFlags) -> ScopeId {
+        let scope_id = self.parent_ids.push(parent_id);
+        _ = self.flags.push(flags);
+        _ = self.bindings.push(Bindings::default());
+        _ = self.unresolved_references.push(UnresolvedReferences::default());
+        scope_id
+    }
+
+    pub(crate) fn add_binding(&mut self, scope_id: ScopeId, name: Atom, symbol_id: SymbolId) {
+        self.bindings[scope_id].insert(name, symbol_id);
+        // self.bindings.insert(name, symbol_id);
+    }
+
+    pub(crate) fn add_unresolved_reference(
+        &mut self,
+        scope_id: ScopeId,
+        name: Atom,
+        reference_id: ReferenceId,
+    ) {
+        self.unresolved_references[scope_id].entry(name).or_default().push(reference_id);
+    }
+
+    pub(crate) fn extend_unresolved_reference(
+        &mut self,
+        scope_id: ScopeId,
+        name: Atom,
+        reference_ids: Vec<ReferenceId>,
+    ) {
+        self.unresolved_references[scope_id].entry(name).or_default().extend(reference_ids);
+    }
+
+    pub(crate) fn unresolved_references_mut(
+        &mut self,
+        scope_id: ScopeId,
+    ) -> &mut UnresolvedReferences {
+        &mut self.unresolved_references[scope_id]
     }
 }
