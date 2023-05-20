@@ -5,7 +5,7 @@
 mod idx;
 mod vec;
 
-pub use idx::Idx;
+pub use idx::{Idx, NonZeroIdx};
 pub use vec::IndexVec;
 
 /// Type size assertion. The first argument is a type and the second argument is its expected size.

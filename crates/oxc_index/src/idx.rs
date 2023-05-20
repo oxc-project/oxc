@@ -1,5 +1,23 @@
-use std::fmt::Debug;
-use std::hash::Hash;
+use std::{fmt::Debug, hash::Hash, num::NonZeroUsize};
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct NonZeroIdx(NonZeroUsize);
+
+impl Default for NonZeroIdx {
+    fn default() -> Self {
+        Self::new(0)
+    }
+}
+
+impl Idx for NonZeroIdx {
+    fn new(idx: usize) -> Self {
+        Self(unsafe { NonZeroUsize::new_unchecked(idx + 1) })
+    }
+
+    fn index(self) -> usize {
+        self.0.get() - 1
+    }
+}
 
 /// Represents some newtyped `usize` wrapper.
 ///
