@@ -1151,6 +1151,7 @@ dependencies = [
  "oxc_semantic2",
  "oxc_span",
  "oxc_syntax",
+ "pico-args",
  "walkdir",
 ]
 

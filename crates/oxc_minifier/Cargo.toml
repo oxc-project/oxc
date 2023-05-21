@@ -22,3 +22,4 @@ oxc_syntax    = { workspace = true }
 
 [dev-dependencies]
 walkdir = { workspace = true }
+pico-args = { workspace = true }
