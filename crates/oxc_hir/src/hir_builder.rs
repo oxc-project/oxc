@@ -6,7 +6,6 @@
 )]
 
 use num_bigint::BigUint;
-use ordered_float::NotNan;
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_index::Idx;
 use oxc_semantic2::{reference::ReferenceId, symbol::SymbolId};
@@ -79,7 +78,7 @@ impl<'a> HirBuilder<'a> {
     pub fn number_literal(
         &mut self,
         span: Span,
-        value: NotNan<f64>,
+        value: f64,
         raw: &'a str,
         base: NumberBase,
     ) -> NumberLiteral<'a> {

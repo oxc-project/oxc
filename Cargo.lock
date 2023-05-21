@@ -931,17 +931,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ab1bc2a289d34bd04a330323ac98a1b4bc82c9d9fcb1e66b63caa84da26b575"
 
 [[package]]
-name = "ordered-float"
-version = "3.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fc2dbde8f8a79f2102cc474ceb0ad68e3b80b85289ea62389b60e66777e4213"
-dependencies = [
- "num-traits",
- "rand",
- "serde",
-]
-
-[[package]]
 name = "os_str_bytes"
 version = "6.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -968,7 +957,6 @@ version = "0.0.6"
 dependencies = [
  "bitflags 2.2.1",
  "num-bigint",
- "ordered-float",
  "oxc_allocator",
  "oxc_index",
  "oxc_span",
@@ -1089,7 +1077,6 @@ version = "0.0.0"
 dependencies = [
  "bitflags 2.2.1",
  "num-bigint",
- "ordered-float",
  "oxc_allocator",
  "oxc_index",
  "oxc_semantic2",
@@ -1414,7 +1401,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34af8d1a0e25924bc5b7c43c079c942339d8f0a8b57c39049bef581b46327404"
 dependencies = [
  "rand_core",
- "serde",
 ]
 
 [[package]]
@@ -1422,9 +1408,6 @@ name = "rand_core"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "rayon"

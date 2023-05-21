@@ -7,7 +7,6 @@ use std::{
 
 use bitflags::bitflags;
 use num_bigint::BigUint;
-use ordered_float::NotNan;
 use oxc_span::{Atom, Span};
 #[cfg(feature = "serde")]
 use serde::Serialize;
@@ -44,7 +43,7 @@ impl Hash for NullLiteral {
 pub struct NumberLiteral<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub value: NotNan<f64>, // using NotNan for `Hash`
+    pub value: f64,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub raw: &'a str,
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -53,7 +52,6 @@ pub struct NumberLiteral<'a> {
 
 impl<'a> NumberLiteral<'a> {
     pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
-        let value = unsafe { NotNan::new_unchecked(value) };
         Self { span, value, raw, base }
     }
 }
@@ -61,7 +59,7 @@ impl<'a> NumberLiteral<'a> {
 impl<'a> Hash for NumberLiteral<'a> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.base.hash(state);
-        self.value.hash(state);
+        self.raw.hash(state);
     }
 }
 
