@@ -63,6 +63,16 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Literals ---------- */
 
+    pub fn number_literal(
+        &mut self,
+        span: Span,
+        value: f64,
+        raw: &'a str,
+        base: NumberBase,
+    ) -> NumberLiteral<'a> {
+        NumberLiteral { span, value, raw, base }
+    }
+
     pub fn literal_string_expression(&self, literal: StringLiteral) -> Expression<'a> {
         Expression::StringLiteral(self.alloc(literal))
     }

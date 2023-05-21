@@ -223,12 +223,6 @@ pub struct NumberLiteral<'a> {
     pub base: NumberBase,
 }
 
-impl<'a> NumberLiteral<'a> {
-    pub fn new(span: Span, value: f64, raw: &'a str, base: NumberBase) -> Self {
-        Self { span, value, raw, base }
-    }
-}
-
 impl<'a> Hash for NumberLiteral<'a> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.base.hash(state);

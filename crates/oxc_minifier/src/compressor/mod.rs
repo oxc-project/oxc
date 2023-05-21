@@ -55,14 +55,21 @@ impl<'a> Compressor<'a> {
 
     /* Utilities */
 
+    /// `void 0`
     fn create_void_0(&mut self) -> Expression<'a> {
-        let num = self.hir.literal_number_expression(NumberLiteral::new(
-            SPAN,
-            0.0,
-            "0",
-            NumberBase::Decimal,
-        ));
+        let left = self.hir.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
+        let num = self.hir.literal_number_expression(left);
         self.hir.unary_expression(SPAN, UnaryOperator::Void, true, num)
+    }
+
+    /// `1/0`
+    fn create_one_div_zero(&mut self) -> Expression<'a> {
+        let left = self.hir.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
+        let left = self.hir.literal_number_expression(left);
+        let right = self.hir.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
+        let right = self.hir.literal_number_expression(right);
+        let expr = self.hir.binary_expression(SPAN, left, BinaryOperator::Division, right);
+        self.hir.parenthesized_expression(SPAN, expr)
     }
 
     /* Statements */
@@ -142,17 +149,29 @@ impl<'a> Compressor<'a> {
         false
     }
 
+    /// Transforms `Infinity` => `1/0`
+    fn compress_infinity<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
+        if let Expression::Identifier(ident) = expr
+        && ident.name == "Infinity"
+        && self.semantic.symbol_table.is_global_reference(ident.reference_id) {
+            *expr = self.create_one_div_zero();
+            return true;
+        }
+        false
+    }
+
     /// Transforms boolean expression `true` => `!0` `false` => `!1`
     /// Enabled by `compress.booleans`
     fn compress_boolean<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         if let Expression::BooleanLiteral(lit) = expr
         && self.options.booleans {
-            let num = self.hir.literal_number_expression(NumberLiteral::new(
+            let num = self.hir.number_literal(
                 SPAN,
                 if lit.value { 0.0 } else { 1.0 },
                 if lit.value { "0" } else { "1" },
                 NumberBase::Decimal,
-            ));
+            );
+            let num = self.hir.literal_number_expression(num);
             *expr = self.hir.unary_expression(SPAN, UnaryOperator::LogicalNot, true, num);
             return true;
         }
@@ -197,10 +216,10 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     }
 
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
-        if self.compress_undefined(expr) {
-            return;
-        }
-        if self.compress_boolean(expr) {
+        if self.compress_undefined(expr)
+            || self.compress_boolean(expr)
+            || self.compress_infinity(expr)
+        {
             return;
         }
         self.visit_expression_match(expr);
