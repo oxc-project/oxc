@@ -1,10 +1,10 @@
 //! Bumpalo memory arena utilities
 //! Copied from [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/ast/src/arena.rs)
 
-use std::hash::{Hash, Hasher};
 use std::{
     self,
     fmt::{self, Debug, Formatter},
+    hash::{Hash, Hasher},
     ops, ptr,
 };
 

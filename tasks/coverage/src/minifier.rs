@@ -3,9 +3,11 @@ use std::path::{Path, PathBuf};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_span::SourceType;
 
-use crate::babel::BabelCase;
-use crate::suite::{Case, TestResult};
-use crate::test262::{Test262Case, TestFlag};
+use crate::{
+    babel::BabelCase,
+    suite::{Case, TestResult},
+    test262::{Test262Case, TestFlag},
+};
 
 pub struct MinifierTest262Case {
     base: Test262Case,

@@ -3,8 +3,11 @@
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use crate::lexer::{Kind, LexerCheckpoint, LexerContext, Token};
-use crate::{diagnostics, Context, Parser};
+use crate::{
+    diagnostics,
+    lexer::{Kind, LexerCheckpoint, LexerContext, Token},
+    Context, Parser,
+};
 
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,

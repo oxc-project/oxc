@@ -9,8 +9,7 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 // See: `https://rust-lang.github.io/rfcs/2360-bench-black-box.html`
-use std::hint::black_box;
-use std::time::Duration;
+use std::{hint::black_box, time::Duration};
 
 use criterion::{BenchmarkId, Criterion, Throughput};
 use oxc_allocator::Allocator;

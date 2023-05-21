@@ -4,12 +4,14 @@ use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::BinaryOperator;
 
-use super::function::IsParenthesizedArrowFunction;
-use super::grammar::CoverGrammar;
-use super::list::{ArrayExpressionList, CallArguments, SequenceExpressionList};
-use super::operator::{
-    map_assignment_operator, map_binary_operator, map_logical_operator, map_unary_operator,
-    map_update_operator, BindingPower,
+use super::{
+    function::IsParenthesizedArrowFunction,
+    grammar::CoverGrammar,
+    list::{ArrayExpressionList, CallArguments, SequenceExpressionList},
+    operator::{
+        map_assignment_operator, map_binary_operator, map_logical_operator, map_unary_operator,
+        map_update_operator, BindingPower,
+    },
 };
 use crate::{
     diagnostics,

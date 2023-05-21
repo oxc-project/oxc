@@ -16,8 +16,7 @@ use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
 
-use self::gen::Gen;
-use self::operator::Operator;
+use self::{gen::Gen, operator::Operator};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct PrinterOptions;

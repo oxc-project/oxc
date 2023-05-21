@@ -2,12 +2,12 @@ use std::borrow::Cow;
 
 use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{
-    ArrayExpression, ArrayExpressionElement, CallExpression, ExpressionStatement, ObjectExpression,
-    ObjectProperty, Program, Statement, StringLiteral, TemplateLiteral,
-};
 use oxc_ast::{
-    ast::{Argument, Expression, ObjectPropertyKind, PropertyKey},
+    ast::{
+        Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression,
+        ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
+        PropertyKey, Statement, StringLiteral, TemplateLiteral,
+    },
     Visit,
 };
 use oxc_parser::Parser;

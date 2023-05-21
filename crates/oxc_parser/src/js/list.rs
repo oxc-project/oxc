@@ -8,10 +8,12 @@ use oxc_diagnostics::{
 use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use crate::diagnostics;
-use crate::lexer::Kind;
-use crate::list::{NormalList, SeparatedList};
-use crate::Parser;
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    list::{NormalList, SeparatedList},
+    Parser,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("Identifier `{0}` has already been declared")]

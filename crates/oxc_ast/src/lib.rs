@@ -24,11 +24,9 @@ mod visit_mut;
 
 pub use num_bigint::BigUint;
 
-pub use crate::ast_builder::AstBuilder;
-pub use crate::ast_kind::AstKind;
-pub use crate::trivia::Trivias;
-pub use crate::visit::Visit;
-pub use crate::visit_mut::VisitMut;
+pub use crate::{
+    ast_builder::AstBuilder, ast_kind::AstKind, trivia::Trivias, visit::Visit, visit_mut::VisitMut,
+};
 
 // After experimenting with two types of boxed enum variants:
 //   1.

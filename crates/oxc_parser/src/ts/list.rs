@@ -2,9 +2,11 @@ use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 
-use crate::lexer::Kind;
-use crate::list::{NormalList, SeparatedList};
-use crate::Parser;
+use crate::{
+    lexer::Kind,
+    list::{NormalList, SeparatedList},
+    Parser,
+};
 
 pub struct TSEnumMemberList<'a> {
     pub members: Vec<'a, TSEnumMember<'a>>,

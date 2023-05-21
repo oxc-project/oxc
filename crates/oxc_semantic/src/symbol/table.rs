@@ -1,5 +1,7 @@
-use std::collections::BTreeMap;
-use std::ops::{Deref, Index, IndexMut};
+use std::{
+    collections::BTreeMap,
+    ops::{Deref, Index, IndexMut},
+};
 
 use oxc_ast::ast::IdentifierReference;
 use oxc_index::Idx;

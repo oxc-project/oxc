@@ -1,5 +1,4 @@
-use oxc_linter::rule::RuleCategory;
-use oxc_linter::rule::RuleMeta;
+use oxc_linter::rule::{RuleCategory, RuleMeta};
 use oxc_macros::declare_oxc_lint_test;
 
 struct TestRule;

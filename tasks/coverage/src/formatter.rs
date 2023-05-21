@@ -5,9 +5,11 @@ use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-use crate::babel::BabelCase;
-use crate::suite::{Case, TestResult};
-use crate::test262::{Test262Case, TestFlag};
+use crate::{
+    babel::BabelCase,
+    suite::{Case, TestResult},
+    test262::{Test262Case, TestFlag},
+};
 
 pub struct FormatterTest262Case {
     base: Test262Case,

@@ -7,10 +7,7 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
 
-use crate::diagnostics;
-use crate::lexer::Kind;
-use crate::Context;
-use crate::Parser;
+use crate::{diagnostics, lexer::Kind, Context, Parser};
 
 impl<'a> Parser<'a> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Result<Expression<'a>> {

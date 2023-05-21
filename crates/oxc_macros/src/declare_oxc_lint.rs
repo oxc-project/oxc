@@ -1,8 +1,10 @@
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::parse::{Parse, ParseStream};
-use syn::{Attribute, Error, Ident, Lit, LitStr, Meta, Result, Token};
+use syn::{
+    parse::{Parse, ParseStream},
+    Attribute, Error, Ident, Lit, LitStr, Meta, Result, Token,
+};
 
 fn parse_attr<const LEN: usize>(path: [&'static str; LEN], attr: &Attribute) -> Option<LitStr> {
     if let Meta::NameValue(name_value) = attr.parse_meta().ok()? {

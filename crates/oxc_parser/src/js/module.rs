@@ -3,8 +3,10 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use super::function::FunctionKind;
-use super::list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList};
+use super::{
+    function::FunctionKind,
+    list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList},
+};
 use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, Parser};
 
 impl<'a> Parser<'a> {

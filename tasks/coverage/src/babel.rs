@@ -4,8 +4,10 @@ use oxc_span::SourceType;
 use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::Value;
 
-use crate::project_root;
-use crate::suite::{Case, Suite, TestResult};
+use crate::{
+    project_root,
+    suite::{Case, Suite, TestResult},
+};
 
 const FIXTURES_PATH: &str = "tasks/coverage/babel/packages/babel-parser/test/fixtures";
 

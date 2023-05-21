@@ -3,8 +3,10 @@ mod trie;
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::parse::{Parse, ParseStream};
-use syn::Result;
+use syn::{
+    parse::{Parse, ParseStream},
+    Result,
+};
 use trie::RulePathTrieBuilder;
 
 pub struct LintRuleMeta {

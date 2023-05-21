@@ -10,8 +10,7 @@ use oxc_diagnostics::{
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
-use oxc_span::Span;
+use oxc_span::{SourceType, Span};
 
 // Instruction:
 // create a `test.js`,

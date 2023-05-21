@@ -9,8 +9,7 @@ mod visit_mut;
 
 use oxc_index::Idx;
 
-pub use crate::hir_builder::HirBuilder;
-pub use crate::visit_mut::VisitMut;
+pub use crate::{hir_builder::HirBuilder, visit_mut::VisitMut};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct HirId(usize);

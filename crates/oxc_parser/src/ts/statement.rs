@@ -8,8 +8,10 @@ use super::{
     types::ModifierFlags,
 };
 use crate::{
-    js::declaration::{VariableDeclarationContext, VariableDeclarationParent},
-    js::function::FunctionKind,
+    js::{
+        declaration::{VariableDeclarationContext, VariableDeclarationParent},
+        function::FunctionKind,
+    },
     lexer::Kind,
     list::{NormalList, SeparatedList},
     Parser, StatementContext,
