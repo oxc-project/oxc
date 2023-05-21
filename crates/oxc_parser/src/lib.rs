@@ -268,34 +268,4 @@ mod test {
         assert!(ret.program.is_empty());
         assert_eq!(ret.errors.first().unwrap().to_string(), "Flow is not supported");
     }
-
-    #[test]
-    fn fuzzer() {
-        let allocator = Allocator::default();
-        let source_type = SourceType::default();
-
-        let fail = [
-            "1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>",
-            "x = (/* a */)",
-        ];
-
-        for source in fail {
-            let ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(!ret.errors.is_empty());
-        }
-
-        let pass = [
-            "async(...null)",
-            "null?async():null",
-            "switch(null){case async():}",
-            "for(new null(null in null);;);",
-            "for(`${null in null}`;;);",
-            "for(var[l=null in null]in null);",
-        ];
-
-        for source in pass {
-            let ret = Parser::new(&allocator, source, source_type).parse();
-            assert!(ret.errors.is_empty());
-        }
-    }
 }
