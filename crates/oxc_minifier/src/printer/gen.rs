@@ -102,7 +102,25 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
     p.print(b'(');
     if_stmt.test.gen(p);
     p.print(b')');
-    if_stmt.consequent.gen(p);
+
+    match &if_stmt.consequent {
+        Some(Statement::BlockStatement(block)) => {
+            p.print_block1(block);
+        }
+        Some(stmt) if wrap_to_avoid_ambiguous_else(stmt) => {
+            p.print(b'{');
+            stmt.gen(p);
+            p.print(b'}');
+            p.needs_semicolon = false;
+        }
+        Some(stmt) => {
+            stmt.gen(p);
+        }
+        None => {
+            p.print(b';');
+        }
+    }
+
     if let Some(alternate) = if_stmt.alternate.as_ref() {
         p.print_semicolon_if_needed();
         p.print(b' ');
@@ -120,6 +138,36 @@ fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
             }
         }
     }
+}
+
+// <https://github.com/evanw/esbuild/blob/e6a8169c3a574f4c67d4cdd5f31a938b53eb7421/internal/js_printer/js_printer.go#L3444>
+fn wrap_to_avoid_ambiguous_else(stmt: &Statement) -> bool {
+    let mut current = stmt;
+    loop {
+        current = match current {
+            Statement::IfStatement(Box(IfStatement { alternate, .. })) => {
+                if let Some(stmt) = &alternate {
+                    stmt
+                } else {
+                    return true;
+                }
+            }
+            Statement::ForStatement(Box(ForStatement { body, .. }))
+            | Statement::ForOfStatement(Box(ForOfStatement { body, .. }))
+            | Statement::ForInStatement(Box(ForInStatement { body, .. }))
+            | Statement::WhileStatement(Box(WhileStatement { body, .. }))
+            | Statement::WithStatement(Box(WithStatement { body, .. }))
+            | Statement::LabeledStatement(Box(LabeledStatement { body, .. })) => {
+                if let Some(stmt) = &body {
+                    stmt
+                } else {
+                    return false;
+                }
+            }
+            _ => return false,
+        }
+    }
+    false
 }
 
 impl<'a> Gen for BlockStatement<'a> {

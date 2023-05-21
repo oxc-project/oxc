@@ -22,6 +22,7 @@ fn main() {
 
     let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
     let mangle = args.contains("--mangle");
+    let twice = args.contains("--twice");
 
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path).unwrap_or_else(|_| panic!("{name} not found"));
@@ -30,4 +31,10 @@ fn main() {
     let options = MinifierOptions { mangle, ..MinifierOptions::default() };
     let printed = Minifier::new(&source_text, source_type, options).build();
     println!("{printed}");
+
+    if twice {
+        let options = MinifierOptions { mangle, ..MinifierOptions::default() };
+        let printed = Minifier::new(&printed, source_type, options).build();
+        println!("{printed}");
+    }
 }

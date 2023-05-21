@@ -33,7 +33,10 @@ pub struct Printer {
 
     // states
     prev_op_end: usize,
+
+    /// For avoiding `;` if the previous statement ends with `}`.
     needs_semicolon: bool,
+
     prev_op: Option<Operator>,
 }
 

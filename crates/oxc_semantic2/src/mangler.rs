@@ -71,11 +71,6 @@ impl Mangler {
         // Walk the scope tree and compute the slot number for each scope
         for scope_id in scope_tree.descendants() {
             let bindings = scope_tree.get_bindings(scope_id);
-            // Skip if the scope is empty
-            if bindings.is_empty() {
-                continue;
-            }
-
             // The current slot number is continued by the maximum slot from the parent scope
             let parent_max_slot = scope_tree
                 .get_parent_id(scope_id)

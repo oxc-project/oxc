@@ -79,6 +79,20 @@ impl<'a> Compressor<'a> {
 
     /* Statements */
 
+    /// Remove block from single line blocks
+    /// `{ block } -> block`
+    #[allow(clippy::only_used_in_recursion)] // `&self` is only used in recursion
+    fn compress_block<'b>(&self, stmt: &'b mut Statement<'a>) {
+        if let Statement::BlockStatement(block) = stmt {
+            // Avoid compressing `if (x) { var x = 1 }` to `if (x) var x = 1` due to different
+            // semantics according to AnnexB, which lead to different semantics.
+            if block.body.len() == 1 && !matches!(&block.body[0], Statement::Declaration(_)) {
+                *stmt = block.body.remove(0);
+                self.compress_block(stmt);
+            }
+        }
+    }
+
     /// Drop `drop_debugger` statement.
     /// Enabled by `compress.drop_debugger`
     fn drop_debugger<'b>(&mut self, stmt: &'b Statement<'a>) -> bool {
@@ -248,6 +262,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     }
 
     fn visit_statement(&mut self, stmt: &'b mut Statement<'a>) {
+        self.compress_block(stmt);
         self.compress_while(stmt);
         self.visit_statement_match(stmt);
     }

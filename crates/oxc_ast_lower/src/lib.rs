@@ -133,10 +133,14 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_for_statement(&mut self, stmt: &ast::ForStatement<'a>) -> hir::Statement<'a> {
+        let is_lexical_declaration =
+            stmt.init.as_ref().is_some_and(ast::ForStatementInit::is_lexical_declaration);
+        self.semantic.enter_for_statement(is_lexical_declaration);
         let init = stmt.init.as_ref().map(|init| self.lower_for_statement_init(init));
         let test = stmt.test.as_ref().map(|expr| self.lower_expression(expr));
         let update = stmt.update.as_ref().map(|expr| self.lower_expression(expr));
         let body = self.lower_statement(&stmt.body);
+        self.semantic.leave_for_statement(is_lexical_declaration);
         self.hir.for_statement(stmt.span, init, test, update, body)
     }
 
@@ -155,16 +159,22 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_for_in_statement(&mut self, stmt: &ast::ForInStatement<'a>) -> hir::Statement<'a> {
+        let is_lexical_declaration = stmt.left.is_lexical_declaration();
+        self.semantic.enter_for_in_of_statement(is_lexical_declaration);
         let left = self.lower_for_statement_left(&stmt.left);
         let right = self.lower_expression(&stmt.right);
         let body = self.lower_statement(&stmt.body);
+        self.semantic.leave_for_in_of_statement(is_lexical_declaration);
         self.hir.for_in_statement(stmt.span, left, right, body)
     }
 
     fn lower_for_of_statement(&mut self, stmt: &ast::ForOfStatement<'a>) -> hir::Statement<'a> {
+        let is_lexical_declaration = stmt.left.is_lexical_declaration();
+        self.semantic.enter_for_in_of_statement(is_lexical_declaration);
         let left = self.lower_for_statement_left(&stmt.left);
         let right = self.lower_expression(&stmt.right);
         let body = self.lower_statement(&stmt.body);
+        self.semantic.leave_for_in_of_statement(is_lexical_declaration);
         self.hir.for_of_statement(stmt.span, stmt.r#await, left, right, body)
     }
 
