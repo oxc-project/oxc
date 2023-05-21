@@ -242,14 +242,10 @@ impl<'a> HirBuilder<'a> {
     pub fn do_while_statement(
         &mut self,
         span: Span,
-        body: Statement<'a>,
+        body: Option<Statement<'a>>,
         test: Expression<'a>,
     ) -> Statement<'a> {
         Statement::DoWhileStatement(self.alloc(DoWhileStatement { span, body, test }))
-    }
-
-    pub fn empty_statement(&mut self, span: Span) -> Statement<'a> {
-        Statement::EmptyStatement(self.alloc(EmptyStatement { span }))
     }
 
     pub fn expression_statement(
@@ -265,7 +261,7 @@ impl<'a> HirBuilder<'a> {
         span: Span,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
-        body: Statement<'a>,
+        body: Option<Statement<'a>>,
     ) -> Statement<'a> {
         Statement::ForInStatement(self.alloc(ForInStatement { span, left, right, body }))
     }
@@ -276,7 +272,7 @@ impl<'a> HirBuilder<'a> {
         r#await: bool,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
-        body: Statement<'a>,
+        body: Option<Statement<'a>>,
     ) -> Statement<'a> {
         Statement::ForOfStatement(self.alloc(ForOfStatement { span, r#await, left, right, body }))
     }
@@ -287,7 +283,7 @@ impl<'a> HirBuilder<'a> {
         init: Option<ForStatementInit<'a>>,
         test: Option<Expression<'a>>,
         update: Option<Expression<'a>>,
-        body: Statement<'a>,
+        body: Option<Statement<'a>>,
     ) -> Statement<'a> {
         Statement::ForStatement(self.alloc(ForStatement { span, init, test, update, body }))
     }
@@ -296,7 +292,7 @@ impl<'a> HirBuilder<'a> {
         &mut self,
         span: Span,
         test: Expression<'a>,
-        consequent: Statement<'a>,
+        consequent: Option<Statement<'a>>,
         alternate: Option<Statement<'a>>,
     ) -> Statement<'a> {
         Statement::IfStatement(self.alloc(IfStatement { span, test, consequent, alternate }))
@@ -306,7 +302,7 @@ impl<'a> HirBuilder<'a> {
         &mut self,
         span: Span,
         label: LabelIdentifier,
-        body: Statement<'a>,
+        body: Option<Statement<'a>>,
     ) -> Statement<'a> {
         Statement::LabeledStatement(self.alloc(LabeledStatement { span, label, body }))
     }
@@ -364,7 +360,7 @@ impl<'a> HirBuilder<'a> {
         &mut self,
         span: Span,
         test: Expression<'a>,
-        body: Statement<'a>,
+        body: Option<Statement<'a>>,
     ) -> Statement<'a> {
         Statement::WhileStatement(self.alloc(WhileStatement { span, test, body }))
     }
@@ -373,7 +369,7 @@ impl<'a> HirBuilder<'a> {
         &mut self,
         span: Span,
         object: Expression<'a>,
-        body: Statement<'a>,
+        body: Option<Statement<'a>>,
     ) -> Statement<'a> {
         Statement::WithStatement(self.alloc(WithStatement { span, object, body }))
     }

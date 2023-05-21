@@ -62,11 +62,6 @@ impl<'a> AstLower<'a> {
         self.hir.directive(directive.span, expression, directive.directive)
     }
 
-    fn lower_statement_or_empty(&mut self, statement: &ast::Statement<'a>) -> hir::Statement<'a> {
-        self.lower_statement(statement)
-            .unwrap_or_else(|| self.hir.empty_statement(statement.span()))
-    }
-
     fn lower_statement(&mut self, statement: &ast::Statement<'a>) -> Option<hir::Statement<'a>> {
         match statement {
             ast::Statement::BlockStatement(stmt) => {
@@ -77,7 +72,7 @@ impl<'a> AstLower<'a> {
             ast::Statement::ContinueStatement(stmt) => Some(self.lower_continue_statement(stmt)),
             ast::Statement::DebuggerStatement(stmt) => Some(self.lower_debugger_statement(stmt)),
             ast::Statement::DoWhileStatement(stmt) => Some(self.lower_do_while_statement(stmt)),
-            ast::Statement::EmptyStatement(stmt) => Some(self.lower_empty_statement(stmt)),
+            ast::Statement::EmptyStatement(_) => None,
             ast::Statement::ExpressionStatement(stmt) => {
                 Some(self.lower_expression_statement(stmt))
             }
@@ -124,13 +119,9 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_do_while_statement(&mut self, stmt: &ast::DoWhileStatement<'a>) -> hir::Statement<'a> {
-        let body = self.lower_statement_or_empty(&stmt.body);
+        let body = self.lower_statement(&stmt.body);
         let test = self.lower_expression(&stmt.test);
         self.hir.do_while_statement(stmt.span, body, test)
-    }
-
-    fn lower_empty_statement(&mut self, stmt: &ast::EmptyStatement) -> hir::Statement<'a> {
-        self.hir.empty_statement(stmt.span)
     }
 
     fn lower_expression_statement(
@@ -145,7 +136,7 @@ impl<'a> AstLower<'a> {
         let init = stmt.init.as_ref().map(|init| self.lower_for_statement_init(init));
         let test = stmt.test.as_ref().map(|expr| self.lower_expression(expr));
         let update = stmt.update.as_ref().map(|expr| self.lower_expression(expr));
-        let body = self.lower_statement_or_empty(&stmt.body);
+        let body = self.lower_statement(&stmt.body);
         self.hir.for_statement(stmt.span, init, test, update, body)
     }
 
@@ -166,14 +157,14 @@ impl<'a> AstLower<'a> {
     fn lower_for_in_statement(&mut self, stmt: &ast::ForInStatement<'a>) -> hir::Statement<'a> {
         let left = self.lower_for_statement_left(&stmt.left);
         let right = self.lower_expression(&stmt.right);
-        let body = self.lower_statement_or_empty(&stmt.body);
+        let body = self.lower_statement(&stmt.body);
         self.hir.for_in_statement(stmt.span, left, right, body)
     }
 
     fn lower_for_of_statement(&mut self, stmt: &ast::ForOfStatement<'a>) -> hir::Statement<'a> {
         let left = self.lower_for_statement_left(&stmt.left);
         let right = self.lower_expression(&stmt.right);
-        let body = self.lower_statement_or_empty(&stmt.body);
+        let body = self.lower_statement(&stmt.body);
         self.hir.for_of_statement(stmt.span, stmt.r#await, left, right, body)
     }
 
@@ -193,14 +184,14 @@ impl<'a> AstLower<'a> {
 
     fn lower_if_statement(&mut self, stmt: &ast::IfStatement<'a>) -> hir::Statement<'a> {
         let test = self.lower_expression(&stmt.test);
-        let consequent = self.lower_statement_or_empty(&stmt.consequent);
+        let consequent = self.lower_statement(&stmt.consequent);
         let alternate = stmt.alternate.as_ref().and_then(|stmt| self.lower_statement(stmt));
         self.hir.if_statement(stmt.span, test, consequent, alternate)
     }
 
     fn lower_labeled_statement(&mut self, stmt: &ast::LabeledStatement<'a>) -> hir::Statement<'a> {
         let label = self.lower_label_identifier(&stmt.label);
-        let body = self.lower_statement_or_empty(&stmt.body);
+        let body = self.lower_statement(&stmt.body);
         self.hir.labeled_statement(stmt.span, label, body)
     }
 
@@ -253,13 +244,13 @@ impl<'a> AstLower<'a> {
 
     fn lower_while_statement(&mut self, stmt: &ast::WhileStatement<'a>) -> hir::Statement<'a> {
         let test = self.lower_expression(&stmt.test);
-        let body = self.lower_statement_or_empty(&stmt.body);
+        let body = self.lower_statement(&stmt.body);
         self.hir.while_statement(stmt.span, test, body)
     }
 
     fn lower_with_statement(&mut self, stmt: &ast::WithStatement<'a>) -> hir::Statement<'a> {
         let object = self.lower_expression(&stmt.object);
-        let body = self.lower_statement_or_empty(&stmt.body);
+        let body = self.lower_statement(&stmt.body);
         self.hir.with_statement(stmt.span, object, body)
     }
 

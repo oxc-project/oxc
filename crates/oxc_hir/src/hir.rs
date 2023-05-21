@@ -960,7 +960,6 @@ pub enum Statement<'a> {
     ContinueStatement(Box<'a, ContinueStatement>),
     DebuggerStatement(Box<'a, DebuggerStatement>),
     DoWhileStatement(Box<'a, DoWhileStatement<'a>>),
-    EmptyStatement(Box<'a, EmptyStatement>),
     ExpressionStatement(Box<'a, ExpressionStatement<'a>>),
     ForInStatement(Box<'a, ForInStatement<'a>>),
     ForOfStatement(Box<'a, ForOfStatement<'a>>),
@@ -1062,14 +1061,6 @@ pub struct VariableDeclarator<'a> {
     pub definite: bool,
 }
 
-/// Empty Statement
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct EmptyStatement {
-    #[cfg_attr(feature = "serde", serde(flatten))]
-    pub span: Span,
-}
-
 /// Expression Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -1086,7 +1077,7 @@ pub struct IfStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub test: Expression<'a>,
-    pub consequent: Statement<'a>,
+    pub consequent: Option<Statement<'a>>,
     pub alternate: Option<Statement<'a>>,
 }
 
@@ -1096,7 +1087,7 @@ pub struct IfStatement<'a> {
 pub struct DoWhileStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub body: Statement<'a>,
+    pub body: Option<Statement<'a>>,
     pub test: Expression<'a>,
 }
 
@@ -1107,7 +1098,7 @@ pub struct WhileStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub test: Expression<'a>,
-    pub body: Statement<'a>,
+    pub body: Option<Statement<'a>>,
 }
 
 /// For Statement
@@ -1119,7 +1110,7 @@ pub struct ForStatement<'a> {
     pub init: Option<ForStatementInit<'a>>,
     pub test: Option<Expression<'a>>,
     pub update: Option<Expression<'a>>,
-    pub body: Statement<'a>,
+    pub body: Option<Statement<'a>>,
 }
 
 #[derive(Debug, Hash)]
@@ -1137,7 +1128,7 @@ pub struct ForInStatement<'a> {
     pub span: Span,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
-    pub body: Statement<'a>,
+    pub body: Option<Statement<'a>>,
 }
 
 /// For-Of Statement
@@ -1149,7 +1140,7 @@ pub struct ForOfStatement<'a> {
     pub r#await: bool,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
-    pub body: Statement<'a>,
+    pub body: Option<Statement<'a>>,
 }
 
 #[derive(Debug, Hash)]
@@ -1193,7 +1184,7 @@ pub struct WithStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub object: Expression<'a>,
-    pub body: Statement<'a>,
+    pub body: Option<Statement<'a>>,
 }
 
 /// Switch Statement
@@ -1228,7 +1219,7 @@ pub struct LabeledStatement<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub label: LabelIdentifier,
-    pub body: Statement<'a>,
+    pub body: Option<Statement<'a>>,
 }
 
 /// Throw Statement

@@ -34,7 +34,6 @@ pub trait VisitMut<'a, 'b>: Sized {
             Statement::ContinueStatement(stmt) => self.visit_continue_statement(stmt),
             Statement::DebuggerStatement(stmt) => self.visit_debugger_statement(stmt),
             Statement::DoWhileStatement(stmt) => self.visit_do_while_statement(stmt),
-            Statement::EmptyStatement(stmt) => self.visit_empty_statement(stmt),
             Statement::ExpressionStatement(stmt) => self.visit_expression_statement(stmt),
             Statement::ForInStatement(stmt) => self.visit_for_in_statement(stmt),
             Statement::ForOfStatement(stmt) => self.visit_for_of_statement(stmt),
@@ -72,11 +71,11 @@ pub trait VisitMut<'a, 'b>: Sized {
     fn visit_debugger_statement(&mut self, _stmt: &'b mut DebuggerStatement) {}
 
     fn visit_do_while_statement(&mut self, stmt: &'b mut DoWhileStatement<'a>) {
-        self.visit_statement(&mut stmt.body);
+        if let Some(stmt) = &mut stmt.body {
+            self.visit_statement(stmt);
+        }
         self.visit_expression(&mut stmt.test);
     }
-
-    fn visit_empty_statement(&mut self, _stmt: &'b mut EmptyStatement) {}
 
     fn visit_expression_statement(&mut self, stmt: &'b mut ExpressionStatement<'a>) {
         self.visit_expression(&mut stmt.expression);
@@ -92,7 +91,9 @@ pub trait VisitMut<'a, 'b>: Sized {
         if let Some(update) = &mut stmt.update {
             self.visit_expression(update);
         }
-        self.visit_statement(&mut stmt.body);
+        if let Some(stmt) = &mut stmt.body {
+            self.visit_statement(stmt);
+        }
     }
 
     fn visit_for_statement_init(&mut self, init: &'b mut ForStatementInit<'a>) {
@@ -107,13 +108,17 @@ pub trait VisitMut<'a, 'b>: Sized {
     fn visit_for_in_statement(&mut self, stmt: &'b mut ForInStatement<'a>) {
         self.visit_for_statement_left(&mut stmt.left);
         self.visit_expression(&mut stmt.right);
-        self.visit_statement(&mut stmt.body);
+        if let Some(stmt) = &mut stmt.body {
+            self.visit_statement(stmt);
+        }
     }
 
     fn visit_for_of_statement(&mut self, stmt: &'b mut ForOfStatement<'a>) {
         self.visit_for_statement_left(&mut stmt.left);
         self.visit_expression(&mut stmt.right);
-        self.visit_statement(&mut stmt.body);
+        if let Some(stmt) = &mut stmt.body {
+            self.visit_statement(stmt);
+        }
     }
 
     fn visit_for_statement_left(&mut self, left: &'b mut ForStatementLeft<'a>) {
@@ -127,15 +132,19 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_if_statement(&mut self, stmt: &'b mut IfStatement<'a>) {
         self.visit_expression(&mut stmt.test);
-        self.visit_statement(&mut stmt.consequent);
-        if let Some(alternate) = &mut stmt.alternate {
-            self.visit_statement(alternate);
+        if let Some(stmt) = &mut stmt.consequent {
+            self.visit_statement(stmt);
+        }
+        if let Some(stmt) = &mut stmt.alternate {
+            self.visit_statement(stmt);
         }
     }
 
     fn visit_labeled_statement(&mut self, stmt: &'b mut LabeledStatement<'a>) {
         self.visit_label_identifier(&mut stmt.label);
-        self.visit_statement(&mut stmt.body);
+        if let Some(stmt) = &mut stmt.body {
+            self.visit_statement(stmt);
+        }
     }
 
     fn visit_return_statement(&mut self, stmt: &'b mut ReturnStatement<'a>) {
@@ -185,12 +194,16 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_while_statement(&mut self, stmt: &'b mut WhileStatement<'a>) {
         self.visit_expression(&mut stmt.test);
-        self.visit_statement(&mut stmt.body);
+        if let Some(stmt) = &mut stmt.body {
+            self.visit_statement(stmt);
+        }
     }
 
     fn visit_with_statement(&mut self, stmt: &'b mut WithStatement<'a>) {
         self.visit_expression(&mut stmt.object);
-        self.visit_statement(&mut stmt.body);
+        if let Some(stmt) = &mut stmt.body {
+            self.visit_statement(stmt);
+        }
     }
 
     fn visit_directive(&mut self, directive: &'b mut Directive<'a>) {

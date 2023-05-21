@@ -67,11 +67,6 @@ impl<'a> Compressor<'a> {
 
     /* Statements */
 
-    #[allow(clippy::unused_self)]
-    fn drop_empty<'b>(&mut self, stmt: &'b Statement<'a>) -> bool {
-        matches!(stmt, Statement::EmptyStatement(_))
-    }
-
     /// Drop `drop_debugger` statement.
     /// Enabled by `compress.drop_debugger`
     fn drop_debugger<'b>(&mut self, stmt: &'b Statement<'a>) -> bool {
@@ -129,8 +124,7 @@ impl<'a> Compressor<'a> {
             && self.options.loops {
             let dummy_test = self.hir.this_expression(SPAN);
             let test = std::mem::replace(&mut while_stmt.test, dummy_test);
-            let dummy_body = self.hir.empty_statement(SPAN);
-            let body = std::mem::replace(&mut while_stmt.body, dummy_body);
+            let body = while_stmt.body.take();
             *stmt = self.hir.for_statement(SPAN, None, Some(test), None, body);
         }
     }
@@ -188,7 +182,7 @@ impl<'a> Compressor<'a> {
 
 impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
-        stmts.retain(|stmt| !self.drop_empty(stmt) && !self.drop_debugger(stmt));
+        stmts.retain(|stmt| !self.drop_debugger(stmt));
 
         self.join_vars(stmts);
 

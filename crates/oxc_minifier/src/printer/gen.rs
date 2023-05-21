@@ -49,7 +49,6 @@ impl<'a> Gen for Statement<'a> {
             Self::ContinueStatement(stmt) => stmt.gen(p),
             Self::DebuggerStatement(stmt) => stmt.gen(p),
             Self::DoWhileStatement(stmt) => stmt.gen(p),
-            Self::EmptyStatement(stmt) => stmt.gen(p),
             Self::ExpressionStatement(stmt) => stmt.gen(p),
             Self::ForInStatement(stmt) => stmt.gen(p),
             Self::ForOfStatement(stmt) => stmt.gen(p),
@@ -68,6 +67,15 @@ impl<'a> Gen for Statement<'a> {
     }
 }
 
+impl<'a> Gen for Option<Statement<'a>> {
+    fn gen(&self, p: &mut Printer) {
+        match self {
+            Some(stmt) => stmt.gen(p),
+            None => p.print(b';'),
+        }
+    }
+}
+
 impl<'a> Gen for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Printer) {
         self.expression.gen(p);
@@ -77,12 +85,6 @@ impl<'a> Gen for ExpressionStatement<'a> {
         } else {
             p.print_semicolon_after_statement();
         }
-    }
-}
-
-impl Gen for EmptyStatement {
-    fn gen(&self, p: &mut Printer) {
-        p.print_semicolon();
     }
 }
 
@@ -148,7 +150,7 @@ impl<'a> Gen for ForStatement<'a> {
         }
 
         p.print(b')');
-        p.print_body(&self.body);
+        self.body.gen(p);
     }
 }
 
@@ -172,7 +174,7 @@ impl<'a> Gen for ForOfStatement<'a> {
 fn gen_for_statement_brack_content<'a>(
     left: &ForStatementLeft<'a>,
     right: &Expression<'a>,
-    body: &Statement,
+    body: &Option<Statement>,
     key: &[u8],
     p: &mut Printer,
 ) {
@@ -183,7 +185,7 @@ fn gen_for_statement_brack_content<'a>(
     p.print(b' ');
     right.gen(p);
     p.print(b')');
-    p.print_body(body);
+    body.gen(p);
 }
 
 impl<'a> Gen for ForStatementLeft<'a> {
@@ -201,7 +203,7 @@ impl<'a> Gen for WhileStatement<'a> {
         p.print(b'(');
         self.test.gen(p);
         p.print(b')');
-        p.print_body(&self.body);
+        self.body.gen(p);
     }
 }
 
@@ -209,7 +211,7 @@ impl<'a> Gen for DoWhileStatement<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"do");
         p.print(b' ');
-        if let Statement::BlockStatement(block) = &self.body {
+        if let Some(Statement::BlockStatement(block)) = &self.body {
             p.print_block1(block);
         } else {
             self.body.gen(p);
