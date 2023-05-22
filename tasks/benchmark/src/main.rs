@@ -27,7 +27,7 @@ pub fn main() -> Result<(), String> {
         .files()
         .iter()
         .filter(|file| {
-            ["react", "vue", "babylon", "typescript"].iter().any(|f| file.file_name.contains(f))
+            ["react", "vue", "antd", "typescript"].iter().any(|f| file.file_name.contains(f))
         })
         .collect::<Vec<_>>();
     let mut args = Arguments::from_env();
