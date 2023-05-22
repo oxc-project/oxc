@@ -10,6 +10,12 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+jemallocator = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+mimalloc = { workspace = true }
+
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }

@@ -1130,6 +1130,8 @@ dependencies = [
 name = "oxc_minifier"
 version = "0.0.0"
 dependencies = [
+ "jemallocator",
+ "mimalloc",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_lower",

@@ -4,6 +4,14 @@ use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_span::SourceType;
 use pico_args::Arguments;
 
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+
+#[cfg(target_os = "windows")]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 // Instruction:
 // create a `test.js`,
 // run `cargo run -p oxc_minifier --example minifier`
