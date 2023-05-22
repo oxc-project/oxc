@@ -59,7 +59,7 @@ impl<'a> Compressor<'a> {
     fn create_void_0(&mut self) -> Expression<'a> {
         let left = self.hir.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
         let num = self.hir.literal_number_expression(left);
-        self.hir.unary_expression(SPAN, UnaryOperator::Void, true, num)
+        self.hir.unary_expression(SPAN, UnaryOperator::Void, num)
     }
 
     /// `1/0`
@@ -172,7 +172,7 @@ impl<'a> Compressor<'a> {
                 NumberBase::Decimal,
             );
             let num = self.hir.literal_number_expression(num);
-            *expr = self.hir.unary_expression(SPAN, UnaryOperator::LogicalNot, true, num);
+            *expr = self.hir.unary_expression(SPAN, UnaryOperator::LogicalNot, num);
             return true;
         }
         false

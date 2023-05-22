@@ -681,7 +681,7 @@ impl<'a> Parser<'a> {
 
         let span = self.end_span(span);
         let literal = if negative {
-            match self.ast.unary_expression(span, UnaryOperator::UnaryNegation, true, expression) {
+            match self.ast.unary_expression(span, UnaryOperator::UnaryNegation, expression) {
                 Expression::UnaryExpression(unary_expr) => TSLiteral::UnaryExpression(unary_expr),
                 _ => unreachable!(),
             }

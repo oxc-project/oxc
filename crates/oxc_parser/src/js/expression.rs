@@ -823,7 +823,7 @@ impl<'a> Parser<'a> {
         let operator = map_unary_operator(self.cur_kind());
         self.bump_any();
         let argument = self.parse_unary_expression_base(span)?;
-        Ok(self.ast.unary_expression(self.end_span(span), operator, true, argument))
+        Ok(self.ast.unary_expression(self.end_span(span), operator, argument))
     }
 
     fn parse_binary_or_logical_expression_base(

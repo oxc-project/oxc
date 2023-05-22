@@ -727,7 +727,6 @@ pub struct UnaryExpression<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub operator: UnaryOperator,
-    pub prefix: bool,
     pub argument: Expression<'a>,
 }
 

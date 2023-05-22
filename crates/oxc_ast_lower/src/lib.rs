@@ -639,7 +639,7 @@ impl<'a> AstLower<'a> {
 
     fn lower_unary_expression(&mut self, expr: &ast::UnaryExpression<'a>) -> hir::Expression<'a> {
         let argument = self.lower_expression(&expr.argument);
-        self.hir.unary_expression(expr.span, expr.operator, expr.prefix, argument)
+        self.hir.unary_expression(expr.span, expr.operator, argument)
     }
 
     fn lower_update_expression(&mut self, expr: &ast::UpdateExpression<'a>) -> hir::Expression<'a> {

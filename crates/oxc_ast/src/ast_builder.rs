@@ -547,15 +547,9 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         operator: UnaryOperator,
-        prefix: bool,
         argument: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::UnaryExpression(self.alloc(UnaryExpression {
-            span,
-            operator,
-            prefix,
-            argument,
-        }))
+        Expression::UnaryExpression(self.alloc(UnaryExpression { span, operator, argument }))
     }
 
     pub fn update_expression(
