@@ -10,12 +10,6 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-jemallocator = { workspace = true }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-mimalloc = { workspace = true }
-
 [dependencies]
 oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
@@ -29,3 +23,9 @@ oxc_syntax    = { workspace = true }
 [dev-dependencies]
 walkdir = { workspace = true }
 pico-args = { workspace = true }
+
+[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
+jemallocator = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dev-dependencies]
+mimalloc = { workspace = true }
