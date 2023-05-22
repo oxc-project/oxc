@@ -42,7 +42,7 @@ clap             = { version = "4.2.7", default-features = false, features = ["s
 compact_str      = { version = "0.7.0" }
 convert_case     = { version = "0.6.0" }
 criterion        = { version = "0.4.0", default-features = false }
-flate2           = { version = "1.0.26", default-features = false }
+flate2           = { version = "1.0.26" }
 glob             = { version = "0.3.1" }
 ignore           = { version = "0.4.20" }
 indextree        = { version = "4.6.0" }

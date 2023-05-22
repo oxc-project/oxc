@@ -10,6 +10,6 @@ oxc_span     = { workspace = true }
 oxc_minifier = { workspace = true }
 
 oxc_tasks_common = { workspace = true }
-flate2           = { workspace = true, features = ["zlib"] }
+flate2           = { workspace = true }
 
 humansize = "2.1.3"
