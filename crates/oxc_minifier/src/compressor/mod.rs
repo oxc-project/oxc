@@ -1,3 +1,5 @@
+#![allow(clippy::unused_self)]
+
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::{hir::*, HirBuilder, VisitMut};
@@ -180,7 +182,7 @@ impl<'a> Compressor<'a> {
 
     /// Transforms `typeof foo == "undefined"` into `foo === void 0`
     /// Enabled by `compress.typeofs`
-    fn compress_typeof_undefined<'b>(&mut self, expr: &'b mut BinaryExpression<'a>) -> bool {
+    fn compress_typeof_undefined<'b>(&mut self, expr: &'b mut BinaryExpression<'a>) {
         if expr.operator.is_equality()
             && self.options.typeofs
             && let Expression::UnaryExpression(unary_expr) = &expr.left
@@ -188,14 +190,35 @@ impl<'a> Compressor<'a> {
             && let Expression::Identifier(ident) = &unary_expr.argument
             && let Expression::StringLiteral(s) = &expr.right
             && s.value == "undefined" {
-            let mut left = self.hir.identifier_reference_expression((*ident).clone());
-            self.visit_expression(&mut left);
+            let left = self.hir.identifier_reference_expression((*ident).clone());
             let right = self.create_void_0();
             let operator = BinaryOperator::StrictEquality;
             *expr = BinaryExpression {span: SPAN, left, operator, right};
-            return true
         }
-        false
+    }
+
+    /// [Peephole Reorder Constant Expression](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeReorderConstantExpression.java)
+    ///
+    /// Reorder constant expression hoping for a better compression.
+    /// ex. x === 0 -> 0 === x
+    /// After reordering, expressions like 0 === x and 0 === y may have higher
+    /// compression together than their original counterparts.
+    fn reorder_constant_expression<'b>(&self, expr: &'b mut BinaryExpression<'a>) {
+        let operator = expr.operator;
+        if operator.is_equality()
+            || operator.is_compare()
+            || operator == BinaryOperator::Multiplication
+        {
+            if expr.precedence() == expr.left.precedence() {
+                return;
+            }
+            if !expr.left.is_immutable_value() && expr.right.is_immutable_value() {
+                if let Some(inverse_operator) = operator.compare_inverse_operator() {
+                    expr.operator = inverse_operator;
+                }
+                std::mem::swap(&mut expr.left, &mut expr.right);
+            }
+        }
     }
 }
 
@@ -226,10 +249,10 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     }
 
     fn visit_binary_expression(&mut self, expr: &'b mut BinaryExpression<'a>) {
-        if self.compress_typeof_undefined(expr) {
-            return;
-        }
         self.visit_expression(&mut expr.left);
         self.visit_expression(&mut expr.right);
+
+        self.compress_typeof_undefined(expr);
+        self.reorder_constant_expression(expr);
     }
 }

@@ -189,6 +189,16 @@ impl BinaryOperator {
         matches!(self, Self::In | Self::Instanceof)
     }
 
+    pub fn compare_inverse_operator(self) -> Option<Self> {
+        match self {
+            Self::LessThan => Some(Self::GreaterThan),
+            Self::LessEqualThan => Some(Self::GreaterEqualThan),
+            Self::GreaterThan => Some(Self::LessThan),
+            Self::GreaterEqualThan => Some(Self::LessEqualThan),
+            _ => None,
+        }
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Equality => "==",
