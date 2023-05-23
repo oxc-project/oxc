@@ -1086,6 +1086,11 @@ impl<'a> Gen for UnaryExpression<'a> {
 impl<'a> Gen for BinaryExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         self.left.gen(p);
+        if self.operator.is_keyword() 
+            && matches!(self.left, Expression::RegExpLiteral(_) | Expression::Identifier(_))
+         {
+            p.print(b' ');
+        }
         self.operator.gen(p);
         self.right.gen(p);
     }
@@ -1095,7 +1100,6 @@ impl Gen for BinaryOperator {
     fn gen(&self, p: &mut Printer) {
         let operator = self.as_str().as_bytes();
         if self.is_keyword() {
-            p.print(b' ');
             p.print_str(operator);
             p.print(b' ');
         } else {

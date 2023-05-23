@@ -573,7 +573,7 @@ fn whitespace() {
     // test("/x/ / /y/", "/x// /y/");
     test("/x/ + Foo", "/x/+Foo");
     test("/x/ instanceof Foo", "/x/ instanceof Foo");
-    // test("[x] instanceof Foo", "[x]instanceof Foo");
+    test("[x] instanceof Foo", "[x]instanceof Foo");
 
     test("throw x", "throw x");
     test("throw typeof x", "throw typeof x");
