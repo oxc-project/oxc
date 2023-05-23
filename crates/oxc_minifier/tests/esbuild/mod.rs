@@ -1,6 +1,6 @@
 //! <https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer_test.go#L164>
 
-use crate::expect;
+use crate::{expect, expect_same};
 
 #[test]
 #[ignore]
@@ -280,17 +280,16 @@ fn template() {
 }
 
 #[test]
-#[ignore]
 fn object() {
-    expect("let x = {'(':')'}", "let x = { \"(\": \")\" }");
+    expect("let x = {'(':')'}", "let x={'(':')'}");
     expect("({})", "({})");
-    expect("({}.x)", "({}).x");
-    expect("({} = {})", "({} = {})");
-    expect("(x, {} = {})", "x, {} = {}");
-    expect("let x = () => ({})", "let x = () => ({})");
-    expect("let x = () => ({}.x)", "let x = () => ({}).x");
-    expect("let x = () => ({} = {})", "let x = () => ({} = {})");
-    expect("let x = () => (x, {} = {})", "let x = () => (x, {} = {})");
+    // expect("({}.x)", "({}).x");
+    expect("({} = {})", "({}={})");
+    // expect("(x, {} = {})", "x,{}={}");
+    expect("let x = () => ({})", "let x=()=>({})");
+    // expect("let x = () => ({}.x)", "let x=()=>({}).x");
+    expect("let x = () => ({} = {})", "let x=()=>({}={})");
+    expect("let x = () => (x, {} = {})", "let x=()=>(x,{}={})");
 }
 
 #[test]
@@ -383,65 +382,59 @@ fn pure_comment() {
 }
 
 #[test]
-#[ignore]
 fn generator() {
-    expect("function* foo() {}", "function* foo() {\n}\n");
-    expect("(function* () {})", "(function* () {\n});\n");
-    expect("(function* foo() {})", "(function* foo() {\n});\n");
+    expect("function* foo() {}", "function*foo(){}");
+    expect("(function* () {})", "(function*(){})");
+    expect("(function* foo() {})", "(function*foo(){})");
 
-    expect("class Foo { *foo() {} }", "class Foo {\n  *foo() {\n  }\n}\n");
-    expect("class Foo { static *foo() {} }", "class Foo {\n  static *foo() {\n  }\n}\n");
-    expect("class Foo { *[foo]() {} }", "class Foo {\n  *[foo]() {\n  }\n}\n");
-    expect("class Foo { static *[foo]() {} }", "class Foo {\n  static *[foo]() {\n  }\n}\n");
+    expect("class Foo { *foo() {} }", "class Foo{*foo(){}}");
+    expect("class Foo { static *foo() {} }", "class Foo{static *foo(){}}");
+    expect("class Foo { *[foo]() {} }", "class Foo{*[foo](){}}");
+    expect("class Foo { static *[foo]() {} }", "class Foo{static *[foo](){}}");
 
-    expect("(class { *foo() {} })", "(class {\n  *foo() {\n  }\n});\n");
-    expect("(class { static *foo() {} })", "(class {\n  static *foo() {\n  }\n});\n");
-    expect("(class { *[foo]() {} })", "(class {\n  *[foo]() {\n  }\n});\n");
-    expect("(class { static *[foo]() {} })", "(class {\n  static *[foo]() {\n  }\n});\n");
+    expect("(class { *foo() {} })", "(class{*foo(){}})");
+    expect("(class { static *foo() {} })", "(class{static *foo(){}})");
+    expect("(class { *[foo]() {} })", "(class{*[foo](){}})");
+    expect("(class { static *[foo]() {} })", "(class{static *[foo](){}})");
 }
 
 #[test]
-#[ignore]
 fn arrow() {
-    expect("() => {}", "() => {\n};\n");
-    expect("x => (x, 0)", "(x) => (x, 0);\n");
-    expect("x => {y}", "(x) => {\n  y;\n};\n");
-    expect("(a = (b, c), ...d) => {}", "(a = (b, c), ...d) => {\n};\n");
-    expect(
-        "({[1 + 2]: a = 3} = {[1 + 2]: 3}) => {}",
-        "({ [1 + 2]: a = 3 } = { [1 + 2]: 3 }) => {\n};\n",
-    );
+    expect("() => {}", "()=>{}");
+    expect("x => (x, 0)", "(x)=>(x,0)");
+    expect("x => {y}", "(x)=>{y}");
+    expect("(a = (b, c), ...d) => {}", "(a=(b,c),...d)=>{}");
+    expect("({[1 + 2]: a = 3} = {[1 + 2]: 3}) => {}", "({[1+2]:a=3}={[1+2]:3})=>{}");
     expect(
         "([a = (1, 2), ...[b, ...c]] = [1, [2, 3]]) => {}",
-        "([a = (1, 2), ...[b, ...c]] = [1, [2, 3]]) => {\n};\n",
+        "([a=(1,2),...[b,...c]]=[1,[2,3]])=>{}",
     );
-    expect("([] = []) => {}", "([] = []) => {\n};\n");
-    expect("([,] = [,]) => {}", "([,] = [,]) => {\n};\n");
-    expect("([,,] = [,,]) => {}", "([, ,] = [, ,]) => {\n};\n");
-    expect("a = () => {}", "a = () => {\n};\n");
-    expect("a || (() => {})", "a || (() => {\n});\n");
-    expect("({a = b, c = d}) => {}", "({ a = b, c = d }) => {\n};\n");
-    expect("([{a = b, c = d} = {}] = []) => {}", "([{ a = b, c = d } = {}] = []) => {\n};\n");
-    expect("({a: [b = c] = []} = {}) => {}", "({ a: [b = c] = [] } = {}) => {\n};\n");
+    expect("([] = []) => {}", "([]=[])=>{}");
+    expect("([,] = [,]) => {}", "([,]=[,])=>{}");
+    expect("([,,] = [,,]) => {}", "([,,]=[,,])=>{}");
+    expect("a = () => {}", "a=()=>{}");
+    expect("a || (() => {})", "a||(()=>{})");
+    // expect("({a = b, c = d}) => {}", "({a=b,c=d})=>{}");
+    // expect("([{a = b, c = d} = {}] = []) => {}", "([{a=b,c=d}={}]=[])=>{}");
+    expect("({a: [b = c] = []} = {}) => {}", "({a:[b=c]=[]}={})=>{}");
 
     // These are not arrow functions but initially look like one
-    expect("(a = b, c)", "a = b, c;\n");
-    expect("([...a = b])", "[...a = b];\n");
-    expect("([...a, ...b])", "[...a, ...b];\n");
-    expect("({a: b, c() {}})", "({ a: b, c() {\n} });\n");
-    expect("({a: b, get c() {}})", "({ a: b, get c() {\n} });\n");
-    expect("({a: b, set c(x) {}})", "({ a: b, set c(x) {\n} });\n");
+    // expect("(a = b, c)", "a=b,c");
+    // expect("([...a = b])", "[...a=b]");
+    // expect("([...a, ...b])", "[...a,...b]");
+    expect("({a: b, c() {}})", "({a:b,c(){}})");
+    expect("({a: b, get c() {}})", "({a:b,get c(){}})");
+    expect("({a: b, set c(x) {}})", "({a:b,set c(x){}})");
 }
 
 #[test]
-#[ignore]
 fn class() {
-    expect("class Foo extends (a, b) {}", "class Foo extends (a, b) {\n}\n");
-    expect("class Foo { get foo() {} }", "class Foo {\n  get foo() {\n  }\n}\n");
-    expect("class Foo { set foo(x) {} }", "class Foo {\n  set foo(x) {\n  }\n}\n");
-    expect("class Foo { static foo() {} }", "class Foo {\n  static foo() {\n  }\n}\n");
-    expect("class Foo { static get foo() {} }", "class Foo {\n  static get foo() {\n  }\n}\n");
-    expect("class Foo { static set foo(x) {} }", "class Foo {\n  static set foo(x) {\n  }\n}\n");
+    expect("class Foo extends (a, b) {}", "class Foo extends (a,b){}");
+    expect("class Foo { get foo() {} }", "class Foo{get foo(){}}");
+    expect("class Foo { set foo(x) {} }", "class Foo{set foo(x){}}");
+    expect("class Foo { static foo() {} }", "class Foo{static foo(){}}");
+    expect("class Foo { static get foo() {} }", "class Foo{static get foo(){}}");
+    expect("class Foo { static set foo(x) {} }", "class Foo{static set foo(x){}}");
 }
 
 #[test]
@@ -722,15 +715,14 @@ fn jsx_single_line() {}
 fn avoid_slash_script() {}
 
 #[test]
-#[ignore]
 fn binary_operator_visitor() {
     // Make sure the inner "/*b*/" comment doesn't disappear due to weird binary visitor stuff
-    expect(
-        "x = (0, /*a*/ (0, /*b*/ (0, /*c*/ 1 == 2) + 3) * 4)",
-        "x = /*a*/\n/*b*/\n(/*c*/\n!1 + 3) * 4;\n",
-    );
+    // expect(
+    // "x = (0, /*a*/ (0, /*b*/ (0, /*c*/ 1 == 2) + 3) * 4)",
+    // "x = /*a*/\n/*b*/\n(/*c*/\n!1 + 3) * 4;\n",
+    // );
 
     // Make sure deeply-nested ASTs don't cause a stack overflow
-    // x := "x = f()" + strings.Repeat(" || f()", 10_000) + ";\n"
-    // expectPrinted(t, x, x)
+    let x = format!("x=f(){}", "||f()".repeat(1000)); // TODO: change this to 10_000
+    expect_same(&x);
 }
