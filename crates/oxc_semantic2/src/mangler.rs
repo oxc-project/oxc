@@ -102,7 +102,6 @@ impl Mangler {
         let unresolved_references = scope_tree
             .root_unresolved_references()
             .keys()
-            // .map(|reference_id| semantic.symbol_table.get_reference(*reference_id).name.clone())
             // It is unlike to get a 5 letter mangled identifier, which is a lot of slots.
             .filter(|name| name.len() < 5)
             .collect::<Vec<_>>();

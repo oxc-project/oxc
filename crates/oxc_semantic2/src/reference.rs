@@ -15,6 +15,7 @@ impl Idx for ReferenceId {
         self.0.index()
     }
 }
+
 #[cfg(target_pointer_width = "64")]
 mod size_asserts {
     oxc_index::static_assert_size!(Option<super::ReferenceId>, 8);

@@ -24,6 +24,7 @@ impl Idx for ScopeId {
         self.0.index()
     }
 }
+
 #[cfg(target_pointer_width = "64")]
 mod size_asserts {
     oxc_index::static_assert_size!(Option<super::ScopeId>, 8);
@@ -128,7 +129,6 @@ impl ScopeTree {
 
     pub(crate) fn add_binding(&mut self, scope_id: ScopeId, name: Atom, symbol_id: SymbolId) {
         self.bindings[scope_id].insert(name, symbol_id);
-        // self.bindings.insert(name, symbol_id);
     }
 
     pub(crate) fn add_unresolved_reference(
