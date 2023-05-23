@@ -1,7 +1,9 @@
 #![feature(let_chains)]
+#![allow(clippy::too_many_lines)]
 
 mod closure;
 mod esbuild;
+mod tdewolff;
 mod terser;
 
 use oxc_minifier::{Minifier, MinifierOptions};
