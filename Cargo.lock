@@ -94,6 +94,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "brotlic"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8d5a350a871e06f5274bc1206bcd0da426522b4d0fbfad5fcec92806d854e5b"
+dependencies = [
+ "brotlic-sys",
+]
+
+[[package]]
+name = "brotlic-sys"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afdec5c62bc97b56349053cf66ba503af5c2448591be61c3ad70a5f11b57e574"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "bstr"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1136,6 +1154,7 @@ dependencies = [
 name = "oxc_minsize"
 version = "0.0.0"
 dependencies = [
+ "brotlic",
  "flate2",
  "humansize",
  "oxc_minifier",
