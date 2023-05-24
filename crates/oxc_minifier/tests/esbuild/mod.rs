@@ -135,10 +135,9 @@ fn call() {
 }
 
 #[test]
-#[ignore]
 fn member() {
     expect("x.y[z]", "x.y[z]");
-    expect("((x+1).y+1)[z]", "((x + 1).y + 1)[z]");
+    expect("((x+1).y+1)[z]", "((x+1).y+1)[z]");
 }
 
 #[test]
@@ -441,10 +440,6 @@ fn class() {
 fn private_identifiers() {
     expect(
         "class Foo { #foo; foo() { return #foo in this } }",
-        "class Foo {\n  #foo;\n  foo() {\n    return #foo in this;\n  }\n}\n",
-    );
-    expect(
-        "class Foo { #foo; foo() { return #foo in this } }",
         "class Foo{#foo;foo(){return#foo in this}}",
     );
 }
@@ -498,46 +493,39 @@ fn import() {
 }
 
 #[test]
-#[ignore]
 fn export_default() {
-    expect("export default function() {}", "export default function() {\n}\n");
-    expect("export default function foo() {}", "export default function foo() {\n}\n");
-    expect("export default async function() {}", "export default async function() {\n}\n");
-    expect("export default async function foo() {}", "export default async function foo() {\n}\n");
-    expect("export default class {}", "export default class {\n}\n");
-    expect("export default class foo {}", "export default class foo {\n}\n");
+    expect("export default function() {}", "export default function(){}");
+    expect("export default function foo() {}", "export default function foo(){}");
+    expect("export default async function() {}", "export default async function(){}");
+    expect("export default async function foo() {}", "export default async function foo(){}");
+    expect("export default class {}", "export default class{}");
+    expect("export default class foo {}", "export default class foo{}");
 
-    expect("export default (function() {})", "export default (function() {\n});\n");
-    expect("export default (function foo() {})", "export default (function foo() {\n});\n");
-    expect("export default (async function() {})", "export default (async function() {\n});\n");
-    expect(
-        "export default (async function foo() {})",
-        "export default (async function foo() {\n});\n",
-    );
-    expect("export default (class {})", "export default (class {\n});\n");
-    expect("export default (class foo {})", "export default (class foo {\n});\n");
+    expect("export default (function() {})", "export default (function(){})");
+    expect("export default (function foo() {})", "export default (function foo(){})");
+    expect("export default (async function() {})", "export default (async function(){})");
+    expect("export default (async function foo() {})", "export default (async function foo(){})");
+    expect("export default (class {})", "export default (class{})");
+    expect("export default (class foo {})", "export default (class foo{})");
 
-    expect(
-        "export default (function() {}.toString())",
-        "export default (function() {\n}).toString();\n",
-    );
-    expect(
-        "export default (function foo() {}.toString())",
-        "export default (function foo() {\n}).toString();\n",
-    );
-    expect(
-        "export default (async function() {}.toString())",
-        "export default (async function() {\n}).toString();\n",
-    );
-    expect(
-        "export default (async function foo() {}.toString())",
-        "export default (async function foo() {\n}).toString();\n",
-    );
-    expect("export default (class {}.toString())", "export default (class {\n}).toString();\n");
-    expect(
-        "export default (class foo {}.toString())",
-        "export default (class foo {\n}).toString();\n",
-    );
+    // expect(
+    // "export default (function() {}.toString())",
+    // "export default (function() {}).toString()",
+    // );
+    // expect(
+    // "export default (function foo() {}.toString())",
+    // "export default (function foo() {}).toString()",
+    // );
+    // expect(
+    // "export default (async function() {}.toString())",
+    // "export default (async function() {}).toString()",
+    // );
+    // expect(
+    // "export default (async function foo() {}.toString())",
+    // "export default (async function foo() {}).toString()",
+    // );
+    // expect("export default (class {}.toString())", "export default (class {}).toString()");
+    // expect("export default (class foo {}.toString())", "export default (class foo {}).toString()");
 
     expect("export default function() {}", "export default function(){}");
     expect("export default function foo() {}", "export default function foo(){}");
@@ -618,51 +606,46 @@ fn mangle() {
 }
 
 #[test]
-#[ignore]
 fn minify() {
-    expect("0.1", ".1;");
-    expect("1.2", "1.2;");
+    // expect("0.1", ".1");
+    expect("1.2", "1.2");
 
-    expect("() => {}", "()=>{};");
-    expect("(a) => {}", "a=>{};");
-    expect("(...a) => {}", "(...a)=>{};");
-    expect("(a = 0) => {}", "(a=0)=>{};");
-    expect("(a, b) => {}", "(a,b)=>{};");
+    expect("() => {}", "()=>{}");
+    // expect("(a) => {}", "a=>{}");
+    expect("(...a) => {}", "(...a)=>{}");
+    expect("(a = 0) => {}", "(a=0)=>{}");
+    expect("(a, b) => {}", "(a,b)=>{}");
 
-    expect("true ** 2", "true ** 2;\n");
-    expect("false ** 2", "false ** 2;\n");
-    expect("true ** 2", "true**2;");
-    expect("false ** 2", "false**2;");
-    expect("true ** 2", "(!0) ** 2;\n");
-    expect("false ** 2", "(!1) ** 2;\n");
+    // expect("true ** 2", "(!0)**2");
+    // expect("false ** 2", "(!1)**2");
 
-    expect("import a from 'path'", "import a from\"path\";");
-    expect("import * as ns from 'path'", "import*as ns from\"path\";");
-    expect("import {a, b as c} from 'path'", "import{a,b as c}from\"path\";");
-    expect("import {a, ' ' as c} from 'path'", "import{a,\" \"as c}from\"path\";");
+    // expect("import a from 'path'", "import a from'path'");
+    // expect("import * as ns from 'path'", "import*as ns from'path'");
+    // expect("import {a, b as c} from 'path'", "import{a,b as c}from'path'");
+    // expect("import {a, ' ' as c} from 'path'", "import{a,' 'as c}from'path'");
 
-    expect("export * as ns from 'path'", "export*as ns from\"path\";");
-    expect("export * as ' ' from 'path'", "export*as\" \"from\"path\";");
-    expect("export {a, b as c} from 'path'", "export{a,b as c}from\"path\";");
-    expect("export {' ', '-' as ';'} from 'path'", "export{\" \",\"-\"as\";\"}from\"path\";");
-    expect("let a, b; export {a, b as c}", "let a,b;export{a,b as c};");
-    expect("let a, b; export {a, b as ' '}", "let a,b;export{a,b as\" \"};");
+    // expect("export * as ns from 'path'", "export*as ns from'path'");
+    // expect("export * as ' ' from 'path'", "export*as' 'from'path'");
+    // expect("export {a, b as c} from 'path'", "export{a,b as c}from'path'");
+    // expect("export {' ', '-' as ';'} from 'path'", "export{' ','-'as';'}from'path'");
+    // expect("let a, b; export {a, b as c}", "let a,b;export{a,b as c}");
+    // expect("let a, b; export {a, b as ' '}", "let a,b;export{a,b as' '}");
 
     // Print some strings using template literals when minifying
-    expect("x = '\\n'", "x = \"\\n\";\n");
-    expect("x = '\\n'", "x = `\n`;\n");
-    expect("x = {'\\n': 0}", "x = { \"\\n\": 0 };\n");
-    expect("(class{'\\n' = 0})", "(class {\n  \"\\n\" = 0;\n});\n");
-    expect("class Foo{'\\n' = 0}", "class Foo {\n  \"\\n\" = 0;\n}\n");
+    // expect("x = '\\n'", "x = \"\\n\";\n");
+    // expect("x = '\\n'", "x = `\n`;\n");
+    // expect("x = {'\\n': 0}", "x = { \"\\n\": 0 };\n");
+    // expect("(class{'\\n' = 0})", "(class {\n  \"\\n\" = 0;\n});\n");
+    // expect("class Foo{'\\n' = 0}", "class Foo {\n  \"\\n\" = 0;\n}\n");
 
     // Special identifiers must not be minified
-    expect("exports", "exports;");
-    expect("require", "require;");
-    expect("module", "module;");
+    expect("exports", "exports");
+    expect("require", "require");
+    expect("module", "module");
 
     // Comment statements must not affect their surroundings when minified
-    expect("//!single\nthrow 1 + 2", "//!single\nthrow 1+2;");
-    expect("/*!multi-\nline*/\nthrow 1 + 2", "/*!multi-\nline*/throw 1+2;");
+    // expect("//!single\nthrow 1 + 2", "//!single\nthrow 1+2;");
+    // expect("/*!multi-\nline*/\nthrow 1 + 2", "/*!multi-\nline*/throw 1+2;");
 }
 
 #[test]
