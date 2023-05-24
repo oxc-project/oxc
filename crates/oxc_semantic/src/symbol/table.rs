@@ -4,7 +4,6 @@ use std::{
 };
 
 use oxc_ast::ast::IdentifierReference;
-use oxc_index::Idx;
 use oxc_span::Span;
 
 use super::{

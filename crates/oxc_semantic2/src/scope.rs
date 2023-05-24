@@ -4,7 +4,7 @@ use std::hash::BuildHasherDefault;
 
 use bitflags::bitflags;
 use indexmap::IndexMap;
-use oxc_index::{Idx, IndexVec, NonZeroIdx};
+use oxc_index::{define_index_type, IndexVec};
 use oxc_span::Atom;
 use rustc_hash::{FxHashMap, FxHasher};
 
@@ -12,22 +12,8 @@ use crate::{reference::ReferenceId, symbol::SymbolId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct ScopeId(NonZeroIdx);
-
-impl Idx for ScopeId {
-    fn new(idx: usize) -> Self {
-        Self(NonZeroIdx::new(idx))
-    }
-
-    fn index(self) -> usize {
-        self.0.index()
-    }
-}
-
-#[cfg(target_pointer_width = "64")]
-mod size_asserts {
-    oxc_index::static_assert_size!(Option<super::ScopeId>, 8);
+define_index_type! {
+    pub struct ScopeId = u32;
 }
 
 bitflags! {

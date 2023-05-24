@@ -7,19 +7,10 @@ pub mod hir;
 mod hir_builder;
 mod visit_mut;
 
-use oxc_index::Idx;
+use oxc_index::define_index_type;
 
 pub use crate::{hir_builder::HirBuilder, visit_mut::VisitMut};
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct HirId(usize);
-
-impl Idx for HirId {
-    fn new(idx: usize) -> Self {
-        Self(idx)
-    }
-
-    fn index(self) -> usize {
-        self.0
-    }
+define_index_type! {
+    pub struct HirId = usize;
 }

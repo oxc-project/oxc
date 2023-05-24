@@ -3,7 +3,6 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use oxc_index::Idx;
 use oxc_span::{Atom, Span};
 
 use super::{

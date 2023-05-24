@@ -7,7 +7,6 @@
 
 use num_bigint::BigUint;
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_index::Idx;
 use oxc_semantic2::{reference::ReferenceId, symbol::SymbolId};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
@@ -32,7 +31,7 @@ impl<'a> HirBuilder<'a> {
     }
 
     fn next_id(&mut self) -> HirId {
-        self.hir_id.increment();
+        self.hir_id += 1;
         self.hir_id
     }
 

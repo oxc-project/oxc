@@ -1,4 +1,4 @@
-use oxc_index::{Idx, IndexVec};
+use oxc_index::{index_vec, IndexVec};
 use oxc_span::Atom;
 
 use crate::{
@@ -63,7 +63,7 @@ impl Mangler {
         let mut total_number_of_slots: Slot = 0;
 
         // All symbols with their assigned slots
-        let mut slots: IndexVec<SymbolId, Slot> = IndexVec::from_raw(vec![0; symbol_table.len()]);
+        let mut slots: IndexVec<SymbolId, Slot> = index_vec![0; symbol_table.len()];
 
         // Keep track of the maximum slot number for each scope
         let mut max_slot_for_scope = vec![0; scope_tree.len()];
@@ -134,7 +134,7 @@ impl Mangler {
             if !symbol_table.get_flag(symbol_id).is_variable() {
                 continue;
             }
-            let index = slot.index();
+            let index = *slot;
             frequencies[index].slot = *slot;
             frequencies[index].frequency += symbol_table.resolved_references[symbol_id].len();
             frequencies[index].symbol_ids.push(symbol_id);
