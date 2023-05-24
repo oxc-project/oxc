@@ -11,4 +11,5 @@ license.workspace     = true
 repository.workspace  = true
 
 [dependencies]
-index_vec = { workspace = true }
+index_vec         = { workspace = true }
+static_assertions = { workspace = true }

@@ -19,9 +19,9 @@ oxc_span      = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_index     = { workspace = true }
 
-bitflags      = { workspace = true }
-rustc-hash    = { workspace = true }
-num-bigint    = { workspace = true }
+bitflags   = { workspace = true }
+rustc-hash = { workspace = true }
+num-bigint = { workspace = true }
 
 serde      = { workspace = true, features = ["derive"], optional = true }
 serde_json = { workspace = true, optional = true }

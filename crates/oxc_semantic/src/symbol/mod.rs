@@ -35,8 +35,8 @@ pub struct Symbol {
 
 #[cfg(target_pointer_width = "64")]
 mod size_asserts {
-    use oxc_index::static_assert_size;
-    static_assert_size!(super::Symbol, 88);
+    use oxc_index::assert_eq_size;
+    assert_eq_size!(super::Symbol, [u8; 88]);
 }
 
 bitflags! {

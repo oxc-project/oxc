@@ -1102,6 +1102,7 @@ name = "oxc_index"
 version = "0.0.0"
 dependencies = [
  "index_vec",
+ "static_assertions",
 ]
 
 [[package]]

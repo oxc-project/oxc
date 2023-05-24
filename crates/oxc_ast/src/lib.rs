@@ -52,21 +52,18 @@ pub use crate::{
 //  Read `https://nnethercote.github.io/perf-book/type-sizes.html` for more details.
 #[cfg(target_pointer_width = "64")]
 mod size_asserts {
-    use oxc_index::static_assert_size;
+    use oxc_index::assert_eq_size;
 
-    #[allow(clippy::wildcard_imports)]
-    use crate::ast::*;
-
-    static_assert_size!(Statement, 16);
-    static_assert_size!(Expression, 16);
-    static_assert_size!(Declaration, 16);
-    static_assert_size!(BindingPatternKind, 16);
-    static_assert_size!(ModuleDeclaration, 16);
-    static_assert_size!(ClassElement, 16);
-    static_assert_size!(ExportDefaultDeclarationKind, 16);
-    static_assert_size!(AssignmentTargetPattern, 16);
-    static_assert_size!(AssignmentTargetMaybeDefault, 24);
-    static_assert_size!(AssignmentTargetProperty, 16);
-    static_assert_size!(TSLiteral, 16);
-    static_assert_size!(TSType, 16);
+    assert_eq_size!(crate::ast::Statement, [u8; 16]);
+    assert_eq_size!(crate::ast::Expression, [u8; 16]);
+    assert_eq_size!(crate::ast::Declaration, [u8; 16]);
+    assert_eq_size!(crate::ast::BindingPatternKind, [u8; 16]);
+    assert_eq_size!(crate::ast::ModuleDeclaration, [u8; 16]);
+    assert_eq_size!(crate::ast::ClassElement, [u8; 16]);
+    assert_eq_size!(crate::ast::ExportDefaultDeclarationKind, [u8; 16]);
+    assert_eq_size!(crate::ast::AssignmentTargetPattern, [u8; 16]);
+    assert_eq_size!(crate::ast::AssignmentTargetMaybeDefault, [u8; 24]);
+    assert_eq_size!(crate::ast::AssignmentTargetProperty, [u8; 16]);
+    assert_eq_size!(crate::ast::TSLiteral, [u8; 16]);
+    assert_eq_size!(crate::ast::TSType, [u8; 16]);
 }

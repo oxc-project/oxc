@@ -21,7 +21,7 @@ oxc_semantic2 = { workspace = true }
 oxc_syntax    = { workspace = true }
 
 [dev-dependencies]
-walkdir = { workspace = true }
+walkdir   = { workspace = true }
 pico-args = { workspace = true }
 
 [target.'cfg(not(target_env = "msvc"))'.dev-dependencies]

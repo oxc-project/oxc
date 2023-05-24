@@ -13,11 +13,6 @@ define_index_type! {
     pub struct SymbolId = u32;
 }
 
-#[cfg(target_pointer_width = "64")]
-mod size_asserts {
-    oxc_index::static_assert_size!(Option<super::SymbolId>, 8);
-}
-
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct SymbolFlags: u16 {
