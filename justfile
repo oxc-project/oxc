@@ -3,6 +3,9 @@
 _default:
   just --list -u
 
+alias r := ready
+alias c := coverage
+
 # Initialize the project by installing all the necessary tools
 init:
   cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
