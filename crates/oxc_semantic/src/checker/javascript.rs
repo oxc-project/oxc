@@ -356,7 +356,7 @@ fn check_number_literal(lit: &NumberLiteral, ctx: &SemanticBuilder) {
             NumberBase::Octal if leading_zero(lit.raw) => {
                 ctx.error(LegacyOctal(lit.span));
             }
-            NumberBase::Decimal if leading_zero(lit.raw) => {
+            NumberBase::Decimal | NumberBase::Float if leading_zero(lit.raw) => {
                 #[derive(Debug, Error, Diagnostic)]
                 #[error("Decimals with leading zeros are not allowed in strict mode")]
                 #[diagnostic(help("remove the leading zero"))]
