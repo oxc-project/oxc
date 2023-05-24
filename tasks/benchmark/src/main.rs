@@ -33,7 +33,7 @@ pub fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
 
     let baseline: Option<String> = args.opt_value_from_str("--save-baseline").unwrap();
-    let measurement_time = Duration::new(/* seconds */ 10, 0);
+    let measurement_time = Duration::new(/* seconds */ 15, 0);
     let mut criterion = Criterion::default().without_plots().measurement_time(measurement_time);
     if let Some(ref baseline) = baseline {
         criterion = criterion.save_baseline(baseline.to_string());

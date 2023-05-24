@@ -32,6 +32,16 @@ jobs:
       - name: Compile
         run: cargo build --release -p oxc_benchmark
 
+      - name: Sleep for CPU cooldown (windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: Start-Sleep -s 15
+
+      - name: Sleep for CPU cooldown
+        if: runner.os != 'Windows'
+        shell: bash
+        run: sleep 15s
+
       - name: Run Bench on PR Branch
         run: cargo benchmark --save-baseline pr
 
@@ -43,6 +53,16 @@ jobs:
 
       - name: Compile
         run: cargo build --release -p oxc_benchmark
+
+      - name: Sleep for CPU cooldown (windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: Start-Sleep -s 15
+
+      - name: Sleep for CPU cooldown
+        if: runner.os != 'Windows'
+        shell: bash
+        run: sleep 15s
 
       - name: Run Bench on Main Branch
         run: cargo benchmark --save-baseline main
