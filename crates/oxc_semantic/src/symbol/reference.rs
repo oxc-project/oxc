@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 
 use bitflags::bitflags;
-use oxc_index::Idx;
+use oxc_index::define_index_type;
 use oxc_span::Span;
 
 use super::SymbolId;
@@ -75,15 +75,6 @@ impl ResolvedReference {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct ResolvedReferenceId(usize);
-
-impl Idx for ResolvedReferenceId {
-    fn new(idx: usize) -> Self {
-        Self(idx)
-    }
-
-    fn index(self) -> usize {
-        self.0
-    }
+define_index_type! {
+    pub struct ResolvedReferenceId = u32;
 }

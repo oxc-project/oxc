@@ -1,22 +1,13 @@
 #![allow(non_upper_case_globals)]
 
 use bitflags::bitflags;
-use oxc_index::{Idx, IndexVec, NonZeroIdx};
+use oxc_index::{define_index_type, IndexVec};
 use oxc_span::{Atom, Span};
 
 use crate::reference::{Reference, ReferenceId};
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct SymbolId(NonZeroIdx);
-
-impl Idx for SymbolId {
-    fn new(idx: usize) -> Self {
-        Self(NonZeroIdx::new(idx))
-    }
-
-    fn index(self) -> usize {
-        self.0.index()
-    }
+define_index_type! {
+    pub struct SymbolId = u32;
 }
 
 #[cfg(target_pointer_width = "64")]

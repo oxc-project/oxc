@@ -62,6 +62,11 @@ rustflags = [
   # Having #[must_use] every where also hinders readability.
   "-Aclippy::must_use_candidate",
 
+  # Generated from the `index_vec` crate.
+  # this error originates in the macro `$crate::__define_index_type_inner` which comes from the expansion of the macro `define_index_type`
+  "-Aclippy::used_underscore_binding",
+  "-Aclippy::doc_markdown",
+
   # nursery
 
   # `const` functions do not make sense for our project because this is not a `const` library.

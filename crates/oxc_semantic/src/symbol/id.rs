@@ -1,16 +1,7 @@
 use std::hash::Hash;
 
-use oxc_index::Idx;
+use oxc_index::define_index_type;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct SymbolId(usize);
-
-impl Idx for SymbolId {
-    fn new(idx: usize) -> Self {
-        Self(idx)
-    }
-
-    fn index(self) -> usize {
-        self.0
-    }
+define_index_type! {
+    pub struct SymbolId = u32;
 }

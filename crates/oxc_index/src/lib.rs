@@ -2,11 +2,7 @@
 //!
 //! <https://github.com/rust-lang/rust/tree/master/compiler/rustc_index>
 
-mod idx;
-mod vec;
-
-pub use idx::{Idx, NonZeroIdx};
-pub use vec::IndexVec;
+pub use index_vec::{define_index_type, index_vec, IndexSlice, IndexVec};
 
 /// Type size assertion. The first argument is a type and the second argument is its expected size.
 ///
