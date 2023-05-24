@@ -5,7 +5,10 @@ use oxc_allocator::{Allocator, Vec};
 use oxc_hir::{hir::*, HirBuilder, VisitMut};
 use oxc_semantic2::Semantic;
 use oxc_span::Span;
-use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+use oxc_syntax::{
+    operator::{BinaryOperator, UnaryOperator},
+    NumberBase,
+};
 
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]

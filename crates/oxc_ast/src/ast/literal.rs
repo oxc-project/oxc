@@ -8,6 +8,7 @@ use std::{
 use bitflags::bitflags;
 use num_bigint::BigUint;
 use oxc_span::{Atom, Span};
+use oxc_syntax::NumberBase;
 #[cfg(feature = "serde")]
 use serde::Serialize;
 
@@ -170,12 +171,4 @@ impl StringLiteral {
         }
         true
     }
-}
-
-#[derive(Debug, Clone, Copy, Hash)]
-pub enum NumberBase {
-    Decimal,
-    Binary,
-    Octal,
-    Hex,
 }

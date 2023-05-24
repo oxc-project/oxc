@@ -8,8 +8,11 @@ use num_bigint::BigUint;
 use oxc_allocator::{Box, Vec};
 use oxc_semantic2::{reference::ReferenceId, symbol::SymbolId};
 use oxc_span::{Atom, Span};
-use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+use oxc_syntax::{
+    operator::{
+        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+    },
+    NumberBase,
 };
 #[cfg(feature = "serde")]
 use serde::Serialize;
@@ -371,14 +374,6 @@ impl StringLiteral {
         }
         true
     }
-}
-
-#[derive(Debug, Clone, Copy, Hash)]
-pub enum NumberBase {
-    Decimal,
-    Binary,
-    Octal,
-    Hex,
 }
 
 /// Identifier Name

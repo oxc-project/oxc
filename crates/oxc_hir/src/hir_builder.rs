@@ -10,8 +10,11 @@ use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_index::Idx;
 use oxc_semantic2::{reference::ReferenceId, symbol::SymbolId};
 use oxc_span::{Atom, Span};
-use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+use oxc_syntax::{
+    operator::{
+        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+    },
+    NumberBase,
 };
 
 #[allow(clippy::wildcard_imports)]

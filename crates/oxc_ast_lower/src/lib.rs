@@ -995,13 +995,7 @@ impl<'a> AstLower<'a> {
     /* ----------  Literal ---------- */
 
     fn lower_number_literal(&mut self, lit: &ast::NumberLiteral<'a>) -> hir::NumberLiteral<'a> {
-        let base = match lit.base {
-            ast::NumberBase::Decimal => hir::NumberBase::Decimal,
-            ast::NumberBase::Binary => hir::NumberBase::Binary,
-            ast::NumberBase::Octal => hir::NumberBase::Octal,
-            ast::NumberBase::Hex => hir::NumberBase::Hex,
-        };
-        self.hir.number_literal(lit.span, lit.value, lit.raw, base)
+        self.hir.number_literal(lit.span, lit.value, lit.raw, lit.base)
     }
 
     fn lower_boolean_literal(&mut self, lit: &ast::BooleanLiteral) -> hir::BooleanLiteral {

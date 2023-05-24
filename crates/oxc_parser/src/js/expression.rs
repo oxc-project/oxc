@@ -2,7 +2,7 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
-use oxc_syntax::operator::BinaryOperator;
+use oxc_syntax::{operator::BinaryOperator, NumberBase};
 
 use super::{
     function::IsParenthesizedArrowFunction,
@@ -270,7 +270,8 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_literal_number(&mut self) -> Result<NumberLiteral<'a>> {
         let span = self.start_span();
         let base = match self.cur_kind() {
-            Kind::Float | Kind::Decimal => NumberBase::Decimal,
+            Kind::Decimal => NumberBase::Decimal,
+            Kind::Float => NumberBase::Float,
             Kind::Binary => NumberBase::Binary,
             Kind::Octal => NumberBase::Octal,
             Kind::Hex => NumberBase::Hex,
