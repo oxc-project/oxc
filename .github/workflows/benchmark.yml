@@ -3,9 +3,7 @@ name: Benchmark
 on:
   workflow_dispatch:
   pull_request:
-    paths-ignore:
-      - '**/*.md'
-  push:
+    types: [opened, synchronize]
     paths-ignore:
       - '**/*.md'
 
