@@ -86,7 +86,7 @@ impl SemanticBuilder {
             return symbol_id;
         }
 
-        let symbol_id = self.symbol_table.create_symbol(span, name.clone(), includes);
+        let symbol_id = self.symbol_table.create_symbol(span, name.clone(), includes, scope_id);
         if includes.is_variable() {
             self.scope_tree.add_binding(scope_id, name.clone(), symbol_id);
         }

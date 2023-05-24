@@ -4,7 +4,10 @@ use bitflags::bitflags;
 use oxc_index::{define_index_type, IndexVec};
 use oxc_span::{Atom, Span};
 
-use crate::reference::{Reference, ReferenceId};
+use crate::{
+    reference::{Reference, ReferenceId},
+    scope::ScopeId,
+};
 
 define_index_type! {
     pub struct SymbolId = u32;
@@ -73,6 +76,7 @@ pub struct SymbolTable {
     pub(crate) spans: IndexVec<SymbolId, Span>,
     pub(crate) names: IndexVec<SymbolId, Atom>,
     pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
+    pub(crate) scope_ids: IndexVec<SymbolId, ScopeId>,
     pub(crate) resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     pub(crate) references: IndexVec<ReferenceId, Reference>,
 }
@@ -83,6 +87,7 @@ impl SymbolTable {
             spans: IndexVec::new(),
             names: IndexVec::new(),
             flags: IndexVec::new(),
+            scope_ids: IndexVec::new(),
             resolved_references: IndexVec::new(),
             references: IndexVec::new(),
         }
@@ -104,11 +109,18 @@ impl SymbolTable {
         self.flags[symbol_id]
     }
 
-    pub fn create_symbol(&mut self, span: Span, name: Atom, flag: SymbolFlags) -> SymbolId {
-        let _ = self.spans.push(span);
-        let _ = self.names.push(name);
-        let _ = self.resolved_references.push(vec![]);
-        self.flags.push(flag)
+    pub fn create_symbol(
+        &mut self,
+        span: Span,
+        name: Atom,
+        flag: SymbolFlags,
+        scope_id: ScopeId,
+    ) -> SymbolId {
+        _ = self.spans.push(span);
+        _ = self.names.push(name);
+        _ = self.flags.push(flag);
+        _ = self.scope_ids.push(scope_id);
+        self.resolved_references.push(vec![])
     }
 
     pub fn create_reference(&mut self, _span: Span, name: Atom) -> ReferenceId {
