@@ -2,7 +2,7 @@
 
 pub mod operator;
 
-#[derive(Debug, Clone, Copy, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum NumberBase {
     Float,
     Decimal,

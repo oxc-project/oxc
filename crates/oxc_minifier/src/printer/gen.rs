@@ -1,8 +1,11 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
-use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+use oxc_syntax::{
+    operator::{
+        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+    },
+    NumberBase,
 };
 
 use super::{Operator, Printer, Separator};
@@ -721,7 +724,21 @@ impl Gen for NullLiteral {
 }
 
 impl<'a> Gen for NumberLiteral<'a> {
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn gen(&self, p: &mut Printer) {
+        if self.base != NumberBase::Float {
+            let value = self.value as u64;
+            let decimal = format!("{value}");
+            let hex = format!("{value:#x}");
+            let s = if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
+                let hex = format!("{value:#x}");
+                if hex.len() < decimal.len() { hex } else { decimal }
+            } else {
+                decimal
+            };
+            p.print_str(s.as_bytes());
+            return;
+        }
         p.print_str(self.raw.as_bytes());
     }
 }
