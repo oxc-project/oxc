@@ -43,7 +43,7 @@ The Oxidation Compiler is creating a suite of tools for the JavaScript / TypeScr
 * [Linter](./crates/oxc_linter) - Work in progress. Try it out! `npx oxidation-compiler@latest lint path`
 * Formatter
 * Transpiler
-* [Minifier](./crates/oxc_minifier) - Draft
+* [Minifier](./crates/oxc_minifier) - Prototype
 
 [docs-ast]: https://docs.rs/oxc_ast
 [docs-parser]: https://docs.rs/oxc_parser
@@ -61,22 +61,21 @@ The primary objectives for this project include:
 
 ## Milestone
 
-As of now, Oxc has a fully working parser and a prototype for the linter.
+As of now, Oxc has a fully working parser, a prototype for the linter and the minifier.
 
 The current objectives are:
 
-* [HIR - High-Level Intermediate Representation](https://github.com/Boshen/oxc/issues/315) for the compiler
-* A prototype for the minifier.
-* A MVP (Minimal Viable Product) for the linter.
+* A MVP (Minimal Viable Product) for the minifier.
+* A MVP for the linter.
 
 ## Contributing
 
 This project is an invitation for you to come and learn Rust with us,
-We welcome and appreciate all contributions to this project.
+any contributions to this project are appreciated.
 
-To get started, check out [CONTRIBUTING.md](./CONTRIBUTING.md).
+To get started, check out some of the [Good First Issues](https://github.com/Boshen/oxc/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22E-Good+First+Issue%22) or just directly ask us on Discord.
 
-If you are unable to contribute code,, you can still participate by:
+If you are unable to contribute by code, you can still participate by:
 
 * star and watch this project
 * join us on [Discord](https://discord.gg/9uXCAwqQZW)
@@ -87,7 +86,7 @@ If you are unable to contribute code,, you can still participate by:
 
 The linter is fast to the extent that it feels broken.
 
-With a few rules implemented, testing in the [VSCode](https://github.com/microsoft/vscode) repo:
+With 20 rules implemented, testing in the [VSCode](https://github.com/microsoft/vscode) repo:
 
 ```
 vscode  main ❯ npx oxidation-compiler@latest lint src
@@ -157,7 +156,11 @@ Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 ───────────────────────────────────────────────────────────────────────────────
 Language                     Files       Lines     Blanks    Comments      Code
 ───────────────────────────────────────────────────────────────────────────────
-Rust                           172       46389       5039        2935     38415
+Rust                           194       54278       5933        4636     43709
+───────────────────────────────────────────────────────────────────────────────
+Estimated Cost to Develop (organic) $1,426,246
+Estimated Schedule Effort (organic) 15.74 months
+Estimated People Required (organic) 8.05
 ```
 
 ## Credits
