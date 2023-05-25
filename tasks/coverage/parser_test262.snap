@@ -1,7 +1,35 @@
 parser_test262 Summary:
-AST Parsed     : 44157/44157 (100.00%)
-Positive Passed: 44157/44157 (100.00%)
-Negative Passed: 3915/3915 (100.00%)
+AST Parsed     : 44226/44226 (100.00%)
+Positive Passed: 44226/44226 (100.00%)
+Negative Passed: 3919/3947 (99.29%)
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-01.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-02.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-03.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-04.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-05.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-06.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-07.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-08.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-09.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-10.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-11.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-12.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-13.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-14.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-15.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-16.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-17.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-18.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-19.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-20.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-21.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-22.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-23.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-24.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-25.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-26.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-27.js"
+Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-28.js"
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:17:1]
@@ -16503,6 +16531,13 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ }
     ╰────
 
+  × Cannot assign to this expression
+    ╭─[language/expressions/postfix-decrement/this.js:26:1]
+ 26 │ 
+ 27 │ this--;
+    · ────
+    ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/expressions/postfix-increment/11.3.1-2-1gs.js:16:1]
  16 │ 
@@ -16579,6 +16614,13 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ }
     ╰────
 
+  × Cannot assign to this expression
+    ╭─[language/expressions/postfix-increment/this.js:26:1]
+ 26 │ 
+ 27 │ this++;
+    · ────
+    ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/expressions/prefix-decrement/11.4.5-2-2gs.js:16:1]
  16 │ 
@@ -16624,6 +16666,13 @@ Negative Passed: 3915/3915 (100.00%)
  31 │ }
     ╰────
 
+  × Cannot assign to this expression
+    ╭─[language/expressions/prefix-decrement/this.js:26:1]
+ 26 │ 
+ 27 │ --this;
+    ·   ────
+    ╰────
+
   × Cannot assign to 'arguments' in strict mode
     ╭─[language/expressions/prefix-increment/arguments.js:25:1]
  25 │ 
@@ -16660,6 +16709,13 @@ Negative Passed: 3915/3915 (100.00%)
  30 │   ++new.target;
     ·     ──────────
  31 │ }
+    ╰────
+
+  × Cannot assign to this expression
+    ╭─[language/expressions/prefix-increment/this.js:26:1]
+ 26 │ 
+ 27 │ ++this;
+    ·   ────
     ╰────
 
   × Unexpected token

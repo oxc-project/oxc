@@ -1,7 +1,7 @@
 parser_babel Summary:
-AST Parsed     : 2065/2071 (99.71%)
-Positive Passed: 2062/2071 (99.57%)
-Negative Passed: 1330/1502 (88.55%)
+AST Parsed     : 2072/2078 (99.71%)
+Positive Passed: 2069/2078 (99.57%)
+Negative Passed: 1332/1507 (88.39%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -103,10 +103,13 @@ Expect Syntax Error: "typescript/expect-plugin/export-interface/input.js"
 Expect Syntax Error: "typescript/expect-plugin/export-type-named/input.js"
 Expect Syntax Error: "typescript/expect-plugin/export-type/input.js"
 Expect Syntax Error: "typescript/export/double-declare/input.ts"
+Expect Syntax Error: "typescript/export/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/function/empty-type-parameters/input.ts"
 Expect Syntax Error: "typescript/function/parameter-properties/input.ts"
 Expect Syntax Error: "typescript/function/pattern-optional-parameters-arrow/input.ts"
 Expect Syntax Error: "typescript/function/pattern-optional-parameters/input.ts"
+Expect Syntax Error: "typescript/import/equals-in-script/input.ts"
+Expect Syntax Error: "typescript/import/equals-require-in-script/input.ts"
 Expect Syntax Error: "typescript/import/export-import-type/input.ts"
 Expect Syntax Error: "typescript/import/type-equals/input.ts"
 Expect Syntax Error: "typescript/interface/abstract/input.ts"
@@ -6721,6 +6724,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/numeric-separator/template-with-invalid-numeric-separator-in-code-point/input.js:1:1]
  1 │ `abc\u{1000_0000}`;
    ·  ────────────────
+   ╰────
+
+  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+   ╭─[es2024/regexp-unicode-sets/uv-error/input.js:1:1]
+ 1 │ /a/ugv;
+   · ──────
+   ╰────
+
+  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+   ╭─[es2024/regexp-unicode-sets/vu-error/input.js:1:1]
+ 1 │ /a/vu;
+   · ─────
    ╰────
 
   × Identifier `x` has already been declared

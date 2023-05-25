@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5043/5047 (99.92%)
-Positive Passed: 5036/5047 (99.78%)
-Negative Passed: 990/4741 (20.88%)
+AST Parsed     : 5065/5069 (99.92%)
+Positive Passed: 5056/5069 (99.74%)
+Negative Passed: 989/4751 (20.82%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -425,6 +425,7 @@ Expect Syntax Error: "compiler/copyrightWithoutNewLine1.ts"
 Expect Syntax Error: "compiler/corrupted.ts"
 Expect Syntax Error: "compiler/couldNotSelectGenericOverload.ts"
 Expect Syntax Error: "compiler/crashInEmitTokenWithComment.ts"
+Expect Syntax Error: "compiler/crashInYieldStarInAsyncFunction.ts"
 Expect Syntax Error: "compiler/crashInsourcePropertyIsRelatableToTargetProperty.ts"
 Expect Syntax Error: "compiler/crashIntypeCheckInvocationExpression.ts"
 Expect Syntax Error: "compiler/crashIntypeCheckObjectCreationExpression.ts"
@@ -1072,6 +1073,7 @@ Expect Syntax Error: "compiler/jsxChildrenWrongType.tsx"
 Expect Syntax Error: "compiler/jsxComponentTypeErrors.tsx"
 Expect Syntax Error: "compiler/jsxElementType.tsx"
 Expect Syntax Error: "compiler/jsxElementTypeLiteral.tsx"
+Expect Syntax Error: "compiler/jsxElementTypeLiteralWithGeneric.tsx"
 Expect Syntax Error: "compiler/jsxEmptyExpressionNotCountedAsChild2.tsx"
 Expect Syntax Error: "compiler/jsxExcessPropsAndAssignability.tsx"
 Expect Syntax Error: "compiler/jsxFactoryAndJsxFragmentFactoryErrorNotIdentifier.tsx"
@@ -1515,6 +1517,7 @@ Expect Syntax Error: "compiler/signatureLengthMismatchCall.ts"
 Expect Syntax Error: "compiler/signatureLengthMismatchInOverload.ts"
 Expect Syntax Error: "compiler/signatureLengthMismatchWithOptionalParameters.ts"
 Expect Syntax Error: "compiler/signaturesUseJSDocForOptionalParameters.ts"
+Expect Syntax Error: "compiler/simpleRecursionWithBaseCase.ts"
 Expect Syntax Error: "compiler/slightlyIndirectedDeepObjectLiteralElaborations.ts"
 Expect Syntax Error: "compiler/sourceMap-Comment1.ts"
 Expect Syntax Error: "compiler/sourceMap-EmptyFile1.ts"
@@ -1700,6 +1703,7 @@ Expect Syntax Error: "compiler/typeParametersShouldNotBeEqual.ts"
 Expect Syntax Error: "compiler/typeParametersShouldNotBeEqual2.ts"
 Expect Syntax Error: "compiler/typeParametersShouldNotBeEqual3.ts"
 Expect Syntax Error: "compiler/typePredicateInLoop.ts"
+Expect Syntax Error: "compiler/typePredicatesInUnion3.ts"
 Expect Syntax Error: "compiler/typeUsedAsTypeLiteralIndex.ts"
 Expect Syntax Error: "compiler/typeUsedAsValueError.ts"
 Expect Syntax Error: "compiler/typeValueConflict1.ts"
@@ -1734,7 +1738,6 @@ Expect Syntax Error: "compiler/undefinedTypeAssignment2.ts"
 Expect Syntax Error: "compiler/undefinedTypeAssignment3.ts"
 Expect Syntax Error: "compiler/undefinedTypeAssignment4.ts"
 Expect Syntax Error: "compiler/unionErrorMessageOnMatchingDiscriminant.ts"
-Expect Syntax Error: "compiler/unionOfClassCalls.ts"
 Expect Syntax Error: "compiler/unionPropertyExistence.ts"
 Expect Syntax Error: "compiler/unionPropertyOfProtectedAndIntersectionProperty.ts"
 Expect Syntax Error: "compiler/unionSubtypeReductionErrors.ts"
@@ -2096,6 +2099,7 @@ Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOv
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty4.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty6.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty7.ts"
+Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationES2022.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationESNext.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor11.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor5.ts"
@@ -2205,6 +2209,7 @@ Expect Syntax Error: "conformance/es2021/logicalAssignment/logicalAssignment5.ts
 Expect Syntax Error: "conformance/es2021/logicalAssignment/logicalAssignment6.ts"
 Expect Syntax Error: "conformance/es2021/logicalAssignment/logicalAssignment7.ts"
 Expect Syntax Error: "conformance/es2021/logicalAssignment/logicalAssignment8.ts"
+Expect Syntax Error: "conformance/es5/es5DateAPIs.ts"
 Expect Syntax Error: "conformance/es6/Symbols/symbolDeclarationEmit12.ts"
 Expect Syntax Error: "conformance/es6/Symbols/symbolProperty10.ts"
 Expect Syntax Error: "conformance/es6/Symbols/symbolProperty12.ts"
@@ -2468,6 +2473,8 @@ Expect Syntax Error: "conformance/es6/templates/templateStringInCallExpressionES
 Expect Syntax Error: "conformance/es6/templates/templateStringInDeleteExpression.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringInDeleteExpressionES6.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringInDivision.ts"
+Expect Syntax Error: "conformance/es6/templates/templateStringInEqualityChecks.ts"
+Expect Syntax Error: "conformance/es6/templates/templateStringInEqualityChecksES6.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringInInstanceOf.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringInInstanceOfES6.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringInModulo.ts"
@@ -2478,6 +2485,8 @@ Expect Syntax Error: "conformance/es6/templates/templateStringInNewExpression.ts
 Expect Syntax Error: "conformance/es6/templates/templateStringInNewExpressionES6.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringInNewOperator.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringInNewOperatorES6.ts"
+Expect Syntax Error: "conformance/es6/templates/templateStringInSwitchAndCase.ts"
+Expect Syntax Error: "conformance/es6/templates/templateStringInSwitchAndCaseES6.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringInTaggedTemplate.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringInTaggedTemplateES6.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringWithEmbeddedInstanceOf.ts"
@@ -2826,6 +2835,7 @@ Expect Syntax Error: "conformance/jsdoc/enumTagCircularReference.ts"
 Expect Syntax Error: "conformance/jsdoc/errorOnFunctionReturnType.ts"
 Expect Syntax Error: "conformance/jsdoc/extendsTag2.ts"
 Expect Syntax Error: "conformance/jsdoc/extendsTag4.ts"
+Expect Syntax Error: "conformance/jsdoc/extendsTag5.ts"
 Expect Syntax Error: "conformance/jsdoc/jsdocAccessibilityTags.ts"
 Expect Syntax Error: "conformance/jsdoc/jsdocAccessibilityTagsDeclarations.ts"
 Expect Syntax Error: "conformance/jsdoc/jsdocAugmentsMissingType.ts"
@@ -2874,6 +2884,7 @@ Expect Syntax Error: "conformance/jsdoc/paramTagNestedWithoutTopLevelObject.ts"
 Expect Syntax Error: "conformance/jsdoc/paramTagNestedWithoutTopLevelObject2.ts"
 Expect Syntax Error: "conformance/jsdoc/paramTagNestedWithoutTopLevelObject3.ts"
 Expect Syntax Error: "conformance/jsdoc/paramTagNestedWithoutTopLevelObject4.ts"
+Expect Syntax Error: "conformance/jsdoc/templateInsideCallback.ts"
 Expect Syntax Error: "conformance/jsdoc/typeTagCircularReferenceOnConstructorFunction.ts"
 Expect Syntax Error: "conformance/jsdoc/typeTagModuleExports.ts"
 Expect Syntax Error: "conformance/jsdoc/typeTagNoErasure.ts"
@@ -3817,6 +3828,55 @@ Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
      ·             ╰── It can not be redeclared here
  134 │     }
      ╰────
+Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
+
+  × Classes may not have a static property named prototype
+    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:27:1]
+ 27 │ class StaticPrototype {
+ 28 │     static prototype: number; // always an error
+    ·            ─────────
+ 29 │     prototype: string; // ok
+    ╰────
+
+  × Classes may not have a static property named prototype
+    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:32:1]
+ 32 │ class StaticPrototypeFn {
+ 33 │     static prototype() {} // always an error
+    ·            ─────────
+ 34 │     prototype() {} // ok
+    ╰────
+
+  × Classes may not have a static property named prototype
+    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:86:1]
+ 86 │ var StaticPrototype_Anonymous = class {
+ 87 │     static prototype: number; // always an error
+    ·            ─────────
+ 88 │     prototype: string; // ok
+    ╰────
+
+  × Classes may not have a static property named prototype
+    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:91:1]
+ 91 │ var StaticPrototypeFn_Anonymous = class {
+ 92 │     static prototype() {} // always an error
+    ·            ─────────
+ 93 │     prototype() {} // ok
+    ╰────
+
+  × Classes may not have a static property named prototype
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:153:1]
+ 153 │     export default class StaticPrototype {
+ 154 │         static prototype: number; // always an error
+     ·                ─────────
+ 155 │         prototype: string; // ok
+     ╰────
+
+  × Classes may not have a static property named prototype
+     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:160:1]
+ 160 │     export default class StaticPrototypeFn {
+ 161 │         static prototype() {} // always an error
+     ·                ─────────
+ 162 │         prototype() {} // ok
+     ╰────
 Expect to Parse: "conformance/es6/for-ofStatements/for-of53.ts"
 
   × Identifier `v` has already been declared
@@ -3830,6 +3890,15 @@ Expect to Parse: "conformance/es6/for-ofStatements/for-of53.ts"
    ·         ╰── It can not be redeclared here
  4 │ }
    ╰────
+Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts"
+
+  × 'with' statements are not allowed
+    ╭─[conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts:67:1]
+ 67 │ // @ts-ignore
+ 68 │ with (_) {
+    · ────
+ 69 │     var y = _;
+    ╰────
 Expect to Parse: "conformance/externalModules/topLevelAwait.2.ts"
 
   × Cannot use `await` as an identifier in an async context
@@ -11338,54 +11407,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·            ─────────
  4 │ }
    ╰────
-
-  × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:25:1]
- 25 │ class StaticPrototype {
- 26 │     static prototype: number; // error
-    ·            ─────────
- 27 │     prototype: string; // ok
-    ╰────
-
-  × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:30:1]
- 30 │ class StaticPrototypeFn {
- 31 │     static prototype() {} // error
-    ·            ─────────
- 32 │     prototype() {} // ok
-    ╰────
-
-  × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:84:1]
- 84 │ var StaticPrototype_Anonymous = class {
- 85 │     static prototype: number; // error
-    ·            ─────────
- 86 │     prototype: string; // ok
-    ╰────
-
-  × Classes may not have a static property named prototype
-    ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:89:1]
- 89 │ var StaticPrototypeFn_Anonymous = class {
- 90 │     static prototype() {} // error
-    ·            ─────────
- 91 │     prototype() {} // ok
-    ╰────
-
-  × Classes may not have a static property named prototype
-     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:151:1]
- 151 │     export default class StaticPrototype {
- 152 │         static prototype: number; // error
-     ·                ─────────
- 153 │         prototype: string; // ok
-     ╰────
-
-  × Classes may not have a static property named prototype
-     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:158:1]
- 158 │     export default class StaticPrototypeFn {
- 159 │         static prototype() {} // error
-     ·                ─────────
- 160 │         prototype() {} // ok
-     ╰────
 
   × Unexpected token
     ╭─[conformance/classes/staticIndexSignature/staticIndexSignature4.ts:13:1]
