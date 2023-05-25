@@ -76,8 +76,7 @@ impl<'a> Compressor<'a> {
         let left = self.hir.literal_number_expression(left);
         let right = self.hir.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
         let right = self.hir.literal_number_expression(right);
-        let expr = self.hir.binary_expression(SPAN, left, BinaryOperator::Division, right);
-        self.hir.parenthesized_expression(SPAN, expr)
+        self.hir.binary_expression(SPAN, left, BinaryOperator::Division, right)
     }
 
     /* Statements */

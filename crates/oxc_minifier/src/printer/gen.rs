@@ -705,7 +705,6 @@ impl<'a> Gen for Expression<'a> {
             Self::CallExpression(expr) => expr.gen(p),
             Self::ArrayExpression(expr) => expr.gen(p),
             Self::ObjectExpression(expr) => expr.gen(p),
-            Self::ParenthesizedExpression(expr) => expr.gen(p),
             Self::FunctionExpression(expr) => expr.gen(p),
             Self::ArrowExpression(expr) => expr.gen(p),
             Self::YieldExpression(expr) => expr.gen(p),
@@ -1014,14 +1013,6 @@ impl<'a> Gen for PropertyValue<'a> {
             Self::Pattern(pattern) => pattern.gen(p),
             Self::Expression(expr) => expr.gen(p),
         }
-    }
-}
-
-impl<'a> Gen for ParenthesizedExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        p.print(b'(');
-        self.expression.gen(p);
-        p.print(b')');
     }
 }
 

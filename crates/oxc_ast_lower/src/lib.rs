@@ -579,8 +579,7 @@ impl<'a> AstLower<'a> {
         &mut self,
         expr: &ast::ParenthesizedExpression<'a>,
     ) -> hir::Expression<'a> {
-        let expression = self.lower_expression(&expr.expression);
-        self.hir.parenthesized_expression(expr.span, expression)
+        self.lower_expression(&expr.expression)
     }
 
     fn lower_object_property_kind(
