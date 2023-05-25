@@ -1,7 +1,7 @@
 use std::{
     fs::{self, File},
     io::{stdout, Read, Write},
-    panic::{catch_unwind, UnwindSafe},
+    panic::UnwindSafe,
     path::{Path, PathBuf},
     result::Result,
 };
@@ -101,16 +101,9 @@ pub trait Suite<T: Case> {
                 T::new(path, code)
             })
             .filter(|case| !case.skip_test_case())
-            .filter_map(|mut case| {
-                let path = case.path().to_path_buf();
-                catch_unwind(move || {
-                    case.run();
-                    Some(case)
-                })
-                .unwrap_or_else(|_| {
-                    println!("panic: {path:?}");
-                    None
-                })
+            .map(|mut case| {
+                case.run();
+                case
             })
             .collect::<Vec<_>>();
 
