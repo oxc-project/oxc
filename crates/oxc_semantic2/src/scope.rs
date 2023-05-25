@@ -105,6 +105,10 @@ impl ScopeTree {
         &self.bindings[scope_id]
     }
 
+    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &Atom) {
+        self.bindings[scope_id].remove(name);
+    }
+
     pub(crate) fn add_scope(&mut self, parent_id: Option<ScopeId>, flags: ScopeFlags) -> ScopeId {
         let scope_id = self.parent_ids.push(parent_id);
         _ = self.flags.push(flags);

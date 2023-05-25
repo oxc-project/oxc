@@ -104,6 +104,10 @@ impl SymbolTable {
         self.flags[symbol_id]
     }
 
+    pub fn get_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
+        self.scope_ids[symbol_id]
+    }
+
     pub fn create_symbol(
         &mut self,
         span: Span,
@@ -128,5 +132,9 @@ impl SymbolTable {
 
     pub fn is_global_reference(&self, reference_id: ReferenceId) -> bool {
         self.references[reference_id].symbol_id.is_none()
+    }
+
+    pub fn get_resolved_references(&self, symbol_id: SymbolId) -> &Vec<ReferenceId> {
+        &self.resolved_references[symbol_id]
     }
 }
