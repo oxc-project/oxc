@@ -15,6 +15,7 @@ use oxc_span::Atom;
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
+use unicode_id_start::is_id_continue;
 
 use self::{gen::Gen, operator::Operator};
 
@@ -33,6 +34,7 @@ pub struct Printer {
 
     // states
     prev_op_end: usize,
+    prev_reg_exp_end: usize,
 
     /// For avoiding `;` if the previous statement ends with `}`.
     needs_semicolon: bool,
@@ -61,6 +63,7 @@ impl Printer {
             code: Vec::with_capacity(capacity),
             needs_semicolon: false,
             prev_op_end: 0,
+            prev_reg_exp_end: 0,
             prev_op: None,
         }
     }
@@ -132,6 +135,18 @@ impl Printer {
             || (prev == un_op_post_dec && next == bin_op_gt)
             || (prev == un_op_not && next == un_op_pre_dec && self.peek_nth(1) == Some('<'))
         {
+            self.print(b' ');
+        }
+    }
+
+    fn print_space_before_identifier(&mut self) {
+        let ch = self.peek_nth(0);
+
+        if let Some(ch) = ch && (
+            is_id_continue(ch)
+            || ch == '$'
+            || self.prev_reg_exp_end == self.code.len()
+         ) {
             self.print(b' ');
         }
     }

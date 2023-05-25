@@ -805,6 +805,7 @@ impl Gen for RegExpLiteral {
         p.print_str(self.regex.pattern.as_bytes());
         p.print(b'/');
         p.print_str(self.regex.flags.to_string().as_bytes());
+        p.prev_reg_exp_end = p.code().len();
     }
 }
 
@@ -1086,10 +1087,8 @@ impl<'a> Gen for UnaryExpression<'a> {
 impl<'a> Gen for BinaryExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         self.left.gen(p);
-        if self.operator.is_keyword()
-            && matches!(self.left, Expression::RegExpLiteral(_) | Expression::Identifier(_))
-        {
-            p.print(b' ');
+        if self.operator.is_keyword() {
+            p.print_space_before_identifier();
         }
         self.operator.gen(p);
         self.right.gen(p);
