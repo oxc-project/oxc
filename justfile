@@ -10,10 +10,20 @@ alias c := coverage
 init:
   cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
 
+# We are ready, let's run the same CI commands
+ready:
+  git diff --exit-code --quiet
+  typos
+  cargo fmt
+  just check
+  just test
+  just lint
+  git status
+
 # Run `cargo watch`
+# --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
+# use .ignore file getting the ignore list
 watch command:
-  # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
-  # use .ignore file getting the ignore list
   cargo watch --no-vcs-ignores -x '{{command}}'
 
 # Format all files
@@ -50,12 +60,10 @@ benchmark:
 new-rule name:
   cargo run -p rulegen {{name}}
 
-# We are ready, let's run the same CI commands
-ready:
-  git diff --exit-code --quiet
-  typos
-  cargo fmt
-  just check
-  just test
-  just lint
-  git status
+# Sync submodules with main
+sync-submodule:
+  git submodule update --init
+
+# Update submodules to remote
+update-submodule:
+  git submodule update --init --remote
