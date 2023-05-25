@@ -200,6 +200,17 @@ impl<'a> Compressor<'a> {
         }
     }
 
+    /// Removes redundant argument of `ReturnStatement`
+    ///
+    /// `return undefined` -> `return`
+    /// `return void 0` -> `return`
+    fn compress_return_statement<'b>(&mut self, stmt: &'b mut ReturnStatement<'a>) {
+        if let Some(expr) = &stmt.argument
+            && (expr.is_undefined() || expr.is_void_0()) {
+            stmt.argument = None;
+        }
+    }
+
     /// [Peephole Reorder Constant Expression](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeReorderConstantExpression.java)
     ///
     /// Reorder constant expression hoping for a better compression.
@@ -239,6 +250,13 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_statement(&mut self, stmt: &'b mut Statement<'a>) {
         self.compress_while(stmt);
         self.visit_statement_match(stmt);
+    }
+
+    fn visit_return_statement(&mut self, stmt: &'b mut ReturnStatement<'a>) {
+        self.compress_return_statement(stmt);
+        if let Some(arg) = &mut stmt.argument {
+            self.visit_expression(arg);
+        }
     }
 
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
