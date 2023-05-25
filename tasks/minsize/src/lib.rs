@@ -35,7 +35,7 @@ pub fn run() -> Result<(), io::Error> {
     for file in files.files() {
         let minified = minify(file);
         let s = format!(
-            "{:width$} -> {:width$} -> {:width$} {:width$} {}\n",
+            "{:width$} -> {:width$} -> {:width$} {:width$} {}\n\n",
             format_size(file.source_text.len(), DECIMAL),
             format_size(minified.len(), DECIMAL),
             format_size(gzip_size(&minified), DECIMAL),
