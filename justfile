@@ -20,6 +20,11 @@ ready:
   just lint
   git status
 
+# Update our local branch with the remote branch (this is for you to sync the submodules)
+update:
+  git pull
+  git submodule update --init
+
 # Run `cargo watch`
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
 # use .ignore file getting the ignore list
@@ -60,10 +65,6 @@ benchmark:
 new-rule name:
   cargo run -p rulegen {{name}}
 
-# Sync submodules with main
-sync-submodule:
-  git submodule update --init
-
-# Update submodules to remote
-update-submodule:
+# Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
+sync:
   git submodule update --init --remote
