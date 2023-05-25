@@ -122,9 +122,20 @@ impl<'a> Expression<'a> {
         matches!(self, Self::Identifier(ident) if ident.name == "undefined")
     }
 
+    /// Determines whether the given expr is a `void expr`
+    pub fn is_void(&self) -> bool {
+        matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void)
+    }
+
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
-        matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void)
+        if let Self::UnaryExpression(expr) = self
+            && expr.operator == UnaryOperator::Void
+            && let Self::NumberLiteral(lit) = &expr.argument
+            && lit.value == 0.0 {
+            return true
+        }
+        false
     }
 
     /// Determines whether the given expr is a `0`
@@ -134,7 +145,7 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr evaluate to `undefined`
     pub fn evaluate_to_undefined(&self) -> bool {
-        self.is_undefined() || self.is_void_0()
+        self.is_undefined() || self.is_void()
     }
 
     /// Determines whether the given expr is a `null` or `undefined` or `void 0`

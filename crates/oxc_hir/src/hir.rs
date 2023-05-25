@@ -123,7 +123,13 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
-        matches!(self, Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void)
+        if let Self::UnaryExpression(expr) = self
+            && expr.operator == UnaryOperator::Void
+            && let Self::NumberLiteral(lit) = &expr.argument
+            && lit.value == 0.0 {
+            return true
+        }
+        false
     }
 
     /// Determines whether the given expr is a `0`
