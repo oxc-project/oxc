@@ -137,7 +137,7 @@ impl Printer {
     }
 
     fn peek_nth(&self, n: usize) -> Option<char> {
-        unsafe{ from_utf8_unchecked(&self.code())}.chars().nth_back(n)
+        unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
     fn print_semicolon_after_statement(&mut self) {
