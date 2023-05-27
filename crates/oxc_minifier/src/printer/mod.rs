@@ -6,7 +6,7 @@
 mod gen;
 mod operator;
 
-use std::rc::Rc;
+use std::{rc::Rc, str::from_utf8_unchecked};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
@@ -130,10 +130,14 @@ impl Printer {
             || ((prev == bin_op_sub || prev == un_op_neg)
                 && (next == bin_op_sub || next == un_op_neg || next == un_op_pre_dec))
             || (prev == un_op_post_dec && next == bin_op_gt)
-            || (prev == un_op_not && next == un_op_pre_dec && self.code().len() > 1/*&& p.js[len(p.js)-2] == '<'*/)
+            || (prev == un_op_not && next == un_op_pre_dec && self.peek_nth(1) == Some('<'))
         {
             self.print(b' ');
         }
+    }
+
+    fn peek_nth(&self, n: usize) -> Option<char> {
+        unsafe { from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
     fn print_semicolon_after_statement(&mut self) {

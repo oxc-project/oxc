@@ -562,7 +562,7 @@ fn whitespace() {
 
     test("x-- > y", "x-- >y");
     test("x < !--y", "x<! --y");
-    // test("x > !--y", "x>!--y");
+    test("x > !--y", "x>!--y");
     test("!--y", "!--y");
 
     test("1 + -0", "1+-0");
