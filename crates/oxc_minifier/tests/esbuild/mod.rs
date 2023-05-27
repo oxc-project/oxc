@@ -7,26 +7,26 @@ fn number() {
     test("x = 1e-100", "x=1e-100");
     test("x = 1e-5", "x=1e-5");
     test("x = 1e-4", "x=1e-4");
-    // expect("x = 1e-3", "x=.001");
-    // expect("x = 1e-2", "x=.01");
-    // expect("x = 1e-1", "x=.1");
-    // expect("x = 1e0", "x=1");
-    // expect("x = 1e1", "x=10");
-    // expect("x = 1e2", "x=100");
-    // expect("x = 1e3", "x=1e3");
-    // expect("x = 1e4", "x=1e4");
-    // expect("x = 1e100", "x=1e100");
+    // test("x = 1e-3", "x=.001");
+    // test("x = 1e-2", "x=.01");
+    // test("x = 1e-1", "x=.1");
+    // test("x = 1e0", "x=1");
+    // test("x = 1e1", "x=10");
+    // test("x = 1e2", "x=100");
+    // test("x = 1e3", "x=1e3");
+    // test("x = 1e4", "x=1e4");
+    // test("x = 1e100", "x=1e100");
 
     test("x = 12e-100", "x=12e-100");
     test("x = 12e-6", "x=12e-6");
     test("x = 12e-5", "x=12e-5");
-    // expect("x = 12e-4", "x=.0012");
-    // expect("x = 12e-3", "x=.012");
-    // expect("x = 12e-2", "x=.12");
-    // expect("x = 12e-1", "x=1.2");
-    // expect("x = 12e0", "x=12");
-    // expect("x = 12e1", "x=120");
-    // expect("x = 12e2", "x=1200");
+    // test("x = 12e-4", "x=.0012");
+    // test("x = 12e-3", "x=.012");
+    // test("x = 12e-2", "x=.12");
+    // test("x = 12e-1", "x=1.2");
+    // test("x = 12e0", "x=12");
+    // test("x = 12e1", "x=120");
+    // test("x = 12e2", "x=1200");
     test("x = 12e3", "x=12e3");
     test("x = 12e4", "x=12e4");
     test("x = 12e100", "x=12e100");
@@ -34,20 +34,20 @@ fn number() {
     test("x = 999999999999", "x=999999999999");
     test("x = 1000000000001", "x=0xe8d4a51001");
     test("x = 0x0FFF_FFFF_FFFF_FF80", "x=0xfffffffffffff80");
-    // expect("x = 0x1000_0000_0000_0000", "x=1152921504606847e3");
+    // test("x = 0x1000_0000_0000_0000", "x=1152921504606847e3");
     test("x = 0xFFFF_FFFF_FFFF_F000", "x=0xfffffffffffff000");
-    // expect("x = 0xFFFF_FFFF_FFFF_F800", "x=1844674407370955e4");
-    // expect("x = 0xFFFF_FFFF_FFFF_FFFF", "x=18446744073709552e3");
+    // test("x = 0xFFFF_FFFF_FFFF_F800", "x=1844674407370955e4");
+    // test("x = 0xFFFF_FFFF_FFFF_FFFF", "x=18446744073709552e3");
 
-    // expect("x = 0.0001 .y", "x=1e-4.y");
-    // expect("x = 0.001 .y", "x=.001.y");
-    // expect("x = 0.01 .y", "x=.01.y");
-    // expect("x = 0.1 .y", "x=.1.y");
-    // expect("x = 0 .y", "x=0 .y");
-    // expect("x = 10 .y", "x=10 .y");
-    // expect("x = 100 .y", "x=100 .y");
-    // expect("x = 1000 .y", "x=1e3.y");
-    // expect("x = 12345 .y", "x=12345 .y");
+    // test("x = 0.0001 .y", "x=1e-4.y");
+    // test("x = 0.001 .y", "x=.001.y");
+    // test("x = 0.01 .y", "x=.01.y");
+    // test("x = 0.1 .y", "x=.1.y");
+    // test("x = 0 .y", "x=0 .y");
+    // test("x = 10 .y", "x=10 .y");
+    // test("x = 100 .y", "x=100 .y");
+    // test("x = 1000 .y", "x=1e3.y");
+    // test("x = 12345 .y", "x=12345 .y");
     test("x = 0xFFFF_0000_FFFF_0000 .y", "x=0xffff0000ffff0000.y");
 }
 
@@ -96,13 +96,13 @@ fn new() {
     test("new x() ** 2", "new x**2;");
 
     // Test preservation of Webpack-specific comments
-    // expect( "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');", "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n")
-    // expect( "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');", "new Worker(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n")
-    // expect( "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');", "new Worker(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n")
-    // expect( "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);", "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n")
-    // expect( "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);", "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n") // Not currently handled
-    // expect( "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );", "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n")
-    // expect( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
+    // test( "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');", "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n")
+    // test( "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');", "new Worker(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n")
+    // test( "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');", "new Worker(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n")
+    // test( "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);", "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n")
+    // test( "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);", "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n") // Not currently handled
+    // test( "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );", "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n")
+    // test( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
     // 	"new Worker(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n")
 }
 
@@ -115,23 +115,23 @@ fn call() {
 
     test("eval(x)", "eval(x)");
     test("eval?.(x)", "eval?.(x)");
-    // expect("(eval)(x)", "eval(x)");
-    // expect("(eval)?.(x)", "eval?.(x)");
+    // test("(eval)(x)", "eval(x)");
+    // test("(eval)?.(x)", "eval?.(x)");
 
     test("eval(x, y)", "eval(x,y)");
     test("eval?.(x, y)", "eval?.(x,y)");
     test("(1, eval)(x)", "(1,eval)(x)");
     test("(1, eval)?.(x)", "(1,eval)?.(x)");
-    // expect("(1 ? eval : 2)(x)", "(0,eval)(x)");
-    // expect("(1 ? eval : 2)?.(x)", "eval?.(x)");
+    // test("(1 ? eval : 2)(x)", "(0,eval)(x)");
+    // test("(1 ? eval : 2)?.(x)", "eval?.(x)");
 
     test("eval?.(x)", "eval?.(x)");
     test("eval(x,y)", "eval(x,y)");
     test("eval?.(x,y)", "eval?.(x,y)");
     test("(1, eval)(x)", "(1,eval)(x)");
     test("(1, eval)?.(x)", "(1,eval)?.(x)");
-    // expect("(1 ? eval : 2)(x)", "(0,eval)(x)");
-    // expect("(1 ? eval : 2)?.(x)", "eval?.(x)");
+    // test("(1 ? eval : 2)(x)", "(0,eval)(x)");
+    // test("(1 ? eval : 2)?.(x)", "eval?.(x)");
 }
 
 #[test]
@@ -143,11 +143,11 @@ fn member() {
 #[test]
 fn comma() {
     test("1, 2, 3", "1,2,3");
-    // expect("(1, 2), 3", "1,2,3");
-    // expect("1, (2, 3)", "1,2,3");
+    // test("(1, 2), 3", "1,2,3");
+    // test("1, (2, 3)", "1,2,3");
     test("a ? (b, c) : (d, e)", "a?(b,c):(d,e)");
     test("let x = (a, b)", "let x=(a,b)");
-    // expect("(x = a), b", "x=a,b");
+    // test("(x = a), b", "x=a,b");
     test("x = (a, b)", "x=(a,b)");
     test("x((1, 2))", "x((1,2))");
 }
@@ -281,11 +281,11 @@ fn template() {
 fn object() {
     test("let x = {'(':')'}", "let x={'(':')'}");
     test("({})", "({})");
-    // expect("({}.x)", "({}).x");
+    // test("({}.x)", "({}).x");
     test("({} = {})", "({}={})");
-    // expect("(x, {} = {})", "x,{}={}");
+    // test("(x, {} = {})", "x,{}={}");
     test("let x = () => ({})", "let x=()=>({})");
-    // expect("let x = () => ({}.x)", "let x=()=>({}).x");
+    // test("let x = () => ({}.x)", "let x=()=>({}).x");
     test("let x = () => ({} = {})", "let x=()=>({}={})");
     test("let x = () => (x, {} = {})", "let x=()=>(x,{}={})");
 }
@@ -412,14 +412,14 @@ fn arrow() {
     test("([,,] = [,,]) => {}", "([,,]=[,,])=>{}");
     test("a = () => {}", "a=()=>{}");
     test("a || (() => {})", "a||(()=>{})");
-    // expect("({a = b, c = d}) => {}", "({a=b,c=d})=>{}");
-    // expect("([{a = b, c = d} = {}] = []) => {}", "([{a=b,c=d}={}]=[])=>{}");
+    // test("({a = b, c = d}) => {}", "({a=b,c=d})=>{}");
+    // test("([{a = b, c = d} = {}] = []) => {}", "([{a=b,c=d}={}]=[])=>{}");
     test("({a: [b = c] = []} = {}) => {}", "({a:[b=c]=[]}={})=>{}");
 
     // These are not arrow functions but initially look like one
-    // expect("(a = b, c)", "a=b,c");
-    // expect("([...a = b])", "[...a=b]");
-    // expect("([...a, ...b])", "[...a,...b]");
+    // test("(a = b, c)", "a=b,c");
+    // test("([...a = b])", "[...a=b]");
+    // test("([...a, ...b])", "[...a,...b]");
     test("({a: b, c() {}})", "({a:b,c(){}})");
     test("({a: b, get c() {}})", "({a:b,get c(){}})");
     test("({a: b, set c(x) {}})", "({a:b,set c(x){}})");
@@ -508,24 +508,24 @@ fn export_default() {
     test("export default (class {})", "export default (class{})");
     test("export default (class foo {})", "export default (class foo{})");
 
-    // expect(
+    // test(
     // "export default (function() {}.toString())",
     // "export default (function() {}).toString()",
     // );
-    // expect(
+    // test(
     // "export default (function foo() {}.toString())",
     // "export default (function foo() {}).toString()",
     // );
-    // expect(
+    // test(
     // "export default (async function() {}.toString())",
     // "export default (async function() {}).toString()",
     // );
-    // expect(
+    // test(
     // "export default (async function foo() {}.toString())",
     // "export default (async function foo() {}).toString()",
     // );
-    // expect("export default (class {}.toString())", "export default (class {}).toString()");
-    // expect("export default (class foo {}.toString())", "export default (class foo {}).toString()");
+    // test("export default (class {}.toString())", "export default (class {}).toString()");
+    // test("export default (class foo {}.toString())", "export default (class foo {}).toString()");
 
     test("export default function() {}", "export default function(){}");
     test("export default function foo() {}", "export default function foo(){}");
@@ -562,18 +562,18 @@ fn whitespace() {
 
     test("x-- > y", "x-- >y");
     test("x < !--y", "x<! --y");
-    // expect("x > !--y", "x>!--y");
+    // test("x > !--y", "x>!--y");
     test("!--y", "!--y");
 
     test("1 + -0", "1+-0");
     test("1 - -0", "1- -0");
-    // expect("1 + -Infinity", "1+-Infinity");
-    // expect("1 - -Infinity", "1- -Infinity");
+    // test("1 + -Infinity", "1+-1/0");
+    // test("1 - -Infinity", "1- -1/0;");
 
-    // expect("/x/ / /y/", "/x// /y/");
+    // test("/x/ / /y/", "/x// /y/");
     test("/x/ + Foo", "/x/+Foo");
     test("/x/ instanceof Foo", "/x/ instanceof Foo");
-    // expect("[x] instanceof Foo", "[x]instanceof Foo");
+    // test("[x] instanceof Foo", "[x]instanceof Foo");
 
     test("throw x", "throw x");
     test("throw typeof x", "throw typeof x");
@@ -586,7 +586,7 @@ fn whitespace() {
     test("π instanceof function(){}", "π instanceof function(){}");
 
     test("()=>({})", "()=>({})");
-    // expect("()=>({}[1])", "()=>({})[1]");
+    // test("()=>({}[1])", "()=>({})[1]");
     test("()=>({}+0)", "()=>({}+0)");
     test("()=>function(){}", "()=>function(){}");
 
@@ -607,36 +607,36 @@ fn mangle() {
 
 #[test]
 fn minify() {
-    // expect("0.1", ".1");
+    // test("0.1", ".1");
     test("1.2", "1.2");
 
     test("() => {}", "()=>{}");
-    // expect("(a) => {}", "a=>{}");
+    // test("(a) => {}", "a=>{}");
     test("(...a) => {}", "(...a)=>{}");
     test("(a = 0) => {}", "(a=0)=>{}");
     test("(a, b) => {}", "(a,b)=>{}");
 
-    // expect("true ** 2", "(!0)**2");
-    // expect("false ** 2", "(!1)**2");
+    // test("true ** 2", "(!0)**2");
+    // test("false ** 2", "(!1)**2");
 
-    // expect("import a from 'path'", "import a from'path'");
-    // expect("import * as ns from 'path'", "import*as ns from'path'");
-    // expect("import {a, b as c} from 'path'", "import{a,b as c}from'path'");
-    // expect("import {a, ' ' as c} from 'path'", "import{a,' 'as c}from'path'");
+    // test("import a from 'path'", "import a from'path'");
+    // test("import * as ns from 'path'", "import*as ns from'path'");
+    // test("import {a, b as c} from 'path'", "import{a,b as c}from'path'");
+    // test("import {a, ' ' as c} from 'path'", "import{a,' 'as c}from'path'");
 
-    // expect("export * as ns from 'path'", "export*as ns from'path'");
-    // expect("export * as ' ' from 'path'", "export*as' 'from'path'");
-    // expect("export {a, b as c} from 'path'", "export{a,b as c}from'path'");
-    // expect("export {' ', '-' as ';'} from 'path'", "export{' ','-'as';'}from'path'");
-    // expect("let a, b; export {a, b as c}", "let a,b;export{a,b as c}");
-    // expect("let a, b; export {a, b as ' '}", "let a,b;export{a,b as' '}");
+    // test("export * as ns from 'path'", "export*as ns from'path'");
+    // test("export * as ' ' from 'path'", "export*as' 'from'path'");
+    // test("export {a, b as c} from 'path'", "export{a,b as c}from'path'");
+    // test("export {' ', '-' as ';'} from 'path'", "export{' ','-'as';'}from'path'");
+    // test("let a, b; export {a, b as c}", "let a,b;export{a,b as c}");
+    // test("let a, b; export {a, b as ' '}", "let a,b;export{a,b as' '}");
 
     // Print some strings using template literals when minifying
-    // expect("x = '\\n'", "x = \"\\n\";\n");
-    // expect("x = '\\n'", "x = `\n`;\n");
-    // expect("x = {'\\n': 0}", "x = { \"\\n\": 0 };\n");
-    // expect("(class{'\\n' = 0})", "(class {\n  \"\\n\" = 0;\n});\n");
-    // expect("class Foo{'\\n' = 0}", "class Foo {\n  \"\\n\" = 0;\n}\n");
+    // test("x = '\\n'", "x = \"\\n\";\n");
+    // test("x = '\\n'", "x = `\n`;\n");
+    // test("x = {'\\n': 0}", "x = { \"\\n\": 0 };\n");
+    // test("(class{'\\n' = 0})", "(class {\n  \"\\n\" = 0;\n});\n");
+    // test("class Foo{'\\n' = 0}", "class Foo {\n  \"\\n\" = 0;\n}\n");
 
     // Special identifiers must not be minified
     test("exports", "exports");
@@ -644,8 +644,8 @@ fn minify() {
     test("module", "module");
 
     // Comment statements must not affect their surroundings when minified
-    // expect("//!single\nthrow 1 + 2", "//!single\nthrow 1+2;");
-    // expect("/*!multi-\nline*/\nthrow 1 + 2", "/*!multi-\nline*/throw 1+2;");
+    // test("//!single\nthrow 1 + 2", "//!single\nthrow 1+2;");
+    // test("/*!multi-\nline*/\nthrow 1 + 2", "/*!multi-\nline*/throw 1+2;");
 }
 
 #[test]
@@ -699,7 +699,7 @@ fn avoid_slash_script() {}
 #[test]
 fn binary_operator_visitor() {
     // Make sure the inner "/*b*/" comment doesn't disappear due to weird binary visitor stuff
-    // expect(
+    // test(
     // "x = (0, /*a*/ (0, /*b*/ (0, /*c*/ 1 == 2) + 3) * 4)",
     // "x = /*a*/\n/*b*/\n(/*c*/\n!1 + 3) * 4;\n",
     // );
