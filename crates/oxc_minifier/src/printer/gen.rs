@@ -291,6 +291,7 @@ impl Gen for BreakStatement {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"break");
         if let Some(label) = &self.label {
+            p.print(b' ');
             label.gen(p);
         }
         p.print_semicolon_after_statement();

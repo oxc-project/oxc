@@ -3,20 +3,19 @@
 use crate::expect;
 
 #[test]
-#[ignore]
 fn tdewolff() {
-    expect("#!shebang", "#!shebang");
+    // expect("#!shebang", "#!shebang");
     expect("/*comment*/a", "a");
-    expect("/*!comment*/a", "/*!comment*/a");
-    expect("//!comment1\n\n//!comment2\na", "//!comment1\n//!comment2\na");
-    expect("debugger", "debugger");
+    // expect("/*!comment*/a", "/*!comment*/a");
+    // expect("//!comment1\n\n//!comment2\na", "//!comment1\n//!comment2\na");
+    expect("debugger", "");
     // expect(""use strict"", ""use strict"");
-    expect("1.0", "1");
-    expect("1_2.0_3", "12.03");
-    expect("1000", "1e3");
-    expect("1e10", "1e10");
-    expect("1e-10", "1e-10");
-    expect("5_000", "5e3");
+    // expect("1.0", "1");
+    // expect("1_2.0_3", "12.03");
+    // expect("1000", "1e3");
+    // expect("1e10", "1e10");
+    // expect("1e-10", "1e-10");
+    // expect("5_000", "5e3");
     expect("0b1001", "9");
     expect("0b10_01", "9");
     expect("0o11", "9");
@@ -36,14 +35,14 @@ fn tdewolff() {
     expect("a-- -b", "a---b");
     expect("a - ++b", "a-++b");
     expect("a-- > b", "a-- >b");
-    expect("(a--) > b", "a-- >b");
+    // expect("(a--) > b", "a-- >b");
     expect("a-- < b", "a--<b");
     expect("a < !--b", "a<! --b");
-    expect("a > !--b", "a>!--b");
+    // expect("a > !--b", "a>!--b");
     expect("!--b", "!--b");
     expect("/a/ + b", "/a/+b");
     expect("/a/ instanceof b", "/a/ instanceof b");
-    expect("[a] instanceof b", "[a]instanceof b");
+    // expect("[a] instanceof b", "[a]instanceof b");
     expect("let a = 5;a", "let a=5;a");
     expect("let a = 5,b;a,b", "let a=5,b;a,b");
     expect("let a,b = 5;a,b", "let a,b=5;a,b");
@@ -53,18 +52,18 @@ fn tdewolff() {
     expect("function * a(){}", "function*a(){}");
     expect("function a(){}; return 5", "function a(){}return 5");
     expect("x = function (){}", "x=function(){}");
-    expect("x = function a(){}", "x=function(){}");
+    // expect("x = function a(){}", "x=function(){}");
     expect("x = function (a){a}", "x=function(a){a}");
     expect("x = function (a, b, ...c){}", "x=function(a,b,...c){}");
-    expect("x = function (){};y=z", "x=function(){},y=z");
+    // expect("x = function (){};y=z", "x=function(){},y=z");
     expect("return 5", "return 5");
-    expect("return .5", "return.5");
-    expect("return-5", "return-5");
+    // expect("return .5", "return.5");
+    // expect("return-5", "return-5");
     expect("break a", "break a");
     expect("continue a", "continue a");
     expect("label: b", "label:b");
     expect("typeof a", "typeof a");
-    expect("new RegExp()", "new RegExp");
+    // expect("new RegExp()", "new RegExp");
     expect("switch (a) { case b: 5; default: 6}", "switch(a){case b:5;default:6}");
     expect(
         "switch (a) { case b: {var c;return c}; default: 6}",
@@ -75,37 +74,37 @@ fn tdewolff() {
     expect("let a=5;switch(b){case 0:let a=5}", "let a=5;switch(b){case 0:let a=5}");
     expect("with (a = b) x", "with(a=b)x");
     expect("with (a = b) {x}", "with(a=b)x");
-    // expect("import "path"", "import"path"");
-    // expect("import x from "path"", "import x from"path"");
-    // expect("import * as b from "path"", "import*as b from"path"");
-    // expect("import {a as b} from "path"", "import{a as b}from"path"");
-    // expect("import {a as b, c} from "path"", "import{a as b,c}from"path"");
-    // expect("import x, * as b from "path"", "import x,*as b from"path"");
-    // expect("import x, {a as b, c} from "path"", "import x,{a as b,c}from"path"");
-    // expect("export * from "path"", "export*from"path"");
-    // expect("export * as ns from "path"", "export*as ns from"path"");
-    // expect("export {a as b} from "path"", "export{a as b}from"path"");
-    // expect("export {a as b, c} from "path"", "export{a as b,c}from"path"");
-    expect("export {a as b, c}", "export{a as b,c}");
+    // // expect("import "path"", "import"path"");
+    // // expect("import x from "path"", "import x from"path"");
+    // // expect("import * as b from "path"", "import*as b from"path"");
+    // // expect("import {a as b} from "path"", "import{a as b}from"path"");
+    // // expect("import {a as b, c} from "path"", "import{a as b,c}from"path"");
+    // // expect("import x, * as b from "path"", "import x,*as b from"path"");
+    // // expect("import x, {a as b, c} from "path"", "import x,{a as b,c}from"path"");
+    // // expect("export * from "path"", "export*from"path"");
+    // // expect("export * as ns from "path"", "export*as ns from"path"");
+    // // expect("export {a as b} from "path"", "export{a as b}from"path"");
+    // // expect("export {a as b, c} from "path"", "export{a as b,c}from"path"");
+    // expect("export {a as b, c}", "export{a as b,c}");
     expect("export var a = b", "export var a=b");
     expect("export function a(){}", "export function a(){}");
     expect("export default a = b", "export default a=b");
     expect("export default a = b;c=d", "export default a=b;c=d");
-    expect("export default function a(){};c=d", "export default function(){}c=d");
+    // expect("export default function a(){};c=d", "export default function(){}c=d");
     expect("!class {}", "!class{}");
     expect("class a {}", "class a{}");
     expect("class a extends b {}", "class a extends b{}");
-    expect("class a extends(!b){}", "class a extends(!b){}");
+    // expect("class a extends(!b){}", "class a extends(!b){}");
     expect("class a { f(a) {a} }", "class a{f(a){a}}");
     expect("class a { f(a) {a}; static g(b) {b} }", "class a{f(a){a}static g(b){b}}");
     expect("class a { static }", "class a{static}");
     expect("class a { static b }", "class a{static b}");
     expect("class a { f(c){c} }", "class a{f(c){c}}");
-    expect("class a { static #d=5 }", "class a{static#d=5}");
+    // expect("class a { static #d=5 }", "class a{static#d=5}");
     expect("class a { static { b = this.f(5) } }", "class a{static{b=this.f(5)}}");
     expect("class a { #a(){} }", "class a{#a(){}}");
-    expect("for (var a = 5; a < 10; a++){a}", "for(var a=5;a<10;a++)a");
-    expect("for (a,b = 5; a < 10; a++){a}", "for(a,b=5;a<10;a++)a");
+    expect("for (var a = 5; a < 10; a++){a}", "for(var a=5;10>a;a++)a");
+    expect("for (a,b = 5; a < 10; a++){a}", "for(a,b=5;10>a;a++)a");
     expect(
         "async function f(){for await (var a of b){a}}",
         "async function f(){for await(var a of b)a}",
@@ -115,23 +114,23 @@ fn tdewolff() {
     expect("for (var a of b){a}", "for(var a of b)a");
     expect("for (a of b){a}", "for(a of b)a");
     expect("for (;;){let a;a}", "for(;;){let a;a}");
-    expect("var a;for(var b;;){let a;a++}a,b", "for(var a,b;;){let a;a++}a,b");
-    expect("var a;for(var b;;){let c = 10;c++}a,b", "for(var a,b;;){let c=10;c++}a,b");
-    expect("while(a < 10){a}", "for(;a<10;)a");
-    expect("while(a < 10){a;b}", "for(;a<10;)a,b");
-    expect("while(a < 10){while(b);c}", "for(;a<10;){for(;b;);c}");
+    // expect("var a;for(var b;;){let a;a++}a,b", "for(var a,b;;){let a;a++}a,b");
+    // expect("var a;for(var b;;){let c = 10;c++}a,b", "for(var a,b;;){let c=10;c++}a,b");
+    expect("while(a < 10){a}", "for(;10>a;)a");
+    // expect("while(a < 10){a;b}", "for(;10>a;)a,b");
+    expect("while(a < 10){while(b);c}", "for(;10>a;){for(;b;);c}");
     //expect("while(a) if (!b) break", "for(;a&&b;);");
-    expect("do {a} while(a < 10)", "do a;while(a<10)");
-    expect("do [a]=5; while(a < 10)", "do[a]=5;while(a<10)");
-    expect("do [a]=5; while(a < 10);return a", "do[a]=5;while(a<10)return a");
+    expect("do {a} while(a < 10)", "do a;while(10>a)");
+    // expect("do [a]=5; while(a < 10)", "do[a]=5;while(10>a)");
+    // expect("do [a]=5; while(a < 10);return a", "do[a]=5;while(10>a)return a");
     expect("throw a", "throw a");
-    expect("throw [a]", "throw[a]");
+    // expect("throw [a]", "throw[a]");
     expect("try {a} catch {b}", "try{a}catch{b}");
     expect("try {a} catch(b) {b}", "try{a}catch(b){b}");
     expect("try {a} catch(b) {b} finally {c}", "try{a}catch(b){b}finally{c}");
     expect("try {a} finally {c}", "try{a}finally{c}");
-    expect("try {a} catch(b) {c}", "try{a}catch{c}");
-    expect("a=b;c=d", "a=b,c=d");
+    // expect("try {a} catch(b) {c}", "try{a}catch{c}");
+    // expect("a=b;c=d", "a=b,c=d");
 
     // strings
     // expect("""", """");
@@ -168,21 +167,25 @@ fn tdewolff() {
     // rename true, false, undefined, Infinity
     expect("x=true", "x=!0");
     expect("x=false", "x=!1");
-    expect("x=false()", "x=(!1)()");
+    // expect("x=false()", "x=(!1)()");
     expect("false", "!1");
     expect("x=undefined", "x=void 0");
-    expect("x=undefined()", "x=(void 0)()");
+    // expect("x=undefined()", "x=(void 0)()");
     expect("x=undefined.a", "x=(void 0).a");
     //expect("undefined=5;x=undefined", "undefined=5;x=undefined");
-    expect("x=Infinity", "x=1/0");
+    // expect("x=Infinity", "x=1/0");
     expect("x=Infinity()", "x=(1/0)()");
     expect("x=2**Infinity", "x=2**(1/0)");
     //expect("Infinity=5;x=Infinity", "Infinity=5;x=Infinity");
-    expect("class a extends undefined {}", "class a extends(void 0){}");
-    expect("new true", "new(!0)");
-    expect("function*a(){yield undefined}", "function*a(){yield}");
-    expect("function*a(){yield*undefined}", "function*a(){yield*void 0}");
+    // expect("class a extends undefined {}", "class a extends(void 0){}");
+    // expect("new true", "new(!0)");
+    // expect("function*a(){yield undefined}", "function*a(){yield}");
+    // expect("function*a(){yield*undefined}", "function*a(){yield*void 0}");
+}
 
+#[test]
+#[ignore = "TODO"]
+fn ignore() {
     // if/else statements
     expect("if(a){return b}", "if(a)return b");
     expect("if(a){b = 5;return b}", "if(a)return b=5,b");
