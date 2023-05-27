@@ -1,6 +1,9 @@
 //! Common code for JavaScript Syntax
 
+pub mod identifier;
 pub mod operator;
+
+pub use unicode_id_start;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum NumberBase {

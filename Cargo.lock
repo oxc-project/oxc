@@ -1201,7 +1201,6 @@ dependencies = [
  "oxc_syntax",
  "rustc-hash",
  "serde_json",
- "unicode-id-start",
 ]
 
 [[package]]
@@ -1247,6 +1246,7 @@ name = "oxc_syntax"
 version = "0.0.0"
 dependencies = [
  "serde",
+ "unicode-id-start",
 ]
 
 [[package]]

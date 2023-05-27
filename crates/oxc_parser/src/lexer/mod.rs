@@ -19,16 +19,20 @@ use oxc_allocator::{Allocator, String};
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::Error;
 use oxc_span::{SourceType, Span};
+use oxc_syntax::{
+    identifier::{
+        is_identifier_part, is_identifier_start_all, is_identifier_start_ascii,
+        is_irregular_line_terminator, is_irregular_whitespace, is_line_terminator, CR, EOF, FF, LF,
+        LS, PS, TAB, VT,
+    },
+    unicode_id_start::is_id_start_unicode,
+};
 use simd::{SkipMultilineComment, SkipWhitespace};
 pub use token::{RegExp, Token, TokenValue};
 
 pub use self::kind::Kind;
 use self::{
-    constants::{
-        is_identifier_part, is_identifier_start_all, is_identifier_start_ascii,
-        is_irregular_line_terminator, is_irregular_whitespace, is_line_terminator, EOF,
-        SINGLE_CHAR_TOKENS,
-    },
+    constants::SINGLE_CHAR_TOKENS,
     number::{parse_big_int, parse_float, parse_int},
     string_builder::AutoCow,
     trivia_builder::TriviaBuilder,
@@ -429,7 +433,7 @@ impl<'a> Lexer<'a> {
                 self.identifier_unicode_escape_sequence(&mut builder, true);
                 self.identifier_name_or_keyword(builder)
             }
-            c if unicode_id_start::is_id_start_unicode(c) => {
+            c if is_id_start_unicode(c) => {
                 builder.push_matching(c);
                 self.identifier_name_or_keyword(builder)
             }
@@ -1053,10 +1057,10 @@ impl<'a> Lexer<'a> {
                     }
                     return tail;
                 }
-                constants::CR => {
+                CR => {
                     builder.force_allocation_without_current_ascii_char(self);
-                    if self.next_eq(constants::LF) {
-                        builder.push_different(constants::LF);
+                    if self.next_eq(LF) {
+                        builder.push_different(LF);
                     }
                 }
                 '\\' => {
@@ -1354,17 +1358,17 @@ impl<'a> Lexer<'a> {
             }
             Some(c) => match c {
                 // CharacterEscapeSequence
-                constants::LF | constants::LS | constants::PS => {}
-                constants::CR => {
-                    self.next_eq(constants::LF);
+                LF | LS | PS => {}
+                CR => {
+                    self.next_eq(LF);
                 }
                 '\'' | '"' | '\\' => text.push(c),
                 'b' => text.push('\u{8}'),
-                'f' => text.push(constants::FF),
-                'n' => text.push(constants::LF),
-                'r' => text.push(constants::CR),
-                't' => text.push(constants::TAB),
-                'v' => text.push(constants::VT),
+                'f' => text.push(FF),
+                'n' => text.push(LF),
+                'r' => text.push(CR),
+                't' => text.push(TAB),
+                'v' => text.push(VT),
                 // HexEscapeSequence
                 'x' => {
                     self.hex_digit()

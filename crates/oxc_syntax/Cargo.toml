@@ -15,4 +15,5 @@ default = []
 serde   = ["dep:serde"]
 
 [dependencies]
+unicode-id-start = { workspace = true }
 serde = { workspace = true, features = ["derive"], optional = true }
