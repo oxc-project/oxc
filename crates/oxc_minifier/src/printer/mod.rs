@@ -12,10 +12,12 @@ use std::{rc::Rc, str::from_utf8_unchecked};
 use oxc_hir::hir::*;
 use oxc_semantic2::symbol::{SymbolId, SymbolTable};
 use oxc_span::Atom;
-use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+use oxc_syntax::{
+    identifier::is_identifier_part,
+    operator::{
+        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+    },
 };
-use unicode_id_start::is_id_continue;
 
 use self::{gen::Gen, operator::Operator};
 
@@ -143,8 +145,7 @@ impl Printer {
         let ch = self.peek_nth(0);
 
         if let Some(ch) = ch && (
-            is_id_continue(ch)
-            || ch == '$'
+            is_identifier_part(ch)
             || self.prev_reg_exp_end == self.code.len()
          ) {
             self.print(b' ');

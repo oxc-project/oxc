@@ -19,7 +19,6 @@ oxc_ast_lower = { workspace = true }
 oxc_hir       = { workspace = true }
 oxc_semantic2 = { workspace = true }
 oxc_syntax    = { workspace = true }
-unicode-id-start = { workspace = true }
 
 [dev-dependencies]
 walkdir   = { workspace = true }
