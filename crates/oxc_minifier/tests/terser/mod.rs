@@ -3,7 +3,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions, PrinterOptions};
 use oxc_parser::Parser;
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 use walkdir::WalkDir;
 
 #[test]
@@ -103,7 +103,8 @@ impl TestCase {
                 // Parse input / expect
                 if let Statement::LabeledStatement(labeled_stmt) = stmt
                 && let Statement::BlockStatement(block_stmt) = &labeled_stmt.body {
-                    let code = block_stmt.span.source_text(source_text).to_string().into_boxed_str();
+                    let span = block_stmt.span;
+                    let code = Span::new(span.start + 1, span.end - 1).source_text(source_text).to_string().into_boxed_str();
                     match labeled_stmt.label.name.as_str() {
                         "input" => {
                             input = code;

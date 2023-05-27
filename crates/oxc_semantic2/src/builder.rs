@@ -205,4 +205,31 @@ impl SemanticBuilder {
     pub fn leave_catch_clause(&mut self) {
         self.leave_scope();
     }
+
+    // ForStatement : for ( LexicalDeclaration Expressionopt ; Expressionopt ) Statement
+    //   1. Let oldEnv be the running execution context's LexicalEnvironment.
+    //   2. Let loopEnv be NewDeclarativeEnvironment(oldEnv).
+    pub fn enter_for_statement(&mut self, is_lexical_declaration: bool) {
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
+    }
+
+    pub fn leave_for_statement(&mut self, is_lexical_declaration: bool) {
+        if is_lexical_declaration {
+            self.leave_scope();
+        }
+    }
+
+    pub fn enter_for_in_of_statement(&mut self, is_lexical_declaration: bool) {
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
+    }
+
+    pub fn leave_for_in_of_statement(&mut self, is_lexical_declaration: bool) {
+        if is_lexical_declaration {
+            self.leave_scope();
+        }
+    }
 }
