@@ -179,7 +179,7 @@ This project was incubated with the assistance of these exceptional mentors and 
 
 ## Third Party Licenses
 
-Licenses are listed in [THIRD-PARTY-LICENSE](./LICENSE-THIRD-PARTY-LICENSE)
+Licenses are listed in [THIRD-PARTY-LICENSE](./THIRD-PARTY-LICENSE)
 
 This project partially copies code from the following projects:
 
