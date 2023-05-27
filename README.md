@@ -179,7 +179,7 @@ This project was incubated with the assistance of these exceptional mentors and 
 
 ## Third Party Licenses
 
-Licenses are listed in [THIRD-PARTY-LICENSE](./LICENSE-THIRD-PARTY-LICENSE)
+Licenses are listed in [THIRD-PARTY-LICENSE](./THIRD-PARTY-LICENSE)
 
 This project partially copies code from the following projects:
 
@@ -195,6 +195,5 @@ This project partially copies code from the following projects:
 | [sindresorhus/globals](https://github.com/sindresorhus/globals) | [MIT](https://github.com/sindresorhus/globals/blob/main/license) |
 | [terser](https://github.com/terser/terser) | [BSD](https://github.com/terser/terser/blob/master/LICENSE) |
 | [evanw/esbuild](https://github.com/evanw/esbuild) | [MIT](https://github.com/evanw/esbuild/blob/main/LICENSE.md) |
-| [google/closure-compiler](https://github.com/google/closure-compiler) | [Apache 2.0](https://github.com/google/closure-compiler#closure-compiler-license) |
 | [google/closure-compiler](https://github.com/google/closure-compiler) | [Apache 2.0](https://github.com/google/closure-compiler#closure-compiler-license) |
 | [tdewolff/minify](https://github.com/tdewolff/minify) | [MIT](https://github.com/tdewolff/minify/blob/master/LICENSE) |
