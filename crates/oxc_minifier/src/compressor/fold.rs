@@ -98,7 +98,7 @@ impl<'a> Compressor<'a> {
         }
     }
 
-    /// <https://tc39.es/ecma262/##sec-abstract-equality-comparison>
+    /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
     fn try_abstract_equality_comparison<'b>(
         &self,
         left_expr: &'b Expression<'a>,
