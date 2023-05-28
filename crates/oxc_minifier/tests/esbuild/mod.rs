@@ -693,8 +693,17 @@ fn jsx() {}
 fn jsx_single_line() {}
 
 #[test]
-#[ignore]
-fn avoid_slash_script() {}
+fn avoid_slash_script() {
+    // Positive cases
+    test("x = 1 < /script/.exec(y).length", "x=1< /script/.exec(y).length");
+    test("x = 1 < /SCRIPT/.exec(y).length", "x=1< /SCRIPT/.exec(y).length");
+    test("x = 1 < /ScRiPt/.exec(y).length", "x=1< /ScRiPt/.exec(y).length");
+    test("x = 1 << /script/.exec(y).length", "x=1<< /script/.exec(y).length");
+
+    // Negative cases
+    test("x = 1 < / script/.exec(y).length", "x=1</ script/.exec(y).length");
+    test("x = 1 << / script/.exec(y).length", "x=1<</ script/.exec(y).length");
+}
 
 #[test]
 fn binary_operator_visitor() {

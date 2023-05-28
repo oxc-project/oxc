@@ -801,7 +801,11 @@ impl Gen for BigintLiteral {
 
 impl Gen for RegExpLiteral {
     fn gen(&self, p: &mut Printer) {
-        if let Some('/') = p.peek_nth(0) {
+        let last = p.peek_nth(0);
+        if Some('/') == last
+            || (Some('<') == last
+                && self.regex.pattern.as_str().to_lowercase().starts_with("script"))
+        {
             p.print(b' ');
         }
         p.print(b'/');
