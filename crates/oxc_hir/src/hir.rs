@@ -52,7 +52,7 @@ pub enum Expression<'a> {
     Super(Box<'a, Super>),
 
     ArrayExpression(Box<'a, ArrayExpression<'a>>),
-    ArrowFunctionExpression(Box<'a, ArrowExpression<'a>>),
+    ArrowExpression(Box<'a, ArrowExpression<'a>>),
     AssignmentExpression(Box<'a, AssignmentExpression<'a>>),
     AwaitExpression(Box<'a, AwaitExpression<'a>>),
     BinaryExpression(Box<'a, BinaryExpression<'a>>),
@@ -175,7 +175,7 @@ impl<'a> Expression<'a> {
     }
 
     pub fn is_function(&self) -> bool {
-        matches!(self, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
+        matches!(self, Expression::FunctionExpression(_) | Expression::ArrowExpression(_))
     }
 
     /// Returns literal's value converted to the Boolean type

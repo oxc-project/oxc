@@ -300,7 +300,7 @@ impl<'a> AstLower<'a> {
             }
             ast::Expression::MetaProperty(meta) => self.lower_meta_property(meta),
             ast::Expression::ArrayExpression(expr) => self.lower_array_expression(expr),
-            ast::Expression::ArrowFunctionExpression(expr) => self.lower_arrow_expression(expr),
+            ast::Expression::ArrowExpression(expr) => self.lower_arrow_expression(expr),
             ast::Expression::AssignmentExpression(expr) => self.lower_assignment_expression(expr),
             ast::Expression::AwaitExpression(expr) => self.lower_await_expression(expr),
             ast::Expression::BinaryExpression(expr) => self.lower_binary_expression(expr),

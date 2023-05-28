@@ -408,7 +408,7 @@ impl<'a> HirBuilder<'a> {
         params: Box<'a, FormalParameters<'a>>,
         body: Box<'a, FunctionBody<'a>>,
     ) -> Expression<'a> {
-        Expression::ArrowFunctionExpression(self.alloc(ArrowExpression {
+        Expression::ArrowExpression(self.alloc(ArrowExpression {
             span,
             expression,
             generator,

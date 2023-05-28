@@ -305,7 +305,7 @@ impl<'a> AstBuilder<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Expression<'a> {
-        Expression::ArrowFunctionExpression(self.alloc(ArrowExpression {
+        Expression::ArrowExpression(self.alloc(ArrowExpression {
             span,
             expression,
             generator,

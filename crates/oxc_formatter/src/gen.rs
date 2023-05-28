@@ -758,7 +758,7 @@ impl<'a> Gen for Expression<'a> {
             Self::ArrayExpression(expr) => expr.gen(p),
             Self::ObjectExpression(expr) => expr.gen(p),
             Self::FunctionExpression(expr) => expr.gen(p),
-            Self::ArrowFunctionExpression(expr) => expr.gen(p),
+            Self::ArrowExpression(expr) => expr.gen(p),
             Self::YieldExpression(expr) => expr.gen(p),
             Self::UpdateExpression(expr) => expr.gen(p),
             Self::UnaryExpression(expr) => expr.gen(p),
