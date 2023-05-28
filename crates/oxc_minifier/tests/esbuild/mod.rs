@@ -570,7 +570,7 @@ fn whitespace() {
     // test("1 + -Infinity", "1+-1/0");
     // test("1 - -Infinity", "1- -1/0;");
 
-    // test("/x/ / /y/", "/x// /y/");
+    test("/x/ / /y/", "/x// /y/");
     test("/x/ + Foo", "/x/+Foo");
     test("/x/ instanceof Foo", "/x/ instanceof Foo");
     test("[x] instanceof Foo", "[x]instanceof Foo");
