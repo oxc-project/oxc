@@ -1,5 +1,7 @@
 #![allow(clippy::unused_self)]
 
+mod fold;
+
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::{hir::*, HirBuilder, VisitMut};
@@ -275,6 +277,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     }
 
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
+        self.fold_expression(expr);
         if self.compress_undefined(expr)
             || self.compress_boolean(expr)
             || self.compress_infinity(expr)
