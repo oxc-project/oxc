@@ -337,7 +337,7 @@ pub trait VisitMut<'a, 'b>: Sized {
             Expression::MetaProperty(meta) => self.visit_meta_property(meta),
 
             Expression::ArrayExpression(expr) => self.visit_array_expression(expr),
-            Expression::ArrowFunctionExpression(expr) => self.visit_arrow_expression(expr),
+            Expression::ArrowExpression(expr) => self.visit_arrow_expression(expr),
             Expression::AssignmentExpression(expr) => self.visit_assignment_expression(expr),
             Expression::AwaitExpression(expr) => self.visit_await_expression(expr),
             Expression::BinaryExpression(expr) => self.visit_binary_expression(expr),

@@ -77,7 +77,7 @@ pub trait IsConstant<'a, 'b> {
 impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
     fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
         match self {
-            Self::ArrowFunctionExpression(_)
+            Self::ArrowExpression(_)
             | Self::FunctionExpression(_)
             | Self::ClassExpression(_)
             | Self::ObjectExpression(_) => true,

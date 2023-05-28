@@ -171,7 +171,7 @@ impl NoConstantBinaryExpression {
         match expr.get_inner_expression() {
             Expression::ObjectExpression(_)
             | Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
+            | Expression::ArrowExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::ClassExpression(_)
             | Expression::NewExpression(_)
@@ -249,7 +249,7 @@ impl NoConstantBinaryExpression {
         match expr {
             Expression::ObjectExpression(_)
             | Expression::ClassExpression(_)
-            | Expression::ArrowFunctionExpression(_)
+            | Expression::ArrowExpression(_)
             | Expression::FunctionExpression(_) => true,
             Expression::ArrayExpression(array_expr) => {
                 array_expr.elements.is_empty()
@@ -295,7 +295,7 @@ impl NoConstantBinaryExpression {
         match expr {
             Expression::ObjectExpression(_)
             | Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
+            | Expression::ArrowExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::NewExpression(_)
             | Expression::TemplateLiteral(_)
@@ -352,7 +352,7 @@ impl NoConstantBinaryExpression {
         match expr {
             Expression::ObjectExpression(_)
             | Expression::ArrayExpression(_)
-            | Expression::ArrowFunctionExpression(_)
+            | Expression::ArrowExpression(_)
             | Expression::FunctionExpression(_)
             | Expression::ClassExpression(_)
             | Expression::RegExpLiteral(_) => true,

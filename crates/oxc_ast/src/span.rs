@@ -44,7 +44,7 @@ impl<'a> GetSpan for Expression<'a> {
             Self::MetaProperty(e) => e.span,
             Self::Super(e) => e.span,
             Self::ArrayExpression(e) => e.span,
-            Self::ArrowFunctionExpression(e) => e.span,
+            Self::ArrowExpression(e) => e.span,
             Self::AssignmentExpression(e) => e.span,
             Self::AwaitExpression(e) => e.span,
             Self::BinaryExpression(e) => e.span,
