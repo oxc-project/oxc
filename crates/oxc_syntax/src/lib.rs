@@ -2,6 +2,7 @@
 
 pub mod identifier;
 pub mod operator;
+pub mod precedence;
 
 pub use unicode_id_start;
 

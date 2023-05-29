@@ -2,15 +2,15 @@ use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, Span};
-use oxc_syntax::{operator::BinaryOperator, NumberBase};
+use oxc_syntax::{operator::BinaryOperator, precedence::Precedence, NumberBase};
 
 use super::{
     function::IsParenthesizedArrowFunction,
     grammar::CoverGrammar,
     list::{ArrayExpressionList, CallArguments, SequenceExpressionList},
     operator::{
-        map_assignment_operator, map_binary_operator, map_logical_operator, map_unary_operator,
-        map_update_operator, BindingPower,
+        kind_to_precedence, map_assignment_operator, map_binary_operator, map_logical_operator,
+        map_unary_operator, map_update_operator,
     },
 };
 use crate::{
@@ -829,7 +829,7 @@ impl<'a> Parser<'a> {
 
     fn parse_binary_or_logical_expression_base(
         &mut self,
-        lhs_binding_power: BindingPower,
+        lhs_precedence: Precedence,
     ) -> Result<Expression<'a>> {
         let lhs_span = self.start_span();
 
@@ -847,7 +847,7 @@ impl<'a> Parser<'a> {
             self.parse_unary_expression_base(lhs_span)?
         };
 
-        self.parse_binary_or_logical_expression_recursive(lhs_span, lhs, lhs_binding_power)
+        self.parse_binary_or_logical_expression_recursive(lhs_span, lhs, lhs_precedence)
     }
 
     /// Section 13.6 - 13.13 Binary Expression
@@ -855,7 +855,7 @@ impl<'a> Parser<'a> {
         &mut self,
         lhs_span: Span,
         lhs: Expression<'a>,
-        min_binding_power: BindingPower,
+        min_precedence: Precedence,
     ) -> Result<Expression<'a>> {
         // Pratt Parsing Algorithm
         // <https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html>
@@ -865,12 +865,12 @@ impl<'a> Parser<'a> {
             // This is need for jsx `<div>=</div>` case
             let kind = self.re_lex_right_angle();
 
-            let Some(left_binding_power) = BindingPower::value(kind) else { break };
+            let Some(left_precedence) = kind_to_precedence(kind) else { break };
 
-            let stop = if BindingPower::is_right_associative(left_binding_power) {
-                left_binding_power < min_binding_power
+            let stop = if Precedence::is_right_associative(left_precedence) {
+                left_precedence < min_precedence
             } else {
-                left_binding_power <= min_binding_power
+                left_precedence <= min_precedence
             };
 
             if stop {
@@ -900,7 +900,7 @@ impl<'a> Parser<'a> {
             }
 
             self.bump_any(); // bump operator
-            let rhs = self.parse_binary_or_logical_expression_base(left_binding_power)?;
+            let rhs = self.parse_binary_or_logical_expression_base(left_precedence)?;
 
             lhs = if kind.is_logical_operator() {
                 self.ast.logical_expression(
@@ -930,7 +930,7 @@ impl<'a> Parser<'a> {
     ///     `ShortCircuitExpression`[?In, ?Yield, ?Await] ? `AssignmentExpression`[+In, ?Yield, ?Await] : `AssignmentExpression`[?In, ?Yield, ?Await]
     fn parse_conditional_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
-        let lhs = self.parse_binary_or_logical_expression_base(BindingPower::lowest())?;
+        let lhs = self.parse_binary_or_logical_expression_base(Precedence::lowest())?;
         if !self.eat(Kind::Question) {
             return Ok(lhs);
         }
