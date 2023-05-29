@@ -23,10 +23,10 @@ pub fn kind_to_precedence(kind: Kind) -> Option<Precedence> {
         | Kind::Instanceof
         | Kind::In
         | Kind::As
-        | Kind::Satisfies => Some(Precedence::Relational),
+        | Kind::Satisfies => Some(Precedence::Compare),
         Kind::ShiftLeft | Kind::ShiftRight | Kind::ShiftRight3 => Some(Precedence::Shift),
-        Kind::Plus | Kind::Minus => Some(Precedence::Additive),
-        Kind::Star | Kind::Slash | Kind::Percent => Some(Precedence::Multiplicative),
+        Kind::Plus | Kind::Minus => Some(Precedence::Add),
+        Kind::Star | Kind::Slash | Kind::Percent => Some(Precedence::Multiply),
         Kind::Star2 => Some(Precedence::Exponential),
         _ => None,
     }

@@ -208,23 +208,6 @@ impl<'a> Expression<'a> {
             _ => false,
         }
     }
-
-    // <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/NodeUtil.java#L1311>
-    pub fn precedence(&self) -> u8 {
-        match self {
-            Self::SequenceExpression(_) => 0,
-            Self::AssignmentExpression(_) => 1,
-            Self::YieldExpression(_) => 2,
-            Self::ConditionalExpression(_) => 3,
-            Self::LogicalExpression(expr) => expr.precedence(), // 4 - 6
-            Self::BinaryExpression(expr) => expr.precedence(),  // 7 - 15
-            Self::UnaryExpression(expr) => expr.precedence(),   // 16,
-            Self::UpdateExpression(expr) => expr.precedence(),  // 16
-            Self::AwaitExpression(_) | Self::NewExpression(_) => 16,
-            Self::ParenthesizedExpression(_) => 19,
-            _ => 18,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Hash)]
@@ -755,12 +738,6 @@ pub struct UpdateExpression<'a> {
     pub argument: SimpleAssignmentTarget<'a>,
 }
 
-impl<'a> UpdateExpression<'a> {
-    pub fn precedence(&self) -> u8 {
-        17
-    }
-}
-
 /// Unary Expression
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -769,12 +746,6 @@ pub struct UnaryExpression<'a> {
     pub span: Span,
     pub operator: UnaryOperator,
     pub argument: Expression<'a>,
-}
-
-impl<'a> UnaryExpression<'a> {
-    pub fn precedence(&self) -> u8 {
-        16
-    }
 }
 
 /// Binary Expression
@@ -786,34 +757,6 @@ pub struct BinaryExpression<'a> {
     pub left: Expression<'a>,
     pub operator: BinaryOperator,
     pub right: Expression<'a>,
-}
-
-impl<'a> BinaryExpression<'a> {
-    pub fn precedence(&self) -> u8 {
-        match self.operator {
-            BinaryOperator::BitwiseOR => 7,
-            BinaryOperator::BitwiseXOR => 8,
-            BinaryOperator::BitwiseAnd => 9,
-            BinaryOperator::Equality
-            | BinaryOperator::Inequality
-            | BinaryOperator::StrictEquality
-            | BinaryOperator::StrictInequality => 10,
-            BinaryOperator::LessThan
-            | BinaryOperator::LessEqualThan
-            | BinaryOperator::GreaterThan
-            | BinaryOperator::GreaterEqualThan
-            | BinaryOperator::Instanceof
-            | BinaryOperator::In => 11,
-            BinaryOperator::ShiftLeft
-            | BinaryOperator::ShiftRight
-            | BinaryOperator::ShiftRightZeroFill => 12,
-            BinaryOperator::Subtraction | BinaryOperator::Addition => 13,
-            BinaryOperator::Multiplication
-            | BinaryOperator::Remainder
-            | BinaryOperator::Division => 14,
-            BinaryOperator::Exponential => 15,
-        }
-    }
 }
 
 /// Private Identifier in Shift Expression
@@ -835,16 +778,6 @@ pub struct LogicalExpression<'a> {
     pub left: Expression<'a>,
     pub operator: LogicalOperator,
     pub right: Expression<'a>,
-}
-
-impl<'a> LogicalExpression<'a> {
-    pub fn precedence(&self) -> u8 {
-        match self.operator {
-            LogicalOperator::Or => 4,
-            LogicalOperator::And => 5,
-            LogicalOperator::Coalesce => 6,
-        }
-    }
 }
 
 /// Conditional Expression

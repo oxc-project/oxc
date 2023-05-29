@@ -9,6 +9,7 @@ use oxc_semantic2::Semantic;
 use oxc_span::Span;
 use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
+    precedence::GetPrecedence,
     NumberBase,
 };
 

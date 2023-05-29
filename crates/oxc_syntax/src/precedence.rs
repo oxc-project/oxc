@@ -2,27 +2,29 @@
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u8)]
 pub enum Precedence {
-    Comma = 0,
-    // Yield = 1,
-    // Assignment = 2,
-    // Conditional = 3,
-    Coalesce = 4,
-    LogicalOr = 5,
-    LogicalAnd = 6,
-    BitwiseOr = 7,
-    BitwiseXor = 8,
-    BitwiseAnd = 9,
-    Equality = 10,
-    Relational = 11,
-    Shift = 12,
-    Additive = 13,
-    Multiplicative = 14,
-    Exponential = 15,
-    // Unary = 16,
-    // Update = 17,
-    // LeftHandSide = 18,
-    // Member = 19,
-    // Primary = 20,
+    Lowest = 0,
+    Comma,
+    Spread,
+    Yield,
+    Assign,
+    Conditional,
+    Coalesce,
+    LogicalOr,
+    LogicalAnd,
+    BitwiseOr,
+    BitwiseXor,
+    BitwiseAnd,
+    Equality,
+    Compare,
+    Shift,
+    Add,
+    Multiply,
+    Exponential,
+    Prefix,
+    Postfix,
+    New,
+    Call,
+    Member,
 }
 
 impl Precedence {
@@ -33,4 +35,8 @@ impl Precedence {
     pub fn is_right_associative(right: Self) -> bool {
         right == Self::Exponential
     }
+}
+
+pub trait GetPrecedence {
+    fn precedence(&self) -> Precedence;
 }
