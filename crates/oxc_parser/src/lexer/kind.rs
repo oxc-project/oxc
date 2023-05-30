@@ -169,6 +169,8 @@ pub enum Kind {
     Binary,
     Octal,
     Hex,
+    PostiveExponential,
+    NegativeExponential,
     // 12.8.4 String Literals
     /// String Type
     Str,
@@ -200,7 +202,7 @@ impl Kind {
     }
 
     pub fn is_number(self) -> bool {
-        matches!(self, Float | Decimal | Binary | Octal | Hex)
+        matches!(self, Float | Decimal | Binary | Octal | Hex | PostiveExponential | NegativeExponential)
     }
 
     pub fn matches_number_char(self, c: char) -> bool {
@@ -604,6 +606,8 @@ impl Kind {
             Binary => "binary",
             Octal => "octal",
             Hex => "hex",
+            PostiveExponential => "positiveexponential",
+            NegativeExponential => "negativeexponential",
             Str | String => "string",
             RegExp => "/regexp/",
             NoSubstitutionTemplate => "${}",
