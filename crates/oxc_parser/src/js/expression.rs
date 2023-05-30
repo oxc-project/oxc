@@ -276,7 +276,7 @@ impl<'a> Parser<'a> {
             Kind::Binary => NumberBase::Binary,
             Kind::Octal => NumberBase::Octal,
             Kind::Hex => NumberBase::Hex,
-            Kind::PostiveExponential | Kind::NegativeExponential => {
+            Kind::PositiveExponential | Kind::NegativeExponential => {
                 if value.fract() == 0.0 {
                     NumberBase::Decimal
                 } else {

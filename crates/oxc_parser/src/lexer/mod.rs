@@ -302,7 +302,7 @@ impl<'a> Lexer<'a> {
                     |src| parse_big_int(src, kind).map(TokenValue::BigInt),
                 )
             }
-            Kind::Float | Kind::PostiveExponential | Kind::NegativeExponential => {
+            Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
                 parse_float(src).map(TokenValue::Number)
             }
             Kind::Undetermined => Ok(TokenValue::Number(std::f64::NAN)),
@@ -846,7 +846,7 @@ impl<'a> Lexer<'a> {
         if c == '-' {
             Kind::NegativeExponential
         } else {
-            Kind::PostiveExponential
+            Kind::PositiveExponential
         }
     }
 
