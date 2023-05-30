@@ -202,7 +202,10 @@ impl Kind {
     }
 
     pub fn is_number(self) -> bool {
-        matches!(self, Float | Decimal | Binary | Octal | Hex | PositiveExponential | NegativeExponential)
+        matches!(
+            self,
+            Float | Decimal | Binary | Octal | Hex | PositiveExponential | NegativeExponential
+        )
     }
 
     pub fn matches_number_char(self, c: char) -> bool {
