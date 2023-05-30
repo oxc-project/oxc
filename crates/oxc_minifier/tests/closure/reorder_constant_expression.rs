@@ -44,7 +44,7 @@ fn set1_tests(op1: &str, op2: &str) {
     test(&format!("a {op1} 0"), &format!("0{op2}a"));
     test(&format!("a {op1} '0'"), &format!("'0'{op1}a"));
     test(&format!("a  {op1}  ''"), &format!("''{op2}a"));
-    test(&format!("a {op1} -1.0"), &format!("-1.0{op2}a"));
+    test(&format!("a {op1} -1.0"), &format!("-1{op2}a"));
 
     test(&format!("function f(a){{a {op1} 0}}"), &format!("function f(a){{0{op2}a}}"));
     test(&format!("f() {op1} 0"), &format!("0{op2}f()"));
@@ -73,7 +73,7 @@ fn set3_tests(op: &str) {
     test(&format!("0 {op} a"), &format!("0{op}a"));
     test(&format!("'0' {op} a"), &format!("'0'{op}a"));
     test(&format!("'' {op} a"), &format!("''{op}a"));
-    test(&format!("-1.0 {op} a"), &format!("-1.0{op}a"));
+    test(&format!("-1.0 {op} a"), &format!("-1{op}a"));
 
     test(&format!("0 {op} 1"), &format!("0{op}1"));
 

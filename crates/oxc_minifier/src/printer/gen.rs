@@ -793,10 +793,10 @@ impl Gen for NullLiteral {
 impl<'a> Gen for NumberLiteral<'a> {
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn gen(&self, p: &mut Printer) {
+        let non_negative_value = self.value;
         if self.base != NumberBase::Float {
-            let value = self.value as u64;
+            let value = non_negative_value as u64;
             let decimal = format!("{value}");
-            let hex = format!("{value:#x}");
             let s = if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
                 let hex = format!("{value:#x}");
                 if hex.len() < decimal.len() { hex } else { decimal }
@@ -808,6 +808,21 @@ impl<'a> Gen for NumberLiteral<'a> {
         }
         p.print_str(self.raw.as_bytes());
     }
+}
+
+fn print_non_negative_float(raw: &str, value: f64, p: &mut Printer) {
+    // If integers less than 1000, we know that exponential notation will always be longer than
+    // the integer representation. This is not the case for 1000 which is "1e3".
+    if value < 1000.0 && value.fract() == 0.0 {
+        let s = format!("{}", value as u64);
+        p.print_str(s.as_bytes());
+        p.need_space_before_dot = p.code().len();
+        return;
+    }
+
+    let result = value.to_string().chars().collect::<Vec<char>>();
+
+    p.print_str(raw.as_bytes());
 }
 
 impl Gen for BigintLiteral {
