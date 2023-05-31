@@ -38,7 +38,7 @@ oxc_tasks_common = { path = "tasks/common" }
 
 bitflags          = { version = "2.3.1" }
 bumpalo           = { version = "3.13.0" }
-clap              = { version = "4.3.0", default-features = false, features = ["std"] }
+clap              = { version = "4.3.0" }
 compact_str       = { version = "0.7.0" }
 convert_case      = { version = "0.6.0" }
 criterion         = { version = "0.4.0", default-features = false }
