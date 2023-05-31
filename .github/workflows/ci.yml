@@ -30,13 +30,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@cargo-nextest
-
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
           save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@cargo-nextest
 
       # NAPI crashes nextest on windows
       # https://github.com/napi-rs/napi-rs/issues/1405
