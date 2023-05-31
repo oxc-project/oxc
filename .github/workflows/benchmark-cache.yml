@@ -1,0 +1,30 @@
+name: Benchmark Cache
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**/*.md'
+
+jobs:
+  cache: # Warm cache factory for the benchmark job
+    name: Benchmark Cache
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+          - os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: benchmark
+          save-cache: true
+
+      - name: Build Benchmark
+        run: cargo build --release -p oxc_benchmark

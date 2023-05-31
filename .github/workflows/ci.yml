@@ -39,21 +39,20 @@ jobs:
         if: runner.os != 'Windows'
         uses: taiki-e/install-action@cargo-nextest
 
+      - name: Cargo check
+        run: cargo ck
+
       # NAPI crashes nextest on windows
       # https://github.com/napi-rs/napi-rs/issues/1405
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os == 'Windows'
         run: |
-          cargo ck
           cargo test run --workspace --all-targets --all-features --no-run
-          cargo build --release -p oxc_benchmark # save cache for benchmark
 
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os != 'Windows'
         run: |
-          cargo ck
           cargo nextest run --workspace --all-targets --all-features --no-run
-          cargo build --release -p oxc_benchmark # save cache for benchmark
 
   typos:
     name: Spell Check

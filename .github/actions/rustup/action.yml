@@ -24,6 +24,10 @@ inputs:
     default: false
     required: false
     type: boolean
+  shared-key:
+    default: 'warm'
+    required: false
+    type: string
 
 runs:
   using: composite
@@ -74,5 +78,5 @@ runs:
       uses: Swatinem/rust-cache@v2
       if: ${{ inputs.restore-cache == 'true' }}
       with:
-        shared-key: warm
+        shared-key: ${{ inputs.shared-key }}
         save-if: ${{ inputs.save-cache == 'true' }}

@@ -26,6 +26,8 @@ jobs:
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
+        with:
+          shared-key: benchmark
 
       - name: Compile
         run: cargo build --release -p oxc_benchmark
