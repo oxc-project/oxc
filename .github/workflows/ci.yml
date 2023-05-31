@@ -36,6 +36,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
 
       - name: Install cargo-nextest
+        if: runner.os != 'Windows'
         uses: taiki-e/install-action@cargo-nextest
 
       # NAPI crashes nextest on windows
@@ -43,16 +44,16 @@ jobs:
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os == 'Windows'
         run: |
-          cargo ck --release # for benchmark
           cargo ck
           cargo test run --workspace --all-targets --all-features --no-run
+          cargo build --release -p oxc_benchmark # save cache for benchmark
 
       - name: Build cache by Cargo Check and Cargo Test
         if: runner.os != 'Windows'
         run: |
-          cargo ck --release # for benchmark
           cargo ck
           cargo nextest run --workspace --all-targets --all-features --no-run
+          cargo build --release -p oxc_benchmark # save cache for benchmark
 
   typos:
     name: Spell Check

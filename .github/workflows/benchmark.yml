@@ -22,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: main # Checkout main first because the cache is warm
 
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
@@ -41,13 +41,13 @@ jobs:
         run: sleep 15s
 
       - name: Run Bench on PR Branch
-        run: cargo benchmark --save-baseline pr
+        run: cargo benchmark --save-baseline main
 
       - name: Checkout Main Branch
         uses: actions/checkout@v3
         with:
           clean: false
-          ref: main
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Compile
         run: cargo build --release -p oxc_benchmark
@@ -63,7 +63,7 @@ jobs:
         run: sleep 15s
 
       - name: Run Bench on Main Branch
-        run: cargo benchmark --save-baseline main
+        run: cargo benchmark --save-baseline pr
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v3
