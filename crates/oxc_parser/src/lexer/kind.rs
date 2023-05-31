@@ -169,7 +169,9 @@ pub enum Kind {
     Binary,
     Octal,
     Hex,
+    // for `1e10`, `1e+10`
     PositiveExponential,
+    // for `1e-10`
     NegativeExponential,
     // 12.8.4 String Literals
     /// String Type
@@ -605,12 +607,10 @@ impl Kind {
             True => "true",
             False => "false",
             Decimal => "decimal",
-            Float => "float",
+            Float | PositiveExponential | NegativeExponential => "float",
             Binary => "binary",
             Octal => "octal",
             Hex => "hex",
-            PositiveExponential => "positiveexponential",
-            NegativeExponential => "negativeexponential",
             Str | String => "string",
             RegExp => "/regexp/",
             NoSubstitutionTemplate => "${}",

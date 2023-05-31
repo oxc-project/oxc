@@ -843,7 +843,7 @@ impl<'a> Lexer<'a> {
             builder.push_matching(c);
         }
         self.read_decimal_digits(builder);
-        if c == '-' { Kind::NegativeExponential } else { Kind::PositiveExponential }
+        if matches!(c, '-') { Kind::NegativeExponential } else { Kind::PositiveExponential }
     }
 
     fn read_decimal_digits(&mut self, builder: &mut AutoCow<'a>) {
