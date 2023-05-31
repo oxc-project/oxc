@@ -1,9 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 53
 expression: use_isnan
 ---
-
   ⚠ eslint(use-isnan): Requires calls to isNaN() when checking for NaN
    ╭─[use_isnan.tsx:1:1]
  1 │ 123 == NaN;
@@ -605,4 +603,5 @@ expression: use_isnan
    ·                ──────────
    ╰────
   help: Array prototype method 'indexOf' cannot find NaN.
+
 

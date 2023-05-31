@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_constant_binary_expression
 ---
-
   ⚠ eslint(no-constant-binary-expression): Unexpected constant "truthiness" on the left-hand side of a `"&&"` expression
    ╭─[no_constant_binary_expression.tsx:1:1]
  1 │ [] && greeting
@@ -1549,4 +1548,5 @@ expression: no_constant_binary_expression
    · ───────────────────┬───────────────────
    ·                    ╰── This expression always evaluates to the constant on the left-hand side
    ╰────
+
 

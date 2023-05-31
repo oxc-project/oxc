@@ -1,9 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 53
 expression: no_dupe_class_members
 ---
-
   ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
    ╭─[no_dupe_class_members.tsx:1:1]
  1 │ class A { foo() {} foo() {} }
@@ -286,4 +284,5 @@ expression: no_dupe_class_members
  6 │       }
    ╰────
   help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
 

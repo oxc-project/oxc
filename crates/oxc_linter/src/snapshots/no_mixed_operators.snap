@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_mixed_operators
 ---
-
   ⚠ eslint(no-mixed-operators): Unexpected mix of && with ||
    ╭─[no_mixed_operators.tsx:1:1]
  1 │ a && b || c
@@ -114,4 +113,5 @@ expression: no_mixed_operators
    ·   ──   ──
    ╰────
   help: Use parentheses to clarify the intended order of operations.
+
 

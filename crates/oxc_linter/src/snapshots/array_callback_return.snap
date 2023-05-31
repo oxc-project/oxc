@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: array_callback_return
 ---
-
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
    ╭─[array_callback_return.tsx:1:1]
  1 │ Array.from(x, function() {})
@@ -792,4 +791,5 @@ expression: array_callback_return
    ·                                        ────────────────────────
    ╰────
   help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+
 

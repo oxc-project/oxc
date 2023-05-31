@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: constructor_super
 ---
-
   ⚠ eslint(constructor-super): Expected to call 'super()'.
    ╭─[constructor_super.tsx:1:1]
  1 │ class A extends B { constructor() {} }
@@ -43,4 +42,5 @@ expression: constructor_super
    ·                    ╰── because this is not a constructor
    ╰────
   help: Do not call 'super()' from constructor.
+
 

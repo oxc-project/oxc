@@ -1,9 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 53
 expression: no_compare_neg_zero
 ---
-
   ⚠ eslint(no-compare-neg-zero): Do not use the === operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
  1 │ x === -0
@@ -94,4 +92,5 @@ expression: no_compare_neg_zero
    · ────────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+
 

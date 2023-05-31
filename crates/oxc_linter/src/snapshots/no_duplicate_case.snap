@@ -1,9 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 53
 expression: no_duplicate_case
 ---
-
   ⚠ eslint(no-duplicate-case): Disallow duplicate case labels
    ╭─[no_duplicate_case.tsx:1:1]
  1 │ var a = 1; switch (a) {case 1: break; case 1: break; case 2: break; default: break;}
@@ -147,4 +145,5 @@ expression: no_duplicate_case
  4 │ ╰──▶ .p1: break; default: break;}
    ╰────
   help: Remove the duplicated case
+
 

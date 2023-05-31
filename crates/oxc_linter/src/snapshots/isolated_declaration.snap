@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: isolated_declaration
 ---
-
   ⚠ isolated-declaration: Requires type annotation on export parameters
    ╭─[isolated_declaration.tsx:1:1]
  1 │ export function foo(a) { return a; }
@@ -56,4 +55,5 @@ expression: isolated_declaration
  1 │ export class A { set foo(val) { } }
    ·                          ───
    ╰────
+
 

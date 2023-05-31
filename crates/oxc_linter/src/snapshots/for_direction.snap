@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: for_direction
 ---
-
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
    ╭─[for_direction.tsx:1:1]
  1 │ for (var i = 0; i < 10; i--){}
@@ -110,4 +109,5 @@ expression: for_direction
    ·                    ╰── This test moves in the wrong direction
    ╰────
   help: Use while loop for intended infinite loop
+
 

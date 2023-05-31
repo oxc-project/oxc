@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_empty
 ---
-
   ⚠ eslint(no-empty): Disallow empty block statements
    ╭─[no_empty.tsx:1:1]
  1 │ try {} catch (ex) {throw ex}
@@ -114,4 +113,5 @@ expression: no_empty
    ·                                       ╰── Empty block statement
    ╰────
   help: Add comment inside empty block statement
+
 

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_new_symbol
 ---
-
   ⚠ eslint(no-new-symbol): Disallow new operators with the Symbol object
    ╭─[no_new_symbol.tsx:1:1]
  1 │ var foo = new Symbol('foo');
@@ -16,4 +15,5 @@ expression: no_new_symbol
    ·                                                           ───
    ╰────
   help: Symbol is not intended to be used with the new operator, but to be called as a function. Consider removing the new operator.
+
 

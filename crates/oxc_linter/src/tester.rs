@@ -97,6 +97,7 @@ impl Tester {
                 source_text.to_string(),
             ));
             handler.render_report(&mut self.snapshot, diagnostic.as_ref()).unwrap();
+            self.snapshot.push('\n');
         }
         false
     }

@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: bad_array_method_on_arguments
 ---
-
   ⚠ Bad array method on arguments
    ╭─[bad_array_method_on_arguments.tsx:1:1]
  1 │ function fn() {arguments['map'](() => {})}
@@ -233,4 +232,5 @@ expression: bad_array_method_on_arguments
    ·                ───────────────────────
    ╰────
   help: The 'arguments' object does not have '@@iterator()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead.
+
 

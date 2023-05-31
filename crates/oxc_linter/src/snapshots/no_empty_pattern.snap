@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_empty_pattern
 ---
-
   ⚠ eslint(no-empty-pattern): Disallow empty destructuring patterns
    ╭─[no_empty_pattern.tsx:1:1]
  1 │ var {} = foo
@@ -65,4 +64,5 @@ expression: no_empty_pattern
    ·                  ─┬
    ·                   ╰── Empty array binding pattern
    ╰────
+
 

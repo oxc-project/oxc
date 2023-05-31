@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_shadow_restricted_names
 ---
-
   ⚠ eslint(no-shadow-restricted-names): Shadowing of global property 'NaN'
    ╭─[no_shadow_restricted_names.tsx:1:1]
  1 │ function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }
@@ -191,4 +190,5 @@ expression: no_shadow_restricted_names
    ·     ────┬────
    ·         ╰── Shadowing of global property 'undefined'
    ╰────
+
 

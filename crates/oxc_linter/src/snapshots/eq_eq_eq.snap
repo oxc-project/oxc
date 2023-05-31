@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: eq_eq_eq
 ---
-
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eq_eq_eq.tsx:1:1]
  1 │ a == b
@@ -30,4 +29,5 @@ expression: eq_eq_eq
    · ──────────────────
    ╰────
   help: Prefer strict === operator
+
 

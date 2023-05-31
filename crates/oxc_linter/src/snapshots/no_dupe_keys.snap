@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_dupe_keys
 ---
-
   ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { a: b, ['a']: b };
@@ -118,4 +117,5 @@ expression: no_dupe_keys
    ·            ──────────────      ────────────
    ╰────
   help: Consider removing the duplicated key
+
 

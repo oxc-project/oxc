@@ -2,7 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_bitwise
 ---
-
   ⚠ eslint(no-bitwise): Unexpected use of "^"
    ╭─[no_bitwise.tsx:1:1]
  1 │ a ^ b
@@ -93,4 +92,5 @@ expression: no_bitwise
    · ────────
    ╰────
   help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`
+
 
