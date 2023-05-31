@@ -32,7 +32,7 @@ lazy_static  = { workspace = true }
 walkdir      = { workspace = true }
 regex        = { workspace = true }
 
-console        = "0.15.5"
+console        = "0.15.7"
 encoding_rs    = "0.8.32"
 encoding_rs_io = "0.1.7"
 serde_yaml     = "0.9.21"
