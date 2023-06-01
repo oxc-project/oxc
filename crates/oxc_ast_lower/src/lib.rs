@@ -6,6 +6,14 @@ use oxc_hir::{hir, HirBuilder};
 use oxc_semantic2::{symbol::SymbolFlags, Semantic, SemanticBuilder};
 use oxc_span::{GetSpan, SourceType};
 
+// <https://github.com/rust-lang/rust/blob/master/compiler/rustc_data_structures/src/stack.rs>
+const RED_ZONE: usize = 100 * 1024; // 100k
+const STACK_PER_RECURSION: usize = 1024 * 1024; // 1MB
+#[inline]
+pub fn ensure_sufficient_stack<R, F: FnOnce() -> R>(f: F) -> R {
+    stacker::maybe_grow(RED_ZONE, STACK_PER_RECURSION, f)
+}
+
 pub struct AstLowerReturn<'a> {
     pub program: hir::Program<'a>,
     pub semantic: Semantic,
@@ -265,93 +273,105 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_expression(&mut self, expr: &ast::Expression<'a>) -> hir::Expression<'a> {
-        match expr {
-            ast::Expression::BigintLiteral(lit) => {
-                let lit = self.lower_bigint_literal(lit);
-                self.hir.literal_bigint_expression(lit)
+        ensure_sufficient_stack(|| {
+            match expr {
+                ast::Expression::BigintLiteral(lit) => {
+                    let lit = self.lower_bigint_literal(lit);
+                    self.hir.literal_bigint_expression(lit)
+                }
+                ast::Expression::BooleanLiteral(lit) => {
+                    let lit = self.lower_boolean_literal(lit);
+                    self.hir.literal_boolean_expression(lit)
+                }
+                ast::Expression::NullLiteral(lit) => {
+                    let lit = self.lower_null_literal(lit);
+                    self.hir.literal_null_expression(lit)
+                }
+                ast::Expression::NumberLiteral(lit) => {
+                    let lit = self.lower_number_literal(lit);
+                    self.hir.literal_number_expression(lit)
+                }
+                ast::Expression::RegExpLiteral(lit) => {
+                    let lit = self.lower_reg_expr_literal(lit);
+                    self.hir.literal_regexp_expression(lit)
+                }
+                ast::Expression::StringLiteral(lit) => {
+                    let lit = self.lower_string_literal(lit);
+                    self.hir.literal_string_expression(lit)
+                }
+                ast::Expression::TemplateLiteral(lit) => {
+                    let lit = self.lower_template_literal(lit);
+                    self.hir.literal_template_expression(lit)
+                }
+                ast::Expression::Identifier(ident) => {
+                    let lit = self.lower_identifier_reference(ident);
+                    self.hir.identifier_reference_expression(lit)
+                }
+                ast::Expression::MetaProperty(meta) => self.lower_meta_property(meta),
+                ast::Expression::ArrayExpression(expr) => self.lower_array_expression(expr),
+                ast::Expression::ArrowExpression(expr) => self.lower_arrow_expression(expr),
+                ast::Expression::AssignmentExpression(expr) => {
+                    self.lower_assignment_expression(expr)
+                }
+                ast::Expression::AwaitExpression(expr) => self.lower_await_expression(expr),
+                ast::Expression::BinaryExpression(expr) => self.lower_binary_expression(expr),
+                ast::Expression::CallExpression(expr) => self.lower_call_expression(expr),
+                ast::Expression::ChainExpression(expr) => self.lower_chain_expression(expr),
+                ast::Expression::ClassExpression(expr) => self.lower_class_expression(expr),
+                ast::Expression::ConditionalExpression(expr) => {
+                    self.lower_conditional_expression(expr)
+                }
+                ast::Expression::FunctionExpression(expr) => self.lower_function_expression(expr),
+                ast::Expression::ImportExpression(expr) => self.lower_import_expression(expr),
+                ast::Expression::LogicalExpression(expr) => self.lower_logical_expression(expr),
+                ast::Expression::MemberExpression(expr) => self.lower_member_expression(expr),
+                ast::Expression::NewExpression(expr) => self.lower_new_expression(expr),
+                ast::Expression::ObjectExpression(expr) => self.lower_object_expression(expr),
+                ast::Expression::ParenthesizedExpression(expr) => {
+                    self.lower_parenthesized_expression(expr)
+                }
+                ast::Expression::PrivateInExpression(expr) => {
+                    self.lower_private_in_expression(expr)
+                }
+                ast::Expression::SequenceExpression(expr) => self.lower_sequence_expression(expr),
+                ast::Expression::TaggedTemplateExpression(expr) => {
+                    self.lower_tagged_template_expression(expr)
+                }
+                ast::Expression::ThisExpression(expr) => self.lower_this_expression(expr),
+                ast::Expression::UnaryExpression(expr) => self.lower_unary_expression(expr),
+                ast::Expression::UpdateExpression(expr) => self.lower_update_expression(expr),
+                ast::Expression::YieldExpression(expr) => self.lower_yield_expression(expr),
+                ast::Expression::Super(expr) => self.lower_super(expr),
+                ast::Expression::JSXElement(elem) => {
+                    // TODO: implement JSX
+                    let ident = self.lower_identifier_reference(&ast::IdentifierReference {
+                        span: elem.span,
+                        name: "undefined".into(),
+                    });
+                    self.hir.identifier_reference_expression(ident)
+                }
+                ast::Expression::JSXFragment(elem) => {
+                    // TODO: implement JSX
+                    let ident = self.lower_identifier_reference(&ast::IdentifierReference {
+                        span: elem.span,
+                        name: "undefined".into(),
+                    });
+                    self.hir.identifier_reference_expression(ident)
+                }
+                // Syntax trimmed for the following expressions
+                ast::Expression::TSAsExpression(expr) => self.lower_expression(&expr.expression),
+                ast::Expression::TSSatisfiesExpression(expr) => {
+                    self.lower_expression(&expr.expression)
+                }
+                ast::Expression::TSNonNullExpression(expr) => {
+                    self.lower_expression(&expr.expression)
+                }
+                ast::Expression::TSTypeAssertion(expr) => self.lower_expression(&expr.expression),
+                ast::Expression::TSInstantiationExpression(expr) => {
+                    self.lower_expression(&expr.expression)
+                }
             }
-            ast::Expression::BooleanLiteral(lit) => {
-                let lit = self.lower_boolean_literal(lit);
-                self.hir.literal_boolean_expression(lit)
-            }
-            ast::Expression::NullLiteral(lit) => {
-                let lit = self.lower_null_literal(lit);
-                self.hir.literal_null_expression(lit)
-            }
-            ast::Expression::NumberLiteral(lit) => {
-                let lit = self.lower_number_literal(lit);
-                self.hir.literal_number_expression(lit)
-            }
-            ast::Expression::RegExpLiteral(lit) => {
-                let lit = self.lower_reg_expr_literal(lit);
-                self.hir.literal_regexp_expression(lit)
-            }
-            ast::Expression::StringLiteral(lit) => {
-                let lit = self.lower_string_literal(lit);
-                self.hir.literal_string_expression(lit)
-            }
-            ast::Expression::TemplateLiteral(lit) => {
-                let lit = self.lower_template_literal(lit);
-                self.hir.literal_template_expression(lit)
-            }
-            ast::Expression::Identifier(ident) => {
-                let lit = self.lower_identifier_reference(ident);
-                self.hir.identifier_reference_expression(lit)
-            }
-            ast::Expression::MetaProperty(meta) => self.lower_meta_property(meta),
-            ast::Expression::ArrayExpression(expr) => self.lower_array_expression(expr),
-            ast::Expression::ArrowExpression(expr) => self.lower_arrow_expression(expr),
-            ast::Expression::AssignmentExpression(expr) => self.lower_assignment_expression(expr),
-            ast::Expression::AwaitExpression(expr) => self.lower_await_expression(expr),
-            ast::Expression::BinaryExpression(expr) => self.lower_binary_expression(expr),
-            ast::Expression::CallExpression(expr) => self.lower_call_expression(expr),
-            ast::Expression::ChainExpression(expr) => self.lower_chain_expression(expr),
-            ast::Expression::ClassExpression(expr) => self.lower_class_expression(expr),
-            ast::Expression::ConditionalExpression(expr) => self.lower_conditional_expression(expr),
-            ast::Expression::FunctionExpression(expr) => self.lower_function_expression(expr),
-            ast::Expression::ImportExpression(expr) => self.lower_import_expression(expr),
-            ast::Expression::LogicalExpression(expr) => self.lower_logical_expression(expr),
-            ast::Expression::MemberExpression(expr) => self.lower_member_expression(expr),
-            ast::Expression::NewExpression(expr) => self.lower_new_expression(expr),
-            ast::Expression::ObjectExpression(expr) => self.lower_object_expression(expr),
-            ast::Expression::ParenthesizedExpression(expr) => {
-                self.lower_parenthesized_expression(expr)
-            }
-            ast::Expression::PrivateInExpression(expr) => self.lower_private_in_expression(expr),
-            ast::Expression::SequenceExpression(expr) => self.lower_sequence_expression(expr),
-            ast::Expression::TaggedTemplateExpression(expr) => {
-                self.lower_tagged_template_expression(expr)
-            }
-            ast::Expression::ThisExpression(expr) => self.lower_this_expression(expr),
-            ast::Expression::UnaryExpression(expr) => self.lower_unary_expression(expr),
-            ast::Expression::UpdateExpression(expr) => self.lower_update_expression(expr),
-            ast::Expression::YieldExpression(expr) => self.lower_yield_expression(expr),
-            ast::Expression::Super(expr) => self.lower_super(expr),
-            ast::Expression::JSXElement(elem) => {
-                // TODO: implement JSX
-                let ident = self.lower_identifier_reference(&ast::IdentifierReference {
-                    span: elem.span,
-                    name: "undefined".into(),
-                });
-                self.hir.identifier_reference_expression(ident)
-            }
-            ast::Expression::JSXFragment(elem) => {
-                // TODO: implement JSX
-                let ident = self.lower_identifier_reference(&ast::IdentifierReference {
-                    span: elem.span,
-                    name: "undefined".into(),
-                });
-                self.hir.identifier_reference_expression(ident)
-            }
-            // Syntax trimmed for the following expressions
-            ast::Expression::TSAsExpression(expr) => self.lower_expression(&expr.expression),
-            ast::Expression::TSSatisfiesExpression(expr) => self.lower_expression(&expr.expression),
-            ast::Expression::TSNonNullExpression(expr) => self.lower_expression(&expr.expression),
-            ast::Expression::TSTypeAssertion(expr) => self.lower_expression(&expr.expression),
-            ast::Expression::TSInstantiationExpression(expr) => {
-                self.lower_expression(&expr.expression)
-            }
-        }
+        })
     }
 
     fn lower_meta_property(&mut self, prop: &ast::MetaProperty) -> hir::Expression<'a> {
