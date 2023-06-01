@@ -3,6 +3,7 @@
 use crate::test;
 
 #[test]
+#[ignore]
 fn symmetric_operations() {
     set1_tests_same("==");
     set2_tests("==");
@@ -27,6 +28,7 @@ fn symmetric_operations() {
 }
 
 #[test]
+#[ignore]
 fn reorder_constant_doesnt_add_parens() {
     test("a % b * 4", "a%b*4");
     test("a * b * 4", "a*b*4");

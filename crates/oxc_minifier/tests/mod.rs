@@ -3,6 +3,7 @@
 
 mod closure;
 mod esbuild;
+mod oxc;
 mod tdewolff;
 mod terser;
 

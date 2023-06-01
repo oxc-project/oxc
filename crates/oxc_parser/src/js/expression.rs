@@ -874,7 +874,7 @@ impl<'a> Parser<'a> {
 
             let Some(left_precedence) = kind_to_precedence(kind) else { break };
 
-            let stop = if Precedence::is_right_associative(left_precedence) {
+            let stop = if left_precedence.is_right_associative() {
                 left_precedence < min_precedence
             } else {
                 left_precedence <= min_precedence

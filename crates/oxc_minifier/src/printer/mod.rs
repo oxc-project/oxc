@@ -10,6 +10,7 @@ use std::{rc::Rc, str::from_utf8_unchecked};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
+use oxc_hir::precedence;
 use oxc_semantic2::symbol::{SymbolId, SymbolTable};
 use oxc_span::Atom;
 use oxc_syntax::{
@@ -17,9 +18,13 @@ use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
+    precedence::Precedence,
 };
 
-use self::{gen::Gen, operator::Operator};
+use self::{
+    gen::{Gen, GenExpr},
+    operator::Operator,
+};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct PrinterOptions;
@@ -42,6 +47,10 @@ pub struct Printer {
     needs_semicolon: bool,
 
     prev_op: Option<Operator>,
+
+    start_of_stmt: usize,
+    start_of_arrow_expr: usize,
+    start_of_default_export: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -67,6 +76,9 @@ impl Printer {
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,
+            start_of_stmt: 0,
+            start_of_arrow_expr: 0,
+            start_of_default_export: 0,
         }
     }
 
@@ -89,6 +101,10 @@ impl Printer {
 
     fn code(&self) -> &Vec<u8> {
         &self.code
+    }
+
+    fn code_len(&self) -> usize {
+        self.code().len()
     }
 
     /// Push a single character into the buffer
@@ -227,12 +243,31 @@ impl Printer {
         }
     }
 
+    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence) {
+        for (index, item) in items.iter().enumerate() {
+            if index != 0 {
+                self.print_comma();
+            }
+            item.gen_expr(self, precedence);
+        }
+    }
+
     fn print_symbol(&mut self, symbol_id: SymbolId, fallback: &Atom) {
         if self.mangle {
             let name = self.symbol_table.get_name(symbol_id).clone();
             self.print_str(name.as_bytes());
         } else {
             self.print_str(fallback.as_bytes());
+        }
+    }
+
+    fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
+        if wrap {
+            self.print(b'(');
+        }
+        f(self);
+        if wrap {
+            self.print(b')');
         }
     }
 }

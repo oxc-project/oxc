@@ -1270,6 +1270,10 @@ pub enum BindingPattern<'a> {
 }
 
 impl<'a> BindingPattern<'a> {
+    pub fn is_binding_identifier(&self) -> bool {
+        matches!(self, Self::BindingIdentifier(_))
+    }
+
     pub fn is_destructuring_pattern(&self) -> bool {
         matches!(self, Self::ObjectPattern(_) | Self::ArrayPattern(_))
     }
