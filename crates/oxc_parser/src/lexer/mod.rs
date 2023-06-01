@@ -302,7 +302,9 @@ impl<'a> Lexer<'a> {
                     |src| parse_big_int(src, kind).map(TokenValue::BigInt),
                 )
             }
-            Kind::Float => parse_float(src).map(TokenValue::Number),
+            Kind::Float | Kind::PositiveExponential | Kind::NegativeExponential => {
+                parse_float(src).map(TokenValue::Number)
+            }
             Kind::Undetermined => Ok(TokenValue::Number(std::f64::NAN)),
             _ => unreachable!("{kind}"),
         };
@@ -830,8 +832,8 @@ impl<'a> Lexer<'a> {
             return self.check_after_numeric_literal(Kind::Decimal);
         }
 
-        let has_exponent = self.optional_exponent(builder);
-        self.check_after_numeric_literal(if has_exponent { Kind::Float } else { Kind::Decimal })
+        let kind = self.optional_exponent(builder).map_or(Kind::Decimal, |kind| kind);
+        self.check_after_numeric_literal(kind)
     }
 
     fn read_decimal_exponent(&mut self, builder: &mut AutoCow<'a>) -> Kind {
@@ -841,7 +843,7 @@ impl<'a> Lexer<'a> {
             builder.push_matching(c);
         }
         self.read_decimal_digits(builder);
-        Kind::Float
+        if matches!(c, '-') { Kind::NegativeExponential } else { Kind::PositiveExponential }
     }
 
     fn read_decimal_digits(&mut self, builder: &mut AutoCow<'a>) {
@@ -904,14 +906,13 @@ impl<'a> Lexer<'a> {
         self.read_decimal_digits_after_first_digit(builder);
     }
 
-    fn optional_exponent(&mut self, builder: &mut AutoCow<'a>) -> bool {
+    fn optional_exponent(&mut self, builder: &mut AutoCow<'a>) -> Option<Kind> {
         if matches!(self.peek(), 'e' | 'E') {
             let c = self.current.chars.next().unwrap();
             builder.push_matching(c);
-            self.read_decimal_exponent(builder);
-            return true;
+            return Some(self.read_decimal_exponent(builder));
         }
-        false
+        None
     }
 
     fn check_after_numeric_literal(&mut self, kind: Kind) -> Kind {

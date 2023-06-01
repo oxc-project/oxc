@@ -269,15 +269,22 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn parse_literal_number(&mut self) -> Result<NumberLiteral<'a>> {
         let span = self.start_span();
+        let value = self.cur_token().value.as_number();
         let base = match self.cur_kind() {
             Kind::Decimal => NumberBase::Decimal,
             Kind::Float => NumberBase::Float,
             Kind::Binary => NumberBase::Binary,
             Kind::Octal => NumberBase::Octal,
             Kind::Hex => NumberBase::Hex,
+            Kind::PositiveExponential | Kind::NegativeExponential => {
+                if value.fract() == 0.0 {
+                    NumberBase::Decimal
+                } else {
+                    NumberBase::Float
+                }
+            }
             _ => return Err(self.unexpected()),
         };
-        let value = self.cur_token().value.as_number();
         let raw = self.cur_src();
         self.bump_any();
         Ok(NumberLiteral::new(self.end_span(span), value, raw, base))
