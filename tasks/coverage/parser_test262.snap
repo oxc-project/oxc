@@ -30,7 +30,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-26.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-27.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-28.js"
-
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:17:1]
  17 │ 
@@ -34695,3 +34694,4 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  32 │ var᠎foo;
     ·    ─
     ╰────
+

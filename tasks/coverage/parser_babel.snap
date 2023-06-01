@@ -178,7 +178,6 @@ Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/inp
 Expect Syntax Error: "typescript/types/tuple-unlabeled-spread-after-labeled/input.ts"
 Expect Syntax Error: "typescript/types/tuple-unlabeled-spread-before-labeled/input.ts"
 Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
-
   × Unexpected new.target expression
    ╭─[core/opts/allowNewTargetOutsideFunction-true/input.js:1:1]
  1 │ const x = new.target;
@@ -194,14 +193,14 @@ Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
-Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
+Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
   × Expected `<` but found `EOF`
    ╭─[typescript/arrow-function/generic-tsx-babel-7/input.ts:2:1]
  2 │ <T>(a: T): T => a;
    ╰────
-Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
 
+Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
   × Multiple constructor implementations are not allowed.
    ╭─[typescript/class/constructor-with-modifier-names/input.ts:1:1]
  1 │ class Foo {
@@ -213,8 +212,8 @@ Expect to Parse: "typescript/class/constructor-with-modifier-names/input.ts"
    ·        ╰── it cannot be redeclared here
  4 │ }
    ╰────
-Expect to Parse: "typescript/interface/get-set-properties/input.ts"
 
+Expect to Parse: "typescript/interface/get-set-properties/input.ts"
   × Expected `(` but found `:`
    ╭─[typescript/interface/get-set-properties/input.ts:1:1]
  1 │ interface Foo {
@@ -223,8 +222,8 @@ Expect to Parse: "typescript/interface/get-set-properties/input.ts"
    ·          ╰── `(` expected
  3 │   set bar: string;
    ╰────
-Expect to Parse: "typescript/module-namespace/body-nested-declare/input.ts"
 
+Expect to Parse: "typescript/module-namespace/body-nested-declare/input.ts"
   × Missing initializer in const declaration
    ╭─[typescript/module-namespace/body-nested-declare/input.ts:2:1]
  2 │     namespace B {
@@ -232,32 +231,32 @@ Expect to Parse: "typescript/module-namespace/body-nested-declare/input.ts"
    ·               ─
  4 │     }
    ╰────
-Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
 
+Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
   × Expected `,` but found `extends`
    ╭─[typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts:1:1]
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
    ·                               ───┬───
    ·                                  ╰── `,` expected
    ╰────
-Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input.ts"
 
+Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input.ts"
   × Expected `,` but found `extends`
    ╭─[typescript/regression/nested-extends-in-arrow-type-param/input.ts:1:1]
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
    ·                               ───┬───
    ·                                  ╰── `,` expected
    ╰────
-Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
 
+Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Unexpected token
    ╭─[typescript/types/const-type-parameters-babel-7/input.ts:1:1]
  1 │ function a<const T>() {}
    ·            ─────
  2 │ function b<const T extends U>() {}
    ╰────
-Expect to Parse: "typescript/types/const-type-parameters/input.ts"
 
+Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
    ╭─[typescript/types/const-type-parameters/input.ts:1:1]
  1 │ function a<const T>() {}
@@ -10216,3 +10215,4 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ let {}! = {};
    ·         ─
    ╰────
+

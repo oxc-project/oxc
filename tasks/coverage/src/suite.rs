@@ -296,6 +296,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
                     source_text.to_string(),
                 ));
                 handler.render_report(&mut output, error.as_ref()).unwrap();
+                output.push('\n');
             }
             Err(output)
         };

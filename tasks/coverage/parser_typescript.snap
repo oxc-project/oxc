@@ -3765,14 +3765,13 @@ Expect Syntax Error: "conformance/types/unknown/unknownType1.ts"
 Expect Syntax Error: "conformance/types/unknown/unknownType2.ts"
 Expect Syntax Error: "conformance/types/witness/witness.ts"
 Expect to Parse: "compiler/bom-utf16be.ts"
-
   × Invalid Character `￾`
    ╭─[compiler/bom-utf16be.ts:1:1]
  1 │ ￾瘀愀爀 砀㴀㄀　㬀ഀ਀
    · ─
    ╰────
-Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
 
+Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
   × 'with' statements are not allowed
     ╭─[compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts:22:1]
  22 │ // @ts-ignore suppress `with` statement error
@@ -3780,8 +3779,8 @@ Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
     · ────
  24 │     const enum H {}
     ╰────
-Expect to Parse: "compiler/emitBundleWithShebang1.ts"
 
+Expect to Parse: "compiler/emitBundleWithShebang1.ts"
   × Invalid Character `!`
    ╭─[compiler/emitBundleWithShebang1.ts:4:1]
  4 │ 
@@ -3789,8 +3788,8 @@ Expect to Parse: "compiler/emitBundleWithShebang1.ts"
    ·  ─
  6 │ class Doo {}
    ╰────
-Expect to Parse: "compiler/emitBundleWithShebangAndPrologueDirectives1.ts"
 
+Expect to Parse: "compiler/emitBundleWithShebangAndPrologueDirectives1.ts"
   × Invalid Character `!`
    ╭─[compiler/emitBundleWithShebangAndPrologueDirectives1.ts:5:1]
  5 │ // @Filename: test.ts
@@ -3798,8 +3797,8 @@ Expect to Parse: "compiler/emitBundleWithShebangAndPrologueDirectives1.ts"
    ·  ─
  7 │ "use strict"
    ╰────
-Expect to Parse: "compiler/spreadsAndContextualTupleTypes.ts"
 
+Expect to Parse: "compiler/spreadsAndContextualTupleTypes.ts"
   × Unexpected token
     ╭─[compiler/spreadsAndContextualTupleTypes.ts:26:1]
  26 │ 
@@ -3807,16 +3806,16 @@ Expect to Parse: "compiler/spreadsAndContextualTupleTypes.ts"
     ·                      ─────
  28 │ 
     ╰────
-Expect to Parse: "compiler/withStatementInternalComments.ts"
 
+Expect to Parse: "compiler/withStatementInternalComments.ts"
   × 'with' statements are not allowed
    ╭─[compiler/withStatementInternalComments.ts:1:1]
  1 │ // @ts-ignore
  2 │ /*1*/ with /*2*/ ( /*3*/ false /*4*/ ) /*5*/ {}
    ·       ────
    ╰────
-Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
 
+Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
   × Identifier `x` has already been declared
      ╭─[conformance/async/es6/asyncWithVarShadowing_es6.ts:131:1]
  131 │     }
@@ -3828,8 +3827,8 @@ Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
      ·             ╰── It can not be redeclared here
  134 │     }
      ╰────
-Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
 
+Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
   × Classes may not have a static property named prototype
     ╭─[conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts:27:1]
  27 │ class StaticPrototype {
@@ -3877,8 +3876,8 @@ Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyN
      ·                ─────────
  162 │         prototype() {} // ok
      ╰────
-Expect to Parse: "conformance/es6/for-ofStatements/for-of53.ts"
 
+Expect to Parse: "conformance/es6/for-ofStatements/for-of53.ts"
   × Identifier `v` has already been declared
    ╭─[conformance/es6/for-ofStatements/for-of53.ts:1:1]
  1 │ //@target: ES6
@@ -3890,8 +3889,8 @@ Expect to Parse: "conformance/es6/for-ofStatements/for-of53.ts"
    ·         ╰── It can not be redeclared here
  4 │ }
    ╰────
-Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts"
 
+Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts"
   × 'with' statements are not allowed
     ╭─[conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts:67:1]
  67 │ // @ts-ignore
@@ -3899,8 +3898,8 @@ Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJ
     · ────
  69 │     var y = _;
     ╰────
-Expect to Parse: "conformance/externalModules/topLevelAwait.2.ts"
 
+Expect to Parse: "conformance/externalModules/topLevelAwait.2.ts"
   × Cannot use `await` as an identifier in an async context
    ╭─[conformance/externalModules/topLevelAwait.2.ts:6:1]
  6 │ // await allowed in import=namespace when not a module
@@ -3922,8 +3921,8 @@ Expect to Parse: "conformance/externalModules/topLevelAwait.2.ts"
  7 │ import await = foo.await;
    ·        ─────
    ╰────
-Expect to Parse: "conformance/externalModules/topLevelAwait.3.ts"
 
+Expect to Parse: "conformance/externalModules/topLevelAwait.3.ts"
   × The keyword 'await' is reserved
    ╭─[conformance/externalModules/topLevelAwait.3.ts:6:1]
  6 │ export {};
@@ -3938,8 +3937,8 @@ Expect to Parse: "conformance/externalModules/topLevelAwait.3.ts"
  8 │ declare class C extends await {}
    ·                         ─────
    ╰────
-Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
 
+Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Identifier `orbitol` has already been declared
    ╭─[conformance/salsa/plainJSRedeclare3.ts:4:1]
  4 │ // @filename: plainJSRedeclare.js
@@ -19071,3 +19070,4 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·            ──
  5 │ type T2<out out> = T2 // Error: circularly references 
    ╰────
+
