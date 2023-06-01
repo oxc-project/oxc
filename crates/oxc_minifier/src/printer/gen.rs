@@ -793,37 +793,92 @@ impl Gen for NullLiteral {
 impl<'a> Gen for NumberLiteral<'a> {
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn gen(&self, p: &mut Printer) {
-        let non_negative_value = self.value;
+        p.print_space_before_identifier();
+        let result = print_non_negative_float(self.value, p);
+
         if self.base != NumberBase::Float {
-            let value = non_negative_value as u64;
-            let decimal = format!("{value}");
+            let value = self.value as u64;
             let s = if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
                 let hex = format!("{value:#x}");
-                if hex.len() < decimal.len() { hex } else { decimal }
+                if hex.len() < result.len() { hex } else { result }
             } else {
-                decimal
+                result
             };
             p.print_str(s.as_bytes());
             return;
         }
-        p.print_str(self.raw.as_bytes());
+        p.print_str(result.as_bytes());
     }
 }
 
-fn print_non_negative_float(raw: &str, value: f64, p: &mut Printer) {
+fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
     // If integers less than 1000, we know that exponential notation will always be longer than
     // the integer representation. This is not the case for 1000 which is "1e3".
     if value < 1000.0 && value.fract() == 0.0 {
-        let s = format!("{}", value as u64);
-        p.print_str(s.as_bytes());
+        let s = format!("{value}");
         p.need_space_before_dot = p.code().len();
-        return;
+        return s;
     }
 
-    let result = value.to_string().chars().collect::<Vec<char>>();
+    let chars = value.to_string().chars().collect::<std::vec::Vec<char>>();
+    let len = chars.len();
+    let dot = chars.iter().position(|&c| c == '.');
+    let mut result = &chars[0..len];
+    let mut final_result = chars.iter().collect::<String>();
 
-    p.print_str(raw.as_bytes());
+    if matches!(dot, Some(1)) && matches!(chars[0], '0') {
+        // Strip off the leading zero when minifying
+        // "0.5" => ".5"
+        result = &result[1..];
+        // after stripping the leading zero, the after dot position will be start from 1
+        let after_dot = 1;
+
+        // Try using an exponent
+        // "0.001" => "1e-3"
+        if result[after_dot] == '0' {
+            let mut i = after_dot + 1;
+            loop {
+                if result[i] != '0' {
+                    break;
+                }
+                i += 1;
+            }
+            let remaining = &result[i..];
+            let exponent = format!("-{}", remaining.len() - after_dot + i);
+
+            // Only switch if it's actually shorter
+            if result.len() > remaining.len() + 1 + exponent.len() {
+                final_result = format!("{}e{}", remaining.iter().collect::<String>(), exponent);
+            } else {
+                final_result = result.iter().collect::<String>();
+            }
+        } else {
+            final_result = result.iter().collect::<String>();
+        }
+    } else if result[len - 1] == '0' {
+        // Simplify numbers ending with "0" by trying to use an exponent
+        // "1000" => "1e3"
+        let mut i = len - 1;
+        loop {
+            if i == 0 || result[i - 1] != '0' {
+                break;
+            }
+            i -= 1;
+        }
+        let remaining = &result[0..i];
+        let exponent = format!("{}", len - i);
+
+        // Only switch if it's actually shorter
+        if result.len() > remaining.len() + 1 + exponent.len() {
+            final_result = format!("{}e{}", remaining.iter().collect::<String>(), exponent);
+        } else {
+            final_result = result.iter().collect::<String>();
+        }
+    }
+
+    final_result
 }
+
 
 impl Gen for BigintLiteral {
     fn gen(&self, p: &mut Printer) {
