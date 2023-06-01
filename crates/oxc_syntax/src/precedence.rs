@@ -1,12 +1,24 @@
-/// [Operator Precedence](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence#table)
+use std::fmt;
+
+pub trait GetPrecedence {
+    fn precedence(&self) -> Precedence;
+}
+
+/// Operator Precedence
+///
+/// The following values are meaningful relative position, not their individual values.
+/// The relative positions are derived from the ECMA Spec by following the grammar bottom up, starting from the "Comma Operator".
+///
+/// Note: This differs from the the operator precedence table
+/// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence#table>
+/// but the relative positions are the same, as both are derived from the ECMA specification.
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 #[repr(u8)]
 pub enum Precedence {
-    Lowest = 0,
     Comma,
-    Spread,
-    Yield,
     Assign,
+    Arrow,
+    Yield,
     Conditional,
     Coalesce,
     LogicalOr,
@@ -15,16 +27,17 @@ pub enum Precedence {
     BitwiseXor,
     BitwiseAnd,
     Equality,
-    Compare,
+    Relational,
     Shift,
     Add,
     Multiply,
     Exponential,
     Prefix,
     Postfix,
-    New,
+    NewWithoutArgs,
     Call,
     Member,
+    Grouping,
 }
 
 impl Precedence {
@@ -32,11 +45,17 @@ impl Precedence {
         Self::Comma
     }
 
-    pub fn is_right_associative(right: Self) -> bool {
-        right == Self::Exponential
+    pub fn highest() -> Self {
+        Self::Grouping
+    }
+
+    pub fn is_right_associative(&self) -> bool {
+        matches!(self, Self::Exponential)
     }
 }
 
-pub trait GetPrecedence {
-    fn precedence(&self) -> Precedence;
+impl fmt::Display for Precedence {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}({})", self, (*self) as u8)
+    }
 }

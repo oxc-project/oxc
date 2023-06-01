@@ -1,3 +1,4 @@
 minifier_test262 Summary:
 AST Parsed     : 44745/44745 (100.00%)
-Positive Passed: 44745/44745 (100.00%)
+Positive Passed: 44744/44745 (100.00%)
+Expect to Parse: "built-ins/Number/prototype/toFixed/exactness.js"

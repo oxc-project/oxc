@@ -171,6 +171,7 @@ impl<'a> Compressor<'a> {
     }
 
     /// Transforms `Infinity` => `1/0`
+    #[allow(unused)]
     fn compress_infinity<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         if let Expression::Identifier(ident) = expr
         && ident.name == "Infinity"
@@ -233,6 +234,7 @@ impl<'a> Compressor<'a> {
     /// ex. x === 0 -> 0 === x
     /// After reordering, expressions like 0 === x and 0 === y may have higher
     /// compression together than their original counterparts.
+    #[allow(unused)]
     fn reorder_constant_expression<'b>(&self, expr: &'b mut BinaryExpression<'a>) {
         let operator = expr.operator;
         if operator.is_equality()
@@ -278,10 +280,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
 
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
         self.fold_expression(expr);
-        if self.compress_undefined(expr)
-            || self.compress_boolean(expr)
-            || self.compress_infinity(expr)
-        {
+        if self.compress_undefined(expr) || self.compress_boolean(expr) {
             return;
         }
         self.visit_expression_match(expr);
@@ -292,6 +291,5 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
         self.visit_expression(&mut expr.right);
 
         self.compress_typeof_undefined(expr);
-        self.reorder_constant_expression(expr);
     }
 }

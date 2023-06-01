@@ -1,17 +1,23 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
+use oxc_hir::precedence;
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
     },
+    precedence::{GetPrecedence, Precedence},
     NumberBase,
 };
 
 use super::{Operator, Printer, Separator};
 
 pub trait Gen {
-    fn gen(&self, p: &mut Printer);
+    fn gen(&self, p: &mut Printer) {}
+}
+
+pub trait GenExpr {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {}
 }
 
 impl<'a, T> Gen for Box<'a, T>
@@ -20,6 +26,15 @@ where
 {
     fn gen(&self, p: &mut Printer) {
         (**self).gen(p);
+    }
+}
+
+impl<'a, T> GenExpr for Box<'a, T>
+where
+    T: GenExpr,
+{
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        (**self).gen_expr(p, precedence);
     }
 }
 
@@ -81,7 +96,8 @@ impl<'a> Gen for Option<Statement<'a>> {
 
 impl<'a> Gen for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Printer) {
-        self.expression.gen(p);
+        p.start_of_stmt = p.code_len();
+        self.expression.gen_expr(p, Precedence::lowest());
         if let Expression::Identifier(ident) = &self.expression
         && ident.name == "let" {
             p.print_semicolon();
@@ -100,7 +116,7 @@ impl<'a> Gen for IfStatement<'a> {
 fn print_if(if_stmt: &IfStatement<'_>, p: &mut Printer) {
     p.print_str(b"if");
     p.print(b'(');
-    if_stmt.test.gen(p);
+    if_stmt.test.gen_expr(p, Precedence::lowest());
     p.print(b')');
 
     match &if_stmt.consequent {
@@ -183,7 +199,7 @@ impl<'a> Gen for ForStatement<'a> {
 
         if let Some(init) = self.init.as_ref() {
             match init {
-                ForStatementInit::Expression(expr) => expr.gen(p),
+                ForStatementInit::Expression(expr) => expr.gen_expr(p, Precedence::lowest()),
                 ForStatementInit::VariableDeclaration(var) => var.gen(p),
             }
         }
@@ -191,13 +207,13 @@ impl<'a> Gen for ForStatement<'a> {
         p.print_semicolon();
 
         if let Some(test) = self.test.as_ref() {
-            test.gen(p);
+            test.gen_expr(p, Precedence::lowest());
         }
 
         p.print_semicolon();
 
         if let Some(update) = self.update.as_ref() {
-            update.gen(p);
+            update.gen_expr(p, Precedence::lowest());
         }
 
         p.print(b')');
@@ -208,7 +224,14 @@ impl<'a> Gen for ForStatement<'a> {
 impl<'a> Gen for ForInStatement<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"for");
-        gen_for_statement_brack_content(&self.left, &self.right, &self.body, b"in", p);
+        p.print(b'(');
+        self.left.gen(p);
+        p.print(b' ');
+        p.print_str(b"in");
+        p.print(b' ');
+        self.right.gen_expr(p, Precedence::lowest());
+        p.print(b')');
+        self.body.gen(p);
     }
 }
 
@@ -218,25 +241,15 @@ impl<'a> Gen for ForOfStatement<'a> {
         if self.r#await {
             p.print_str(b" await");
         }
-        gen_for_statement_brack_content(&self.left, &self.right, &self.body, b"of", p);
+        p.print(b'(');
+        self.left.gen(p);
+        p.print(b' ');
+        p.print_str(b"of");
+        p.print(b' ');
+        self.right.gen_expr(p, Precedence::Assign);
+        p.print(b')');
+        self.body.gen(p);
     }
-}
-
-fn gen_for_statement_brack_content<'a>(
-    left: &ForStatementLeft<'a>,
-    right: &Expression<'a>,
-    body: &Option<Statement>,
-    key: &[u8],
-    p: &mut Printer,
-) {
-    p.print(b'(');
-    left.gen(p);
-    p.print(b' ');
-    p.print_str(key);
-    p.print(b' ');
-    right.gen(p);
-    p.print(b')');
-    body.gen(p);
 }
 
 impl<'a> Gen for ForStatementLeft<'a> {
@@ -252,7 +265,7 @@ impl<'a> Gen for WhileStatement<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"while");
         p.print(b'(');
-        self.test.gen(p);
+        self.test.gen_expr(p, Precedence::lowest());
         p.print(b')');
         self.body.gen(p);
     }
@@ -270,7 +283,7 @@ impl<'a> Gen for DoWhileStatement<'a> {
         }
         p.print_str(b"while");
         p.print(b'(');
-        self.test.gen(p);
+        self.test.gen_expr(p, Precedence::lowest());
         p.print(b')');
         p.print_semicolon_after_statement();
     }
@@ -302,7 +315,7 @@ impl<'a> Gen for SwitchStatement<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"switch");
         p.print(b'(');
-        self.discriminant.gen(p);
+        self.discriminant.gen_expr(p, Precedence::lowest());
         p.print(b')');
         p.print(b'{');
         for case in &self.cases {
@@ -320,7 +333,7 @@ impl<'a> Gen for SwitchCase<'a> {
             Some(test) => {
                 p.print_str(b"case");
                 p.print(b' ');
-                test.gen(p);
+                test.gen_expr(p, Precedence::lowest());
             }
             None => p.print_str(b"default"),
         }
@@ -337,7 +350,7 @@ impl<'a> Gen for ReturnStatement<'a> {
         p.print_str(b"return");
         if let Some(arg) = &self.argument {
             p.print(b' ');
-            arg.gen(p);
+            arg.gen_expr(p, Precedence::lowest());
         }
         p.print_semicolon_after_statement();
     }
@@ -375,7 +388,7 @@ impl<'a> Gen for ThrowStatement<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"throw");
         p.print(b' ');
-        self.argument.gen(p);
+        self.argument.gen_expr(p, Precedence::lowest());
         p.print_semicolon_after_statement();
     }
 }
@@ -384,7 +397,7 @@ impl<'a> Gen for WithStatement<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"with");
         p.print(b'(');
-        self.object.gen(p);
+        self.object.gen_expr(p, Precedence::lowest());
         p.print(b')');
         self.body.gen(p);
     }
@@ -443,33 +456,37 @@ impl<'a> Gen for VariableDeclarator<'a> {
         self.id.gen(p);
         if let Some(init) = &self.init {
             p.print_equal();
-            init.gen(p);
+            init.gen_expr(p, Precedence::Assign);
         }
     }
 }
 
 impl<'a> Gen for Function<'a> {
     fn gen(&self, p: &mut Printer) {
-        if self.r#async {
-            p.print_str(b"async");
-            p.print(b' ');
-        }
-        p.print_str(b"function");
-        if self.generator {
-            p.print(b'*');
-        }
-        if let Some(id) = &self.id {
-            if !self.generator {
+        let n = p.code_len();
+        let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
+        p.wrap(wrap, |p| {
+            if self.r#async {
+                p.print_str(b"async");
                 p.print(b' ');
             }
-            id.gen(p);
-        }
-        p.print(b'(');
-        self.params.gen(p);
-        p.print(b')');
-        if let Some(body) = &self.body {
-            body.gen(p);
-        }
+            p.print_str(b"function");
+            if self.generator {
+                p.print(b'*');
+            }
+            if let Some(id) = &self.id {
+                if !self.generator {
+                    p.print(b' ');
+                }
+                id.gen(p);
+            }
+            p.print(b'(');
+            self.params.gen(p);
+            p.print(b')');
+            if let Some(body) = &self.body {
+                body.gen(p);
+            }
+        });
     }
 }
 
@@ -680,7 +697,8 @@ impl<'a> Gen for ExportDefaultDeclarationKind<'a> {
     fn gen(&self, p: &mut Printer) {
         match self {
             Self::Expression(expr) => {
-                expr.gen(p);
+                p.start_of_default_export = p.code_len();
+                expr.gen_expr(p, Precedence::Assign);
                 p.print_semicolon_after_statement();
             }
             Self::FunctionDeclaration(fun) => fun.gen(p),
@@ -690,8 +708,8 @@ impl<'a> Gen for ExportDefaultDeclarationKind<'a> {
     }
 }
 
-impl<'a> Gen for Expression<'a> {
-    fn gen(&self, p: &mut Printer) {
+impl<'a> GenExpr for Expression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
         match self {
             Self::BooleanLiteral(lit) => lit.gen(p),
             Self::NullLiteral(lit) => lit.gen(p),
@@ -701,28 +719,28 @@ impl<'a> Gen for Expression<'a> {
             Self::StringLiteral(lit) => lit.gen(p),
             Self::Identifier(ident) => ident.gen(p),
             Self::ThisExpression(expr) => expr.gen(p),
-            Self::MemberExpression(expr) => expr.gen(p),
-            Self::CallExpression(expr) => expr.gen(p),
+            Self::MemberExpression(expr) => expr.gen_expr(p, precedence),
+            Self::CallExpression(expr) => expr.gen_expr(p, precedence),
             Self::ArrayExpression(expr) => expr.gen(p),
-            Self::ObjectExpression(expr) => expr.gen(p),
+            Self::ObjectExpression(expr) => expr.gen_expr(p, precedence),
             Self::FunctionExpression(expr) => expr.gen(p),
-            Self::ArrowExpression(expr) => expr.gen(p),
-            Self::YieldExpression(expr) => expr.gen(p),
-            Self::UpdateExpression(expr) => expr.gen(p),
-            Self::UnaryExpression(expr) => expr.gen(p),
-            Self::BinaryExpression(expr) => expr.gen(p),
+            Self::ArrowExpression(expr) => expr.gen_expr(p, precedence),
+            Self::YieldExpression(expr) => expr.gen_expr(p, precedence),
+            Self::UpdateExpression(expr) => expr.gen_expr(p, precedence),
+            Self::UnaryExpression(expr) => expr.gen_expr(p, precedence),
+            Self::BinaryExpression(expr) => expr.gen_expr(p, precedence),
             Self::PrivateInExpression(expr) => expr.gen(p),
-            Self::LogicalExpression(expr) => expr.gen(p),
-            Self::ConditionalExpression(expr) => expr.gen(p),
-            Self::AssignmentExpression(expr) => expr.gen(p),
-            Self::SequenceExpression(expr) => expr.gen(p),
+            Self::LogicalExpression(expr) => expr.gen_expr(p, precedence),
+            Self::ConditionalExpression(expr) => expr.gen_expr(p, precedence),
+            Self::AssignmentExpression(expr) => expr.gen_expr(p, precedence),
+            Self::SequenceExpression(expr) => expr.gen_expr(p, precedence),
             Self::ImportExpression(expr) => expr.gen(p),
             Self::TemplateLiteral(literal) => literal.gen(p),
             Self::TaggedTemplateExpression(expr) => expr.gen(p),
             Self::Super(sup) => sup.gen(p),
-            Self::AwaitExpression(expr) => expr.gen(p),
-            Self::ChainExpression(expr) => expr.gen(p),
-            Self::NewExpression(expr) => expr.gen(p),
+            Self::AwaitExpression(expr) => expr.gen_expr(p, precedence),
+            Self::ChainExpression(expr) => expr.gen_expr(p, precedence),
+            Self::NewExpression(expr) => expr.gen_expr(p, precedence),
             Self::MetaProperty(expr) => expr.gen(p),
             Self::ClassExpression(expr) => expr.gen(p),
             Self::JSXElement(el) => el.gen(p),
@@ -767,6 +785,7 @@ impl Gen for BooleanLiteral {
 
 impl Gen for NullLiteral {
     fn gen(&self, p: &mut Printer) {
+        p.print_space_before_identifier();
         p.print_str(b"null");
     }
 }
@@ -828,46 +847,51 @@ impl Gen for StringLiteral {
 
 impl Gen for ThisExpression {
     fn gen(&self, p: &mut Printer) {
+        p.print_space_before_identifier();
         p.print_str(b"this");
     }
 }
 
-impl<'a> Gen for MemberExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        match self {
-            Self::ComputedMemberExpression(expr) => expr.gen(p),
-            Self::StaticMemberExpression(expr) => expr.gen(p),
-            Self::PrivateFieldExpression(expr) => expr.gen(p),
-        }
+impl<'a> GenExpr for MemberExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence > self.precedence(), |p| match self {
+            Self::ComputedMemberExpression(expr) => expr.gen_expr(p, self.precedence()),
+            Self::StaticMemberExpression(expr) => expr.gen_expr(p, self.precedence()),
+            Self::PrivateFieldExpression(expr) => expr.gen_expr(p, self.precedence()),
+        });
     }
 }
 
-impl<'a> Gen for ComputedMemberExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        self.object.gen(p);
+impl<'a> GenExpr for ComputedMemberExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        self.object.gen_expr(p, Precedence::Postfix);
         if self.optional {
             p.print_str(b"?.");
         }
         p.print(b'[');
-        self.expression.gen(p);
+        self.expression.gen_expr(p, Precedence::lowest());
         p.print(b']');
     }
 }
 
-impl<'a> Gen for StaticMemberExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        with_parens_if_unary_expr(&self.object, p);
+impl<'a> GenExpr for StaticMemberExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        self.object.gen_expr(p, Precedence::Postfix);
         if self.optional {
             p.print(b'?');
+        } else if matches!(&self.object, Expression::NumberLiteral(n) if n.base == NumberBase::Decimal)
+        {
+            // `0.toExponential()` is invalid, add a space before the dot, `0 .toExponential()` is valid
+            p.print(b' ');
         }
         p.print(b'.');
         self.property.gen(p);
     }
 }
 
-impl<'a> Gen for PrivateFieldExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        self.object.gen(p);
+impl<'a> GenExpr for PrivateFieldExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        self.object.gen_expr(p, Precedence::Postfix);
         if self.optional {
             p.print_str(b"?");
         }
@@ -876,16 +900,17 @@ impl<'a> Gen for PrivateFieldExpression<'a> {
     }
 }
 
-impl<'a> Gen for CallExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        self.callee.gen(p);
-
-        if self.optional {
-            p.print_str(b"?.");
-        }
-        p.print(b'(');
-        p.print_list(&self.arguments);
-        p.print(b')');
+impl<'a> GenExpr for CallExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence > self.precedence(), |p| {
+            self.callee.gen_expr(p, self.precedence());
+            if self.optional {
+                p.print_str(b"?.");
+            }
+            p.print(b'(');
+            p.print_list(&self.arguments);
+            p.print(b')');
+        });
     }
 }
 
@@ -893,7 +918,7 @@ impl<'a> Gen for Argument<'a> {
     fn gen(&self, p: &mut Printer) {
         match self {
             Self::SpreadElement(elem) => elem.gen(p),
-            Self::Expression(elem) => elem.gen(p),
+            Self::Expression(elem) => elem.gen_expr(p, Precedence::Assign),
         }
     }
 }
@@ -901,7 +926,7 @@ impl<'a> Gen for Argument<'a> {
 impl<'a> Gen for ArrayExpressionElement<'a> {
     fn gen(&self, p: &mut Printer) {
         match self {
-            Self::Expression(expr) => expr.gen(p),
+            Self::Expression(expr) => expr.gen_expr(p, Precedence::Assign),
             Self::SpreadElement(elem) => elem.gen(p),
             Self::Elision(_span) => {}
         }
@@ -911,7 +936,7 @@ impl<'a> Gen for ArrayExpressionElement<'a> {
 impl<'a> Gen for SpreadElement<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_ellipsis();
-        self.argument.gen(p);
+        self.argument.gen_expr(p, Precedence::Assign);
     }
 }
 
@@ -926,16 +951,19 @@ impl<'a> Gen for ArrayExpression<'a> {
     }
 }
 
-impl<'a> Gen for ObjectExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        p.print(b'{');
-        for (i, item) in self.properties.iter().enumerate() {
-            if i != 0 {
-                p.print_comma();
+impl<'a> GenExpr for ObjectExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        let n = p.code_len();
+        p.wrap(p.start_of_stmt == n || p.start_of_arrow_expr == n, |p| {
+            p.print(b'{');
+            for (i, item) in self.properties.iter().enumerate() {
+                if i != 0 {
+                    p.print_comma();
+                }
+                item.gen(p);
             }
-            item.gen(p);
-        }
-        p.print(b'}');
+            p.print(b'}');
+        });
     }
 }
 
@@ -993,7 +1021,7 @@ impl<'a> Gen for ObjectProperty<'a> {
             p.print(b']');
         }
         p.print_colon();
-        self.value.gen(p);
+        self.value.gen_expr(p, Precedence::Assign);
     }
 }
 
@@ -1002,7 +1030,7 @@ impl<'a> Gen for PropertyKey<'a> {
         match self {
             Self::Identifier(ident) => ident.gen(p),
             Self::PrivateIdentifier(ident) => ident.gen(p),
-            Self::Expression(expr) => expr.gen(p),
+            Self::Expression(expr) => expr.gen_expr(p, Precedence::Assign),
         }
     }
 }
@@ -1011,86 +1039,106 @@ impl<'a> Gen for PropertyValue<'a> {
     fn gen(&self, p: &mut Printer) {
         match self {
             Self::Pattern(pattern) => pattern.gen(p),
-            Self::Expression(expr) => expr.gen(p),
+            Self::Expression(expr) => expr.gen_expr(p, Precedence::Assign),
         }
     }
 }
 
-impl<'a> Gen for ArrowExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        if self.r#async {
-            p.print_str(b"async");
-        }
-        p.print(b'(');
-        self.params.gen(p);
-        p.print(b')');
-        p.print_str(b"=>");
-        if self.expression {
-            if let Statement::ExpressionStatement(stmt) = &self.body.statements[0] {
-                stmt.expression.gen(p);
+impl<'a> GenExpr for ArrowExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence > Precedence::Assign, |p| {
+            if self.r#async {
+                p.print_str(b"async");
             }
-        } else {
-            self.body.gen(p);
-        }
+            // No wrap for `a => {}`
+            let nowrap = self.params.rest.is_none()
+                && self.params.items.len() == 1
+                && self.params.items[0].pattern.is_binding_identifier();
+            if nowrap && self.r#async {
+                p.print(b' ');
+            }
+            p.wrap(!nowrap, |p| {
+                self.params.gen(p);
+            });
+            p.print_str(b"=>");
+            if self.expression {
+                if let Statement::ExpressionStatement(stmt) = &self.body.statements[0] {
+                    p.start_of_arrow_expr = p.code_len();
+                    stmt.expression.gen_expr(p, Precedence::Assign);
+                }
+            } else {
+                self.body.gen(p);
+            }
+        });
     }
 }
 
-impl<'a> Gen for YieldExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        p.print_str(b"yield");
-        if self.delegate {
-            p.print(b'*');
-        }
+impl<'a> GenExpr for YieldExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence >= self.precedence(), |p| {
+            p.print_str(b"yield");
+            if self.delegate {
+                p.print(b'*');
+            }
 
-        if let Some(argument) = self.argument.as_ref() {
-            p.print(b' ');
-            argument.gen(p);
-        }
+            if let Some(argument) = self.argument.as_ref() {
+                if !self.delegate {
+                    p.print(b' ');
+                }
+                argument.gen_expr(p, Precedence::Assign);
+            }
+        });
     }
 }
 
-impl<'a> Gen for UpdateExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+impl<'a> GenExpr for UpdateExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
         let operator = self.operator.as_str().as_bytes();
-        if self.prefix {
-            p.print_space_before_operator(self.operator.into());
-            p.print_str(operator);
-            p.prev_op = Some(self.operator.into());
-            p.prev_op_end = p.code().len();
-            self.argument.gen(p);
-        } else {
-            self.argument.gen(p);
-            p.print_str(operator);
-            p.prev_op = Some(self.operator.into());
-            p.prev_op_end = p.code().len();
-        }
+        p.wrap(precedence > self.precedence(), |p| {
+            if self.prefix {
+                p.print_space_before_operator(self.operator.into());
+                p.print_str(operator);
+                p.prev_op = Some(self.operator.into());
+                p.prev_op_end = p.code().len();
+                self.argument.gen_expr(p, Precedence::Prefix);
+            } else {
+                self.argument.gen_expr(p, Precedence::Postfix);
+                p.print_str(operator);
+                p.prev_op = Some(self.operator.into());
+                p.prev_op_end = p.code().len();
+            }
+        });
     }
 }
 
-impl<'a> Gen for UnaryExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        let operator = self.operator.as_str().as_bytes();
-        if self.operator.is_keyword() {
-            p.print_str(operator);
-            p.print(b' ');
-        } else {
-            p.print_space_before_operator(self.operator.into());
-            p.print_str(operator);
-            p.prev_op = Some(self.operator.into());
-            p.prev_op_end = p.code().len();
-        }
-        self.argument.gen(p);
+impl<'a> GenExpr for UnaryExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence > self.precedence() || precedence == Precedence::Exponential, |p| {
+            let operator = self.operator.as_str().as_bytes();
+            if self.operator.is_keyword() {
+                p.print_str(operator);
+                p.print(b' ');
+            } else {
+                p.print_space_before_operator(self.operator.into());
+                p.print_str(operator);
+                p.prev_op = Some(self.operator.into());
+                p.prev_op_end = p.code().len();
+            }
+            self.argument.gen_expr(p, Precedence::Prefix);
+        });
     }
 }
 
-impl<'a> Gen for BinaryExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        self.left.gen(p);
-        if self.operator.is_keyword() {
-            p.print_space_before_identifier();
-        }
-        self.operator.gen(p);
-        self.right.gen(p);
+impl<'a> GenExpr for BinaryExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence > self.precedence() || self.operator == BinaryOperator::In, |p| {
+            self.left.gen_expr(p, self.precedence());
+            if self.operator.is_keyword() {
+                p.print_space_before_identifier();
+            }
+            self.operator.gen(p);
+            self.right.gen_expr(p, self.precedence());
+        });
     }
 }
 
@@ -1116,50 +1164,76 @@ impl<'a> Gen for PrivateInExpression<'a> {
         p.print(b' ');
         p.print_str(b"in");
         p.print(b' ');
-        self.right.gen(p);
+        self.right.gen_expr(p, Precedence::Shift);
     }
 }
 
-impl<'a> Gen for LogicalExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        self.left.gen(p);
-        p.print_str(self.operator.as_str().as_bytes());
-        self.right.gen(p);
+impl<'a> GenExpr for LogicalExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        // Logical expressions and coalesce expressions cannot be mixed (Syntax Error).
+        let mixed = matches!(
+            (precedence, self.precedence()),
+            (Precedence::Coalesce, Precedence::LogicalAnd | Precedence::LogicalOr)
+        );
+        p.wrap(mixed || (precedence > self.precedence()), |p| {
+            self.left.gen_expr(p, self.precedence());
+            p.print_str(self.operator.as_str().as_bytes());
+            let precedence = match self.operator {
+                LogicalOperator::And | LogicalOperator::Coalesce => Precedence::BitwiseOr,
+                LogicalOperator::Or => Precedence::LogicalAnd,
+            };
+            self.right.gen_expr(p, self.precedence());
+        });
     }
 }
 
-impl<'a> Gen for ConditionalExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        self.test.gen(p);
-        p.print(b'?');
-        self.consequent.gen(p);
-        p.print(b':');
-        self.alternate.gen(p);
+impl<'a> GenExpr for ConditionalExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence > self.precedence(), |p| {
+            self.test.gen_expr(p, self.precedence());
+            p.print(b'?');
+            self.consequent.gen_expr(p, Precedence::Assign);
+            p.print(b':');
+            self.alternate.gen_expr(p, Precedence::Assign);
+        });
     }
 }
 
-impl<'a> Gen for AssignmentExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        self.left.gen(p);
-        p.print_str(self.operator.as_str().as_bytes());
-        self.right.gen(p);
+impl<'a> GenExpr for AssignmentExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        // Destructuring assignment
+        let n = p.code_len();
+        let wrap = (p.start_of_stmt == n || p.start_of_arrow_expr == n)
+            && matches!(
+                self.left,
+                AssignmentTarget::AssignmentTargetPattern(
+                    AssignmentTargetPattern::ObjectAssignmentTarget(_)
+                )
+            );
+        p.wrap(wrap || precedence > self.precedence(), |p| {
+            self.left.gen(p);
+            p.print_str(self.operator.as_str().as_bytes());
+            self.right.gen_expr(p, Precedence::Assign);
+        });
     }
 }
 
 impl<'a> Gen for AssignmentTarget<'a> {
     fn gen(&self, p: &mut Printer) {
         match self {
-            Self::SimpleAssignmentTarget(target) => target.gen(p),
+            Self::SimpleAssignmentTarget(target) => target.gen_expr(p, Precedence::Assign),
             Self::AssignmentTargetPattern(pat) => pat.gen(p),
         }
     }
 }
 
-impl<'a> Gen for SimpleAssignmentTarget<'a> {
-    fn gen(&self, p: &mut Printer) {
+impl<'a> GenExpr for SimpleAssignmentTarget<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
         match self {
             Self::AssignmentTargetIdentifier(ident) => ident.gen(p),
-            Self::MemberAssignmentTarget(member_expr) => member_expr.gen(p),
+            Self::MemberAssignmentTarget(member_expr) => {
+                member_expr.gen_expr(p, precedence);
+            }
         }
     }
 }
@@ -1225,7 +1299,7 @@ impl<'a> Gen for AssignmentTargetWithDefault<'a> {
     fn gen(&self, p: &mut Printer) {
         self.binding.gen(p);
         p.print_equal();
-        self.init.gen(p);
+        self.init.gen_expr(p, Precedence::Assign);
     }
 }
 
@@ -1243,7 +1317,7 @@ impl<'a> Gen for AssignmentTargetPropertyIdentifier<'a> {
         self.binding.gen(p);
         if let Some(expr) = &self.init {
             p.print_equal();
-            expr.gen(p);
+            expr.gen_expr(p, Precedence::Assign);
         }
     }
 }
@@ -1259,7 +1333,7 @@ impl<'a> Gen for AssignmentTargetPropertyProperty<'a> {
             }
             PropertyKey::Expression(expr) => {
                 p.print(b'[');
-                expr.gen(p);
+                expr.gen_expr(p, Precedence::Assign);
                 p.print(b']');
             }
         }
@@ -1268,19 +1342,21 @@ impl<'a> Gen for AssignmentTargetPropertyProperty<'a> {
     }
 }
 
-impl<'a> Gen for SequenceExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        p.print_list(&self.expressions);
+impl<'a> GenExpr for SequenceExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence > self.precedence(), |p| {
+            p.print_expressions(&self.expressions, Precedence::Assign);
+        });
     }
 }
 
 impl<'a> Gen for ImportExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"import(");
-        self.source.gen(p);
+        self.source.gen_expr(p, Precedence::Assign);
         if !self.arguments.is_empty() {
             p.print_comma();
-            p.print_list(&self.arguments);
+            p.print_expressions(&self.arguments, Precedence::Assign);
         }
         p.print(b')');
     }
@@ -1296,7 +1372,7 @@ impl<'a> Gen for TemplateLiteral<'a> {
 
             if let Some(expr) = expressions.next() {
                 p.print_str(b"${");
-                expr.gen(p);
+                expr.gen_expr(p, Precedence::lowest());
                 p.print(b'}');
             }
         }
@@ -1307,7 +1383,7 @@ impl<'a> Gen for TemplateLiteral<'a> {
 
 impl<'a> Gen for TaggedTemplateExpression<'a> {
     fn gen(&self, p: &mut Printer) {
-        self.tag.gen(p);
+        self.tag.gen_expr(p, Precedence::Call);
         self.quasi.gen(p);
     }
 }
@@ -1318,41 +1394,33 @@ impl Gen for Super {
     }
 }
 
-impl<'a> Gen for AwaitExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        p.print_str(b"await ");
-        self.argument.gen(p);
+impl<'a> GenExpr for AwaitExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence > self.precedence(), |p| {
+            p.print_str(b"await ");
+            self.argument.gen_expr(p, self.precedence());
+        });
     }
 }
 
-impl<'a> Gen for ChainExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
+impl<'a> GenExpr for ChainExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
         match &self.expression {
-            ChainElement::CallExpression(expr) => expr.gen(p),
-            ChainElement::MemberExpression(expr) => expr.gen(p),
+            ChainElement::CallExpression(expr) => expr.gen_expr(p, precedence),
+            ChainElement::MemberExpression(expr) => expr.gen_expr(p, precedence),
         }
     }
 }
 
-impl<'a> Gen for NewExpression<'a> {
-    fn gen(&self, p: &mut Printer) {
-        p.print_str(b"new ");
-        with_parens_if_unary_expr(&self.callee, p);
-        p.print(b'(');
-        p.print_list(&self.arguments);
-        p.print(b')');
-    }
-}
-
-fn with_parens_if_unary_expr(expr: &Expression, p: &mut Printer) {
-    let is_unary_expr = matches!(expr, Expression::UnaryExpression(_));
-
-    if is_unary_expr {
-        p.print(b'(');
-    }
-    expr.gen(p);
-    if is_unary_expr {
-        p.print(b')');
+impl<'a> GenExpr for NewExpression<'a> {
+    fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
+        p.wrap(precedence > self.precedence(), |p| {
+            p.print_str(b"new ");
+            self.callee.gen_expr(p, self.precedence());
+            p.wrap(true, |p| {
+                p.print_list(&self.arguments);
+            });
+        });
     }
 }
 
@@ -1366,30 +1434,34 @@ impl Gen for MetaProperty {
 
 impl<'a> Gen for Class<'a> {
     fn gen(&self, p: &mut Printer) {
-        self.decorators.gen(p);
-        p.print_str(b"class");
-        if let Some(id) = &self.id {
-            p.print(b' ');
-            id.gen(p);
-        }
-        if let Some(super_class) = self.super_class.as_ref() {
-            p.print_str(b" extends ");
-            super_class.gen(p);
-        }
-        p.print(b'{');
-        for item in &self.body.body {
-            p.print_semicolon_if_needed();
-            item.gen(p);
-            if matches!(
-                item,
-                ClassElement::PropertyDefinition(_) | ClassElement::AccessorProperty(_)
-            ) {
-                p.print_semicolon_after_statement();
-            } else {
+        let n = p.code_len();
+        let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
+        p.wrap(wrap, |p| {
+            self.decorators.gen(p);
+            p.print_str(b"class");
+            if let Some(id) = &self.id {
+                p.print(b' ');
+                id.gen(p);
             }
-        }
-        p.needs_semicolon = false;
-        p.print(b'}');
+            if let Some(super_class) = self.super_class.as_ref() {
+                p.print_str(b" extends ");
+                super_class.gen_expr(p, Precedence::Call);
+            }
+            p.print(b'{');
+            for item in &self.body.body {
+                p.print_semicolon_if_needed();
+                item.gen(p);
+                if matches!(
+                    item,
+                    ClassElement::PropertyDefinition(_) | ClassElement::AccessorProperty(_)
+                ) {
+                    p.print_semicolon_after_statement();
+                } else {
+                }
+            }
+            p.needs_semicolon = false;
+            p.print(b'}');
+        });
     }
 }
 
@@ -1471,7 +1543,7 @@ impl Gen for JSXEmptyExpression {
 impl<'a> Gen for JSXExpression<'a> {
     fn gen(&self, p: &mut Printer) {
         match self {
-            Self::Expression(expr) => expr.gen(p),
+            Self::Expression(expr) => expr.gen_expr(p, Precedence::lowest()),
             Self::EmptyExpression(expr) => expr.gen(p),
         }
     }
@@ -1498,7 +1570,7 @@ impl<'a> Gen for JSXAttributeValue<'a> {
 
 impl<'a> Gen for JSXSpreadAttribute<'a> {
     fn gen(&self, p: &mut Printer) {
-        self.argument.gen(p);
+        self.argument.gen_expr(p, Precedence::lowest());
     }
 }
 
@@ -1567,7 +1639,7 @@ impl Gen for JSXText {
 impl<'a> Gen for JSXSpreadChild<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_str(b"...");
-        self.expression.gen(p);
+        self.expression.gen_expr(p, Precedence::lowest());
     }
 }
 
@@ -1576,7 +1648,7 @@ impl<'a> Gen for JSXChild<'a> {
         match self {
             Self::Fragment(fragment) => fragment.gen(p),
             Self::Element(el) => el.gen(p),
-            Self::Spread(spread) => spread.expression.gen(p),
+            Self::Spread(spread) => spread.expression.gen_expr(p, Precedence::lowest()),
             Self::ExpressionContainer(expr_container) => expr_container.gen(p),
             Self::Text(text) => text.gen(p),
         }
@@ -1659,7 +1731,7 @@ impl<'a> Gen for PropertyDefinition<'a> {
         }
         if let Some(value) = &self.value {
             p.print_equal();
-            value.gen(p);
+            value.gen_expr(p, Precedence::Assign);
         }
     }
 }
@@ -1679,7 +1751,7 @@ impl<'a> Gen for AccessorProperty<'a> {
         }
         if let Some(value) = &self.value {
             p.print_equal();
-            value.gen(p);
+            value.gen_expr(p, Precedence::Assign);
         }
     }
 }
@@ -1763,7 +1835,7 @@ impl<'a> Gen for AssignmentPattern<'a> {
     fn gen(&self, p: &mut Printer) {
         self.left.gen(p);
         p.print_equal();
-        self.right.gen(p);
+        self.right.gen_expr(p, Precedence::Assign);
     }
 }
 
@@ -1779,6 +1851,6 @@ impl<'a> Gen for Vec<'a, Decorator<'a>> {
 impl<'a> Gen for Decorator<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print(b'@');
-        self.expression.gen(p);
+        self.expression.gen_expr(p, Precedence::Assign);
     }
 }

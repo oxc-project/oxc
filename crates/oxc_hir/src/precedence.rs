@@ -4,9 +4,9 @@ use oxc_syntax::{
 };
 
 use crate::hir::{
-    AssignmentExpression, AwaitExpression, BinaryExpression, CallExpression, ConditionalExpression,
-    Expression, LogicalExpression, MemberExpression, NewExpression, SequenceExpression,
-    UnaryExpression, UpdateExpression, YieldExpression,
+    ArrowExpression, AssignmentExpression, AwaitExpression, BinaryExpression, CallExpression,
+    ConditionalExpression, Expression, LogicalExpression, MemberExpression, NewExpression,
+    SequenceExpression, UnaryExpression, UpdateExpression, YieldExpression,
 };
 
 impl<'a> GetPrecedence for Expression<'a> {
@@ -15,6 +15,7 @@ impl<'a> GetPrecedence for Expression<'a> {
             Self::SequenceExpression(expr) => expr.precedence(),
             Self::AssignmentExpression(expr) => expr.precedence(),
             Self::YieldExpression(expr) => expr.precedence(),
+            Self::ArrowExpression(expr) => expr.precedence(),
             Self::ConditionalExpression(expr) => expr.precedence(),
             Self::LogicalExpression(expr) => expr.precedence(),
             Self::BinaryExpression(expr) => expr.precedence(),
@@ -24,7 +25,7 @@ impl<'a> GetPrecedence for Expression<'a> {
             Self::NewExpression(expr) => expr.precedence(),
             Self::CallExpression(expr) => expr.precedence(),
             Self::MemberExpression(expr) => expr.precedence(),
-            _ => Precedence::Lowest,
+            _ => Precedence::highest(),
         }
     }
 }
@@ -41,15 +42,21 @@ impl<'a> GetPrecedence for YieldExpression<'a> {
     }
 }
 
-impl<'a> GetPrecedence for AssignmentExpression<'a> {
+impl<'a> GetPrecedence for ArrowExpression<'a> {
     fn precedence(&self) -> Precedence {
-        Precedence::Assign
+        Precedence::Arrow
     }
 }
 
 impl<'a> GetPrecedence for ConditionalExpression<'a> {
     fn precedence(&self) -> Precedence {
-        Precedence::Compare
+        Precedence::Conditional
+    }
+}
+
+impl<'a> GetPrecedence for AssignmentExpression<'a> {
+    fn precedence(&self) -> Precedence {
+        Precedence::Assign
     }
 }
 
@@ -78,7 +85,7 @@ impl<'a> GetPrecedence for BinaryExpression<'a> {
             | BinaryOperator::GreaterThan
             | BinaryOperator::GreaterEqualThan
             | BinaryOperator::Instanceof
-            | BinaryOperator::In => Precedence::Compare,
+            | BinaryOperator::In => Precedence::Relational,
             BinaryOperator::ShiftLeft
             | BinaryOperator::ShiftRight
             | BinaryOperator::ShiftRightZeroFill => Precedence::Shift,
@@ -117,7 +124,7 @@ impl<'a> GetPrecedence for CallExpression<'a> {
 
 impl<'a> GetPrecedence for NewExpression<'a> {
     fn precedence(&self) -> Precedence {
-        if self.arguments.is_empty() { Precedence::New } else { Precedence::Call }
+        if self.arguments.is_empty() { Precedence::NewWithoutArgs } else { Precedence::Call }
     }
 }
 
