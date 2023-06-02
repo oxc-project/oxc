@@ -70,8 +70,9 @@ impl ModuleRecordBuilder {
     /// [ParseModule](https://tc39.es/ecma262/#sec-parsemodule)
     /// Step 10.
     fn resolve_export_entries(&mut self) {
+        let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
         // 10. For each ExportEntry Record ee of exportEntries, do
-        for ee in self.export_entries.drain(..).collect::<Vec<_>>() {
+        for ee in export_entries {
             // a. If ee.[[ModuleRequest]] is null, then
             if ee.module_request.is_none() {
                 let local_name = match &ee.local_name {

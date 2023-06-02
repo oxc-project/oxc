@@ -95,8 +95,7 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                     // Get the span between the preceding newline to this comment
                     let start = self.source_text[..=span.start as usize]
                         .lines()
-                        .rev()
-                        .next()
+                        .next_back()
                         .map_or(0, |line| span.start - (line.len() as u32 - 1));
                     let stop = span.start;
 
@@ -144,7 +143,8 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
         }
 
         // Lone `eslint-disable rule_name`
-        for (rule_name, start) in self.disable_start_map.drain().collect::<Vec<_>>() {
+        let disable_start_map = self.disable_start_map.drain().collect::<Vec<_>>();
+        for (rule_name, start) in disable_start_map {
             self.add_interval(start, source_len, DisabledRule::Single(rule_name));
         }
     }

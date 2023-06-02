@@ -22,11 +22,7 @@ pub struct MinifierOptions {
 
 impl Default for MinifierOptions {
     fn default() -> Self {
-        Self {
-            mangle: true,
-            compress: CompressOptions::default(),
-            print: PrinterOptions::default(),
-        }
+        Self { mangle: true, compress: CompressOptions::default(), print: PrinterOptions }
     }
 }
 
