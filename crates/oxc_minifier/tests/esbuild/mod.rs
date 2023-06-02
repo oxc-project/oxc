@@ -10,12 +10,12 @@ fn number() {
     test("x = 1e-3", "x=.001");
     test("x = 1e-2", "x=.01");
     test("x = 1e-1", "x=.1");
+    test("x = 1e0", "x=1");
     test("x = 1e1", "x=10");
     test("x = 1e2", "x=100");
     test("x = 1e3", "x=1e3");
     test("x = 1e4", "x=1e4");
     test("x = 1e100", "x=1e100");
-    test("x = 1e0", "x=1");
 
     test("x = 12e-100", "x=12e-100");
     test("x = 12e-6", "x=12e-6");
