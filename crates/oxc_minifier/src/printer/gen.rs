@@ -795,7 +795,9 @@ impl<'a> Gen for NumberLiteral<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_space_before_identifier();
 
-        let result = if self.base != NumberBase::Float {
+        let result = if self.base == NumberBase::Float {
+            print_non_negative_float(self.value, p)
+        } else {
             let value = self.value as u64;
             // If integers less than 1000, we know that exponential notation will always be longer than
             // the integer representation. This is not the case for 1000 which is "1e3".
@@ -808,8 +810,6 @@ impl<'a> Gen for NumberLiteral<'a> {
             } else {
                 print_non_negative_float(self.value, p)
             }
-        } else {
-            print_non_negative_float(self.value, p)
         };
         let bytes = result.as_bytes();
         p.print_str(bytes);
