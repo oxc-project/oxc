@@ -47,7 +47,7 @@ fn number() {
     test("x = 10 .y", "x=10 .y");
     test("x = 100 .y", "x=100 .y");
     test("x = 1000 .y", "x=1e3.y");
-    // test("x = 12345 .y", "x=12345 .y");
+    test("x = 12345 .y", "x=12345 .y");
     test("x = 0xFFFF_0000_FFFF_0000 .y", "x=0xffff0000ffff0000.y");
 }
 

@@ -795,11 +795,11 @@ impl<'a> Gen for NumberLiteral<'a> {
     fn gen(&self, p: &mut Printer) {
         p.print_space_before_identifier();
 
-        if self.base != NumberBase::Float {
+        let result = if self.base != NumberBase::Float {
             let value = self.value as u64;
             // If integers less than 1000, we know that exponential notation will always be longer than
             // the integer representation. This is not the case for 1000 which is "1e3".
-            let s = if value < 1000 {
+            if value < 1000 {
                 format!("{value}")
             } else if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
                 let hex = format!("{value:#x}");
@@ -807,16 +807,16 @@ impl<'a> Gen for NumberLiteral<'a> {
                 if hex.len() < result.len() { hex } else { result }
             } else {
                 print_non_negative_float(self.value, p)
-            };
-            let bytes = s.as_bytes();
-            p.print_str(bytes);
-
-            if !bytes.iter().any(|&b| matches!(b, b'.' | b'e' | b'x',)) {
-                p.need_space_before_dot = p.code().len()
             }
         } else {
-            let result = print_non_negative_float(self.value, p);
-            p.print_str(result.as_bytes());
+            print_non_negative_float(self.value, p)
+        };
+        let bytes = result.as_bytes();
+        p.print_str(bytes);
+
+        // We'll need a space before "." if it could be parsed as a decimal point
+        if !bytes.iter().any(|&b| matches!(b, b'.' | b'e' | b'x')) {
+            p.need_space_before_dot = p.code().len();
         }
     }
 }
@@ -837,12 +837,9 @@ fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
 
         // Try using an exponent
         // "0.001" => "1e-3"
-        if stripped_result[after_dot] == b'0' {
+        if matches!(stripped_result[after_dot], b'0') {
             let mut i = after_dot + 1;
-            loop {
-                if stripped_result[i] != b'0' {
-                    break;
-                }
+            while matches!(stripped_result[i], b'0') {
                 i += 1;
             }
             let remaining = &stripped_result[i..];
@@ -861,10 +858,7 @@ fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
         // Simplify numbers ending with "0" by trying to use an exponent
         // "1000" => "1e3"
         let mut i = len - 1;
-        loop {
-            if i == 0 || chars[i - 1] != b'0' {
-                break;
-            }
+        while i > 0 && matches!(chars[i - 1], b'0') {
             i -= 1;
         }
         let remaining = &chars[0..i];
