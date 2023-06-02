@@ -816,7 +816,7 @@ impl<'a> Gen for NumberLiteral<'a> {
 
         // We'll need a space before "." if it could be parsed as a decimal point
         if !bytes.iter().any(|&b| matches!(b, b'.' | b'e' | b'x')) {
-            p.need_space_before_dot = p.code().len();
+            p.need_space_before_dot = p.code_len();
         }
     }
 }
@@ -942,14 +942,9 @@ impl<'a> GenExpr for ComputedMemberExpression<'a> {
 impl<'a> GenExpr for StaticMemberExpression<'a> {
     fn gen_expr(&self, p: &mut Printer, precedence: Precedence) {
         self.object.gen_expr(p, Precedence::Postfix);
-        if p.need_space_before_dot == p.code().len() {
-            // "1.toString" is a syntax error, so print "1 .toString" instead
-            p.print(b' ');
-        }
         if self.optional {
             p.print(b'?');
-        } else if matches!(&self.object, Expression::NumberLiteral(n) if n.base == NumberBase::Decimal)
-        {
+        } else if p.need_space_before_dot == p.code_len() {
             // `0.toExponential()` is invalid, add a space before the dot, `0 .toExponential()` is valid
             p.print(b' ');
         }
