@@ -1,0 +1,27 @@
+{
+  "name": "oxc-website",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --base=https://boshen.github.io/oxc/"
+  },
+  "dependencies": {
+    "@codemirror/lang-javascript": "^6.1.8",
+    "@codemirror/lint": "^6.2.1",
+    "@codemirror/state": "^6.2.1",
+    "@codemirror/view": "^6.12.0",
+    "@ddietr/codemirror-themes": "^1.4.1",
+    "@replit/codemirror-vscode-keymap": "^6.0.2",
+    "codemirror": "^6.0.1"
+  },
+  "devDependencies": {
+    "vite": "^4.3.9"
+  },
+  "engines": {
+    "node": ">=16.13.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.2.0"
+}
