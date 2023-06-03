@@ -7,7 +7,7 @@ use oxc_linter::Linter;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use serde::ser::Serialize;
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
@@ -69,6 +69,15 @@ pub struct OxcFormatterOptions {
     pub indentation: u8,
 }
 
+// #[wasm_bindgen]
+#[derive(Default, Clone, Serialize)]
+pub struct OxcDiagnostic {
+    pub start: usize,
+    pub end: usize,
+    pub severity: String,
+    pub message: String,
+}
+
 #[wasm_bindgen]
 impl Oxc {
     #[wasm_bindgen(constructor)]
@@ -108,14 +117,28 @@ impl Oxc {
     /// Returns Array of String
     #[wasm_bindgen(js_name = getDiagnostics)]
     pub fn get_diagnostics(&self) -> Result<Vec<JsValue>, serde_wasm_bindgen::Error> {
-        self.diagnostics
+        Ok(self
+            .diagnostics
             .borrow()
             .iter()
-            .map(|error| {
-                let s = format!("{error:?}");
-                s.serialize(&self.serializer)
+            .flat_map(|error| {
+                let Some(labels) = error.labels() else {
+                    return vec![]
+                };
+                labels
+                    .map(|label| {
+                        OxcDiagnostic {
+                            start: label.offset(),
+                            end: label.offset() + label.len(),
+                            severity: format!("{:?}", error.severity().unwrap_or_default()),
+                            message: format!("{}", error),
+                        }
+                        .serialize(&self.serializer)
+                        .unwrap()
+                    })
+                    .collect::<Vec<_>>()
             })
-            .collect()
+            .collect::<Vec<_>>())
     }
 
     /// # Errors
@@ -162,10 +185,6 @@ impl Oxc {
     }
 
     fn save_diagnostics(&self, diagnostics: Vec<Error>) {
-        self.diagnostics.borrow_mut().extend(
-            diagnostics
-                .into_iter()
-                .map(|diagnostic| diagnostic.with_source_code(self.source_text.clone())),
-        );
+        self.diagnostics.borrow_mut().extend(diagnostics);
     }
 }

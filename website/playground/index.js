@@ -35,7 +35,10 @@ function initEditor(oxc) {
   }
 
   function getConsole(_doc) {
-    return oxc.getDiagnostics().join("\n");
+    return oxc
+      .getDiagnostics()
+      .map((d) => d.message)
+      .join("\n");
   }
 
   function consolePanel(view) {
@@ -53,8 +56,12 @@ function initEditor(oxc) {
   }
 
   const oxcLinter = linter((_view) => {
-    return [
-    ];
+    return oxc.getDiagnostics().map((d) => ({
+      from: d.start,
+      to: d.end,
+      severity: d.severity.toLowerCase(),
+      message: d.message,
+    }));
   });
 
   const rightView = new EditorView({
