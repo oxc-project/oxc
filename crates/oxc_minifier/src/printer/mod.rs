@@ -42,6 +42,7 @@ pub struct Printer {
     // states
     prev_op_end: usize,
     prev_reg_exp_end: usize,
+    need_space_before_dot: usize,
 
     /// For avoiding `;` if the previous statement ends with `}`.
     needs_semicolon: bool,
@@ -73,6 +74,7 @@ impl Printer {
             symbol_table: SymbolTable::new(),
             code: Vec::with_capacity(capacity),
             needs_semicolon: false,
+            need_space_before_dot: 0,
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,

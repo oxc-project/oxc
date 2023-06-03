@@ -793,21 +793,87 @@ impl Gen for NullLiteral {
 impl<'a> Gen for NumberLiteral<'a> {
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn gen(&self, p: &mut Printer) {
-        if self.base != NumberBase::Float {
+        p.print_space_before_identifier();
+
+        let result = if self.base == NumberBase::Float {
+            print_non_negative_float(self.value, p)
+        } else {
             let value = self.value as u64;
-            let decimal = format!("{value}");
-            let hex = format!("{value:#x}");
-            let s = if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
+            // If integers less than 1000, we know that exponential notation will always be longer than
+            // the integer representation. This is not the case for 1000 which is "1e3".
+            if value < 1000 {
+                format!("{value}")
+            } else if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
                 let hex = format!("{value:#x}");
-                if hex.len() < decimal.len() { hex } else { decimal }
+                let result = print_non_negative_float(self.value, p);
+                if hex.len() < result.len() { hex } else { result }
             } else {
-                decimal
-            };
-            p.print_str(s.as_bytes());
-            return;
+                print_non_negative_float(self.value, p)
+            }
+        };
+        let bytes = result.as_bytes();
+        p.print_str(bytes);
+
+        // We'll need a space before "." if it could be parsed as a decimal point
+        if !bytes.iter().any(|&b| matches!(b, b'.' | b'e' | b'x')) {
+            p.need_space_before_dot = p.code_len();
         }
-        p.print_str(self.raw.as_bytes());
     }
+}
+
+// TODO: refactor this with less allocations
+fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
+    let mut result = value.to_string();
+    let chars = result.as_bytes();
+    let len = chars.len();
+    let dot = chars.iter().position(|&c| c == b'.');
+    let u8_to_string = |num: &[u8]| unsafe { String::from_utf8_unchecked(num.to_vec()) };
+
+    if matches!(dot, Some(1)) && matches!(chars[0], b'0') {
+        // Strip off the leading zero when minifying
+        // "0.5" => ".5"
+        let stripped_result = &chars[1..];
+        // after stripping the leading zero, the after dot position will be start from 1
+        let after_dot = 1;
+
+        // Try using an exponent
+        // "0.001" => "1e-3"
+        if matches!(stripped_result[after_dot], b'0') {
+            let mut i = after_dot + 1;
+            while matches!(stripped_result[i], b'0') {
+                i += 1;
+            }
+            let remaining = &stripped_result[i..];
+            let exponent = format!("-{}", remaining.len() - after_dot + i);
+
+            // Only switch if it's actually shorter
+            if stripped_result.len() > remaining.len() + 1 + exponent.len() {
+                result = format!("{}e{}", u8_to_string(remaining), exponent);
+            } else {
+                result = u8_to_string(stripped_result);
+            }
+        } else {
+            result = u8_to_string(stripped_result);
+        }
+    } else if matches!(chars[len - 1], b'0') {
+        // Simplify numbers ending with "0" by trying to use an exponent
+        // "1000" => "1e3"
+        let mut i = len - 1;
+        while i > 0 && matches!(chars[i - 1], b'0') {
+            i -= 1;
+        }
+        let remaining = &chars[0..i];
+        let exponent = format!("{}", chars.len() - i);
+
+        // Only switch if it's actually shorter
+        if chars.len() > remaining.len() + 1 + exponent.len() {
+            result = format!("{}e{}", u8_to_string(remaining), exponent);
+        } else {
+            result = u8_to_string(chars);
+        }
+    }
+
+    result
 }
 
 impl Gen for BigintLiteral {
@@ -879,8 +945,7 @@ impl<'a> GenExpr for StaticMemberExpression<'a> {
         self.object.gen_expr(p, Precedence::Postfix);
         if self.optional {
             p.print(b'?');
-        } else if matches!(&self.object, Expression::NumberLiteral(n) if n.base == NumberBase::Decimal)
-        {
+        } else if p.need_space_before_dot == p.code_len() {
             // `0.toExponential()` is invalid, add a space before the dot, `0 .toExponential()` is valid
             p.print(b' ');
         }
