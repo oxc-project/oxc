@@ -1,6 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use oxc_allocator::Allocator;
+use oxc_ast_lower::AstLower;
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::Linter;
@@ -24,6 +25,7 @@ pub struct Oxc {
     options: OxcOptions,
 
     ast: JsValue,
+    hir: JsValue,
 
     formatted_text: String,
 
@@ -109,6 +111,12 @@ impl Oxc {
         self.ast.clone()
     }
 
+    /// Returns HIR in JSON
+    #[wasm_bindgen(js_name = getHir)]
+    pub fn get_hir(&self) -> JsValue {
+        self.hir.clone()
+    }
+
     #[wasm_bindgen(js_name = getFormattedText)]
     pub fn get_formatted_text(&self) -> String {
         self.formatted_text.clone()
@@ -180,6 +188,9 @@ impl Oxc {
             let printed = Formatter::new(source_text.len(), formatter_options).build(program);
             self.formatted_text = printed;
         }
+
+        let ast_lower_ret = AstLower::new(&allocator, source_type).build(program);
+        self.hir = ast_lower_ret.program.serialize(&self.serializer)?;
 
         Ok(())
     }

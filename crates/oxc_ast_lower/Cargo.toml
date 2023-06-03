@@ -16,6 +16,8 @@ oxc_ast       = { workspace = true }
 oxc_hir       = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_semantic2 = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 stacker       = { workspace = true }
 
 [dev_dependencies]

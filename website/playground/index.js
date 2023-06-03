@@ -34,6 +34,10 @@ function initEditor(oxc) {
     return JSON.stringify(oxc.getAst(), null, 2);
   }
 
+  function getHir() {
+    return JSON.stringify(oxc.getHir(), null, 2);
+  }
+
   function getFormattedText() {
     return oxc.getFormattedText()
   }
@@ -92,6 +96,10 @@ function initEditor(oxc) {
 
   document.querySelector("#ast").onclick = () => {
     updateRightView(getAst());
+  };
+
+  document.querySelector("#hir").onclick = () => {
+    updateRightView(getHir());
   };
 
   document.querySelector("#formatted").onclick = () => {
