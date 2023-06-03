@@ -2,7 +2,6 @@ import { basicSetup } from "codemirror";
 import { EditorView, keymap, showPanel } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
 import { javascript } from "@codemirror/lang-javascript";
-import { json } from "@codemirror/lang-json";
 import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
 import { linter, lintGutter } from "@codemirror/lint";
@@ -10,9 +9,27 @@ import { linter, lintGutter } from "@codemirror/lint";
 import init, { Oxc, OxcOptions } from "@oxc/wasm-web";
 
 const placeholderText = `
-function foo() {
-    debugger;
-}`.trim();
+import React, { useEffect, useRef } from 'react'
+
+const DummyComponent:React.FC = () => {
+
+  const ref = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (ref.current) ref.current.focus()
+  }, [])
+
+  return (
+      <div>{Boolean(ref.current) ?? (
+        <input type="text" ref={ref} />
+      )}
+      </div>
+  )
+
+}
+
+export default DummyComponent
+`.trim();
 
 async function main() {
   await init();
@@ -40,6 +57,10 @@ function initEditor(oxc) {
 
   function getFormattedText() {
     return oxc.getFormattedText()
+  }
+
+  function getMinifiedText() {
+    return oxc.getMinifiedText()
   }
 
   function getConsole(_doc) {
@@ -74,7 +95,7 @@ function initEditor(oxc) {
 
   const rightView = new EditorView({
     doc: getAst(),
-    extensions: [javascript(), githubDark, EditorView.editable.of(false)],
+    extensions: [javascript(), githubDark, EditorView.editable.of(false), EditorView.lineWrapping],
     parent: document.querySelector("#display"),
   });
 
@@ -102,8 +123,12 @@ function initEditor(oxc) {
     updateRightView(getHir());
   };
 
-  document.querySelector("#formatted").onclick = () => {
+  document.querySelector("#format").onclick = () => {
     updateRightView(getFormattedText());
+  };
+
+  document.querySelector("#minify").onclick = () => {
+    updateRightView(getMinifiedText());
   };
 
   const state = EditorState.create({

@@ -5,6 +5,7 @@ use oxc_ast_lower::AstLower;
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::Linter;
+use oxc_minifier::{CompressOptions, Compressor, Printer, PrinterOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -28,6 +29,7 @@ pub struct Oxc {
     hir: JsValue,
 
     formatted_text: String,
+    minified_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -122,6 +124,11 @@ impl Oxc {
         self.formatted_text.clone()
     }
 
+    #[wasm_bindgen(js_name = getMinifiedText)]
+    pub fn get_minified_text(&self) -> String {
+        self.minified_text.clone()
+    }
+
     /// Returns Array of String
     #[wasm_bindgen(js_name = getDiagnostics)]
     pub fn get_diagnostics(&self) -> Result<Vec<JsValue>, serde_wasm_bindgen::Error> {
@@ -190,7 +197,15 @@ impl Oxc {
         }
 
         let ast_lower_ret = AstLower::new(&allocator, source_type).build(program);
-        self.hir = ast_lower_ret.program.serialize(&self.serializer)?;
+        let mut hir = ast_lower_ret.program;
+        let semantic = ast_lower_ret.semantic;
+        self.hir = hir.serialize(&self.serializer)?;
+
+        let semantic =
+            Compressor::new(&allocator, semantic, CompressOptions::default()).build(&mut hir);
+        self.minified_text = Printer::new(self.source_text.len(), PrinterOptions::default())
+            .with_mangle(semantic.symbol_table, /* mangle */ false)
+            .build(&hir);
 
         Ok(())
     }
