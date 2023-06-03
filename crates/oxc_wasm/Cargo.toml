@@ -16,6 +16,7 @@ default = ["console_error_panic_hook"]
 [dependencies]
 oxc_allocator   = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_ast         = { workspace = true, features = ["serde"] }
 oxc_parser      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_linter      = { workspace = true }
