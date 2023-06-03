@@ -41,6 +41,18 @@ pub struct OxcOptions {
 }
 
 #[wasm_bindgen]
+impl OxcOptions {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self {
+            parser: Some(OxcParserOptions { allow_return_outside_function: true }),
+            linter: Some(OxcLinterOptions),
+            formatter: Some(OxcFormatterOptions { indentation: 8 }),
+        }
+    }
+}
+
+#[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
 pub struct OxcParserOptions {
     #[wasm_bindgen(js_name = allowReturnOutsideFunction)]
@@ -74,6 +86,12 @@ impl Oxc {
     pub fn set_source_text(&mut self, text: String) {
         self.diagnostics = RefCell::default();
         self.source_text = text;
+    }
+
+    /// Returns the source text
+    #[wasm_bindgen(js_name = getSourceText)]
+    pub fn get_source_text(&self) -> String {
+        self.source_text.clone()
     }
 
     /// Returns AST in JSON

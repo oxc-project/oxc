@@ -4,11 +4,14 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build --base=https://boshen.github.io/oxc/"
+    "dev": "pnpm run wasm-dev && concurrently 'vite' 'cd .. && cargo watch --workdir website -s \"pnpm run wasm-dev\"'",
+    "wasm-dev": "wasm-pack build --out-dir ../../npm/wasm-web --target web --dev --scope oxc ../crates/oxc_wasm",
+    "build": "pnpm run wasm-build && vite build --base=https://boshen.github.io/oxc/",
+    "wasm-build": "wasm-pack build --out-dir ../../npm/wasm-web --target web --release --scope oxc ../crates/oxc_wasm"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.1.8",
+    "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lint": "^6.2.1",
     "@codemirror/state": "^6.2.1",
     "@codemirror/view": "^6.12.0",
@@ -17,7 +20,10 @@
     "codemirror": "^6.0.1"
   },
   "devDependencies": {
-    "vite": "^4.3.9"
+    "@oxc/wasm-web": "../npm/wasm-web",
+    "concurrently": "^8.1.0",
+    "vite": "^4.3.9",
+    "wasm-pack": "^0.11.1"
   },
   "engines": {
     "node": ">=16.13.0",
