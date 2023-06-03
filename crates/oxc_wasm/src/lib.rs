@@ -25,7 +25,7 @@ pub struct Oxc {
 
     ast: JsValue,
 
-    printed_text: String,
+    formatted_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -109,9 +109,9 @@ impl Oxc {
         self.ast.clone()
     }
 
-    #[wasm_bindgen(js_name = getPrintedText)]
-    pub fn get_printed_text(&self) -> String {
-        self.printed_text.clone()
+    #[wasm_bindgen(js_name = getFormattedText)]
+    pub fn get_formatted_text(&self) -> String {
+        self.formatted_text.clone()
     }
 
     /// Returns Array of String
@@ -178,7 +178,7 @@ impl Oxc {
         if let Some(o) = &self.options.formatter {
             let formatter_options = FormatterOptions { indentation: o.indentation };
             let printed = Formatter::new(source_text.len(), formatter_options).build(program);
-            self.printed_text = printed;
+            self.formatted_text = printed;
         }
 
         Ok(())

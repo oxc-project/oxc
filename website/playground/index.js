@@ -34,6 +34,10 @@ function initEditor(oxc) {
     return JSON.stringify(oxc.getAst(), null, 2);
   }
 
+  function getFormattedText() {
+    return oxc.getFormattedText()
+  }
+
   function getConsole(_doc) {
     return oxc
       .getDiagnostics()
@@ -66,21 +70,33 @@ function initEditor(oxc) {
 
   const rightView = new EditorView({
     doc: getAst(),
-    extensions: [json(), githubDark, EditorView.editable.of(false)],
-    parent: document.querySelector("#right"),
+    extensions: [javascript(), githubDark, EditorView.editable.of(false)],
+    parent: document.querySelector("#display"),
   });
+
+  function updateRightView(text) {
+      const transaction = rightView.state.update({
+        changes: { from: 0, to: rightView.state.doc.length, insert: text },
+      });
+      rightView.dispatch(transaction);
+  }
 
   const stateListener = EditorView.updateListener.of((view) => {
     if (view.docChanged) {
       const sourceText = view.state.doc.toString();
       oxc.setSourceText(sourceText);
       oxc.run();
-      const transaction = rightView.state.update({
-        changes: { from: 0, to: rightView.state.doc.length, insert: getAst() },
-      });
-      rightView.dispatch(transaction);
+      updateRightView(getAst());
     }
   });
+
+  document.querySelector("#ast").onclick = () => {
+    updateRightView(getAst());
+  };
+
+  document.querySelector("#formatted").onclick = () => {
+    updateRightView(getFormattedText());
+  };
 
   const state = EditorState.create({
     doc: oxc.getSourceText(),

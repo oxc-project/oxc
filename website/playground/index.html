@@ -16,8 +16,15 @@
     <script type="module" src="./index.js"></script>
 
     <div style="display:flex;">
-      <div id="app" style="height:100vh;flex:3 0 0" ></div>
-      <div id="right" style="height:100vh;flex:2 0 0"></div>
+      <div id="app" style="height:100vh;flex:3 0 0"></div>
+      <div id="right" style="height:100vh;flex:2 0 0;display:flex;flex-direction:column;">
+        <div id="tab" style="background:lightgray;padding:.2em">
+          <button id="ast">AST</button>
+          <button id="formatted">Format</button>
+        </div>
+        <div id="display" style="flex:1;overflow:auto;">
+        </div>
+      </div>
     </div>
   </body>
 </html>
