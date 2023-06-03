@@ -821,6 +821,7 @@ impl<'a> Gen for NumberLiteral<'a> {
     }
 }
 
+// TODO: refactor this with less allocations
 fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
     let mut result = value.to_string();
     let chars = result.as_bytes();
