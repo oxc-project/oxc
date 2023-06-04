@@ -88,6 +88,7 @@ class Playground {
     return new EditorView({
       doc: this.getAst(),
       extensions: [
+        basicSetup,
         javascript(),
         githubDark,
         EditorView.editable.of(false),
@@ -106,11 +107,11 @@ class Playground {
   }
 
   getFormattedText() {
-    return oxc.getFormattedText();
+    return this.oxc.getFormattedText();
   }
 
   getMinifiedText() {
-    return oxc.getMinifiedText();
+    return this.oxc.getMinifiedText();
   }
 
   getConsole(_doc) {
