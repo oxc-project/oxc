@@ -21,6 +21,7 @@ fn js_typeof() {
     test("x = typeof [1,[]]", "x='object'");
     test("x = typeof {}", "x='object'");
     test("x = typeof function() {}", "x='function'");
+
     test_same("x=typeof [1,[foo()]]");
     test_same("x=typeof {bathwater:baby()}");
 }

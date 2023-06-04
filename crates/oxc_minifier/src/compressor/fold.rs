@@ -144,10 +144,9 @@ impl<'a> Compressor<'a> {
         Tri::Unknown
     }
 
-    //
-    // Folds 'typeof(foo)' if foo is a literal, e.g.
-    // typeof("bar") --> "string"
-    // typeof(6) --> "number"
+    /// Folds 'typeof(foo)' if foo is a literal, e.g.
+    /// typeof("bar") --> "string"
+    /// typeof(6) --> "number"
     fn try_fold_typeof<'b>(
         &mut self,
         span: Span,
