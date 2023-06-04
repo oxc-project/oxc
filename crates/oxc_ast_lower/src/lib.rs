@@ -7,11 +7,17 @@ use oxc_semantic2::{symbol::SymbolFlags, Semantic, SemanticBuilder};
 use oxc_span::{GetSpan, SourceType};
 
 // <https://github.com/rust-lang/rust/blob/master/compiler/rustc_data_structures/src/stack.rs>
-const RED_ZONE: usize = 100 * 1024; // 100k
-const STACK_PER_RECURSION: usize = 1024 * 1024; // 1MB
+#[cfg(not(target_arch = "wasm32"))]
 #[inline]
 pub fn ensure_sufficient_stack<R, F: FnOnce() -> R>(f: F) -> R {
+    const RED_ZONE: usize = 100 * 1024; // 100k
+    const STACK_PER_RECURSION: usize = 1024 * 1024; // 1MB
     stacker::maybe_grow(RED_ZONE, STACK_PER_RECURSION, f)
+}
+#[cfg(target_arch = "wasm32")]
+#[inline]
+pub fn ensure_sufficient_stack<R, F: FnOnce() -> R>(f: F) -> R {
+    f()
 }
 
 pub struct AstLowerReturn<'a> {

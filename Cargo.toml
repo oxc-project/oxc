@@ -41,7 +41,7 @@ bumpalo           = { version = "3.13.0" }
 clap              = { version = "4.3.0" }
 compact_str       = { version = "0.7.0" }
 convert_case      = { version = "0.6.0" }
-criterion         = { version = "0.4.0", default-features = false }
+criterion         = { version = "0.5.0", default-features = false }
 flate2            = { version = "1.0.26" }
 glob              = { version = "0.3.1" }
 ignore            = { version = "0.4.20" }

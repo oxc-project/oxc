@@ -2,95 +2,183 @@ import { basicSetup } from "codemirror";
 import { EditorView, keymap, showPanel } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
 import { javascript } from "@codemirror/lang-javascript";
-import { json } from "@codemirror/lang-json";
 import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
 import { linter, lintGutter } from "@codemirror/lint";
 
-import init, { Oxc, OxcOptions } from "@oxc/wasm-web";
+import initWasm, { Oxc, OxcOptions, OxcMinifierOptions } from "@oxc/wasm-web";
 
 const placeholderText = `
-function foo() {
-    debugger;
-}`.trim();
+import React, { useEffect, useRef } from 'react'
 
-async function main() {
-  await init();
-  const oxc = new Oxc();
-  const options = new OxcOptions();
-  oxc.setOptions(options);
-  oxc.setSourceText(placeholderText);
-  oxc.run();
-  const editor = initEditor(oxc);
-  window.setTimeout(function () {
-    editor.focus();
-  });
+const DummyComponent:React.FC = () => {
+
+  const ref = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (ref.current) ref.current.focus()
+  }, [])
+
+  return (
+      <div>{Boolean(ref.current) ?? (
+        <input type="text" ref={ref} />
+      )}
+      </div>
+  )
+
 }
 
-main();
+export default DummyComponent
+`.trim();
 
-function initEditor(oxc) {
-  function getAst() {
-    return JSON.stringify(oxc.getAst(), null, 2);
+class Playground {
+  oxc;
+  options;
+  editor;
+  viewer;
+
+  constructor() {
+    this.oxc = new Oxc();
+    this.options = new OxcOptions();
+    this.oxc.setOptions(this.options);
+    this.oxc.setSourceText(placeholderText);
+    this.oxc.run();
+    this.editor = this.initEditor();
+    this.viewer = this.initViewer();
   }
 
-  function getConsole(_doc) {
-    return oxc.getDiagnostics().join("\n");
+  initEditor() {
+    const stateListener = EditorView.updateListener.of((view) => {
+      if (view.docChanged) {
+        const sourceText = view.state.doc.toString();
+        this.oxc.setSourceText(sourceText);
+        this.oxc.run();
+        this.updateViewer(this.getAst());
+      }
+    });
+
+    const state = EditorState.create({
+      doc: this.oxc.getSourceText(),
+      extensions: [
+        basicSetup,
+        keymap.of(vscodeKeymap),
+        javascript(),
+        githubDark,
+        lintGutter(),
+        showPanel.of(this.getConsolePanel.bind(this)),
+        stateListener,
+        linter((_view) => {
+          return this.oxc.getDiagnostics().map((d) => ({
+            from: d.start,
+            to: d.end,
+            severity: d.severity.toLowerCase(),
+            message: d.message,
+          }));
+        }),
+      ],
+    });
+
+    return new EditorView({
+      state,
+      parent: document.querySelector("#app"),
+    });
   }
 
-  function consolePanel(view) {
+  initViewer() {
+    return new EditorView({
+      doc: this.getAst(),
+      extensions: [
+        basicSetup,
+        javascript(),
+        githubDark,
+        EditorView.editable.of(false),
+        EditorView.lineWrapping,
+      ],
+      parent: document.querySelector("#display"),
+    });
+  }
+
+  getAst() {
+    return JSON.stringify(this.oxc.getAst(), null, 2);
+  }
+
+  getHir() {
+    return JSON.stringify(this.oxc.getHir(), null, 2);
+  }
+
+  getFormattedText() {
+    return this.oxc.getFormattedText();
+  }
+
+  getMinifiedText() {
+    return this.oxc.getMinifiedText();
+  }
+
+  getConsole(_doc) {
+    return this.oxc
+      .getDiagnostics()
+      .map((d) => d.message)
+      .join("\n");
+  }
+
+  getConsolePanel(view) {
+    const that = this;
     const dom = document.createElement("div");
-    dom.textContent = getConsole(view.state.doc);
+    dom.textContent = that.getConsole(view.state.doc);
     return {
       dom,
       update(update) {
         if (update.docChanged) {
-          dom.textContent = getConsole(update.state.doc);
+          dom.textContent = that.getConsole(update.state.doc);
           dom.scrollTop = dom.scrollHeight;
         }
       },
     };
   }
 
-  const oxcLinter = linter((_view) => {
-    return [
-    ];
-  });
-
-  const rightView = new EditorView({
-    doc: getAst(),
-    extensions: [json(), githubDark, EditorView.editable.of(false)],
-    parent: document.querySelector("#right"),
-  });
-
-  const stateListener = EditorView.updateListener.of((view) => {
-    if (view.docChanged) {
-      const sourceText = view.state.doc.toString();
-      oxc.setSourceText(sourceText);
-      oxc.run();
-      const transaction = rightView.state.update({
-        changes: { from: 0, to: rightView.state.doc.length, insert: getAst() },
-      });
-      rightView.dispatch(transaction);
-    }
-  });
-
-  const state = EditorState.create({
-    doc: oxc.getSourceText(),
-    extensions: [
-      basicSetup,
-      keymap.of(vscodeKeymap),
-      javascript(),
-      githubDark,
-      lintGutter(),
-      showPanel.of(consolePanel),
-      oxcLinter,
-      stateListener,
-    ],
-  });
-
-  return new EditorView({
-    state,
-    parent: document.querySelector("#app"),
-  });
+  updateViewer(text) {
+    const transaction = this.viewer.state.update({
+      changes: { from: 0, to: this.viewer.state.doc.length, insert: text },
+    });
+    this.viewer.dispatch(transaction);
+  }
 }
+
+async function main() {
+  await initWasm();
+
+  const playground = new Playground();
+
+  window.setTimeout(function () {
+    playground.editor.focus();
+  });
+
+  document.getElementById("ast").onclick = function () {
+    playground.updateViewer(playground.getAst());
+  };
+
+  document.getElementById("hir").onclick = function () {
+    playground.updateViewer(playground.getHir());
+  };
+
+  document.getElementById("format").onclick = function () {
+    playground.updateViewer(playground.getFormattedText());
+  };
+
+  document.getElementById("minify").onclick = function () {
+    playground.updateViewer(playground.getMinifiedText());
+  };
+
+  document.getElementById("mangle").onchange = function () {
+    const checked = document.getElementById("mangle-checkbox").checked;
+    const options = new OxcOptions();
+    const minifiedOptions = new OxcMinifierOptions();
+    minifiedOptions.mangle = checked;
+    options.minifier = minifiedOptions;
+    playground.oxc.setOptions(options);
+    playground.oxc.run();
+    playground.updateViewer(playground.getMinifiedText());
+  };
+}
+
+main();
