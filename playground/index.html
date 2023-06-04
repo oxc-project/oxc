@@ -15,8 +15,9 @@
       #right { height:100vh; min-width: 0; flex:2 0 0; display:flex; flex-direction: column }
       #tab { background:lightgray; padding:.2em }
       #display { flex: 1; overflow-y: auto; }
+      #mangle { display: inline-flex; align-items: center }
     </style>
-    <script type="module" crossorigin src="https://boshen.github.io/oxc/assets/playground-6ecac4de.js"></script>
+    <script type="module" crossorigin src="https://boshen.github.io/oxc/assets/playground-c4e162f5.js"></script>
     <link rel="modulepreload" crossorigin href="https://boshen.github.io/oxc/assets/modulepreload-polyfill-3cfb730f.js">
   </head>
   <body>
@@ -30,6 +31,10 @@
           <button id="hir">HIR</button>
           <button id="format">Format</button>
           <button id="minify">Minify</button>
+          <label id="mangle">
+            Mangle
+            <input id="mangle-checkbox" type="checkbox">
+          </label>
         </div>
         <div id="display">
         </div>
