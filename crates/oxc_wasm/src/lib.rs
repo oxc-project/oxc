@@ -161,7 +161,7 @@ impl Oxc {
                             start: label.offset(),
                             end: label.offset() + label.len(),
                             severity: format!("{:?}", error.severity().unwrap_or_default()),
-                            message: format!("{}", error),
+                            message: format!("{error}"),
                         }
                         .serialize(&self.serializer)
                         .unwrap()
@@ -222,7 +222,7 @@ impl Oxc {
         if mangle {
             semantic.mangle();
         }
-        self.minified_text = Printer::new(self.source_text.len(), PrinterOptions::default())
+        self.minified_text = Printer::new(self.source_text.len(), PrinterOptions)
             .with_mangle(semantic.symbol_table, mangle)
             .build(&hir);
 
