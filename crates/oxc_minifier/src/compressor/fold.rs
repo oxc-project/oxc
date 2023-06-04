@@ -164,12 +164,10 @@ impl<'a> Compressor<'a> {
                 | Expression::ObjectExpression(_)
                 | Expression::ArrayExpression(_) => Some("object"),
                 Expression::Identifier(_) if argument.is_undefined() => Some("undefined"),
-                Expression::UnaryExpression(unary_expr) => {
-                    if unary_expr.operator == UnaryOperator::Void {
-                        Some("undefined")
-                    } else {
-                        None
-                    }
+                Expression::UnaryExpression(unary_expr)
+                    if unary_expr.operator == UnaryOperator::Void =>
+                {
+                    Some("undefined")
                 }
                 _ => None,
             };
