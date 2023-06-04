@@ -42,6 +42,7 @@ pub struct OxcOptions {
     pub parser: Option<OxcParserOptions>,
     pub linter: Option<OxcLinterOptions>,
     pub formatter: Option<OxcFormatterOptions>,
+    pub minifier: Option<OxcMinifierOptions>,
 }
 
 #[wasm_bindgen]
@@ -51,7 +52,8 @@ impl OxcOptions {
         Self {
             parser: Some(OxcParserOptions { allow_return_outside_function: true }),
             linter: Some(OxcLinterOptions),
-            formatter: Some(OxcFormatterOptions { indentation: 8 }),
+            formatter: Some(OxcFormatterOptions { indentation: 4 }),
+            minifier: Some(OxcMinifierOptions { mangle: false }),
         }
     }
 }
@@ -73,7 +75,20 @@ pub struct OxcFormatterOptions {
     pub indentation: u8,
 }
 
-// #[wasm_bindgen]
+#[wasm_bindgen]
+#[derive(Default, Clone, Copy)]
+pub struct OxcMinifierOptions {
+    pub mangle: bool,
+}
+
+#[wasm_bindgen]
+impl OxcMinifierOptions {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
 #[derive(Default, Clone, Serialize)]
 pub struct OxcDiagnostic {
     pub start: usize,
@@ -201,10 +216,14 @@ impl Oxc {
         let semantic = ast_lower_ret.semantic;
         self.hir = hir.serialize(&self.serializer)?;
 
-        let semantic =
+        let mut semantic =
             Compressor::new(&allocator, semantic, CompressOptions::default()).build(&mut hir);
+        let mangle = self.options.minifier.map_or(false, |options| options.mangle);
+        if mangle {
+            semantic.mangle();
+        }
         self.minified_text = Printer::new(self.source_text.len(), PrinterOptions::default())
-            .with_mangle(semantic.symbol_table, /* mangle */ false)
+            .with_mangle(semantic.symbol_table, mangle)
             .build(&hir);
 
         Ok(())

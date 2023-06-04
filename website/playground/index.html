@@ -15,6 +15,7 @@
       #right { height:100vh; min-width: 0; flex:2 0 0; display:flex; flex-direction: column }
       #tab { background:lightgray; padding:.2em }
       #display { flex: 1; overflow-y: auto; }
+      #mangle { display: inline-flex; align-items: center }
     </style>
   </head>
   <body>
@@ -28,6 +29,10 @@
           <button id="hir">HIR</button>
           <button id="format">Format</button>
           <button id="minify">Minify</button>
+          <label id="mangle">
+            Mangle
+            <input id="mangle-checkbox" type="checkbox">
+          </label>
         </div>
         <div id="display">
         </div>
