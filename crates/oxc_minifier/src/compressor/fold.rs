@@ -5,7 +5,7 @@
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::hir_util::IsLiteralValue;
-use oxc_span::Span;
+use oxc_span::{Atom, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use super::Compressor;
@@ -153,7 +153,33 @@ impl<'a> Compressor<'a> {
         span: Span,
         argument: &'b Expression<'a>,
     ) -> Option<Expression<'a>> {
-        if argument.is_literal_value(true) {}
+        if argument.is_literal_value(true) {
+            let type_name = match argument {
+                Expression::FunctionExpression(_) | Expression::ArrowExpression(_) => {
+                    Some("function")
+                }
+                Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => Some("string"),
+                Expression::NumberLiteral(_) => Some("number"),
+                Expression::BooleanLiteral(_) => Some("boolean"),
+                Expression::NullLiteral(_)
+                | Expression::ObjectExpression(_)
+                | Expression::ArrayExpression(_) => Some("object"),
+                Expression::Identifier(_) if argument.is_undefined() => Some("undefined"),
+                Expression::UnaryExpression(unary_expr) => {
+                    if unary_expr.operator == UnaryOperator::Void {
+                        Some("undefined")
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            };
+
+            if let Some(type_name) = type_name {
+                let string_literal = self.hir.string_literal(span, Atom::from(type_name));
+                return Some(self.hir.literal_string_expression(string_literal));
+            }
+        }
 
         None
     }
