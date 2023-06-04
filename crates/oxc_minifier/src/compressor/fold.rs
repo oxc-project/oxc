@@ -4,8 +4,9 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
+use oxc_hir::hir_util::IsLiteralValue;
 use oxc_span::Span;
-use oxc_syntax::operator::BinaryOperator;
+use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use super::Compressor;
 
@@ -61,6 +62,12 @@ impl<'a> Compressor<'a> {
                     &binary_expr.left,
                     &binary_expr.right,
                 ),
+                _ => None,
+            },
+            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+                UnaryOperator::Typeof => {
+                    self.try_fold_typeof(unary_expr.span, &unary_expr.argument)
+                }
                 _ => None,
             },
             _ => None,
@@ -135,5 +142,19 @@ impl<'a> Compressor<'a> {
             };
         }
         Tri::Unknown
+    }
+
+    //
+    // Folds 'typeof(foo)' if foo is a literal, e.g.
+    // typeof("bar") --> "string"
+    // typeof(6) --> "number"
+    fn try_fold_typeof<'b>(
+        &mut self,
+        span: Span,
+        argument: &'b Expression<'a>,
+    ) -> Option<Expression<'a>> {
+        if argument.is_literal_value(true) {}
+
+        None
     }
 }

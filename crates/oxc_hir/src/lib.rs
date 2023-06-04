@@ -5,6 +5,7 @@ mod serialize;
 
 pub mod hir;
 mod hir_builder;
+pub mod hir_util;
 pub mod precedence;
 mod visit_mut;
 
