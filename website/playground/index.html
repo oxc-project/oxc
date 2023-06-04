@@ -6,17 +6,37 @@
     <title>Oxc - The JavaScript Oxidation Compiler</title>
     <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Boshen/oxc-assets/main/oxc.ico">
     <style>
+      body { font-size: 16px; margin: 0 }
       .cm-editor { height: 100%; }
       .cm-panels.cm-panels-bottom { border-top: gray!important; }
-      .cm-panel { white-space: pre; height: 300px; overflow: auto; }
+      .cm-panel { white-space: pre; height: 300px; overflow-y: auto; padding: 1em }
+      #container { display: flex; }
+      #app { height:100vh; flex:1 0 0 }
+      #right { height:100vh; min-width: 0; flex:1 0 0; display:flex; flex-direction: column }
+      #tab { background:lightgray; padding:.2em }
+      #display { flex: 1; overflow-y: auto; }
+      #mangle { display: inline-flex; align-items: center }
     </style>
   </head>
-  <body style="margin:0">
+  <body>
     <script type="module" src="./index.js"></script>
 
-    <div style="display:flex;">
-      <div id="app" style="height:100vh;flex:3 0 0" ></div>
-      <div id="right" style="height:100vh;flex:2 0 0"></div>
+    <div id="container">
+      <div id="app"></div>
+      <div id="right">
+        <div id="tab">
+          <button id="ast">AST</button>
+          <button id="hir">HIR</button>
+          <button id="format">Format</button>
+          <button id="minify">Minify</button>
+          <label id="mangle">
+            Mangle
+            <input id="mangle-checkbox" type="checkbox">
+          </label>
+        </div>
+        <div id="display">
+        </div>
+      </div>
     </div>
   </body>
 </html>

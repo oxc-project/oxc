@@ -10,8 +10,10 @@ use oxc_ast_lower::AstLower;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-pub use crate::{compressor::CompressOptions, printer::PrinterOptions};
-use crate::{compressor::Compressor, printer::Printer};
+pub use crate::{
+    compressor::{CompressOptions, Compressor},
+    printer::{Printer, PrinterOptions},
+};
 
 #[derive(Debug, Clone, Copy)]
 pub struct MinifierOptions {

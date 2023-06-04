@@ -1,13 +1,15 @@
 use std::{cell::RefCell, rc::Rc};
 
 use oxc_allocator::Allocator;
+use oxc_ast_lower::AstLower;
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::Linter;
+use oxc_minifier::{CompressOptions, Compressor, Printer, PrinterOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
-use serde::ser::Serialize;
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
@@ -24,8 +26,10 @@ pub struct Oxc {
     options: OxcOptions,
 
     ast: JsValue,
+    hir: JsValue,
 
-    printed_text: String,
+    formatted_text: String,
+    minified_text: String,
 
     diagnostics: RefCell<Vec<Error>>,
 
@@ -38,6 +42,7 @@ pub struct OxcOptions {
     pub parser: Option<OxcParserOptions>,
     pub linter: Option<OxcLinterOptions>,
     pub formatter: Option<OxcFormatterOptions>,
+    pub minifier: Option<OxcMinifierOptions>,
 }
 
 #[wasm_bindgen]
@@ -47,7 +52,8 @@ impl OxcOptions {
         Self {
             parser: Some(OxcParserOptions { allow_return_outside_function: true }),
             linter: Some(OxcLinterOptions),
-            formatter: Some(OxcFormatterOptions { indentation: 8 }),
+            formatter: Some(OxcFormatterOptions { indentation: 4 }),
+            minifier: Some(OxcMinifierOptions { mangle: false }),
         }
     }
 }
@@ -67,6 +73,28 @@ pub struct OxcLinterOptions;
 #[derive(Default, Clone, Copy)]
 pub struct OxcFormatterOptions {
     pub indentation: u8,
+}
+
+#[wasm_bindgen]
+#[derive(Default, Clone, Copy)]
+pub struct OxcMinifierOptions {
+    pub mangle: bool,
+}
+
+#[wasm_bindgen]
+impl OxcMinifierOptions {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[derive(Default, Clone, Serialize)]
+pub struct OxcDiagnostic {
+    pub start: usize,
+    pub end: usize,
+    pub severity: String,
+    pub message: String,
 }
 
 #[wasm_bindgen]
@@ -100,22 +128,47 @@ impl Oxc {
         self.ast.clone()
     }
 
-    #[wasm_bindgen(js_name = getPrintedText)]
-    pub fn get_printed_text(&self) -> String {
-        self.printed_text.clone()
+    /// Returns HIR in JSON
+    #[wasm_bindgen(js_name = getHir)]
+    pub fn get_hir(&self) -> JsValue {
+        self.hir.clone()
+    }
+
+    #[wasm_bindgen(js_name = getFormattedText)]
+    pub fn get_formatted_text(&self) -> String {
+        self.formatted_text.clone()
+    }
+
+    #[wasm_bindgen(js_name = getMinifiedText)]
+    pub fn get_minified_text(&self) -> String {
+        self.minified_text.clone()
     }
 
     /// Returns Array of String
     #[wasm_bindgen(js_name = getDiagnostics)]
     pub fn get_diagnostics(&self) -> Result<Vec<JsValue>, serde_wasm_bindgen::Error> {
-        self.diagnostics
+        Ok(self
+            .diagnostics
             .borrow()
             .iter()
-            .map(|error| {
-                let s = format!("{error:?}");
-                s.serialize(&self.serializer)
+            .flat_map(|error| {
+                let Some(labels) = error.labels() else {
+                    return vec![]
+                };
+                labels
+                    .map(|label| {
+                        OxcDiagnostic {
+                            start: label.offset(),
+                            end: label.offset() + label.len(),
+                            severity: format!("{:?}", error.severity().unwrap_or_default()),
+                            message: format!("{error}"),
+                        }
+                        .serialize(&self.serializer)
+                        .unwrap()
+                    })
+                    .collect::<Vec<_>>()
             })
-            .collect()
+            .collect::<Vec<_>>())
     }
 
     /// # Errors
@@ -155,17 +208,28 @@ impl Oxc {
         if let Some(o) = &self.options.formatter {
             let formatter_options = FormatterOptions { indentation: o.indentation };
             let printed = Formatter::new(source_text.len(), formatter_options).build(program);
-            self.printed_text = printed;
+            self.formatted_text = printed;
         }
+
+        let ast_lower_ret = AstLower::new(&allocator, source_type).build(program);
+        let mut hir = ast_lower_ret.program;
+        let semantic = ast_lower_ret.semantic;
+        self.hir = hir.serialize(&self.serializer)?;
+
+        let mut semantic =
+            Compressor::new(&allocator, semantic, CompressOptions::default()).build(&mut hir);
+        let mangle = self.options.minifier.map_or(false, |options| options.mangle);
+        if mangle {
+            semantic.mangle();
+        }
+        self.minified_text = Printer::new(self.source_text.len(), PrinterOptions)
+            .with_mangle(semantic.symbol_table, mangle)
+            .build(&hir);
 
         Ok(())
     }
 
     fn save_diagnostics(&self, diagnostics: Vec<Error>) {
-        self.diagnostics.borrow_mut().extend(
-            diagnostics
-                .into_iter()
-                .map(|diagnostic| diagnostic.with_source_code(self.source_text.clone())),
-        );
+        self.diagnostics.borrow_mut().extend(diagnostics);
     }
 }
