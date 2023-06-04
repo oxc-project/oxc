@@ -12,7 +12,7 @@ use crate::hir::{
 /// If it is evaluated in a different scope, then it captures a different variable. Even if
 /// the function did not read any captured variables directly, it would still fail this definition,
 /// because it affects the lifecycle of variables in the enclosing scope.
-
+///
 /// However, a function literal with respect to a particular scope is a literal.
 pub trait IsLiteralValue<'a, 'b> {
     fn is_literal_value(&self, include_functions: bool) -> bool;
