@@ -837,13 +837,21 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_decimal_exponent(&mut self, builder: &mut AutoCow<'a>) -> Kind {
-        let c = self.peek();
-        if matches!(c, '+' | '-') {
-            self.current.chars.next();
-            builder.push_matching(c);
-        }
+        let kind = match self.peek() {
+            '-' => {
+                self.current.chars.next();
+                builder.push_matching('-');
+                Kind::NegativeExponential
+            }
+            '+' => {
+                self.current.chars.next();
+                builder.push_matching('+');
+                Kind::PositiveExponential
+            }
+            _ => Kind::PositiveExponential,
+        };
         self.read_decimal_digits(builder);
-        if matches!(c, '-') { Kind::NegativeExponential } else { Kind::PositiveExponential }
+        kind
     }
 
     fn read_decimal_digits(&mut self, builder: &mut AutoCow<'a>) {

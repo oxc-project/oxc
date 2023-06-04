@@ -829,7 +829,7 @@ fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
     let dot = chars.iter().position(|&c| c == b'.');
     let u8_to_string = |num: &[u8]| unsafe { String::from_utf8_unchecked(num.to_vec()) };
 
-    if matches!(dot, Some(1)) && matches!(chars[0], b'0') {
+    if dot == Some(1) && chars[0] == b'0' {
         // Strip off the leading zero when minifying
         // "0.5" => ".5"
         let stripped_result = &chars[1..];
@@ -838,9 +838,9 @@ fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
 
         // Try using an exponent
         // "0.001" => "1e-3"
-        if matches!(stripped_result[after_dot], b'0') {
+        if stripped_result[after_dot] == b'0' {
             let mut i = after_dot + 1;
-            while matches!(stripped_result[i], b'0') {
+            while stripped_result[i] == b'0' {
                 i += 1;
             }
             let remaining = &stripped_result[i..];
@@ -855,11 +855,11 @@ fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
         } else {
             result = u8_to_string(stripped_result);
         }
-    } else if matches!(chars[len - 1], b'0') {
+    } else if chars[len - 1] == b'0' {
         // Simplify numbers ending with "0" by trying to use an exponent
         // "1000" => "1e3"
         let mut i = len - 1;
-        while i > 0 && matches!(chars[i - 1], b'0') {
+        while i > 0 && chars[i - 1] == b'0' {
             i -= 1;
         }
         let remaining = &chars[0..i];
