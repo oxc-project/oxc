@@ -6,23 +6,27 @@
     <title>Oxc - The JavaScript Oxidation Compiler</title>
     <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Boshen/oxc-assets/main/oxc.ico">
     <style>
-      body { font-size: 16px; margin: 0 }
+      body { font-family: monospace; font-size: 16px; margin: 0 }
       .cm-editor { height: 100%; }
-      .cm-panels.cm-panels-bottom { border-top: gray!important; }
-      .cm-panel { white-space: pre; height: 300px; overflow-y: auto; padding: 1em }
-      #container { display: flex; }
-      #app { height:100vh; flex:1 0 0 }
-      #right { height:100vh; min-width: 0; flex:1 0 0; display:flex; flex-direction: column }
-      #tab { background:lightgray; padding:.2em }
+      #container { display: flex; height: 100vh; }
+      #left { display: flex; flex: 1; flex-direction: column; border-right: 1px solid #444 }
+      #editor { flex: 1; overflow-y: auto; }
+      #panel { height: 300px; overflow-y: auto; padding: 1em; color: #d1d5da; background-color: #24292e; border-top: 1px solid #444!important; }
+      #right { flex: 1; display:flex; flex-direction: column }
+      #tab { background: lightgray; padding:.2em .5em; }
       #display { flex: 1; overflow-y: auto; }
       #mangle { display: inline-flex; align-items: center }
+      #duration { float: right; }
     </style>
   </head>
   <body>
     <script type="module" src="./index.js"></script>
 
     <div id="container">
-      <div id="app"></div>
+      <div id="left">
+        <div id="editor"></div>
+        <div id="panel"></div>
+      </div>
       <div id="right">
         <div id="tab">
           <button id="ast">AST</button>
@@ -33,6 +37,7 @@
             Mangle
             <input id="mangle-checkbox" type="checkbox">
           </label>
+          <span id="duration"></span>
         </div>
         <div id="display">
         </div>

@@ -1,5 +1,5 @@
 import { basicSetup } from "codemirror";
-import { EditorView, keymap, showPanel } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
 import { EditorState } from "@codemirror/state";
 import { javascript } from "@codemirror/lang-javascript";
 import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
@@ -36,15 +36,19 @@ class Playground {
   options;
   editor;
   viewer;
+  currentView = "ast"; // "ast" | "hir" | "format" | "minify"
 
   constructor() {
+    this.editor = this.initEditor();
+    this.viewer = this.initViewer();
+  }
+
+  initOxc() {
     this.oxc = new Oxc();
     this.options = new OxcOptions();
     this.oxc.setOptions(this.options);
-    this.oxc.setSourceText(placeholderText);
-    this.oxc.run();
-    this.editor = this.initEditor();
-    this.viewer = this.initViewer();
+    // This will trigger `stateListener`.
+    this.updateEditorText(this.editor, placeholderText);
   }
 
   initEditor() {
@@ -52,43 +56,42 @@ class Playground {
       if (view.docChanged) {
         const sourceText = view.state.doc.toString();
         this.oxc.setSourceText(sourceText);
-        this.oxc.run();
-        this.updateViewer(this.getAst());
+        this.run();
+        this.updateView(this.currentView);
       }
     });
 
     const state = EditorState.create({
-      doc: this.oxc.getSourceText(),
+      doc: "Loading Wasm... (~400kb)",
       extensions: [
         basicSetup,
         keymap.of(vscodeKeymap),
         javascript(),
         githubDark,
         lintGutter(),
-        showPanel.of(this.getConsolePanel.bind(this)),
         stateListener,
         linter((_view) => {
-          return this.oxc.getDiagnostics().map((d) => ({
-            from: d.start,
-            to: d.end,
-            severity: d.severity.toLowerCase(),
-            message: d.message,
-          }));
+          return this.oxc
+            ? this.oxc.getDiagnostics().map((d) => ({
+                from: d.start,
+                to: d.end,
+                severity: d.severity.toLowerCase(),
+                message: d.message,
+              }))
+            : [];
         }),
       ],
     });
 
     return new EditorView({
       state,
-      parent: document.querySelector("#app"),
+      parent: document.querySelector("#editor"),
     });
   }
 
   initViewer() {
     return new EditorView({
-      doc: this.getAst(),
       extensions: [
-        basicSetup,
         javascript(),
         githubDark,
         EditorView.editable.of(false),
@@ -98,75 +101,76 @@ class Playground {
     });
   }
 
-  getAst() {
-    return JSON.stringify(this.oxc.getAst(), null, 2);
+  run() {
+    const start = new Date();
+    this.oxc.run();
+    const elapsed = new Date() - start;
+    document.getElementById("duration").innerText = `${elapsed}ms`;
+    this.updatePanel();
   }
 
-  getHir() {
-    return JSON.stringify(this.oxc.getHir(), null, 2);
-  }
-
-  getFormattedText() {
-    return this.oxc.getFormattedText();
-  }
-
-  getMinifiedText() {
-    return this.oxc.getMinifiedText();
-  }
-
-  getConsole(_doc) {
-    return this.oxc
+  updatePanel() {
+    const panel = document.getElementById("panel");
+    panel.innerText = this.oxc
       .getDiagnostics()
       .map((d) => d.message)
       .join("\n");
+    panel.scrollTop = panel.scrollHeight;
   }
 
-  getConsolePanel(view) {
-    const that = this;
-    const dom = document.createElement("div");
-    dom.textContent = that.getConsole(view.state.doc);
-    return {
-      dom,
-      update(update) {
-        if (update.docChanged) {
-          dom.textContent = that.getConsole(update.state.doc);
-          dom.scrollTop = dom.scrollHeight;
-        }
-      },
-    };
+  updateView(view) {
+    this.currentView = view;
+    let text;
+    switch (this.currentView) {
+      case "ast":
+        text = JSON.stringify(this.oxc.getAst(), null, 2);
+        break;
+      case "hir":
+        text = JSON.stringify(this.oxc.getHir(), null, 2);
+        break;
+      case "format":
+        text = this.oxc.getFormattedText();
+        break;
+      case "minify":
+        text = this.oxc.getMinifiedText();
+        break;
+    }
+    this.updateEditorText(this.viewer, text);
   }
 
-  updateViewer(text) {
-    const transaction = this.viewer.state.update({
-      changes: { from: 0, to: this.viewer.state.doc.length, insert: text },
+  updateEditorText(instance, text) {
+    const transaction = instance.state.update({
+      changes: { from: 0, to: instance.state.doc.length, insert: text },
     });
-    this.viewer.dispatch(transaction);
+    instance.dispatch(transaction);
   }
 }
 
 async function main() {
+  const playground = new Playground();
+
   await initWasm();
 
-  const playground = new Playground();
+  playground.initOxc();
 
   window.setTimeout(function () {
     playground.editor.focus();
-  });
+  }, 0);
 
-  document.getElementById("ast").onclick = function () {
-    playground.updateViewer(playground.getAst());
+  document.getElementById("ast").onclick = () => {
+    playground.updateView("ast");
   };
 
-  document.getElementById("hir").onclick = function () {
-    playground.updateViewer(playground.getHir());
+  document.getElementById("hir").onclick = () => {
+    playground.updateView("hir");
   };
 
-  document.getElementById("format").onclick = function () {
-    playground.updateViewer(playground.getFormattedText());
+  document.getElementById("format").onclick = () => {
+    playground.updateView("format");
   };
 
   document.getElementById("minify").onclick = function () {
-    playground.updateViewer(playground.getMinifiedText());
+    playground.updateView("minify");
   };
 
   document.getElementById("mangle").onchange = function () {
@@ -176,8 +180,8 @@ async function main() {
     minifiedOptions.mangle = checked;
     options.minifier = minifiedOptions;
     playground.oxc.setOptions(options);
-    playground.oxc.run();
-    playground.updateViewer(playground.getMinifiedText());
+    playground.run();
+    playground.updateView("minify");
   };
 }
 
