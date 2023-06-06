@@ -1,10 +1,19 @@
 import { basicSetup } from "codemirror";
-import { EditorView, keymap } from "@codemirror/view";
-import { EditorState } from "@codemirror/state";
-import { javascript } from "@codemirror/lang-javascript";
+import { EditorView, keymap, Decoration } from "@codemirror/view";
+import {
+  EditorState,
+  StateEffect,
+  StateField,
+  EditorSelection,
+  Compartment,
+  RangeSet,
+} from "@codemirror/state";
+import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
+import { json, jsonLanguage } from "@codemirror/lang-json";
 import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
 import { linter, lintGutter } from "@codemirror/lint";
+import { language, syntaxTree } from "@codemirror/language";
 
 import initWasm, { Oxc, OxcOptions, OxcMinifierOptions } from "@oxc/wasm-web";
 
@@ -12,7 +21,6 @@ const placeholderText = `
 import React, { useEffect, useRef } from 'react'
 
 const DummyComponent:React.FC = () => {
-
   const ref = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -25,7 +33,6 @@ const DummyComponent:React.FC = () => {
       )}
       </div>
   )
-
 }
 
 export default DummyComponent
@@ -37,8 +44,10 @@ class Playground {
   editor;
   viewer;
   currentView = "ast"; // "ast" | "hir" | "format" | "minify"
+  languageConf;
 
   constructor() {
+    this.languageConf = new Compartment();
     this.editor = this.initEditor();
     this.viewer = this.initViewer();
   }
@@ -92,12 +101,34 @@ class Playground {
   initViewer() {
     return new EditorView({
       extensions: [
-        javascript(),
         githubDark,
         EditorView.editable.of(false),
         EditorView.lineWrapping,
+        this.languageConf.of(javascript()),
+        // Change language according to the current view
+        EditorState.transactionExtender.of((tr) => {
+          if (!tr.docChanged) return null;
+          const currentLanguage = tr.startState.facet(language);
+          let newLanguage;
+          switch (this.currentLanguage()) {
+            case "json":
+              if (currentLanguage == jsonLanguage) return null;
+              newLanguage = json();
+              break;
+            case "javascript":
+              if (currentLanguage == javascriptLanguage) return null;
+              newLanguage = javascript();
+              break;
+          }
+          return {
+            effects: this.languageConf.reconfigure(newLanguage),
+          };
+        }),
+        EditorView.domEventHandlers({
+          mouseover: this.highlightEditorFromViewer.bind(this),
+        }),
       ],
-      parent: document.querySelector("#display"),
+      parent: document.querySelector("#viewer"),
     });
   }
 
@@ -107,6 +138,16 @@ class Playground {
     const elapsed = new Date() - start;
     document.getElementById("duration").innerText = `${elapsed}ms`;
     this.updatePanel();
+  }
+
+  currentLanguage() {
+    switch (this.currentView) {
+      case "ast":
+      case "hir":
+        return "json";
+      default:
+        return "javascript";
+    }
   }
 
   updatePanel() {
@@ -143,6 +184,95 @@ class Playground {
       changes: { from: 0, to: instance.state.doc.length, insert: text },
     });
     instance.dispatch(transaction);
+  }
+
+  hightlightEditorRange(view, range) {
+    const addHighlight = StateEffect.define({
+      map: ({ from, to }, change) => ({
+        from: change.mapPos(from),
+        to: change.mapPos(to),
+      }),
+    });
+    const highlightField = StateField.define({
+      create() {
+        return Decoration.none;
+      },
+      update(highlights, tr) {
+        highlights = RangeSet.empty;
+        for (let e of tr.effects) {
+          if (e.is(addHighlight)) {
+            highlights = highlights.update({
+              add: [Playground.highlightMark.range(e.value.from, e.value.to)],
+            });
+          }
+        }
+        return highlights;
+      },
+      provide: (f) => EditorView.decorations.from(f),
+    });
+    const effects = [addHighlight.of(range)];
+    if (!view.state.field(highlightField, false)) {
+      effects.push(
+        StateEffect.appendConfig.of([highlightField, Playground.highlightTheme])
+      );
+    }
+    view.dispatch({ effects });
+  }
+
+  getTextFromView(view, from, to) {
+    return view.state.doc.sliceString(from, to);
+  }
+
+  static highlightMark = Decoration.mark({ class: "cm-highlight" });
+  static highlightTheme = EditorView.baseTheme({
+    ".cm-highlight": { background: "black" },
+  });
+
+  // Highlight the editor by searching for `start` and `end` values.
+  highlightEditorFromViewer(e, view) {
+    if (this.currentLanguage() != "json") {
+      return;
+    }
+    const pos = view.posAtCoords(e);
+    const tree = syntaxTree(view.state);
+    let cursor = tree.cursorAt(pos);
+    // Go up and find the `type` key
+    while (true) {
+      if (view.state.doc.sliceString(cursor.from, cursor.to) == '"type"') {
+        break;
+      }
+      if (!cursor.prev()) {
+        break;
+      }
+    }
+    // Go down and find the `start` and `end` keys
+    let start, end;
+    while (true) {
+      if (
+        !start &&
+        this.getTextFromView(view, cursor.from, cursor.to) == '"start"'
+      ) {
+        cursor.next();
+        start = this.getTextFromView(view, cursor.from, cursor.to);
+      }
+      if (
+        !end &&
+        this.getTextFromView(view, cursor.from, cursor.to) == '"end"'
+      ) {
+        cursor.next();
+        end = this.getTextFromView(view, cursor.from, cursor.to);
+      }
+      if (start && end) {
+        break;
+      }
+      if (!cursor.next()) {
+        break;
+      }
+    }
+    this.hightlightEditorRange(
+      this.editor,
+      EditorSelection.range(Number(start), Number(end))
+    );
   }
 }
 
