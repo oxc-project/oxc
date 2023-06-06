@@ -15,6 +15,7 @@ use crate::hir::{
 /// because it affects the lifecycle of variables in the enclosing scope.
 ///
 /// However, a function literal with respect to a particular scope is a literal.
+/// If `include_functions` is true, all function expressions will be treated as literals.
 pub trait IsLiteralValue<'a, 'b> {
     fn is_literal_value(&self, include_functions: bool) -> bool;
 }
