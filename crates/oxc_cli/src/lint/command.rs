@@ -2,7 +2,6 @@ use clap::{builder::ValueParser, Arg, ArgAction, Command};
 
 pub fn lint_command() -> Command {
     Command::new("lint")
-            .alias("check")
             .about("Lint this repository.")
             .arg_required_else_help(true)
             .after_help(

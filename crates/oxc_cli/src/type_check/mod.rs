@@ -50,7 +50,7 @@ impl<'a> From<&'a ArgMatches> for TypeCheckOptions {
 }
 
 pub fn type_check_command() -> Command {
-    Command::new("type-check")
+    Command::new("check")
         .about(
             "NOTE: Experimental / work in progress. Check source code for type errors using Ezno",
         )
