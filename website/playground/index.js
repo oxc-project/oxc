@@ -191,7 +191,7 @@ class Playground {
     instance.dispatch(transaction);
   }
 
-  hightlightEditorRange(view, range) {
+  highlightEditorRange(view, range) {
     const addHighlight = StateEffect.define({
       map: ({ from, to }, change) => ({
         from: change.mapPos(from),
@@ -274,7 +274,7 @@ class Playground {
         break;
       }
     }
-    this.hightlightEditorRange(
+    this.highlightEditorRange(
       this.editor,
       EditorSelection.range(Number(start), Number(end))
     );
