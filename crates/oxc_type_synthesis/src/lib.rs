@@ -1,3 +1,5 @@
+#![allow(clippy::all, clippy::restriction, clippy::pedantic, clippy::nursery)]
+
 use ezno_checker::{
     events::Event, CheckingData, Environment, FSResolver, Root, Scope, Span as SourceMapSpan,
     TypeId,

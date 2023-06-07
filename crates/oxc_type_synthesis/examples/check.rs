@@ -53,19 +53,19 @@ fn main() {
         if args.iter().any(|arg| arg == "--types") {
             eprintln!("Types:");
             for item in types {
-                eprintln!("\t{:?}", item);
+                eprintln!("\t{item:?}");
             }
         }
         if args.iter().any(|arg| arg == "--events") {
             eprintln!("Events:");
             for item in events {
-                eprintln!("\t{:?}", item);
+                eprintln!("\t{item:?}");
             }
         }
 
         eprintln!("Diagnostics:");
         for diag in diagnostics.into_iter() {
-            eprintln!("\t{}", diag.get_diagnostic().unwrap().reason())
+            eprintln!("\t{}", diag.get_diagnostic().unwrap().reason());
         }
     } else {
         for error in ret.errors {

@@ -42,6 +42,7 @@ pub struct TypeCheckOptions {
     pub path: PathBuf,
 }
 
+#[allow(clippy::fallible_impl_from)]
 impl<'a> From<&'a ArgMatches> for TypeCheckOptions {
     fn from(matches: &'a ArgMatches) -> Self {
         Self { path: PathBuf::from(matches.get_one::<String>("path").unwrap()) }
@@ -65,6 +66,7 @@ impl TypeCheckRunner {
         Self { options }
     }
 
+    /// # Panics
     pub fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
 
@@ -131,6 +133,7 @@ mod type_check_output {
         Diagnostic as TypeCheckDiagnostic, DiagnosticsContainer, ErrorWarningInfo,
     };
 
+    #[allow(clippy::items_after_statements)]
     pub(super) fn print_diagnostics_container(
         error_handler: DiagnosticsContainer,
         path: String,
