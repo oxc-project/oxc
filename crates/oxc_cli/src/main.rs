@@ -32,7 +32,7 @@ fn main() -> CliRunResult {
 
             LintRunner::new(options).run()
         }
-        "type-check" => {
+        "check" => {
             let options = TypeCheckOptions::from(matches);
             TypeCheckRunner::new(options).run()
         }
