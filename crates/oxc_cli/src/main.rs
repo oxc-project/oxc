@@ -8,7 +8,7 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use oxc_cli::{command, CliRunResult, LintOptions, LintRunner};
+use oxc_cli::{command, CliRunResult, LintOptions, LintRunner, TypeCheckOptions, TypeCheckRunner};
 
 fn main() -> CliRunResult {
     let matches = command().get_matches();
@@ -31,6 +31,10 @@ fn main() -> CliRunResult {
             }
 
             LintRunner::new(options).run()
+        }
+        "check" => {
+            let options = TypeCheckOptions::from(matches);
+            TypeCheckRunner::new(options).run()
         }
         _ => CliRunResult::None,
     }
