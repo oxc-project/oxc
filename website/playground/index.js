@@ -14,6 +14,7 @@ import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
 import { linter, lintGutter } from "@codemirror/lint";
 import { language, syntaxTree } from "@codemirror/language";
+import throttle from "lodash.throttle";
 
 import initWasm, { Oxc, OxcOptions, OxcMinifierOptions } from "@oxc/wasm-web";
 
@@ -45,9 +46,11 @@ class Playground {
   viewer;
   currentView = "ast"; // "ast" | "hir" | "format" | "minify"
   languageConf;
+  urlParams;
 
   constructor() {
     this.languageConf = new Compartment();
+    this.urlParams = new URLParams();
     this.editor = this.initEditor();
     this.viewer = this.initViewer();
   }
@@ -57,13 +60,14 @@ class Playground {
     this.options = new OxcOptions();
     this.oxc.setOptions(this.options);
     // This will trigger `stateListener`.
-    this.updateEditorText(this.editor, placeholderText);
+    this.updateEditorText(this.editor, this.urlParams.code || placeholderText);
   }
 
   initEditor() {
     const stateListener = EditorView.updateListener.of((view) => {
       if (view.docChanged) {
         const sourceText = view.state.doc.toString();
+        this.urlParams.updateCode(sourceText);
         this.oxc.setSourceText(sourceText);
         this.run();
         this.updateView(this.currentView);
@@ -74,6 +78,7 @@ class Playground {
       doc: "Loading Wasm... (~400kb)",
       extensions: [
         basicSetup,
+        EditorView.lineWrapping,
         keymap.of(vscodeKeymap),
         javascript(),
         githubDark,
@@ -273,6 +278,80 @@ class Playground {
       this.editor,
       EditorSelection.range(Number(start), Number(end))
     );
+  }
+}
+
+// Code copied from Rome
+// <https://github.com/rome/tools/blob/665bb9d810b4ebf4ea82b72df20ad79b8fa3a3d0/website/src/playground/utils.ts#L141-L181>
+class URLParams {
+  // Safari/Webkit/JSC/whatever only allows setting a URL 50 times within 30 seconds
+  // set our maximum update frequency just under that to avoid any chance of hitting it
+  static URL_UPDATE_THROTTLE = 30000 / 40;
+
+  params;
+  code;
+
+  constructor() {
+    this.params = new URLSearchParams(window.location.search);
+    this.code = this.params.has("code")
+      ? this.decodeCode(this.params.get("code"))
+      : "";
+    console.log(this.code);
+  }
+
+  updateCode = throttle(
+    (code) => {
+      this.code = this.encodeCode(code);
+      this.params.set("code", this.code);
+      const url = `${window.location.protocol}//${window.location.host}${
+        window.location.pathname
+      }?${this.params.toString()}`;
+      window.history.replaceState({ path: url }, "", url);
+    },
+    URLParams.URL_UPDATE_THROTTLE,
+    { trailing: true }
+  );
+
+  // See https://developer.mozilla.org/en-US/docs/Web/API/btoa#unicode_strings
+  encodeCode(code) {
+    return btoa(this.toBinary(code));
+  }
+
+  decodeCode(encoded) {
+    try {
+      return this.fromBinary(atob(encoded));
+    } catch {
+      return encoded;
+    }
+  }
+
+  // convert a Unicode string to a string in which
+  // each 16-bit unit occupies only one byte
+  toBinary(input) {
+    const codeUnits = new Uint16Array(input.length);
+    for (let i = 0; i < codeUnits.length; i++) {
+      codeUnits[i] = input.charCodeAt(i);
+    }
+
+    const charCodes = new Uint8Array(codeUnits.buffer);
+    let result = "";
+    for (let i = 0; i < charCodes.byteLength; i++) {
+      result += String.fromCharCode(charCodes[i]);
+    }
+    return result;
+  }
+
+  fromBinary(binary) {
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < bytes.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    const charCodes = new Uint16Array(bytes.buffer);
+    let result = "";
+    for (let i = 0; i < charCodes.length; i++) {
+      result += String.fromCharCode(charCodes[i]);
+    }
+    return result;
   }
 }
 
