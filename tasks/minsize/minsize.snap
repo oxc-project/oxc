@@ -11,7 +11,7 @@ Original   -> Minified   -> Gzip       Brotli
 
 555.77 kB  -> 274.97 kB  -> 91.38 kB   77.41 kB   d3.js
 
-977.19 kB  -> 456.46 kB  -> 123.82 kB  107.39 kB  bundle.min.js
+977.19 kB  -> 456.45 kB  -> 123.82 kB  107.40 kB  bundle.min.js
 
 1.25 MB    -> 677.77 kB  -> 166.79 kB  135.23 kB  three.js
 
