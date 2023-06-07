@@ -1382,17 +1382,16 @@ pub struct FormalParameters<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct FormalParameter<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    #[cfg_attr(feature = "serde", serde(flatten))]
     pub pattern: BindingPattern<'a>,
     pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter,

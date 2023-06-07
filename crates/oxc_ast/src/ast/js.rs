@@ -1175,9 +1175,8 @@ pub struct DebuggerStatement {
 
 /// Destructuring Binding Patterns
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct BindingPattern<'a> {
-    #[cfg_attr(feature = "serde", serde(flatten))]
     pub kind: BindingPatternKind<'a>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub optional: bool,
@@ -1309,11 +1308,10 @@ pub struct FormalParameters<'a> {
 }
 
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize))]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct FormalParameter<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    #[cfg_attr(feature = "serde", serde(flatten))]
     pub pattern: BindingPattern<'a>,
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
@@ -1321,7 +1319,7 @@ pub struct FormalParameter<'a> {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
+#[cfg_attr(feature = "serde", derive(Serialize))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
     FormalParameter,
