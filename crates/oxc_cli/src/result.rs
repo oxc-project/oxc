@@ -17,6 +17,10 @@ pub enum CliRunResult {
         number_of_diagnostics: usize,
         max_warnings_exceeded: bool,
     },
+    TypeCheckResult {
+        duration: std::time::Duration,
+        number_of_diagnostics: usize,
+    },
 }
 
 impl Termination for CliRunResult {
@@ -52,6 +56,19 @@ impl Termination for CliRunResult {
                 }
 
                 println!("Found no errors.");
+                ExitCode::from(0)
+            }
+            Self::TypeCheckResult { duration, number_of_diagnostics } => {
+                let ms = duration.as_millis();
+                println!("Finished in {ms}ms.");
+
+                if number_of_diagnostics > 0 {
+                    println!("Found {number_of_diagnostics} errors.");
+                    return ExitCode::from(1);
+                }
+
+                // TODO
+                // println!("Found no errors.");
                 ExitCode::from(0)
             }
         }
