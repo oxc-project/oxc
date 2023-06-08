@@ -22,13 +22,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Install wasm-pack
-        uses: taiki-e/install-action@wasm-pack
-
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
         with:
-          shared-key: wasm
+          save-cache: ${{ github.ref_name == 'website' }}
+          shared-key: 'wasm'
 
       - name: Install pnpm
         working-directory: website
@@ -41,13 +39,11 @@ jobs:
           cache-dependency-path: ./website/package.json
           cache: pnpm
 
-      - name: Install Npm Dependencies
+      - name: Build
         working-directory: website
-        run: pnpm install
-
-      - name: Build Website
-        working-directory: website
-        run: pnpm run build
+        run: |
+          pnpm install
+          pnpm run build
 
       - name: Deploy Website
         uses: peaceiris/actions-gh-pages@v3
