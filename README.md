@@ -44,6 +44,7 @@ The Oxidation Compiler is creating a suite of tools for the JavaScript / TypeScr
 * Formatter
 * Transpiler
 * [Minifier](./crates/oxc_minifier) - Prototype
+* Type Checker - See [ezno](https://github.com/kaleidawave/ezno), available via `npx oxidation-compiler@latest check path`
 
 [docs-ast]: https://docs.rs/oxc_ast
 [docs-parser]: https://docs.rs/oxc_parser
@@ -131,7 +132,6 @@ AST Parsed     : 2065/2071 (99.71%)
 Positive Passed: 2062/2071 (99.57%)
 Negative Passed: 1332/1502 (88.68%)
 
-TypeScript Summary:
 TypeScript Summary:
 AST Parsed     : 2337/2337 (100.00%)
 Positive Passed: 2331/2337 (99.74%)
