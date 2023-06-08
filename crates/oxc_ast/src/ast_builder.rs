@@ -1056,8 +1056,9 @@ impl<'a> AstBuilder<'a> {
         default: Option<TSType<'a>>,
         r#in: bool,
         out: bool,
+        r#const: bool,
     ) -> Box<'a, TSTypeParameter<'a>> {
-        self.alloc(TSTypeParameter { span, name, constraint, default, r#in, out })
+        self.alloc(TSTypeParameter { span, name, constraint, default, r#in, out, r#const })
     }
 
     pub fn ts_type_parameters(

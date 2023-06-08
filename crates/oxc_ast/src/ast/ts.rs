@@ -418,6 +418,7 @@ pub struct TSTypeParameter<'a> {
     pub default: Option<TSType<'a>>,
     pub r#in: bool,
     pub out: bool,
+    pub r#const: bool,
 }
 
 #[derive(Debug, Hash)]

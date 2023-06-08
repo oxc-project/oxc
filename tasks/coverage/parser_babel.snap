@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2072/2078 (99.71%)
 Positive Passed: 2069/2078 (99.57%)
-Negative Passed: 1332/1507 (88.39%)
+Negative Passed: 1330/1507 (88.25%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
@@ -161,6 +161,8 @@ Expect Syntax Error: "typescript/type-arguments/empty-type-ref/input.ts"
 Expect Syntax Error: "typescript/type-arguments/instantiation-expression-property-access/input.ts"
 Expect Syntax Error: "typescript/type-only-import-export-specifiers/export-invalid-type-in-type/input.ts"
 Expect Syntax Error: "typescript/type-only-import-export-specifiers/import-invalid-type-in-type/input.ts"
+Expect Syntax Error: "typescript/types/const-type-parameters-invalid-babel-7/input.ts"
+Expect Syntax Error: "typescript/types/const-type-parameters-invalid/input.ts"
 Expect Syntax Error: "typescript/types/import-type-declaration-error/input.ts"
 Expect Syntax Error: "typescript/types/import-type-dynamic-errors/input.ts"
 Expect Syntax Error: "typescript/types/intrinsic-keyword-error/input.ts"
@@ -250,19 +252,21 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input
 
 Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Unexpected token
-   ╭─[typescript/types/const-type-parameters-babel-7/input.ts:1:1]
- 1 │ function a<const T>() {}
-   ·            ─────
- 2 │ function b<const T extends U>() {}
-   ╰────
+    ╭─[typescript/types/const-type-parameters-babel-7/input.ts:13:1]
+ 13 │ class C<T, const U> {}
+ 14 │ class D<in const T> {}
+    ·            ─────
+ 15 │ class E<const in T> {}
+    ╰────
 
 Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
-   ╭─[typescript/types/const-type-parameters/input.ts:1:1]
- 1 │ function a<const T>() {}
-   ·            ─────
- 2 │ function b<const T extends U>() {}
-   ╰────
+    ╭─[typescript/types/const-type-parameters/input.ts:13:1]
+ 13 │ class C<T, const U> {}
+ 14 │ class D<in const T> {}
+    ·            ─────
+ 15 │ class E<const in T> {}
+    ╰────
 
   × Identifier `f` has already been declared
    ╭─[annex-b/disabled/3.4-var-redeclaration-catch-binding/input.js:1:1]
@@ -10121,18 +10125,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Expected `)` but found `EOF`
    ╭─[typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:1:1]
  1 │ type F = ({
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/types/const-type-parameters-invalid-babel-7/input.ts:1:1]
- 1 │ type T<const U> = {};
-   ·        ─────
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/types/const-type-parameters-invalid/input.ts:1:1]
- 1 │ type T<const U> = {};
-   ·        ─────
    ╰────
 
   × Keywords cannot contain escape characters

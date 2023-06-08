@@ -152,28 +152,44 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_ts_type_parameter(&mut self) -> Result<Box<'a, TSTypeParameter<'a>>> {
         let span = self.start_span();
 
-        let r#in = if self.at(Kind::In) && self.peek_kind().is_identifier_name() {
-            self.bump_any();
-            true
-        } else {
-            false
-        };
-        let out = if self.at(Kind::Out) && self.peek_kind().is_identifier_name() {
-            self.bump_any();
-            true
-        } else {
-            false
-        };
+        let mut r#in = false;
+        let mut out = false;
+        let mut r#const = false;
 
-        if self.at(Kind::In) && self.peek_kind().is_identifier_name() {
-            // TODO error
+        match self.cur_kind() {
+            Kind::In if self.peek_kind().is_identifier_name() => {
+                self.bump_any();
+                r#in = true;
+                if self.at(Kind::Out) && self.peek_kind().is_identifier_name() {
+                    // `<in out T>`
+                    self.bump_any();
+                    out = true;
+                }
+            }
+            Kind::Out if self.peek_kind().is_identifier_name() => {
+                self.bump_any();
+                out = true;
+            }
+            Kind::Const if self.peek_kind().is_identifier_name() => {
+                self.bump_any();
+                r#const = true;
+            }
+            _ => {}
         }
 
         let name = self.parse_binding_identifier()?;
         let constraint = self.parse_ts_type_constraint()?;
         let default = self.parse_ts_default_type()?;
 
-        Ok(self.ast.ts_type_parameter(self.end_span(span), name, constraint, default, r#in, out))
+        Ok(self.ast.ts_type_parameter(
+            self.end_span(span),
+            name,
+            constraint,
+            default,
+            r#in,
+            out,
+            r#const,
+        ))
     }
 
     fn parse_ts_type_constraint(&mut self) -> Result<Option<TSType<'a>>> {
@@ -617,6 +633,7 @@ impl<'a> Parser<'a> {
             None,
             false,
             false,
+            false,
         );
 
         let name_type = if self.eat(Kind::As) { Some(self.parse_ts_type()?) } else { None };
@@ -811,6 +828,7 @@ impl<'a> Parser<'a> {
             name,
             constraint,
             None,
+            false,
             false,
             false,
         );

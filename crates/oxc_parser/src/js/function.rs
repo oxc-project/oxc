@@ -400,7 +400,14 @@ impl<'a> Parser<'a> {
                 _ => IsParenthesizedArrowFunction::False,
             },
             Kind::LAngle => {
-                if !self.nth_kind(offset + 1).is_identifier() {
+                let kind = self.nth_kind(offset + 1);
+
+                // `<const` for const type parameter from TypeScript 5.0
+                if kind == Kind::Const {
+                    return IsParenthesizedArrowFunction::Maybe;
+                }
+
+                if !kind.is_identifier() {
                     return IsParenthesizedArrowFunction::False;
                 }
 

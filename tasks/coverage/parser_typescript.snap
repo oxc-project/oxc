@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5065/5069 (99.92%)
-Positive Passed: 5056/5069 (99.74%)
-Negative Passed: 989/4751 (20.82%)
+AST Parsed     : 5068/5071 (99.94%)
+Positive Passed: 5059/5071 (99.76%)
+Negative Passed: 986/4751 (20.75%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -79,6 +79,7 @@ Expect Syntax Error: "compiler/argumentsPropertyNameInJsMode1.ts"
 Expect Syntax Error: "compiler/argumentsReferenceInConstructor4_Js.ts"
 Expect Syntax Error: "compiler/argumentsReferenceInMethod4_Js.ts"
 Expect Syntax Error: "compiler/argumentsReferenceInObjectLiteral_Js.ts"
+Expect Syntax Error: "compiler/argumentsSpreadRestIterables.tsx"
 Expect Syntax Error: "compiler/arithAssignTyping.ts"
 Expect Syntax Error: "compiler/arithmeticOnInvalidTypes.ts"
 Expect Syntax Error: "compiler/arithmeticOnInvalidTypes2.ts"
@@ -1567,6 +1568,7 @@ Expect Syntax Error: "compiler/strictNullEmptyDestructuring.ts"
 Expect Syntax Error: "compiler/strictNullNotNullIndexTypeNoLib.ts"
 Expect Syntax Error: "compiler/strictOptionalProperties1.ts"
 Expect Syntax Error: "compiler/strictOptionalProperties3.ts"
+Expect Syntax Error: "compiler/strictSubtypeAndNarrowing.ts"
 Expect Syntax Error: "compiler/stringIndexerAndConstructor.ts"
 Expect Syntax Error: "compiler/stringIndexerAndConstructor1.ts"
 Expect Syntax Error: "compiler/stringIndexerAssignments1.ts"
@@ -3617,6 +3619,7 @@ Expect Syntax Error: "conformance/types/typeParameters/typeParameterAsBaseType.t
 Expect Syntax Error: "conformance/types/typeParameters/typeParameterLists/propertyAccessOnTypeParameterWithConstraints4.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeParameterLists/propertyAccessOnTypeParameterWithConstraints5.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeParameterLists/staticMembersUsingClassTypeParameter.ts"
+Expect Syntax Error: "conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeParameterLists/typeParameterDirectlyConstrainedToItself.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeParameterLists/typeParameterIndirectlyConstrainedToItself.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeParameterLists/typesWithDuplicateTypeParameters.ts"
@@ -3797,15 +3800,6 @@ Expect to Parse: "compiler/emitBundleWithShebangAndPrologueDirectives1.ts"
    ·  ─
  7 │ "use strict"
    ╰────
-
-Expect to Parse: "compiler/spreadsAndContextualTupleTypes.ts"
-  × Unexpected token
-    ╭─[compiler/spreadsAndContextualTupleTypes.ts:26:1]
- 26 │ 
- 27 │ declare function foo<const T>(path: T): T;
-    ·                      ─────
- 28 │ 
-    ╰────
 
 Expect to Parse: "compiler/withStatementInternalComments.ts"
   × 'with' statements are not allowed
@@ -4074,14 +4068,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                         ┬
    ·                         ╰── `:` expected
    ╰────
-
-  × Unexpected token
-    ╭─[compiler/argumentsSpreadRestIterables.tsx:10:1]
- 10 │ 
- 11 │ declare function fn1<const T extends readonly unknown[]>(...args: T): T;
-    ·                      ─────
- 12 │ const res1 = fn1(..."hello");
-    ╰────
 
   × 'arguments' is not allowed in class field initializer
    ╭─[compiler/argumentsUsedInClassFieldInitializerOrStaticInitializationBlock.ts:2:1]
@@ -8567,14 +8553,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  5 │ import public from "./1"
    ·        ──────
    ╰────
-
-  × Unexpected token
-     ╭─[compiler/strictSubtypeAndNarrowing.ts:187:1]
- 187 │     ObjT extends object,
- 188 │     const DeepPathT extends ReadonlyArray<number | string>,
-     ·     ─────
- 189 │     ValueT,
-     ╰────
 
   × Unterminated string
    ╭─[compiler/stringLiteralsErrors.ts:1:1]
@@ -19045,14 +19023,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                             ─
  22 │ const a9 = (f<number>)<number>;  // Error, no applicable signatures
     ╰────
-
-  × Unexpected token
-   ╭─[conformance/types/typeParameters/typeParameterLists/typeParameterConstModifiers.ts:2:1]
- 2 │ 
- 3 │ declare function f1<const T>(x: T): T;
-   ·                     ─────
- 4 │ 
-   ╰────
 
   × Expected `,` but found `Identifier`
     ╭─[conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:97:1]
