@@ -16,7 +16,14 @@ import { linter, lintGutter } from "@codemirror/lint";
 import { language, syntaxTree } from "@codemirror/language";
 import throttle from "lodash.throttle";
 
-import initWasm, { Oxc, OxcOptions, OxcMinifierOptions } from "@oxc/wasm-web";
+import initWasm, {
+  Oxc,
+  OxcRunOptions,
+  OxcParserOptions,
+  OxcLinterOptions,
+  OxcMinifierOptions,
+  OxcFormatterOptions,
+} from "@oxc/wasm-web";
 
 const placeholderText = `
 import React, { useEffect, useRef } from 'react'
@@ -41,7 +48,13 @@ export default DummyComponent
 
 class Playground {
   oxc;
-  options;
+
+  runOptions;
+  parserOptions;
+  formatterOptions;
+  linterOptions;
+  minifierOptions;
+
   editor;
   viewer;
   currentView = "ast"; // "ast" | "hir" | "format" | "minify"
@@ -57,8 +70,11 @@ class Playground {
 
   initOxc() {
     this.oxc = new Oxc();
-    this.options = new OxcOptions();
-    this.oxc.setOptions(this.options);
+    this.runOptions = new OxcRunOptions();
+    this.parserOptions = new OxcParserOptions();
+    this.formatterOptions = new OxcFormatterOptions();
+    this.linterOptions = new OxcLinterOptions();
+    this.minifierOptions = new OxcMinifierOptions();
     // This will trigger `stateListener`.
     this.updateEditorText(this.editor, this.urlParams.code || placeholderText);
   }
@@ -68,9 +84,8 @@ class Playground {
       if (view.docChanged) {
         const sourceText = view.state.doc.toString();
         this.urlParams.updateCode(sourceText);
-        this.oxc.setSourceText(sourceText);
-        this.run();
-        this.updateView(this.currentView);
+        this.oxc.sourceText = sourceText;
+        this.updateView();
       }
     });
 
@@ -84,16 +99,22 @@ class Playground {
         githubDark,
         lintGutter(),
         stateListener,
-        linter((_view) => {
-          return this.oxc
-            ? this.oxc.getDiagnostics().map((d) => ({
-                from: d.start,
-                to: d.end,
-                severity: d.severity.toLowerCase(),
-                message: d.message,
-              }))
-            : [];
-        }),
+        linter(
+          () => {
+            const diagnostics = this.oxc
+              ? this.oxc.getDiagnostics().map((d) => ({
+                  from: d.start,
+                  to: d.end,
+                  severity: d.severity.toLowerCase(),
+                  message: d.message,
+                }))
+              : [];
+            console.log(diagnostics);
+            this.updatePanel(diagnostics);
+            return diagnostics;
+          },
+          { delay: 0 }
+        ),
       ],
     });
 
@@ -139,10 +160,15 @@ class Playground {
 
   run() {
     const start = new Date();
-    this.oxc.run();
+    this.oxc.run(
+      this.runOptions,
+      this.parserOptions,
+      this.linterOptions,
+      this.formatterOptions,
+      this.minifierOptions
+    );
     const elapsed = new Date() - start;
     document.getElementById("duration").innerText = `${elapsed}ms`;
-    this.updatePanel();
   }
 
   currentLanguage() {
@@ -155,32 +181,42 @@ class Playground {
     }
   }
 
-  updatePanel() {
+  updatePanel(diagnostics) {
     const panel = document.getElementById("panel");
-    panel.innerText = this.oxc
-      .getDiagnostics()
-      .map((d) => d.message)
-      .join("\n\n");
+    panel.innerText = diagnostics.map((d) => d.message).join("\n\n");
     panel.scrollTop = panel.scrollHeight;
   }
 
   updateView(view) {
+    view = view || this.currentView;
     this.currentView = view;
+    this.runOptions.format = false;
+    this.runOptions.hir = false;
+    this.runOptions.minify = false;
+
     let text;
     switch (this.currentView) {
       case "ast":
-        text = JSON.stringify(this.oxc.getAst(), null, 2);
+        this.run();
+        text = JSON.stringify(this.oxc.ast, null, 2);
         break;
       case "hir":
-        text = JSON.stringify(this.oxc.getHir(), null, 2);
+        this.runOptions.hir = true;
+        this.run();
+        text = JSON.stringify(this.oxc.hir, null, 2);
         break;
       case "format":
-        text = this.oxc.getFormattedText();
+        this.runOptions.format = true;
+        this.run();
+        text = this.oxc.formattedText;
         break;
       case "minify":
-        text = this.oxc.getMinifiedText();
+        this.runOptions.minify = true;
+        this.run();
+        text = this.oxc.minifiedText;
         break;
     }
+
     this.updateEditorText(this.viewer, text);
   }
 
@@ -193,7 +229,7 @@ class Playground {
 
   highlightEditorRange(view, range) {
     if (range.from === 0 && range.to === 0) {
-      return
+      return;
     }
     const addHighlight = StateEffect.define({
       map: ({ from, to }, change) => ({
@@ -299,7 +335,6 @@ class URLParams {
     this.code = this.params.has("code")
       ? this.decodeCode(this.params.get("code"))
       : "";
-    console.log(this.code);
   }
 
   updateCode = throttle(
@@ -385,14 +420,29 @@ async function main() {
     playground.updateView("minify");
   };
 
+  document.getElementById("syntax").onchange = function () {
+    const checked = document.getElementById("syntax-checkbox").checked;
+    playground.runOptions.syntax = checked;
+    // Need to repaint the editor to clear the rendered linter diagnostics
+    const sourceText = playground.oxc.sourceText;
+    playground.updateEditorText(playground.editor, "");
+    playground.updateView();
+    playground.updateEditorText(playground.editor, sourceText);
+  };
+
+  document.getElementById("lint").onchange = function () {
+    const checked = document.getElementById("lint-checkbox").checked;
+    playground.runOptions.lint = checked;
+    // Need to repaint the editor to clear the rendered linter diagnostics
+    const sourceText = playground.oxc.sourceText;
+    playground.updateEditorText(playground.editor, "");
+    playground.updateView();
+    playground.updateEditorText(playground.editor, sourceText);
+  };
+
   document.getElementById("mangle").onchange = function () {
     const checked = document.getElementById("mangle-checkbox").checked;
-    const options = new OxcOptions();
-    const minifiedOptions = new OxcMinifierOptions();
-    minifiedOptions.mangle = checked;
-    options.minifier = minifiedOptions;
-    playground.oxc.setOptions(options);
-    playground.run();
+    playground.minifierOptions.mangle = checked;
     playground.updateView("minify");
   };
 }
