@@ -160,7 +160,7 @@ class Playground {
     panel.innerText = this.oxc
       .getDiagnostics()
       .map((d) => d.message)
-      .join("\n");
+      .join("\n\n");
     panel.scrollTop = panel.scrollHeight;
   }
 
@@ -192,6 +192,9 @@ class Playground {
   }
 
   highlightEditorRange(view, range) {
+    if (range.from === 0 && range.to === 0) {
+      return
+    }
     const addHighlight = StateEffect.define({
       map: ({ from, to }, change) => ({
         from: change.mapPos(from),
