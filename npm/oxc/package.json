@@ -1,6 +1,6 @@
 {
   "name": "oxidation-compiler",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The JavaScript Oxidation Compiler",
   "keywords": [],
   "author": "Boshen and oxc contributors",
