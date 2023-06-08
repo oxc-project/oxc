@@ -5,7 +5,7 @@
 //! The following optimization techniques are used:
 //! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
 //! * Short strings are inlined by [CompactString](https://github.com/ParkMyCar/compact_str)
-//! * No other heap allocations are done expect the above two
+//! * No other heap allocations are done except the above two
 //! * SIMD is used for skipping whitespace and multiline comments
 //! * [oxc_ast::Span] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
