@@ -1,0 +1,40 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_eval
+---
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ eval();
+   · ──┬─
+   ·   ╰── eval can be harmful
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ eval('...');
+   · ──┬─
+   ·   ╰── eval can be harmful
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ eval('...');
+   · ──┬─
+   ·   ╰── eval can be harmful
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ let a = eval;
+   ·         ──┬─
+   ·           ╰── eval can be harmful
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ const foo = { asdf: eval };
+   ·                     ──┬─
+   ·                       ╰── eval can be harmful
+   ╰────
+
+
