@@ -1,6 +1,6 @@
 parser_typescript Summary:
-AST Parsed     : 5065/5069 (99.92%)
-Positive Passed: 5056/5069 (99.74%)
+AST Parsed     : 5067/5071 (99.92%)
+Positive Passed: 5058/5071 (99.74%)
 Negative Passed: 989/4751 (20.82%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
