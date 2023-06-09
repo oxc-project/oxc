@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches:
-      # - main
-      - website
+      - main
+      # - website
     paths:
       - 'website/**'
       - '.github/workflows/website.yml'
