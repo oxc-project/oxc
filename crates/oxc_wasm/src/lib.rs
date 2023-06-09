@@ -1,3 +1,5 @@
+mod options;
+
 use std::{cell::RefCell, rc::Rc};
 
 use oxc_allocator::Allocator;
@@ -12,6 +14,10 @@ use oxc_span::SourceType;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
+use crate::options::{
+    OxcFormatterOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions,
+};
+
 #[wasm_bindgen(start)]
 pub fn main() {
     #[cfg(feature = "console_error_panic_hook")]
@@ -23,8 +29,6 @@ pub fn main() {
 pub struct Oxc {
     source_text: String,
 
-    options: OxcOptions,
-
     ast: JsValue,
     hir: JsValue,
 
@@ -34,59 +38,6 @@ pub struct Oxc {
     diagnostics: RefCell<Vec<Error>>,
 
     serializer: serde_wasm_bindgen::Serializer,
-}
-
-#[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
-pub struct OxcOptions {
-    pub parser: Option<OxcParserOptions>,
-    pub linter: Option<OxcLinterOptions>,
-    pub formatter: Option<OxcFormatterOptions>,
-    pub minifier: Option<OxcMinifierOptions>,
-}
-
-#[wasm_bindgen]
-impl OxcOptions {
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> Self {
-        Self {
-            parser: Some(OxcParserOptions { allow_return_outside_function: true }),
-            linter: Some(OxcLinterOptions),
-            formatter: Some(OxcFormatterOptions { indentation: 4 }),
-            minifier: Some(OxcMinifierOptions { mangle: false }),
-        }
-    }
-}
-
-#[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
-pub struct OxcParserOptions {
-    #[wasm_bindgen(js_name = allowReturnOutsideFunction)]
-    pub allow_return_outside_function: bool,
-}
-
-#[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
-pub struct OxcLinterOptions;
-
-#[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
-pub struct OxcFormatterOptions {
-    pub indentation: u8,
-}
-
-#[wasm_bindgen]
-#[derive(Default, Clone, Copy)]
-pub struct OxcMinifierOptions {
-    pub mangle: bool,
-}
-
-#[wasm_bindgen]
-impl OxcMinifierOptions {
-    #[wasm_bindgen(constructor)]
-    pub fn new() -> Self {
-        Self::default()
-    }
 }
 
 #[derive(Default, Clone, Serialize)]
@@ -104,43 +55,36 @@ impl Oxc {
         Self { serializer: serde_wasm_bindgen::Serializer::json_compatible(), ..Self::default() }
     }
 
-    #[wasm_bindgen(js_name = setOptions)]
-    pub fn set_options(&mut self, options: OxcOptions) {
-        self.diagnostics = RefCell::default();
-        self.options = options;
-    }
-
-    #[wasm_bindgen(js_name = setSourceText)]
-    pub fn set_source_text(&mut self, text: String) {
-        self.diagnostics = RefCell::default();
-        self.source_text = text;
-    }
-
-    /// Returns the source text
-    #[wasm_bindgen(js_name = getSourceText)]
-    pub fn get_source_text(&self) -> String {
+    #[wasm_bindgen(getter = sourceText)]
+    pub fn source_text(&self) -> String {
         self.source_text.clone()
     }
 
+    #[wasm_bindgen(setter = sourceText)]
+    pub fn set_source_text(&mut self, source_text: String) {
+        self.diagnostics = RefCell::default();
+        self.source_text = source_text;
+    }
+
     /// Returns AST in JSON
-    #[wasm_bindgen(js_name = getAst)]
-    pub fn get_ast(&self) -> JsValue {
+    #[wasm_bindgen(getter)]
+    pub fn ast(&self) -> JsValue {
         self.ast.clone()
     }
 
     /// Returns HIR in JSON
-    #[wasm_bindgen(js_name = getHir)]
-    pub fn get_hir(&self) -> JsValue {
+    #[wasm_bindgen(getter)]
+    pub fn hir(&self) -> JsValue {
         self.hir.clone()
     }
 
-    #[wasm_bindgen(js_name = getFormattedText)]
-    pub fn get_formatted_text(&self) -> String {
+    #[wasm_bindgen(getter = formattedText)]
+    pub fn formatted_text(&self) -> String {
         self.formatted_text.clone()
     }
 
-    #[wasm_bindgen(js_name = getMinifiedText)]
-    pub fn get_minified_text(&self) -> String {
+    #[wasm_bindgen(getter = minifiedText)]
+    pub fn minified_text(&self) -> String {
         self.minified_text.clone()
     }
 
@@ -174,10 +118,15 @@ impl Oxc {
     /// # Errors
     /// Serde serialization error
     #[wasm_bindgen]
-    pub fn run(&mut self) -> Result<(), serde_wasm_bindgen::Error> {
-        let Some(parser_options) = &self.options.parser else {
-            return Ok(())
-        };
+    pub fn run(
+        &mut self,
+        run_options: &OxcRunOptions,
+        parser_options: &OxcParserOptions,
+        _linter_options: &OxcLinterOptions,
+        formatter_options: &OxcFormatterOptions,
+        minifier_options: &OxcMinifierOptions,
+    ) -> Result<(), serde_wasm_bindgen::Error> {
+        self.diagnostics = RefCell::default();
 
         let allocator = Allocator::default();
         let source_text = &self.source_text;
@@ -188,43 +137,53 @@ impl Oxc {
             .parse();
         self.save_diagnostics(ret.errors);
 
+        self.ast = ret.program.serialize(&self.serializer)?;
         let program = allocator.alloc(ret.program);
 
-        self.ast = program.serialize(&self.serializer)?;
+        if run_options.syntax() && !run_options.lint() {
+            let semantic_ret = SemanticBuilder::new(source_text, source_type, &ret.trivias)
+                .with_check_syntax_error(true)
+                .build(program);
+            self.save_diagnostics(semantic_ret.errors);
+        }
 
-        let semantic_ret = SemanticBuilder::new(source_text, source_type, &ret.trivias)
-            .with_module_record_builder(true)
-            .with_check_syntax_error(true)
-            .build(program);
-        let semantic = Rc::new(semantic_ret.semantic);
-        self.save_diagnostics(semantic_ret.errors);
+        if run_options.lint() {
+            let semantic_ret = SemanticBuilder::new(source_text, source_type, &ret.trivias)
+                .with_check_syntax_error(true)
+                .build(program);
+            self.save_diagnostics(semantic_ret.errors);
 
-        if self.options.linter.is_some() {
+            let semantic = Rc::new(semantic_ret.semantic);
             let linter_ret = Linter::new().run(&semantic);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
         }
 
-        if let Some(o) = &self.options.formatter {
-            let formatter_options = FormatterOptions { indentation: o.indentation };
+        if run_options.format() {
+            let formatter_options = FormatterOptions { indentation: formatter_options.indentation };
             let printed = Formatter::new(source_text.len(), formatter_options).build(program);
             self.formatted_text = printed;
         }
 
-        let ast_lower_ret = AstLower::new(&allocator, source_type).build(program);
-        let mut hir = ast_lower_ret.program;
-        let semantic = ast_lower_ret.semantic;
-        self.hir = hir.serialize(&self.serializer)?;
-
-        let mut semantic =
-            Compressor::new(&allocator, semantic, CompressOptions::default()).build(&mut hir);
-        let mangle = self.options.minifier.map_or(false, |options| options.mangle);
-        if mangle {
-            semantic.mangle();
+        if run_options.hir() && !run_options.minify() {
+            let ast_lower_ret = AstLower::new(&allocator, source_type).build(program);
+            self.hir = ast_lower_ret.program.serialize(&self.serializer)?;
         }
-        self.minified_text = Printer::new(self.source_text.len(), PrinterOptions)
-            .with_mangle(semantic.symbol_table, mangle)
-            .build(&hir);
+
+        if run_options.minify() {
+            let ast_lower_ret = AstLower::new(&allocator, source_type).build(program);
+            let mut hir = ast_lower_ret.program;
+            let semantic = ast_lower_ret.semantic;
+
+            let mut semantic =
+                Compressor::new(&allocator, semantic, CompressOptions::default()).build(&mut hir);
+            if minifier_options.mangle() {
+                semantic.mangle();
+            }
+            self.minified_text = Printer::new(self.source_text.len(), PrinterOptions)
+                .with_mangle(semantic.symbol_table, minifier_options.mangle())
+                .build(&hir);
+        }
 
         Ok(())
     }
