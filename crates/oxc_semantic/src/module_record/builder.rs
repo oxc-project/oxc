@@ -19,7 +19,7 @@ impl ModuleRecordBuilder {
         }
 
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
-        // resolved before resovling export entries.
+        // resolved before resolving export entries.
         self.resolve_export_entries();
     }
 
