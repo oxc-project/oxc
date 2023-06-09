@@ -4,37 +4,122 @@ expression: no_eval
 ---
   ⚠ eslint(no-eval): eval can be harmful.
    ╭─[no_eval.tsx:1:1]
- 1 │ eval();
-   · ──┬─
-   ·   ╰── eval can be harmful
+ 1 │ eval(foo)
+   · ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
    ╭─[no_eval.tsx:1:1]
- 1 │ eval('...');
-   · ──┬─
-   ·   ╰── eval can be harmful
+ 1 │ eval('foo')
+   · ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
    ╭─[no_eval.tsx:1:1]
- 1 │ eval('...');
-   · ──┬─
-   ·   ╰── eval can be harmful
+ 1 │ function foo(eval) { eval('foo') }
+   ·                      ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
    ╭─[no_eval.tsx:1:1]
- 1 │ let a = eval;
-   ·         ──┬─
-   ·           ╰── eval can be harmful
+ 1 │ (0, eval)('foo')
+   ·     ────
    ╰────
 
   ⚠ eslint(no-eval): eval can be harmful.
    ╭─[no_eval.tsx:1:1]
- 1 │ const foo = { asdf: eval };
-   ·                     ──┬─
-   ·                       ╰── eval can be harmful
+ 1 │ (0, window.eval)('foo')
+   ·            ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ (0, window['eval'])('foo')
+   ·            ──────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ window.eval('foo')
+   ·        ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ window.window.eval('foo')
+   ·               ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ window.window['eval']('foo')
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ global.eval('foo')
+   ·        ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ global.global.eval('foo')
+   ·               ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ global.global[`eval`]('foo')
+   ·               ──────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ var EVAL = globalThis.eval; EVAL('foo')
+   ·                       ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ globalThis.eval('foo')
+   ·            ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ globalThis.globalThis.eval('foo')
+   ·                       ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ globalThis.globalThis['eval']('foo')
+   ·                       ──────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ (0, globalThis.eval)('foo')
+   ·                ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ (0, globalThis['eval'])('foo')
+   ·                ──────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ window?.eval('foo')
+   ·         ────
+   ╰────
+
+  ⚠ eslint(no-eval): eval can be harmful.
+   ╭─[no_eval.tsx:1:1]
+ 1 │ (window?.eval)('foo')
+   ·          ────
    ╰────
 
 
