@@ -7,40 +7,49 @@
     <link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/Boshen/oxc-assets/main/oxc.ico">
     <style>
       body { font-family: monospace; font-size: 16px; margin: 0 }
+      button { cursor: pointer }
+      label { display: inline-flex; align-items: center; cursor: pointer; user-select: none; }
       .cm-editor { height: 100%; }
+      #logo { display: flex; justify-content: center; }
+      #logo > img { margin-right: .5em; }
+      #loading { background: white; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; display: flex; justify-content: center; align-items: center; }
       #container { display: flex; height: 100vh; }
       #left { display: flex; flex: 1; flex-direction: column; border-right: 1px solid #444 }
       #editor { flex: 1; overflow-y: auto; }
       #panel { height: 300px; overflow-y: auto; padding: 1em; color: #d1d5da; background-color: #24292e; border-top: 1px solid #444!important; }
       #right { flex: 1; display:flex; flex-direction: column }
-      .controls { color: white; background: #24292e; padding: .5em; }
+      .controls { color: white; background: #24292e; padding: .8em 1em; border-bottom: 1px solid #444; display: flex; align-items: center; justify-content: space-between; }
       #viewer { flex: 1; overflow-y: auto; }
       #mangle { display: inline-flex; align-items: center }
-      #duration { float: right; }
-      label { display: inline-flex; align-items: center; cursor: pointer; user-select: none; }
     </style>
-    <script type="module" crossorigin src="https://boshen.github.io/oxc/assets/playground-cf469d1f.js"></script>
+    <script type="module" crossorigin src="https://boshen.github.io/oxc/assets/playground-8ebc1a83.js"></script>
     <link rel="modulepreload" crossorigin href="https://boshen.github.io/oxc/assets/modulepreload-polyfill-3cfb730f.js">
   </head>
   <body>
     
+    <div id="loading">Loading Wasm (~400kB)...</div>
 
     <div id="container">
       <div id="left">
         <div class="controls">
-          <label id="syntax">Check Syntax<input id="syntax-checkbox" type="checkbox" checked></label>
-          <label id="lint">Lint<input id="lint-checkbox" type="checkbox" checked></label>
+          <div id="logo"><img height="100%" width="20" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/oxc.ico"></img><span>Oxc</span></div>
+          <div>
+            <label id="syntax">Check Syntax<input id="syntax-checkbox" type="checkbox" checked></label>
+            <label id="lint">Lint<input id="lint-checkbox" type="checkbox" checked></label>
+          </div>
         </div>
         <div id="editor"></div>
         <div id="panel"></div>
       </div>
       <div id="right">
         <div class="controls">
-          <button id="ast">AST</button>
-          <button id="hir">HIR</button>
-          <button id="format">Format</button>
-          <button id="minify">Minify</button>
-          <label id="mangle">Mangle<input id="mangle-checkbox" type="checkbox"></label>
+          <div>
+            <button type="button" id="ast">AST</button>
+            <button type="button" id="hir">HIR</button>
+            <button type="button" id="format">Format</button>
+            <button type="button" id="minify">Minify</button>
+            <label id="mangle">Mangle<input id="mangle-checkbox" type="checkbox"></label>
+          </div>
           <span id="duration"></span>
         </div>
         <div id="viewer"></div>
