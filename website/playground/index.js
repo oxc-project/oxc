@@ -90,7 +90,6 @@ class Playground {
     });
 
     const state = EditorState.create({
-      doc: "Loading Wasm... (~400kb)",
       extensions: [
         basicSetup,
         EditorView.lineWrapping,
@@ -109,7 +108,6 @@ class Playground {
                   message: d.message,
                 }))
               : [];
-            console.log(diagnostics);
             this.updatePanel(diagnostics);
             return diagnostics;
           },
@@ -183,13 +181,24 @@ class Playground {
 
   updatePanel(diagnostics) {
     const panel = document.getElementById("panel");
-    panel.innerText = diagnostics.map((d) => d.message).join("\n\n");
+    panel.innerText = diagnostics
+      .map((d) => {
+        const emoji = {
+          error: "❗",
+          warning: "⚠️",
+          advice: "ℹ️",
+        }[d.severity.toLowerCase()];
+        return `${emoji} ${d.message}`;
+      })
+      .join("\n\n");
     panel.scrollTop = panel.scrollHeight;
   }
 
   updateView(view) {
     view = view || this.currentView;
     this.currentView = view;
+
+    document.getElementById("mangle").style.visibility = "hidden";
     this.runOptions.format = false;
     this.runOptions.hir = false;
     this.runOptions.minify = false;
@@ -211,6 +220,7 @@ class Playground {
         text = this.oxc.formattedText;
         break;
       case "minify":
+        document.getElementById("mangle").style.visibility = "visible";
         this.runOptions.minify = true;
         this.run();
         text = this.oxc.minifiedText;
@@ -269,7 +279,7 @@ class Playground {
 
   static highlightMark = Decoration.mark({ class: "cm-highlight" });
   static highlightTheme = EditorView.baseTheme({
-    ".cm-highlight": { background: "black" },
+    ".cm-highlight": { background: "#3392FF44" },
   });
 
   // Highlight the editor by searching for `start` and `end` values.
@@ -403,6 +413,8 @@ async function main() {
   window.setTimeout(function () {
     playground.editor.focus();
   }, 0);
+
+  document.getElementById("loading").remove();
 
   document.getElementById("ast").onclick = () => {
     playground.updateView("ast");
