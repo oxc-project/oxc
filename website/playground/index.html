@@ -17,7 +17,7 @@
       #container { display: flex; height: 100vh; }
       #left { display: flex; flex: 1; flex-direction: column; border-right: 1px solid #444 }
       #editor { flex: 1; overflow-y: auto; }
-      #panel { height: 300px; overflow-y: auto; padding: 1em; color: #d1d5da; background-color: #24292e; border-top: 1px solid #444!important; }
+      #panel { height: 20%; overflow-y: auto; padding: 1em; color: #d1d5da; background-color: #24292e; border-top: 1px solid #444!important; }
       #right { flex: 1; display:flex; flex-direction: column }
       .controls { color: white; background: #24292e; padding: .8em 1em; border-bottom: 1px solid #444; display: flex; align-items: center; justify-content: space-between; }
       #viewer { flex: 1; overflow-y: auto; }
@@ -45,7 +45,7 @@
           <div>
             <button type="button" id="ast">AST</button>
             <button type="button" id="hir">HIR</button>
-            <button type="button" id="format">Format</button>
+            <!-- The formatter is WIP <button type="button" id="format">Format</button> -->
             <button type="button" id="minify">Minify</button>
             <label id="mangle">Mangle<input id="mangle-checkbox" type="checkbox"></label>
           </div>
