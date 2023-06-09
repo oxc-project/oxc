@@ -16,7 +16,8 @@
 [![Code Coverage][code-coverage-badge]][code-coverage-url]
 [![Code Size][code-size-badge]][code-size-url]
 [![MIT licensed][mit-badge]][mit-url]
-
+  
+### [Playground](https://boshen.github.io/oxc/playground)
 </div>
 
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
@@ -145,6 +146,7 @@ Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 ## Learning Resources
 
 * My [small tutorial on how to write a JavaScript Parser in Rust](https://boshen.github.io/javascript-parser-in-rust/)
+* My small article - [Pursuit of Performance on Building a JavaScript Compiler](https://rustmagazine.org/issue-3/javascript-compiler/)
 * [Crafting Interpreters](https://craftinginterpreters.com)
 * [Create an issue and insert your inspirational learning resources here]
 
