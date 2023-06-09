@@ -71,7 +71,7 @@ syn               = { version = "1.0.109" }
 thiserror         = { version = "1.0.40" }
 tokio             = { version = "1" }
 unicode-id-start  = { version = "1.1.0" }
-ureq              = { version = "2.6.2", default-features = false }
+ureq              = { version = "2.6.2", default-features = false, features = ["tls"] }
 url               = { version = "2.3.1" }
 walkdir           = { version = "2.3.3" }
 indexmap          = { version = "1.9.3" }

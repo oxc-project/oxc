@@ -221,6 +221,8 @@ fn main() {
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
 
     let rule_test_path = format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js");
+    println!("Reading test file from {rule_test_path}");
+
     let body = ureq::get(&rule_test_path).call().map(Response::into_string);
     let pass_cases;
     let fail_cases;

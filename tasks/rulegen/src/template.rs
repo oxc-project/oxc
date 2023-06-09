@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::{Error, Write},
-    path::{Path, PathBuf},
+    path::Path,
     process::{Child, Command},
 };
 
@@ -33,12 +33,14 @@ impl<'a> Template<'a> {
             Path::new("crates/oxc_linter/src/rules").join(format!("{}.rs", self.context.rule_name));
 
         File::create(out_path.clone())?.write_all(rendered.as_bytes())?;
-        format_rule_output(out_path)?;
+        format_rule_output(&out_path)?;
+
+        println!("Saved testd file to {out_path:?}");
 
         Ok(())
     }
 }
 
-fn format_rule_output(path: PathBuf) -> Result<Child, Error> {
+fn format_rule_output(path: &Path) -> Result<Child, Error> {
     Command::new("cargo").arg("fmt").arg("--").arg(path).spawn()
 }
