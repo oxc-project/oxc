@@ -424,9 +424,9 @@ async function main() {
     playground.updateView("hir");
   };
 
-  document.getElementById("format").onclick = () => {
-    playground.updateView("format");
-  };
+  // document.getElementById("format").onclick = () => {
+    // playground.updateView("format");
+  // };
 
   document.getElementById("minify").onclick = function () {
     playground.updateView("minify");
