@@ -446,6 +446,26 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
+    pub fn static_property_info(&'a self) -> Option<(Span, &'a str)> {
+        match self {
+            MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
+                Expression::StringLiteral(lit) => Some((lit.span, &lit.value)),
+                Expression::TemplateLiteral(lit) => {
+                    if lit.expressions.is_empty() && lit.quasis.len() == 1 {
+                        Some((lit.span, &lit.quasis[0].value.raw))
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            MemberExpression::StaticMemberExpression(expr) => {
+                Some((expr.property.span, &expr.property.name))
+            }
+            MemberExpression::PrivateFieldExpression(_) => None,
+        }
+    }
+
     /// Whether it is a static member access `object.property`
     pub fn is_specific_member_access(&'a self, object: &str, property: &str) -> bool {
         self.object().is_specific_id(object)
