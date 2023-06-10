@@ -103,6 +103,9 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
     fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
         match self {
             Self::NumberLiteral(_) => false,
+            Self::Identifier(ident) => {
+                !matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
+            }
             Self::UnaryExpression(unary_expr) => {
                 if is_simple_unary_operator(unary_expr.operator) {
                     return unary_expr.argument.check_for_state_change(check_for_new_objects);

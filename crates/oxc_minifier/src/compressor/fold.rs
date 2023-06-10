@@ -4,9 +4,7 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
-use oxc_hir::{
-    hir_util::{IsLiteralValue, MayHaveSideEffects},
-};
+use oxc_hir::hir_util::{IsLiteralValue, MayHaveSideEffects};
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
@@ -197,20 +195,31 @@ impl<'a> Compressor<'a> {
         unary_expr: &'b UnaryExpression<'a>,
     ) -> Option<Expression<'a>> {
         match unary_expr.operator {
-            UnaryOperator::UnaryNegation => {
-                if let Expression::NumberLiteral(number_literal) = &unary_expr.argument {
-                    let raw = Atom::from(format!("-{}", number_literal.value));
+            UnaryOperator::UnaryNegation => match &unary_expr.argument {
+                Expression::NumberLiteral(number_literal) => {
+                    let raw = self.hir.new_str(format!("-{}", number_literal.value).as_str());
                     let number_literal = self.hir.number_literal(
                         unary_expr.span,
                         -number_literal.value,
-                        raw.as_str(),
+                        raw,
                         number_literal.base,
                     );
                     return Some(self.hir.literal_number_expression(number_literal));
-                } else {
-                    None
                 }
-            }
+                Expression::Identifier(ident) => {
+                    if ident.name == "NaN" {
+                        let ident = self.hir.identifier_reference(
+                            unary_expr.span,
+                            ident.name.clone(),
+                            ident.reference_id,
+                        );
+                        Some(self.hir.identifier_reference_expression(ident))
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
             _ => None,
         }
     }

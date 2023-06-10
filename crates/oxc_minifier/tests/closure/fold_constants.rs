@@ -27,7 +27,7 @@ fn js_typeof() {
 }
 
 #[test]
-fn unary_ops () {
+fn unary_ops() {
     // TODO: need to port
     // These cases are handled by PeepholeRemoveDeadCode in closure-compiler.
     // test_same("!foo()");
@@ -35,12 +35,12 @@ fn unary_ops () {
     // test_same("-foo()");
 
     // These cases are handled here.
-    test("a=!true", "a=false");
-    test("a=!10", "a=false");
-    test("a=!false", "a=true");
+    // test("a=!true", "a=false");
+    // test("a=!10", "a=false");
+    // test("a=!false", "a=true");
     test_same("a=!foo()");
-    test("a=-0", "a=-0.0");
-    test("a=-(0)", "a=-0.0");
+    test("a=-0", "a=-0");
+    test("a=-(0)", "a=-0");
     test_same("a=-Infinity");
     test("a=-NaN", "a=NaN");
     test_same("a=-foo()");

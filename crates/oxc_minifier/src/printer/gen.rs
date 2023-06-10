@@ -808,11 +808,17 @@ impl<'a> Gen for NumberLiteral<'a> {
     #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     fn gen(&self, p: &mut Printer, ctx: Context) {
         p.print_space_before_identifier();
+        let abs_value = self.value.abs();
+
+        if self.value.is_sign_negative() {
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+            p.print_str(b"-");
+        }
 
         let result = if self.base == NumberBase::Float {
-            print_non_negative_float(self.value, p)
+            print_non_negative_float(abs_value, p)
         } else {
-            let value = self.value as u64;
+            let value = abs_value as u64;
             // If integers less than 1000, we know that exponential notation will always be longer than
             // the integer representation. This is not the case for 1000 which is "1e3".
             if value < 1000 {
