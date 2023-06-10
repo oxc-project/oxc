@@ -1,3 +1,5 @@
+use oxc_syntax::operator::UnaryOperator;
+
 use crate::hir::{
     ArrayExpressionElement, Expression, ObjectProperty, ObjectPropertyKind, PropertyKey,
     SpreadElement,
@@ -74,4 +76,47 @@ impl<'a, 'b> IsLiteralValue<'a, 'b> for PropertyKey<'a> {
             Self::Expression(expr) => expr.is_literal_value(include_functions),
         }
     }
+}
+
+/// port from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L94)
+/// Returns true if the node which may have side effects when executed.
+/// This version default to the "safe" assumptions when the compiler object
+/// is not provided (RegExp have side-effects, etc).
+pub trait MayHaveSideEffects<'a, 'b>
+where
+    Self: CheckForStateChange<'a, 'b>,
+{
+    fn may_have_side_effects(&self) -> bool {
+        self.check_for_state_change(false)
+    }
+}
+
+/// port from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/AstAnalyzer.java#L241)
+/// Returns true if some node in n's subtree changes application state. If
+/// `check_for_new_objects` is true, we assume that newly created mutable objects (like object
+/// literals) change state. Otherwise, we assume that they have no side effects.
+pub trait CheckForStateChange<'a, 'b> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool;
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match self {
+            Self::NumberLiteral(_) => false,
+            Self::UnaryExpression(unary_expr) => {
+                if is_simple_unary_operator(unary_expr.operator) {
+                    return unary_expr.argument.check_for_state_change(check_for_new_objects);
+                }
+
+                true
+            }
+            _ => true,
+        }
+    }
+}
+
+impl<'a, 'b> MayHaveSideEffects<'a, 'b> for Expression<'a> {}
+
+fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
+    operator != UnaryOperator::Delete
 }

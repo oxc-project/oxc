@@ -4,7 +4,9 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
-use oxc_hir::hir_util::IsLiteralValue;
+use oxc_hir::{
+    hir_util::{IsLiteralValue, MayHaveSideEffects},
+};
 use oxc_span::{Atom, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
@@ -54,6 +56,8 @@ impl<'a> From<&Expression<'a>> for Ty {
 
 impl<'a> Compressor<'a> {
     pub(crate) fn fold_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
+        let has_side_effects = expr.may_have_side_effects();
+
         let folded_expr = match expr {
             Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
                 BinaryOperator::Equality => self.try_fold_comparison(
@@ -67,6 +71,13 @@ impl<'a> Compressor<'a> {
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Typeof => {
                     self.try_fold_typeof(unary_expr.span, &unary_expr.argument)
+                }
+                UnaryOperator::UnaryPlus
+                | UnaryOperator::UnaryNegation
+                | UnaryOperator::LogicalNot
+                    if !has_side_effects =>
+                {
+                    self.try_reduce_unary_operands_for_op(unary_expr)
                 }
                 _ => None,
             },
@@ -179,5 +190,28 @@ impl<'a> Compressor<'a> {
         }
 
         None
+    }
+
+    fn try_reduce_unary_operands_for_op<'b>(
+        &mut self,
+        unary_expr: &'b UnaryExpression<'a>,
+    ) -> Option<Expression<'a>> {
+        match unary_expr.operator {
+            UnaryOperator::UnaryNegation => {
+                if let Expression::NumberLiteral(number_literal) = &unary_expr.argument {
+                    let raw = Atom::from(format!("-{}", number_literal.value));
+                    let number_literal = self.hir.number_literal(
+                        unary_expr.span,
+                        -number_literal.value,
+                        raw.as_str(),
+                        number_literal.base,
+                    );
+                    return Some(self.hir.literal_number_expression(number_literal));
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
     }
 }
