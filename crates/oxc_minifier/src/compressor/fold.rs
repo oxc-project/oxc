@@ -199,8 +199,6 @@ impl<'a> Compressor<'a> {
         &mut self,
         unary_expr: &'b mut UnaryExpression<'a>,
     ) -> Option<Expression<'a>> {
-        // TODO: I want compress children first, so we can fold expression like `- - 4`
-        // But our ast will visit more than once, is there better way?
         self.fold_expression(&mut unary_expr.argument);
 
         let tri_kind = get_boolean_value(&unary_expr.argument);
@@ -319,6 +317,8 @@ impl<'a> Compressor<'a> {
     }
 }
 
+/// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L348)
+/// Gets the value of a node as a Number, or None if it cannot be converted.
 fn get_number_value(expr: &Expression) -> Option<f64> {
     match expr {
         Expression::NumberLiteral(number_literal) => Some(number_literal.value),
@@ -346,7 +346,7 @@ fn get_number_value(expr: &Expression) -> Option<f64> {
     }
 }
 
-/// code port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
+/// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
 /// <https://262.ecma-international.org/5.1/#sec-9.5>
 #[allow(clippy::cast_possible_truncation)] // for `as i32`
 fn ecmascript_to_int32(num: f64) -> i32 {
@@ -361,6 +361,10 @@ fn ecmascript_to_int32(num: f64) -> i32 {
     if int32bit >= 2f64.powi(31) { (int32bit - 2f64.powi(32)) as i32 } else { int32bit as i32 }
 }
 
+/// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L109)
+/// Gets the boolean value of a node that represents an expression, or  Tri.UNKNOWN if no
+/// such value can be determined by static analysis.
+/// This method does not consider whether the node may have side-effects.
 fn get_boolean_value(expr: &Expression) -> Tri {
     let be_tri_boolean = |boolean: bool| {
         if boolean { Tri::True } else { Tri::False }
@@ -401,8 +405,6 @@ fn get_boolean_value(expr: &Expression) -> Tri {
         },
         Expression::AssignmentExpression(assign_expr) => {
             match assign_expr.operator {
-                // TODO: Is there possible to be true or false ?
-                // https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L186 
                 AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => {
                     Tri::Unknown
                 }
