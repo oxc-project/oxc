@@ -423,7 +423,7 @@ impl<'a> Lexer<'a> {
                 // HashbangComment ::
                 //     `#!` SingleLineCommentChars?
                 if self.current.token.start == 0 && self.next_eq('!') {
-                    self.skip_hashbang_comment()
+                    self.read_hashbang_comment()
                 } else {
                     builder.get_mut_string_without_current_ascii_char(self);
                     self.private_identifier(builder)
@@ -514,7 +514,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.5 Hashbang Comments
-    fn skip_hashbang_comment(&mut self) -> Kind {
+    fn read_hashbang_comment(&mut self) -> Kind {
         while let Some(c) = self.current.chars.next().as_ref() {
             if is_line_terminator(*c) {
                 break;

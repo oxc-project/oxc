@@ -59,10 +59,10 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         source_type: SourceType,
         directives: Vec<'a, Directive>,
-        interpreter: Option<Hashbang<'a>>,
+        hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
-        Program { span, source_type, directives, interpreter, body }
+        Program { span, source_type, directives, hashbang, body }
     }
 
     /* ---------- Literals ---------- */

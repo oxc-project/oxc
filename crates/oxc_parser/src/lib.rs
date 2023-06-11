@@ -188,12 +188,12 @@ impl<'a> Parser<'a> {
         // initialize cur_token and prev_token by moving onto the first token
         self.bump_any();
 
-        let interpreter = self.parse_hashbang();
+        let hashbang = self.parse_hashbang();
         let (directives, statements) =
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
         let span = Span::new(0, self.source_text.len() as u32);
-        Ok(self.ast.program(span, self.source_type, directives, interpreter, statements))
+        Ok(self.ast.program(span, self.source_type, directives, hashbang, statements))
     }
 
     fn default_context(source_type: SourceType) -> Context {

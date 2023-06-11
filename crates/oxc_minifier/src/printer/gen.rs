@@ -40,6 +40,9 @@ where
 
 impl<'a> Gen for Program<'a> {
     fn gen(&self, p: &mut Printer, ctx: Context) {
+        if let Some(hashbang) = &self.hashbang {
+            hashbang.gen(p, ctx);
+        }
         for directive in &self.directives {
             directive.gen(p, ctx);
         }
@@ -52,8 +55,7 @@ impl<'a> Gen for Program<'a> {
 
 impl<'a> Gen for Hashbang<'a> {
     fn gen(&self, p: &mut Printer, ctx: Context) {
-        p.print(b'#');
-        p.print(b'!');
+        p.print_str(b"#!");
         p.print_str(self.value.as_bytes());
     }
 }

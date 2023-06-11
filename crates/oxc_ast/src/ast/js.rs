@@ -19,7 +19,7 @@ pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
     pub directives: Vec<'a, Directive<'a>>,
-    pub interpreter: Option<Hashbang<'a>>,
+    pub hashbang: Option<Hashbang<'a>>,
     pub body: Vec<'a, Statement<'a>>,
 }
 

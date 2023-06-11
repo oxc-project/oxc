@@ -66,10 +66,10 @@ impl<'a> HirBuilder<'a> {
         &mut self,
         span: Span,
         directives: Vec<'a, Directive>,
-        interpreter: Option<Hashbang<'a>>,
+        hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
-        Program { span, directives, interpreter, body }
+        Program { span, directives, hashbang, body }
     }
 
     /* ---------- Literals ---------- */
