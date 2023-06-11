@@ -260,7 +260,7 @@ mod tests {
 
         // The program is a function declaration with a single statement
         let program = ret.program;
-        let Program { body, span: _, directives: _, source_type: _ } = program;
+        let Program { body, .. } = program;
         let stmt = body.first().unwrap();
         let Statement::Declaration(Declaration::FunctionDeclaration(func)) = stmt else { unreachable!() };
 

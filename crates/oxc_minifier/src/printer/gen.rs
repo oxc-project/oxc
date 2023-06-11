@@ -50,6 +50,14 @@ impl<'a> Gen for Program<'a> {
     }
 }
 
+impl <'a> Gen for Hashbang<'a> {
+	fn gen(&self, p: &mut Printer, ctx: Context) {
+		p.print(b'#');
+		p.print(b'!');
+		p.print_str(self.value.as_bytes());
+	}
+}
+
 impl<'a> Gen for Directive<'a> {
     fn gen(&self, p: &mut Printer, ctx: Context) {
         p.print(b'"');

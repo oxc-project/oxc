@@ -11,6 +11,21 @@ use super::{
 use crate::{diagnostics, lexer::Kind, list::NormalList, Context, Parser, StatementContext};
 
 impl<'a> Parser<'a> {
+    // Section 12
+    // The InputElementHashbangOrRegExp goal is used at the start of a Script
+    // or Module.
+    pub(crate) fn parse_hashbang(&mut self) -> Option<Hashbang<'a>> {
+        if self.cur_kind() == Kind::HashbangComment {
+            let span = self.start_span();
+            self.bump_any();
+            let span = self.end_span(span);
+            let src = &self.source_text[span.start as usize + 2..span.end as usize];
+            Some(self.ast.hashbang(span, src))
+        } else {
+            None
+        }
+    }
+
     /// <https://tc39.es/ecma262/#prod-StatementList>
     /// `StatementList`[Yield, Await, Return] :
     ///     `StatementListItem`[?Yield, ?Await, ?Return]

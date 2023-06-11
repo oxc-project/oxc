@@ -4,7 +4,7 @@ use crate::test;
 
 #[test]
 fn tdewolff() {
-    // expect("#!shebang", "#!shebang");
+    test("#!shebang", "#!shebang");
     test("/*comment*/a", "a");
     // expect("/*!comment*/a", "/*!comment*/a");
     // expect("//!comment1\n\n//!comment2\na", "//!comment1\n//!comment2\na");
