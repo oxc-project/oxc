@@ -102,7 +102,12 @@ pub trait CheckForStateChange<'a, 'b> {
 impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
     fn check_for_state_change(&self, _check_for_new_objects: bool) -> bool {
         match self {
-            Self::NumberLiteral(_) => false,
+            Self::NumberLiteral(_)
+            | Self::BooleanLiteral(_)
+            | Self::StringLiteral(_)
+            | Self::BigintLiteral(_)
+            | Self::NullLiteral(_)
+            | Self::RegExpLiteral(_) => false,
             Self::Identifier(ident) => {
                 !matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
             }
