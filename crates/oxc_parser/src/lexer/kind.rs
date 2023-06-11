@@ -12,6 +12,8 @@ pub enum Kind {
     NewLine,
     Comment,
     MultiLineComment,
+    // 12.5 Hashbang Comments
+    HashbangComment,
     // 12.6 identifier
     Ident,
     // 12.6.2 keyword
@@ -486,6 +488,7 @@ impl Kind {
             NewLine => "\n",
             Comment => "//",
             MultiLineComment => "/** */",
+            HashbangComment => "#!",
             WhiteSpace => " ",
             Ident => "Identifier",
             Await => "await",

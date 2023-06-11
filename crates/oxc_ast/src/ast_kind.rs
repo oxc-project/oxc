@@ -10,6 +10,7 @@ pub enum AstKind<'a> {
 
     Program(&'a Program<'a>),
     Directive(&'a Directive<'a>),
+    Hashbang(&'a Hashbang<'a>),
 
     BlockStatement(&'a BlockStatement<'a>),
     BreakStatement(&'a BreakStatement),
@@ -233,6 +234,7 @@ impl<'a> GetSpan for AstKind<'a> {
 
             Self::Program(x) => x.span,
             Self::Directive(x) => x.span,
+            Self::Hashbang(x) => x.span,
 
             Self::BlockStatement(x) => x.span,
             Self::BreakStatement(x) => x.span,

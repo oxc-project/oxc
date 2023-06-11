@@ -19,6 +19,7 @@ pub struct Program<'a> {
     pub span: Span,
     pub source_type: SourceType,
     pub directives: Vec<'a, Directive<'a>>,
+    pub hashbang: Option<Hashbang<'a>>,
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -881,6 +882,15 @@ pub struct Directive<'a> {
     pub expression: StringLiteral,
     // directives should always use the unescaped raw string
     pub directive: &'a str,
+}
+
+/// Hashbang
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct Hashbang<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub value: &'a str,
 }
 
 /// Block Statement

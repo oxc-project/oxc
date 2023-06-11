@@ -40,6 +40,9 @@ where
 
 impl<'a> Gen for Program<'a> {
     fn gen(&self, p: &mut Printer, ctx: Context) {
+        if let Some(hashbang) = &self.hashbang {
+            hashbang.gen(p, ctx);
+        }
         for directive in &self.directives {
             directive.gen(p, ctx);
         }
@@ -47,6 +50,13 @@ impl<'a> Gen for Program<'a> {
             p.print_semicolon_if_needed();
             stmt.gen(p, ctx);
         }
+    }
+}
+
+impl<'a> Gen for Hashbang<'a> {
+    fn gen(&self, p: &mut Printer, ctx: Context) {
+        p.print_str(b"#!");
+        p.print_str(self.value.as_bytes());
     }
 }
 

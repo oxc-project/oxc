@@ -420,11 +420,10 @@ impl<'a> Lexer<'a> {
             }
             '^' => self.read_caret(),
             '#' => {
-                // https://tc39.es/proposal-hashbang/out.html
                 // HashbangComment ::
                 //     `#!` SingleLineCommentChars?
                 if self.current.token.start == 0 && self.next_eq('!') {
-                    self.skip_single_line_comment()
+                    self.read_hashbang_comment()
                 } else {
                     builder.get_mut_string_without_current_ascii_char(self);
                     self.private_identifier(builder)
@@ -512,6 +511,17 @@ impl<'a> Lexer<'a> {
 
         self.trivia_builder.add_multi_line_comment(self.current.token.start, self.offset());
         Kind::MultiLineComment
+    }
+
+    /// Section 12.5 Hashbang Comments
+    fn read_hashbang_comment(&mut self) -> Kind {
+        while let Some(c) = self.current.chars.next().as_ref() {
+            if is_line_terminator(*c) {
+                break;
+            }
+        }
+        self.current.token.is_on_new_line = true;
+        Kind::HashbangComment
     }
 
     /// Section 12.6.1 Identifier Names

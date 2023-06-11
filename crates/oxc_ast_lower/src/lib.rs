@@ -67,8 +67,13 @@ impl<'a> AstLower<'a> {
 
     fn lower_program(&mut self, program: &ast::Program<'a>) -> hir::Program<'a> {
         let directives = self.lower_vec(&program.directives, Self::lower_directive);
+        let hashbang = program.hashbang.as_ref().map(|hashbang| self.lower_hasbang(hashbang));
         let statements = self.lower_statements(&program.body);
-        self.hir.program(program.span, directives, statements)
+        self.hir.program(program.span, directives, hashbang, statements)
+    }
+
+    fn lower_hasbang(&mut self, hashbang: &ast::Hashbang<'a>) -> hir::Hashbang<'a> {
+        self.hir.hashbang(hashbang.span, hashbang.value)
     }
 
     fn lower_directive(&mut self, directive: &ast::Directive<'a>) -> hir::Directive<'a> {
