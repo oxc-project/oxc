@@ -67,7 +67,8 @@ impl<'a> AstLower<'a> {
 
     fn lower_program(&mut self, program: &ast::Program<'a>) -> hir::Program<'a> {
         let directives = self.lower_vec(&program.directives, Self::lower_directive);
-        let interpreter = program.interpreter.as_ref().map(|interpreter| self.lower_hasbang(interpreter));
+        let interpreter =
+            program.interpreter.as_ref().map(|interpreter| self.lower_hasbang(interpreter));
         let statements = self.lower_statements(&program.body);
         self.hir.program(program.span, directives, interpreter, statements)
     }
