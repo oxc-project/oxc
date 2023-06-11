@@ -199,8 +199,8 @@ impl<'a> Compressor<'a> {
         &mut self,
         unary_expr: &'b mut UnaryExpression<'a>,
     ) -> Option<Expression<'a>> {
-        // TODO: I want compress children frist, so we can fold expression like `- - 4`
-        // But our ast will vistor more than once, is there better way?
+        // TODO: I want compress children first, so we can fold expression like `- - 4`
+        // But our ast will visit more than once, is there better way?
         self.fold_expression(&mut unary_expr.argument);
 
         let tri_kind = get_boolean_value(&unary_expr.argument);
@@ -403,7 +403,7 @@ fn get_boolean_value(expr: &Expression) -> Tri {
         },
         Expression::AssignmentExpression(assign_expr) => {
             match assign_expr.operator {
-                // TODO: Is there possible to be true or fase ?
+                // TODO: Is there possible to be true or false ?
                 // https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L186 
                 AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => {
                     Tri::Unknown
