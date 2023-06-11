@@ -100,7 +100,7 @@ pub trait CheckForStateChange<'a, 'b> {
 }
 
 impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
-    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+    fn check_for_state_change(&self, _check_for_new_objects: bool) -> bool {
         match self {
             Self::NumberLiteral(_) => false,
             Self::Identifier(ident) => {
@@ -108,7 +108,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
             }
             Self::UnaryExpression(unary_expr) => {
                 if is_simple_unary_operator(unary_expr.operator) {
-                    return unary_expr.argument.check_for_state_change(check_for_new_objects);
+                    return unary_expr.argument.check_for_state_change(_check_for_new_objects);
                 }
 
                 true

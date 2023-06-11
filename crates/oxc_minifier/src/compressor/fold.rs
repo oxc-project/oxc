@@ -7,7 +7,10 @@ use oxc_ast::BigUint;
 use oxc_hir::hir::*;
 use oxc_hir::hir_util::{IsLiteralValue, MayHaveSideEffects};
 use oxc_span::{Atom, Span};
-use oxc_syntax::{operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator}, NumberBase};
+use oxc_syntax::{
+    operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
+    NumberBase,
+};
 
 use super::Compressor;
 
@@ -210,13 +213,12 @@ impl<'a> Compressor<'a> {
             UnaryOperator::LogicalNot => {
                 if let Expression::NumberLiteral(number_literal) = &unary_expr.argument {
                     let value = number_literal.value;
-                    if value == 0.0 || value == 1.0 {
+                    if value == 0_f64 || (value - 1_f64).abs() < f64::EPSILON {
                         None
                     } else {
                         // Tri::Unknown has been already filtered out
-                        let inverted_boolean = if tri_kind == Tri::True { false } else { true };
                         let bool_literal =
-                            self.hir.boolean_literal(unary_expr.span, inverted_boolean);
+                            self.hir.boolean_literal(unary_expr.span, tri_kind != Tri::True);
                         Some(self.hir.literal_boolean_expression(bool_literal))
                     }
                 } else {
@@ -232,14 +234,14 @@ impl<'a> Compressor<'a> {
                         number_literal.base,
                     );
                     Some(self.hir.literal_number_expression(number_literal))
-                },
+                }
                 Expression::Identifier(ident) => {
                     if matches!(ident.name.as_str(), "NaN" | "Infinity") {
                         self.try_detach_unary_op(unary_expr)
                     } else {
                         None
                     }
-                }, 
+                }
                 _ => {
                     if let Some(value) = get_number_value(&unary_expr.argument) {
                         let raw = self.hir.new_str(value.to_string().as_str());
@@ -253,9 +255,8 @@ impl<'a> Compressor<'a> {
                     } else {
                         None
                     }
-                },
-                
-            }
+                }
+            },
             UnaryOperator::UnaryNegation => match &unary_expr.argument {
                 Expression::NumberLiteral(number_literal) => {
                     let number_literal = self.hir.number_literal(
@@ -272,7 +273,7 @@ impl<'a> Compressor<'a> {
                     } else {
                         None
                     }
-                }, 
+                }
                 _ => None,
             },
             UnaryOperator::BitwiseNot => {
@@ -282,7 +283,7 @@ impl<'a> Compressor<'a> {
                         let int_value = ecmascript_to_int32(value);
                         let number_literal = self.hir.number_literal(
                             unary_expr.span,
-                            (!int_value) as f64,
+                            f64::from(!int_value),
                             number_literal.raw,
                             number_literal.base,
                         );
@@ -297,7 +298,11 @@ impl<'a> Compressor<'a> {
             _ => None,
         }
     }
-    fn try_detach_unary_op(&mut self, unary_expr: & mut UnaryExpression<'a>) -> Option<Expression<'a>> {
+
+    fn try_detach_unary_op(
+        &mut self,
+        unary_expr: &mut UnaryExpression<'a>,
+    ) -> Option<Expression<'a>> {
         match &unary_expr.argument {
             Expression::Identifier(ident) => {
                 if matches!(ident.name.as_str(), "NaN" | "Infinity") {
@@ -310,37 +315,27 @@ impl<'a> Compressor<'a> {
                 } else {
                     None
                 }
-            },
-            _ => None
+            }
+            _ => None,
         }
-        
     }
 }
 
 fn get_number_value(expr: &Expression) -> Option<f64> {
     match expr {
         Expression::NumberLiteral(number_literal) => Some(number_literal.value),
-        Expression::UnaryExpression(unary_expr) => {
-            match unary_expr.operator {
-                UnaryOperator::UnaryPlus => get_number_value(&unary_expr.argument),
-                UnaryOperator::UnaryNegation => get_number_value(&unary_expr.argument).map(|v| -v),
-                UnaryOperator::BitwiseNot => {
-                    if let Some(value) = get_number_value(&unary_expr.argument) {
-                        Some(!ecmascript_to_int32(value) as f64)
-                    } else {
-                        None
-                    }
-                },
-                UnaryOperator::LogicalNot => {
-                    match get_boolean_value(expr) {
-                        Tri::True => Some(1.0),
-                        Tri::False => Some(0.0),
-                        Tri::Unknown => None,
-                    }
-                }, 
-                _ => None
-            }
-        }
+        Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+            UnaryOperator::UnaryPlus => get_number_value(&unary_expr.argument),
+            UnaryOperator::UnaryNegation => get_number_value(&unary_expr.argument).map(|v| -v),
+            UnaryOperator::BitwiseNot => get_number_value(&unary_expr.argument)
+                .map(|value| f64::from(!ecmascript_to_int32(value))),
+            UnaryOperator::LogicalNot => match get_boolean_value(expr) {
+                Tri::True => Some(1.0),
+                Tri::False => Some(0.0),
+                Tri::Unknown => None,
+            },
+            _ => None,
+        },
         Expression::BooleanLiteral(bool_literal) => {
             if bool_literal.value {
                 Some(1.0)
@@ -355,37 +350,34 @@ fn get_number_value(expr: &Expression) -> Option<f64> {
 
 /// code port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
 /// <https://262.ecma-international.org/5.1/#sec-9.5>
+#[allow(clippy::cast_possible_truncation)] // for `as i32`
 fn ecmascript_to_int32(num: f64) -> i32 {
     let int32_value = num as i32;
-    if int32_value as f64 == num {
+    if (f64::from(int32_value) - num).abs() < f64::EPSILON {
         return int32_value;
     }
 
     let pos_int = num.signum() * num.abs().floor();
     let int32bit = pos_int % 2f64.powi(32);
 
-    if int32bit >= 2f64.powi(31) {
-        return (int32bit - 2f64.powi(32)) as i32;
-    } else {
-        return int32bit as i32;
-    }
+    if int32bit >= 2f64.powi(31) { (int32bit - 2f64.powi(32)) as i32 } else { int32bit as i32 }
 }
 
-fn get_boolean_value<'a, 'b>(expr: &'b Expression<'a>) -> Tri {
+fn get_boolean_value(expr: &Expression) -> Tri {
     let be_tri_boolean = |boolean: bool| {
         if boolean { Tri::True } else { Tri::False }
     };
 
     match expr {
+        Expression::RegExpLiteral(_) | Expression::ArrayExpression(_)| Expression::ArrowExpression(_)| Expression::ClassExpression(_) | Expression::FunctionExpression(_)| Expression::NewExpression(_) |  Expression::ObjectExpression(_) => Tri::True,
+        Expression::NullLiteral(_) => Tri::False,
         Expression::BooleanLiteral(boolean_literal) => {
             be_tri_boolean(boolean_literal.value)
         },
-        Expression::NullLiteral(_) => Tri::False,
         Expression::NumberLiteral(number_literal) => {
             be_tri_boolean(number_literal.value != 0.0)
         },
         Expression::BigintLiteral(big_int_literal) => be_tri_boolean(big_int_literal.value == BigUint::default()),
-        Expression::RegExpLiteral(_) => Tri::True,
         Expression::StringLiteral(string_literal) => be_tri_boolean(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
             if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
@@ -408,9 +400,7 @@ fn get_boolean_value<'a, 'b>(expr: &'b Expression<'a>) -> Tri {
             } else {
                 Tri::Unknown
             }
-        }, 
-        Expression::ArrayExpression(_) => Tri::True,
-        Expression::ArrowExpression(_) => Tri::True,
+        },
         Expression::AssignmentExpression(assign_expr) => {
             match assign_expr.operator {
                 // TODO: Is there possible to be true or fase ?
@@ -422,8 +412,6 @@ fn get_boolean_value<'a, 'b>(expr: &'b Expression<'a>) -> Tri {
                 _ =>  get_boolean_value(&assign_expr.right)
             }
         },
-        Expression::ClassExpression(_) => Tri::True,
-        Expression::FunctionExpression(_) => Tri::True,
         Expression::LogicalExpression(logical_expr) => {
             match logical_expr.operator {
                 LogicalOperator::And => {
@@ -440,18 +428,12 @@ fn get_boolean_value<'a, 'b>(expr: &'b Expression<'a>) -> Tri {
                         Tri::False
                     }
                 },
-                _ => Tri::Unknown
+                LogicalOperator::Coalesce => Tri::Unknown
             }
         },
-        Expression::NewExpression(_) => Tri::True,
-        Expression::ObjectExpression(_) => Tri::True,
         Expression::SequenceExpression(sequence_expr) => {
             // For sequence expression, the value is the value of the RHS.
-            if let Some(expr) = sequence_expr.expressions.last() {
-                get_boolean_value(expr)
-            } else {
-                Tri::Unknown
-            }
+            sequence_expr.expressions.last().map_or(Tri::Unknown, get_boolean_value)
         },
         Expression::UnaryExpression(unary_expr) => {
             if unary_expr.operator == UnaryOperator::Void {
