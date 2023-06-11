@@ -1,0 +1,187 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_setter_return
+---
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { return 1; } }
+   ·                        ────┬────
+   ·                            ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { static set a(val) { return 1; } }
+   ·                               ────┬────
+   ·                                   ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ (class { set a(val) { return 1; } })
+   ·                       ────┬────
+   ·                           ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { return undefined; } }
+   ·                        ────────┬────────
+   ·                                ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ (class { set a(val) { return null; } })
+   ·                       ──────┬─────
+   ·                             ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { return foo(); } }
+   ·                        ──────┬──────
+   ·                              ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ (class { set a(val) { return this._a; } })
+   ·                       ───────┬───────
+   ·                              ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { try { return 1; } catch(e) {} } }
+   ·                              ────┬────
+   ·                                  ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { return 1; } set b(val) { return 1; } }
+   ·                        ────┬────
+   ·                            ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { return 1; } set b(val) { return 1; } }
+   ·                                                 ────┬────
+   ·                                                     ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ (class { set a(val) { return 1; } static set b(val) { return 1; } })
+   ·                       ────┬────
+   ·                           ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ (class { set a(val) { return 1; } static set b(val) { return 1; } })
+   ·                                                       ────┬────
+   ·                                                           ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return y; default: return z } } }
+   ·                                              ────┬────
+   ·                                                  ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return y; default: return z } } }
+   ·                                                                ────┬────
+   ·                                                                    ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return y; default: return z } } }
+   ·                                                                                   ────┬───
+   ·                                                                                       ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ (class { static set a(val) { if (val > 0) { this._val = val; return val; } return false; } })
+   ·                                                                            ──────┬──────
+   ·                                                                                  ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return; default: return z } } }
+   ·                                              ────┬────
+   ·                                                  ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return; default: return z } } }
+   ·                                                                ───┬───
+   ·                                                                   ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { switch(val) { case 1: return x; case 2: return; default: return z } } }
+   ·                                                                                 ────┬───
+   ·                                                                                     ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ (class { static set a(val) { if (val > 0) { this._val = val; return; } return false; } })
+   ·                                                                        ──────┬──────
+   ·                                                                              ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { return () => {}; } }
+   ·                        ────────┬───────
+   ·                                ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ (class { set a(val) { function b(){ return 1; } return 2; } })
+   ·                                                 ────┬────
+   ·                                                     ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ class A { set a(val) { var x = function() { return 1; }; return 2; } }
+   ·                                                          ────┬────
+   ·                                                              ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ (class { set a(val) { var x = () => { return; }; return 2; } })
+   ·                                                  ────┬────
+   ·                                                      ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ x = function f(){}; class A { set a(val) { return 1; } };
+   ·                                            ────┬────
+   ·                                                ╰── Invalid return in setter function
+   ╰────
+
+  × eslint(no-setter-return): Setters cannot return values
+   ╭─[no_setter_return.tsx:1:1]
+ 1 │ x = () => {}; A = class { set a(val) { return 1; } };
+   ·                                        ────┬────
+   ·                                            ╰── Invalid return in setter function
+   ╰────
+
+

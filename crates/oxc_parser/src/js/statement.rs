@@ -380,12 +380,6 @@ impl<'a> Parser<'a> {
             self.asi()?;
             Some(expr)
         };
-        if !self.ctx.has_return() {
-            self.error(diagnostics::ReturnStatementOnlyInFunctionBody(Span::new(
-                span.start,
-                span.start + 6,
-            )));
-        }
         Ok(self.ast.return_statement(self.end_span(span), argument))
     }
 
