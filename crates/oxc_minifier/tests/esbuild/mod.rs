@@ -287,27 +287,26 @@ fn object() {
 }
 
 #[test]
-#[ignore]
 fn r#for() {
     // Make sure "in" expressions are forbidden in the right places
-    test("for ((a in b);;);", "for ((a in b); ; )");
-    test("for (a ? b : (c in d);;);", "for (a ? b : (c in d); ; )");
-    test("for ((a ? b : c in d).foo;;);", "for ((a ? b : c in d).foo; ; )");
-    test("for (var x = (a in b);;);", "for (var x = (a in b); ; )");
-    test("for (x = (a in b);;);", "for (x = (a in b); ; )");
-    test("for (x == (a in b);;);", "for (x == (a in b); ; )");
-    test("for (1 * (x == a in b);;);", "for (1 * (x == a in b); ; )");
-    test("for (a ? b : x = (c in d);;);", "for (a ? b : x = (c in d); ; )");
-    test("for (var x = y = (a in b);;);", "for (var x = y = (a in b); ; )");
-    test("for ([a in b];;);", "for ([a in b]; ; )");
-    test("for (x(a in b);;);", "for (x(a in b); ; )");
-    test("for (x[a in b];;);", "for (x[a in b]; ; )");
-    test("for (x?.[a in b];;);", "for (x?.[a in b]; ; )");
-    test("for ((x => a in b);;);", "for ((x) => (a in b); ; )");
+    test("for ((a in b);;);", "for((a in b);;);");
+    test("for (a ? b : (c in d);;);", "for(a?b:(c in d);;);");
+    test("for ((a ? b : c in d).foo;;);", "for((a?b:c in d).foo;;);");
+    test("for (var x = (a in b);;);", "for(var x=(a in b);;);");
+    test("for (x = (a in b);;);", "for(x=(a in b);;);");
+    test("for (x == (a in b);;);", "for(x==(a in b);;);");
+    test("for (1 * (x == a in b);;);", "for(1*(x==a in b);;);");
+    test("for (a ? b : x = (c in d);;);", "for(a?b:x=(c in d);;);");
+    test("for (var x = y = (a in b);;);", "for(var x=y=(a in b);;);");
+    test("for ([a in b];;);", "for([a in b];;);");
+    test("for (x(a in b);;);", "for(x(a in b);;);");
+    test("for (x[a in b];;);", "for(x[a in b];;);");
+    test("for (x?.[a in b];;);", "for(x?.[a in b];;);");
+    test("for ((x => a in b);;);", "for(x=>(a in b);;);");
 
     // Make sure for-of loops with commas are wrapped in parentheses
-    test("for (let a in b, c);", "for (let a in b, c)");
-    test("for (let a of (b, c));", "for (let a of (b, c))");
+    test("for (let a in b, c);", "for(let a in b,c);");
+    test("for (let a of (b, c));", "for(let a of (b,c));");
 }
 
 #[test]
@@ -576,10 +575,10 @@ fn whitespace() {
     test("throw delete x", "throw delete x");
     test("throw function(){}", "throw function(){}");
 
-    // test("x in function(){}", "x in function(){}");
-    // test("x instanceof function(){}", "x instanceof function(){}");
-    // test("π in function(){}", "π in function(){}");
-    // test("π instanceof function(){}", "π instanceof function(){}");
+    test("x in function(){}", "x in function(){}");
+    test("x instanceof function(){}", "x instanceof function(){}");
+    test("π in function(){}", "π in function(){}");
+    test("π instanceof function(){}", "π instanceof function(){}");
 
     test("()=>({})", "()=>({})");
     test("()=>({}[1])", "()=>({})[1]");

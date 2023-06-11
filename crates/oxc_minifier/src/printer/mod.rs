@@ -3,6 +3,7 @@
 
 #![allow(unused)]
 
+mod context;
 mod gen;
 mod operator;
 
@@ -22,6 +23,7 @@ use oxc_syntax::{
 };
 
 use self::{
+    context::Context,
     gen::{Gen, GenExpr},
     operator::Operator,
 };
@@ -94,7 +96,7 @@ impl Printer {
     }
 
     pub fn build(mut self, program: &Program<'_>) -> String {
-        program.gen(&mut self);
+        program.gen(&mut self, Context::default());
         self.into_code()
     }
 
@@ -198,10 +200,10 @@ impl Printer {
         self.print(b'=');
     }
 
-    fn print_sequence<T: Gen>(&mut self, items: &[T], separator: Separator) {
+    fn print_sequence<T: Gen>(&mut self, items: &[T], separator: Separator, ctx: Context) {
         let len = items.len();
         for (index, item) in items.iter().enumerate() {
-            item.gen(self);
+            item.gen(self, ctx);
             match separator {
                 Separator::Semicolon => self.print_semicolon(),
                 Separator::Comma => self.print(b','),
@@ -211,47 +213,47 @@ impl Printer {
         }
     }
 
-    fn print_body(&mut self, stmt: &Statement<'_>) {
+    fn print_body(&mut self, stmt: &Statement<'_>, ctx: Context) {
         if let Statement::BlockStatement(block) = stmt {
-            self.print_block1(block);
+            self.print_block1(block, ctx);
         } else {
-            stmt.gen(self);
+            stmt.gen(self, ctx);
         }
     }
 
-    fn print_block1(&mut self, stmt: &BlockStatement<'_>) {
+    fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print(b'{');
         for item in &stmt.body {
             self.print_semicolon_if_needed();
-            item.gen(self);
+            item.gen(self, ctx);
         }
         self.needs_semicolon = false;
         self.print(b'}');
     }
 
-    fn print_block<T: Gen>(&mut self, items: &[T], separator: Separator) {
+    fn print_block<T: Gen>(&mut self, items: &[T], separator: Separator, ctx: Context) {
         self.print(b'{');
         if !items.is_empty() {}
-        self.print_sequence(items, separator);
+        self.print_sequence(items, separator, ctx);
         if !items.is_empty() {}
         self.print(b'}');
     }
 
-    fn print_list<T: Gen>(&mut self, items: &[T]) {
+    fn print_list<T: Gen>(&mut self, items: &[T], ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
             }
-            item.gen(self);
+            item.gen(self, ctx);
         }
     }
 
-    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence) {
+    fn print_expressions<T: GenExpr>(&mut self, items: &[T], precedence: Precedence, ctx: Context) {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
             }
-            item.gen_expr(self, precedence);
+            item.gen_expr(self, precedence, ctx);
         }
     }
 

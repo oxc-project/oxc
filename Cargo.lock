@@ -1285,6 +1285,7 @@ dependencies = [
 name = "oxc_minifier"
 version = "0.0.0"
 dependencies = [
+ "bitflags 2.3.1",
  "jemallocator",
  "mimalloc",
  "oxc_allocator",
