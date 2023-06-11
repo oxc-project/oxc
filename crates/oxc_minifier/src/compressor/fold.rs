@@ -259,12 +259,10 @@ impl<'a> Compressor<'a> {
             },
             UnaryOperator::UnaryNegation => match &unary_expr.argument {
                 Expression::NumberLiteral(number_literal) => {
-                    let number_literal = self.hir.number_literal(
-                        unary_expr.span,
-                        -number_literal.value,
-                        number_literal.raw,
-                        number_literal.base,
-                    );
+                    let value = -number_literal.value;
+                    let raw = self.hir.new_str(value.to_string().as_str());
+                    let number_literal =
+                        self.hir.number_literal(unary_expr.span, value, raw, number_literal.base);
                     Some(self.hir.literal_number_expression(number_literal))
                 }
                 Expression::Identifier(ident) => {
