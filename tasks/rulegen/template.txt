@@ -1,4 +1,4 @@
-use oxc_ast::Span;
+use oxc_span::Span;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
