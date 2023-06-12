@@ -1371,6 +1371,7 @@ dependencies = [
  "indexmap",
  "oxc_index",
  "oxc_span",
+ "oxc_syntax",
  "rustc-hash",
 ]
 
@@ -1387,6 +1388,8 @@ dependencies = [
 name = "oxc_syntax"
 version = "0.0.0"
 dependencies = [
+ "bitflags 2.3.1",
+ "oxc_index",
  "serde",
  "unicode-id-start",
 ]
