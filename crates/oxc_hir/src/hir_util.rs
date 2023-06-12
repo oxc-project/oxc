@@ -214,7 +214,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         },
         Expression::SequenceExpression(sequence_expr) => {
             // For sequence expression, the value is the value of the RHS.
-            sequence_expr.expressions.last().map_or(None, get_boolean_value)
+            sequence_expr.expressions.last().and_then(get_boolean_value)
         },
         Expression::UnaryExpression(unary_expr) => {
             if unary_expr.operator == UnaryOperator::Void {
@@ -226,7 +226,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
                    _ => None
                 }
             } else if unary_expr.operator == UnaryOperator::LogicalNot {
-                get_boolean_value(&unary_expr.argument).map(|boolean| !boolean) 
+                get_boolean_value(&unary_expr.argument).map(|boolean| !boolean)
             } else {
                 None
             }

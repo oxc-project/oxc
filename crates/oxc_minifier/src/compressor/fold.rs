@@ -200,19 +200,17 @@ impl<'a> Compressor<'a> {
     ) -> Option<Expression<'a>> {
         self.fold_expression(&mut unary_expr.argument);
 
-        if let Some(tri_kind) = get_boolean_value(&unary_expr.argument) {
+        if let Some(boolean) = get_boolean_value(&unary_expr.argument) {
             match unary_expr.operator {
                 UnaryOperator::LogicalNot => {
                     if let Expression::NumberLiteral(number_literal) = &unary_expr.argument {
                         let value = number_literal.value;
                         if value == 0_f64 || (value - 1_f64).abs() < f64::EPSILON {
                             return None
-                        } else {
-                            // Tri::Unknown has been already filtered out
-                            let bool_literal =
-                                self.hir.boolean_literal(unary_expr.span, tri_kind);
-                            return Some(self.hir.literal_boolean_expression(bool_literal))
                         }
+                        let bool_literal =
+                            self.hir.boolean_literal(unary_expr.span, boolean);
+                        return Some(self.hir.literal_boolean_expression(bool_literal))
                     }
                 }
                 UnaryOperator::UnaryPlus => match &unary_expr.argument {
@@ -281,18 +279,15 @@ impl<'a> Compressor<'a> {
         &mut self,
         unary_expr: &mut UnaryExpression<'a>,
     ) -> Option<Expression<'a>> {
-        match &unary_expr.argument {
-            Expression::Identifier(ident) => {
-                if matches!(ident.name.as_str(), "NaN" | "Infinity") {
-                    let ident = self.hir.identifier_reference(
-                        unary_expr.span,
-                        ident.name.clone(),
-                        ident.reference_id,
-                    );
-                    return Some(self.hir.identifier_reference_expression(ident));
-                }
+        if let Expression::Identifier(ident) = &unary_expr.argument {
+            if matches!(ident.name.as_str(), "NaN" | "Infinity") {
+                let ident = self.hir.identifier_reference(
+                    unary_expr.span,
+                    ident.name.clone(),
+                    ident.reference_id,
+                );
+                return Some(self.hir.identifier_reference_expression(ident));
             }
-            _ => {}
         }
 
         None
