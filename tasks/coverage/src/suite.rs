@@ -21,6 +21,11 @@ use walkdir::WalkDir;
 
 use crate::{project_root, AppArgs};
 
+/// Normalizes the path when on Windows to using forward slash delimiters.
+fn normalize_path(path: &Path) -> String {
+    path.display().to_string().replace('\\', "/")
+}
+
 #[derive(Debug)]
 pub enum TestResult {
     ToBeRun,
@@ -292,7 +297,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             let mut output = String::new();
             for error in errors {
                 let error = error.with_source_code(NamedSource::new(
-                    self.path().to_string_lossy(),
+                    normalize_path(self.path()),
                     source_text.to_string(),
                 ));
                 handler.render_report(&mut output, error.as_ref()).unwrap();
@@ -314,17 +319,21 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn print<W: Write>(&self, args: &AppArgs, writer: &mut W) -> std::io::Result<()> {
         match self.test_result() {
             TestResult::ParseError(error, _) => {
-                writer.write_all(format!("Expect to Parse: {:?}\n", self.path()).as_bytes())?;
+                writer.write_all(
+                    format!("Expect to Parse: {}\n", normalize_path(self.path())).as_bytes(),
+                )?;
                 writer.write_all(error.as_bytes())?;
             }
             TestResult::Mismatch(ast_string, expected_ast_string) => {
                 if args.diff {
                     self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
-                    println!("Mismatch: {:?}", self.path());
+                    println!("Mismatch: {}", normalize_path(self.path()));
                 }
             }
             TestResult::IncorrectlyPassed => {
-                writer.write_all(format!("Expect Syntax Error: {:?}\n", self.path()).as_bytes())?;
+                writer.write_all(
+                    format!("Expect Syntax Error: {:?}\n", normalize_path(self.path())).as_bytes(),
+                )?;
             }
             _ => {}
         }

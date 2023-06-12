@@ -3,12 +3,12 @@ AST Parsed     : 3/3 (100.00%)
 Positive Passed: 3/3 (100.00%)
 Negative Passed: 2/2 (100.00%)
   × Unexpected token
-   ╭─[fail\oxc-169.js:1:1]
+   ╭─[fail/oxc-169.js:1:1]
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
    ╰────
 
   × Empty parenthesized expression
-   ╭─[fail\oxc-232.js:1:1]
+   ╭─[fail/oxc-232.js:1:1]
  1 │ x = (/* a */)
    ·     ─────────
    ╰────
