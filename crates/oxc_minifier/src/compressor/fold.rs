@@ -213,7 +213,7 @@ impl<'a> Compressor<'a> {
                                 self.hir.boolean_literal(unary_expr.span, tri_kind);
                             return Some(self.hir.literal_boolean_expression(bool_literal))
                         }
-                    } 
+                    }
                 }
                 UnaryOperator::UnaryPlus => match &unary_expr.argument {
                     Expression::NumberLiteral(number_literal) => {
@@ -228,7 +228,7 @@ impl<'a> Compressor<'a> {
                     Expression::Identifier(ident) => {
                         if matches!(ident.name.as_str(), "NaN" | "Infinity") {
                             return self.try_detach_unary_op(unary_expr)
-                        } 
+                        }
                     }
                     _ => {
                         if let Some(value) = get_number_value(&unary_expr.argument) {
@@ -240,7 +240,7 @@ impl<'a> Compressor<'a> {
                                 NumberBase::Decimal,
                             );
                             return Some(self.hir.literal_number_expression(number_literal))
-                        } 
+                        }
                     }
                 },
                 UnaryOperator::UnaryNegation => match &unary_expr.argument {
@@ -254,7 +254,7 @@ impl<'a> Compressor<'a> {
                     Expression::Identifier(ident) => {
                         if ident.name == "NaN" {
                             return self.try_detach_unary_op(unary_expr)
-                        } 
+                        }
                     }
                     _ => {},
                 },
@@ -268,11 +268,11 @@ impl<'a> Compressor<'a> {
                                 number_literal.base,
                             );
                             return Some(self.hir.literal_number_expression(number_literal))
-                    } 
+                    }
                 }
                 _ => {},
             }
-        } 
+        }
 
         None
     }
@@ -289,10 +289,10 @@ impl<'a> Compressor<'a> {
                         ident.name.clone(),
                         ident.reference_id,
                     );
-                    return Some(self.hir.identifier_reference_expression(ident))
-                } 
+                    return Some(self.hir.identifier_reference_expression(ident));
+                }
             }
-            _ => {},
+            _ => {}
         }
 
         None
