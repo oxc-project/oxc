@@ -1,8 +1,9 @@
-use oxc_syntax::operator::UnaryOperator;
+use num_bigint::BigUint;
+use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 use crate::hir::{
-    ArrayExpressionElement, Expression, ObjectProperty, ObjectPropertyKind, PropertyKey,
-    SpreadElement,
+    ArrayExpressionElement, Expression, NumberLiteral, ObjectProperty, ObjectPropertyKind,
+    PropertyKey, SpreadElement,
 };
 
 /// Code ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/NodeUtil.java#LL836C6-L836C6)
@@ -127,4 +128,109 @@ impl<'a, 'b> MayHaveSideEffects<'a, 'b> for Expression<'a> {}
 
 fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
     operator != UnaryOperator::Delete
+}
+
+/// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L348)
+/// Gets the value of a node as a Number, or None if it cannot be converted.
+pub fn get_number_value(expr: &Expression) -> Option<f64> {
+    match expr {
+        Expression::NumberLiteral(number_literal) => Some(number_literal.value),
+        Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+            UnaryOperator::UnaryPlus => get_number_value(&unary_expr.argument),
+            UnaryOperator::UnaryNegation => get_number_value(&unary_expr.argument).map(|v| -v),
+            UnaryOperator::BitwiseNot => get_number_value(&unary_expr.argument)
+                .map(|value| f64::from(!NumberLiteral::ecmascript_to_int32(value))),
+            UnaryOperator::LogicalNot => {
+                get_boolean_value(expr).map(|boolean| if boolean { 1.0 } else { 0.0 })
+            }
+            _ => None,
+        },
+        Expression::BooleanLiteral(bool_literal) => {
+            if bool_literal.value {
+                Some(1.0)
+            } else {
+                Some(0.0)
+            }
+        }
+        Expression::NullLiteral(_) => Some(0.0),
+        _ => None,
+    }
+}
+
+/// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L109)
+/// Gets the boolean value of a node that represents an expression, or `None` if no
+/// such value can be determined by static analysis.
+/// This method does not consider whether the node may have side-effects.
+pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
+    match expr {
+        Expression::RegExpLiteral(_) | Expression::ArrayExpression(_)| Expression::ArrowExpression(_)| Expression::ClassExpression(_) | Expression::FunctionExpression(_)| Expression::NewExpression(_) |  Expression::ObjectExpression(_) => Some(true),
+        Expression::NullLiteral(_) => Some(false),
+        Expression::BooleanLiteral(boolean_literal) =>  Some(boolean_literal.value),
+        Expression::NumberLiteral(number_literal) => Some(number_literal.value != 0.0),
+        Expression::BigintLiteral(big_int_literal) => Some(big_int_literal.value == BigUint::default()),
+        Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
+        Expression::TemplateLiteral(template_literal) => {
+            if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
+                if quasi.value.cooked.as_ref().map_or(false, |cooked| !cooked.is_empty()) {
+                    Some(true)
+                } else {
+                    Some(false)
+                }
+            } else {
+                None
+            }
+        },
+        Expression::Identifier(ident) => {
+            if expr.is_undefined() {
+                Some(false)
+            } else if  ident.name == "Infinity" {
+                Some(true)
+            } else if ident.name == "NaN" {
+                Some(false)
+            } else {
+                None
+            }
+        },
+        Expression::AssignmentExpression(assign_expr) => {
+            match assign_expr.operator {
+                AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => {
+                    None
+                }
+                // For ASSIGN, the value is the value of the RHS.
+                _ =>  get_boolean_value(&assign_expr.right)
+            }
+        },
+        Expression::LogicalExpression(logical_expr) => {
+            let predict = |expr: &&Expression| get_boolean_value(expr) == Some(true);
+            match logical_expr.operator {
+                LogicalOperator::And => {
+                    Some([&logical_expr.left, &logical_expr.right].iter().all(predict))
+                },
+                LogicalOperator::Or => {
+                    Some([&logical_expr.left, &logical_expr.right].iter().any(predict))
+                },
+                LogicalOperator::Coalesce => None
+            }
+        },
+        Expression::SequenceExpression(sequence_expr) => {
+            // For sequence expression, the value is the value of the RHS.
+            sequence_expr.expressions.last().map_or(None, get_boolean_value)
+        },
+        Expression::UnaryExpression(unary_expr) => {
+            if unary_expr.operator == UnaryOperator::Void {
+                Some(false)
+            } else if matches!(unary_expr.operator, UnaryOperator::BitwiseNot | UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation) {
+                match &unary_expr.argument {
+                   Expression::NumberLiteral(number_literal) => Some(number_literal.value != 0.0),
+                   Expression::BigintLiteral(big_int_literal) => Some(big_int_literal.value == BigUint::default()),
+                   _ => None
+                }
+            } else if unary_expr.operator == UnaryOperator::LogicalNot {
+                get_boolean_value(&unary_expr.argument).map(|boolean| !boolean) 
+            } else {
+                None
+            }
+        },
+        _ => None
+    }
 }

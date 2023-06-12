@@ -249,6 +249,21 @@ pub struct NumberLiteral<'a> {
     pub base: NumberBase,
 }
 
+impl<'a> NumberLiteral<'a> {
+    /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/base/JSCompDoubles.java#L113)
+    /// <https://262.ecma-international.org/5.1/#sec-9.5>
+    #[allow(clippy::cast_possible_truncation)] // for `as i32`
+    pub fn ecmascript_to_int32(num: f64) -> i32 {
+        let int32_value = num as i32;
+        if (f64::from(int32_value) - num).abs() < f64::EPSILON {
+            return int32_value;
+        }
+        let pos_int = num.signum() * num.abs().floor();
+        let int32bit = pos_int % 2f64.powi(32);
+        if int32bit >= 2f64.powi(31) { (int32bit - 2f64.powi(32)) as i32 } else { int32bit as i32 }
+    }
+}
+
 impl<'a> Hash for NumberLiteral<'a> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.base.hash(state);
