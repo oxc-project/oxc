@@ -30,7 +30,7 @@ impl SemanticBuilder {
         Semantic { scope_tree: self.scope_tree, symbol_table: self.symbol_table }
     }
 
-    fn enter_scope(&mut self, flags: ScopeFlags) {
+    pub fn enter_scope(&mut self, flags: ScopeFlags) {
         let mut flags = flags;
         // Inherit strict mode for functions
         // https://tc39.es/ecma262/#sec-strict-mode-code
@@ -67,7 +67,7 @@ impl SemanticBuilder {
     /// excludes: the flags which node cannot be declared alongside in a symbol table. Used to report forbidden declarations.
     ///
     /// Reports errors for conflicting identifier names.
-    fn declare_symbol(
+    pub fn declare_symbol(
         &mut self,
         span: Span,
         name: &Atom,
@@ -120,7 +120,7 @@ impl SemanticBuilder {
         // }
     }
 
-    fn declare_reference(&mut self, span: Span, name: &Atom) -> ReferenceId {
+    pub fn declare_reference(&mut self, span: Span, name: &Atom) -> ReferenceId {
         let reference_id = self.symbol_table.create_reference(span, name.clone());
         self.scope_tree.add_unresolved_reference(self.current_scope_id, name.clone(), reference_id);
         reference_id

@@ -1,10 +1,37 @@
-use oxc_index::{index_vec, IndexVec};
-use oxc_span::Atom;
+use std::collections::BTreeMap;
 
-use crate::{
+#[allow(clippy::wildcard_imports)]
+use oxc_hir::hir::*;
+use oxc_hir::Visit;
+use oxc_index::{index_vec, IndexVec};
+use oxc_semantic2::{
+    reference::ReferenceId,
     symbol::{SymbolId, SymbolTable},
-    Semantic,
+    SemanticBuilder,
 };
+use oxc_span::{Atom, SourceType, Span};
+use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
+
+type Slot = usize;
+
+pub struct Mangler {
+    symbol_table: SymbolTable,
+    symbol_map: BTreeMap<Span, SymbolId>,
+    reference_map: BTreeMap<Span, ReferenceId>,
+}
+
+impl Mangler {
+    pub fn get_symbol_name(&self, span: Span) -> Option<&Atom> {
+        let symbol_id = self.symbol_map.get(&span)?;
+        Some(self.symbol_table.get_name(*symbol_id))
+    }
+
+    pub fn get_reference_name(&self, span: Span) -> Option<&Atom> {
+        let reference_id = self.reference_map.get(&span)?;
+        let symbol_id = self.symbol_table.get_reference(*reference_id).symbol_id?;
+        Some(self.symbol_table.get_name(symbol_id))
+    }
+}
 
 /// # Name Mangler / Symbol Minification
 ///
@@ -47,17 +74,59 @@ use crate::{
 ///     }
 /// }
 /// ```
-#[derive(Debug, Default)]
-pub struct Mangler;
+pub struct ManglerBuilder {
+    semantic: SemanticBuilder,
+    symbol_map: BTreeMap<Span, SymbolId>,
+    reference_map: BTreeMap<Span, ReferenceId>,
+}
 
-type Slot = usize;
+impl<'a> Visit<'a> for ManglerBuilder {
+    fn enter_scope(&mut self, flags: ScopeFlags) {
+        self.semantic.enter_scope(flags);
+    }
 
-impl Mangler {
+    fn leave_scope(&mut self) {
+        self.semantic.leave_scope();
+    }
+
+    fn visit_binding_identifier(
+        &mut self,
+        ident: &'a BindingIdentifier,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) {
+        let new_symbol_id =
+            self.semantic.declare_symbol(ident.span, &ident.name, includes, excludes);
+        self.symbol_map.insert(ident.span, new_symbol_id);
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &'a IdentifierReference) {
+        let new_reference_id = self.semantic.declare_reference(ident.span, &ident.name);
+        self.reference_map.insert(ident.span, new_reference_id);
+    }
+}
+
+impl ManglerBuilder {
+    pub fn new(source_type: SourceType) -> Self {
+        Self {
+            semantic: SemanticBuilder::new(source_type),
+            symbol_map: BTreeMap::default(),
+            reference_map: BTreeMap::default(),
+        }
+    }
+
+    #[must_use]
+    pub fn build<'a>(mut self, program: &'a Program<'a>) -> Mangler {
+        self.visit_program(program);
+        self.mangle()
+    }
+
     /// Mangle the symbol table by computing slots from the scope tree.
     /// A slot is the occurrence index of a binding identifier inside a scope.
-    pub fn mangle(semantic: &mut Semantic) {
-        let symbol_table = &semantic.symbol_table;
-        let scope_tree = &semantic.scope_tree;
+    pub fn mangle(self) -> Mangler {
+        let semantic = self.semantic.build();
+        let scope_tree = semantic.scope_tree;
+        let mut symbol_table = semantic.symbol_table;
 
         // Total number of slots for all scopes
         let mut total_number_of_slots: Slot = 0;
@@ -92,13 +161,13 @@ impl Mangler {
         }
 
         let frequencies =
-            Self::tally_slot_frequencies(&semantic.symbol_table, total_number_of_slots, &slots);
+            Self::tally_slot_frequencies(&symbol_table, total_number_of_slots, &slots);
 
         let unresolved_references = scope_tree
             .root_unresolved_references()
             .keys()
             // It is unlike to get a 5 letter mangled identifier, which is a lot of slots.
-            .filter(|name| name.len() < 5)
+            // .filter(|name| name.len() < 5)
             .collect::<Vec<_>>();
 
         // Compute short identifiers by slot frequency
@@ -114,9 +183,11 @@ impl Mangler {
             };
             // All symbols for the same frequency gets the same
             for symbol_id in &freq.symbol_ids {
-                semantic.symbol_table.names[*symbol_id] = name.clone();
+                symbol_table.set_name(*symbol_id, name.clone());
             }
         }
+
+        Mangler { symbol_table, symbol_map: self.symbol_map, reference_map: self.reference_map }
     }
 
     fn tally_slot_frequencies(
@@ -131,7 +202,7 @@ impl Mangler {
             }
             let index = *slot;
             frequencies[index].slot = *slot;
-            frequencies[index].frequency += symbol_table.resolved_references[symbol_id].len();
+            frequencies[index].frequency += symbol_table.get_resolved_references(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
         }
         frequencies.sort_by_key(|x| (std::cmp::Reverse(x.frequency)));
@@ -147,9 +218,9 @@ struct SlotFrequency {
 }
 
 #[rustfmt::skip]
-    fn is_keyword(s: &str) -> bool {
-        matches!(s, "as" | "do" | "if" | "in" | "is" | "of" | "any" | "for" | "get"
-                | "let" | "new" | "out" | "set" | "try" | "var" | "case" | "else"
-                | "enum" | "from" | "meta" | "null" | "this" | "true" | "type"
-                | "void" | "with")
-    }
+fn is_keyword(s: &str) -> bool {
+    matches!(s, "as" | "do" | "if" | "in" | "is" | "of" | "any" | "for" | "get"
+            | "let" | "new" | "out" | "set" | "try" | "var" | "case" | "else"
+            | "enum" | "from" | "meta" | "null" | "this" | "true" | "type"
+            | "void" | "with")
+}
