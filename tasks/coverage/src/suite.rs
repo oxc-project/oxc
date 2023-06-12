@@ -320,14 +320,14 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         match self.test_result() {
             TestResult::ParseError(error, _) => {
                 writer.write_all(
-                    format!("Expect to Parse: {}\n", normalize_path(self.path())).as_bytes(),
+                    format!("Expect to Parse: {:?}\n", normalize_path(self.path())).as_bytes(),
                 )?;
                 writer.write_all(error.as_bytes())?;
             }
             TestResult::Mismatch(ast_string, expected_ast_string) => {
                 if args.diff {
                     self.print_diff(writer, ast_string.as_str(), expected_ast_string.as_str())?;
-                    println!("Mismatch: {}", normalize_path(self.path()));
+                    println!("Mismatch: {:?}", normalize_path(self.path()));
                 }
             }
             TestResult::IncorrectlyPassed => {
