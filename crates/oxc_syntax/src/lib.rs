@@ -3,6 +3,7 @@
 pub mod identifier;
 pub mod operator;
 pub mod precedence;
+pub mod scope;
 pub mod symbol;
 
 pub use unicode_id_start;

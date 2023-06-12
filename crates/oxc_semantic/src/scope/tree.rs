@@ -1,8 +1,9 @@
 use std::ops::{Deref, DerefMut, Index, IndexMut};
 
 use indextree::{Ancestors, Arena, Node, NodeId};
+use oxc_syntax::scope::ScopeFlags;
 
-use super::{Scope, ScopeFlags, ScopeId};
+use super::{Scope, ScopeId};
 use crate::node::AstNode;
 
 pub struct ScopeTree {

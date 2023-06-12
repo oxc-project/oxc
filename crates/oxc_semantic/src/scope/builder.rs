@@ -48,7 +48,7 @@ impl ScopeBuilder {
         let flags = if flags.contains(ScopeFlags::Function) {
             flags
         } else {
-            flags | (parent_scope.flags & ScopeFlags::MODIFIERS)
+            flags | (parent_scope.flags & ScopeFlags::Modifiers)
         };
 
         let scope = Scope::new(flags, strict_mode);

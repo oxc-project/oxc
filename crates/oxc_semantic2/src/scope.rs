@@ -1,54 +1,14 @@
-#![allow(non_upper_case_globals)]
-
 use std::hash::BuildHasherDefault;
 
-use bitflags::bitflags;
 use indexmap::IndexMap;
-use oxc_index::{define_index_type, IndexVec};
+use oxc_index::IndexVec;
 use oxc_span::Atom;
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::{FxHashMap, FxHasher};
 
 use crate::{reference::ReferenceId, symbol::SymbolId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
-
-define_index_type! {
-    pub struct ScopeId = u32;
-}
-
-bitflags! {
-    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct ScopeFlags: u8 {
-        const StrictMode       = 1 << 0;
-        const Top              = 1 << 1;
-        const Function         = 1 << 2;
-        const Arrow            = 1 << 3;
-        const ClassStaticBlock = 1 << 4;
-        const Constructor      = 1 << 5;
-        const GetAccessor      = 1 << 6;
-        const SetAccessor      = 1 << 7;
-        const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits();
-        const Modifiers = Self::Constructor.bits() | Self::GetAccessor.bits() | Self::SetAccessor.bits();
-    }
-}
-
-impl ScopeFlags {
-    pub fn is_strict_mode(&self) -> bool {
-        self.contains(Self::StrictMode)
-    }
-
-    pub fn is_function(&self) -> bool {
-        self.contains(Self::Function)
-    }
-
-    pub fn is_var(&self) -> bool {
-        self.intersects(Self::Var)
-    }
-
-    pub(crate) fn with_strict_mode(self, yes: bool) -> Self {
-        if yes { self | Self::StrictMode } else { self }
-    }
-}
 
 type Bindings = FxIndexMap<Atom, SymbolId>;
 type UnresolvedReferences = FxHashMap<Atom, Vec<ReferenceId>>;

@@ -1,14 +1,13 @@
 //! ECMAScript Scope Tree
 //! See [Scope Analysis](https://tc39.es/ecma262/#sec-syntax-directed-operations-scope-analysis)
 //! Code Adapted from [acorn](https://github.com/acornjs/acorn/blob/master/acorn/src/scope.js)
-#![allow(non_upper_case_globals)]
 
 mod builder;
 mod id;
 mod tree;
 
-use bitflags::bitflags;
 use oxc_span::Atom;
+pub use oxc_syntax::scope::ScopeFlags;
 use rustc_hash::FxHashMap;
 
 pub use self::{builder::ScopeBuilder, id::ScopeId, tree::ScopeTree};
@@ -27,22 +26,6 @@ pub struct Scope {
 
     /// Unsolved references in this scope
     pub unresolved_references: FxHashMap<Atom, Vec<Reference>>,
-}
-
-bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct ScopeFlags: u16 {
-        const Top              = 1 << 0;
-        const Function         = 1 << 1;
-        const Arrow            = 1 << 2;
-        const ClassStaticBlock = 1 << 4;
-        const TsModuleBlock    = 1 << 5; // `declare namespace`
-        const Constructor      = 1 << 6;
-        const GetAccessor      = 1 << 7;
-        const SetAccessor      = 1 << 8;
-        const VAR = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
-        const MODIFIERS = Self::Constructor.bits() | Self::GetAccessor.bits() | Self::SetAccessor.bits();
-    }
 }
 
 impl Scope {

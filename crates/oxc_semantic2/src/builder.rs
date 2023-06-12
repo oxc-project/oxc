@@ -1,9 +1,10 @@
 use oxc_span::{Atom, SourceType, Span};
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::FxHashMap;
 
 use crate::{
     reference::ReferenceId,
-    scope::{ScopeFlags, ScopeId, ScopeTree},
+    scope::ScopeTree,
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     Semantic,
 };

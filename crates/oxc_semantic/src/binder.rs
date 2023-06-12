@@ -39,12 +39,12 @@ impl<'a> Binder for VariableDeclarator<'a> {
                 excludes,
             );
             if self.kind == VariableDeclarationKind::Var
-                && !builder.scope.current_scope().flags.intersects(ScopeFlags::VAR)
+                && !builder.scope.current_scope().flags.intersects(ScopeFlags::Var)
             {
                 let mut scope_ids = vec![];
                 for scope_id in current_scope_id.ancestors(&builder.scope.scopes).skip(1) {
                     let scope = builder.scope.scopes[scope_id].get();
-                    if scope.flags.intersects(ScopeFlags::VAR) {
+                    if scope.flags.intersects(ScopeFlags::Var) {
                         scope_ids.push(ScopeId::from(scope_id));
                         break;
                     }

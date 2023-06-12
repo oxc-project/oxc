@@ -1,11 +1,11 @@
 use oxc_index::IndexVec;
 use oxc_span::{Atom, Span};
-pub use oxc_syntax::symbol::{SymbolFlags, SymbolId};
-
-use crate::{
-    reference::{Reference, ReferenceId},
+pub use oxc_syntax::{
     scope::ScopeId,
+    symbol::{SymbolFlags, SymbolId},
 };
+
+use crate::reference::{Reference, ReferenceId};
 
 /// Symbol Table
 ///
