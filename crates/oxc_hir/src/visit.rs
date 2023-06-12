@@ -6,6 +6,7 @@
 
 use oxc_allocator::Vec;
 use oxc_span::Span;
+use oxc_syntax::scope::ScopeFlags;
 
 #[allow(clippy::wildcard_imports)]
 use crate::{hir::*, hir_kind::HirKind};
@@ -14,6 +15,8 @@ use crate::{hir::*, hir_kind::HirKind};
 pub trait Visit<'a>: Sized {
     fn enter_node(&mut self, _kind: HirKind<'a>) {}
     fn leave_node(&mut self, _kind: HirKind<'a>) {}
+    fn enter_scope(&mut self, _flags: ScopeFlags) {}
+    fn leave_scope(&mut self) {}
 
     fn visit_program(&mut self, program: &'a Program<'a>) {
         let kind = HirKind::Program(program);
@@ -65,7 +68,9 @@ pub trait Visit<'a>: Sized {
     fn visit_block_statement(&mut self, stmt: &'a BlockStatement<'a>) {
         let kind = HirKind::BlockStatement(stmt);
         self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty());
         self.visit_statements(&stmt.body);
+        self.leave_scope();
         self.leave_node(kind);
     }
 
@@ -113,6 +118,11 @@ pub trait Visit<'a>: Sized {
     fn visit_for_statement(&mut self, stmt: &'a ForStatement<'a>) {
         let kind = HirKind::ForStatement(stmt);
         self.enter_node(kind);
+        let is_lexical_declaration =
+            stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
         if let Some(init) = &stmt.init {
             self.visit_for_statement_init(init);
         }
@@ -124,6 +134,9 @@ pub trait Visit<'a>: Sized {
         }
         if let Some(stmt) = &stmt.body {
             self.visit_statement(stmt);
+        }
+        if is_lexical_declaration {
+            self.leave_scope();
         }
         self.leave_node(kind);
     }
@@ -143,10 +156,17 @@ pub trait Visit<'a>: Sized {
     fn visit_for_in_statement(&mut self, stmt: &'a ForInStatement<'a>) {
         let kind = HirKind::ForInStatement(stmt);
         self.enter_node(kind);
+        let is_lexical_declaration = stmt.left.is_lexical_declaration();
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
         self.visit_for_statement_left(&stmt.left);
         self.visit_expression(&stmt.right);
         if let Some(stmt) = &stmt.body {
             self.visit_statement(stmt);
+        }
+        if is_lexical_declaration {
+            self.leave_scope();
         }
         self.leave_node(kind);
     }
@@ -154,10 +174,17 @@ pub trait Visit<'a>: Sized {
     fn visit_for_of_statement(&mut self, stmt: &'a ForOfStatement<'a>) {
         let kind = HirKind::ForOfStatement(stmt);
         self.enter_node(kind);
+        let is_lexical_declaration = stmt.left.is_lexical_declaration();
+        if is_lexical_declaration {
+            self.enter_scope(ScopeFlags::empty());
+        }
         self.visit_for_statement_left(&stmt.left);
         self.visit_expression(&stmt.right);
         if let Some(stmt) = &stmt.body {
             self.visit_statement(stmt);
+        }
+        if is_lexical_declaration {
+            self.leave_scope();
         }
         self.leave_node(kind);
     }
@@ -246,10 +273,12 @@ pub trait Visit<'a>: Sized {
     fn visit_catch_clause(&mut self, clause: &'a CatchClause<'a>) {
         let kind = HirKind::CatchClause(clause);
         self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty());
         if let Some(param) = &clause.param {
             self.visit_binding_pattern(param);
         }
         self.visit_statements(&clause.body.body);
+        self.leave_scope();
         self.leave_node(kind);
     }
 
@@ -408,7 +437,9 @@ pub trait Visit<'a>: Sized {
     fn visit_static_block(&mut self, block: &'a StaticBlock<'a>) {
         let kind = HirKind::StaticBlock(block);
         self.enter_node(kind);
+        self.enter_scope(ScopeFlags::ClassStaticBlock);
         self.visit_statements(&block.body);
+        self.leave_scope();
         self.leave_node(kind);
     }
 
@@ -545,8 +576,10 @@ pub trait Visit<'a>: Sized {
     fn visit_arrow_expression(&mut self, expr: &'a ArrowExpression<'a>) {
         let kind = HirKind::ArrowExpression(expr);
         self.enter_node(kind);
+        self.enter_scope(ScopeFlags::Function);
         self.visit_formal_parameters(&expr.params);
         self.visit_function_body(&expr.body);
+        self.leave_scope();
         self.leave_node(kind);
     }
 

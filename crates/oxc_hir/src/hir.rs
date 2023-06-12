@@ -1131,6 +1131,14 @@ pub enum ForStatementInit<'a> {
     Expression(Expression<'a>),
 }
 
+impl<'a> ForStatementInit<'a> {
+    /// LexicalDeclaration[In, Yield, Await] :
+    ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
+    pub fn is_lexical_declaration(&self) -> bool {
+        matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_lexical())
+    }
+}
+
 /// For-In Statement
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
@@ -1159,6 +1167,14 @@ pub struct ForOfStatement<'a> {
 pub enum ForStatementLeft<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>),
     AssignmentTarget(AssignmentTarget<'a>),
+}
+
+impl<'a> ForStatementLeft<'a> {
+    /// LexicalDeclaration[In, Yield, Await] :
+    ///   LetOrConst BindingList[?In, ?Yield, ?Await] ;
+    pub fn is_lexical_declaration(&self) -> bool {
+        matches!(self, Self::VariableDeclaration(decl) if decl.kind.is_lexical())
+    }
 }
 
 /// Continue Statement
