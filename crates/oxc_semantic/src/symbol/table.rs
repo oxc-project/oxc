@@ -8,7 +8,7 @@ use oxc_span::Span;
 
 use super::{
     reference::{ResolvedReference, ResolvedReferenceId},
-    Mangler, Symbol, SymbolId,
+    Symbol, SymbolId,
 };
 
 /// `SymbolTable` is a storage of all the symbols (related to `BindingIdentifiers`)
@@ -20,8 +20,6 @@ use super::{
 pub struct SymbolTable {
     /// Stores all the `Symbols` indexed by `SymbolId`
     symbols: Vec<Symbol>,
-
-    mangler: Mangler,
 
     /// Stores all the resolved references indexed by `ResolvedReferenceId`
     resolved_references: Vec<ResolvedReference>,
@@ -70,24 +68,15 @@ impl Deref for SymbolTable {
 impl SymbolTable {
     pub fn new(
         symbols: Vec<Symbol>,
-        mangler: Mangler,
         resolved_references: Vec<ResolvedReference>,
         resolved_references_index: BTreeMap<Span, ResolvedReferenceId>,
         symbol_index: BTreeMap<Span, SymbolId>,
     ) -> Self {
-        Self { symbols, mangler, resolved_references, resolved_references_index, symbol_index }
-    }
-
-    pub fn mangle(&self) {
-        self.mangler.compute_slot_frequency(&self.symbols);
+        Self { symbols, resolved_references, resolved_references_index, symbol_index }
     }
 
     pub fn symbols(&self) -> &Vec<Symbol> {
         &self.symbols
-    }
-
-    pub fn mangler(&self) -> &Mangler {
-        &self.mangler
     }
 
     pub fn get_symbol(&self, id: SymbolId) -> Option<&Symbol> {

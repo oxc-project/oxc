@@ -1,7 +1,6 @@
 //! Symbol and Symbol Table for tracking of semantics of variables
 
 mod builder;
-mod mangler;
 mod reference;
 mod table;
 
@@ -11,7 +10,6 @@ pub use oxc_syntax::symbol::{SymbolFlags, SymbolId};
 use self::reference::ResolvedReferenceId;
 pub use self::{
     builder::SymbolTableBuilder,
-    mangler::{Mangler, Slot},
     reference::{Reference, ReferenceFlag, ResolvedReference},
     table::SymbolTable,
 };
@@ -25,7 +23,6 @@ pub struct Symbol {
     name: Atom,
     span: Span,
     flags: SymbolFlags,
-    slot: Slot,
     /// Pointers to the AST Nodes that reference this symbol
     references: Vec<ResolvedReferenceId>,
 }
@@ -33,7 +30,7 @@ pub struct Symbol {
 #[cfg(target_pointer_width = "64")]
 mod size_asserts {
     use oxc_index::assert_eq_size;
-    assert_eq_size!(super::Symbol, [u8; 88]);
+    assert_eq_size!(super::Symbol, [u8; 80]);
 }
 
 impl Symbol {
@@ -44,7 +41,7 @@ impl Symbol {
         span: Span,
         flags: SymbolFlags,
     ) -> Self {
-        Self { id, declaration, name, span, flags, slot: Slot::default(), references: vec![] }
+        Self { id, declaration, name, span, flags, references: vec![] }
     }
 
     pub fn id(&self) -> SymbolId {
@@ -61,10 +58,6 @@ impl Symbol {
 
     pub fn flags(&self) -> SymbolFlags {
         self.flags
-    }
-
-    pub fn slot(&self) -> Slot {
-        self.slot
     }
 
     pub fn is_const(&self) -> bool {

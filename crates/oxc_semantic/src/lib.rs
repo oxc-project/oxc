@@ -21,7 +21,7 @@ use oxc_span::SourceType;
 use scope::ScopeId;
 pub use scope::{Scope, ScopeFlags, ScopeTree};
 use symbol::SymbolId;
-pub use symbol::{Mangler, Reference, ResolvedReference, Symbol, SymbolFlags, SymbolTable};
+pub use symbol::{Reference, ResolvedReference, Symbol, SymbolFlags, SymbolTable};
 
 pub struct Semantic<'a> {
     source_text: &'a str,

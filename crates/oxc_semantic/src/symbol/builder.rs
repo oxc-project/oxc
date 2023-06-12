@@ -6,8 +6,7 @@ use std::{
 use oxc_span::{Atom, Span};
 
 use super::{
-    Mangler, Reference, ResolvedReference, ResolvedReferenceId, Symbol, SymbolFlags, SymbolId,
-    SymbolTable,
+    Reference, ResolvedReference, ResolvedReferenceId, Symbol, SymbolFlags, SymbolId, SymbolTable,
 };
 use crate::node::AstNodeId;
 
@@ -15,8 +14,6 @@ use crate::node::AstNodeId;
 pub struct SymbolTableBuilder {
     /// Stores all the `Symbols` indexed by `SymbolId`
     symbols: Vec<Symbol>,
-
-    mangler: Mangler,
 
     /// Stores all the resolved references indexed by `ResolvedReferenceId`
     resolved_references: Vec<ResolvedReference>,
@@ -74,15 +71,9 @@ impl SymbolTableBuilder {
         }
     }
 
-    pub fn update_slot(&mut self, symbol_id: SymbolId) {
-        let next_slot = self.mangler.next_slot();
-        self.symbols[symbol_id.index()].slot = next_slot;
-    }
-
     pub fn build(self) -> SymbolTable {
         SymbolTable::new(
             self.symbols,
-            self.mangler,
             self.resolved_references,
             self.resolved_references_index,
             self.symbol_index,
