@@ -64,3 +64,19 @@ fn unary_ops() {
     test("a=~~0xffffffff", "a=-1");
     // test_same("a=~.5", PeepholeFoldConstants.FRACTIONAL_BITWISE_OPERAND);
 }
+
+#[test]
+fn unary_with_big_int() {
+    test("-(1n)", "-1n");
+    // test("- -1n", "1n");
+    // test("!1n", "false");
+    // test("~0n", "-1n");
+}
+
+#[test]
+fn test_unary_ops_string_compare() {
+    test_same("a=-1");
+    test("a = ~0", "a=-1");
+    test("a = ~1", "a=-2");
+    test("a = ~101", "a=-102");
+}

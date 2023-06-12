@@ -249,6 +249,15 @@ impl<'a> Compressor<'a> {
                             self.hir.number_literal(unary_expr.span, value, raw, number_literal.base);
                         return Some(self.hir.literal_number_expression(number_literal))
                     }
+                    Expression::BigintLiteral(_big_int_literal) => {
+                        // let value = big_int_literal.value;
+                        // let big_int_literal = self.hir.bigint_literal(
+                        //     unary_expr.span,
+                        //     value
+                        // );
+                        // return Some(self.hir.literal_bigint_expression(big_int_literal))
+                        return None
+                    }
                     Expression::Identifier(ident) => {
                         if ident.name == "NaN" {
                             return self.try_detach_unary_op(unary_expr)
