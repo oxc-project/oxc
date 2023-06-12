@@ -1,7 +1,7 @@
 minifier_babel Summary:
 AST Parsed     : 1624/1624 (100.00%)
 Positive Passed: 1620/1624 (99.75%)
-Expect to Parse: "core/categorized/not-directive/input.js"
-Expect to Parse: "core/create-parenthesized-expressions/valid-parenthesized-expression/input.js"
-Expect to Parse: "es2019/json-strings/string-line-separator/input.js"
-Expect to Parse: "es2019/json-strings/string-paragraph-separator/input.js"
+Expect to Parse: "core\\categorized\\not-directive\\input.js"
+Expect to Parse: "core\\create-parenthesized-expressions\\valid-parenthesized-expression\\input.js"
+Expect to Parse: "es2019\\json-strings\\string-line-separator\\input.js"
+Expect to Parse: "es2019\\json-strings\\string-paragraph-separator\\input.js"
