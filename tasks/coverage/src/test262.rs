@@ -89,7 +89,7 @@ impl<T: Case> Suite<T> for Test262Suite<T> {
         // ignore fixtures
         path.contains("_FIXTURE") ||
         // ignore regexp as we don't have a regexp parser for now
-        path.contains("literals/regexp")
+        (path.contains("literals") && path.contains("regexp"))
     }
 
     fn save_test_cases(&mut self, cases: Vec<T>) {
