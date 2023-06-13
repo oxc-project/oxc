@@ -8,6 +8,7 @@
 mod constants;
 mod kind;
 mod number;
+#[cfg(not(target_arch = "wasm32"))]
 mod simd;
 mod string_builder;
 mod token;
@@ -531,6 +532,7 @@ impl<'a> Lexer<'a> {
     fn skip_multi_line_comment(&mut self) -> Kind {
         while let Some(c) = self.current.chars.next() {
             if c == '*' && self.next_eq('/') {
+                self.trivia_builder.add_multi_line_comment(self.current.token.start, self.offset());
                 return Kind::MultiLineComment;
             }
             if is_line_terminator(c) {
