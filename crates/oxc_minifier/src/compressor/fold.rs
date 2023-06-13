@@ -57,8 +57,6 @@ impl<'a> From<&Expression<'a>> for Ty {
 
 impl<'a> Compressor<'a> {
     pub(crate) fn fold_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
-        let has_side_effects = expr.may_have_side_effects();
-
         let folded_expr = match expr {
             Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
                 BinaryOperator::Equality => self.try_fold_comparison(
@@ -76,9 +74,8 @@ impl<'a> Compressor<'a> {
                 UnaryOperator::UnaryPlus
                 | UnaryOperator::UnaryNegation
                 | UnaryOperator::LogicalNot
-                | UnaryOperator::BitwiseNot
-                    if !has_side_effects =>
-                {
+                | UnaryOperator::BitwiseNot 
+                if !unary_expr.may_have_side_effects() => {
                     self.try_fold_unary_operator(unary_expr)
                 }
                 _ => None,
@@ -198,21 +195,28 @@ impl<'a> Compressor<'a> {
         &mut self,
         unary_expr: &'b mut UnaryExpression<'a>,
     ) -> Option<Expression<'a>> {
+        // fold its children first, so that we can fold - -4.
         self.fold_expression(&mut unary_expr.argument);
 
         if let Some(boolean) = get_boolean_value(&unary_expr.argument) {
             match unary_expr.operator {
+                // !100 -> false
+                // after this, it will be compressed to !1 or !0 in `compress_boolean`
                 UnaryOperator::LogicalNot => {
                     if let Expression::NumberLiteral(number_literal) = &unary_expr.argument {
                         let value = number_literal.value;
+                        // Don't fold !0 and !1 back to false.
                         if value == 0_f64 || (value - 1_f64).abs() < f64::EPSILON {
                             return None
                         }
                         let bool_literal =
-                            self.hir.boolean_literal(unary_expr.span, boolean);
+                            self.hir.boolean_literal(unary_expr.span, !boolean);
                         return Some(self.hir.literal_boolean_expression(bool_literal))
                     }
                 }
+                // +1 -> 1
+                // NaN -> NaN
+                // +Infinity -> Infinity
                 UnaryOperator::UnaryPlus => match &unary_expr.argument {
                     Expression::NumberLiteral(number_literal) => {
                         let number_literal = self.hir.number_literal(
@@ -229,18 +233,23 @@ impl<'a> Compressor<'a> {
                         }
                     }
                     _ => {
+                        // +true -> 1
+                        // +false -> 0
+                        // +null -> 0 
                         if let Some(value) = get_number_value(&unary_expr.argument) {
                             let raw = self.hir.new_str(value.to_string().as_str());
                             let number_literal = self.hir.number_literal(
                                 unary_expr.span,
                                 value,
                                 raw,
-                                NumberBase::Decimal,
+                                if value.fract() == 0.0 { NumberBase::Decimal} else {NumberBase::Float} ,
                             );
                             return Some(self.hir.literal_number_expression(number_literal))
                         }
                     }
                 },
+                // -4 -> -4, fold UnaryExpression -4 to NumberLiteral -4
+                // -NaN -> NaN
                 UnaryOperator::UnaryNegation => match &unary_expr.argument {
                     Expression::NumberLiteral(number_literal) => {
                         let value = -number_literal.value;
@@ -259,6 +268,7 @@ impl<'a> Compressor<'a> {
                     }
                     _ => {},
                 },
+                // ~10 -> -11
                 UnaryOperator::BitwiseNot => {
                     if let Expression::NumberLiteral(number_literal) = &unary_expr.argument && number_literal.value.fract() == 0.0 {
                             let int_value = NumberLiteral::ecmascript_to_int32(number_literal.value);
@@ -266,7 +276,7 @@ impl<'a> Compressor<'a> {
                                 unary_expr.span,
                                 f64::from(!int_value),
                                 number_literal.raw,
-                                number_literal.base,
+                                NumberBase::Decimal, // since it be converted to i32, it should always be decimal.
                             );
                             return Some(self.hir.literal_number_expression(number_literal))
                     }
