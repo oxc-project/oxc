@@ -27,6 +27,7 @@ use oxc_syntax::{
     },
     unicode_id_start::is_id_start_unicode,
 };
+#[cfg(not(target_arch = "wasm32"))]
 use simd::{SkipMultilineComment, SkipWhitespace};
 pub use token::{RegExp, Token, TokenValue};
 
@@ -327,6 +328,7 @@ impl<'a> Lexer<'a> {
         self.current.token.start = self.offset();
 
         loop {
+            #[cfg(not(target_arch = "wasm32"))]
             self.skip_whitespace();
 
             let offset = self.offset();
@@ -365,6 +367,13 @@ impl<'a> Lexer<'a> {
         // > the rough order of frequency for different token kinds is as follows:
         // identifiers/keywords, ‘.’, ‘=’, strings, decimal numbers, ‘:’, ‘+’, hex/octal numbers, and then everything else
         match c {
+            #[cfg(target_arch = "wasm32")]
+            ' ' | '\t' => Kind::WhiteSpace,
+            #[cfg(target_arch = "wasm32")]
+            '\r' | '\n' => {
+                self.current.token.is_on_new_line = true;
+                Kind::NewLine
+            }
             '.' => {
                 let kind = self.read_dot(&mut builder);
                 if kind.is_number() {
@@ -450,6 +459,9 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    // Portable SIMD adds a bit to the binary and we're not really sure if it
+    // uses the WASM instructions yet so we use a linear implementation.
+    #[cfg(not(target_arch = "wasm32"))]
     fn skip_whitespace(&mut self) {
         let c = self.peek();
         let any_newline = c == '\r' || c == '\n';
@@ -490,6 +502,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.4 Multi Line Comment
+    #[cfg(not(target_arch = "wasm32"))]
     fn skip_multi_line_comment(&mut self) -> Kind {
         let remaining = self.remaining().as_bytes();
         let newline = self.current.token.is_on_new_line;
@@ -511,6 +524,21 @@ impl<'a> Lexer<'a> {
 
         self.trivia_builder.add_multi_line_comment(self.current.token.start, self.offset());
         Kind::MultiLineComment
+    }
+
+    /// Section 12.4 Multi Line Comment
+    #[cfg(target_arch = "wasm32")]
+    fn skip_multi_line_comment(&mut self) -> Kind {
+        while let Some(c) = self.current.chars.next() {
+            if c == '*' && self.next_eq('/') {
+                return Kind::MultiLineComment;
+            }
+            if is_line_terminator(c) {
+                self.current.token.is_on_new_line = true;
+            }
+        }
+        self.error(diagnostics::UnterminatedMultiLineComment(self.unterminated_range()));
+        Kind::Eof
     }
 
     /// Section 12.5 Hashbang Comments

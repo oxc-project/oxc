@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5068/5071 (99.94%)
-Positive Passed: 5059/5071 (99.76%)
-Negative Passed: 986/4751 (20.75%)
+AST Parsed     : 5069/5072 (99.94%)
+Positive Passed: 5060/5072 (99.76%)
+Negative Passed: 986/4752 (20.75%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -500,6 +500,7 @@ Expect Syntax Error: "compiler/didYouMeanStringLiteral.ts"
 Expect Syntax Error: "compiler/didYouMeanSuggestionErrors.ts"
 Expect Syntax Error: "compiler/differentTypesWithSameName.ts"
 Expect Syntax Error: "compiler/discriminatedUnionErrorMessage.ts"
+Expect Syntax Error: "compiler/dissallowSymbolAsWeakType.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes2.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes4.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes5.ts"
