@@ -204,9 +204,13 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         Expression::LogicalExpression(logical_expr) => {
             let predict = |expr: &&Expression| get_boolean_value(expr) == Some(true);
             match logical_expr.operator {
+                // true && true -> true
+                // true && false -> false
                 LogicalOperator::And => {
                     Some([&logical_expr.left, &logical_expr.right].iter().all(predict))
                 },
+                // true || false -> true
+                // false || false -> false
                 LogicalOperator::Or => {
                     Some([&logical_expr.left, &logical_expr.right].iter().any(predict))
                 },
@@ -232,6 +236,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
                     None
                 }
             } else if unary_expr.operator == UnaryOperator::LogicalNot {
+                // !true -> false
                 get_boolean_value(&unary_expr.argument).map(|boolean| !boolean)
             } else {
                 None
