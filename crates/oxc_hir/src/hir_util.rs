@@ -3,7 +3,7 @@ use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 use crate::hir::{
     ArrayExpressionElement, Expression, NumberLiteral, ObjectProperty, ObjectPropertyKind,
-    PropertyKey, SpreadElement,
+    PropertyKey, SpreadElement, UnaryExpression,
 };
 
 /// Code ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/NodeUtil.java#LL836C6-L836C6)
@@ -113,18 +113,24 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
                 !matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
             }
             Self::UnaryExpression(unary_expr) => {
-                if is_simple_unary_operator(unary_expr.operator) {
-                    return unary_expr.argument.check_for_state_change(_check_for_new_objects);
-                }
-
-                true
+                unary_expr.check_for_state_change(_check_for_new_objects)
             }
             _ => true,
         }
     }
 }
 
+impl<'a, 'b> CheckForStateChange<'a, 'b> for UnaryExpression<'a> {
+    fn check_for_state_change(&self, _check_for_new_objects: bool) -> bool {
+        if is_simple_unary_operator(self.operator) {
+            return self.argument.check_for_state_change(_check_for_new_objects);
+        }
+        true
+    }
+}
+
 impl<'a, 'b> MayHaveSideEffects<'a, 'b> for Expression<'a> {}
+impl<'a, 'b> MayHaveSideEffects<'a, 'b> for UnaryExpression<'a> {}
 
 fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
     operator != UnaryOperator::Delete
@@ -170,23 +176,18 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         Expression::BigintLiteral(big_int_literal) => Some(big_int_literal.value == BigUint::default()),
         Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
+            // only for ``
             if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
-                if quasi.value.cooked.as_ref().map_or(false, |cooked| !cooked.is_empty()) {
-                    Some(true)
-                } else {
-                    Some(false)
-                }
+                Some(quasi.value.cooked.as_ref().map_or(false, |cooked| !cooked.is_empty())) 
             } else {
                 None
             }
         },
         Expression::Identifier(ident) => {
-            if expr.is_undefined() {
+            if expr.is_undefined() || ident.name == "NaN" {
                 Some(false)
-            } else if  ident.name == "Infinity" {
+            } else if ident.name == "Infinity" {
                 Some(true)
-            } else if ident.name == "NaN" {
-                Some(false)
             } else {
                 None
             }
@@ -220,10 +221,15 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
             if unary_expr.operator == UnaryOperator::Void {
                 Some(false)
             } else if matches!(unary_expr.operator, UnaryOperator::BitwiseNot | UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation) {
-                match &unary_expr.argument {
-                   Expression::NumberLiteral(number_literal) => Some(number_literal.value != 0.0),
-                   Expression::BigintLiteral(big_int_literal) => Some(big_int_literal.value == BigUint::default()),
-                   _ => None
+                // we should check expr itself's number value
+                // ~0 -> true
+                // +1 -> true
+                // +0 -> false
+                // -0 -> false
+                if let Some(value) = get_number_value(&expr) {
+                    Some(value != 0.0)
+                } else {
+                    None
                 }
             } else if unary_expr.operator == UnaryOperator::LogicalNot {
                 get_boolean_value(&unary_expr.argument).map(|boolean| !boolean)

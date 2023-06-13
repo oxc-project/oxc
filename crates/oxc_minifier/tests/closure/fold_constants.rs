@@ -35,9 +35,9 @@ fn unary_ops() {
     // test_same("-foo()");
 
     // These cases are handled here.
-    // test("a=!true", "a=false");
-    // test("a=!10", "a=false");
-    // test("a=!false", "a=true");
+    test("a=!true", "a=!!0");
+    test("a=!10", "a=!1");
+    test("a=!false", "a=!!1");
     test_same("a=!foo()");
     test("a=-0", "a=-0");
     test("a=-(0)", "a=-0");
