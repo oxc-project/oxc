@@ -1,7 +1,7 @@
 parser_test262 Summary:
-AST Parsed     : 44279/44279 (100.00%)
-Positive Passed: 44279/44279 (100.00%)
-Negative Passed: 3939/4050 (97.26%)
+AST Parsed     : 44219/44219 (100.00%)
+Positive Passed: 44219/44219 (100.00%)
+Negative Passed: 3919/3947 (99.29%)
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-01.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-02.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-03.js"
@@ -30,89 +30,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-26.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-27.js"
 Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-28.js"
-Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/uv-flags.js"
-Expect Syntax Error: "language/literals/regexp/early-err-pattern.js"
-Expect Syntax Error: "language/literals/regexp/invalid-braced-quantifier-exact.js"
-Expect Syntax Error: "language/literals/regexp/invalid-braced-quantifier-lower.js"
-Expect Syntax Error: "language/literals/regexp/invalid-braced-quantifier-range.js"
-Expect Syntax Error: "language/literals/regexp/invalid-optional-lookbehind.js"
-Expect Syntax Error: "language/literals/regexp/invalid-optional-negative-lookbehind.js"
-Expect Syntax Error: "language/literals/regexp/invalid-range-lookbehind.js"
-Expect Syntax Error: "language/literals/regexp/invalid-range-negative-lookbehind.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname-2-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname-2.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname-3-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname-3.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname-4-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname-4.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname-5.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname-without-group-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-dangling-groupname.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-2.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-duplicate-groupspecifier-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-duplicate-groupspecifier.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-empty-groupspecifier-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-empty-groupspecifier.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-2-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-2.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-3-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-3.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-4.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-5.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-6.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-2-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-3-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-incomplete-groupname.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier-4-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier-4.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-3.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-4-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-4.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-5-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-5.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-6.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-7.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-8-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-8.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-9-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-numeric-groupspecifier-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-numeric-groupspecifier.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-punctuator-starting-groupspecifier-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-punctuator-starting-groupspecifier.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-punctuator-within-groupspecifier-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-punctuator-within-groupspecifier.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-unterminated-groupspecifier-u.js"
-Expect Syntax Error: "language/literals/regexp/named-groups/invalid-unterminated-groupspecifier.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-class-escape.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-extended-pattern-char.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-identity-escape.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-legacy-octal-escape.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-a.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-ab.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-b.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-non-empty-class-ranges.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-oob-decimal-escape.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-optional-lookahead.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-optional-lookbehind.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-optional-negative-lookahead.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-optional-negative-lookbehind.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-range-lookahead.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-range-lookbehind.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-range-negative-lookahead.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-range-negative-lookbehind.js"
-Expect Syntax Error: "language/literals/regexp/u-unicode-esc-bounds.js"
-Expect Syntax Error: "language/literals/regexp/u-unicode-esc-non-hex.js"
-Expect Syntax Error: "language/literals/regexp/unicode-escape-nls-err.js"
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:17:1]
  17 │ 
@@ -164,6 +81,13 @@ Expect Syntax Error: "language/literals/regexp/unicode-escape-nls-err.js"
  14 │ for (var {a} = 0 in {});
     ·      ───────────
  15 │ 
+    ╰────
+
+  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+    ╭─[built-ins/RegExp/prototype/unicodeSets/uv-flags.js:16:1]
+ 16 │ 
+ 17 │ /./uv;
+    · ─────
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -19120,166 +19044,6 @@ Expect Syntax Error: "language/literals/regexp/unicode-escape-nls-err.js"
     ·  ▲
     ╰────
   help: Try insert a semicolon here
-
-  × Unterminated multiline comment
-    ╭─[language/literals/regexp/S7.8.5_A1.2_T1.js:22:1]
- 22 │ 
- 23 │ /*/
-    · ────
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A1.2_T2.js:25:1]
- 25 │ 
- 26 │ /\/
-    · ────
-    ╰────
-
-  × Unexpected token
-    ╭─[language/literals/regexp/S7.8.5_A1.2_T3.js:26:1]
- 26 │ ///
- 27 │ .source;
-    · ─
-    ╰────
-
-  × Unexpected token
-    ╭─[language/literals/regexp/S7.8.5_A1.2_T4.js:26:1]
- 26 │ //
- 27 │ .source;
-    · ─
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A1.3_T1.js:28:1]
- 28 │ 
- 29 │ /
-    · ──
- 30 │ /
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A1.3_T3.js:28:1]
- 28 │ 
- 29 │ /
-    · ──
- 30 │ /
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A1.5_T1.js:22:1]
- 22 │ 
- 23 │ /\
-    · ───
- 24 │ /
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A1.5_T3.js:21:1]
- 21 │ 
- 22 │ /\
-    · ───
- 23 │ /
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A2.2_T1.js:22:1]
- 22 │ 
- 23 │ /a\/
-    · ─────
-    ╰────
-
-  × Unexpected token
-    ╭─[language/literals/regexp/S7.8.5_A2.2_T2.js:22:1]
- 22 │ 
- 23 │ /a//.source;
-    ·     ─
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A2.3_T1.js:31:1]
- 31 │ 
- 32 │ /a
-    · ───
- 33 │ /
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A2.3_T3.js:32:1]
- 32 │ 
- 33 │ /a
-    · ───
- 34 │ /
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A2.5_T1.js:27:1]
- 27 │ 
- 28 │ /a\
-    · ────
- 29 │ /
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/S7.8.5_A2.5_T3.js:27:1]
- 27 │ 
- 28 │ /a\
-    · ────
- 29 │ /
-    ╰────
-
-  × Unexpected flag G in regular expression literal
-    ╭─[language/literals/regexp/early-err-bad-flag.js:17:1]
- 17 │ 
- 18 │ /./G;
-    ·     ▲
-    ╰────
-
-  × Flag g is mentioned twice in regular expression literal
-    ╭─[language/literals/regexp/early-err-dup-flag.js:17:1]
- 17 │ 
- 18 │ /./gig;
-    ·       ▲
-    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/literals/regexp/early-err-flags-unicode-escape.js:17:1]
- 17 │ 
- 18 │ /./\u0067;
-    ·    ▲
-    ╰────
-  help: Try insert a semicolon here
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/regexp-first-char-no-line-separator.js:28:1]
- 28 │ 
- 29 │ / /
-    · ──
- 30 │ 
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/regexp-first-char-no-paragraph-separator.js:28:1]
- 28 │ 
- 29 │ / /
-    · ──
- 30 │ 
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/regexp-source-char-no-line-separator.js:27:1]
- 27 │ 
- 28 │ /a\\ /
-    · ─────
- 29 │ 
-    ╰────
-
-  × Unterminated regular expression
-    ╭─[language/literals/regexp/regexp-source-char-no-paragraph-separator.js:28:1]
- 28 │ 
- 29 │ /a\\  /
-    · ─────
- 30 │ 
-    ╰────
 
   × Unterminated string
     ╭─[language/literals/string/S7.8.4_A1.1_T1.js:17:1]
