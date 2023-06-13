@@ -169,20 +169,28 @@ pub fn get_number_value(expr: &Expression) -> Option<f64> {
 /// This method does not consider whether the node may have side-effects.
 pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
     match expr {
-        Expression::RegExpLiteral(_) | Expression::ArrayExpression(_)| Expression::ArrowExpression(_)| Expression::ClassExpression(_) | Expression::FunctionExpression(_)| Expression::NewExpression(_) |  Expression::ObjectExpression(_) => Some(true),
+        Expression::RegExpLiteral(_)
+        | Expression::ArrayExpression(_)
+        | Expression::ArrowExpression(_)
+        | Expression::ClassExpression(_)
+        | Expression::FunctionExpression(_)
+        | Expression::NewExpression(_)
+        | Expression::ObjectExpression(_) => Some(true),
         Expression::NullLiteral(_) => Some(false),
-        Expression::BooleanLiteral(boolean_literal) =>  Some(boolean_literal.value),
+        Expression::BooleanLiteral(boolean_literal) => Some(boolean_literal.value),
         Expression::NumberLiteral(number_literal) => Some(number_literal.value != 0.0),
-        Expression::BigintLiteral(big_int_literal) => Some(big_int_literal.value == BigUint::default()),
+        Expression::BigintLiteral(big_int_literal) => {
+            Some(big_int_literal.value == BigUint::default())
+        }
         Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
             // only for ``
             if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
-                Some(quasi.value.cooked.as_ref().map_or(false, |cooked| !cooked.is_empty())) 
+                Some(quasi.value.cooked.as_ref().map_or(false, |cooked| !cooked.is_empty()))
             } else {
                 None
             }
-        },
+        }
         Expression::Identifier(ident) => {
             if expr.is_undefined() || ident.name == "NaN" {
                 Some(false)
@@ -191,16 +199,14 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
             } else {
                 None
             }
-        },
+        }
         Expression::AssignmentExpression(assign_expr) => {
             match assign_expr.operator {
-                AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => {
-                    None
-                }
+                AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => None,
                 // For ASSIGN, the value is the value of the RHS.
-                _ =>  get_boolean_value(&assign_expr.right)
+                _ => get_boolean_value(&assign_expr.right),
             }
-        },
+        }
         Expression::LogicalExpression(logical_expr) => {
             let predict = |expr: &&Expression| get_boolean_value(expr) == Some(true);
             match logical_expr.operator {
@@ -208,40 +214,38 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
                 // true && false -> false
                 LogicalOperator::And => {
                     Some([&logical_expr.left, &logical_expr.right].iter().all(predict))
-                },
+                }
                 // true || false -> true
                 // false || false -> false
                 LogicalOperator::Or => {
                     Some([&logical_expr.left, &logical_expr.right].iter().any(predict))
-                },
-                LogicalOperator::Coalesce => None
+                }
+                LogicalOperator::Coalesce => None,
             }
-        },
+        }
         Expression::SequenceExpression(sequence_expr) => {
             // For sequence expression, the value is the value of the RHS.
             sequence_expr.expressions.last().and_then(get_boolean_value)
-        },
+        }
         Expression::UnaryExpression(unary_expr) => {
             if unary_expr.operator == UnaryOperator::Void {
                 Some(false)
-            } else if matches!(unary_expr.operator, UnaryOperator::BitwiseNot | UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation) {
-                // we should check expr itself's number value
+            } else if matches!(
+                unary_expr.operator,
+                UnaryOperator::BitwiseNot | UnaryOperator::UnaryPlus | UnaryOperator::UnaryNegation
+            ) {
                 // ~0 -> true
                 // +1 -> true
                 // +0 -> false
                 // -0 -> false
-                if let Some(value) = get_number_value(&expr) {
-                    Some(value != 0.0)
-                } else {
-                    None
-                }
+                get_number_value(expr).map(|value| value != 0.0)
             } else if unary_expr.operator == UnaryOperator::LogicalNot {
                 // !true -> false
                 get_boolean_value(&unary_expr.argument).map(|boolean| !boolean)
             } else {
                 None
             }
-        },
-        _ => None
+        }
+        _ => None,
     }
 }
