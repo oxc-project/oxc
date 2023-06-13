@@ -250,12 +250,6 @@ impl<'a> Compressor<'a> {
                         return Some(self.hir.literal_number_expression(number_literal))
                     }
                     Expression::BigintLiteral(_big_int_literal) => {
-                        // let value = big_int_literal.value;
-                        // let big_int_literal = self.hir.bigint_literal(
-                        //     unary_expr.span,
-                        //     value
-                        // );
-                        // return Some(self.hir.literal_bigint_expression(big_int_literal))
                         return None
                     }
                     Expression::Identifier(ident) => {
