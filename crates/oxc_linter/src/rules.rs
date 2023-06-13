@@ -18,6 +18,7 @@ oxc_macros::declare_all_lint_rules! {
     no_eval,
     no_new_symbol,
     no_self_compare,
+    no_self_import,
     no_shadow_restricted_names,
     no_mixed_operators,
     no_constant_binary_expression,

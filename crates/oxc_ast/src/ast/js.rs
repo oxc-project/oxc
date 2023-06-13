@@ -144,6 +144,10 @@ impl<'a> Expression<'a> {
         matches!(self, Self::NumberLiteral(lit) if lit.value == 0.0)
     }
 
+    pub fn is_require(&self) -> bool {
+        matches!(self, Self::Identifier(ident) if ident.name == "require")
+    }
+
     /// Determines whether the given expr evaluate to `undefined`
     pub fn evaluate_to_undefined(&self) -> bool {
         self.is_undefined() || self.is_void()
