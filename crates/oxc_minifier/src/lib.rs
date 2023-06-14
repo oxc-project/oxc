@@ -3,6 +3,7 @@
 #![feature(let_chains)]
 
 mod compressor;
+mod mangler;
 mod printer;
 
 use oxc_allocator::Allocator;
@@ -12,6 +13,7 @@ use oxc_span::SourceType;
 
 pub use crate::{
     compressor::{CompressOptions, Compressor},
+    mangler::ManglerBuilder,
     printer::{Printer, PrinterOptions},
 };
 
@@ -43,15 +45,14 @@ impl<'a> Minifier<'a> {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, self.source_text, self.source_type).parse();
         let ret = AstLower::new(&allocator, self.source_type).build(&ret.program);
-        let mut program = ret.program;
+        let program = allocator.alloc(ret.program);
         let semantic = ret.semantic;
-        let mut semantic =
-            Compressor::new(&allocator, semantic, self.options.compress).build(&mut program);
+        let _semantic = Compressor::new(&allocator, semantic, self.options.compress).build(program);
+        let mut printer = Printer::new(self.source_text.len(), self.options.print);
         if self.options.mangle {
-            semantic.mangle();
+            let mangler = ManglerBuilder::new(self.source_type).build(program);
+            printer.with_mangler(mangler);
         }
-        Printer::new(self.source_text.len(), self.options.print)
-            .with_mangle(semantic.symbol_table, self.options.mangle)
-            .build(&program)
+        printer.build(program)
     }
 }

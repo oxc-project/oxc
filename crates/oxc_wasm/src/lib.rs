@@ -7,7 +7,7 @@ use oxc_ast_lower::AstLower;
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::Linter;
-use oxc_minifier::{CompressOptions, Compressor, Printer, PrinterOptions};
+use oxc_minifier::{CompressOptions, Compressor, ManglerBuilder, Printer, PrinterOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -172,17 +172,18 @@ impl Oxc {
 
         if run_options.minify() {
             let ast_lower_ret = AstLower::new(&allocator, source_type).build(program);
-            let mut hir = ast_lower_ret.program;
+            let hir = allocator.alloc(ast_lower_ret.program);
             let semantic = ast_lower_ret.semantic;
 
-            let mut semantic =
-                Compressor::new(&allocator, semantic, CompressOptions::default()).build(&mut hir);
+            let mut printer = Printer::new(self.source_text.len(), PrinterOptions);
+            let _semantic =
+                Compressor::new(&allocator, semantic, CompressOptions::default()).build(hir);
             if minifier_options.mangle() {
-                semantic.mangle();
+                let mangler = ManglerBuilder::new(source_type).build(hir);
+                printer.with_mangler(mangler);
             }
-            self.minified_text = Printer::new(self.source_text.len(), PrinterOptions)
-                .with_mangle(semantic.symbol_table, minifier_options.mangle())
-                .build(&hir);
+
+            self.minified_text = printer.build(hir);
         }
 
         Ok(())

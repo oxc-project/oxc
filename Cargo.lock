@@ -1292,6 +1292,7 @@ dependencies = [
  "oxc_ast",
  "oxc_ast_lower",
  "oxc_hir",
+ "oxc_index",
  "oxc_parser",
  "oxc_semantic2",
  "oxc_span",

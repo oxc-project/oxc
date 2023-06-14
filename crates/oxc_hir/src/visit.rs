@@ -6,7 +6,7 @@
 
 use oxc_allocator::Vec;
 use oxc_span::Span;
-use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
 
 #[allow(clippy::wildcard_imports)]
 use crate::{hir::*, hir_kind::HirKind};
@@ -275,7 +275,11 @@ pub trait Visit<'a>: Sized {
         self.enter_node(kind);
         self.enter_scope(ScopeFlags::empty());
         if let Some(param) = &clause.param {
-            self.visit_binding_pattern(param);
+            self.visit_binding_pattern(
+                param,
+                SymbolFlags::CatchVariable | SymbolFlags::BlockScopedVariable,
+                SymbolFlags::BlockScopedVariableExcludes,
+            );
         }
         self.visit_statements(&clause.body.body);
         self.leave_scope();
@@ -327,11 +331,16 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_variable_declarator(&mut self, declarator: &'a VariableDeclarator<'a>) {
-        let kind = HirKind::VariableDeclarator(declarator);
+    fn visit_variable_declarator(&mut self, decl: &'a VariableDeclarator<'a>) {
+        let kind = HirKind::VariableDeclarator(decl);
         self.enter_node(kind);
-        self.visit_binding_pattern(&declarator.id);
-        if let Some(init) = &declarator.init {
+        let (includes, excludes) = if decl.kind.is_lexical() {
+            (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
+        } else {
+            (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
+        };
+        self.visit_binding_pattern(&decl.id, includes, excludes);
+        if let Some(init) = &decl.init {
             self.visit_expression(init);
         }
         self.leave_node(kind);
@@ -343,12 +352,20 @@ pub trait Visit<'a>: Sized {
         let kind = HirKind::Function(func);
         self.enter_node(kind);
         if let Some(ident) = &func.id {
-            self.visit_binding_identifier(ident);
+            let (includes, excludes) = if func.r#type == FunctionType::FunctionDeclaration {
+                (SymbolFlags::FunctionScopedVariable, SymbolFlags::FunctionScopedVariableExcludes)
+            } else {
+                (SymbolFlags::empty(), SymbolFlags::empty())
+            };
+            let includes = includes | SymbolFlags::Function;
+            self.visit_binding_identifier(ident, includes, excludes);
         }
+        self.enter_scope(ScopeFlags::Function);
         self.visit_formal_parameters(&func.params);
         if let Some(body) = &func.body {
             self.visit_function_body(body);
         }
+        self.leave_scope();
         self.leave_node(kind);
     }
 
@@ -369,7 +386,11 @@ pub trait Visit<'a>: Sized {
             self.visit_formal_parameter(param);
         }
         if let Some(rest) = &params.rest {
-            self.visit_rest_element(rest);
+            self.visit_rest_element(
+                rest,
+                SymbolFlags::FunctionScopedVariable,
+                SymbolFlags::FunctionScopedVariableExcludes,
+            );
         }
         self.leave_node(kind);
     }
@@ -380,7 +401,11 @@ pub trait Visit<'a>: Sized {
         for decorator in &param.decorators {
             self.visit_decorator(decorator);
         }
-        self.visit_binding_pattern(&param.pattern);
+        self.visit_binding_pattern(
+            &param.pattern,
+            SymbolFlags::FunctionScopedVariable,
+            SymbolFlags::FunctionScopedVariableExcludes,
+        );
         self.leave_node(kind);
     }
 
@@ -403,7 +428,12 @@ pub trait Visit<'a>: Sized {
         let kind = HirKind::Class(class);
         self.enter_node(kind);
         if let Some(id) = &class.id {
-            self.visit_binding_identifier(id);
+            let (includes, excludes) = if class.r#type == ClassType::ClassDeclaration {
+                (SymbolFlags::Class | SymbolFlags::BlockScopedVariable, SymbolFlags::ClassExcludes)
+            } else {
+                (SymbolFlags::empty(), SymbolFlags::empty())
+            };
+            self.visit_binding_identifier(id, includes, excludes);
         }
         if let Some(super_class) = &class.super_class {
             self.visit_class_heritage(super_class);
@@ -976,64 +1006,103 @@ pub trait Visit<'a>: Sized {
 
     /* ----------  Pattern ---------- */
 
-    fn visit_binding_pattern(&mut self, pat: &'a BindingPattern<'a>) {
+    fn visit_binding_pattern(
+        &mut self,
+        pat: &'a BindingPattern<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) {
         match pat {
             BindingPattern::BindingIdentifier(ident) => {
-                self.visit_binding_identifier(ident);
+                self.visit_binding_identifier(ident, includes, excludes);
             }
-            BindingPattern::ObjectPattern(pat) => self.visit_object_pattern(pat),
-            BindingPattern::ArrayPattern(pat) => self.visit_array_pattern(pat),
-            BindingPattern::AssignmentPattern(pat) => self.visit_assignment_pattern(pat),
-            BindingPattern::RestElement(elem) => self.visit_rest_element(elem),
+            BindingPattern::ObjectPattern(pat) => {
+                self.visit_object_pattern(pat, includes, excludes);
+            }
+            BindingPattern::ArrayPattern(pat) => self.visit_array_pattern(pat, includes, excludes),
+            BindingPattern::AssignmentPattern(pat) => {
+                self.visit_assignment_pattern(pat, includes, excludes);
+            }
+            BindingPattern::RestElement(elem) => self.visit_rest_element(elem, includes, excludes),
         }
     }
 
-    fn visit_binding_identifier(&mut self, ident: &'a BindingIdentifier) {
+    fn visit_binding_identifier(
+        &mut self,
+        ident: &'a BindingIdentifier,
+        _includes: SymbolFlags,
+        _excludes: SymbolFlags,
+    ) {
         let kind = HirKind::BindingIdentifier(ident);
         self.enter_node(kind);
         self.leave_node(kind);
     }
 
-    fn visit_object_pattern(&mut self, pat: &'a ObjectPattern<'a>) {
+    fn visit_object_pattern(
+        &mut self,
+        pat: &'a ObjectPattern<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) {
         let kind = HirKind::ObjectPattern(pat);
         self.enter_node(kind);
         for prop in &pat.properties {
-            self.visit_binding_property(prop);
+            self.visit_binding_property(prop, includes, excludes);
         }
         if let Some(rest) = &pat.rest {
-            self.visit_rest_element(rest);
+            self.visit_rest_element(rest, includes, excludes);
         }
         self.leave_node(kind);
     }
 
-    fn visit_binding_property(&mut self, prop: &'a BindingProperty<'a>) {
+    fn visit_binding_property(
+        &mut self,
+        prop: &'a BindingProperty<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) {
         self.visit_property_key(&prop.key);
-        self.visit_binding_pattern(&prop.value);
+        self.visit_binding_pattern(&prop.value, includes, excludes);
     }
 
-    fn visit_array_pattern(&mut self, pat: &'a ArrayPattern<'a>) {
+    fn visit_array_pattern(
+        &mut self,
+        pat: &'a ArrayPattern<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) {
         let kind = HirKind::ArrayPattern(pat);
         self.enter_node(kind);
         for pat in pat.elements.iter().flatten() {
-            self.visit_binding_pattern(pat);
+            self.visit_binding_pattern(pat, includes, excludes);
         }
         if let Some(rest) = &pat.rest {
-            self.visit_rest_element(rest);
+            self.visit_rest_element(rest, includes, excludes);
         }
         self.leave_node(kind);
     }
 
-    fn visit_rest_element(&mut self, pat: &'a RestElement<'a>) {
+    fn visit_rest_element(
+        &mut self,
+        pat: &'a RestElement<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) {
         let kind = HirKind::RestElement(pat);
         self.enter_node(kind);
-        self.visit_binding_pattern(&pat.argument);
+        self.visit_binding_pattern(&pat.argument, includes, excludes);
         self.leave_node(kind);
     }
 
-    fn visit_assignment_pattern(&mut self, pat: &'a AssignmentPattern<'a>) {
+    fn visit_assignment_pattern(
+        &mut self,
+        pat: &'a AssignmentPattern<'a>,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) {
         let kind = HirKind::AssignmentPattern(pat);
         self.enter_node(kind);
-        self.visit_binding_pattern(&pat.left);
+        self.visit_binding_pattern(&pat.left, includes, excludes);
         self.visit_expression(&pat.right);
         self.leave_node(kind);
     }
@@ -1162,15 +1231,15 @@ pub trait Visit<'a>: Sized {
 
     fn visit_import_specifier(&mut self, specifier: &'a ImportSpecifier) {
         // TODO: imported
-        self.visit_binding_identifier(&specifier.local);
+        self.visit_binding_identifier(&specifier.local, SymbolFlags::Import, SymbolFlags::empty());
     }
 
     fn visit_import_default_specifier(&mut self, specifier: &'a ImportDefaultSpecifier) {
-        self.visit_binding_identifier(&specifier.local);
+        self.visit_binding_identifier(&specifier.local, SymbolFlags::Import, SymbolFlags::empty());
     }
 
     fn visit_import_name_specifier(&mut self, specifier: &'a ImportNamespaceSpecifier) {
-        self.visit_binding_identifier(&specifier.local);
+        self.visit_binding_identifier(&specifier.local, SymbolFlags::Import, SymbolFlags::empty());
     }
 
     fn visit_export_all_declaration(&mut self, _decl: &'a ExportAllDeclaration<'a>) {}
@@ -1206,7 +1275,7 @@ pub trait Visit<'a>: Sized {
     fn visit_enum(&mut self, decl: &'a TSEnumDeclaration<'a>) {
         let kind = HirKind::TSEnumDeclaration(decl);
         self.enter_node(kind);
-        self.visit_binding_identifier(&decl.id);
+        self.visit_binding_identifier(&decl.id, SymbolFlags::empty(), SymbolFlags::empty());
         for member in &decl.members {
             self.visit_enum_member(member);
         }

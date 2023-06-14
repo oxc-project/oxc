@@ -12,8 +12,8 @@ use std::{rc::Rc, str::from_utf8_unchecked};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::precedence;
-use oxc_semantic2::symbol::{SymbolId, SymbolTable};
-use oxc_span::Atom;
+use oxc_semantic2::symbol::{self, SymbolId, SymbolTable};
+use oxc_span::{Atom, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{
@@ -27,6 +27,7 @@ use self::{
     gen::{Gen, GenExpr},
     operator::Operator,
 };
+use crate::mangler::Mangler;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct PrinterOptions;
@@ -34,9 +35,7 @@ pub struct PrinterOptions;
 pub struct Printer {
     options: PrinterOptions,
 
-    /// Symbol Table for name mangling
-    mangle: bool,
-    symbol_table: SymbolTable,
+    mangler: Option<Mangler>,
 
     /// Output Code
     code: Vec<u8>,
@@ -72,8 +71,7 @@ impl Printer {
         let capacity = source_len / 2;
         Self {
             options,
-            mangle: false,
-            symbol_table: SymbolTable::new(),
+            mangler: None,
             code: Vec::with_capacity(capacity),
             needs_semicolon: false,
             need_space_before_dot: 0,
@@ -86,13 +84,8 @@ impl Printer {
         }
     }
 
-    #[must_use]
-    pub fn with_mangle(mut self, symbol_table: SymbolTable, yes: bool) -> Self {
-        if yes {
-            self.symbol_table = symbol_table;
-            self.mangle = true;
-        }
-        self
+    pub fn with_mangler(&mut self, mangler: Mangler) {
+        self.mangler = Some(mangler);
     }
 
     pub fn build(mut self, program: &Program<'_>) -> String {
@@ -257,10 +250,10 @@ impl Printer {
         }
     }
 
-    fn print_symbol(&mut self, symbol_id: SymbolId, fallback: &Atom) {
-        if self.mangle {
-            let name = self.symbol_table.get_name(symbol_id).clone();
-            self.print_str(name.as_bytes());
+    fn print_symbol(&mut self, span: Span, fallback: &Atom) {
+        if let Some(mangler) = &self.mangler
+            && let Some(name) = mangler.get_symbol_name(span) {
+            self.print_str(name.clone().as_bytes());
         } else {
             self.print_str(fallback.as_bytes());
         }

@@ -40,8 +40,16 @@ impl SymbolTable {
         self.len() == 0
     }
 
+    pub fn get_span(&self, symbol_id: SymbolId) -> Span {
+        self.spans[symbol_id]
+    }
+
     pub fn get_name(&self, symbol_id: SymbolId) -> &Atom {
         &self.names[symbol_id]
+    }
+
+    pub fn set_name(&mut self, symbol_id: SymbolId, name: Atom) {
+        self.names[symbol_id] = name;
     }
 
     pub fn get_flag(&self, symbol_id: SymbolId) -> SymbolFlags {
