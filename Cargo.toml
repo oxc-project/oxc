@@ -37,12 +37,12 @@ oxc_semantic2      = { version = "0.0.0", path = "crates/oxc_semantic2" }
 
 oxc_tasks_common = { path = "tasks/common" }
 
-bitflags          = { version = "2.3.1" }
+bitflags          = { version = "2.3.2" }
 bumpalo           = { version = "3.13.0" }
-clap              = { version = "4.3.0" }
+clap              = { version = "4.3.4" }
 compact_str       = { version = "0.7.0" }
 convert_case      = { version = "0.6.0" }
-criterion         = { version = "0.5.0", default-features = false }
+criterion         = { version = "0.5.1", default-features = false }
 flate2            = { version = "1.0.26" }
 glob              = { version = "0.3.1" }
 ignore            = { version = "0.4.20" }
@@ -55,24 +55,24 @@ mimalloc          = { version = "0.1.37" }
 num-bigint        = { version = "0.4.3" }
 num-traits        = { version = "0.2.15" }
 num_cpus          = { version = "1.15.0" }
-once_cell         = { version = "1.17.2" }
+once_cell         = { version = "1.18.0" }
 phf               = { version = "0.11" }
 pico-args         = { version = "0.5.0" }
-proc-macro2       = { version = "1.0.59" }
+proc-macro2       = { version = "1.0.60" }
 project-root      = { version = "0.2.2" }
 quote             = { version = "1.0.28" }
 rayon             = { version = "1.7.0" }
-regex             = { version = "1.8.3" }
+regex             = { version = "1.8.4" }
 rustc-hash        = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js            = { version = "0.2.2" }
-serde             = { version = "1.0.163" }
+serde             = { version = "1.0.164" }
 serde_json        = { version = "1.0.96" }
 syn               = { version = "1.0.109" }
 thiserror         = { version = "1.0.40" }
 tokio             = { version = "1" }
 unicode-id-start  = { version = "1.1.0" }
 ureq              = { version = "2.6.2", default-features = false, features = ["tls"] }
-url               = { version = "2.3.1" }
+url               = { version = "2.4.0" }
 walkdir           = { version = "2.3.3" }
 indexmap          = { version = "1.9.3" }
 index_vec         = { version = "0.1.3" }
