@@ -7,6 +7,7 @@ on:
       - main
       # - website
     paths:
+      - 'crates/**'
       - 'website/**'
       - '.github/workflows/website.yml'
 
@@ -25,7 +26,7 @@ jobs:
       - name: Install Rust Toolchain
         uses: ./.github/actions/rustup
         with:
-          save-cache: ${{ github.ref_name == 'website' }}
+          save-cache: ${{ github.ref_name == 'main' }}
           shared-key: 'wasm'
 
       - name: Install pnpm

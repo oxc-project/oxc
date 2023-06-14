@@ -54,6 +54,23 @@ jobs:
         run: |
           cargo nextest run --workspace --all-targets --all-features --no-run
 
+  wasm:
+    name: Check Wasm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: 'wasm'
+          # cache is saved from the website workflow
+
+      - name: Check
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo check -p oxc_wasm --target wasm32-unknown-unknown
+
   typos:
     name: Spell Check
     runs-on: ubuntu-latest
