@@ -3,9 +3,9 @@ AST Parsed     : 2072/2078 (99.71%)
 Positive Passed: 2069/2078 (99.57%)
 Negative Passed: 1330/1507 (88.25%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
+Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
-Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.2.4-duplicate-function-in-block/input.js"
 Expect Syntax Error: "annex-b/disabled/3.2.5-duplicate-function-in-switch/input.js"
 Expect Syntax Error: "annex-b/disabled/3.3-function-in-if-body/input.js"
@@ -13,8 +13,8 @@ Expect Syntax Error: "annex-b/disabled/3.5-for-in-initializer/input.js"
 Expect Syntax Error: "annex-b/enabled/3.1-sloppy-labeled-functions-if-body/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-if/input.js"
 Expect Syntax Error: "core/categorized/invalid-fn-decl-labeled-inside-loop/input.js"
-Expect Syntax Error: "core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js"
 Expect Syntax Error: "core/escape-string/non-octal-eight-and-nine/input.js"
+Expect Syntax Error: "core/escape-string/non-octal-eight-and-nine-before-use-strict/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-catch-func/input.js"
 Expect Syntax Error: "core/scope/dupl-bind-func-var-sloppy/input.js"
 Expect Syntax Error: "es2015/class-methods/direct-super-in-object-method/input.js"
@@ -32,8 +32,8 @@ Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-rest/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-for-in/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-nested/input.js"
-Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest/input.js"
+Expect Syntax Error: "es2018/object-rest-spread/no-pattern-in-rest-with-ts/input.js"
 Expect Syntax Error: "es2020/dynamic-import/invalid-trailing-comma/input.js"
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-generator/.generator-parameter-binding-property-reserved/input.js"
@@ -55,15 +55,15 @@ Expect Syntax Error: "typescript/cast/unparenthesized-type-assertion-and-assign/
 Expect Syntax Error: "typescript/class/abstract-method-in-non-abstract-class-1/input.ts"
 Expect Syntax Error: "typescript/class/abstract-method-in-non-abstract-class-2/input.ts"
 Expect Syntax Error: "typescript/class/abstract-method-in-non-abstract-class-3/input.ts"
-Expect Syntax Error: "typescript/class/abstract-method-with-body-computed/input.ts"
 Expect Syntax Error: "typescript/class/abstract-method-with-body/input.ts"
+Expect Syntax Error: "typescript/class/abstract-method-with-body-computed/input.ts"
 Expect Syntax Error: "typescript/class/abstract-property-initializer/input.ts"
 Expect Syntax Error: "typescript/class/accessor-invalid/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-1/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-2/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-3/input.ts"
-Expect Syntax Error: "typescript/class/constructor-with-type-parameters-babel-7/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-type-parameters/input.ts"
+Expect Syntax Error: "typescript/class/constructor-with-type-parameters-babel-7/input.ts"
 Expect Syntax Error: "typescript/class/declare-accessor/input.ts"
 Expect Syntax Error: "typescript/class/declare-field-initializer/input.ts"
 Expect Syntax Error: "typescript/class/declare-initializer/input.ts"
@@ -95,29 +95,29 @@ Expect Syntax Error: "typescript/declare/namespace-class/input.ts"
 Expect Syntax Error: "typescript/declare/namespace-function/input.ts"
 Expect Syntax Error: "typescript/decorators/type-arguments-invalid/input.ts"
 Expect Syntax Error: "typescript/disallow-jsx-ambiguity/type-assertion/input.ts"
-Expect Syntax Error: "typescript/disallow-jsx-ambiguity/type-parameter-babel-7/input.ts"
 Expect Syntax Error: "typescript/disallow-jsx-ambiguity/type-parameter/input.ts"
+Expect Syntax Error: "typescript/disallow-jsx-ambiguity/type-parameter-babel-7/input.ts"
 Expect Syntax Error: "typescript/dts/invalid-class-implementation/input.ts"
 Expect Syntax Error: "typescript/dts/invalid-class-initializer/input.ts"
 Expect Syntax Error: "typescript/expect-plugin/export-interface/input.js"
-Expect Syntax Error: "typescript/expect-plugin/export-type-named/input.js"
 Expect Syntax Error: "typescript/expect-plugin/export-type/input.js"
+Expect Syntax Error: "typescript/expect-plugin/export-type-named/input.js"
 Expect Syntax Error: "typescript/export/double-declare/input.ts"
 Expect Syntax Error: "typescript/export/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/function/empty-type-parameters/input.ts"
 Expect Syntax Error: "typescript/function/parameter-properties/input.ts"
-Expect Syntax Error: "typescript/function/pattern-optional-parameters-arrow/input.ts"
 Expect Syntax Error: "typescript/function/pattern-optional-parameters/input.ts"
+Expect Syntax Error: "typescript/function/pattern-optional-parameters-arrow/input.ts"
 Expect Syntax Error: "typescript/import/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/import/equals-require-in-script/input.ts"
 Expect Syntax Error: "typescript/import/export-import-type/input.ts"
 Expect Syntax Error: "typescript/import/type-equals/input.ts"
 Expect Syntax Error: "typescript/interface/abstract/input.ts"
 Expect Syntax Error: "typescript/interface/export-abstract-interface/input.ts"
-Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter/input.ts"
-Expect Syntax Error: "typescript/interface/invalid-modifiers-method-babel-7/input.ts"
+Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method/input.ts"
+Expect Syntax Error: "typescript/interface/invalid-modifiers-method-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-property/input.ts"
 Expect Syntax Error: "typescript/regression/keyword-qualified-type-disallowed/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-class-enum/input.ts"
@@ -161,14 +161,14 @@ Expect Syntax Error: "typescript/type-arguments/empty-type-ref/input.ts"
 Expect Syntax Error: "typescript/type-arguments/instantiation-expression-property-access/input.ts"
 Expect Syntax Error: "typescript/type-only-import-export-specifiers/export-invalid-type-in-type/input.ts"
 Expect Syntax Error: "typescript/type-only-import-export-specifiers/import-invalid-type-in-type/input.ts"
-Expect Syntax Error: "typescript/types/const-type-parameters-invalid-babel-7/input.ts"
 Expect Syntax Error: "typescript/types/const-type-parameters-invalid/input.ts"
+Expect Syntax Error: "typescript/types/const-type-parameters-invalid-babel-7/input.ts"
 Expect Syntax Error: "typescript/types/import-type-declaration-error/input.ts"
 Expect Syntax Error: "typescript/types/import-type-dynamic-errors/input.ts"
 Expect Syntax Error: "typescript/types/intrinsic-keyword-error/input.ts"
 Expect Syntax Error: "typescript/types/no-annotation-in-destructuring/input.ts"
-Expect Syntax Error: "typescript/types/no-optional-in-destructuring-in-params/input.ts"
 Expect Syntax Error: "typescript/types/no-optional-in-destructuring/input.ts"
+Expect Syntax Error: "typescript/types/no-optional-in-destructuring-in-params/input.ts"
 Expect Syntax Error: "typescript/types/read-only-1/input.ts"
 Expect Syntax Error: "typescript/types/read-only-2/input.ts"
 Expect Syntax Error: "typescript/types/read-only-3/input.ts"
@@ -234,14 +234,6 @@ Expect to Parse: "typescript/module-namespace/body-nested-declare/input.ts"
  4 │     }
    ╰────
 
-Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
-  × Expected `,` but found `extends`
-   ╭─[typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts:1:1]
- 1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
-   ·                               ───┬───
-   ·                                  ╰── `,` expected
-   ╰────
-
 Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input.ts"
   × Expected `,` but found `extends`
    ╭─[typescript/regression/nested-extends-in-arrow-type-param/input.ts:1:1]
@@ -250,18 +242,26 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input
    ·                                  ╰── `,` expected
    ╰────
 
-Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
+Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
+  × Expected `,` but found `extends`
+   ╭─[typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts:1:1]
+ 1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
+   ·                               ───┬───
+   ·                                  ╰── `,` expected
+   ╰────
+
+Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Unexpected token
-    ╭─[typescript/types/const-type-parameters-babel-7/input.ts:13:1]
+    ╭─[typescript/types/const-type-parameters/input.ts:13:1]
  13 │ class C<T, const U> {}
  14 │ class D<in const T> {}
     ·            ─────
  15 │ class E<const in T> {}
     ╰────
 
-Expect to Parse: "typescript/types/const-type-parameters/input.ts"
+Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Unexpected token
-    ╭─[typescript/types/const-type-parameters/input.ts:13:1]
+    ╭─[typescript/types/const-type-parameters-babel-7/input.ts:13:1]
  13 │ class C<T, const U> {}
  14 │ class D<in const T> {}
     ·            ─────
@@ -371,6 +371,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Cannot assign to this expression
+   ╭─[core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern/input.js:1:1]
+ 1 │ ({x}) = {x: 1};
+   · ─────
+   ╰────
+
+  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern-2/input.js:1:1]
  1 │ [{b: [([a = 1])]}] = t
    ·       ─────────
@@ -401,12 +407,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Cannot assign to this expression
-   ╭─[core/create-parenthesized-expressions/invalid-parenthesized-assignment-pattern/input.js:1:1]
- 1 │ ({x}) = {x: 1};
-   · ─────
-   ╰────
-
-  × Cannot assign to this expression
    ╭─[core/create-parenthesized-expressions/invalid-parenthesized-left-hand-side/input.js:1:1]
  1 │ (!a) += 1
    ·  ──
@@ -431,6 +431,58 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ };
    · ─
    ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:1:1]
+ 1 │ "\01 foo \02 bar \03";
+   · ─────────────────────
+ 2 │ 
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:2:1]
+ 2 │ 
+ 3 │ "\4";
+   · ────
+ 4 │ "\5";
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:3:1]
+ 3 │ "\4";
+ 4 │ "\5";
+   · ────
+ 5 │ 
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:7:1]
+ 7 │ 
+ 8 │ "\4";
+   · ────
+ 9 │ "\5";
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:8:1]
+  8 │ "\4";
+  9 │ "\5";
+    · ────
+ 10 │ 
+    ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+    ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:10:1]
+ 10 │ 
+ 11 │ "\04 foo \05 bar \06";
+    · ─────────────────────
+    ╰────
+  help: for octal literals use the '0o' prefix instead
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[core/escape-string/invalid-decimal-escape-strict-directive-function/input.js:1:1]
@@ -487,58 +539,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   help: for octal literals use the '0o' prefix instead
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
-   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:1:1]
- 1 │ "\01 foo \02 bar \03";
-   · ─────────────────────
- 2 │ 
-   ╰────
-  help: for octal literals use the '0o' prefix instead
-
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
-   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:2:1]
- 2 │ 
- 3 │ "\4";
-   · ────
- 4 │ "\5";
-   ╰────
-  help: for octal literals use the '0o' prefix instead
-
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
-   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:3:1]
- 3 │ "\4";
- 4 │ "\5";
-   · ────
- 5 │ 
-   ╰────
-  help: for octal literals use the '0o' prefix instead
-
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
-   ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:7:1]
- 7 │ 
- 8 │ "\4";
-   · ────
- 9 │ "\5";
-   ╰────
-  help: for octal literals use the '0o' prefix instead
-
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
-    ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:8:1]
-  8 │ "\4";
-  9 │ "\5";
-    · ────
- 10 │ 
-    ╰────
-  help: for octal literals use the '0o' prefix instead
-
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
-    ╭─[core/escape-string/invalid-decimal-escape-strict-directive/input.js:10:1]
- 10 │ 
- 11 │ "\04 foo \05 bar \06";
-    · ─────────────────────
-    ╰────
-  help: for octal literals use the '0o' prefix instead
-
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[core/escape-string/numeric-escape-in-directive/input.js:1:1]
  1 │ function hello() { "use strict"; function inner() { "octal directive\1"; } }
    ·                                                     ───────────────────
@@ -563,6 +563,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ `\9`;
    ·  ──
    ╰────
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/legacy-octal/legacy-octal-after-use-strict/input.js:1:1]
+ 1 │ "use strict"; 04; 05;
+   ·               ──
+   ╰────
+  help: for octal literals use the '0o' prefix instead
+
+  × '0'-prefixed octal literals and octal escape sequences are deprecated
+   ╭─[core/legacy-octal/legacy-octal-after-use-strict/input.js:1:1]
+ 1 │ "use strict"; 04; 05;
+   ·                   ──
+   ╰────
+  help: for octal literals use the '0o' prefix instead
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
    ╭─[core/legacy-octal/legacy-octal-after-use-strict-function/input.js:2:1]
@@ -591,20 +605,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
     ╰────
   help: for octal literals use the '0o' prefix instead
 
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
-   ╭─[core/legacy-octal/legacy-octal-after-use-strict/input.js:1:1]
- 1 │ "use strict"; 04; 05;
-   ·               ──
-   ╰────
-  help: for octal literals use the '0o' prefix instead
-
-  × '0'-prefixed octal literals and octal escape sequences are deprecated
-   ╭─[core/legacy-octal/legacy-octal-after-use-strict/input.js:1:1]
- 1 │ "use strict"; 04; 05;
-   ·                   ──
-   ╰────
-  help: for octal literals use the '0o' prefix instead
-
   × Keywords cannot contain escape characters
    ╭─[core/object/invalid-escape-get/input.js:1:1]
  1 │ ({ ge\u0074 x() {} })
@@ -625,16 +625,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Unexpected new.target expression
-   ╭─[core/opts/allowNewTargetOutsideFunction-false-2/input.js:1:1]
- 1 │ const y = () => new.target;
-   ·                 ──────────
+   ╭─[core/opts/allowNewTargetOutsideFunction-false/input.js:1:1]
+ 1 │ const x = new.target;
+   ·           ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
   × Unexpected new.target expression
-   ╭─[core/opts/allowNewTargetOutsideFunction-false/input.js:1:1]
- 1 │ const x = new.target;
-   ·           ──────────
+   ╭─[core/opts/allowNewTargetOutsideFunction-false-2/input.js:1:1]
+ 1 │ const y = () => new.target;
+   ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
@@ -665,18 +665,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   help: Try insert a semicolon here
 
   × Identifier `foo` has already been declared
-   ╭─[core/scope/dupl-bind-2nd-lvl-lex-nested/input.js:2:1]
- 2 │   let bar;
- 3 │   var foo = 1;
-   ·       ─┬─
-   ·        ╰── `foo` has already been declared here
- 4 │   let foo = 1;
-   ·       ─┬─
-   ·        ╰── It can not be redeclared here
- 5 │ }
-   ╰────
-
-  × Identifier `foo` has already been declared
    ╭─[core/scope/dupl-bind-2nd-lvl-lex/input.js:1:1]
  1 │ let bar;
  2 │ var foo = 1;
@@ -688,12 +676,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Identifier `foo` has already been declared
-   ╭─[core/scope/dupl-bind-2nd-lvl-var-nested/input.js:2:1]
+   ╭─[core/scope/dupl-bind-2nd-lvl-lex-nested/input.js:2:1]
  2 │   let bar;
- 3 │   let foo = 1;
+ 3 │   var foo = 1;
    ·       ─┬─
    ·        ╰── `foo` has already been declared here
- 4 │   var foo = 1;
+ 4 │   let foo = 1;
    ·       ─┬─
    ·        ╰── It can not be redeclared here
  5 │ }
@@ -708,6 +696,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ var foo = 1;
    ·     ─┬─
    ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[core/scope/dupl-bind-2nd-lvl-var-nested/input.js:2:1]
+ 2 │   let bar;
+ 3 │   let foo = 1;
+   ·       ─┬─
+   ·        ╰── `foo` has already been declared here
+ 4 │   var foo = 1;
+   ·       ─┬─
+   ·        ╰── It can not be redeclared here
+ 5 │ }
    ╰────
 
   × Identifier `foo` has already been declared
@@ -841,14 +841,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Identifier `foo` has already been declared
-   ╭─[core/scope/dupl-bind-func-module-sloppy/input.js:1:1]
- 1 │ { function foo() {} function foo() {} }
-   ·            ─┬─               ─┬─
-   ·             │                 ╰── It can not be redeclared here
-   ·             ╰── `foo` has already been declared here
-   ╰────
-
-  × Identifier `foo` has already been declared
    ╭─[core/scope/dupl-bind-func-module/input.js:1:1]
  1 │ function foo() {}
    ·          ─┬─
@@ -856,6 +848,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ function foo() {}
    ·          ─┬─
    ·           ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `foo` has already been declared
+   ╭─[core/scope/dupl-bind-func-module-sloppy/input.js:1:1]
+ 1 │ { function foo() {} function foo() {} }
+   ·            ─┬─               ─┬─
+   ·             │                 ╰── It can not be redeclared here
+   ·             ╰── `foo` has already been declared here
    ╰────
 
   × Identifier `f` has already been declared
@@ -898,8 +898,8 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Export 'encrypt' is not defined
-   ╭─[core/scope/undecl-export-as-default/input.js:1:1]
- 1 │ export { encrypt as default };
+   ╭─[core/scope/undecl-export/input.js:1:1]
+ 1 │ export { encrypt };
    ·          ───────
    ╰────
 
@@ -911,6 +911,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Export 'encrypt' is not defined
+   ╭─[core/scope/undecl-export-as-default/input.js:1:1]
+ 1 │ export { encrypt as default };
+   ·          ───────
+   ╰────
+
+  × Export 'encrypt' is not defined
    ╭─[core/scope/undecl-export-block/input.js:3:1]
  3 │ }
  4 │ export { encrypt }
@@ -918,14 +924,14 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Export 'Object' is not defined
-   ╭─[core/scope/undecl-export-builtin-as/input.js:1:1]
- 1 │ export { Object as Obj };
+   ╭─[core/scope/undecl-export-builtin/input.js:1:1]
+ 1 │ export { Object };
    ·          ──────
    ╰────
 
   × Export 'Object' is not defined
-   ╭─[core/scope/undecl-export-builtin/input.js:1:1]
- 1 │ export { Object };
+   ╭─[core/scope/undecl-export-builtin-as/input.js:1:1]
+ 1 │ export { Object as Obj };
    ·          ──────
    ╰────
 
@@ -936,12 +942,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·           ─────────────────────
    ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Export 'encrypt' is not defined
-   ╭─[core/scope/undecl-export/input.js:1:1]
- 1 │ export { encrypt };
-   ·          ───────
-   ╰────
 
   × A 'get' accessor must not have any formal parameters.
    ╭─[core/uncategorised/.542/input.js:1:1]
@@ -2167,9 +2167,23 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[es2015/arrow-functions/inner-parens/input.js:1:1]
+ 1 │ var foo = ((foo)) => {};
+   ·                  ─
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-2/input.js:1:1]
  1 │ (a, (b)) => 42
    ·         ─
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[es2015/arrow-functions/inner-parens-array-pattern/input.js:1:1]
+ 1 │ ([(a)]) => {}
+   ·        ─
    ╰────
   help: Try insert a semicolon here
 
@@ -2188,20 +2202,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[es2015/arrow-functions/inner-parens-array-pattern/input.js:1:1]
- 1 │ ([(a)]) => {}
-   ·        ─
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[es2015/arrow-functions/inner-parens-object-pattern-member/input.js:1:1]
- 1 │ ({ a: (foo.qux) } = {}) => {}
-   ·                        ─
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-object-pattern/input.js:1:1]
  1 │ ({ a: (foo) } = {}) => {}
    ·                    ─
@@ -2209,9 +2209,9 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[es2015/arrow-functions/inner-parens/input.js:1:1]
- 1 │ var foo = ((foo)) => {};
-   ·                  ─
+   ╭─[es2015/arrow-functions/inner-parens-object-pattern-member/input.js:1:1]
+ 1 │ ({ a: (foo.qux) } = {}) => {}
+   ·                        ─
    ╰────
   help: Try insert a semicolon here
 
@@ -2256,6 +2256,32 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·         ─
    ╰────
   help: Try insert a semicolon here
+
+  × 'with' statements are not allowed
+   ╭─[es2015/class/extends-strict/input.js:1:1]
+ 1 │ class C extends (function B() {
+ 2 │   with ({});
+   ·   ────
+ 3 │   return B;
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[es2015/class/invalid-escape-get/input.js:1:1]
+ 1 │ class X { ge\u0074 x() {} }
+   ·           ────────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[es2015/class/invalid-escape-set/input.js:1:1]
+ 1 │ class X { se\u0074 x(value) {} }
+   ·           ────────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[es2015/class/invalid-escape-static/input.js:1:1]
+ 1 │ class X { st\u0061tic y() {} }
+   ·           ───────────
+   ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
   │ 
@@ -2362,32 +2388,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  4 │   }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
-
-  × 'with' statements are not allowed
-   ╭─[es2015/class/extends-strict/input.js:1:1]
- 1 │ class C extends (function B() {
- 2 │   with ({});
-   ·   ────
- 3 │   return B;
-   ╰────
-
-  × Keywords cannot contain escape characters
-   ╭─[es2015/class/invalid-escape-get/input.js:1:1]
- 1 │ class X { ge\u0074 x() {} }
-   ·           ────────
-   ╰────
-
-  × Keywords cannot contain escape characters
-   ╭─[es2015/class/invalid-escape-set/input.js:1:1]
- 1 │ class X { se\u0074 x(value) {} }
-   ·           ────────
-   ╰────
-
-  × Keywords cannot contain escape characters
-   ╭─[es2015/class/invalid-escape-static/input.js:1:1]
- 1 │ class X { st\u0061tic y() {} }
-   ·           ───────────
-   ╰────
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[es2015/destructuring/binding-arguments-module/input.js:1:1]
@@ -2707,6 +2707,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
+  × Unexpected new.target expression
+   ╭─[es2015/meta-properties/new-target-invalid/input.js:1:1]
+ 1 │ new.target
+   · ──────────
+   ╰────
+  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+
   × Keywords cannot contain escape characters
    ╭─[es2015/meta-properties/new-target-invalid-escaped-new/input.js:1:1]
  1 │ function f() { n\u0065w.target; }
@@ -2719,12 +2726,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ───────────
    ╰────
 
-  × Unexpected new.target expression
-   ╭─[es2015/meta-properties/new-target-invalid/input.js:1:1]
- 1 │ new.target
-   · ──────────
+  × Duplicated export 'default'
+   ╭─[es2015/modules/duplicate-export-default/input.js:1:1]
+ 1 │ export default {};
+   ·        ───┬───
+   ·           ╰── Export has already been declared here
+ 2 │ export default function() {};
+   ·        ───┬───
+   ·           ╰── It cannot be redeclared here
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
   × Export 'foo' is not defined
    ╭─[es2015/modules/duplicate-export-default-and-export-as-default/input.js:1:1]
@@ -2743,14 +2753,28 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ╰── It cannot be redeclared here
    ╰────
 
-  × Duplicated export 'default'
-   ╭─[es2015/modules/duplicate-export-default/input.js:1:1]
- 1 │ export default {};
-   ·        ───┬───
+  × Export 'foo' is not defined
+   ╭─[es2015/modules/duplicate-named-export/input.js:1:1]
+ 1 │ export { foo };
+   ·          ───
+ 2 │ export { bar as foo };
+   ╰────
+
+  × Export 'bar' is not defined
+   ╭─[es2015/modules/duplicate-named-export/input.js:1:1]
+ 1 │ export { foo };
+ 2 │ export { bar as foo };
+   ·          ───
+   ╰────
+
+  × Duplicated export 'foo'
+   ╭─[es2015/modules/duplicate-named-export/input.js:1:1]
+ 1 │ export { foo };
+   ·          ─┬─
    ·           ╰── Export has already been declared here
- 2 │ export default function() {};
-   ·        ───┬───
-   ·           ╰── It cannot be redeclared here
+ 2 │ export { bar as foo };
+   ·                 ─┬─
+   ·                  ╰── It cannot be redeclared here
    ╰────
 
   × Duplicated export 'Foo'
@@ -3165,30 +3189,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·               ╰── It cannot be redeclared here
    ╰────
 
-  × Export 'foo' is not defined
-   ╭─[es2015/modules/duplicate-named-export/input.js:1:1]
- 1 │ export { foo };
-   ·          ───
- 2 │ export { bar as foo };
-   ╰────
-
-  × Export 'bar' is not defined
-   ╭─[es2015/modules/duplicate-named-export/input.js:1:1]
- 1 │ export { foo };
- 2 │ export { bar as foo };
-   ·          ───
-   ╰────
-
-  × Duplicated export 'foo'
-   ╭─[es2015/modules/duplicate-named-export/input.js:1:1]
- 1 │ export { foo };
-   ·          ─┬─
-   ·           ╰── Export has already been declared here
- 2 │ export { bar as foo };
-   ·                 ─┬─
-   ·                  ╰── It cannot be redeclared here
-   ╰────
-
   × Unexpected token
    ╭─[es2015/modules/export-default-variable-declaration/input.js:1:1]
  1 │ export default const Foo = () => {
@@ -3212,15 +3212,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[es2015/modules/import-invalid-keyword-typeof/input.js:1:1]
- 1 │ import { typeof } from "foo";
-   ·          ──────
-   ╰────
-
-  × Unexpected token
    ╭─[es2015/modules/import-invalid-keyword/input.js:1:1]
  1 │ import { debugger } from "foo";
    ·          ────────
+   ╰────
+
+  × Unexpected token
+   ╭─[es2015/modules/import-invalid-keyword-typeof/input.js:1:1]
+ 1 │ import { typeof } from "foo";
+   ·          ──────
    ╰────
 
   × Keywords cannot contain escape characters
@@ -3266,6 +3266,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Invalid assignment in object literal
+   ╭─[es2015/object/invalid-property-initializer/input.js:1:1]
+ 1 │ const obj = {
+ 2 │   foo = 123,
+   ·   ─────────
+ 3 │   bar: x = 123
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Invalid assignment in object literal
    ╭─[es2015/object/invalid-property-initializer-1/input.js:2:1]
  2 │   bar: x = 123,
  3 │   foo = 123
@@ -3288,19 +3297,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × Invalid assignment in object literal
-   ╭─[es2015/object/invalid-property-initializer/input.js:1:1]
- 1 │ const obj = {
- 2 │   foo = 123,
-   ·   ─────────
- 3 │   bar: x = 123
-   ╰────
-  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
-
   × Flag i is mentioned twice in regular expression literal
    ╭─[es2015/regex/duplicate-flags/input.js:1:1]
  1 │ /./gii;
    ·       ▲
+   ╰────
+
+  × Unexpected token
+   ╭─[es2015/shorthand/reserved-word/input.js:1:1]
+ 1 │ var x = ({ const, if, this });
+   ·                 ─
    ╰────
 
   × The keyword 'implements' is reserved
@@ -3322,12 +3328,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ "use strict";
  2 │ var x = ({ implements, interface, package });
    ·                                   ───────
-   ╰────
-
-  × Unexpected token
-   ╭─[es2015/shorthand/reserved-word/input.js:1:1]
- 1 │ var x = ({ const, if, this });
-   ·                 ─
    ╰────
 
   × Invalid class declaration
@@ -4272,15 +4272,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × The keyword 'yield' is reserved
-   ╭─[es2015/yield/function-name-strict-body/input.js:1:1]
- 1 │ function yield() { "use strict"; }
+   ╭─[es2015/yield/function-name-strict/input.js:1:1]
+ 1 │ "use strict";
+ 2 │ function yield() {}
    ·          ─────
    ╰────
 
   × The keyword 'yield' is reserved
-   ╭─[es2015/yield/function-name-strict/input.js:1:1]
- 1 │ "use strict";
- 2 │ function yield() {}
+   ╭─[es2015/yield/function-name-strict-body/input.js:1:1]
+ 1 │ function yield() { "use strict"; }
    ·          ─────
    ╰────
 
@@ -4365,17 +4365,17 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × yield expression not allowed in formal parameter
-   ╭─[es2015/yield/parameter-default-inside-generator-method/input.js:1:1]
- 1 │ ({ *method(x = yield) {} })
-   ·                ──┬──
-   ·                  ╰── yield expression not allowed in formal parameter
-   ╰────
-
-  × yield expression not allowed in formal parameter
    ╭─[es2015/yield/parameter-default-inside-generator/input.js:1:1]
  1 │ function* fn(x = yield) {}
    ·                  ──┬──
    ·                    ╰── yield expression not allowed in formal parameter
+   ╰────
+
+  × yield expression not allowed in formal parameter
+   ╭─[es2015/yield/parameter-default-inside-generator-method/input.js:1:1]
+ 1 │ ({ *method(x = yield) {} })
+   ·                ──┬──
+   ·                  ╰── yield expression not allowed in formal parameter
    ╰────
 
   × The keyword 'yield' is reserved
@@ -4419,27 +4419,27 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Cannot use `yield` as an identifier in a generator context
-   ╭─[es2015/yield/parameter-name-generator-method/input.js:1:1]
- 1 │ ({ *method(yield) {} });
-   ·            ─────
-   ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
    ╭─[es2015/yield/parameter-name-generator/input.js:1:1]
  1 │ function* fn(yield) {}
    ·              ─────
    ╰────
 
-  × The keyword 'yield' is reserved
-   ╭─[es2015/yield/parameter-name-strict-body/input.js:1:1]
- 1 │ function fn(yield) { "use strict"; }
-   ·             ─────
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[es2015/yield/parameter-name-generator-method/input.js:1:1]
+ 1 │ ({ *method(yield) {} });
+   ·            ─────
    ╰────
 
   × The keyword 'yield' is reserved
    ╭─[es2015/yield/parameter-name-strict/input.js:1:1]
  1 │ "use strict";
  2 │ function fn(yield) {}
+   ·             ─────
+   ╰────
+
+  × The keyword 'yield' is reserved
+   ╭─[es2015/yield/parameter-name-strict-body/input.js:1:1]
+ 1 │ function fn(yield) { "use strict"; }
    ·             ─────
    ╰────
 
@@ -4526,14 +4526,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   help: Wrap unary expression in parentheses to enforce operator precedence
 
   × Illegal 'use strict' directive in function with non-simple parameter list
-   ╭─[es2016/simple-parameter-list/array-pattern-default/input.js:1:1]
- 1 │ function a([ option1, option2 ] = []) {
- 2 │   "use strict";
-   ·   ─────────────
- 3 │ }
-   ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
    ╭─[es2016/simple-parameter-list/array-pattern/input.js:1:1]
  1 │ function a([ option1, option2 ]) {
  2 │   "use strict";
@@ -4542,8 +4534,24 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
+   ╭─[es2016/simple-parameter-list/array-pattern-default/input.js:1:1]
+ 1 │ function a([ option1, option2 ] = []) {
+ 2 │   "use strict";
+   ·   ─────────────
+ 3 │ }
+   ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
    ╭─[es2016/simple-parameter-list/arrow-function/input.js:1:1]
  1 │ var a = (options = {}) => {
+ 2 │   "use strict";
+   ·   ─────────────
+ 3 │ };
+   ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+   ╭─[es2016/simple-parameter-list/async-arrow-function/input.js:1:1]
+ 1 │ var a = async (options = {}) => {
  2 │   "use strict";
    ·   ─────────────
  3 │ };
@@ -4562,14 +4570,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ─
    ╰────
   help: Try insert a semicolon here
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-   ╭─[es2016/simple-parameter-list/async-arrow-function/input.js:1:1]
- 1 │ var a = async (options = {}) => {
- 2 │   "use strict";
-   ·   ─────────────
- 3 │ };
-   ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
    ╭─[es2016/simple-parameter-list/async-function/input.js:1:1]
@@ -4612,16 +4612,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
-   ╭─[es2016/simple-parameter-list/object-pattern-default/input.js:1:1]
- 1 │ function a({ option1, option2 } = {}) {
+   ╭─[es2016/simple-parameter-list/object-pattern/input.js:1:1]
+ 1 │ function a({ option1, option2 }) {
  2 │   "use strict";
    ·   ─────────────
  3 │ }
    ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
-   ╭─[es2016/simple-parameter-list/object-pattern/input.js:1:1]
- 1 │ function a({ option1, option2 }) {
+   ╭─[es2016/simple-parameter-list/object-pattern-default/input.js:1:1]
+ 1 │ function a({ option1, option2 } = {}) {
  2 │   "use strict";
    ·   ─────────────
  3 │ }
@@ -4636,16 +4636,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[es2017/async-arrow/parenthesized-array-pattern-nested-2/input.js:1:1]
- 1 │ async ([(a) = []] = []) => {}
-   ·                        ─
+   ╭─[es2017/async-arrow/parenthesized-array-pattern-nested/input.js:1:1]
+ 1 │ async ([ [(a)] = [] ] = []) => {};
+   ·                            ─
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[es2017/async-arrow/parenthesized-array-pattern-nested/input.js:1:1]
- 1 │ async ([ [(a)] = [] ] = []) => {};
-   ·                            ─
+   ╭─[es2017/async-arrow/parenthesized-array-pattern-nested-2/input.js:1:1]
+ 1 │ async ([(a) = []] = []) => {}
+   ·                        ─
    ╰────
   help: Try insert a semicolon here
 
@@ -4814,6 +4814,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × await expression not allowed in formal parameter
+   ╭─[es2017/async-functions/await-inside-parameters/input.js:1:1]
+ 1 │ async function fn(x = await 2) {}
+   ·                       ───┬───
+   ·                          ╰── await expression not allowed in formal parameter
+   ╰────
+
+  × await expression not allowed in formal parameter
    ╭─[es2017/async-functions/await-inside-parameters-of-async-arrow-function/input.js:1:1]
  1 │ async (x = await 2) => {};
    ·            ───┬───
@@ -4853,13 +4860,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                    ───┬───
    ·                       ╰── await expression not allowed in formal parameter
  3 │ }
-   ╰────
-
-  × await expression not allowed in formal parameter
-   ╭─[es2017/async-functions/await-inside-parameters/input.js:1:1]
- 1 │ async function fn(x = await 2) {}
-   ·                       ───┬───
-   ·                          ╰── await expression not allowed in formal parameter
    ╰────
 
   × Unexpected token
@@ -4926,13 +4926,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                ──────────
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[es2017/async-functions/invalid-escape-sequence-arrow-list/input.js:1:1]
- 1 │ (\u0061sync x => { await x })
-   ·             ┬
-   ·             ╰── `,` expected
-   ╰────
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/invalid-escape-sequence-arrow/input.js:1:1]
  1 │ \u0061sync x => { await x }
@@ -4940,16 +4933,23 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Keywords cannot contain escape characters
-   ╭─[es2017/async-functions/invalid-escape-sequence-function-list/input.js:1:1]
- 1 │ (\u0061sync function() { await x })
-   ·  ──────────
+  × Expected `,` but found `Identifier`
+   ╭─[es2017/async-functions/invalid-escape-sequence-arrow-list/input.js:1:1]
+ 1 │ (\u0061sync x => { await x })
+   ·             ┬
+   ·             ╰── `,` expected
    ╰────
 
   × Keywords cannot contain escape characters
    ╭─[es2017/async-functions/invalid-escape-sequence-function/input.js:1:1]
  1 │ \u0061sync function() { await x }
    · ──────────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[es2017/async-functions/invalid-escape-sequence-function-list/input.js:1:1]
+ 1 │ (\u0061sync function() { await x })
+   ·  ──────────
    ╰────
 
   × Keywords cannot contain escape characters
@@ -5062,19 +5062,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × await can only be used in conjunction with `for...of` statements
-   ╭─[es2018/async-generators/for-await-async-of-arrow-semicolon/input.js:1:1]
- 1 │ async function f() {
- 2 │   for await (async of => {};;);
-   ·   ────────────────────────────
- 3 │ }
-   ╰────
-
   × Unexpected token
    ╭─[es2018/async-generators/for-await-async-of-arrow/input.js:1:1]
  1 │ async function f() {
  2 │   for await (async of => {} of x);
    ·              ──────────────
+ 3 │ }
+   ╰────
+
+  × await can only be used in conjunction with `for...of` statements
+   ╭─[es2018/async-generators/for-await-async-of-arrow-semicolon/input.js:1:1]
+ 1 │ async function f() {
+ 2 │   for await (async of => {};;);
+   ·   ────────────────────────────
  3 │ }
    ╰────
 
@@ -5543,18 +5543,18 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × 'super' can only be used with function calls or in property accesses
-   ╭─[es2020/optional-chaining/optional-super-property-class/input.js:2:1]
+   ╭─[es2020/optional-chaining/optional-super-property/input.js:2:1]
  2 │     b(){
- 3 │         return super?.b;
+ 3 │         return super?.c;
    ·                ─────
  4 │     }
    ╰────
   help: replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be used with function calls or in property accesses
-   ╭─[es2020/optional-chaining/optional-super-property/input.js:2:1]
+   ╭─[es2020/optional-chaining/optional-super-property-class/input.js:2:1]
  2 │     b(){
- 3 │         return super?.c;
+ 3 │         return super?.b;
    ·                ─────
  4 │     }
    ╰────
@@ -5564,6 +5564,21 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2020/optional-chaining/optional-tagged-template-literals/input.js:1:1]
  1 │ a?.b`foo`
    ·     ─────
+   ╰────
+
+  × The left-hand side of a `for...of` statement may not be `async`
+   ╭─[es2021/for-async-of/forbidden/input.js:1:1]
+ 1 │ for (async of x);
+   ·      ─────
+ 2 │ 
+   ╰────
+
+  × The left-hand side of a `for...of` statement may not be `async`
+   ╭─[es2021/for-async-of/forbidden/input.js:3:1]
+ 3 │ async () => {
+ 4 │   for (async of x);
+   ·        ─────
+ 5 │ }
    ╰────
 
   × Unexpected token
@@ -5584,21 +5599,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  2 │ // and finds "=" instead of "=>".
  3 │ for (async of = x);
    ·               ─
-   ╰────
-
-  × The left-hand side of a `for...of` statement may not be `async`
-   ╭─[es2021/for-async-of/forbidden/input.js:1:1]
- 1 │ for (async of x);
-   ·      ─────
- 2 │ 
-   ╰────
-
-  × The left-hand side of a `for...of` statement may not be `async`
-   ╭─[es2021/for-async-of/forbidden/input.js:3:1]
- 3 │ async () => {
- 4 │   for (async of x);
-   ·        ─────
- 5 │ }
    ╰────
 
   × Invalid Character `
@@ -6664,6 +6664,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Invalid escape sequence
+   ╭─[es2021/numeric-separator/invalid-unicode/input.js:1:1]
+ 1 │ "\u{1F_639}"
+   ·  ─────
+   ╰────
+
+  × Invalid escape sequence
    ╭─[es2021/numeric-separator/invalid-unicode-2/input.js:1:1]
  1 │ "\u12_34"
    ·  ────
@@ -6715,12 +6721,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[es2021/numeric-separator/invalid-unicode-7/input.js:1:1]
  1 │ \u{0061_};
    ·         ─
-   ╰────
-
-  × Invalid escape sequence
-   ╭─[es2021/numeric-separator/invalid-unicode/input.js:1:1]
- 1 │ "\u{1F_639}"
-   ·  ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
@@ -6898,6 +6898,19 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·            ────
    ╰────
 
+  × Invalid assignment in object literal
+   ╭─[esprima/es2015-destructuring-assignment/invalid-cover-grammar/input.js:1:1]
+ 1 │ [[[[[[[[[[[[[[[[[[[[{a=b}]]]]]]]]]]]]]]]]]]]]
+   ·                      ───
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
+
+  × Cannot assign to this expression
+   ╭─[esprima/es2015-destructuring-assignment/invalid-group-assignment/input.js:1:1]
+ 1 │ (a,b)=(c,d);
+   ·  ───
+   ╰────
+
   × Cannot assign to this expression
    ╭─[esprima/es2015-destructuring-assignment-object-pattern/invalid-lhs-01/input.js:1:1]
  1 │ ({a:this}=0)
@@ -6916,19 +6929,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·    ────
    ╰────
 
-  × Invalid assignment in object literal
-   ╭─[esprima/es2015-destructuring-assignment/invalid-cover-grammar/input.js:1:1]
- 1 │ [[[[[[[[[[[[[[[[[[[[{a=b}]]]]]]]]]]]]]]]]]]]]
-   ·                      ───
-   ╰────
-  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
-
-  × Cannot assign to this expression
-   ╭─[esprima/es2015-destructuring-assignment/invalid-group-assignment/input.js:1:1]
- 1 │ (a,b)=(c,d);
-   ·  ───
-   ╰────
-
   × Expected `from` but found `EOF`
    ╭─[esprima/es2015-export-declaration/invalid-export-batch-missing-from-clause/input.js:1:1]
  1 │ export *
@@ -6941,6 +6941,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·          ╰── `from` expected
    ╰────
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[esprima/es2015-export-declaration/invalid-export-default/input.js:1:1]
+ 1 │ export default from "foo"
+   ·                    ─
+   ╰────
+  help: Try insert a semicolon here
+
   × Unexpected token
    ╭─[esprima/es2015-export-declaration/invalid-export-default-equal/input.js:1:1]
  1 │ export default = 42
@@ -6951,13 +6958,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/es2015-export-declaration/invalid-export-default-token/input.js:1:1]
  1 │ export {default} +
    ·                 ─
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[esprima/es2015-export-declaration/invalid-export-default/input.js:1:1]
- 1 │ export default from "foo"
-   ·                    ─
    ╰────
   help: Try insert a semicolon here
 
@@ -7089,15 +7089,15 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Unexpected token
-   ╭─[esprima/es2015-generator/malformed-generator-method-2/input.js:1:1]
- 1 │ class Foo { * }
-   ·               ─
-   ╰────
-
-  × Unexpected token
    ╭─[esprima/es2015-generator/malformed-generator-method/input.js:1:1]
  1 │ ({ * })
    ·    ─
+   ╰────
+
+  × Unexpected token
+   ╭─[esprima/es2015-generator/malformed-generator-method-2/input.js:1:1]
+ 1 │ class Foo { * }
+   ·               ─
    ╰────
 
   × Invalid Unicode escape sequence
@@ -7137,11 +7137,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    · ──────
    ╰────
 
-  × Expected `from` but found `,`
-   ╭─[esprima/es2015-import-declaration/invalid-import-default-after-named-after-default/input.js:1:1]
- 1 │ import foo, {bar}, foo from "foo";
-   ·                  ┬
-   ·                  ╰── `from` expected
+  × Expected `from` but found `default`
+   ╭─[esprima/es2015-import-declaration/invalid-import-default/input.js:1:1]
+ 1 │ import default from "foo"
+   ·        ───┬───
+   ·           ╰── `from` expected
    ╰────
 
   × Expected `from` but found `,`
@@ -7149,6 +7149,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  1 │ import {bar}, foo from "foo"
    ·             ┬
    ·             ╰── `from` expected
+   ╰────
+
+  × Expected `from` but found `,`
+   ╭─[esprima/es2015-import-declaration/invalid-import-default-after-named-after-default/input.js:1:1]
+ 1 │ import foo, {bar}, foo from "foo";
+   ·                  ┬
+   ·                  ╰── `from` expected
    ╰────
 
   × Expected `from` but found `EOF`
@@ -7160,13 +7167,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╭─[esprima/es2015-import-declaration/invalid-import-default-module-specifier/input.js:1:1]
  1 │ import foo from bar;
    ·                 ───
-   ╰────
-
-  × Expected `from` but found `default`
-   ╭─[esprima/es2015-import-declaration/invalid-import-default/input.js:1:1]
- 1 │ import default from "foo"
-   ·        ───┬───
-   ·           ╰── `from` expected
    ╰────
 
   × Expected `from` but found `{`
@@ -7407,6 +7407,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ──
    ╰────
 
+  × Unterminated string
+   ╭─[esprima/es2015-template-literals/unclosed/input.js:1:1]
+ 1 │ `test
+   · ──────
+   ╰────
+
   × Unexpected token
    ╭─[esprima/es2015-template-literals/unclosed-interpolation/input.js:1:1]
  1 │ `hello ${10;test`
@@ -7416,12 +7422,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
   × Expected `$}` but found `EOF`
    ╭─[esprima/es2015-template-literals/unclosed-nested/input.js:1:1]
  1 │ `hello ${10 `test`
-   ╰────
-
-  × Unterminated string
-   ╭─[esprima/es2015-template-literals/unclosed/input.js:1:1]
- 1 │ `test
-   · ──────
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
@@ -9446,112 +9446,112 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
+   ╭─[tokens/template-string/invalid-octal/input.js:1:1]
  1 │ `\1`;
    ·  ──
  2 │ `\1${x}\2${y}\3`;
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
+   ╭─[tokens/template-string/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
    ·  ──
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
+   ╭─[tokens/template-string/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
    ·        ──
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
+   ╭─[tokens/template-string/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
    ·              ──
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
+   ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
    ·  ─────
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
+   ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ·  ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
+   ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ·           ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
+   ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ·                    ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string/invalid-octal/input.js:1:1]
+   ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
  1 │ `\1`;
    ·  ──
  2 │ `\1${x}\2${y}\3`;
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string/invalid-octal/input.js:1:1]
+   ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
    ·  ──
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string/invalid-octal/input.js:1:1]
+   ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
    ·        ──
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string/invalid-octal/input.js:1:1]
+   ╭─[tokens/template-string-babel-7/invalid-octal/input.js:1:1]
  1 │ `\1`;
  2 │ `\1${x}\2${y}\3`;
    ·              ──
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
+   ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
    ·  ─────
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
+   ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ·  ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
+   ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ·           ─────
    ╰────
 
   × Bad escape sequence in untagged template literal
-   ╭─[tokens/template-string/invalid-unicode-escape-codepoint/input.js:1:1]
+   ╭─[tokens/template-string-babel-7/invalid-unicode-escape-codepoint/input.js:1:1]
  1 │ `\u{g}`;
  2 │ `\u{g}${x}\u{g}${y}\u{g}`;
    ·                    ─────
@@ -9799,22 +9799,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × A 'get' accessor must not have any formal parameters.
-   ╭─[typescript/interface/get-set-invalid-parameters-babel-7/input.ts:1:1]
- 1 │ interface Foo {
- 2 │   get foo(param): string;
-   ·          ───────
- 3 │   set foo();
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[typescript/interface/get-set-invalid-parameters-babel-7/input.ts:2:1]
- 2 │   get foo(param): string;
- 3 │   set foo();
-   ·          ──
- 4 │ }
-   ╰────
-
-  × A 'get' accessor must not have any formal parameters.
    ╭─[typescript/interface/get-set-invalid-parameters/input.ts:1:1]
  1 │ interface Foo {
  2 │   get foo(param): string;
@@ -9830,12 +9814,20 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  4 │ }
    ╰────
 
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:1:1]
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[typescript/interface/get-set-invalid-parameters-babel-7/input.ts:1:1]
  1 │ interface Foo {
- 2 │   set bar(...v);
-   ·          ──────
- 3 │ }
+ 2 │   get foo(param): string;
+   ·          ───────
+ 3 │   set foo();
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[typescript/interface/get-set-invalid-parameters-babel-7/input.ts:2:1]
+ 2 │   get foo(param): string;
+ 3 │   set foo();
+   ·          ──
+ 4 │ }
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
@@ -9846,11 +9838,11 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × TS1095: A 'set' accessor cannot have a return type annotation
-   ╭─[typescript/interface/get-set-invalid-return-types-babel-7/input.ts:1:1]
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:1:1]
  1 │ interface Foo {
- 2 │   set foo(param): string;
-   ·                 ────────
+ 2 │   set bar(...v);
+   ·          ──────
  3 │ }
    ╰────
 
@@ -9862,12 +9854,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  3 │ }
    ╰────
 
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[typescript/interface/get-set-invalid-this-parameters-babel-7/input.ts:2:1]
- 2 │   get bar(this: Foo);
- 3 │   set bar(this: Foo);
-   ·          ───────────
- 4 │ }
+  × TS1095: A 'set' accessor cannot have a return type annotation
+   ╭─[typescript/interface/get-set-invalid-return-types-babel-7/input.ts:1:1]
+ 1 │ interface Foo {
+ 2 │   set foo(param): string;
+   ·                 ────────
+ 3 │ }
    ╰────
 
   × A 'set' accessor must have exactly one parameter.
@@ -9878,8 +9870,16 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
  4 │ }
    ╰────
 
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[typescript/interface/get-set-invalid-this-parameters-babel-7/input.ts:2:1]
+ 2 │   get bar(this: Foo);
+ 3 │   set bar(this: Foo);
+   ·          ───────────
+ 4 │ }
+   ╰────
+
   × Expected `(` but found `<`
-   ╭─[typescript/interface/get-set-type-parameters-babel-7/input.ts:1:1]
+   ╭─[typescript/interface/get-set-type-parameters/input.ts:1:1]
  1 │ interface Foo {
  2 │   get foo<T>(): string;
    ·          ┬
@@ -9888,7 +9888,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Expected `(` but found `<`
-   ╭─[typescript/interface/get-set-type-parameters/input.ts:1:1]
+   ╭─[typescript/interface/get-set-type-parameters-babel-7/input.ts:1:1]
  1 │ interface Foo {
  2 │   get foo<T>(): string;
    ·          ┬
@@ -9904,6 +9904,13 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × The keyword 'interface' is reserved
+   ╭─[typescript/interface/new-line/input.ts:1:1]
+ 1 │ interface
+   · ─────────
+ 2 │ F
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/interface/new-line-error/input.ts:1:1]
  1 │ interface
@@ -9911,13 +9918,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·  ─
    ╰────
   help: Try insert a semicolon here
-
-  × The keyword 'interface' is reserved
-   ╭─[typescript/interface/new-line/input.ts:1:1]
- 1 │ interface
-   · ─────────
- 2 │ F
-   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/module-namespace/module-declare-new-line/input.ts:5:1]
@@ -10107,26 +10107,6 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ·                      ─────
    ╰────
 
-  × Expected `)` but found `EOF`
-   ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-array-like/input.ts:1:1]
- 1 │ type F = ([
-   ╰────
-
-  × Expected `)` but found `EOF`
-   ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-object-like/input.ts:1:1]
- 1 │ type F = ({
-   ╰────
-
-  × Expected `)` but found `EOF`
-   ╭─[typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:1:1]
- 1 │ type F = ([
-   ╰────
-
-  × Expected `)` but found `EOF`
-   ╭─[typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:1:1]
- 1 │ type F = ({
-   ╰────
-
   × Keywords cannot contain escape characters
    ╭─[typescript/types/import-type-escaped-error/input.ts:1:1]
  1 │ import typ\u{65} typescript from "typescript";
@@ -10167,7 +10147,7 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
    ╰────
 
   × Expected `,` but found `Identifier`
-    ╭─[typescript/types/variance-annotations-babel-7/input.ts:94:1]
+    ╭─[typescript/types/variance-annotations/input.ts:94:1]
  94 │ 
  95 │ type T20<public T> = T;  // Error
     ·                 ┬
@@ -10176,12 +10156,12 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
     ╰────
 
   × Expected `,` but found `Identifier`
-    ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:97:1]
- 97 │ 
- 98 │ type T20<public T> = T;  // Error
+    ╭─[typescript/types/variance-annotations-babel-7/input.ts:94:1]
+ 94 │ 
+ 95 │ type T20<public T> = T;  // Error
     ·                 ┬
     ·                 ╰── `,` expected
- 99 │ type T21<in out in T> = T;  // Error
+ 96 │ type T21<in out in T> = T;  // Error
     ╰────
 
   × Expected `,` but found `Identifier`
@@ -10194,13 +10174,33 @@ Expect to Parse: "typescript/types/const-type-parameters/input.ts"
     ╰────
 
   × Expected `,` but found `Identifier`
-    ╭─[typescript/types/variance-annotations/input.ts:94:1]
- 94 │ 
- 95 │ type T20<public T> = T;  // Error
+    ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:97:1]
+ 97 │ 
+ 98 │ type T20<public T> = T;  // Error
     ·                 ┬
     ·                 ╰── `,` expected
- 96 │ type T21<in out in T> = T;  // Error
+ 99 │ type T21<in out in T> = T;  // Error
     ╰────
+
+  × Expected `)` but found `EOF`
+   ╭─[typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:1:1]
+ 1 │ type F = ([
+   ╰────
+
+  × Expected `)` but found `EOF`
+   ╭─[typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:1:1]
+ 1 │ type F = ({
+   ╰────
+
+  × Expected `)` but found `EOF`
+   ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-array-like/input.ts:1:1]
+ 1 │ type F = ([
+   ╰────
+
+  × Expected `)` but found `EOF`
+   ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-object-like/input.ts:1:1]
+ 1 │ type F = ({
+   ╰────
 
   × Unexpected token
    ╭─[typescript/variable-declarator/definite-assignment-not-allowed/input.ts:1:1]

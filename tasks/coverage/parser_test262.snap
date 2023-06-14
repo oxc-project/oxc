@@ -6559,226 +6559,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/async-gen-method-static/array-destructuring-param-strict-body.js:134:1]
- 134 │   static async *method([element]) {
- 135 │     "use strict";
-     ·     ─────────────
- 136 │   }
-     ╰────
-
-  × Cannot use `await` as an identifier in an async context
-    ╭─[language/expressions/class/async-gen-method-static/await-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     var \u0061wait;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
-  × Cannot use `await` as an identifier in an async context
-    ╭─[language/expressions/class/async-gen-method-static/await-as-binding-identifier.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     var await;
-    ·         ─────
- 36 │ }};
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     void \u0061wait;
-    ·          ──────────
- 36 │ }};
-    ╰────
-
-  × Unexpected token
-    ╭─[language/expressions/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     void \u0061wait;
-    ·                    ─
- 36 │ }};
-    ╰────
-
-  × Unexpected token
-    ╭─[language/expressions/class/async-gen-method-static/await-as-identifier-reference.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     void await;
-    ·               ─
- 36 │ }};
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/async-gen-method-static/await-as-label-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     \u0061wait: ;
-    ·     ──────────
- 36 │ }};
-    ╰────
-
-  × Unexpected token
-    ╭─[language/expressions/class/async-gen-method-static/await-as-label-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     \u0061wait: ;
-    ·               ─
- 36 │ }};
-    ╰────
-
-  × Unexpected token
-    ╭─[language/expressions/class/async-gen-method-static/await-as-label-identifier.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     await: ;
-    ·          ─
- 36 │ }};
-    ╰────
-
-  × Identifier `x` has already been declared
-    ╭─[language/expressions/class/async-gen-method-static/dflt-params-duplicates.js:62:1]
- 62 │ 0, class {
- 63 │   static async *method(x = 0, x) {
-    ·                        ┬      ┬
-    ·                        │      ╰── It can not be redeclared here
-    ·                        ╰── `x` has already been declared here
- 64 │     
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/expressions/class/async-gen-method-static/dflt-params-rest.js:66:1]
- 66 │ 0, class {
- 67 │   static async *method(...x = []) {
-    ·                           ──────
- 68 │     
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/async-gen-method-static/object-destructuring-param-strict-body.js:134:1]
- 134 │   static async *method({property}) {
- 135 │     "use strict";
-     ·     ─────────────
- 136 │   }
-     ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/async-gen-method-static/rest-param-strict-body.js:134:1]
- 134 │   static async *method(a,...rest) {
- 135 │     "use strict";
-     ·     ─────────────
- 136 │   }
-     ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
- 59 │ 0, class {
- 60 │   static async *method(...a,) {
-    ·                        ────
- 61 │     
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     var yield;
-    ·         ─────
- 36 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     var yield;
-    ·         ─────
- 36 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
- 36 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
- 36 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     void yield;
-    ·          ─────
- 36 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     void yield;
-    ·          ─────
- 36 │ }};
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     yi\u0065ld: ;
-    ·     ──────────
- 36 │ }};
-    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     yi\u0065ld: ;
-    ·               ▲
- 36 │ }};
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/class/async-gen-method-static/yield-as-label-identifier.js:34:1]
- 34 │ var C = class { static async *gen() {
- 35 │     yield: ;
-    ·          ▲
- 36 │ }};
-    ╰────
-  help: Try insert a semicolon here
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method-static/yield-identifier-spread-strict.js:40:1]
- 40 │          ...(function() {
- 41 │             var yield;
-    ·                 ─────
- 42 │             throw new Test262Error();
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/async-gen-method-static/yield-identifier-strict.js:32:1]
- 32 │     (function() {
- 33 │         var yield;
-    ·             ─────
- 34 │         throw new Test262Error();
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/expressions/class/async-gen-method/array-destructuring-param-strict-body.js:134:1]
  134 │   async *method([element]) {
  135 │     "use strict";
@@ -6999,117 +6779,223 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/async-method-static/array-destructuring-param-strict-body.js:132:1]
- 132 │   static async method([element]) {
- 133 │     "use strict";
+     ╭─[language/expressions/class/async-gen-method-static/array-destructuring-param-strict-body.js:134:1]
+ 134 │   static async *method([element]) {
+ 135 │     "use strict";
      ·     ─────────────
- 134 │   }
+ 136 │   }
      ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[language/expressions/class/async-method-static/await-as-binding-identifier-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     var \u0061wait;
+    ╭─[language/expressions/class/async-gen-method-static/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var \u0061wait;
     ·         ──────────
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[language/expressions/class/async-method-static/await-as-binding-identifier.js:35:1]
- 35 │   static async method() {
- 36 │     var await;
+    ╭─[language/expressions/class/async-gen-method-static/await-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var await;
     ·         ─────
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     void \u0061wait;
+    ╭─[language/expressions/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void \u0061wait;
     ·          ──────────
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     void \u0061wait;
+    ╭─[language/expressions/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void \u0061wait;
     ·                    ─
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/class/async-method-static/await-as-identifier-reference.js:35:1]
- 35 │   static async method() {
- 36 │     void await;
+    ╭─[language/expressions/class/async-gen-method-static/await-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void await;
     ·               ─
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/async-method-static/await-as-label-identifier-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     \u0061wait: ;
+    ╭─[language/expressions/class/async-gen-method-static/await-as-label-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     \u0061wait: ;
     ·     ──────────
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/class/async-method-static/await-as-label-identifier-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     \u0061wait: ;
+    ╭─[language/expressions/class/async-gen-method-static/await-as-label-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     \u0061wait: ;
     ·               ─
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/class/async-method-static/await-as-label-identifier.js:35:1]
- 35 │   static async method() {
- 36 │     await: ;
+    ╭─[language/expressions/class/async-gen-method-static/await-as-label-identifier.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     await: ;
     ·          ─
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Identifier `x` has already been declared
-    ╭─[language/expressions/class/async-method-static/dflt-params-duplicates.js:60:1]
- 60 │ var C = class {
- 61 │   static async method(x = 0, x) {
-    ·                       ┬      ┬
-    ·                       │      ╰── It can not be redeclared here
-    ·                       ╰── `x` has already been declared here
- 62 │     
+    ╭─[language/expressions/class/async-gen-method-static/dflt-params-duplicates.js:62:1]
+ 62 │ 0, class {
+ 63 │   static async *method(x = 0, x) {
+    ·                        ┬      ┬
+    ·                        │      ╰── It can not be redeclared here
+    ·                        ╰── `x` has already been declared here
+ 64 │     
     ╰────
 
   × A rest parameter cannot have an initializer
-    ╭─[language/expressions/class/async-method-static/dflt-params-rest.js:64:1]
- 64 │ var C = class {
- 65 │   static async method(...x = []) {
-    ·                          ──────
- 66 │     
+    ╭─[language/expressions/class/async-gen-method-static/dflt-params-rest.js:66:1]
+ 66 │ 0, class {
+ 67 │   static async *method(...x = []) {
+    ·                           ──────
+ 68 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/async-method-static/object-destructuring-param-strict-body.js:132:1]
- 132 │   static async method({property}) {
- 133 │     "use strict";
+     ╭─[language/expressions/class/async-gen-method-static/object-destructuring-param-strict-body.js:134:1]
+ 134 │   static async *method({property}) {
+ 135 │     "use strict";
      ·     ─────────────
- 134 │   }
+ 136 │   }
      ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/async-method-static/rest-param-strict-body.js:132:1]
- 132 │   static async method(a,...rest) {
- 133 │     "use strict";
+     ╭─[language/expressions/class/async-gen-method-static/rest-param-strict-body.js:134:1]
+ 134 │   static async *method(a,...rest) {
+ 135 │     "use strict";
      ·     ─────────────
- 134 │   }
+ 136 │   }
      ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:56:1]
- 56 │ var C = class {
- 57 │   static async method(...a,) {
-    ·                       ────
- 58 │     
+    ╭─[language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
+ 59 │ 0, class {
+ 60 │   static async *method(...a,) {
+    ·                        ────
+ 61 │     
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     yi\u0065ld: ;
+    ·     ──────────
+ 36 │ }};
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     yi\u0065ld: ;
+    ·               ▲
+ 36 │ }};
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/expressions/class/async-gen-method-static/yield-as-label-identifier.js:34:1]
+ 34 │ var C = class { static async *gen() {
+ 35 │     yield: ;
+    ·          ▲
+ 36 │ }};
+    ╰────
+  help: Try insert a semicolon here
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-identifier-spread-strict.js:40:1]
+ 40 │          ...(function() {
+ 41 │             var yield;
+    ·                 ─────
+ 42 │             throw new Test262Error();
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/async-gen-method-static/yield-identifier-strict.js:32:1]
+ 32 │     (function() {
+ 33 │         var yield;
+    ·             ─────
+ 34 │         throw new Test262Error();
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -7220,6 +7106,120 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
 
   × A rest element must be last in a destructuring pattern
     ╭─[language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:56:1]
+ 56 │ var C = class {
+ 57 │   static async method(...a,) {
+    ·                       ────
+ 58 │     
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-method-static/array-destructuring-param-strict-body.js:132:1]
+ 132 │   static async method([element]) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-method-static/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/async-method-static/await-as-binding-identifier.js:35:1]
+ 35 │   static async method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/expressions/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     void \u0061wait;
+    ·          ──────────
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/expressions/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     void \u0061wait;
+    ·                    ─
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/expressions/class/async-method-static/await-as-identifier-reference.js:35:1]
+ 35 │   static async method() {
+ 36 │     void await;
+    ·               ─
+ 37 │   }
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/expressions/class/async-method-static/await-as-label-identifier-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     \u0061wait: ;
+    ·     ──────────
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/expressions/class/async-method-static/await-as-label-identifier-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     \u0061wait: ;
+    ·               ─
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/expressions/class/async-method-static/await-as-label-identifier.js:35:1]
+ 35 │   static async method() {
+ 36 │     await: ;
+    ·          ─
+ 37 │   }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/async-method-static/dflt-params-duplicates.js:60:1]
+ 60 │ var C = class {
+ 61 │   static async method(x = 0, x) {
+    ·                       ┬      ┬
+    ·                       │      ╰── It can not be redeclared here
+    ·                       ╰── `x` has already been declared here
+ 62 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/async-method-static/dflt-params-rest.js:64:1]
+ 64 │ var C = class {
+ 65 │   static async method(...x = []) {
+    ·                          ──────
+ 66 │     
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-method-static/object-destructuring-param-strict-body.js:132:1]
+ 132 │   static async method({property}) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/async-method-static/rest-param-strict-body.js:132:1]
+ 132 │   static async method(a,...rest) {
+ 133 │     "use strict";
+     ·     ─────────────
+ 134 │   }
+     ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:56:1]
  56 │ var C = class {
  57 │   static async method(...a,) {
     ·                       ────
@@ -8466,176 +8466,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     var \u0061wait;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
-  × Cannot use `await` as an identifier in an async context
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     var await;
-    ·         ─────
- 36 │ }};
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     void \u0061wait;
-    ·          ──────────
- 36 │ }};
-    ╰────
-
-  × Unexpected token
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     void \u0061wait;
-    ·                    ─
- 36 │ }};
-    ╰────
-
-  × Unexpected token
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-identifier-reference.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     void await;
-    ·               ─
- 36 │ }};
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-label-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     \u0061wait: ;
-    ·     ──────────
- 36 │ }};
-    ╰────
-
-  × Unexpected token
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-label-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     \u0061wait: ;
-    ·               ─
- 36 │ }};
-    ╰────
-
-  × Unexpected token
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-label-identifier.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     await: ;
-    ·          ─
- 36 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     var yield;
-    ·         ─────
- 36 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     var yield;
-    ·         ─────
- 36 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
- 36 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
- 36 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     void yield;
-    ·          ─────
- 36 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     void yield;
-    ·          ─────
- 36 │ }};
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     yi\u0065ld: ;
-    ·     ──────────
- 36 │ }};
-    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     yi\u0065ld: ;
-    ·               ▲
- 36 │ }};
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-label-identifier.js:34:1]
- 34 │ var C = class { static async *#gen() {
- 35 │     yield: ;
-    ·          ▲
- 36 │ }};
-    ╰────
-  help: Try insert a semicolon here
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js:41:1]
- 41 │              ...(function() {
- 42 │                 var yield;
-    ·                     ─────
- 43 │                 throw new Test262Error();
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-identifier-strict.js:33:1]
- 33 │         (function() {
- 34 │             var yield;
-    ·                 ─────
- 35 │             throw new Test262Error();
-    ╰────
-
-  × Cannot use `await` as an identifier in an async context
     ╭─[language/expressions/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js:34:1]
  34 │ var C = class { async *#gen() {
  35 │     var \u0061wait;
@@ -8806,67 +8636,173 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[language/expressions/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     var \u0061wait;
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var \u0061wait;
     ·         ──────────
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[language/expressions/class/elements/async-private-method-static/await-as-binding-identifier.js:35:1]
- 35 │   static async #method() {
- 36 │     var await;
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var await;
     ·         ─────
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     void \u0061wait;
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void \u0061wait;
     ·          ──────────
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     void \u0061wait;
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void \u0061wait;
     ·                    ─
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/class/elements/async-private-method-static/await-as-identifier-reference.js:35:1]
- 35 │   static async #method() {
- 36 │     void await;
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void await;
     ·               ─
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/elements/async-private-method-static/await-as-label-identifier-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     \u0061wait: ;
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-label-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     \u0061wait: ;
     ·     ──────────
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/class/elements/async-private-method-static/await-as-label-identifier-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     \u0061wait: ;
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-label-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     \u0061wait: ;
     ·               ─
- 37 │   }
+ 36 │ }};
     ╰────
 
   × Unexpected token
-    ╭─[language/expressions/class/elements/async-private-method-static/await-as-label-identifier.js:35:1]
- 35 │   static async #method() {
- 36 │     await: ;
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/await-as-label-identifier.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     await: ;
     ·          ─
- 37 │   }
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }};
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     yi\u0065ld: ;
+    ·     ──────────
+ 36 │ }};
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     yi\u0065ld: ;
+    ·               ▲
+ 36 │ }};
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-as-label-identifier.js:34:1]
+ 34 │ var C = class { static async *#gen() {
+ 35 │     yield: ;
+    ·          ▲
+ 36 │ }};
+    ╰────
+  help: Try insert a semicolon here
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js:41:1]
+ 41 │              ...(function() {
+ 42 │                 var yield;
+    ·                     ─────
+ 43 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/async-gen-private-method-static/yield-identifier-strict.js:33:1]
+ 33 │         (function() {
+ 34 │             var yield;
+    ·                 ─────
+ 35 │             throw new Test262Error();
     ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -8928,6 +8864,70 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
   × Unexpected token
     ╭─[language/expressions/class/elements/async-private-method/await-as-label-identifier.js:35:1]
  35 │   async #method() {
+ 36 │     await: ;
+    ·          ─
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-binding-identifier.js:35:1]
+ 35 │   static async #method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     void \u0061wait;
+    ·          ──────────
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     void \u0061wait;
+    ·                    ─
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-identifier-reference.js:35:1]
+ 35 │   static async #method() {
+ 36 │     void await;
+    ·               ─
+ 37 │   }
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-label-identifier-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     \u0061wait: ;
+    ·     ──────────
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-label-identifier-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     \u0061wait: ;
+    ·               ─
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/expressions/class/elements/async-private-method-static/await-as-label-identifier.js:35:1]
+ 35 │   static async #method() {
  36 │     await: ;
     ·          ─
  37 │   }
@@ -9064,112 +9064,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╰────
 
   × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     var yield;
-    ·         ─────
- 35 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     var yield;
-    ·         ─────
- 35 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
- 35 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
- 35 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     void yield;
-    ·          ─────
- 35 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     void yield;
-    ·          ─────
- 35 │ }};
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     yi\u0065ld: ;
-    ·     ──────────
- 35 │ }};
-    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     yi\u0065ld: ;
-    ·               ▲
- 35 │ }};
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-label-identifier.js:33:1]
- 33 │ var C = class { static *#gen() {
- 34 │     yield: ;
-    ·          ▲
- 35 │ }};
-    ╰────
-  help: Try insert a semicolon here
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-identifier-spread-strict.js:40:1]
- 40 │              ...(function() {
- 41 │                 var yield;
-    ·                     ─────
- 42 │                 throw new Test262Error();
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/elements/gen-private-method-static/yield-identifier-strict.js:32:1]
- 32 │         (function() {
- 33 │             var yield;
-    ·                 ─────
- 34 │             throw new Test262Error();
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/expressions/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ var C = class {*#gen() {
  34 │     var yi\u0065ld;
@@ -9269,6 +9163,112 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
 
   × The keyword 'yield' is reserved
     ╭─[language/expressions/class/elements/gen-private-method/yield-identifier-strict.js:32:1]
+ 32 │         (function() {
+ 33 │             var yield;
+    ·                 ─────
+ 34 │             throw new Test262Error();
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     yi\u0065ld: ;
+    ·     ──────────
+ 35 │ }};
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     yi\u0065ld: ;
+    ·               ▲
+ 35 │ }};
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-as-label-identifier.js:33:1]
+ 33 │ var C = class { static *#gen() {
+ 34 │     yield: ;
+    ·          ▲
+ 35 │ }};
+    ╰────
+  help: Try insert a semicolon here
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-identifier-spread-strict.js:40:1]
+ 40 │              ...(function() {
+ 41 │                 var yield;
+    ·                     ─────
+ 42 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/elements/gen-private-method-static/yield-identifier-strict.js:32:1]
  32 │         (function() {
  33 │             var yield;
     ·                 ─────
@@ -12247,6 +12247,162 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  27 │ }
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/gen-method/array-destructuring-param-strict-body.js:155:1]
+ 155 │   *method([element]) {
+ 156 │     "use strict";
+     ·     ─────────────
+ 157 │   }
+     ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/gen-method/dflt-params-duplicates.js:83:1]
+ 83 │ 0, class {
+ 84 │   *method(x = 0, x) {
+    ·           ┬      ┬
+    ·           │      ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+ 85 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/gen-method/dflt-params-rest.js:87:1]
+ 87 │ 0, class {
+ 88 │   *method(...x = []) {
+    ·              ──────
+ 89 │     
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/gen-method/object-destructuring-param-strict-body.js:155:1]
+ 155 │   *method({property}) {
+ 156 │     "use strict";
+     ·     ─────────────
+ 157 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/gen-method/rest-param-strict-body.js:155:1]
+ 155 │   *method(a,...rest) {
+ 156 │     "use strict";
+     ·     ─────────────
+ 157 │   }
+     ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:80:1]
+ 80 │ 0, class {
+ 81 │   *method(...a,) {
+    ·           ────
+ 82 │     
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }};
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }};
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/expressions/class/gen-method/yield-as-label-identifier-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     yi\u0065ld: ;
+    ·     ──────────
+ 35 │ }};
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/expressions/class/gen-method/yield-as-label-identifier-escaped.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     yi\u0065ld: ;
+    ·               ▲
+ 35 │ }};
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/expressions/class/gen-method/yield-as-label-identifier.js:33:1]
+ 33 │ var C = class {*gen() {
+ 34 │     yield: ;
+    ·          ▲
+ 35 │ }};
+    ╰────
+  help: Try insert a semicolon here
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method/yield-identifier-spread-strict.js:39:1]
+ 39 │          ...(function() {
+ 40 │             var yield;
+    ·                 ─────
+ 41 │             throw new Test262Error();
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/expressions/class/gen-method/yield-identifier-strict.js:31:1]
+ 31 │     (function() {
+ 32 │         var yield;
+    ·             ─────
+ 33 │         throw new Test262Error();
+    ╰────
+
   × yield expression not allowed in formal parameter
     ╭─[language/expressions/class/gen-method-param-dflt-yield.js:25:1]
  25 │ 0, class {
@@ -12412,167 +12568,61 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  33 │         throw new Test262Error();
     ╰────
 
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/gen-method/array-destructuring-param-strict-body.js:155:1]
- 155 │   *method([element]) {
- 156 │     "use strict";
-     ·     ─────────────
- 157 │   }
-     ╰────
-
-  × Identifier `x` has already been declared
-    ╭─[language/expressions/class/gen-method/dflt-params-duplicates.js:83:1]
- 83 │ 0, class {
- 84 │   *method(x = 0, x) {
-    ·           ┬      ┬
-    ·           │      ╰── It can not be redeclared here
-    ·           ╰── `x` has already been declared here
- 85 │     
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/expressions/class/gen-method/dflt-params-rest.js:87:1]
- 87 │ 0, class {
- 88 │   *method(...x = []) {
-    ·              ──────
- 89 │     
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/gen-method/object-destructuring-param-strict-body.js:155:1]
- 155 │   *method({property}) {
- 156 │     "use strict";
-     ·     ─────────────
- 157 │   }
-     ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/gen-method/rest-param-strict-body.js:155:1]
- 155 │   *method(a,...rest) {
- 156 │     "use strict";
-     ·     ─────────────
- 157 │   }
-     ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:80:1]
- 80 │ 0, class {
- 81 │   *method(...a,) {
-    ·           ────
- 82 │     
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     var yield;
-    ·         ─────
- 35 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method/yield-as-binding-identifier.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     var yield;
-    ·         ─────
- 35 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
- 35 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
- 35 │ }};
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     void yield;
-    ·          ─────
- 35 │ }};
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method/yield-as-identifier-reference.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     void yield;
-    ·          ─────
- 35 │ }};
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/expressions/class/gen-method/yield-as-label-identifier-escaped.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     yi\u0065ld: ;
-    ·     ──────────
- 35 │ }};
-    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/class/gen-method/yield-as-label-identifier-escaped.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     yi\u0065ld: ;
-    ·               ▲
- 35 │ }};
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/expressions/class/gen-method/yield-as-label-identifier.js:33:1]
- 33 │ var C = class {*gen() {
- 34 │     yield: ;
-    ·          ▲
- 35 │ }};
-    ╰────
-  help: Try insert a semicolon here
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method/yield-identifier-spread-strict.js:39:1]
- 39 │          ...(function() {
- 40 │             var yield;
-    ·                 ─────
- 41 │             throw new Test262Error();
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/expressions/class/gen-method/yield-identifier-strict.js:31:1]
- 31 │     (function() {
- 32 │         var yield;
-    ·             ─────
- 33 │         throw new Test262Error();
-    ╰────
-
   × A 'get' accessor must not have any formal parameters.
     ╭─[language/expressions/class/getter-param-dflt.js:22:1]
  22 │ 
  23 │ 0, class { get a(param = null) {} };
     ·                 ──────────────
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/method/array-destructuring-param-strict-body.js:151:1]
+ 151 │   method([element]) {
+ 152 │     "use strict";
+     ·     ─────────────
+ 153 │   }
+     ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/expressions/class/method/dflt-params-duplicates.js:79:1]
+ 79 │ 0, class {
+ 80 │   method(x = 0, x) {
+    ·          ┬      ┬
+    ·          │      ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
+ 81 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/expressions/class/method/dflt-params-rest.js:83:1]
+ 83 │ 0, class {
+ 84 │   method(...x = []) {
+    ·             ──────
+ 85 │     
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/method/object-destructuring-param-strict-body.js:151:1]
+ 151 │   method({property}) {
+ 152 │     "use strict";
+     ·     ─────────────
+ 153 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/expressions/class/method/rest-param-strict-body.js:151:1]
+ 151 │   method(a,...rest) {
+ 152 │     "use strict";
+     ·     ─────────────
+ 153 │   }
+     ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/expressions/class/method/rest-params-trailing-comma-early-error.js:75:1]
+ 75 │ 0, class {
+ 76 │   method(...a,) {
+    ·          ────
+ 77 │     
     ╰────
 
   × The keyword 'yield' is reserved
@@ -12630,56 +12680,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  75 │ 0, class {
  76 │   static method(...a,) {
     ·                 ────
- 77 │     
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/method/array-destructuring-param-strict-body.js:151:1]
- 151 │   method([element]) {
- 152 │     "use strict";
-     ·     ─────────────
- 153 │   }
-     ╰────
-
-  × Identifier `x` has already been declared
-    ╭─[language/expressions/class/method/dflt-params-duplicates.js:79:1]
- 79 │ 0, class {
- 80 │   method(x = 0, x) {
-    ·          ┬      ┬
-    ·          │      ╰── It can not be redeclared here
-    ·          ╰── `x` has already been declared here
- 81 │     
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/expressions/class/method/dflt-params-rest.js:83:1]
- 83 │ 0, class {
- 84 │   method(...x = []) {
-    ·             ──────
- 85 │     
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/method/object-destructuring-param-strict-body.js:151:1]
- 151 │   method({property}) {
- 152 │     "use strict";
-     ·     ─────────────
- 153 │   }
-     ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/expressions/class/method/rest-param-strict-body.js:151:1]
- 151 │   method(a,...rest) {
- 152 │     "use strict";
-     ·     ─────────────
- 153 │   }
-     ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/expressions/class/method/rest-params-trailing-comma-early-error.js:75:1]
- 75 │ 0, class {
- 76 │   method(...a,) {
-    ·          ────
  77 │     
     ╰────
 
@@ -21772,226 +21772,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js:134:1]
- 134 │   static async *method([element]) {
- 135 │     "use strict";
-     ·     ─────────────
- 136 │   }
-     ╰────
-
-  × Cannot use `await` as an identifier in an async context
-    ╭─[language/statements/class/async-gen-method-static/await-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     var \u0061wait;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
-  × Cannot use `await` as an identifier in an async context
-    ╭─[language/statements/class/async-gen-method-static/await-as-binding-identifier.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     var await;
-    ·         ─────
- 36 │ }}
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     void \u0061wait;
-    ·          ──────────
- 36 │ }}
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     void \u0061wait;
-    ·                    ─
- 36 │ }}
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/async-gen-method-static/await-as-identifier-reference.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     void await;
-    ·               ─
- 36 │ }}
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/async-gen-method-static/await-as-label-identifier-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     \u0061wait: ;
-    ·     ──────────
- 36 │ }}
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/async-gen-method-static/await-as-label-identifier-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     \u0061wait: ;
-    ·               ─
- 36 │ }}
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/async-gen-method-static/await-as-label-identifier.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     await: ;
-    ·          ─
- 36 │ }}
-    ╰────
-
-  × Identifier `x` has already been declared
-    ╭─[language/statements/class/async-gen-method-static/dflt-params-duplicates.js:62:1]
- 62 │ class C {
- 63 │   static async *method(x = 0, x) {
-    ·                        ┬      ┬
-    ·                        │      ╰── It can not be redeclared here
-    ·                        ╰── `x` has already been declared here
- 64 │     
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/class/async-gen-method-static/dflt-params-rest.js:66:1]
- 66 │ class C {
- 67 │   static async *method(...x = []) {
-    ·                           ──────
- 68 │     
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/async-gen-method-static/object-destructuring-param-strict-body.js:134:1]
- 134 │   static async *method({property}) {
- 135 │     "use strict";
-     ·     ─────────────
- 136 │   }
-     ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/async-gen-method-static/rest-param-strict-body.js:134:1]
- 134 │   static async *method(a,...rest) {
- 135 │     "use strict";
-     ·     ─────────────
- 136 │   }
-     ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
- 59 │ class C {
- 60 │   static async *method(...a,) {
-    ·                        ────
- 61 │     
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     var yield;
-    ·         ─────
- 36 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     var yield;
-    ·         ─────
- 36 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
- 36 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
- 36 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     void yield;
-    ·          ─────
- 36 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     void yield;
-    ·          ─────
- 36 │ }}
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     yi\u0065ld: ;
-    ·     ──────────
- 36 │ }}
-    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/statements/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     yi\u0065ld: ;
-    ·               ▲
- 36 │ }}
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/statements/class/async-gen-method-static/yield-as-label-identifier.js:34:1]
- 34 │ class C { static async *gen() {
- 35 │     yield: ;
-    ·          ▲
- 36 │ }}
-    ╰────
-  help: Try insert a semicolon here
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method-static/yield-identifier-spread-strict.js:40:1]
- 40 │          ...(function() {
- 41 │             var yield;
-    ·                 ─────
- 42 │             throw new Test262Error();
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/async-gen-method-static/yield-identifier-strict.js:32:1]
- 32 │     (function() {
- 33 │         var yield;
-    ·             ─────
- 34 │         throw new Test262Error();
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
      ╭─[language/statements/class/async-gen-method/array-destructuring-param-strict-body.js:133:1]
  133 │   async *method([element]) {
  134 │     "use strict";
@@ -22211,126 +21991,232 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  34 │         throw new Test262Error();
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-gen-method-static/array-destructuring-param-strict-body.js:134:1]
+ 134 │   static async *method([element]) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-gen-method-static/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var \u0061wait;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-gen-method-static/await-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var await;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void \u0061wait;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/async-gen-method-static/await-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void \u0061wait;
+    ·                    ─
+ 36 │ }}
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/async-gen-method-static/await-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void await;
+    ·               ─
+ 36 │ }}
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/async-gen-method-static/await-as-label-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     \u0061wait: ;
+    ·     ──────────
+ 36 │ }}
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/async-gen-method-static/await-as-label-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     \u0061wait: ;
+    ·               ─
+ 36 │ }}
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/async-gen-method-static/await-as-label-identifier.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     await: ;
+    ·          ─
+ 36 │ }}
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/async-gen-method-static/dflt-params-duplicates.js:62:1]
+ 62 │ class C {
+ 63 │   static async *method(x = 0, x) {
+    ·                        ┬      ┬
+    ·                        │      ╰── It can not be redeclared here
+    ·                        ╰── `x` has already been declared here
+ 64 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/async-gen-method-static/dflt-params-rest.js:66:1]
+ 66 │ class C {
+ 67 │   static async *method(...x = []) {
+    ·                           ──────
+ 68 │     
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-gen-method-static/object-destructuring-param-strict-body.js:134:1]
+ 134 │   static async *method({property}) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-gen-method-static/rest-param-strict-body.js:134:1]
+ 134 │   static async *method(a,...rest) {
+ 135 │     "use strict";
+     ·     ─────────────
+ 136 │   }
+     ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:59:1]
+ 59 │ class C {
+ 60 │   static async *method(...a,) {
+    ·                        ────
+ 61 │     
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     yi\u0065ld: ;
+    ·     ──────────
+ 36 │ }}
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/statements/class/async-gen-method-static/yield-as-label-identifier-escaped.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     yi\u0065ld: ;
+    ·               ▲
+ 36 │ }}
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/statements/class/async-gen-method-static/yield-as-label-identifier.js:34:1]
+ 34 │ class C { static async *gen() {
+ 35 │     yield: ;
+    ·          ▲
+ 36 │ }}
+    ╰────
+  help: Try insert a semicolon here
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-identifier-spread-strict.js:40:1]
+ 40 │          ...(function() {
+ 41 │             var yield;
+    ·                 ─────
+ 42 │             throw new Test262Error();
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/async-gen-method-static/yield-identifier-strict.js:32:1]
+ 32 │     (function() {
+ 33 │         var yield;
+    ·             ─────
+ 34 │         throw new Test262Error();
+    ╰────
+
   × Keywords cannot contain escape characters
     ╭─[language/statements/class/async-meth-escaped-async.js:24:1]
  24 │ class C {
  25 │     \u0061sync m(){}
     ·     ──────────
  26 │ };
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/async-method-static/array-destructuring-param-strict-body.js:131:1]
- 131 │   static async method([element]) {
- 132 │     "use strict";
-     ·     ─────────────
- 133 │   }
-     ╰────
-
-  × Cannot use `await` as an identifier in an async context
-    ╭─[language/statements/class/async-method-static/await-as-binding-identifier-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     var \u0061wait;
-    ·         ──────────
- 37 │   }
-    ╰────
-
-  × Cannot use `await` as an identifier in an async context
-    ╭─[language/statements/class/async-method-static/await-as-binding-identifier.js:35:1]
- 35 │   static async method() {
- 36 │     var await;
-    ·         ─────
- 37 │   }
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     void \u0061wait;
-    ·          ──────────
- 37 │   }
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     void \u0061wait;
-    ·                    ─
- 37 │   }
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/async-method-static/await-as-identifier-reference.js:35:1]
- 35 │   static async method() {
- 36 │     void await;
-    ·               ─
- 37 │   }
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/async-method-static/await-as-label-identifier-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     \u0061wait: ;
-    ·     ──────────
- 37 │   }
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/async-method-static/await-as-label-identifier-escaped.js:35:1]
- 35 │   static async method() {
- 36 │     \u0061wait: ;
-    ·               ─
- 37 │   }
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/async-method-static/await-as-label-identifier.js:35:1]
- 35 │   static async method() {
- 36 │     await: ;
-    ·          ─
- 37 │   }
-    ╰────
-
-  × Identifier `x` has already been declared
-    ╭─[language/statements/class/async-method-static/dflt-params-duplicates.js:59:1]
- 59 │ class C {
- 60 │   static async method(x = 0, x) {
-    ·                       ┬      ┬
-    ·                       │      ╰── It can not be redeclared here
-    ·                       ╰── `x` has already been declared here
- 61 │     
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/class/async-method-static/dflt-params-rest.js:63:1]
- 63 │ class C {
- 64 │   static async method(...x = []) {
-    ·                          ──────
- 65 │     
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/async-method-static/object-destructuring-param-strict-body.js:131:1]
- 131 │   static async method({property}) {
- 132 │     "use strict";
-     ·     ─────────────
- 133 │   }
-     ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/async-method-static/rest-param-strict-body.js:131:1]
- 131 │   static async method(a,...rest) {
- 132 │     "use strict";
-     ·     ─────────────
- 133 │   }
-     ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:55:1]
- 55 │ class C {
- 56 │   static async method(...a,) {
-    ·                       ────
- 57 │     
     ╰────
 
   × Illegal 'use strict' directive in function with non-simple parameter list
@@ -22445,6 +22331,120 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  57 │   async method(...a,) {
     ·                ────
  58 │     
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-method-static/array-destructuring-param-strict-body.js:131:1]
+ 131 │   static async method([element]) {
+ 132 │     "use strict";
+     ·     ─────────────
+ 133 │   }
+     ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-method-static/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/async-method-static/await-as-binding-identifier.js:35:1]
+ 35 │   static async method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     void \u0061wait;
+    ·          ──────────
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/async-method-static/await-as-identifier-reference-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     void \u0061wait;
+    ·                    ─
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/async-method-static/await-as-identifier-reference.js:35:1]
+ 35 │   static async method() {
+ 36 │     void await;
+    ·               ─
+ 37 │   }
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/async-method-static/await-as-label-identifier-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     \u0061wait: ;
+    ·     ──────────
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/async-method-static/await-as-label-identifier-escaped.js:35:1]
+ 35 │   static async method() {
+ 36 │     \u0061wait: ;
+    ·               ─
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/async-method-static/await-as-label-identifier.js:35:1]
+ 35 │   static async method() {
+ 36 │     await: ;
+    ·          ─
+ 37 │   }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/async-method-static/dflt-params-duplicates.js:59:1]
+ 59 │ class C {
+ 60 │   static async method(x = 0, x) {
+    ·                       ┬      ┬
+    ·                       │      ╰── It can not be redeclared here
+    ·                       ╰── `x` has already been declared here
+ 61 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/async-method-static/dflt-params-rest.js:63:1]
+ 63 │ class C {
+ 64 │   static async method(...x = []) {
+    ·                          ──────
+ 65 │     
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-method-static/object-destructuring-param-strict-body.js:131:1]
+ 131 │   static async method({property}) {
+ 132 │     "use strict";
+     ·     ─────────────
+ 133 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/async-method-static/rest-param-strict-body.js:131:1]
+ 131 │   static async method(a,...rest) {
+ 132 │     "use strict";
+     ·     ─────────────
+ 133 │   }
+     ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:55:1]
+ 55 │ class C {
+ 56 │   static async method(...a,) {
+    ·                       ────
+ 57 │     
     ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -23839,176 +23839,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     var \u0061wait;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
-  × Cannot use `await` as an identifier in an async context
-    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     var await;
-    ·         ─────
- 36 │ }}
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     void \u0061wait;
-    ·          ──────────
- 36 │ }}
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     void \u0061wait;
-    ·                    ─
- 36 │ }}
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-identifier-reference.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     void await;
-    ·               ─
- 36 │ }}
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-label-identifier-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     \u0061wait: ;
-    ·     ──────────
- 36 │ }}
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-label-identifier-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     \u0061wait: ;
-    ·               ─
- 36 │ }}
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-label-identifier.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     await: ;
-    ·          ─
- 36 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     var yi\u0065ld;
-    ·         ──────────
- 36 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     var yield;
-    ·         ─────
- 36 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     var yield;
-    ·         ─────
- 36 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
- 36 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     void yi\u0065ld;
-    ·          ──────────
- 36 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     void yield;
-    ·          ─────
- 36 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     void yield;
-    ·          ─────
- 36 │ }}
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     yi\u0065ld: ;
-    ·     ──────────
- 36 │ }}
-    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     yi\u0065ld: ;
-    ·               ▲
- 36 │ }}
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-label-identifier.js:34:1]
- 34 │ class C { static async *#gen() {
- 35 │     yield: ;
-    ·          ▲
- 36 │ }}
-    ╰────
-  help: Try insert a semicolon here
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js:41:1]
- 41 │              ...(function() {
- 42 │                 var yield;
-    ·                     ─────
- 43 │                 throw new Test262Error();
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-identifier-strict.js:33:1]
- 33 │         (function() {
- 34 │             var yield;
-    ·                 ─────
- 35 │             throw new Test262Error();
-    ╰────
-
-  × Cannot use `await` as an identifier in an async context
     ╭─[language/statements/class/elements/async-gen-private-method/await-as-binding-identifier-escaped.js:34:1]
  34 │ class C { async *#gen() {
  35 │     var \u0061wait;
@@ -24179,67 +24009,173 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[language/statements/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     var \u0061wait;
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var \u0061wait;
     ·         ──────────
- 37 │   }
+ 36 │ }}
     ╰────
 
   × Cannot use `await` as an identifier in an async context
-    ╭─[language/statements/class/elements/async-private-method-static/await-as-binding-identifier.js:35:1]
- 35 │   static async #method() {
- 36 │     var await;
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var await;
     ·         ─────
- 37 │   }
+ 36 │ }}
     ╰────
 
   × Keywords cannot contain escape characters
-    ╭─[language/statements/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     void \u0061wait;
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void \u0061wait;
     ·          ──────────
- 37 │   }
+ 36 │ }}
     ╰────
 
   × Unexpected token
-    ╭─[language/statements/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     void \u0061wait;
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void \u0061wait;
     ·                    ─
- 37 │   }
+ 36 │ }}
     ╰────
 
   × Unexpected token
-    ╭─[language/statements/class/elements/async-private-method-static/await-as-identifier-reference.js:35:1]
- 35 │   static async #method() {
- 36 │     void await;
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void await;
     ·               ─
- 37 │   }
+ 36 │ }}
     ╰────
 
   × Keywords cannot contain escape characters
-    ╭─[language/statements/class/elements/async-private-method-static/await-as-label-identifier-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     \u0061wait: ;
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-label-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     \u0061wait: ;
     ·     ──────────
- 37 │   }
+ 36 │ }}
     ╰────
 
   × Unexpected token
-    ╭─[language/statements/class/elements/async-private-method-static/await-as-label-identifier-escaped.js:35:1]
- 35 │   static async #method() {
- 36 │     \u0061wait: ;
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-label-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     \u0061wait: ;
     ·               ─
- 37 │   }
+ 36 │ }}
     ╰────
 
   × Unexpected token
-    ╭─[language/statements/class/elements/async-private-method-static/await-as-label-identifier.js:35:1]
- 35 │   static async #method() {
- 36 │     await: ;
+    ╭─[language/statements/class/elements/async-gen-private-method-static/await-as-label-identifier.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     await: ;
     ·          ─
- 37 │   }
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var yi\u0065ld;
+    ·         ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-binding-identifier.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     var yield;
+    ·         ─────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void yi\u0065ld;
+    ·          ──────────
+ 36 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-identifier-reference.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     void yield;
+    ·          ─────
+ 36 │ }}
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     yi\u0065ld: ;
+    ·     ──────────
+ 36 │ }}
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-label-identifier-escaped.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     yi\u0065ld: ;
+    ·               ▲
+ 36 │ }}
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-as-label-identifier.js:34:1]
+ 34 │ class C { static async *#gen() {
+ 35 │     yield: ;
+    ·          ▲
+ 36 │ }}
+    ╰────
+  help: Try insert a semicolon here
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-identifier-spread-strict.js:41:1]
+ 41 │              ...(function() {
+ 42 │                 var yield;
+    ·                     ─────
+ 43 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/async-gen-private-method-static/yield-identifier-strict.js:33:1]
+ 33 │         (function() {
+ 34 │             var yield;
+    ·                 ─────
+ 35 │             throw new Test262Error();
     ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -24301,6 +24237,70 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
   × Unexpected token
     ╭─[language/statements/class/elements/async-private-method/await-as-label-identifier.js:35:1]
  35 │   async #method() {
+ 36 │     await: ;
+    ·          ─
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-binding-identifier-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     var \u0061wait;
+    ·         ──────────
+ 37 │   }
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-binding-identifier.js:35:1]
+ 35 │   static async #method() {
+ 36 │     var await;
+    ·         ─────
+ 37 │   }
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     void \u0061wait;
+    ·          ──────────
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-identifier-reference-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     void \u0061wait;
+    ·                    ─
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-identifier-reference.js:35:1]
+ 35 │   static async #method() {
+ 36 │     void await;
+    ·               ─
+ 37 │   }
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-label-identifier-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     \u0061wait: ;
+    ·     ──────────
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-label-identifier-escaped.js:35:1]
+ 35 │   static async #method() {
+ 36 │     \u0061wait: ;
+    ·               ─
+ 37 │   }
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/class/elements/async-private-method-static/await-as-label-identifier.js:35:1]
+ 35 │   static async #method() {
  36 │     await: ;
     ·          ─
  37 │   }
@@ -24437,112 +24437,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╰────
 
   × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     var yield;
-    ·         ─────
- 35 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     var yield;
-    ·         ─────
- 35 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
- 35 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
- 35 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     void yield;
-    ·          ─────
- 35 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     void yield;
-    ·          ─────
- 35 │ }}
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     yi\u0065ld: ;
-    ·     ──────────
- 35 │ }}
-    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     yi\u0065ld: ;
-    ·               ▲
- 35 │ }}
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-label-identifier.js:33:1]
- 33 │ class C {static *#gen() {
- 34 │     yield: ;
-    ·          ▲
- 35 │ }}
-    ╰────
-  help: Try insert a semicolon here
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-identifier-spread-strict.js:40:1]
- 40 │              ...(function() {
- 41 │                 var yield;
-    ·                     ─────
- 42 │                 throw new Test262Error();
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/elements/gen-private-method-static/yield-identifier-strict.js:32:1]
- 32 │         (function() {
- 33 │             var yield;
-    ·                 ─────
- 34 │             throw new Test262Error();
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
     ╭─[language/statements/class/elements/gen-private-method/yield-as-binding-identifier-escaped.js:33:1]
  33 │ class C { *#gen() {
  34 │     var yi\u0065ld;
@@ -24642,6 +24536,112 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
 
   × The keyword 'yield' is reserved
     ╭─[language/statements/class/elements/gen-private-method/yield-identifier-strict.js:32:1]
+ 32 │         (function() {
+ 33 │             var yield;
+    ·                 ─────
+ 34 │             throw new Test262Error();
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-binding-identifier.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-identifier-reference.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     yi\u0065ld: ;
+    ·     ──────────
+ 35 │ }}
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-label-identifier-escaped.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     yi\u0065ld: ;
+    ·               ▲
+ 35 │ }}
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-as-label-identifier.js:33:1]
+ 33 │ class C {static *#gen() {
+ 34 │     yield: ;
+    ·          ▲
+ 35 │ }}
+    ╰────
+  help: Try insert a semicolon here
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-identifier-spread-strict.js:40:1]
+ 40 │              ...(function() {
+ 41 │                 var yield;
+    ·                     ─────
+ 42 │                 throw new Test262Error();
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/elements/gen-private-method-static/yield-identifier-strict.js:32:1]
  32 │         (function() {
  33 │             var yield;
     ·                 ─────
@@ -27681,6 +27681,162 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  27 │ }
     ╰────
 
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/gen-method/array-destructuring-param-strict-body.js:153:1]
+ 153 │   *method([element]) {
+ 154 │     "use strict";
+     ·     ─────────────
+ 155 │   }
+     ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/gen-method/dflt-params-duplicates.js:81:1]
+ 81 │ class C {
+ 82 │   *method(x = 0, x) {
+    ·           ┬      ┬
+    ·           │      ╰── It can not be redeclared here
+    ·           ╰── `x` has already been declared here
+ 83 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/gen-method/dflt-params-rest.js:85:1]
+ 85 │ class C {
+ 86 │   *method(...x = []) {
+    ·              ──────
+ 87 │     
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/gen-method/object-destructuring-param-strict-body.js:153:1]
+ 153 │   *method({property}) {
+ 154 │     "use strict";
+     ·     ─────────────
+ 155 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/gen-method/rest-param-strict-body.js:153:1]
+ 153 │   *method(a,...rest) {
+ 154 │     "use strict";
+     ·     ─────────────
+ 155 │   }
+     ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:78:1]
+ 78 │ class C {
+ 79 │   *method(...a,) {
+    ·           ────
+ 80 │     
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     var yi\u0065ld;
+    ·         ──────────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-binding-identifier.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     var yield;
+    ·         ─────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     void yi\u0065ld;
+    ·          ──────────
+ 35 │ }}
+    ╰────
+
+  × Cannot use `yield` as an identifier in a generator context
+    ╭─[language/statements/class/gen-method/yield-as-identifier-reference.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method/yield-as-identifier-reference.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     void yield;
+    ·          ─────
+ 35 │ }}
+    ╰────
+
+  × Keywords cannot contain escape characters
+    ╭─[language/statements/class/gen-method/yield-as-label-identifier-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     yi\u0065ld: ;
+    ·     ──────────
+ 35 │ }}
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/statements/class/gen-method/yield-as-label-identifier-escaped.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     yi\u0065ld: ;
+    ·               ▲
+ 35 │ }}
+    ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/statements/class/gen-method/yield-as-label-identifier.js:33:1]
+ 33 │ class C { *gen() {
+ 34 │     yield: ;
+    ·          ▲
+ 35 │ }}
+    ╰────
+  help: Try insert a semicolon here
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method/yield-identifier-spread-strict.js:39:1]
+ 39 │          ...(function() {
+ 40 │             var yield;
+    ·                 ─────
+ 41 │             throw new Test262Error();
+    ╰────
+
+  × The keyword 'yield' is reserved
+    ╭─[language/statements/class/gen-method/yield-identifier-strict.js:31:1]
+ 31 │     (function() {
+ 32 │         var yield;
+    ·             ─────
+ 33 │         throw new Test262Error();
+    ╰────
+
   × yield expression not allowed in formal parameter
     ╭─[language/statements/class/gen-method-param-dflt-yield.js:25:1]
  25 │ class C {
@@ -27846,167 +28002,61 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  33 │         throw new Test262Error();
     ╰────
 
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/gen-method/array-destructuring-param-strict-body.js:153:1]
- 153 │   *method([element]) {
- 154 │     "use strict";
-     ·     ─────────────
- 155 │   }
-     ╰────
-
-  × Identifier `x` has already been declared
-    ╭─[language/statements/class/gen-method/dflt-params-duplicates.js:81:1]
- 81 │ class C {
- 82 │   *method(x = 0, x) {
-    ·           ┬      ┬
-    ·           │      ╰── It can not be redeclared here
-    ·           ╰── `x` has already been declared here
- 83 │     
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/class/gen-method/dflt-params-rest.js:85:1]
- 85 │ class C {
- 86 │   *method(...x = []) {
-    ·              ──────
- 87 │     
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/gen-method/object-destructuring-param-strict-body.js:153:1]
- 153 │   *method({property}) {
- 154 │     "use strict";
-     ·     ─────────────
- 155 │   }
-     ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/gen-method/rest-param-strict-body.js:153:1]
- 153 │   *method(a,...rest) {
- 154 │     "use strict";
-     ·     ─────────────
- 155 │   }
-     ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:78:1]
- 78 │ class C {
- 79 │   *method(...a,) {
-    ·           ────
- 80 │     
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ class C { *gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method/yield-as-binding-identifier-escaped.js:33:1]
- 33 │ class C { *gen() {
- 34 │     var yi\u0065ld;
-    ·         ──────────
- 35 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/gen-method/yield-as-binding-identifier.js:33:1]
- 33 │ class C { *gen() {
- 34 │     var yield;
-    ·         ─────
- 35 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method/yield-as-binding-identifier.js:33:1]
- 33 │ class C { *gen() {
- 34 │     var yield;
-    ·         ─────
- 35 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
- 33 │ class C { *gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
- 35 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method/yield-as-identifier-reference-escaped.js:33:1]
- 33 │ class C { *gen() {
- 34 │     void yi\u0065ld;
-    ·          ──────────
- 35 │ }}
-    ╰────
-
-  × Cannot use `yield` as an identifier in a generator context
-    ╭─[language/statements/class/gen-method/yield-as-identifier-reference.js:33:1]
- 33 │ class C { *gen() {
- 34 │     void yield;
-    ·          ─────
- 35 │ }}
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method/yield-as-identifier-reference.js:33:1]
- 33 │ class C { *gen() {
- 34 │     void yield;
-    ·          ─────
- 35 │ }}
-    ╰────
-
-  × Keywords cannot contain escape characters
-    ╭─[language/statements/class/gen-method/yield-as-label-identifier-escaped.js:33:1]
- 33 │ class C { *gen() {
- 34 │     yi\u0065ld: ;
-    ·     ──────────
- 35 │ }}
-    ╰────
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/statements/class/gen-method/yield-as-label-identifier-escaped.js:33:1]
- 33 │ class C { *gen() {
- 34 │     yi\u0065ld: ;
-    ·               ▲
- 35 │ }}
-    ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/statements/class/gen-method/yield-as-label-identifier.js:33:1]
- 33 │ class C { *gen() {
- 34 │     yield: ;
-    ·          ▲
- 35 │ }}
-    ╰────
-  help: Try insert a semicolon here
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method/yield-identifier-spread-strict.js:39:1]
- 39 │          ...(function() {
- 40 │             var yield;
-    ·                 ─────
- 41 │             throw new Test262Error();
-    ╰────
-
-  × The keyword 'yield' is reserved
-    ╭─[language/statements/class/gen-method/yield-identifier-strict.js:31:1]
- 31 │     (function() {
- 32 │         var yield;
-    ·             ─────
- 33 │         throw new Test262Error();
-    ╰────
-
   × A 'get' accessor must not have any formal parameters.
     ╭─[language/statements/class/getter-param-dflt.js:22:1]
  22 │ 
  23 │ class C { get a(param = null) {} }
     ·                ──────────────
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/method/array-destructuring-param-strict-body.js:150:1]
+ 150 │   method([element]) {
+ 151 │     "use strict";
+     ·     ─────────────
+ 152 │   }
+     ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/method/dflt-params-duplicates.js:78:1]
+ 78 │ class C {
+ 79 │   method(x = 0, x) {
+    ·          ┬      ┬
+    ·          │      ╰── It can not be redeclared here
+    ·          ╰── `x` has already been declared here
+ 80 │     
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/class/method/dflt-params-rest.js:82:1]
+ 82 │ class C {
+ 83 │   method(...x = []) {
+    ·             ──────
+ 84 │     
+    ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/method/object-destructuring-param-strict-body.js:150:1]
+ 150 │   method({property}) {
+ 151 │     "use strict";
+     ·     ─────────────
+ 152 │   }
+     ╰────
+
+  × Illegal 'use strict' directive in function with non-simple parameter list
+     ╭─[language/statements/class/method/rest-param-strict-body.js:150:1]
+ 150 │   method(a,...rest) {
+ 151 │     "use strict";
+     ·     ─────────────
+ 152 │   }
+     ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/class/method/rest-params-trailing-comma-early-error.js:74:1]
+ 74 │ class C {
+ 75 │   method(...a,) {
+    ·          ────
+ 76 │     
     ╰────
 
   × The keyword 'yield' is reserved
@@ -28064,56 +28114,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
  74 │ class C {
  75 │   static method(...a,) {
     ·                 ────
- 76 │     
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/method/array-destructuring-param-strict-body.js:150:1]
- 150 │   method([element]) {
- 151 │     "use strict";
-     ·     ─────────────
- 152 │   }
-     ╰────
-
-  × Identifier `x` has already been declared
-    ╭─[language/statements/class/method/dflt-params-duplicates.js:78:1]
- 78 │ class C {
- 79 │   method(x = 0, x) {
-    ·          ┬      ┬
-    ·          │      ╰── It can not be redeclared here
-    ·          ╰── `x` has already been declared here
- 80 │     
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/class/method/dflt-params-rest.js:82:1]
- 82 │ class C {
- 83 │   method(...x = []) {
-    ·             ──────
- 84 │     
-    ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/method/object-destructuring-param-strict-body.js:150:1]
- 150 │   method({property}) {
- 151 │     "use strict";
-     ·     ─────────────
- 152 │   }
-     ╰────
-
-  × Illegal 'use strict' directive in function with non-simple parameter list
-     ╭─[language/statements/class/method/rest-param-strict-body.js:150:1]
- 150 │   method(a,...rest) {
- 151 │     "use strict";
-     ·     ─────────────
- 152 │   }
-     ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/class/method/rest-params-trailing-comma-early-error.js:74:1]
- 74 │ class C {
- 75 │   method(...a,) {
-    ·          ────
  76 │     
     ╰────
 
@@ -28870,6 +28870,442 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ·             ──
  20 │ //
     ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/for/S12.6.3_A11.1_T3.js:23:1]
+ 23 │     nested:for(var index_n=0;index_n<=index;index_n++){
+ 24 │         if(index*index_n == 6)continue nonexist;
+    ·                                        ────┬───
+    ·                                            ╰── This label is used, but not defined
+ 25 │         __str+=""+index+index_n;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/for/S12.6.3_A11_T3.js:23:1]
+ 23 │     nested:for(index_n=0;index_n<=index;index_n++){
+ 24 │         if(index*index_n == 6)continue nonexist;
+    ·                                        ────┬───
+    ·                                            ╰── This label is used, but not defined
+ 25 │         __str+=""+index+index_n;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/for/S12.6.3_A12.1_T3.js:23:1]
+ 23 │     nested:for(var index_n=0;index_n<=index;index_n++){
+ 24 │         if(index*index_n >= 4)break nonexist;
+    ·                                     ────┬───
+    ·                                         ╰── This label is used, but not defined
+ 25 │         __str+=""+index+index_n;
+    ╰────
+
+  × Use of undefined label
+    ╭─[language/statements/for/S12.6.3_A12_T3.js:23:1]
+ 23 │     nested:for(index_n=0;index_n<=index;index_n++){
+ 24 │         if(index*index_n >= 4)break nonexist;
+    ·                                     ────┬───
+    ·                                         ╰── This label is used, but not defined
+ 25 │         __str+=""+index+index_n;
+    ╰────
+
+  × Expected `)` but found `;`
+    ╭─[language/statements/for/S12.6.3_A4.1.js:21:1]
+ 21 │ //CHECK#1
+ 22 │ for (var a in arr;1;){
+    ·                  ┬
+    ·                  ╰── `)` expected
+ 23 │     break;
+    ╰────
+
+  × Expected `)` but found `;`
+    ╭─[language/statements/for/S12.6.3_A4_T1.js:21:1]
+ 21 │ //CHECK#1
+ 22 │ for (a in arr;1;){
+    ·              ┬
+    ·              ╰── `)` expected
+ 23 │     break;
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/for/S12.6.3_A4_T2.js:21:1]
+ 21 │ //CHECK#1
+ 22 │ for(1 in arr;1;) {
+    ·     ─
+ 23 │     break;
+    ╰────
+
+  × Expected `)` but found `;`
+    ╭─[language/statements/for/S12.6.3_A7.1_T1.js:20:1]
+ 20 │ //CHECK#1
+ 21 │ for(var index=0; index<10; index++; index--);
+    ·                                   ┬
+    ·                                   ╰── `)` expected
+ 22 │ //
+    ╰────
+
+  × Expected `)` but found `;`
+    ╭─[language/statements/for/S12.6.3_A7.1_T2.js:20:1]
+ 20 │ //CHECK#1
+ 21 │ for(var index=0; index<10; index+=4; index++; index--) ;
+    ·                                    ┬
+    ·                                    ╰── `)` expected
+ 22 │ //
+    ╰────
+
+  × Expected `)` but found `;`
+    ╭─[language/statements/for/S12.6.3_A7_T1.js:20:1]
+ 20 │ //CHECK#1
+ 21 │ for(index=0; index<10; index++; index--) ;
+    ·                               ┬
+    ·                               ╰── `)` expected
+ 22 │ //
+    ╰────
+
+  × Expected `)` but found `;`
+    ╭─[language/statements/for/S12.6.3_A7_T2.js:20:1]
+ 20 │ //CHECK#1
+ 21 │ for(index=0; index<10; index+=4; index++; index--) ;
+    ·                                ┬
+    ·                                ╰── `)` expected
+ 22 │ //
+    ╰────
+
+  × Expected `,` but found `++`
+    ╭─[language/statements/for/S12.6.3_A8.1_T1.js:20:1]
+ 20 │ //CHECK#1
+ 21 │ for(var index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
+    ·                                   ─┬
+    ·                                    ╰── `,` expected
+ 22 │ //
+    ╰────
+
+  × Expected `,` but found `++`
+    ╭─[language/statements/for/S12.6.3_A8.1_T2.js:20:1]
+ 20 │ //CHECK#1
+ 21 │ for(var index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
+    ·                        ─┬
+    ·                         ╰── `,` expected
+ 22 │ //
+    ╰────
+
+  × Unexpected token
+    ╭─[language/statements/for/S12.6.3_A8.1_T3.js:20:1]
+ 20 │ //CHECK#3
+ 21 │ for({var index=0; index+=1;} index++<=10; index*2;) {   arr.add(""+index);};
+    ·          ─────
+ 22 │ //
+    ╰────
+
+  × Expected `,` but found `++`
+    ╭─[language/statements/for/S12.6.3_A8_T1.js:20:1]
+ 20 │ //CHECK#1
+ 21 │ for(index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
+    ·                               ─┬
+    ·                                ╰── `,` expected
+ 22 │ //
+    ╰────
+
+  × Expected `,` but found `++`
+    ╭─[language/statements/for/S12.6.3_A8_T2.js:20:1]
+ 20 │ //CHECK#1
+ 21 │ for(index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
+    ·                    ─┬
+    ·                     ╰── `,` expected
+ 22 │ //
+    ╰────
+
+  × Expected `,` but found `;`
+    ╭─[language/statements/for/S12.6.3_A8_T3.js:20:1]
+ 20 │ //CHECK#1
+ 21 │ for({index=0; index+=1;} index++<=10; index*2;) {   arr.add(""+index);};
+    ·             ┬
+    ·             ╰── `,` expected
+ 22 │ //
+    ╰────
+
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/for/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ for ( ; false; ) async function f() {}
+    ·                  ──────────────────
+    ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/for/decl-async-fun.js:19:1]
+ 19 │ 
+ 20 │ for ( ; false; ) async function f() {}
+    ·                  ─────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Async functions can only be declared at the top level or inside a block
+    ╭─[language/statements/for/decl-async-gen.js:19:1]
+ 19 │ 
+ 20 │ for ( ; false; ) async function* g() {}
+    ·                  ───────────────────
+    ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/for/decl-async-gen.js:19:1]
+ 19 │ 
+ 20 │ for ( ; false; ) async function* g() {}
+    ·                  ──────────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid class declaration
+    ╭─[language/statements/for/decl-cls.js:13:1]
+ 13 │ 
+ 14 │ for ( ; false; ) class C {}
+    ·                  ────────
+    ╰────
+  help: Classes can only be declared at top level or inside a block
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[language/statements/for/decl-const.js:13:1]
+ 13 │ 
+ 14 │ for ( ; false; ) const x = null;
+    ·                  ───────────────
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Invalid function declaration
+    ╭─[language/statements/for/decl-fun.js:13:1]
+ 13 │ 
+ 14 │ for ( ; false; ) function f() {}
+    ·                  ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Generators can only be declared at the top level or inside a block
+    ╭─[language/statements/for/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ for ( ; false; ) function* g() {}
+    ·                  ─────────────
+    ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/for/decl-gen.js:14:1]
+ 14 │ 
+ 15 │ for ( ; false; ) function* g() {}
+    ·                  ────────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/statements/for/decl-let.js:13:1]
+ 13 │ 
+ 14 │ for ( ; false; ) let x;
+    ·                     ─
+    ╰────
+  help: Try insert a semicolon here
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js:50:1]
+ 50 │ 
+ 51 │ for (const [...[ x ] = []] = []; iterCount < 1; ) {
+    ·                ──────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-id.js:50:1]
+ 50 │ 
+ 51 │ for (const [...x = []] = []; iterCount < 1; ) {
+    ·                ──────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-obj.js:50:1]
+ 50 │ 
+ 51 │ for (const [...{ x } = []] = []; iterCount < 1; ) {
+    ·                ──────────
+ 52 │   
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-ary.js:50:1]
+ 50 │ 
+ 51 │ for (const [...[x], y] = [1, 2, 3]; iterCount < 1; ) {
+    ·             ──────
+ 52 │   
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-id.js:50:1]
+ 50 │ 
+ 51 │ for (const [...x, y] = [1, 2, 3]; iterCount < 1; ) {
+    ·             ────
+ 52 │   
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-obj.js:50:1]
+ 50 │ 
+ 51 │ for (const [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
+    ·             ────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-ary.js:50:1]
+ 50 │ 
+ 51 │ for (let [...[ x ] = []] = []; iterCount < 1; ) {
+    ·              ──────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-id.js:50:1]
+ 50 │ 
+ 51 │ for (let [...x = []] = []; iterCount < 1; ) {
+    ·              ──────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js:50:1]
+ 50 │ 
+ 51 │ for (let [...{ x } = []] = []; iterCount < 1; ) {
+    ·              ──────────
+ 52 │   
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-not-final-ary.js:50:1]
+ 50 │ 
+ 51 │ for (let [...[x], y] = [1, 2, 3]; iterCount < 1; ) {
+    ·           ──────
+ 52 │   
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-not-final-id.js:50:1]
+ 50 │ 
+ 51 │ for (let [...x, y] = [1, 2, 3]; iterCount < 1; ) {
+    ·           ────
+ 52 │   
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-not-final-obj.js:50:1]
+ 50 │ 
+ 51 │ for (let [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
+    ·           ────────
+ 52 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js:44:1]
+ 44 │ 
+ 45 │ for (var [...[ x ] = []] = []; iterCount < 1; ) {
+    ·              ──────────
+ 46 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-id.js:44:1]
+ 44 │ 
+ 45 │ for (var [...x = []] = []; iterCount < 1; ) {
+    ·              ──────
+ 46 │   
+    ╰────
+
+  × A rest parameter cannot have an initializer
+    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js:44:1]
+ 44 │ 
+ 45 │ for (var [...{ x } = []] = []; iterCount < 1; ) {
+    ·              ──────────
+ 46 │   
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-not-final-ary.js:44:1]
+ 44 │ 
+ 45 │ for (var [...[x], y] = [1, 2, 3]; iterCount < 1; ) {
+    ·           ──────
+ 46 │   
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-not-final-id.js:44:1]
+ 44 │ 
+ 45 │ for (var [...x, y] = [1, 2, 3]; iterCount < 1; ) {
+    ·           ────
+ 46 │   
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
+    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-not-final-obj.js:44:1]
+ 44 │ 
+ 45 │ for (var [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
+    ·           ────────
+ 46 │   
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/for/head-const-bound-names-in-stmt.js:19:1]
+ 19 │ 
+ 20 │ for (const x = 0; false; ) {
+    ·            ┬
+    ·            ╰── `x` has already been declared here
+ 21 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 22 │ }
+    ╰────
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/for/head-let-bound-names-in-stmt.js:19:1]
+ 19 │ 
+ 20 │ for (let x; false; ) {
+    ·          ┬
+    ·          ╰── `x` has already been declared here
+ 21 │   var x;
+    ·       ┬
+    ·       ╰── It can not be redeclared here
+ 22 │ }
+    ╰────
+
+  × Invalid function declaration
+    ╭─[language/statements/for/labelled-fn-stmt-const.js:17:1]
+ 17 │ 
+ 18 │ for (const x = 0; false; ) label1: label2: function f() {}
+    ·                                            ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for/labelled-fn-stmt-expr.js:17:1]
+ 17 │ 
+ 18 │ for ( ; false; ) label1: label2: function f() {}
+    ·                                  ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for/labelled-fn-stmt-let.js:17:1]
+ 17 │ 
+ 18 │ for (let x; false; ) label1: label2: function f() {}
+    ·                                      ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Invalid function declaration
+    ╭─[language/statements/for/labelled-fn-stmt-var.js:17:1]
+ 17 │ 
+ 18 │ for (var x; false; ) label1: label2: function f() {}
+    ·                                      ───────────────
+    ╰────
+  help: In strict mode code, functions can only be declared at top level or inside a block
+
+  × Lexical declaration cannot appear in a single-statement context
+    ╭─[language/statements/for/let-array-with-newline.js:19:1]
+ 19 │     
+ 20 │ ╭─▶ for (; false; ) let
+ 21 │ ╰─▶ [a] = 0;
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × The keyword 'yield' is reserved
     ╭─[language/statements/for-await-of/async-func-decl-dstr-array-elem-init-yield-ident-invalid.js:32:1]
@@ -30796,442 +31232,6 @@ Expect Syntax Error: "built-ins/RegExp/prototype/unicodeSets/breaking-change-fro
     ╭─[language/statements/for-of/let-array-with-newline.js:19:1]
  19 │     
  20 │ ╭─▶ for (var x of []) let
- 21 │ ╰─▶ [a] = 0;
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Use of undefined label
-    ╭─[language/statements/for/S12.6.3_A11.1_T3.js:23:1]
- 23 │     nested:for(var index_n=0;index_n<=index;index_n++){
- 24 │         if(index*index_n == 6)continue nonexist;
-    ·                                        ────┬───
-    ·                                            ╰── This label is used, but not defined
- 25 │         __str+=""+index+index_n;
-    ╰────
-
-  × Use of undefined label
-    ╭─[language/statements/for/S12.6.3_A11_T3.js:23:1]
- 23 │     nested:for(index_n=0;index_n<=index;index_n++){
- 24 │         if(index*index_n == 6)continue nonexist;
-    ·                                        ────┬───
-    ·                                            ╰── This label is used, but not defined
- 25 │         __str+=""+index+index_n;
-    ╰────
-
-  × Use of undefined label
-    ╭─[language/statements/for/S12.6.3_A12.1_T3.js:23:1]
- 23 │     nested:for(var index_n=0;index_n<=index;index_n++){
- 24 │         if(index*index_n >= 4)break nonexist;
-    ·                                     ────┬───
-    ·                                         ╰── This label is used, but not defined
- 25 │         __str+=""+index+index_n;
-    ╰────
-
-  × Use of undefined label
-    ╭─[language/statements/for/S12.6.3_A12_T3.js:23:1]
- 23 │     nested:for(index_n=0;index_n<=index;index_n++){
- 24 │         if(index*index_n >= 4)break nonexist;
-    ·                                     ────┬───
-    ·                                         ╰── This label is used, but not defined
- 25 │         __str+=""+index+index_n;
-    ╰────
-
-  × Expected `)` but found `;`
-    ╭─[language/statements/for/S12.6.3_A4.1.js:21:1]
- 21 │ //CHECK#1
- 22 │ for (var a in arr;1;){
-    ·                  ┬
-    ·                  ╰── `)` expected
- 23 │     break;
-    ╰────
-
-  × Expected `)` but found `;`
-    ╭─[language/statements/for/S12.6.3_A4_T1.js:21:1]
- 21 │ //CHECK#1
- 22 │ for (a in arr;1;){
-    ·              ┬
-    ·              ╰── `)` expected
- 23 │     break;
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/for/S12.6.3_A4_T2.js:21:1]
- 21 │ //CHECK#1
- 22 │ for(1 in arr;1;) {
-    ·     ─
- 23 │     break;
-    ╰────
-
-  × Expected `)` but found `;`
-    ╭─[language/statements/for/S12.6.3_A7.1_T1.js:20:1]
- 20 │ //CHECK#1
- 21 │ for(var index=0; index<10; index++; index--);
-    ·                                   ┬
-    ·                                   ╰── `)` expected
- 22 │ //
-    ╰────
-
-  × Expected `)` but found `;`
-    ╭─[language/statements/for/S12.6.3_A7.1_T2.js:20:1]
- 20 │ //CHECK#1
- 21 │ for(var index=0; index<10; index+=4; index++; index--) ;
-    ·                                    ┬
-    ·                                    ╰── `)` expected
- 22 │ //
-    ╰────
-
-  × Expected `)` but found `;`
-    ╭─[language/statements/for/S12.6.3_A7_T1.js:20:1]
- 20 │ //CHECK#1
- 21 │ for(index=0; index<10; index++; index--) ;
-    ·                               ┬
-    ·                               ╰── `)` expected
- 22 │ //
-    ╰────
-
-  × Expected `)` but found `;`
-    ╭─[language/statements/for/S12.6.3_A7_T2.js:20:1]
- 20 │ //CHECK#1
- 21 │ for(index=0; index<10; index+=4; index++; index--) ;
-    ·                                ┬
-    ·                                ╰── `)` expected
- 22 │ //
-    ╰────
-
-  × Expected `,` but found `++`
-    ╭─[language/statements/for/S12.6.3_A8.1_T1.js:20:1]
- 20 │ //CHECK#1
- 21 │ for(var index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
-    ·                                   ─┬
-    ·                                    ╰── `,` expected
- 22 │ //
-    ╰────
-
-  × Expected `,` but found `++`
-    ╭─[language/statements/for/S12.6.3_A8.1_T2.js:20:1]
- 20 │ //CHECK#1
- 21 │ for(var index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
-    ·                        ─┬
-    ·                         ╰── `,` expected
- 22 │ //
-    ╰────
-
-  × Unexpected token
-    ╭─[language/statements/for/S12.6.3_A8.1_T3.js:20:1]
- 20 │ //CHECK#3
- 21 │ for({var index=0; index+=1;} index++<=10; index*2;) {   arr.add(""+index);};
-    ·          ─────
- 22 │ //
-    ╰────
-
-  × Expected `,` but found `++`
-    ╭─[language/statements/for/S12.6.3_A8_T1.js:20:1]
- 20 │ //CHECK#1
- 21 │ for(index=0; index<100; {index++; index*2;}) {  arr.add(""+index);};
-    ·                               ─┬
-    ·                                ╰── `,` expected
- 22 │ //
-    ╰────
-
-  × Expected `,` but found `++`
-    ╭─[language/statements/for/S12.6.3_A8_T2.js:20:1]
- 20 │ //CHECK#1
- 21 │ for(index=0; {index++;index<100;}; index*2;) {  arr.add(""+index);};
-    ·                    ─┬
-    ·                     ╰── `,` expected
- 22 │ //
-    ╰────
-
-  × Expected `,` but found `;`
-    ╭─[language/statements/for/S12.6.3_A8_T3.js:20:1]
- 20 │ //CHECK#1
- 21 │ for({index=0; index+=1;} index++<=10; index*2;) {   arr.add(""+index);};
-    ·             ┬
-    ·             ╰── `,` expected
- 22 │ //
-    ╰────
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/for/decl-async-fun.js:19:1]
- 19 │ 
- 20 │ for ( ; false; ) async function f() {}
-    ·                  ──────────────────
-    ╰────
-
-  × Invalid function declaration
-    ╭─[language/statements/for/decl-async-fun.js:19:1]
- 19 │ 
- 20 │ for ( ; false; ) async function f() {}
-    ·                  ─────────────────────
-    ╰────
-  help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Async functions can only be declared at the top level or inside a block
-    ╭─[language/statements/for/decl-async-gen.js:19:1]
- 19 │ 
- 20 │ for ( ; false; ) async function* g() {}
-    ·                  ───────────────────
-    ╰────
-
-  × Invalid function declaration
-    ╭─[language/statements/for/decl-async-gen.js:19:1]
- 19 │ 
- 20 │ for ( ; false; ) async function* g() {}
-    ·                  ──────────────────────
-    ╰────
-  help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Invalid class declaration
-    ╭─[language/statements/for/decl-cls.js:13:1]
- 13 │ 
- 14 │ for ( ; false; ) class C {}
-    ·                  ────────
-    ╰────
-  help: Classes can only be declared at top level or inside a block
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[language/statements/for/decl-const.js:13:1]
- 13 │ 
- 14 │ for ( ; false; ) const x = null;
-    ·                  ───────────────
-    ╰────
-  help: Wrap this declaration in a block statement
-
-  × Invalid function declaration
-    ╭─[language/statements/for/decl-fun.js:13:1]
- 13 │ 
- 14 │ for ( ; false; ) function f() {}
-    ·                  ───────────────
-    ╰────
-  help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Generators can only be declared at the top level or inside a block
-    ╭─[language/statements/for/decl-gen.js:14:1]
- 14 │ 
- 15 │ for ( ; false; ) function* g() {}
-    ·                  ─────────────
-    ╰────
-
-  × Invalid function declaration
-    ╭─[language/statements/for/decl-gen.js:14:1]
- 14 │ 
- 15 │ for ( ; false; ) function* g() {}
-    ·                  ────────────────
-    ╰────
-  help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[language/statements/for/decl-let.js:13:1]
- 13 │ 
- 14 │ for ( ; false; ) let x;
-    ·                     ─
-    ╰────
-  help: Try insert a semicolon here
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js:50:1]
- 50 │ 
- 51 │ for (const [...[ x ] = []] = []; iterCount < 1; ) {
-    ·                ──────────
- 52 │   
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-id.js:50:1]
- 50 │ 
- 51 │ for (const [...x = []] = []; iterCount < 1; ) {
-    ·                ──────
- 52 │   
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-init-obj.js:50:1]
- 50 │ 
- 51 │ for (const [...{ x } = []] = []; iterCount < 1; ) {
-    ·                ──────────
- 52 │   
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-ary.js:50:1]
- 50 │ 
- 51 │ for (const [...[x], y] = [1, 2, 3]; iterCount < 1; ) {
-    ·             ──────
- 52 │   
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-id.js:50:1]
- 50 │ 
- 51 │ for (const [...x, y] = [1, 2, 3]; iterCount < 1; ) {
-    ·             ────
- 52 │   
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/for/dstr/const-ary-ptrn-rest-not-final-obj.js:50:1]
- 50 │ 
- 51 │ for (const [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
-    ·             ────────
- 52 │   
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-ary.js:50:1]
- 50 │ 
- 51 │ for (let [...[ x ] = []] = []; iterCount < 1; ) {
-    ·              ──────────
- 52 │   
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-id.js:50:1]
- 50 │ 
- 51 │ for (let [...x = []] = []; iterCount < 1; ) {
-    ·              ──────
- 52 │   
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js:50:1]
- 50 │ 
- 51 │ for (let [...{ x } = []] = []; iterCount < 1; ) {
-    ·              ──────────
- 52 │   
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-not-final-ary.js:50:1]
- 50 │ 
- 51 │ for (let [...[x], y] = [1, 2, 3]; iterCount < 1; ) {
-    ·           ──────
- 52 │   
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-not-final-id.js:50:1]
- 50 │ 
- 51 │ for (let [...x, y] = [1, 2, 3]; iterCount < 1; ) {
-    ·           ────
- 52 │   
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/for/dstr/let-ary-ptrn-rest-not-final-obj.js:50:1]
- 50 │ 
- 51 │ for (let [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
-    ·           ────────
- 52 │   
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js:44:1]
- 44 │ 
- 45 │ for (var [...[ x ] = []] = []; iterCount < 1; ) {
-    ·              ──────────
- 46 │   
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-id.js:44:1]
- 44 │ 
- 45 │ for (var [...x = []] = []; iterCount < 1; ) {
-    ·              ──────
- 46 │   
-    ╰────
-
-  × A rest parameter cannot have an initializer
-    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js:44:1]
- 44 │ 
- 45 │ for (var [...{ x } = []] = []; iterCount < 1; ) {
-    ·              ──────────
- 46 │   
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-not-final-ary.js:44:1]
- 44 │ 
- 45 │ for (var [...[x], y] = [1, 2, 3]; iterCount < 1; ) {
-    ·           ──────
- 46 │   
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-not-final-id.js:44:1]
- 44 │ 
- 45 │ for (var [...x, y] = [1, 2, 3]; iterCount < 1; ) {
-    ·           ────
- 46 │   
-    ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[language/statements/for/dstr/var-ary-ptrn-rest-not-final-obj.js:44:1]
- 44 │ 
- 45 │ for (var [...{ x }, y] = [1, 2, 3]; iterCount < 1; ) {
-    ·           ────────
- 46 │   
-    ╰────
-
-  × Identifier `x` has already been declared
-    ╭─[language/statements/for/head-const-bound-names-in-stmt.js:19:1]
- 19 │ 
- 20 │ for (const x = 0; false; ) {
-    ·            ┬
-    ·            ╰── `x` has already been declared here
- 21 │   var x;
-    ·       ┬
-    ·       ╰── It can not be redeclared here
- 22 │ }
-    ╰────
-
-  × Identifier `x` has already been declared
-    ╭─[language/statements/for/head-let-bound-names-in-stmt.js:19:1]
- 19 │ 
- 20 │ for (let x; false; ) {
-    ·          ┬
-    ·          ╰── `x` has already been declared here
- 21 │   var x;
-    ·       ┬
-    ·       ╰── It can not be redeclared here
- 22 │ }
-    ╰────
-
-  × Invalid function declaration
-    ╭─[language/statements/for/labelled-fn-stmt-const.js:17:1]
- 17 │ 
- 18 │ for (const x = 0; false; ) label1: label2: function f() {}
-    ·                                            ───────────────
-    ╰────
-  help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Invalid function declaration
-    ╭─[language/statements/for/labelled-fn-stmt-expr.js:17:1]
- 17 │ 
- 18 │ for ( ; false; ) label1: label2: function f() {}
-    ·                                  ───────────────
-    ╰────
-  help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Invalid function declaration
-    ╭─[language/statements/for/labelled-fn-stmt-let.js:17:1]
- 17 │ 
- 18 │ for (let x; false; ) label1: label2: function f() {}
-    ·                                      ───────────────
-    ╰────
-  help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Invalid function declaration
-    ╭─[language/statements/for/labelled-fn-stmt-var.js:17:1]
- 17 │ 
- 18 │ for (var x; false; ) label1: label2: function f() {}
-    ·                                      ───────────────
-    ╰────
-  help: In strict mode code, functions can only be declared at top level or inside a block
-
-  × Lexical declaration cannot appear in a single-statement context
-    ╭─[language/statements/for/let-array-with-newline.js:19:1]
- 19 │     
- 20 │ ╭─▶ for (; false; ) let
  21 │ ╰─▶ [a] = 0;
     ╰────
   help: Wrap this declaration in a block statement

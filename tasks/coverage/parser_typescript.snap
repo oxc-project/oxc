@@ -1,7 +1,7 @@
 parser_typescript Summary:
-AST Parsed     : 5069/5072 (99.94%)
-Positive Passed: 5060/5072 (99.76%)
-Negative Passed: 986/4752 (20.75%)
+AST Parsed     : 5060/5063 (99.94%)
+Positive Passed: 5051/5063 (99.76%)
+Negative Passed: 986/4761 (20.71%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -688,6 +688,7 @@ Expect Syntax Error: "compiler/extractInferenceImprovement.ts"
 Expect Syntax Error: "compiler/fallFromLastCase2.ts"
 Expect Syntax Error: "compiler/fatarrowfunctionsOptionalArgsErrors4.ts"
 Expect Syntax Error: "compiler/fieldAndGetterWithSameName.ts"
+Expect Syntax Error: "compiler/findLast.ts"
 Expect Syntax Error: "compiler/firstMatchRegExpMatchArray.ts"
 Expect Syntax Error: "compiler/fixTypeParameterInSignatureWithRestParameters.ts"
 Expect Syntax Error: "compiler/fixingTypeParametersRepeatedly2.ts"
@@ -1981,6 +1982,7 @@ Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock19.ts
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock23.ts"
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock3.ts"
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock4.ts"
+Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock5.ts"
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock9.ts"
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlockUseBeforeDef2.ts"
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlockUseBeforeDef3.ts"
@@ -2053,6 +2055,9 @@ Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeO
 Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers11.ts"
 Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers12.ts"
 Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers13.ts"
+Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers3.ts"
+Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers4.ts"
+Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers7.ts"
 Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers8.ts"
 Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers9.ts"
 Expect Syntax Error: "conformance/classes/members/instanceAndStaticMembers/typeOfThisInstanceMemberNarrowedWithLoopAntecedent.ts"
@@ -2104,11 +2109,15 @@ Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOv
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty7.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationES2022.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationESNext.ts"
+Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor1.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor11.ts"
+Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor3.ts"
+Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor4.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor5.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessorExperimentalDecorators.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/constructorParameterShadowsOuterScopes.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/constructorParameterShadowsOuterScopes2.ts"
+Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/defineProperty.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/definePropertyOutputES3.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/initializerReferencingConstructorLocals.ts"
