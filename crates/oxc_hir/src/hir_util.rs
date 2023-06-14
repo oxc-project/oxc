@@ -132,6 +132,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for UnaryExpression<'a> {
 impl<'a, 'b> MayHaveSideEffects<'a, 'b> for Expression<'a> {}
 impl<'a, 'b> MayHaveSideEffects<'a, 'b> for UnaryExpression<'a> {}
 
+/// A "simple" operator is one whose children are expressions, has no direct side-effects.
 fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
     operator != UnaryOperator::Delete
 }

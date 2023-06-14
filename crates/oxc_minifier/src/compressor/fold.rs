@@ -296,6 +296,8 @@ impl<'a> Compressor<'a> {
         None
     }
 
+    // +NaN -> NaN
+    // !Infinity -> Infinity
     fn try_detach_unary_op(
         &mut self,
         unary_expr: &mut UnaryExpression<'a>,
