@@ -5,7 +5,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths-ignore:
-      - '!**/*.md'
+      - '**/*.md'
   push:
     branches:
       - main
@@ -158,3 +158,20 @@ jobs:
 
       - if: runner.os != 'Windows'
         run: cargo nextest run
+
+  conformance:
+    name: Conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true # Pull submodules for `cargo coverage`
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+
+      - run: cargo coverage
+      - run: cargo minsize
+
+      - name: Check for snapshot diff
+        run: git diff --exit-code

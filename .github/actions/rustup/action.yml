@@ -72,7 +72,9 @@ runs:
 
     - name: Install
       shell: bash
-      run: rustup show
+      run: |
+        rustup show
+        git restore .
 
     - name: Cache on ${{ github.ref_name }}
       uses: Swatinem/rust-cache@v2

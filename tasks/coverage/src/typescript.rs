@@ -237,7 +237,9 @@ impl CompilerOptions {
     }
 
     fn split_value_options(value: Option<&String>) -> Vec<String> {
-        value.map(|value| value.split(',').map(ToString::to_string).collect()).unwrap_or_default()
+        value
+            .map(|value| value.split(',').map(|s| s.trim().to_lowercase()).collect())
+            .unwrap_or_default()
     }
 
     fn value_to_boolean(value: Option<&String>, default: bool) -> bool {

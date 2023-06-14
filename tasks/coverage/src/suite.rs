@@ -129,14 +129,14 @@ pub trait Suite<T: Case> {
         let mut failed_positives =
             positives.into_iter().filter(|case| !case.test_passed()).collect::<Vec<_>>();
 
-        failed_positives.sort_by_key(|case| case.path().to_string_lossy().to_string());
+        failed_positives.sort_by_key(|case| case.path());
 
         let passed_positives = all_positives - failed_positives.len();
 
         let all_negatives = negatives.len();
         let mut failed_negatives =
             negatives.into_iter().filter(|case| !case.test_passed()).collect::<Vec<_>>();
-        failed_negatives.sort_by_key(|case| case.path().to_string_lossy().to_string());
+        failed_negatives.sort_by_key(|case| case.path());
 
         let passed_negatives = all_negatives - failed_negatives.len();
 
@@ -209,7 +209,7 @@ pub trait Suite<T: Case> {
             .filter(|case| matches!(case.test_result(), TestResult::CorrectError(_, _)))
             .collect::<Vec<_>>();
 
-        tests.sort_by_key(|case| case.path().to_string_lossy());
+        tests.sort_by_key(|case| case.path());
 
         let args = AppArgs { detail: true, ..AppArgs::default() };
         self.print_coverage(name, &args, report, &mut file)?;
