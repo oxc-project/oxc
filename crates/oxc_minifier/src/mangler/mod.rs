@@ -170,20 +170,60 @@ impl ManglerBuilder {
             // .filter(|name| name.len() < 5)
             .collect::<Vec<_>>();
 
-        // Compute short identifiers by slot frequency
+        let mut names = Vec::with_capacity(total_number_of_slots);
+
         let mut count = 0;
-        for freq in &frequencies {
-            let name = loop {
+        for _ in 0..total_number_of_slots {
+            names.push(loop {
                 let name = Atom::base54(count);
                 count += 1;
                 // Do not mangle keywords and unresolved references
                 if !is_keyword(&name) && !unresolved_references.iter().any(|n| **n == name) {
                     break name;
                 }
-            };
-            // All symbols for the same frequency gets the same
-            for symbol_id in &freq.symbol_ids {
-                symbol_table.set_name(*symbol_id, name.clone());
+            });
+        }
+
+        // Group similar symbols for smaller gzipped file
+        // <https://github.com/google/closure-compiler/blob/c383a3a1d2fce33b6c778ef76b5a626e07abca41/src/com/google/javascript/jscomp/RenameVars.java#L475-L483>
+        // Original Comment:
+        // 1) The most frequent vars get the shorter names.
+        // 2) If N number of vars are going to be assigned names of the same
+        //    length, we assign the N names based on the order at which the vars
+        //    first appear in the source. This makes the output somewhat less
+        //    random, because symbols declared close together are assigned names
+        //    that are quite similar. With this heuristic, the output is more
+        //    compressible.
+        //    For instance, the output may look like:
+        //    var da = "..", ea = "..";
+        //    function fa() { .. } function ga() { .. }
+
+        let mut freq_iter = frequencies.iter();
+        // 2. "N number of vars are going to be assigned names of the same length"
+        for slice_of_same_len_strings in names.group_by_mut(|a, b| a.len() == b.len()) {
+            // 1. "The most frequent vars get the shorter names"
+            // (freq_iter is sorted by frequency from highest to lowest,
+            //  so taking means take the N most frequent symbols remaining)
+            let mut symbols_renamed_in_this_batch =
+                freq_iter.by_ref().take(slice_of_same_len_strings.len()).collect::<Vec<_>>();
+
+            debug_assert!(symbols_renamed_in_this_batch.len() == slice_of_same_len_strings.len());
+
+            // 2. "we assign the N names based on the order at which the vars first appear in the source."
+            // sorting by slot enables us to sort by the order at which the vars first appear in the source
+            // (this is possible because the slots are discovered currently in a DFS method which is the same order
+            //  as variables appear in the source code)
+            symbols_renamed_in_this_batch.sort_by(|a, b| a.slot.cmp(&b.slot.clone()));
+
+            // here we just zip the iterator of symbols to rename with the iterator of new names for the next for loop
+            let symbols_to_rename_with_new_names =
+                symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter());
+
+            // rename the variables
+            for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
+                for symbol_id in &symbol_to_rename.symbol_ids {
+                    symbol_table.set_name(*symbol_id, new_name.clone());
+                }
             }
         }
 
