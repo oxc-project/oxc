@@ -244,7 +244,7 @@ const TARGET_METHODS: phf::Set<&'static str> = phf_set! {
 
 fn full_array_method_name(array_method: &'static str) -> Atom {
     match array_method {
-        "from" => Atom::from("Array.form"),
+        "from" => Atom::from("Array.from"),
         s => Atom::from(format!("Array.prototype.{s}")),
     }
 }
