@@ -192,19 +192,14 @@ impl ManglerBuilder {
 
             debug_assert!(symbols_renamed_in_this_batch.len() == slice_of_same_len_strings.len());
 
-            let symbols_to_rename_grouped_by_freq =
-                symbols_renamed_in_this_batch.group_by_mut(|a, b| a.frequency == b.frequency);
-
             let mut iter_of_new_names = slice_of_same_len_strings.into_iter();
-            for slice_of_symbols_with_same_frequency in symbols_to_rename_grouped_by_freq {
-                slice_of_symbols_with_same_frequency.sort_by(|a, b| a.slot.cmp(&b.slot.clone()));
-                for symbol_to_rename in slice_of_symbols_with_same_frequency {
-                    let name = iter_of_new_names.next().unwrap().to_owned();
+            symbols_renamed_in_this_batch.sort_by(|a, b| a.slot.cmp(&b.slot.clone()));
+            for symbol_to_rename in symbols_renamed_in_this_batch {
+                let name = iter_of_new_names.next().unwrap().to_owned();
 
-                    symbol_to_rename.symbol_ids.iter().for_each(|symbol_id| {
-                        symbol_table.set_name(*symbol_id, name.to_owned());
-                    });
-                }
+                symbol_to_rename.symbol_ids.iter().for_each(|symbol_id| {
+                    symbol_table.set_name(*symbol_id, name.to_owned());
+                });
             }
         }
 
