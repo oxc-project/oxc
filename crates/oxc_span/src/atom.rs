@@ -21,10 +21,14 @@ impl Atom {
     /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
     pub fn base54(n: usize) -> Self {
         let mut num = n;
+        // Base 54 at first because these are the usable first characters in JavaScript identifiers
+        // <https://tc39.es/ecma262/#prod-IdentifierStart>
         let base = 54usize;
         let mut ret = CompactString::default();
         ret.push(BASE54_CHARS[num % base] as char);
         num /= base;
+        // Base 64 for the rest because after the first character we can also use 0-9 too
+        // <https://tc39.es/ecma262/#prod-IdentifierPart>
         let base = 64usize;
         while num > 0 {
             num -= 1;
