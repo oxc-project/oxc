@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
-use phf::{phf_map, Map};
+use phf::{phf_set, Set};
 
 use crate::{ast_util::calculate_hash, context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
@@ -55,15 +55,15 @@ fn is_typeof_expr(expr: &Expression) -> bool {
         false
     }
 }
-const VALID_TYPE: Map<&'static str, bool> = phf_map! {
-    "symbol" => false,
-    "undefined" => false,
-    "object" => false,
-    "boolean" => false,
-    "number" => false,
-    "string" => false,
-    "function" => false,
-    "bigint" => false,
+const VALID_TYPE: Set<&'static str> = phf_set! {
+    "symbol",
+    "undefined",
+    "object",
+    "boolean",
+    "number",
+    "string",
+    "function",
+    "bigint",
 };
 impl Rule for ValidTypeof {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -79,13 +79,13 @@ impl Rule for ValidTypeof {
             };
 
             if let Expression::StringLiteral(lit) = sibling {
-                if !VALID_TYPE.contains_key(lit.value.as_str()) {
+                if !VALID_TYPE.contains(lit.value.as_str()) {
                     ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
                 }
                 return;
             }
             if let Expression::TemplateLiteral(template) = sibling && template.expressions.is_empty() {
-                if let Some(value) = template.quasi() && !VALID_TYPE.contains_key(value.as_str()) {
+                if let Some(value) = template.quasi() && !VALID_TYPE.contains(value.as_str()) {
                     ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
                 }
                 return;
