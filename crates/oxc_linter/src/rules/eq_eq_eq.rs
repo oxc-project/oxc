@@ -55,8 +55,9 @@ impl Rule for EqEqEq {
                 matches!(unary_expr.operator, UnaryOperator::Typeof)
             }
             (lhs, rhs) => {
-                (lhs.is_null() || rhs.is_null())
-                    || lhs.is_literal_expression() && rhs.is_literal_expression()
+                lhs.is_null()
+                    || rhs.is_null()
+                    || (lhs.is_literal_expression() && rhs.is_literal_expression())
             }
         };
 
