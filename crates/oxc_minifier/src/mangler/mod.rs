@@ -184,6 +184,8 @@ impl ManglerBuilder {
             });
         }
 
+        // Group similar symbols for smaller gzipped file
+        // <https://github.com/google/closure-compiler/blob/c383a3a1d2fce33b6c778ef76b5a626e07abca41/src/com/google/javascript/jscomp/RenameVars.java#L475-L483>
         let mut freq_iter = frequencies.iter();
 
         for slice_of_same_len_strings in names.group_by_mut(|a, b| a.len() == b.len()) {
@@ -192,14 +194,15 @@ impl ManglerBuilder {
 
             debug_assert!(symbols_renamed_in_this_batch.len() == slice_of_same_len_strings.len());
 
-            let mut iter_of_new_names = slice_of_same_len_strings.into_iter();
             symbols_renamed_in_this_batch.sort_by(|a, b| a.slot.cmp(&b.slot.clone()));
-            for symbol_to_rename in symbols_renamed_in_this_batch {
-                let name = iter_of_new_names.next().unwrap().to_owned();
 
-                symbol_to_rename.symbol_ids.iter().for_each(|symbol_id| {
-                    symbol_table.set_name(*symbol_id, name.to_owned());
-                });
+            let mut iter_of_new_names = slice_of_same_len_strings.iter_mut();
+            for symbol_to_rename in symbols_renamed_in_this_batch {
+                if let Some(name) = iter_of_new_names.next() {
+                    for symbol_id in &symbol_to_rename.symbol_ids {
+                        symbol_table.set_name(*symbol_id, name.clone());
+                    }
+                }
             }
         }
 
