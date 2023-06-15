@@ -2,63 +2,63 @@
 source: crates/oxc_linter/src/tester.rs
 expression: getter_return
 ---
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ var foo = { get bar() {} };
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ ╭─▶ var foo = { get
  2 │ ╰─▶  bar () {} };
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ var foo = { get bar(){if(baz) {return true;}} };
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ var foo = { get bar() { ~function () {return true;}} };
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ var foo = { get bar() { return; } };
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ var foo = { get bar() {} };
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ var foo = { get bar() {if (baz) {return;}} };
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ class foo { get bar(){} }
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │     var foo = class {
  2 │ ╭─▶   static get
@@ -66,175 +66,175 @@ expression: getter_return
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ class foo { get bar(){ if (baz) { return true; }}}
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ class foo { get bar(){ ~function () { return true; }()}}
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ class foo { get bar(){} }
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ class foo { get bar(){if (baz) {return true;} } }
    ·             ───────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperty(foo, 'bar', { get: function (){}});
    ·                                     ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperty(foo, 'bar', { get: function getfoo (){}});
    ·                                     ─────────────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperty(foo, 'bar', { get(){} });
    ·                                     ───
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperty(foo, 'bar', { get: () => {}});
    ·                                     ─────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperty(foo, "bar", { get: function (){if(bar) {return true;}}});
    ·                                     ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperty(foo, "bar", { get: function (){ ~function () { return true; }()}});
    ·                                     ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Reflect.defineProperty(foo, 'bar', { get: function (){}});
    ·                                      ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.create(foo, { bar: { get: function() {} } })
    ·                             ─────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.create(foo, { bar: { get() {} } })
    ·                             ───
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.create(foo, { bar: { get: () => {} } })
    ·                             ─────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperties(foo, { bar: { get: function () {}} });
    ·                                       ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperties(foo, { bar: { get: function (){if(bar) {return true;}}}});
    ·                                       ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperties(foo, { bar: { get: function () {~function () { return true; }()}} });
    ·                                       ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.defineProperty(foo, "bar", { get: function (){}});
    ·                                     ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object.create(foo, { bar: { get: function (){} } });
    ·                             ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Reflect.defineProperty(foo, "bar", { get: function (){}});
    ·                                      ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object?.defineProperty(foo, 'bar', { get: function (){} });
    ·                                      ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ (Object?.defineProperty)(foo, 'bar', { get: function (){} });
    ·                                        ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ Object?.defineProperty(foo, 'bar', { get: function (){} });
    ·                                      ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ (Object?.defineProperty)(foo, 'bar', { get: function (){} });
    ·                                        ──────────────
    ╰────
   help: Return a value from all code paths in getter.
 
-  × eslint(getter-return): Expected to always return a value in getter.
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.tsx:1:1]
  1 │ (Object?.create)(foo, { bar: { get: function (){} } });
    ·                                ──────────────

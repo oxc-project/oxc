@@ -17,7 +17,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(getter-return): Expected to always return a value in getter.")]
-#[diagnostic(severity(error), help("Return a value from all code paths in getter."))]
+#[diagnostic(severity(warning), help("Return a value from all code paths in getter."))]
 struct GetterReturnDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
