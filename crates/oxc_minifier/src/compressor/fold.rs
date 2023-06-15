@@ -4,9 +4,12 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
-use oxc_hir::hir_util::IsLiteralValue;
+use oxc_hir::hir_util::{get_boolean_value, get_number_value, IsLiteralValue, MayHaveSideEffects};
 use oxc_span::{Atom, Span};
-use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
+use oxc_syntax::{
+    operator::{BinaryOperator, UnaryOperator},
+    NumberBase,
+};
 
 use super::Compressor;
 
@@ -66,7 +69,17 @@ impl<'a> Compressor<'a> {
             },
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Typeof => {
+                    // typeof +-~! 0 -> typeof 2
+                    self.fold_expression(&mut unary_expr.argument);
                     self.try_fold_typeof(unary_expr.span, &unary_expr.argument)
+                }
+                UnaryOperator::UnaryPlus
+                | UnaryOperator::UnaryNegation
+                | UnaryOperator::LogicalNot
+                | UnaryOperator::BitwiseNot
+                    if !unary_expr.may_have_side_effects() =>
+                {
+                    self.try_fold_unary_operator(unary_expr)
                 }
                 _ => None,
             },
@@ -175,6 +188,128 @@ impl<'a> Compressor<'a> {
             if let Some(type_name) = type_name {
                 let string_literal = self.hir.string_literal(span, Atom::from(type_name));
                 return Some(self.hir.literal_string_expression(string_literal));
+            }
+        }
+
+        None
+    }
+
+    fn try_fold_unary_operator<'b>(
+        &mut self,
+        unary_expr: &'b mut UnaryExpression<'a>,
+    ) -> Option<Expression<'a>> {
+        // fold its children first, so that we can fold - -4.
+        self.fold_expression(&mut unary_expr.argument);
+
+        if let Some(boolean) = get_boolean_value(&unary_expr.argument) {
+            match unary_expr.operator {
+                // !100 -> false
+                // after this, it will be compressed to !1 or !0 in `compress_boolean`
+                UnaryOperator::LogicalNot => {
+                    if let Expression::NumberLiteral(number_literal) = &unary_expr.argument {
+                        let value = number_literal.value;
+                        // Don't fold !0 and !1 back to false.
+                        if value == 0_f64 || (value - 1_f64).abs() < f64::EPSILON {
+                            return None;
+                        }
+                        let bool_literal = self.hir.boolean_literal(unary_expr.span, !boolean);
+                        return Some(self.hir.literal_boolean_expression(bool_literal));
+                    }
+                }
+                // +1 -> 1
+                // NaN -> NaN
+                // +Infinity -> Infinity
+                UnaryOperator::UnaryPlus => match &unary_expr.argument {
+                    Expression::NumberLiteral(number_literal) => {
+                        let number_literal = self.hir.number_literal(
+                            unary_expr.span,
+                            number_literal.value,
+                            number_literal.raw,
+                            number_literal.base,
+                        );
+                        return Some(self.hir.literal_number_expression(number_literal));
+                    }
+                    Expression::Identifier(ident) => {
+                        if matches!(ident.name.as_str(), "NaN" | "Infinity") {
+                            return self.try_detach_unary_op(unary_expr);
+                        }
+                    }
+                    _ => {
+                        // +true -> 1
+                        // +false -> 0
+                        // +null -> 0
+                        if let Some(value) = get_number_value(&unary_expr.argument) {
+                            let raw = self.hir.new_str(value.to_string().as_str());
+                            let number_literal = self.hir.number_literal(
+                                unary_expr.span,
+                                value,
+                                raw,
+                                if value.fract() == 0.0 {
+                                    NumberBase::Decimal
+                                } else {
+                                    NumberBase::Float
+                                },
+                            );
+                            return Some(self.hir.literal_number_expression(number_literal));
+                        }
+                    }
+                },
+                // -4 -> -4, fold UnaryExpression -4 to NumberLiteral -4
+                // -NaN -> NaN
+                UnaryOperator::UnaryNegation => match &unary_expr.argument {
+                    Expression::NumberLiteral(number_literal) => {
+                        let value = -number_literal.value;
+                        let raw = self.hir.new_str(value.to_string().as_str());
+                        let number_literal = self.hir.number_literal(
+                            unary_expr.span,
+                            value,
+                            raw,
+                            number_literal.base,
+                        );
+                        return Some(self.hir.literal_number_expression(number_literal));
+                    }
+                    Expression::BigintLiteral(_big_int_literal) => return None,
+                    Expression::Identifier(ident) => {
+                        if ident.name == "NaN" {
+                            return self.try_detach_unary_op(unary_expr);
+                        }
+                    }
+                    _ => {}
+                },
+                // ~10 -> -11
+                UnaryOperator::BitwiseNot => {
+                    if let Expression::NumberLiteral(number_literal) = &unary_expr.argument && number_literal.value.fract() == 0.0 {
+                            let int_value = NumberLiteral::ecmascript_to_int32(number_literal.value);
+                            let number_literal = self.hir.number_literal(
+                                unary_expr.span,
+                                f64::from(!int_value),
+                                number_literal.raw,
+                                NumberBase::Decimal, // since it be converted to i32, it should always be decimal.
+                            );
+                            return Some(self.hir.literal_number_expression(number_literal))
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        None
+    }
+
+    // +NaN -> NaN
+    // !Infinity -> Infinity
+    fn try_detach_unary_op(
+        &mut self,
+        unary_expr: &mut UnaryExpression<'a>,
+    ) -> Option<Expression<'a>> {
+        if let Expression::Identifier(ident) = &unary_expr.argument {
+            if matches!(ident.name.as_str(), "NaN" | "Infinity") {
+                let ident = self.hir.identifier_reference(
+                    unary_expr.span,
+                    ident.name.clone(),
+                    ident.reference_id,
+                );
+                return Some(self.hir.identifier_reference_expression(ident));
             }
         }
 
