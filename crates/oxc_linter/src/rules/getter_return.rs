@@ -67,17 +67,13 @@ impl GetterReturn {
                 Expression::FunctionExpression(function) => {
                     let Some(body) = &function.body else { continue };
                     if !self.is_correct_getter(body) {
-                        let span = Span {
-                            start: property.key.span().start,
-                            end: function.params.span.start,
-                        };
+                        let span = Span::new(property.key.span().start, function.params.span.start);
                         return Some(span);
                     }
                 }
                 Expression::ArrowExpression(arrow) if !arrow.is_single_expression() => {
                     if !self.is_correct_getter(&arrow.body) {
-                        let span =
-                            Span { start: property.key.span().start, end: arrow.params.span.start };
+                        let span = Span::new(property.key.span().start, arrow.params.span.start);
                         return Some(span);
                     }
                 }
@@ -122,7 +118,7 @@ impl Rule for GetterReturn {
                     return;
                 }
 
-                let span = Span { start: method.span.start, end: method.key.span().end };
+                let span = Span::new(method.span.start, method.key.span().end);
                 ctx.diagnostic(GetterReturnDiagnostic(span));
             }
             AstKind::ObjectProperty(property) if property.kind == PropertyKind::Get => {
@@ -133,7 +129,7 @@ impl Rule for GetterReturn {
                     return;
                 }
 
-                let span = Span { start: property.span.start, end: property.key.span().end };
+                let span = Span::new(property.span.start, property.key.span().end);
                 ctx.diagnostic(GetterReturnDiagnostic(span));
             }
             AstKind::CallExpression(call) => {
