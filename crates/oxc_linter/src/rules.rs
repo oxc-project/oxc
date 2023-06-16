@@ -3,6 +3,7 @@ oxc_macros::declare_all_lint_rules! {
     constructor_super,
     eq_eq_eq,
     for_direction,
+    getter_return,
     no_debugger,
     no_dupe_keys,
     no_duplicate_case,

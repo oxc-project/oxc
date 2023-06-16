@@ -1,4 +1,4 @@
-mod return_checker;
+pub mod return_checker;
 
 use oxc_ast::{
     ast::{ChainElement, Expression},
