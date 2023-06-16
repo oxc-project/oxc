@@ -250,9 +250,9 @@ impl Printer {
         }
     }
 
-    fn print_symbol(&mut self, span: Span, fallback: &Atom) {
-        if let Some(mangler) = &self.mangler
-            && let Some(name) = mangler.get_symbol_name(span) {
+    fn print_symbol(&mut self, symbol_id: SymbolId, fallback: &Atom) {
+        if let Some(mangler) = &self.mangler {
+            let name = mangler.get_symbol_name(symbol_id);
             self.print_str(name.clone().as_bytes());
         } else {
             self.print_str(fallback.as_bytes());

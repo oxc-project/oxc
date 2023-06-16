@@ -1,4 +1,5 @@
 use std::{
+    cell::RefCell,
     fmt,
     hash::{Hash, Hasher},
 };
@@ -399,25 +400,37 @@ pub struct IdentifierName {
 }
 
 /// Identifier Reference
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct IdentifierReference {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub reference_id: ReferenceId,
+    pub reference_id: RefCell<ReferenceId>,
+}
+
+impl Hash for IdentifierReference {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
 }
 
 /// Binding Identifier
-#[derive(Debug, Clone, Hash)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BindingIdentifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub symbol_id: SymbolId,
+    pub symbol_id: RefCell<SymbolId>,
+}
+
+impl Hash for BindingIdentifier {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
 }
 
 /// Label Identifier

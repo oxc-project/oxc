@@ -307,7 +307,7 @@ impl<'a> Compressor<'a> {
                 let ident = self.hir.identifier_reference(
                     unary_expr.span,
                     ident.name.clone(),
-                    ident.reference_id,
+                    ident.reference_id.clone().into_inner(),
                 );
                 return Some(self.hir.identifier_reference_expression(ident));
             }

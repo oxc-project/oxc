@@ -1,5 +1,3 @@
-use std::collections::BTreeMap;
-
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::Visit;
@@ -9,26 +7,22 @@ use oxc_semantic2::{
     symbol::{SymbolId, SymbolTable},
     SemanticBuilder,
 };
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, SourceType};
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
 
 type Slot = usize;
 
 pub struct Mangler {
     symbol_table: SymbolTable,
-    symbol_map: BTreeMap<Span, SymbolId>,
-    reference_map: BTreeMap<Span, ReferenceId>,
 }
 
 impl Mangler {
-    pub fn get_symbol_name(&self, span: Span) -> Option<&Atom> {
-        let symbol_id = self.symbol_map.get(&span)?;
-        Some(self.symbol_table.get_name(*symbol_id))
+    pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &Atom {
+        self.symbol_table.get_name(symbol_id)
     }
 
-    pub fn get_reference_name(&self, span: Span) -> Option<&Atom> {
-        let reference_id = self.reference_map.get(&span)?;
-        let symbol_id = self.symbol_table.get_reference(*reference_id).symbol_id?;
+    pub fn get_reference_name(&self, reference_id: ReferenceId) -> Option<&Atom> {
+        let symbol_id = self.symbol_table.get_reference(reference_id).symbol_id?;
         Some(self.symbol_table.get_name(symbol_id))
     }
 }
@@ -76,8 +70,6 @@ impl Mangler {
 /// ```
 pub struct ManglerBuilder {
     semantic: SemanticBuilder,
-    symbol_map: BTreeMap<Span, SymbolId>,
-    reference_map: BTreeMap<Span, ReferenceId>,
 }
 
 impl<'a> Visit<'a> for ManglerBuilder {
@@ -95,24 +87,19 @@ impl<'a> Visit<'a> for ManglerBuilder {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) {
-        let new_symbol_id =
-            self.semantic.declare_symbol(ident.span, &ident.name, includes, excludes);
-        self.symbol_map.insert(ident.span, new_symbol_id);
+        let symbol_id = self.semantic.declare_symbol(ident.span, &ident.name, includes, excludes);
+        *ident.symbol_id.borrow_mut() = symbol_id;
     }
 
     fn visit_identifier_reference(&mut self, ident: &'a IdentifierReference) {
-        let new_reference_id = self.semantic.declare_reference(ident.span, &ident.name);
-        self.reference_map.insert(ident.span, new_reference_id);
+        let reference_id = self.semantic.declare_reference(ident.span, &ident.name);
+        *ident.reference_id.borrow_mut() = reference_id;
     }
 }
 
 impl ManglerBuilder {
     pub fn new(source_type: SourceType) -> Self {
-        Self {
-            semantic: SemanticBuilder::new(source_type),
-            symbol_map: BTreeMap::default(),
-            reference_map: BTreeMap::default(),
-        }
+        Self { semantic: SemanticBuilder::new(source_type) }
     }
 
     #[must_use]
@@ -227,7 +214,7 @@ impl ManglerBuilder {
             }
         }
 
-        Mangler { symbol_table, symbol_map: self.symbol_map, reference_map: self.reference_map }
+        Mangler { symbol_table }
     }
 
     fn tally_slot_frequencies(
