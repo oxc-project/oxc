@@ -765,7 +765,7 @@ impl<'a> GenExpr for Expression<'a> {
 impl Gen for IdentifierReference {
     fn gen(&self, p: &mut Printer, ctx: Context) {
         if let Some(mangler) = &p.mangler
-            && let Some(name) = mangler.get_reference_name(self.span) {
+            && let Some(name) = mangler.get_reference_name(self.reference_id.clone().into_inner()) {
             p.print_str(name.clone().as_bytes());
         } else {
             p.print_str(self.name.as_bytes());
@@ -781,7 +781,7 @@ impl Gen for IdentifierName {
 
 impl Gen for BindingIdentifier {
     fn gen(&self, p: &mut Printer, ctx: Context) {
-        p.print_symbol(self.span, &self.name);
+        p.print_symbol(self.symbol_id.clone().into_inner(), &self.name);
     }
 }
 

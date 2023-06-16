@@ -182,7 +182,7 @@ impl<'a> HirBuilder<'a> {
         name: Atom,
         reference_id: ReferenceId,
     ) -> IdentifierReference {
-        IdentifierReference { span, name, reference_id }
+        IdentifierReference { span, name, reference_id: reference_id.into() }
     }
 
     pub fn binding_identifier(
@@ -191,7 +191,7 @@ impl<'a> HirBuilder<'a> {
         name: Atom,
         symbol_id: SymbolId,
     ) -> BindingIdentifier {
-        BindingIdentifier { span, name, symbol_id }
+        BindingIdentifier { span, name, symbol_id: symbol_id.into() }
     }
 
     pub fn label_identifier(&mut self, span: Span, name: Atom) -> LabelIdentifier {

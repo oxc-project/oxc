@@ -163,7 +163,7 @@ impl<'a> Compressor<'a> {
     fn compress_undefined<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         if let Expression::Identifier(ident) = expr
         && ident.name == "undefined"
-        && self.semantic.symbol_table.is_global_reference(ident.reference_id) {
+        && self.semantic.symbol_table.is_global_reference(ident.reference_id.clone().into_inner()) {
             *expr = self.create_void_0();
             return true;
         }
@@ -175,7 +175,7 @@ impl<'a> Compressor<'a> {
     fn compress_infinity<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         if let Expression::Identifier(ident) = expr
         && ident.name == "Infinity"
-        && self.semantic.symbol_table.is_global_reference(ident.reference_id) {
+        && self.semantic.symbol_table.is_global_reference(ident.reference_id.clone().into_inner()) {
             *expr = self.create_one_div_zero();
             return true;
         }
