@@ -2,19 +2,19 @@
 source: crates/oxc_linter/src/tester.rs
 expression: array_callback_return
 ---
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:1]
  1 │ Array.from(x, function() {})
    ·                          ──
    ╰────
-  help: Array method "Array.form" needs to have valid return on all code paths
+  help: Array method "Array.from" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:1]
  1 │ Array.from(x, function foo() {})
    ·                              ──
    ╰────
-  help: Array method "Array.form" needs to have valid return on all code paths
+  help: Array method "Array.from" needs to have valid return on all code paths
 
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
    ╭─[array_callback_return.tsx:1:1]
@@ -401,12 +401,12 @@ expression: array_callback_return
    ╰────
   help: Array method "Array.prototype.every" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:1]
  1 │ Array.from(x, function() {})
    ·                          ──
    ╰────
-  help: Array method "Array.form" needs to have valid return on all code paths
+  help: Array method "Array.from" needs to have valid return on all code paths
 
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
    ╭─[array_callback_return.tsx:1:1]
@@ -583,12 +583,12 @@ expression: array_callback_return
    ╰────
   help: Array method Array.prototype.forEach expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:1]
  1 │ Array.from(x, function() {})
    ·                          ──
    ╰────
-  help: Array method "Array.form" needs to have valid return on all code paths
+  help: Array method "Array.from" needs to have valid return on all code paths
 
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
    ╭─[array_callback_return.tsx:1:1]
@@ -647,12 +647,12 @@ expression: array_callback_return
    ╰────
   help: Array method "Array.prototype.filter" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:1]
  1 │ Array.from(foo, bar => { bar })
    ·                        ───────
    ╰────
-  help: Array method "Array.form" needs to have valid return on all code paths
+  help: Array method "Array.from" needs to have valid return on all code paths
 
   ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
    ╭─[array_callback_return.tsx:1:1]
@@ -727,19 +727,19 @@ expression: array_callback_return
    ╰────
   help: Array method "Array.prototype.filter" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:1]
  1 │ Array.from(foo, function bar(){})
    ·                               ──
    ╰────
-  help: Array method "Array.form" needs to have valid return on all code paths
+  help: Array method "Array.from" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:1]
  1 │ Array.from(foo, bar ? function (){} : baz)
    ·                                  ──
    ╰────
-  help: Array method "Array.form" needs to have valid return on all code paths
+  help: Array method "Array.from" needs to have valid return on all code paths
 
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
    ╭─[array_callback_return.tsx:1:1]
@@ -771,19 +771,19 @@ expression: array_callback_return
    ╰────
   help: Array method "Array.prototype.filter" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:1]
  1 │ Array?.from([], () => { console.log('hello') })
    ·                       ────────────────────────
    ╰────
-  help: Array method "Array.form" needs to have valid return on all code paths
+  help: Array method "Array.from" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.form"
+  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:1]
  1 │ (Array?.from)([], () => { console.log('hello') })
    ·                         ────────────────────────
    ╰────
-  help: Array method "Array.form" needs to have valid return on all code paths
+  help: Array method "Array.from" needs to have valid return on all code paths
 
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
    ╭─[array_callback_return.tsx:1:1]
