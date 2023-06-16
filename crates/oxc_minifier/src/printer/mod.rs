@@ -12,7 +12,7 @@ use std::{rc::Rc, str::from_utf8_unchecked};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::precedence;
-use oxc_semantic2::symbol::{self, SymbolId, SymbolTable};
+use oxc_semantic::{SymbolId, SymbolTable};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,

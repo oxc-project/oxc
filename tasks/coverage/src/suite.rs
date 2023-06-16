@@ -276,11 +276,12 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
         // Make sure serialization doesn't crash for ast and hir, also for code coverage.
         let _json = parser_ret.program.to_json();
-        let ret = AstLower::new(&allocator, source_type).build(&parser_ret.program);
+        let ret = AstLower::new(&allocator, source_text, source_type).build(&parser_ret.program);
         let _json = ret.program.to_json();
 
         let program = allocator.alloc(parser_ret.program);
-        let semantic_ret = SemanticBuilder::new(source_text, source_type, &parser_ret.trivias)
+        let semantic_ret = SemanticBuilder::new(source_text, source_type)
+            .with_trivias(&parser_ret.trivias)
             .with_module_record_builder(true)
             .with_check_syntax_error(true)
             .build(program);

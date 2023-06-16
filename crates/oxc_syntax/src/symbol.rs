@@ -44,8 +44,16 @@ impl SymbolFlags {
         self.intersects(Self::Variable)
     }
 
+    pub fn is_const_variable(&self) -> bool {
+        self.contains(Self::ConstVariable)
+    }
+
     pub fn is_function(&self) -> bool {
         self.contains(Self::Function)
+    }
+
+    pub fn is_class(&self) -> bool {
+        self.contains(Self::Class)
     }
 
     pub fn is_catch_variable(&self) -> bool {
@@ -54,5 +62,9 @@ impl SymbolFlags {
 
     pub fn is_function_scoped_declaration(&self) -> bool {
         self.contains(Self::FunctionScopedVariable)
+    }
+
+    pub fn is_export(&self) -> bool {
+        self.contains(Self::Export)
     }
 }

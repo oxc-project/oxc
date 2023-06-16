@@ -3,8 +3,11 @@
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_ast::ast;
 use oxc_hir::{hir, HirBuilder};
-use oxc_semantic2::{symbol::SymbolFlags, Semantic, SemanticBuilder};
-use oxc_span::{GetSpan, SourceType};
+use oxc_semantic::{
+    Reference, ReferenceFlag, ReferenceId, ScopeFlags, Semantic, SemanticBuilder, SymbolFlags,
+    SymbolId,
+};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 
 // <https://github.com/rust-lang/rust/blob/master/compiler/rustc_data_structures/src/stack.rs>
 #[cfg(not(target_arch = "wasm32"))]
@@ -22,22 +25,101 @@ pub fn ensure_sufficient_stack<R, F: FnOnce() -> R>(f: F) -> R {
 
 pub struct AstLowerReturn<'a> {
     pub program: hir::Program<'a>,
-    pub semantic: Semantic,
+    pub semantic: Semantic<'a>,
 }
 
 pub struct AstLower<'a> {
     hir: HirBuilder<'a>,
-    semantic: SemanticBuilder,
+    semantic: SemanticBuilder<'a>,
 }
 
 impl<'a> AstLower<'a> {
-    pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
-        Self { hir: HirBuilder::new(allocator), semantic: SemanticBuilder::new(source_type) }
+    pub fn enter_binding_identifier(
+        &mut self,
+        span: Span,
+        name: &Atom,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> SymbolId {
+        self.semantic.declare_symbol(span, name, includes, excludes)
+    }
+
+    pub fn enter_identifier_reference(&mut self, span: Span, name: &Atom) -> ReferenceId {
+        let reference = Reference::new(span, name.clone(), ReferenceFlag::read());
+        self.semantic.declare_reference(reference)
+    }
+
+    pub fn enter_block_statement(&mut self) {
+        self.semantic.enter_scope(ScopeFlags::empty());
+    }
+
+    pub fn leave_block_statement(&mut self) {
+        self.semantic.leave_scope();
+    }
+
+    pub fn enter_function_scope(&mut self) {
+        self.semantic.enter_scope(ScopeFlags::Function);
+    }
+
+    pub fn leave_function_scope(&mut self) {
+        self.semantic.leave_scope();
+    }
+
+    pub fn enter_static_block(&mut self) {
+        self.semantic.enter_scope(ScopeFlags::ClassStaticBlock);
+    }
+
+    pub fn leave_static_block(&mut self) {
+        self.semantic.leave_scope();
+    }
+
+    pub fn enter_catch_clause(&mut self) {
+        self.semantic.enter_scope(ScopeFlags::empty());
+    }
+
+    pub fn leave_catch_clause(&mut self) {
+        self.semantic.leave_scope();
+    }
+
+    // ForStatement : for ( LexicalDeclaration Expressionopt ; Expressionopt ) Statement
+    //   1. Let oldEnv be the running execution context's LexicalEnvironment.
+    //   2. Let loopEnv be NewDeclarativeEnvironment(oldEnv).
+    pub fn enter_for_statement(&mut self, is_lexical_declaration: bool) {
+        if is_lexical_declaration {
+            self.semantic.enter_scope(ScopeFlags::empty());
+        }
+    }
+
+    pub fn leave_for_statement(&mut self, is_lexical_declaration: bool) {
+        if is_lexical_declaration {
+            self.semantic.leave_scope();
+        }
+    }
+
+    pub fn enter_for_in_of_statement(&mut self, is_lexical_declaration: bool) {
+        if is_lexical_declaration {
+            self.semantic.enter_scope(ScopeFlags::empty());
+        }
+    }
+
+    pub fn leave_for_in_of_statement(&mut self, is_lexical_declaration: bool) {
+        if is_lexical_declaration {
+            self.semantic.leave_scope();
+        }
+    }
+}
+
+impl<'a> AstLower<'a> {
+    pub fn new(allocator: &'a Allocator, source_text: &'a str, source_type: SourceType) -> Self {
+        Self {
+            hir: HirBuilder::new(allocator),
+            semantic: SemanticBuilder::new(source_text, source_type),
+        }
     }
 
     pub fn build(mut self, program: &ast::Program<'a>) -> AstLowerReturn<'a> {
         let program = self.lower_program(program);
-        let semantic = self.semantic.build();
+        let semantic = self.semantic.build2();
         AstLowerReturn { program, semantic }
     }
 
@@ -117,9 +199,9 @@ impl<'a> AstLower<'a> {
         &mut self,
         stmt: &ast::BlockStatement<'a>,
     ) -> Box<'a, hir::BlockStatement<'a>> {
-        self.semantic.enter_block_statement();
+        self.enter_block_statement();
         let body = self.lower_statements(&stmt.body);
-        self.semantic.leave_block_statement();
+        self.leave_block_statement();
         self.hir.block(stmt.span, body)
     }
 
@@ -154,12 +236,12 @@ impl<'a> AstLower<'a> {
     fn lower_for_statement(&mut self, stmt: &ast::ForStatement<'a>) -> hir::Statement<'a> {
         let is_lexical_declaration =
             stmt.init.as_ref().is_some_and(ast::ForStatementInit::is_lexical_declaration);
-        self.semantic.enter_for_statement(is_lexical_declaration);
+        self.enter_for_statement(is_lexical_declaration);
         let init = stmt.init.as_ref().map(|init| self.lower_for_statement_init(init));
         let test = stmt.test.as_ref().map(|expr| self.lower_expression(expr));
         let update = stmt.update.as_ref().map(|expr| self.lower_expression(expr));
         let body = self.lower_statement(&stmt.body);
-        self.semantic.leave_for_statement(is_lexical_declaration);
+        self.leave_for_statement(is_lexical_declaration);
         self.hir.for_statement(stmt.span, init, test, update, body)
     }
 
@@ -179,21 +261,21 @@ impl<'a> AstLower<'a> {
 
     fn lower_for_in_statement(&mut self, stmt: &ast::ForInStatement<'a>) -> hir::Statement<'a> {
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
-        self.semantic.enter_for_in_of_statement(is_lexical_declaration);
+        self.enter_for_in_of_statement(is_lexical_declaration);
         let left = self.lower_for_statement_left(&stmt.left);
         let right = self.lower_expression(&stmt.right);
         let body = self.lower_statement(&stmt.body);
-        self.semantic.leave_for_in_of_statement(is_lexical_declaration);
+        self.leave_for_in_of_statement(is_lexical_declaration);
         self.hir.for_in_statement(stmt.span, left, right, body)
     }
 
     fn lower_for_of_statement(&mut self, stmt: &ast::ForOfStatement<'a>) -> hir::Statement<'a> {
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
-        self.semantic.enter_for_in_of_statement(is_lexical_declaration);
+        self.enter_for_in_of_statement(is_lexical_declaration);
         let left = self.lower_for_statement_left(&stmt.left);
         let right = self.lower_expression(&stmt.right);
         let body = self.lower_statement(&stmt.body);
-        self.semantic.leave_for_in_of_statement(is_lexical_declaration);
+        self.leave_for_in_of_statement(is_lexical_declaration);
         self.hir.for_of_statement(stmt.span, stmt.r#await, left, right, body)
     }
 
@@ -257,7 +339,7 @@ impl<'a> AstLower<'a> {
         &mut self,
         clause: &ast::CatchClause<'a>,
     ) -> Box<'a, hir::CatchClause<'a>> {
-        self.semantic.enter_catch_clause();
+        self.enter_catch_clause();
         let param = clause.param.as_ref().map(|pat| {
             self.lower_binding_pattern(
                 pat,
@@ -267,7 +349,7 @@ impl<'a> AstLower<'a> {
         });
         let body = self.lower_statements(&clause.body.body);
         let body = self.hir.block(clause.body.span, body);
-        self.semantic.leave_catch_clause();
+        self.leave_catch_clause();
         self.hir.catch_clause(clause.span, param, body)
     }
 
@@ -445,10 +527,10 @@ impl<'a> AstLower<'a> {
     }
 
     fn lower_arrow_expression(&mut self, expr: &ast::ArrowExpression<'a>) -> hir::Expression<'a> {
-        self.semantic.enter_function_scope();
+        self.enter_function_scope();
         let params = self.lower_formal_parameters(&expr.params);
         let body = self.lower_function_body(&expr.body);
-        self.semantic.leave_function_scope();
+        self.leave_function_scope();
         self.hir.arrow_expression(
             expr.span,
             expr.expression,
@@ -1002,7 +1084,7 @@ impl<'a> AstLower<'a> {
         &mut self,
         ident: &ast::IdentifierReference,
     ) -> hir::IdentifierReference {
-        let reference_id = self.semantic.enter_identifier_reference(ident.span, &ident.name);
+        let reference_id = self.enter_identifier_reference(ident.span, &ident.name);
         self.hir.identifier_reference(ident.span, ident.name.clone(), reference_id)
     }
 
@@ -1027,8 +1109,7 @@ impl<'a> AstLower<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> hir::BindingIdentifier {
-        let symbol_id =
-            self.semantic.enter_binding_identifier(ident.span, &ident.name, includes, excludes);
+        let symbol_id = self.enter_binding_identifier(ident.span, &ident.name, includes, excludes);
         self.hir.binding_identifier(ident.span, ident.name.clone(), symbol_id)
     }
 
@@ -1343,10 +1424,10 @@ impl<'a> AstLower<'a> {
         let includes = includes | SymbolFlags::Function;
         let id =
             func.id.as_ref().map(|ident| self.lower_binding_identifier(ident, includes, excludes));
-        self.semantic.enter_function_scope();
+        self.enter_function_scope();
         let params = self.lower_formal_parameters(&func.params);
         let body = func.body.as_ref().map(|body| self.lower_function_body(body));
-        self.semantic.leave_function_scope();
+        self.leave_function_scope();
         self.hir.function(
             r#type,
             func.span,
@@ -1465,9 +1546,9 @@ impl<'a> AstLower<'a> {
         &mut self,
         block: &ast::StaticBlock<'a>,
     ) -> Box<'a, hir::StaticBlock<'a>> {
-        self.semantic.enter_static_block();
+        self.enter_static_block();
         let body = self.lower_statements(&block.body);
-        self.semantic.leave_static_block();
+        self.leave_static_block();
         self.hir.static_block(block.span, body)
     }
 

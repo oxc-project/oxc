@@ -60,7 +60,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         #(#use_stmts)*
 
         use crate::{context::LintContext, rule::{Rule, RuleCategory}, rule::RuleMeta, AstNode};
-        use oxc_semantic::Symbol;
+        use oxc_semantic::SymbolId;
 
         #[derive(Debug, Clone)]
         #[allow(clippy::enum_variant_names)]
@@ -101,9 +101,9 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub fn run_on_symbol<'a>(&self, symbol: &Symbol, ctx: &LintContext<'a>) {
+            pub fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>) {
               match self {
-                #(Self::#struct_names(rule) => rule.run_on_symbol(symbol, ctx)),*
+                #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx)),*
               }
             }
         }

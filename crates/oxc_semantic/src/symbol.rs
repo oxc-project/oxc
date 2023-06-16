@@ -5,39 +5,37 @@ pub use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::reference::{Reference, ReferenceId};
+use crate::{
+    node::AstNodeId,
+    reference::{Reference, ReferenceId},
+};
 
 /// Symbol Table
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SymbolTable {
-    pub(crate) spans: IndexVec<SymbolId, Span>,
-    pub(crate) names: IndexVec<SymbolId, Atom>,
-    pub(crate) flags: IndexVec<SymbolId, SymbolFlags>,
-    pub(crate) scope_ids: IndexVec<SymbolId, ScopeId>,
-    pub(crate) resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
-    pub(crate) references: IndexVec<ReferenceId, Reference>,
+    pub spans: IndexVec<SymbolId, Span>,
+    pub names: IndexVec<SymbolId, Atom>,
+    pub flags: IndexVec<SymbolId, SymbolFlags>,
+    pub scope_ids: IndexVec<SymbolId, ScopeId>,
+    /// Pointer to the AST Node where this symbol is declared
+    pub declarations: IndexVec<SymbolId, AstNodeId>,
+    pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
+    pub references: IndexVec<ReferenceId, Reference>,
 }
 
 impl SymbolTable {
-    pub fn new() -> Self {
-        Self {
-            spans: IndexVec::new(),
-            names: IndexVec::new(),
-            flags: IndexVec::new(),
-            scope_ids: IndexVec::new(),
-            resolved_references: IndexVec::new(),
-            references: IndexVec::new(),
-        }
-    }
-
     pub fn len(&self) -> usize {
         self.spans.len()
     }
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = SymbolId> + '_ {
+        self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
     pub fn get_span(&self, symbol_id: SymbolId) -> Span {
@@ -60,6 +58,10 @@ impl SymbolTable {
         self.scope_ids[symbol_id]
     }
 
+    pub fn get_declaration(&self, symbol_id: SymbolId) -> AstNodeId {
+        self.declarations[symbol_id]
+    }
+
     pub fn create_symbol(
         &mut self,
         span: Span,
@@ -74,8 +76,12 @@ impl SymbolTable {
         self.resolved_references.push(vec![])
     }
 
-    pub fn create_reference(&mut self, _span: Span, name: Atom) -> ReferenceId {
-        self.references.push(Reference::new(name))
+    pub fn add_declaration(&mut self, node_id: AstNodeId) {
+        self.declarations.push(node_id);
+    }
+
+    pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
+        self.references.push(reference)
     }
 
     pub fn get_reference(&self, reference_id: ReferenceId) -> &Reference {
@@ -83,7 +89,7 @@ impl SymbolTable {
     }
 
     pub fn is_global_reference(&self, reference_id: ReferenceId) -> bool {
-        self.references[reference_id].symbol_id.is_none()
+        self.references[reference_id].symbol_id().is_none()
     }
 
     pub fn get_resolved_references(&self, symbol_id: SymbolId) -> &Vec<ReferenceId> {

@@ -15,7 +15,7 @@ oxc_allocator = { workspace = true }
 oxc_ast       = { workspace = true }
 oxc_hir       = { workspace = true }
 oxc_span      = { workspace = true }
-oxc_semantic2 = { workspace = true }
+oxc_semantic  = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 stacker = { workspace = true }

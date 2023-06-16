@@ -76,8 +76,9 @@ impl Tester {
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
-        let semantic_ret =
-            SemanticBuilder::new(source_text, source_type, &ret.trivias).build(program);
+        let semantic_ret = SemanticBuilder::new(source_text, source_type)
+            .with_trivias(&ret.trivias)
+            .build(program);
         assert!(semantic_ret.errors.is_empty(), "{:?}", &semantic_ret.errors);
         let rule = RULES
             .iter()

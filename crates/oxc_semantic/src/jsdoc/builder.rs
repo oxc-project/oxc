@@ -82,8 +82,10 @@ mod test {
         let source_type = SourceType::default();
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
-        let semantic =
-            SemanticBuilder::new(source_text, source_type, &ret.trivias).build(program).semantic;
+        let semantic = SemanticBuilder::new(source_text, source_type)
+            .with_trivias(&ret.trivias)
+            .build(program)
+            .semantic;
         let jsdoc = semantic.jsdoc();
         let start = source_text.find(symbol).unwrap() as u32;
         let span = Span::new(start, start + symbol.len() as u32);

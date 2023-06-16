@@ -7,7 +7,7 @@ use bitflags::bitflags;
 use oxc_ast::AstKind;
 
 pub use self::{id::AstNodeId, tree::AstNodes};
-use crate::scope::{Scope, ScopeId};
+use crate::scope::{ScopeFlags, ScopeId};
 
 /// Indextree node containing a semantic node
 pub type AstNode<'a> = indextree::Node<SemanticNode<'a>>;
@@ -45,9 +45,9 @@ impl<'a> SemanticNode<'a> {
         self.scope_id
     }
 
-    pub fn strict_mode(&self, scope: &Scope) -> bool {
+    pub fn strict_mode(&self, flags: ScopeFlags) -> bool {
         // All parts of a ClassDeclaration or a ClassExpression are strict mode code.
-        scope.strict_mode() || self.in_class()
+        flags.is_strict_mode() || self.in_class()
     }
 
     pub fn in_class(self) -> bool {

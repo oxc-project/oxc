@@ -19,7 +19,7 @@ oxc_allocator = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_index     = { workspace = true }
-oxc_semantic2 = { workspace = true }
+oxc_semantic  = { workspace = true }
 
 bitflags   = { workspace = true }
 num-bigint = { workspace = true }

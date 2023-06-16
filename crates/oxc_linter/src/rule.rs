@@ -1,6 +1,6 @@
 use std::fmt;
 
-use oxc_semantic::Symbol;
+use oxc_semantic::SymbolId;
 
 use crate::{context::LintContext, AstNode};
 
@@ -10,7 +10,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
         Self::default()
     }
 
-    fn run_on_symbol(&self, _symbol: &Symbol, _ctx: &LintContext<'_>) {}
+    fn run_on_symbol(&self, _symbol_id: SymbolId, _ctx: &LintContext<'_>) {}
 
     fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
 }

@@ -141,14 +141,16 @@ impl Oxc {
         let program = allocator.alloc(ret.program);
 
         if run_options.syntax() && !run_options.lint() {
-            let semantic_ret = SemanticBuilder::new(source_text, source_type, &ret.trivias)
+            let semantic_ret = SemanticBuilder::new(source_text, source_type)
+                .with_trivias(&ret.trivias)
                 .with_check_syntax_error(true)
                 .build(program);
             self.save_diagnostics(semantic_ret.errors);
         }
 
         if run_options.lint() {
-            let semantic_ret = SemanticBuilder::new(source_text, source_type, &ret.trivias)
+            let semantic_ret = SemanticBuilder::new(source_text, source_type)
+                .with_trivias(&ret.trivias)
                 .with_check_syntax_error(true)
                 .build(program);
             self.save_diagnostics(semantic_ret.errors);
@@ -166,12 +168,12 @@ impl Oxc {
         }
 
         if run_options.hir() && !run_options.minify() {
-            let ast_lower_ret = AstLower::new(&allocator, source_type).build(program);
+            let ast_lower_ret = AstLower::new(&allocator, source_text, source_type).build(program);
             self.hir = ast_lower_ret.program.serialize(&self.serializer)?;
         }
 
         if run_options.minify() {
-            let ast_lower_ret = AstLower::new(&allocator, source_type).build(program);
+            let ast_lower_ret = AstLower::new(&allocator, source_text, source_type).build(program);
             let hir = allocator.alloc(ast_lower_ret.program);
             let semantic = ast_lower_ret.semantic;
 
@@ -179,7 +181,7 @@ impl Oxc {
             let _semantic =
                 Compressor::new(&allocator, semantic, CompressOptions::default()).build(hir);
             if minifier_options.mangle() {
-                let mangler = ManglerBuilder::new(source_type).build(hir);
+                let mangler = ManglerBuilder::new(source_text, source_type).build(hir);
                 printer.with_mangler(mangler);
             }
 

@@ -9,7 +9,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Symbol;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::IsPrivate, context::LintContext, rule::Rule};
@@ -66,9 +66,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for IsolatedDeclaration {
-    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext) {
-        if symbol.is_export() {
-            let declaration = ctx.nodes()[symbol.declaration()];
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
+        let symbol_table = ctx.semantic().symbols();
+        if symbol_table.get_flag(symbol_id).is_export() {
+            let declaration = ctx.nodes()[symbol_table.get_declaration(symbol_id)];
             match declaration.kind() {
                 AstKind::Class(class) => Self::check_class(class, ctx),
                 AstKind::Function(function) => Self::check_function(function, ctx),

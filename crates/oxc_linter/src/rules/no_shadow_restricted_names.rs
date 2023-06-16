@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Symbol;
+use oxc_semantic::SymbolId;
 use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule};
@@ -38,18 +38,18 @@ declare_oxc_lint!(
 
 static RESTRICTED: [&str; 5] = ["undefined", "NaN", "Infinity", "arguments", "eval"];
 
-fn safely_shadows_undefined(symbol: &Symbol, ctx: &LintContext<'_>) -> bool {
-    if symbol.name().as_str() == "undefined" {
+fn safely_shadows_undefined(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
+    let symbol_table = ctx.semantic().symbols();
+    if symbol_table.get_name(symbol_id).as_str() == "undefined" {
         let mut no_assign = true;
-        let symbols = ctx.symbols();
-        for reference_id in symbol.references() {
-            let reference = symbols.get_resolved_reference(*reference_id).unwrap();
+        for reference_id in symbol_table.get_resolved_references(symbol_id) {
+            let reference = symbol_table.get_reference(*reference_id);
             if reference.is_write() {
                 no_assign = false;
             }
         }
         let mut no_init = false;
-        let decl = ctx.nodes()[symbol.declaration()];
+        let decl = ctx.nodes()[symbol_table.get_declaration(symbol_id)];
         if let AstKind::VariableDeclarator(var) = decl.kind() {
             no_init = var.init.is_none();
         }
@@ -59,9 +59,14 @@ fn safely_shadows_undefined(symbol: &Symbol, ctx: &LintContext<'_>) -> bool {
 }
 
 impl Rule for NoShadowRestrictedNames {
-    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
-        if RESTRICTED.contains(&symbol.name().as_str()) && !safely_shadows_undefined(symbol, ctx) {
-            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(symbol.name().clone(), symbol.span()));
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+        let symbol_table = ctx.semantic().symbols();
+        let name = symbol_table.get_name(symbol_id);
+        if RESTRICTED.contains(&name.as_str()) && !safely_shadows_undefined(symbol_id, ctx) {
+            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
+                name.clone(),
+                symbol_table.get_span(symbol_id),
+            ));
         }
     }
 }

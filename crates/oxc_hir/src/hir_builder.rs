@@ -7,7 +7,7 @@
 
 use num_bigint::BigUint;
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_semantic2::{reference::ReferenceId, symbol::SymbolId};
+use oxc_semantic::{ReferenceId, SymbolId};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     operator::{
