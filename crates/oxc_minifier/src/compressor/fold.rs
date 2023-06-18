@@ -8,7 +8,7 @@ use oxc_hir::hir_util::{
     get_boolean_value, get_number_value, get_side_free_number_value, IsLiteralValue,
     MayHaveSideEffects, NumberValue,
 };
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
     NumberBase,
@@ -119,6 +119,7 @@ impl<'a> Compressor<'a> {
                 {
                     self.try_fold_unary_operator(unary_expr)
                 }
+                UnaryOperator::Void => self.try_reduce_void(unary_expr),
                 _ => None,
             },
             _ => None,
@@ -394,6 +395,31 @@ impl<'a> Compressor<'a> {
             }
         }
 
+        None
+    }
+
+    /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L195)
+    /// void 0 -> void 0
+    /// void 1 -> void 0
+    /// void x -> void 0
+    fn try_reduce_void(&mut self, unary_expr: &UnaryExpression<'a>) -> Option<Expression<'a>> {
+        let can_replace = match &unary_expr.argument {
+            Expression::NumberLiteral(number_literal) => number_literal.value != 0_f64,
+            Expression::Identifier(_) => true,
+            _ => !unary_expr.may_have_side_effects(),
+        };
+
+        if can_replace {
+            let number_literal = self.hir.number_literal(
+                unary_expr.argument.span(),
+                0_f64,
+                self.hir.new_str("0"),
+                NumberBase::Decimal,
+            );
+
+            let argument = self.hir.literal_number_expression(number_literal);
+            return Some(self.hir.unary_expression(unary_expr.span, UnaryOperator::Void, argument));
+        }
         None
     }
 }

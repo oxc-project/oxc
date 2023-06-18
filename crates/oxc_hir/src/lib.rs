@@ -8,6 +8,7 @@ mod hir_builder;
 mod hir_kind;
 pub mod hir_util;
 pub mod precedence;
+mod span;
 mod visit;
 mod visit_mut;
 
