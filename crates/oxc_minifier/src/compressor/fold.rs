@@ -25,7 +25,6 @@ enum Tri {
 }
 
 impl Tri {
-    #[must_use]
     pub fn not(self) -> Self {
         match self {
             Self::True => Self::False,
