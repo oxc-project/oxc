@@ -5,6 +5,101 @@ use crate::{test, test_same};
 #[test]
 fn undefined_comparison1() {
     test("undefined == undefined", "!0");
+    test("undefined == null", "!0");
+    test("undefined == void 0", "!0");
+
+    test("undefined == 0", "!1");
+    test("undefined == 1", "!1");
+    test("undefined == 'hi'", "!1");
+    test("undefined == true", "!1");
+    test("undefined == false", "!1");
+
+    test("undefined === undefined", "!0");
+    test("undefined === null", "!1");
+    test("undefined === void 0", "!0");
+
+    // origin was `test_same("undefined == this");`
+    test("undefined == this", "void 0==this");
+    // origin was `test_same("undefined == x");`
+    test("undefined == x", "void 0==x");
+
+    test("undefined != undefined", "!1");
+    test("undefined != null", "!1");
+    test("undefined != void 0", "!1");
+
+    test("undefined != 0", "!0");
+    test("undefined != 1", "!0");
+    test("undefined != 'hi'", "!0");
+    test("undefined != true", "!0");
+    test("undefined != false", "!0");
+
+    test("undefined !== undefined", "!1");
+    test("undefined !== void 0", "!1");
+    test("undefined !== null", "!0");
+
+    // origin was `test_same("undefined != this");`
+    test("undefined != this", "void 0!=this");
+    // origin was `test_same("undefined != x");`
+    test("undefined != x", "void 0!=x");
+
+    test("undefined < undefined", "!1");
+    test("undefined > undefined", "!1");
+    test("undefined >= undefined", "!1");
+    test("undefined <= undefined", "!1");
+
+    test("0 < undefined", "!1");
+    test("true > undefined", "!1");
+    // test("'hi' >= undefined", "!1");
+    test("null <= undefined", "!1");
+
+    test("undefined < 0", "!1");
+    test("undefined > true", "!1");
+    // test("undefined >= 'hi'", "!1");
+    test("undefined <= null", "!1");
+
+    test("null == undefined", "!0");
+    test("0 == undefined", "!1");
+    test("1 == undefined", "!1");
+    // test("'hi' == undefined", "!1");
+    test("true == undefined", "!1");
+    test("false == undefined", "!1");
+    test("null === undefined", "!1");
+    test("void 0 === undefined", "!0");
+
+    test("undefined == NaN", "!1");
+    test("NaN == undefined", "!1");
+    test("undefined == Infinity", "!1");
+    test("Infinity == undefined", "!1");
+    test("undefined == -Infinity", "!1");
+    test("-Infinity == undefined", "!1");
+    test("({}) == undefined", "!1");
+    test("undefined == ({})", "!1");
+    test("([]) == undefined", "!1");
+    test("undefined == ([])", "!1");
+    test("(/a/g) == undefined", "!1");
+    test("undefined == (/a/g)", "!1");
+    test("(function(){}) == undefined", "!1");
+    test("undefined == (function(){})", "!1");
+
+    test("undefined != NaN", "!0");
+    test("NaN != undefined", "!0");
+    test("undefined != Infinity", "!0");
+    test("Infinity != undefined", "!0");
+    test("undefined != -Infinity", "!0");
+    test("-Infinity != undefined", "!0");
+    test("({}) != undefined", "!0");
+    test("undefined != ({})", "!0");
+    test("([]) != undefined", "!0");
+    test("undefined != ([])", "!0");
+    test("(/a/g) != undefined", "!0");
+    test("undefined != (/a/g)", "!0");
+    test("(function(){}) != undefined", "!0");
+    test("undefined != (function(){})", "!0");
+
+    // origin was `test_same("this == undefined");`
+    test("this == undefined", "this==void 0");
+    // origin was `test_same("x == undefined");`
+    test("x == undefined", "x==void 0");
 }
 
 #[test]
@@ -69,7 +164,7 @@ fn unary_ops() {
 fn unary_with_big_int() {
     test("-(1n)", "-1n");
     // test("- -1n", "1n");
-    // test("!1n", "false");
+    // test("!1n", "!1");
     // test("~0n", "-1n");
 }
 

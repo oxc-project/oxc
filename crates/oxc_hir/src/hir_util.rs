@@ -101,19 +101,39 @@ pub trait CheckForStateChange<'a, 'b> {
 }
 
 impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
-    fn check_for_state_change(&self, _check_for_new_objects: bool) -> bool {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
         match self {
             Self::NumberLiteral(_)
             | Self::BooleanLiteral(_)
             | Self::StringLiteral(_)
             | Self::BigintLiteral(_)
             | Self::NullLiteral(_)
-            | Self::RegExpLiteral(_) => false,
+            | Self::RegExpLiteral(_)
+            | Self::FunctionExpression(_) => false,
             Self::Identifier(ident) => {
                 !matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
             }
             Self::UnaryExpression(unary_expr) => {
-                unary_expr.check_for_state_change(_check_for_new_objects)
+                unary_expr.check_for_state_change(check_for_new_objects)
+            }
+            Self::ObjectExpression(object_expr) => {
+                if check_for_new_objects {
+                    return true;
+                }
+
+                object_expr
+                    .properties
+                    .iter()
+                    .any(|property| property.check_for_state_change(check_for_new_objects))
+            }
+            Self::ArrayExpression(array_expr) => {
+                if check_for_new_objects {
+                    return true;
+                }
+                array_expr
+                    .elements
+                    .iter()
+                    .any(|element| element.check_for_state_change(check_for_new_objects))
             }
             _ => true,
         }
@@ -121,11 +141,57 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
 }
 
 impl<'a, 'b> CheckForStateChange<'a, 'b> for UnaryExpression<'a> {
-    fn check_for_state_change(&self, _check_for_new_objects: bool) -> bool {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
         if is_simple_unary_operator(self.operator) {
-            return self.argument.check_for_state_change(_check_for_new_objects);
+            return self.argument.check_for_state_change(check_for_new_objects);
         }
         true
+    }
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for ArrayExpressionElement<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match self {
+            Self::SpreadElement(element) => element.check_for_state_change(check_for_new_objects),
+            Self::Expression(expr) => expr.check_for_state_change(check_for_new_objects),
+            Self::Elision(_) => false,
+        }
+    }
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for ObjectPropertyKind<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match self {
+            Self::ObjectProperty(method) => method.check_for_state_change(check_for_new_objects),
+            Self::SpreadProperty(spread_element) => {
+                spread_element.check_for_state_change(check_for_new_objects)
+            }
+        }
+    }
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for SpreadElement<'a> {
+    fn check_for_state_change(&self, _check_for_new_objects: bool) -> bool {
+        // Object-rest and object-spread may trigger a getter.
+        // TODO: Closure Compiler assumes that getters may side-free when set `assumeGettersArePure`.
+        // https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/AstAnalyzer.java#L282
+        true
+    }
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for ObjectProperty<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        self.key.check_for_state_change(check_for_new_objects)
+            || self.value.check_for_state_change(check_for_new_objects)
+    }
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for PropertyKey<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        match self {
+            Self::Identifier(_) | Self::PrivateIdentifier(_) => false,
+            Self::Expression(expr) => expr.check_for_state_change(check_for_new_objects),
+        }
     }
 }
 
@@ -137,31 +203,83 @@ fn is_simple_unary_operator(operator: UnaryOperator) -> bool {
     operator != UnaryOperator::Delete
 }
 
+#[derive(PartialEq)]
+pub enum NumberValue {
+    Number(f64),
+    PositiveInfinity,
+    NegativeInfinity,
+    NaN,
+}
+
+impl NumberValue {
+    #[must_use]
+    pub fn not(&self) -> Self {
+        match self {
+            Self::Number(num) => Self::Number(-num),
+            Self::PositiveInfinity => Self::NegativeInfinity,
+            Self::NegativeInfinity => Self::PositiveInfinity,
+            Self::NaN => Self::NaN,
+        }
+    }
+}
+
 /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L348)
 /// Gets the value of a node as a Number, or None if it cannot be converted.
-pub fn get_number_value(expr: &Expression) -> Option<f64> {
+/// This method does not consider whether `expr` may have side effects.
+pub fn get_number_value(expr: &Expression) -> Option<NumberValue> {
     match expr {
-        Expression::NumberLiteral(number_literal) => Some(number_literal.value),
+        Expression::NumberLiteral(number_literal) => {
+            Some(NumberValue::Number(number_literal.value))
+        }
         Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
             UnaryOperator::UnaryPlus => get_number_value(&unary_expr.argument),
-            UnaryOperator::UnaryNegation => get_number_value(&unary_expr.argument).map(|v| -v),
-            UnaryOperator::BitwiseNot => get_number_value(&unary_expr.argument)
-                .map(|value| f64::from(!NumberLiteral::ecmascript_to_int32(value))),
-            UnaryOperator::LogicalNot => {
-                get_boolean_value(expr).map(|boolean| if boolean { 1.0 } else { 0.0 })
-            }
+            UnaryOperator::UnaryNegation => get_number_value(&unary_expr.argument).map(|v| v.not()),
+            UnaryOperator::BitwiseNot => get_number_value(&unary_expr.argument).map(|value| {
+                match value {
+                    NumberValue::Number(num) => {
+                        NumberValue::Number(f64::from(!NumberLiteral::ecmascript_to_int32(num)))
+                    }
+                    // ~Infinity -> -1
+                    // ~-Infinity -> -1
+                    // ~NaN -> -1
+                    _ => NumberValue::Number(-1_f64),
+                }
+            }),
+            UnaryOperator::LogicalNot => get_boolean_value(expr)
+                .map(|boolean| if boolean { 1_f64 } else { 0_f64 })
+                .map(NumberValue::Number),
+            UnaryOperator::Void => Some(NumberValue::NaN),
             _ => None,
         },
         Expression::BooleanLiteral(bool_literal) => {
             if bool_literal.value {
-                Some(1.0)
+                Some(NumberValue::Number(1.0))
             } else {
-                Some(0.0)
+                Some(NumberValue::Number(0.0))
             }
         }
-        Expression::NullLiteral(_) => Some(0.0),
+        Expression::NullLiteral(_) => Some(NumberValue::Number(0.0)),
+        Expression::Identifier(ident) => match ident.name.as_str() {
+            "Infinity" => Some(NumberValue::PositiveInfinity),
+            "NaN" | "undefined" => Some(NumberValue::NaN),
+            _ => None,
+        },
         _ => None,
     }
+}
+
+/// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L104-L114)
+/// Returns the number value of the node if it has one and it cannot have side effects.
+pub fn get_side_free_number_value(expr: &Expression) -> Option<NumberValue> {
+    let value = get_number_value(expr);
+    // Calculating the number value, if any, is likely to be faster than calculating side effects,
+    // and there are only a very few cases where we can compute a number value, but there could
+    // also be side effects. e.g. `void doSomething()` has value NaN, regardless of the behavior
+    // of `doSomething()`
+    if value.is_some() && !expr.may_have_side_effects() {
+        return value;
+    }
+    None
 }
 
 /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L109)
@@ -239,7 +357,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
                 // +1 -> true
                 // +0 -> false
                 // -0 -> false
-                get_number_value(expr).map(|value| value != 0.0)
+                get_number_value(expr).map(|value| value != NumberValue::Number(0_f64))
             } else if unary_expr.operator == UnaryOperator::LogicalNot {
                 // !true -> false
                 get_boolean_value(&unary_expr.argument).map(|boolean| !boolean)
