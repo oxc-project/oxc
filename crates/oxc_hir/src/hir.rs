@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    cell::Cell,
     fmt,
     hash::{Hash, Hasher},
 };
@@ -407,7 +407,7 @@ pub struct IdentifierReference {
     pub span: Span,
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub reference_id: RefCell<ReferenceId>,
+    pub reference_id: Cell<ReferenceId>,
 }
 
 impl Hash for IdentifierReference {
@@ -424,7 +424,7 @@ pub struct BindingIdentifier {
     pub span: Span,
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub symbol_id: RefCell<SymbolId>,
+    pub symbol_id: Cell<SymbolId>,
 }
 
 impl Hash for BindingIdentifier {

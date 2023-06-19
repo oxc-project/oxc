@@ -85,13 +85,13 @@ impl<'a> Visit<'a> for ManglerBuilder<'a> {
     ) {
         let symbol_id =
             self.semantic.declare_symbol_for_mangler(ident.span, &ident.name, includes, excludes);
-        *ident.symbol_id.borrow_mut() = symbol_id;
+        ident.symbol_id.replace(symbol_id);
     }
 
     fn visit_identifier_reference(&mut self, ident: &'a IdentifierReference) {
         let reference = Reference::new(ident.span, ident.name.clone(), ReferenceFlag::read());
         let reference_id = self.semantic.declare_reference(reference);
-        *ident.reference_id.borrow_mut() = reference_id;
+        ident.reference_id.replace(reference_id);
     }
 }
 
