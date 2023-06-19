@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use phf::{phf_set, Set};
 
-use crate::{ast_util::calculate_hash, context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 enum ValidTypeofDiagnostic {
@@ -48,71 +48,66 @@ declare_oxc_lint!(
     nursery,
 );
 
-fn is_typeof_expr(expr: &Expression) -> bool {
-    if let Expression::UnaryExpression(unary) = expr && unary.operator == UnaryOperator::Typeof {
-        true
-    } else {
-        false
-    }
-}
-const VALID_TYPE: Set<&'static str> = phf_set! {
-    "symbol",
-    "undefined",
-    "object",
-    "boolean",
-    "number",
-    "string",
-    "function",
-    "bigint",
-};
 impl Rule for ValidTypeof {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::UnaryExpression(unary) = node.get().kind()
-            && unary.operator == UnaryOperator::Typeof
-            && let AstKind::BinaryExpression(binary) = ctx.parent_kind(node)
-            && binary.operator.is_equality()
-        {
-            let (sibling, sibling_id) = if let Expression::UnaryExpression(left) = &binary.left && calculate_hash(left) == calculate_hash(unary) {
-                (&binary.right, node.next_sibling().unwrap())
-            } else {
-                (&binary.left, node.previous_sibling().unwrap())
-            };
-
-            if let Expression::StringLiteral(lit) = sibling {
-                if !VALID_TYPE.contains(lit.value.as_str()) {
-                    ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
-                }
-                return;
-            }
-            if let Expression::TemplateLiteral(template) = sibling && template.expressions.is_empty() {
-                if let Some(value) = template.quasi() && !VALID_TYPE.contains(value.as_str()) {
-                    ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
-                }
-                return;
-            }
-
-            if sibling.is_undefined()
-                && ctx.semantic().is_unresolved_reference(sibling_id.into())
+        // match on `typeof` unary expression for better performance
+        let _unary_expr = match node.get().kind() {
+            AstKind::UnaryExpression(unary_expr)
+                if unary_expr.operator == UnaryOperator::Typeof =>
             {
-                ctx.diagnostic_with_fix(
-                    if self.require_string_literals {
-                        ValidTypeofDiagnostic::NotString(
-                            Some("Use `\"undefined\"` instead of `undefined`."),
-                            sibling.span(),
-                        )
-                    } else {
-                        ValidTypeofDiagnostic::InvalidValue(
-                            Some("Use `\"undefined\"` instead of `undefined`."),
-                            sibling.span(),
-                        )
-                    },
-                    || Fix::new("\"undefined\"", sibling.span()),
-                );
+                unary_expr
+            }
+            _ => return,
+        };
+
+        let binary_expr = match ctx.parent_kind(node) {
+            AstKind::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
+                binary_expr
+            }
+            _ => return,
+        };
+
+        let ((Expression::UnaryExpression(_), sibling) | (sibling, Expression::UnaryExpression(_))) =
+            (&binary_expr.left, &binary_expr.right) else { return  };
+
+        if let Expression::StringLiteral(lit) = sibling {
+            if !VALID_TYPES.contains(lit.value.as_str()) {
+                ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
+            }
+            return;
+        }
+
+        if let Expression::TemplateLiteral(template) = sibling && template.expressions.is_empty() {
+                if let Some(value) = template.quasi() && !VALID_TYPES.contains(value.as_str()) {
+                    ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
+                }
                 return;
             }
-            if self.require_string_literals && !is_typeof_expr(sibling) {
-                ctx.diagnostic(ValidTypeofDiagnostic::NotString(None, sibling.span()));
-            }
+
+        if let Expression::Identifier(ident) = sibling
+            && ident.name == "undefined"
+            && ctx.semantic().is_reference_to_global_variable(ident) {
+            ctx.diagnostic_with_fix(
+                if self.require_string_literals {
+                    ValidTypeofDiagnostic::NotString(
+                        Some("Use `\"undefined\"` instead of `undefined`."),
+                        sibling.span(),
+                    )
+                } else {
+                    ValidTypeofDiagnostic::InvalidValue(
+                        Some("Use `\"undefined\"` instead of `undefined`."),
+                        sibling.span(),
+                    )
+                },
+                || Fix::new("\"undefined\"", sibling.span()),
+            );
+            return;
+        }
+
+        if self.require_string_literals
+            && !matches!(sibling, Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof)
+        {
+            ctx.diagnostic(ValidTypeofDiagnostic::NotString(None, sibling.span()));
         }
     }
 
@@ -127,6 +122,17 @@ impl Rule for ValidTypeof {
         Self { require_string_literals }
     }
 }
+
+const VALID_TYPES: Set<&'static str> = phf_set! {
+    "symbol",
+    "undefined",
+    "object",
+    "boolean",
+    "number",
+    "string",
+    "function",
+    "bigint",
+};
 
 #[test]
 #[allow(clippy::too_many_lines)]
