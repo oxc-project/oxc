@@ -9,12 +9,13 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 // See: `https://rust-lang.github.io/rfcs/2360-bench-black-box.html`
-use std::{hint::black_box, time::Duration};
+use std::{hint::black_box, rc::Rc, time::Duration};
 
 use criterion::{BenchmarkId, Criterion, Throughput};
 use oxc_allocator::Allocator;
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
+use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_tasks_common::{TestFile, TestFiles};
 use pico_args::Arguments;
@@ -54,6 +55,7 @@ pub fn main() -> Result<(), String> {
     }
 
     bench_parser(&mut criterion, &files);
+    bench_semantic(&mut criterion, &files);
     bench_minifier(&mut criterion, &files);
     drop(criterion);
 
@@ -96,6 +98,30 @@ fn bench_minifier(criterion: &mut Criterion, files: &[&TestFile]) {
                 b.iter(|| {
                     let _minified =
                         Minifier::new(black_box(source_text), source_type, options).build();
+                });
+            },
+        );
+    }
+    group.finish();
+}
+
+fn bench_semantic(criterion: &mut Criterion, files: &[&TestFile]) {
+    let mut group = criterion.benchmark_group("semantic");
+    for file in files {
+        group.throughput(Throughput::Bytes(file.source_text.len() as u64));
+        group.bench_with_input(
+            BenchmarkId::from_parameter(&file.file_name),
+            &file.source_text,
+            |b, source_text| {
+                let source_type = SourceType::from_path(&file.file_name).unwrap();
+                let allocator = Allocator::default();
+                let ret =
+                    Parser::new(&allocator, black_box(source_text), SourceType::default()).parse();
+                let program = allocator.alloc(ret.program);
+                let trivias = Rc::new(ret.trivias);
+                b.iter(|| {
+                    let _semantic = SemanticBuilder::new(source_text, source_type, &trivias)
+                        .build(black_box(program));
                 });
             },
         );

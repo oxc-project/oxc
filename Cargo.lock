@@ -1141,6 +1141,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
