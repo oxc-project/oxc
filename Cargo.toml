@@ -43,6 +43,7 @@ clap              = { version = "4.3.4" }
 compact_str       = { version = "0.7.0" }
 convert_case      = { version = "0.6.0" }
 criterion         = { version = "0.5.1", default-features = false }
+dashmap           = { version = "5.4.0" }
 flate2            = { version = "1.0.26" }
 glob              = { version = "0.3.1" }
 ignore            = { version = "0.4.20" }
@@ -52,6 +53,7 @@ jemallocator      = { version = "0.5.0" }
 lazy_static       = { version = "1.4.0" }
 miette            = { version = "5.9.0" }
 mimalloc          = { version = "0.1.37" }
+nodejs-resolver   = { version = "0.0.88" }
 num-bigint        = { version = "0.4.3" }
 num-traits        = { version = "0.2.15" }
 num_cpus          = { version = "1.15.0" }

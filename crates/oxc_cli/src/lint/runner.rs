@@ -5,11 +5,13 @@ use std::{
     rc::Rc,
     sync::{
         atomic::{AtomicUsize, Ordering},
-        mpsc, Arc,
+        mpsc::{self, Sender},
+        Arc,
     },
 };
 
 use miette::NamedSource;
+use nodejs_resolver::{EnforceExtension, Options, ResolveResult};
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -23,13 +25,14 @@ use oxc_span::SourceType;
 use rustc_hash::FxHashSet;
 
 use super::{AllowWarnDeny, LintOptions};
-use crate::{CliRunResult, Walk};
+use crate::CliRunResult;
 
 pub struct LintRunner {
     options: LintOptions,
 
     linter: Arc<Linter>,
 }
+use dashmap::DashSet;
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("File is too long to fit on the screen")]
@@ -121,34 +124,27 @@ impl LintRunner {
     fn process_paths(
         &self,
         number_of_files: &Arc<AtomicUsize>,
-        tx_error: mpsc::Sender<(PathBuf, Vec<Error>)>,
+        tx_error: Sender<(PathBuf, Vec<Error>)>,
     ) {
-        let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
+        let visited = Arc::new(DashSet::new());
 
-        let walk = Walk::new(&self.options);
-        let number_of_files = Arc::clone(number_of_files);
-        rayon::spawn(move || {
-            let mut count = 0;
-            walk.iter().for_each(|path| {
-                count += 1;
-                tx_path.send(path).unwrap();
+        for path in &self.options.paths {
+            let path = path.canonicalize().unwrap();
+            let linter = Arc::clone(&self.linter);
+            let tx_error = tx_error.clone();
+            let number_of_files = Arc::clone(number_of_files);
+            let visited = Arc::clone(&visited);
+
+            rayon::spawn(move || {
+                if path.is_file() {
+                    run_for_file(&path, &linter, &tx_error, &number_of_files, &visited);
+                } else if path.is_dir() {
+                    run_for_dir(&path, &linter, &tx_error, &number_of_files, &visited);
+                }
             });
-            number_of_files.store(count, Ordering::Relaxed);
-        });
+        }
 
-        let linter = Arc::clone(&self.linter);
-        rayon::spawn(move || {
-            while let Ok(path) = rx_path.recv() {
-                let tx_error = tx_error.clone();
-                let linter = Arc::clone(&linter);
-                rayon::spawn(move || {
-                    if let Some(diagnostics) = Self::lint_path(&linter, &path) {
-                        tx_error.send(diagnostics).unwrap();
-                    }
-                    drop(tx_error);
-                });
-            }
-        });
+        drop(tx_error);
     }
 
     fn process_diagnostics(
@@ -196,55 +192,126 @@ impl LintRunner {
         buf_writer.flush().unwrap();
         (number_of_warnings, number_of_diagnostics)
     }
+}
 
-    fn lint_path(linter: &Linter, path: &Path) -> Option<(PathBuf, Vec<Error>)> {
-        let source_text = fs::read_to_string(path).unwrap_or_else(|_| panic!("{path:?} not found"));
-        let allocator = Allocator::default();
-        let source_type =
-            SourceType::from_path(path).unwrap_or_else(|_| panic!("incorrect {path:?}"));
-        let ret = Parser::new(&allocator, &source_text, source_type).parse();
+fn wrap_diagnostics(
+    path: &Path,
+    source_text: &str,
+    diagnostics: Vec<Error>,
+) -> (PathBuf, Vec<Error>) {
+    let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
+    let diagnostics = diagnostics
+        .into_iter()
+        .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
+        .collect();
+    (path.to_path_buf(), diagnostics)
+}
 
-        if !ret.errors.is_empty() {
-            return Some(Self::wrap_diagnostics(path, &source_text, ret.errors));
-        };
+fn run_for_dir(
+    path: &Path,
+    linter: &Arc<Linter>,
+    tx_error: &Sender<(PathBuf, Vec<Error>)>,
+    number_of_files: &Arc<AtomicUsize>,
+    visited: &Arc<DashSet<PathBuf>>,
+) {
+    for entry in fs::read_dir(path).unwrap() {
+        let path = entry.unwrap().path();
 
-        let program = allocator.alloc(ret.program);
-        let semantic_ret = SemanticBuilder::new(&source_text, source_type)
-            .with_trivias(&ret.trivias)
-            .with_check_syntax_error(true)
-            .build(program);
-
-        if !semantic_ret.errors.is_empty() {
-            return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));
-        };
-
-        let result = linter.run(&Rc::new(semantic_ret.semantic));
-
-        if result.is_empty() {
-            return None;
+        if visited.contains(&path) {
+            continue;
         }
 
-        if linter.has_fix() {
-            let fix_result = Fixer::new(&source_text, result).fix();
-            fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
-            let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
-            return Some(Self::wrap_diagnostics(path, &source_text, errors));
+        if path.is_file() {
+            run_for_file(&path, linter, tx_error, number_of_files, visited);
+        } else if path.is_dir() {
+            run_for_dir(&path, linter, tx_error, number_of_files, visited);
+        }
+    }
+}
+
+fn run_for_file(
+    path: &Path,
+    linter: &Arc<Linter>,
+    tx_error: &Sender<(PathBuf, Vec<Error>)>,
+    number_of_files: &Arc<AtomicUsize>,
+    visited: &Arc<DashSet<PathBuf>>,
+) {
+    number_of_files.fetch_add(1, Ordering::Relaxed);
+    visited.insert(dbg!(path.to_path_buf()));
+
+    let source = fs::read_to_string(path).unwrap_or_else(|_| panic!("{path:?} not found"));
+
+    let allocator = Allocator::default();
+
+    let source_type = SourceType::from_path(path).unwrap_or_else(|_| panic!("incorrect {path:?}"));
+
+    let parser_return = Parser::new(&allocator, &source, source_type).parse();
+
+    if !parser_return.errors.is_empty() {
+        tx_error.send(wrap_diagnostics(path, &source, parser_return.errors)).unwrap();
+    };
+
+    let program = allocator.alloc(parser_return.program);
+
+    let semantic_return = SemanticBuilder::new(&source, source_type)
+        .with_trivias(&parser_return.trivias)
+        .with_check_syntax_error(true)
+        .with_module_record_builder(true)
+        .build(program);
+
+    if !semantic_return.errors.is_empty() {
+        tx_error.send(wrap_diagnostics(path, &source, semantic_return.errors)).unwrap();
+    };
+
+    let semantic = semantic_return.semantic;
+
+    let options = Options { enforce_extension: EnforceExtension::Disabled, ..Default::default() };
+
+    let resolver = &nodejs_resolver::Resolver::new(options);
+    let resolve_path = path.parent().unwrap();
+
+    for name in dbg!(semantic.module_record()).module_requests.keys() {
+        if !dbg!(name).starts_with('.') {
+            continue;
         }
 
+        let resolve_result = resolver.resolve(resolve_path, name).unwrap_or_else(|_| {
+            panic!("Couldn't resolve '{name}' in '{}'", resolve_path.display())
+        });
+
+        let ResolveResult::Resource(resource) = resolve_result else { continue; };
+
+        let path = resource.path;
+
+        if visited.contains(&path) {
+            continue;
+        }
+
+        let linter = Arc::clone(linter);
+        let tx_error = tx_error.clone();
+        let number_of_files = Arc::clone(number_of_files);
+        let visited = Arc::clone(visited);
+
+        rayon::spawn(move || {
+            run_for_file(&path, &linter, &tx_error, &number_of_files, &visited);
+        });
+    }
+
+    let result = linter.run(&Rc::new(semantic));
+
+    if result.is_empty() {
+        return;
+    }
+
+    let diagnostic = if linter.has_fix() {
+        let fix_result = Fixer::new(&source, result).fix();
+        fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+        let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
+        wrap_diagnostics(path, &source, errors)
+    } else {
         let errors = result.into_iter().map(|diagnostic| diagnostic.error).collect();
-        Some(Self::wrap_diagnostics(path, &source_text, errors))
-    }
+        wrap_diagnostics(path, &source, errors)
+    };
 
-    fn wrap_diagnostics(
-        path: &Path,
-        source_text: &str,
-        diagnostics: Vec<Error>,
-    ) -> (PathBuf, Vec<Error>) {
-        let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
-        let diagnostics = diagnostics
-            .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
-            .collect();
-        (path.to_path_buf(), diagnostics)
-    }
+    tx_error.send(diagnostic).unwrap();
 }
