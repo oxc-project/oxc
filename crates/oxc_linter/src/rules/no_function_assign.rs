@@ -4,9 +4,8 @@ use oxc_diagnostics::{
     thiserror::{self, Error},
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Symbol;
-use oxc_span::Atom;
-use oxc_span::Span;
+use oxc_semantic::SymbolId;
+use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -40,15 +39,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoFunctionAssign {
-    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
-        if let AstKind::Function(_) = ctx.kind(symbol.declaration().into()) {
-            let symbols = ctx.symbols();
-            for reference_id in symbol.references() {
-                let reference = symbols.get_resolved_reference(*reference_id).unwrap();
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+        let symbol_table = ctx.semantic().symbols();
+        let decl = symbol_table.get_declaration(symbol_id);
+        if let AstKind::Function(_) = ctx.kind(decl.into()) {
+            for reference_id in symbol_table.get_resolved_references(symbol_id) {
+                let reference = symbol_table.get_reference(*reference_id);
                 if reference.is_write() {
                     ctx.diagnostic(NoFunctionAssignDiagnostic(
-                        symbol.name().clone(),
-                        symbol.span(),
+                        symbol_table.get_name(symbol_id).clone(),
+                        symbol_table.get_span(symbol_id),
                         reference.span(),
                     ));
                 }

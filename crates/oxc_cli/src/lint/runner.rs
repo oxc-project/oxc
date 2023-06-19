@@ -209,7 +209,8 @@ impl LintRunner {
         };
 
         let program = allocator.alloc(ret.program);
-        let semantic_ret = SemanticBuilder::new(&source_text, source_type, &ret.trivias)
+        let semantic_ret = SemanticBuilder::new(&source_text, source_type)
+            .with_trivias(&ret.trivias)
             .with_check_syntax_error(true)
             .build(program);
 

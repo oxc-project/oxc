@@ -140,7 +140,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
                 paren_expr.expression.is_constant(in_boolean_position, ctx)
             }
             Self::Identifier(ident) => {
-                ident.name == "undefined" && ctx.is_reference_to_global_variable(ident)
+                ident.name == "undefined" && ctx.semantic().is_reference_to_global_variable(ident)
             }
             _ if self.is_literal_expression() => true,
             _ => false,
@@ -154,7 +154,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for CallExpression<'a> {
             if ident.name == "Boolean"
                 && self.arguments.iter().next().map_or(true, |first| first.is_constant(true, ctx))
             {
-                return ctx.is_reference_to_global_variable(ident);
+                return ctx.semantic().is_reference_to_global_variable(ident);
             }
         }
         false

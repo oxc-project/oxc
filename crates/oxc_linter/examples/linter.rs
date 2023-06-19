@@ -32,7 +32,8 @@ fn main() {
     }
 
     let program = allocator.alloc(ret.program);
-    let semantic_ret = SemanticBuilder::new(&source_text, source_type, &ret.trivias).build(program);
+    let semantic_ret =
+        SemanticBuilder::new(&source_text, source_type).with_trivias(&ret.trivias).build(program);
 
     let mut errors: Vec<oxc_diagnostics::Error> = vec![];
 

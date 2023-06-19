@@ -5,11 +5,7 @@ use oxc_ast::ast::*;
 use oxc_ast::{syntax_directed_operations::BoundNames, AstKind};
 use oxc_span::SourceType;
 
-use crate::{
-    scope::{Scope, ScopeFlags, ScopeId},
-    symbol::SymbolFlags,
-    SemanticBuilder,
-};
+use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
 
 pub trait Binder {
     fn bind(&self, _builder: &mut SemanticBuilder) {}
@@ -17,7 +13,7 @@ pub trait Binder {
 
 impl<'a> Binder for VariableDeclarator<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let current_scope_id = builder.scope.current_scope_id;
+        let current_scope_id = builder.current_scope_id;
         let (includes, excludes) = match self.kind {
             VariableDeclarationKind::Const => (
                 SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable,
@@ -31,32 +27,26 @@ impl<'a> Binder for VariableDeclarator<'a> {
             }
         };
         self.id.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(
-                &ident.name,
-                ident.span,
-                current_scope_id,
-                includes,
-                excludes,
-            );
+            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
             if self.kind == VariableDeclarationKind::Var
-                && !builder.scope.current_scope().flags.intersects(ScopeFlags::Var)
+                && !builder.scope.get_flags(current_scope_id).is_var()
             {
                 let mut scope_ids = vec![];
-                for scope_id in current_scope_id.ancestors(&builder.scope.scopes).skip(1) {
-                    let scope = builder.scope.scopes[scope_id].get();
-                    if scope.flags.intersects(ScopeFlags::Var) {
-                        scope_ids.push(ScopeId::from(scope_id));
+                for scope_id in builder.scope.ancestors(current_scope_id).skip(1) {
+                    if builder.scope.get_flags(scope_id).is_var() {
+                        scope_ids.push(scope_id);
                         break;
                     }
-                    scope_ids.push(ScopeId::from(scope_id));
+                    scope_ids.push(scope_id);
                 }
                 for scope_id in scope_ids {
                     if builder
-                        .check_redeclaration(scope_id, &ident.name, ident.span, excludes)
+                        .check_redeclaration(scope_id, ident.span, &ident.name, excludes, true)
                         .is_none()
                     {
-                        builder.scope.scopes[scope_id]
-                            .variables
+                        builder
+                            .scope
+                            .get_bindings_mut(scope_id)
                             .insert(ident.name.clone(), symbol_id);
                     }
                 }
@@ -69,9 +59,8 @@ impl<'a> Binder for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         if let Some(ident) = &self.id && !self.modifiers.contains(ModifierKind::Declare) {
             builder.declare_symbol(
-                &ident.name,
                 ident.span,
-                builder.scope.current_scope_id,
+                &ident.name,
                 SymbolFlags::Class,
                 SymbolFlags::ClassExcludes,
             );
@@ -83,29 +72,27 @@ impl<'a> Binder for Class<'a> {
 // unless the source text matched by this production is not strict mode code
 // and the duplicate entries are only bound by FunctionDeclarations.
 // https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
-fn function_as_var(scope: &Scope, source_type: SourceType) -> bool {
-    scope.flags.intersects(ScopeFlags::Function)
-        || (source_type.is_script() && scope.flags.intersects(ScopeFlags::Top))
+fn function_as_var(flags: ScopeFlags, source_type: SourceType) -> bool {
+    flags.is_function() || (source_type.is_script() && flags.is_top())
 }
 
 impl<'a> Binder for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         if let Some(ident) = &self.id {
-            let current_scope_id = builder.scope.current_scope_id;
-            let scope = builder.scope.current_scope();
-            if !scope.strict_mode && matches!(builder.parent_kind(), AstKind::IfStatement(_)) {
+            let current_scope_id = builder.current_scope_id;
+            let flags = builder.scope.get_flags(current_scope_id);
+            if !flags.is_strict_mode() && matches!(builder.parent_kind(), AstKind::IfStatement(_)) {
                 // Do not declare in if single statements,
                 // if (false) function f() {} else function g() { }
             } else if self.r#type == FunctionType::FunctionDeclaration {
                 // The visitor is already inside the function scope,
                 // retrieve the parent scope for the function id to bind to.
-                let parent_scope_id =
-                    builder.scope.scopes[*current_scope_id].parent().unwrap().into();
-                let parent_scope: &Scope = &builder.scope.scopes[parent_scope_id];
+                let parent_scope_id = builder.scope.get_parent_id(current_scope_id).unwrap();
+                let parent_flags = builder.scope.get_flags(parent_scope_id);
 
                 let (includes, excludes) =
-                    if (parent_scope.strict_mode || self.r#async || self.generator)
-                        && !function_as_var(parent_scope, builder.source_type)
+                    if (parent_flags.is_strict_mode() || self.r#async || self.generator)
+                        && !function_as_var(parent_flags, builder.source_type)
                     {
                         (SymbolFlags::BlockScopedVariable, SymbolFlags::BlockScopedVariableExcludes)
                     } else {
@@ -115,9 +102,9 @@ impl<'a> Binder for Function<'a> {
                         )
                     };
 
-                builder.declare_symbol(
-                    &ident.name,
+                builder.declare_symbol_on_scope(
                     ident.span,
+                    &ident.name,
                     parent_scope_id,
                     includes,
                     excludes,
@@ -134,13 +121,7 @@ impl<'a> Binder for FormalParameters<'a> {
         let is_signature = self.kind == FormalParameterKind::Signature;
         self.bound_names(&mut |ident| {
             if !is_signature {
-                builder.declare_symbol(
-                    &ident.name,
-                    ident.span,
-                    builder.scope.current_scope_id,
-                    includes,
-                    excludes,
-                );
+                builder.declare_symbol(ident.span, &ident.name, includes, excludes);
             }
         });
     }
@@ -148,7 +129,7 @@ impl<'a> Binder for FormalParameters<'a> {
 
 impl<'a> Binder for CatchClause<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let current_scope_id = builder.scope.current_scope_id;
+        let current_scope_id = builder.current_scope_id;
         if let Some(param) = &self.param {
             // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
             // It is a Syntax Error if any element of the BoundNames of CatchParameter also occurs in the VarDeclaredNames of Block
@@ -159,9 +140,8 @@ impl<'a> Binder for CatchClause<'a> {
             } else {
                 param.bound_names(&mut |ident| {
                     builder.declare_symbol(
-                        &ident.name,
                         ident.span,
-                        current_scope_id,
+                        &ident.name,
                         SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
                         SymbolFlags::BlockScopedVariableExcludes,
                     );
@@ -175,9 +155,8 @@ impl<'a> Binder for ModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         self.bound_names(&mut |ident| {
             builder.declare_symbol(
-                &ident.name,
                 ident.span,
-                builder.scope.current_scope_id,
+                &ident.name,
                 SymbolFlags::empty(),
                 SymbolFlags::empty(),
             );

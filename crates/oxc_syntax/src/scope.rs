@@ -34,11 +34,23 @@ impl ScopeFlags {
         self.contains(Self::StrictMode)
     }
 
+    pub fn is_top(&self) -> bool {
+        self.contains(Self::Top)
+    }
+
     pub fn is_function(&self) -> bool {
         self.contains(Self::Function)
     }
 
+    pub fn is_class_static_block(&self) -> bool {
+        self.contains(Self::ClassStaticBlock)
+    }
+
     pub fn is_var(&self) -> bool {
+        self.intersects(Self::Var)
+    }
+
+    pub fn is_class(&self) -> bool {
         self.intersects(Self::Var)
     }
 }

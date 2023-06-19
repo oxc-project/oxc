@@ -95,17 +95,17 @@ impl Rule for NoEval {
 
             match name {
                 Some("this") => {
-                    let scope = ctx.scope(node);
+                    // let scope = ctx.scope(node);
 
-                    if scope.is_get_accessor()
-                        || scope.is_set_accessor()
-                        || scope.is_static_block()
-                        || scope.is_constructor()
-                        || (scope.is_function() && scope.strict_mode())
-                        || (scope.is_top() && ctx.source_type().is_module())
-                    {
-                        return;
-                    }
+                    // if scope.is_get_accessor()
+                    // || scope.is_set_accessor()
+                    // || scope.is_static_block()
+                    // || scope.is_constructor()
+                    // || (scope.is_function() && scope.strict_mode())
+                    // || (scope.is_top() && ctx.source_type().is_module())
+                    // {
+                    return;
+                    // }
                 }
                 Some("window" | "global" | "globalThis") => {}
                 _ => return,

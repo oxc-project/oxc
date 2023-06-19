@@ -183,7 +183,7 @@ impl NoConstantBinaryExpression {
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
-                        && ctx.is_reference_to_global_variable(ident);
+                        && ctx.semantic().is_reference_to_global_variable(ident);
                 }
                 false
             }
@@ -312,12 +312,15 @@ impl NoConstantBinaryExpression {
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     if ident.name == "String"
-                        || ident.name == "Number" && ctx.is_reference_to_global_variable(ident)
+                        || ident.name == "Number"
+                            && ctx.semantic().is_reference_to_global_variable(ident)
                     {
                         return true;
                     }
 
-                    if ident.name == "Boolean" && ctx.is_reference_to_global_variable(ident) {
+                    if ident.name == "Boolean"
+                        && ctx.semantic().is_reference_to_global_variable(ident)
+                    {
                         return call_expr
                             .arguments
                             .iter()
@@ -359,7 +362,7 @@ impl NoConstantBinaryExpression {
             Expression::NewExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
                     return BUILTINS.contains_key(ident.name.as_str())
-                        && ctx.is_reference_to_global_variable(ident);
+                        && ctx.semantic().is_reference_to_global_variable(ident);
                 }
                 false
             }

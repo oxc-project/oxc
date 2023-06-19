@@ -1,10 +1,10 @@
 use std::{cell::RefCell, rc::Rc};
 
 use indextree::{Ancestors, NodeId};
-use oxc_ast::{ast::IdentifierReference, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
-use oxc_semantic::{AstNodes, JSDocComment, Scope, ScopeTree, Semantic, SemanticNode, SymbolTable};
+use oxc_semantic::{AstNodes, JSDocComment, ScopeTree, Semantic, SemanticNode, SymbolTable};
 use oxc_span::SourceType;
 
 use crate::{
@@ -111,27 +111,8 @@ impl<'a> LintContext<'a> {
         self.semantic().scopes()
     }
 
-    pub fn scope(&self, node: &AstNode) -> &Scope {
-        self.semantic().scopes().node_scope(node)
-    }
-
-    pub fn scope_ancestors(&self, node: &AstNode) -> Ancestors<'_, Scope> {
-        self.semantic().scopes().ancestors(node.get().scope_id())
-    }
-
-    pub fn symbols(&self) -> Rc<SymbolTable> {
-        Rc::clone(&self.semantic().symbols())
-    }
-
-    pub fn strict_mode(&self, node: &AstNode) -> bool {
-        let scope = self.scope(node);
-        node.get().strict_mode(scope)
-    }
-
-    /* Symbols */
-
-    pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
-        self.semantic().is_reference_to_global_variables(ident)
+    pub fn symbols(&self) -> &SymbolTable {
+        self.semantic().symbols()
     }
 
     #[allow(clippy::unused_self)]

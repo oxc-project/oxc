@@ -7,7 +7,8 @@ use std::{cell::RefCell, rc::Rc};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, module_record::ModuleRecord, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
-use oxc_span::{Atom, GetSpan, SourceType, Span};
+use oxc_span::{Atom, SourceType, Span};
+use rustc_hash::FxHashMap;
 
 use crate::{
     binder::Binder,
@@ -16,8 +17,9 @@ use crate::{
     jsdoc::JSDocBuilder,
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
-    scope::{ScopeBuilder, ScopeId},
-    symbol::{Reference, ReferenceFlag, SymbolFlags, SymbolId, SymbolTableBuilder},
+    reference::{Reference, ReferenceFlag, ReferenceId},
+    scope::{ScopeFlags, ScopeId, ScopeTree},
+    symbol::{SymbolFlags, SymbolId, SymbolTable},
     Semantic,
 };
 
@@ -47,11 +49,12 @@ pub struct SemanticBuilder<'a> {
     pub current_node_id: AstNodeId,
     pub current_node_flags: NodeFlags,
     pub current_symbol_flags: SymbolFlags,
+    pub current_scope_id: ScopeId,
 
     // builders
     pub nodes: AstNodes<'a>,
-    pub scope: ScopeBuilder,
-    pub symbols: SymbolTableBuilder,
+    pub scope: ScopeTree,
+    pub symbols: SymbolTable,
 
     with_module_record_builder: bool,
     pub module_record_builder: ModuleRecordBuilder,
@@ -68,29 +71,40 @@ pub struct SemanticBuilderReturn<'a> {
 }
 
 impl<'a> SemanticBuilder<'a> {
-    pub fn new(source_text: &'a str, source_type: SourceType, trivias: &Rc<Trivias>) -> Self {
-        let scope = ScopeBuilder::new(source_type);
+    pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
+        let scope = ScopeTree::new(source_type);
+        let current_scope_id = scope.root_scope_id();
+
         let mut nodes = AstNodes::default();
-        let semantic_node =
-            SemanticNode::new(AstKind::Root, scope.current_scope_id, NodeFlags::empty());
+        let semantic_node = SemanticNode::new(AstKind::Root, current_scope_id, NodeFlags::empty());
         let current_node_id = nodes.new_node(semantic_node).into();
+
+        let trivias = Rc::new(Trivias::default());
         Self {
             source_text,
             source_type,
-            trivias: Rc::clone(trivias),
+            trivias: Rc::clone(&trivias),
             errors: RefCell::new(vec![]),
             current_node_id,
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
+            current_scope_id,
             nodes,
             scope,
-            symbols: SymbolTableBuilder::default(),
+            symbols: SymbolTable::default(),
             with_module_record_builder: false,
             module_record_builder: ModuleRecordBuilder::default(),
             unused_labels: UnusedLabels { scopes: vec![], curr_scope: 0, labels: vec![] },
-            jsdoc: JSDocBuilder::new(source_text, trivias),
+            jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
         }
+    }
+
+    #[must_use]
+    pub fn with_trivias(mut self, trivias: &Rc<Trivias>) -> Self {
+        self.trivias = Rc::clone(trivias);
+        self.jsdoc = JSDocBuilder::new(self.source_text, trivias);
+        self
     }
 
     #[must_use]
@@ -127,13 +141,27 @@ impl<'a> SemanticBuilder<'a> {
             source_type: self.source_type,
             trivias: self.trivias,
             nodes: self.nodes,
-            scopes: self.scope.scopes,
-            symbols: Rc::new(self.symbols.build()),
+            scopes: self.scope,
+            symbols: self.symbols,
             module_record,
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
+    }
+
+    pub fn build2(self) -> Semantic<'a> {
+        Semantic {
+            source_text: self.source_text,
+            source_type: self.source_type,
+            trivias: self.trivias,
+            nodes: self.nodes,
+            scopes: self.scope,
+            symbols: self.symbols,
+            module_record: ModuleRecord::default(),
+            jsdoc: self.jsdoc.build(),
+            unused_labels: self.unused_labels.labels,
+        }
     }
 
     /// Push a Syntax Error
@@ -155,7 +183,7 @@ impl<'a> SemanticBuilder<'a> {
         if self.jsdoc.retrieve_jsdoc_comment(kind) {
             flags |= NodeFlags::JSDoc;
         }
-        let ast_node = SemanticNode::new(kind, self.scope.current_scope_id, flags);
+        let ast_node = SemanticNode::new(kind, self.current_scope_id, flags);
         let node_id = self.current_node_id.append_value(ast_node, &mut self.nodes);
         self.current_node_id = node_id.into();
     }
@@ -169,8 +197,8 @@ impl<'a> SemanticBuilder<'a> {
         fn is_strict(directives: &[Directive]) -> bool {
             directives.iter().any(|d| d.directive == "use strict")
         }
-        if let Some(flags) = ScopeBuilder::scope_flags_from_ast_kind(kind) {
-            self.scope.enter(flags);
+        if let Some(flags) = ScopeTree::scope_flags_from_ast_kind(kind) {
+            self.enter_scope(flags);
         }
         let strict_mode = match kind {
             AstKind::Program(program) => is_strict(&program.directives),
@@ -180,43 +208,123 @@ impl<'a> SemanticBuilder<'a> {
             _ => false,
         };
         if strict_mode {
-            self.scope.current_scope_mut().strict_mode = true;
+            *self.scope.get_flags_mut(self.current_scope_id) =
+                self.scope.get_flags(self.current_scope_id).with_strict_mode(true);
         }
     }
 
     fn try_leave_scope(&mut self, kind: AstKind<'a>) {
-        if ScopeBuilder::scope_flags_from_ast_kind(kind).is_some()
+        if ScopeTree::scope_flags_from_ast_kind(kind).is_some()
             || matches!(kind, AstKind::Program(_))
         {
-            self.scope.resolve_reference(&mut self.symbols);
-            self.scope.leave();
+            self.resolve_references_for_current_scope();
+            self.leave_scope();
         }
     }
 
     pub fn strict_mode(&self) -> bool {
-        self.scope.current_scope().strict_mode()
+        self.scope.get_flags(self.current_scope_id).is_strict_mode()
             || self.current_node_flags.contains(NodeFlags::Class)
     }
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
+    ///
+    /// includes: the `SymbolFlags` that node has in addition to its declaration type (eg: export, ambient, etc.)
+    /// excludes: the flags which node cannot be declared alongside in a symbol table. Used to report forbidden declarations.
+    ///
     /// Reports errors for conflicting identifier names.
-    pub fn declare_symbol(
+    pub fn declare_symbol_on_scope(
         &mut self,
-        name: &Atom,
         span: Span,
+        name: &Atom,
         scope_id: ScopeId,
-        // The SymbolFlags that node has in addition to its declaration type (eg: export, ambient, etc.)
         includes: SymbolFlags,
-        // The flags which node cannot be declared alongside in a symbol table. Used to report forbidden declarations.
         excludes: SymbolFlags,
     ) -> SymbolId {
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, name, span, excludes) {
+        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
             return symbol_id;
         }
+
         let includes = includes | self.current_symbol_flags;
-        let symbol_id = self.symbols.create(self.current_node_id, name.clone(), span, includes);
-        self.scope.scopes[scope_id].variables.insert(name.clone(), symbol_id);
+        let symbol_id =
+            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
+        self.symbols.add_declaration(self.current_node_id);
+        self.scope.add_binding(scope_id, name.clone(), symbol_id);
         symbol_id
+    }
+
+    pub fn declare_symbol(
+        &mut self,
+        span: Span,
+        name: &Atom,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> SymbolId {
+        self.declare_symbol_on_scope(span, name, self.current_scope_id, includes, excludes)
+    }
+
+    pub fn declare_symbol_for_mangler(
+        &mut self,
+        span: Span,
+        name: &Atom,
+        includes: SymbolFlags,
+        excludes: SymbolFlags,
+    ) -> SymbolId {
+        let scope_id = if includes.is_function_scoped_declaration()
+            && !self.scope.get_flags(self.current_scope_id).is_var()
+            && !includes.is_function()
+        {
+            self.get_var_hosisting_scope_id()
+        } else {
+            self.current_scope_id
+        };
+
+        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, false) {
+            return symbol_id;
+        }
+
+        // let includes = includes | self.current_symbol_flags;
+        let symbol_id =
+            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
+        if includes.is_variable() {
+            self.scope.add_binding(scope_id, name.clone(), symbol_id);
+        }
+        symbol_id
+    }
+
+    fn get_var_hosisting_scope_id(&self) -> ScopeId {
+        let mut top_scope_id = self.current_scope_id;
+        for scope_id in self.scope.ancestors(self.current_scope_id).skip(1) {
+            if self.scope.get_flags(scope_id).is_var() {
+                top_scope_id = scope_id;
+                break;
+            }
+            top_scope_id = scope_id;
+        }
+        top_scope_id
+    }
+
+    pub fn check_redeclaration(
+        &mut self,
+        scope_id: ScopeId,
+        span: Span,
+        name: &Atom,
+        excludes: SymbolFlags,
+        report_error: bool,
+    ) -> Option<SymbolId> {
+        let symbol_id = self.scope.get_binding(scope_id, name)?;
+        if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
+            let symbol_span = self.symbols.get_span(symbol_id);
+            self.error(Redeclaration(name.clone(), symbol_span, span));
+        }
+        Some(symbol_id)
+    }
+
+    pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
+        let reference_name = reference.name().clone();
+        let reference_id = self.symbols.create_reference(reference);
+        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
+        reference_id
     }
 
     /// Declares a `Symbol` for the node, shadowing previous declarations in the same scope.
@@ -228,25 +336,75 @@ impl<'a> SemanticBuilder<'a> {
         includes: SymbolFlags,
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
-        let symbol_id = self.symbols.create(self.current_node_id, name.clone(), span, includes);
-        self.scope.scopes[scope_id].variables.insert(name.clone(), symbol_id);
+        let symbol_id =
+            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
+        self.symbols.add_declaration(self.current_node_id);
+        self.scope.get_bindings_mut(scope_id).insert(name.clone(), symbol_id);
         symbol_id
     }
 
-    pub fn check_redeclaration(
-        &mut self,
-        scope_id: ScopeId,
-        name: &Atom,
-        span: Span,
-        excludes: SymbolFlags,
-    ) -> Option<SymbolId> {
-        self.scope.scopes[scope_id].get_variable_symbol_id(name).map(|symbol_id| {
-            let symbol = &self.symbols[symbol_id];
-            if symbol.flags().intersects(excludes) {
-                self.error(Redeclaration(name.clone(), symbol.span(), span));
+    pub fn enter_scope(&mut self, flags: ScopeFlags) {
+        let mut flags = flags;
+        // Inherit strict mode for functions
+        // https://tc39.es/ecma262/#sec-strict-mode-code
+        let mut strict_mode = self.scope.root_flags().is_strict_mode();
+        let parent_scope_id = self.current_scope_id;
+        let parent_scope_flags = self.scope.get_flags(parent_scope_id);
+
+        if !strict_mode && parent_scope_flags.is_function() && parent_scope_flags.is_strict_mode() {
+            strict_mode = true;
+        }
+
+        // inherit flags for non-function scopes
+        if !flags.contains(ScopeFlags::Function) {
+            flags |= parent_scope_flags & ScopeFlags::Modifiers;
+        };
+
+        if strict_mode {
+            flags |= ScopeFlags::StrictMode;
+        }
+
+        self.current_scope_id = self.scope.add_scope(Some(self.current_scope_id), flags);
+    }
+
+    pub fn leave_scope(&mut self) {
+        self.resolve_references_for_current_scope();
+        if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
+            self.current_scope_id = parent_id;
+        }
+    }
+
+    fn resolve_references_for_current_scope(&mut self) {
+        let all_references = self
+            .scope
+            .unresolved_references_mut(self.current_scope_id)
+            .drain()
+            .collect::<Vec<(Atom, Vec<ReferenceId>)>>();
+
+        let mut unresolved_references: FxHashMap<Atom, Vec<ReferenceId>> = FxHashMap::default();
+        let mut resolved_references: Vec<(SymbolId, Vec<ReferenceId>)> = vec![];
+
+        for (name, reference_ids) in all_references {
+            if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
+                resolved_references.push((symbol_id, reference_ids));
+            } else {
+                unresolved_references.insert(name, reference_ids);
             }
-            symbol_id
-        })
+        }
+
+        let scope_id =
+            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
+
+        for (name, reference_ids) in unresolved_references {
+            self.scope.extend_unresolved_reference(scope_id, name, reference_ids);
+        }
+
+        for (symbol_id, reference_ids) in resolved_references {
+            for reference_id in reference_ids {
+                self.symbols.references[reference_id].set_symbol_id(symbol_id);
+                self.symbols.resolved_references[symbol_id].push(reference_id);
+            }
+        }
     }
 }
 
@@ -359,12 +517,12 @@ impl<'a> SemanticBuilder<'a> {
             self.parent_kind(),
             AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)
         ) {
-            ReferenceFlag::Write
+            ReferenceFlag::write()
         } else {
-            ReferenceFlag::Read
+            ReferenceFlag::read()
         };
-        let reference = Reference::new(self.current_node_id, ident.span, flag);
-        self.scope.reference_identifier(&ident.name, reference);
+        let reference = Reference::new(ident.span, ident.name.clone(), flag);
+        self.declare_reference(reference);
     }
 
     fn reference_jsx_element_name(&mut self, elem: &JSXElementName) {
@@ -379,8 +537,8 @@ impl<'a> SemanticBuilder<'a> {
                 _ => None,
             } {
                 let reference =
-                    Reference::new(self.current_node_id, elem.span(), ReferenceFlag::Read);
-                self.scope.reference_identifier(&ident.name, reference);
+                    Reference::new(ident.span, ident.name.clone(), ReferenceFlag::read());
+                self.declare_reference(reference);
             }
         }
     }

@@ -44,7 +44,7 @@ impl Rule for NoNewSymbol {
         if let AstKind::NewExpression(expr) = node.get().kind()
             && let Expression::Identifier(ident) = &expr.callee
             && ident.name == "Symbol"
-            && ctx.scope(node).unresolved_references.get("Symbol").is_some()
+            && ctx.semantic().is_reference_to_global_variable(ident)
         {
             let start = expr.span.start;
             let end = start + 3;

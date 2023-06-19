@@ -1,9 +1,10 @@
 use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
+use oxc_ast::{ast::ClassType, AstKind};
 use oxc_index::IndexVec;
-use oxc_span::Atom;
-use oxc_syntax::scope::{ScopeFlags, ScopeId};
+use oxc_span::{Atom, SourceType};
+pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::{FxHashMap, FxHasher};
 
 use crate::{reference::ReferenceId, symbol::SymbolId};
@@ -25,6 +26,14 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
+    pub fn new(source_type: SourceType) -> Self {
+        let mut scope_tree = Self::default();
+        let scope_flags = ScopeFlags::Top
+            .with_strict_mode(source_type.is_module() || source_type.always_strict());
+        scope_tree.add_scope(None, scope_flags);
+        scope_tree
+    }
+
     pub fn len(&self) -> usize {
         self.parent_ids.len()
     }
@@ -41,16 +50,24 @@ impl ScopeTree {
         self.parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
     }
 
+    pub fn root_scope_id(&self) -> ScopeId {
+        ScopeId::new(0)
+    }
+
     pub fn root_flags(&self) -> ScopeFlags {
-        self.flags[ScopeId::new(0)]
+        self.flags[self.root_scope_id()]
     }
 
     pub fn root_unresolved_references(&self) -> &UnresolvedReferences {
-        &self.unresolved_references[ScopeId::new(0)]
+        &self.unresolved_references[self.root_scope_id()]
     }
 
     pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
         self.flags[scope_id]
+    }
+
+    pub fn get_flags_mut(&mut self, scope_id: ScopeId) -> &mut ScopeFlags {
+        &mut self.flags[scope_id]
     }
 
     pub fn get_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
@@ -65,8 +82,8 @@ impl ScopeTree {
         &self.bindings[scope_id]
     }
 
-    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &Atom) {
-        self.bindings[scope_id].remove(name);
+    pub(crate) fn get_bindings_mut(&mut self, scope_id: ScopeId) -> &mut Bindings {
+        &mut self.bindings[scope_id]
     }
 
     pub(crate) fn add_scope(&mut self, parent_id: Option<ScopeId>, flags: ScopeFlags) -> ScopeId {
@@ -104,5 +121,28 @@ impl ScopeTree {
         scope_id: ScopeId,
     ) -> &mut UnresolvedReferences {
         &mut self.unresolved_references[scope_id]
+    }
+}
+
+impl ScopeTree {
+    pub fn scope_flags_from_ast_kind(kind: AstKind) -> Option<ScopeFlags> {
+        match kind {
+            AstKind::Function(_) => Some(ScopeFlags::Function),
+            AstKind::ArrowExpression(_) => Some(ScopeFlags::Function | ScopeFlags::Arrow),
+            AstKind::StaticBlock(_) => Some(ScopeFlags::ClassStaticBlock),
+            AstKind::TSModuleBlock(_) => Some(ScopeFlags::TsModuleBlock),
+            AstKind::Class(class) if matches!(class.r#type, ClassType::ClassExpression) => {
+                // Class expression creates a temporary scope with the class name as its only variable
+                // E.g., `let c = class A { foo() { console.log(A) } }`
+                Some(ScopeFlags::empty())
+            }
+            AstKind::BlockStatement(_)
+            | AstKind::CatchClause(_)
+            | AstKind::ForStatement(_)
+            | AstKind::ForInStatement(_)
+            | AstKind::ForOfStatement(_)
+            | AstKind::SwitchStatement(_) => Some(ScopeFlags::empty()),
+            _ => None,
+        }
     }
 }

@@ -19,7 +19,7 @@ fn main() {
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     let program = allocator.alloc(ret.program);
-    let ret = AstLower::new(&allocator, source_type).build(program);
+    let ret = AstLower::new(&allocator, &source_text, source_type).build(program);
 
     println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
 }

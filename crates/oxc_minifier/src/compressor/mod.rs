@@ -5,7 +5,7 @@ mod fold;
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::{hir::*, HirBuilder, VisitMut};
-use oxc_semantic2::Semantic;
+use oxc_semantic::Semantic;
 use oxc_span::Span;
 use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
@@ -45,18 +45,18 @@ impl Default for CompressOptions {
 
 pub struct Compressor<'a> {
     hir: HirBuilder<'a>,
-    semantic: Semantic,
+    semantic: Semantic<'a>,
     options: CompressOptions,
 }
 
 const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
-    pub fn new(allocator: &'a Allocator, semantic: Semantic, options: CompressOptions) -> Self {
+    pub fn new(allocator: &'a Allocator, semantic: Semantic<'a>, options: CompressOptions) -> Self {
         Self { hir: HirBuilder::new(allocator), semantic, options }
     }
 
-    pub fn build<'b>(mut self, program: &'b mut Program<'a>) -> Semantic {
+    pub fn build<'b>(mut self, program: &'b mut Program<'a>) -> Semantic<'a> {
         self.visit_program(program);
         self.semantic
     }
@@ -163,7 +163,7 @@ impl<'a> Compressor<'a> {
     fn compress_undefined<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         if let Expression::Identifier(ident) = expr
         && ident.name == "undefined"
-        && self.semantic.symbol_table.is_global_reference(ident.reference_id.clone().into_inner()) {
+        && self.semantic.symbols().is_global_reference(ident.reference_id.clone().into_inner()) {
             *expr = self.create_void_0();
             return true;
         }
@@ -175,7 +175,7 @@ impl<'a> Compressor<'a> {
     fn compress_infinity<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
         if let Expression::Identifier(ident) = expr
         && ident.name == "Infinity"
-        && self.semantic.symbol_table.is_global_reference(ident.reference_id.clone().into_inner()) {
+        && self.semantic.symbols().is_global_reference(ident.reference_id.clone().into_inner()) {
             *expr = self.create_one_div_zero();
             return true;
         }
