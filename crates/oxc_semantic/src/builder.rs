@@ -1,6 +1,4 @@
 //! Semantic Builder
-//! This builds:
-//!   * The untyped and flattened ast nodes into an indextree
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -16,7 +14,7 @@ use crate::{
     diagnostics::Redeclaration,
     jsdoc::JSDocBuilder,
     module_record::ModuleRecordBuilder,
-    node::{AstNodeId, AstNodes, NodeFlags, SemanticNode},
+    node::{AstNode, AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
@@ -75,21 +73,17 @@ impl<'a> SemanticBuilder<'a> {
         let scope = ScopeTree::new(source_type);
         let current_scope_id = scope.root_scope_id();
 
-        let mut nodes = AstNodes::default();
-        let semantic_node = SemanticNode::new(AstKind::Root, current_scope_id, NodeFlags::empty());
-        let current_node_id = nodes.new_node(semantic_node).into();
-
         let trivias = Rc::new(Trivias::default());
         Self {
             source_text,
             source_type,
             trivias: Rc::clone(&trivias),
             errors: RefCell::new(vec![]),
-            current_node_id,
+            current_node_id: AstNodeId::new(0),
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
             current_scope_id,
-            nodes,
+            nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
             with_module_record_builder: false,
@@ -169,28 +163,21 @@ impl<'a> SemanticBuilder<'a> {
         self.errors.borrow_mut().push(error.into());
     }
 
-    /// # Panics
-    /// The parent of `AstKind::Program` is `AstKind::Root`,
-    /// it is logic error if this panics.
-    pub fn parent_kind(&self) -> AstKind<'a> {
-        let parent_id = self.nodes[*self.current_node_id].parent().unwrap();
-        let parent_node = self.nodes[parent_id].get();
-        parent_node.kind()
-    }
-
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
         if self.jsdoc.retrieve_jsdoc_comment(kind) {
             flags |= NodeFlags::JSDoc;
         }
-        let ast_node = SemanticNode::new(kind, self.current_scope_id, flags);
-        let node_id = self.current_node_id.append_value(ast_node, &mut self.nodes);
-        self.current_node_id = node_id.into();
+        let ast_node = AstNode::new(kind, self.current_scope_id, flags);
+        let parent_node_id =
+            if matches!(kind, AstKind::Program(_)) { None } else { Some(self.current_node_id) };
+        self.current_node_id = self.nodes.add_node(ast_node, parent_node_id);
     }
 
     fn pop_ast_node(&mut self) {
-        self.current_node_id =
-            self.nodes[self.current_node_id.indextree_id()].parent().unwrap().into();
+        if let Some(parent_id) = self.nodes.parent_id(self.current_node_id) {
+            self.current_node_id = parent_id;
+        }
     }
 
     fn try_enter_scope(&mut self, kind: AstKind<'a>) {
@@ -423,7 +410,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if self.check_syntax_error {
-            let node = &self.nodes[*self.current_node_id];
+            let node = self.nodes.get_node(self.current_node_id);
             EarlyErrorJavaScript::run(node, self);
             EarlyErrorTypeScript::run(node, self);
         }
@@ -514,8 +501,8 @@ impl<'a> SemanticBuilder<'a> {
 
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = if matches!(
-            self.parent_kind(),
-            AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)
+            self.nodes.parent_kind(self.current_node_id),
+            Some(AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_))
         ) {
             ReferenceFlag::write()
         } else {
@@ -526,7 +513,10 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn reference_jsx_element_name(&mut self, elem: &JSXElementName) {
-        if matches!(self.parent_kind(), AstKind::JSXOpeningElement(_)) {
+        if matches!(
+            self.nodes.parent_kind(self.current_node_id),
+            Some(AstKind::JSXOpeningElement(_))
+        ) {
             if let Some(ident) = match elem {
                 JSXElementName::Identifier(ident)
                     if ident.name.chars().next().is_some_and(char::is_uppercase) =>

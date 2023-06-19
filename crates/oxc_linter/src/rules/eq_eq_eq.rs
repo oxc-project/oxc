@@ -44,7 +44,7 @@ fn to_strict_operator(operator: BinaryOperator) -> BinaryOperator {
 
 impl Rule for EqEqEq {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(binary_expr) = node.get().kind() else { return };
+        let AstKind::BinaryExpression(binary_expr) = node.kind() else { return };
         if !matches!(binary_expr.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
             return;
         }

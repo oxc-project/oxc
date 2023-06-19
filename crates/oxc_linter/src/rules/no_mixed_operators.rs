@@ -57,12 +57,15 @@ declare_oxc_lint! {
 
 impl Rule for NoMixedOperators {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let node_kind = node.get().kind();
+        let node_kind = node.kind();
         if !matches!(node_kind, AstKind::BinaryExpression(_) | AstKind::LogicalExpression(_)) {
             return;
         }
 
-        let parent_kind = ctx.parent_kind(node);
+        let Some(parent_kind) = ctx.nodes().parent_kind(node.id()) else {
+            return
+        };
+
         if !matches!(
             parent_kind,
             AstKind::BinaryExpression(_)

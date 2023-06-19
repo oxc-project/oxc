@@ -732,12 +732,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indextree"
-version = "4.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c40411d0e5c63ef1323c3d09ce5ec6d84d71531e18daed0743fccea279d7deb6"
-
-[[package]]
 name = "insta"
 version = "1.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1251,7 +1245,6 @@ dependencies = [
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
- "indextree",
  "insta",
  "lazy_static",
  "miette",
@@ -1353,7 +1346,6 @@ version = "0.0.6"
 dependencies = [
  "bitflags 2.3.2",
  "indexmap",
- "indextree",
  "once_cell",
  "oxc_allocator",
  "oxc_ast",

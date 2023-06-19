@@ -54,7 +54,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDupeClassMembers {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Class(class) = node.get().kind() else { return; };
+        let AstKind::Class(class) = node.kind() else { return; };
 
         let num_element = class.body.body.len();
         let mut property_table = PropertyTable::with_capacity(num_element);

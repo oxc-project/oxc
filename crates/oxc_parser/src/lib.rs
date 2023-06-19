@@ -52,7 +52,7 @@
 //!
 //! ```rust
 //! for node in semantic.nodes().iter() {
-//!     match node.get().kind() {
+//!     match node.kind() {
 //!         // check node
 //!     }
 //! }

@@ -51,7 +51,7 @@ declare_oxc_lint!(
 
 impl Rule for NoCaller {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MemberExpression(member_expr) = node.get().kind() else {return};
+        let AstKind::MemberExpression(member_expr) = node.kind() else {return};
         if let MemberExpression::StaticMemberExpression(expr) = member_expr
         && let Some(reference) = expr.object.get_identifier_reference()
          {

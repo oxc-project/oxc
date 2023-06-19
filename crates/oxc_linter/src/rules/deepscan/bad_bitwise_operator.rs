@@ -64,7 +64,7 @@ declare_oxc_lint!(
 
 impl Rule for BadBitwiseOperator {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.get().kind() {
+        match node.kind() {
             AstKind::BinaryExpression(bin_expr) => {
                 if is_mistype_short_circuit(node) {
                     ctx.diagnostic(BadBitwiseOperatorDiagnostic("&", "&&", bin_expr.span));
@@ -85,7 +85,7 @@ impl Rule for BadBitwiseOperator {
 }
 
 fn is_mistype_short_circuit(node: &AstNode) -> bool {
-    match node.get().kind() {
+    match node.kind() {
         AstKind::BinaryExpression(bin_expr) => {
             if bin_expr.operator != BinaryOperator::BitwiseAnd {
                 return false;
@@ -106,7 +106,7 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
 }
 
 fn is_mistype_option_fallback(node: &AstNode) -> bool {
-    match node.get().kind() {
+    match node.kind() {
         AstKind::BinaryExpression(binary_expr) => {
             if binary_expr.operator != BinaryOperator::BitwiseOR {
                 return false;

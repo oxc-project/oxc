@@ -22,9 +22,8 @@ pub use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::node::AstNodeId;
 pub use crate::{
-    node::{AstNode, AstNodes, SemanticNode},
+    node::{AstNode, AstNodeId, AstNodes},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::ScopeTree,
     symbol::SymbolTable,
@@ -92,7 +91,7 @@ impl<'a> Semantic<'a> {
     }
 
     pub fn is_unresolved_reference(&self, node_id: AstNodeId) -> bool {
-        let reference_node = &self.nodes()[node_id];
+        let reference_node = self.nodes.get_node(node_id);
         let AstKind::IdentifierReference(id) = reference_node.kind() else { return false; };
         self.scopes().root_unresolved_references().contains_key(&id.name)
     }
@@ -136,7 +135,7 @@ mod tests {
             assert!(semantic.errors.is_empty());
             let semantic = semantic.semantic;
             for node in semantic.nodes().iter() {
-                if let AstKind::IdentifierReference(id) = node.get().kind() {
+                if let AstKind::IdentifierReference(id) = node.kind() {
                     assert!(!semantic.is_reference_to_global_variable(id));
                 }
             }

@@ -51,7 +51,7 @@ declare_oxc_lint!(
 impl Rule for ValidTypeof {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // match on `typeof` unary expression for better performance
-        let _unary_expr = match node.get().kind() {
+        let _unary_expr = match node.kind() {
             AstKind::UnaryExpression(unary_expr)
                 if unary_expr.operator == UnaryOperator::Typeof =>
             {
@@ -60,8 +60,8 @@ impl Rule for ValidTypeof {
             _ => return,
         };
 
-        let binary_expr = match ctx.parent_kind(node) {
-            AstKind::BinaryExpression(binary_expr) if binary_expr.operator.is_equality() => {
+        let binary_expr = match ctx.nodes().parent_kind(node.id()) {
+            Some(AstKind::BinaryExpression(binary_expr)) if binary_expr.operator.is_equality() => {
                 binary_expr
             }
             _ => return,

@@ -62,7 +62,7 @@ impl Rule for NoEval {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.get().kind();
+        let kind = node.kind();
 
         if let AstKind::IdentifierReference(ident) = kind {
             if ident.name == "eval" {

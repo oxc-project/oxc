@@ -93,7 +93,7 @@ struct ConstantBothAlwaysNew(#[label("These two values can never be equal")] Spa
 
 impl Rule for NoConstantBinaryExpression {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.get().kind() {
+        match node.kind() {
             AstKind::LogicalExpression(expr) => match expr.operator {
                 LogicalOperator::Or | LogicalOperator::And if expr.left.is_constant(true, ctx) => {
                     ctx.diagnostic(ConstantShortCircuit(

@@ -42,9 +42,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnusedLabels {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if matches!(node.get().kind(), AstKind::Root) {
+        if matches!(node.kind(), AstKind::Program(_)) {
             for id in ctx.semantic().unused_labels() {
-                let node = ctx.semantic().nodes()[*id];
+                let node = ctx.semantic().nodes().get_node(*id);
                 if let AstKind::LabeledStatement(stmt) = node.kind() {
                     // TODO: Ignore fix where comments exist between label and statement
                     // e.g. A: /* Comment */ function foo(){}

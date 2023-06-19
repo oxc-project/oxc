@@ -51,7 +51,7 @@ impl Rule for NoConstantCondition {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.get().kind() {
+        match node.kind() {
             AstKind::IfStatement(if_stmt) => {
                 if if_stmt.test.is_constant(true, ctx) {
                     ctx.diagnostic(NoConstantConditionDiagnostic(if_stmt.test.span()));

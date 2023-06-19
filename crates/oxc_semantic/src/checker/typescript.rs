@@ -12,7 +12,7 @@ pub struct EarlyErrorTypeScript;
 
 impl EarlyErrorTypeScript {
     pub fn run<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
-        let kind = node.get().kind();
+        let kind = node.kind();
 
         // should be removed when add more matches.
         #[allow(clippy::single_match)]

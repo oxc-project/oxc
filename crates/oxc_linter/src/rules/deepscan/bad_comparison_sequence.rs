@@ -45,7 +45,7 @@ declare_oxc_lint!(
 
 impl Rule for BadComparisonSequence {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::BinaryExpression(expr) = node.get().kind()
+        if let AstKind::BinaryExpression(expr) = node.kind()
             && is_bad_comparison(expr)
             && has_no_bad_comparison_in_parents(node, ctx)
         {
@@ -58,14 +58,14 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> bool {
-    let mut current_node = node;
+    let mut current_node_id = node.id();
     loop {
-        current_node = ctx.parent_node(current_node).unwrap();
-        let kind = current_node.get().kind();
+        current_node_id = ctx.nodes().parent_id(current_node_id).unwrap();
+        let kind = ctx.nodes().kind(current_node_id);
 
         // `a === b === c === d === e` only produce one error, since `(a === b === c) === d === e` will produce two errors.
         // So we should treat Parenthesized Expression as a boundary.
-        if matches!(kind, AstKind::Root | AstKind::ParenthesizedExpression(_))
+        if matches!(kind, AstKind::ParenthesizedExpression(_))
             || kind.is_declaration()
             || kind.is_statement()
         {

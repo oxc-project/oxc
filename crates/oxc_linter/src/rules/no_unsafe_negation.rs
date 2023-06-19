@@ -61,7 +61,7 @@ impl Rule for NoUnsafeNegation {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(expr) = node.get().kind() else { return; };
+        let AstKind::BinaryExpression(expr) = node.kind() else { return; };
         if self.should_check(expr.operator) {
             let Expression::UnaryExpression(left) = &expr.left else { return; };
             if left.operator == UnaryOperator::LogicalNot {

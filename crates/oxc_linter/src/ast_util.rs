@@ -210,13 +210,13 @@ pub fn get_enclosing_function<'a, 'b>(
 ) -> Option<&'b AstNode<'a>> {
     let mut current_node = node;
     loop {
-        if matches!(current_node.get().kind(), AstKind::Root) {
+        if matches!(current_node.kind(), AstKind::Program(_)) {
             return None;
         }
-        if matches!(current_node.get().kind(), AstKind::Function(_) | AstKind::ArrowExpression(_)) {
+        if matches!(current_node.kind(), AstKind::Function(_) | AstKind::ArrowExpression(_)) {
             return Some(current_node);
         }
-        current_node = ctx.parent_node(current_node).unwrap();
+        current_node = ctx.nodes().parent_node(current_node.id()).unwrap();
     }
 }
 
@@ -231,8 +231,8 @@ pub fn outermost_paren<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
     let mut node = node;
 
     loop {
-        if let Some(parent) = ctx.parent_node(node) {
-            if let AstKind::ParenthesizedExpression(_) = parent.get().kind() {
+        if let Some(parent) = ctx.nodes().parent_node(node.id()) {
+            if let AstKind::ParenthesizedExpression(_) = parent.kind() {
                 node = parent;
                 continue;
             }

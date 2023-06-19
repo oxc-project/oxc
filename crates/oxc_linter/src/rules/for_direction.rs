@@ -47,7 +47,7 @@ declare_oxc_lint!(
 
 impl Rule for ForDirection {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ForStatement(for_loop) = node.get().kind() {
+        if let AstKind::ForStatement(for_loop) = node.kind() {
             if let Some(Expression::BinaryExpression(test)) = &for_loop.test {
                 if let Expression::Identifier(counter) = &test.left {
                     let test_operator = &test.operator;
