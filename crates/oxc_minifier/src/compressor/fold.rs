@@ -159,19 +159,11 @@ impl<'a> Compressor<'a> {
             BinaryOperator::Equality => self.try_abstract_equality_comparison(left, right),
             BinaryOperator::Inequality => self.try_abstract_equality_comparison(left, right).not(),
             BinaryOperator::StrictEquality => self.try_strict_equality_comparison(left, right),
-            BinaryOperator::StrictInequality => {
-                self.try_strict_equality_comparison(left, right).not()
-            }
+            BinaryOperator::StrictInequality => self.try_strict_equality_comparison(left, right).not(),
             BinaryOperator::LessThan => self.try_abstract_relational_comparison(left, right, false),
-            BinaryOperator::GreaterThan => {
-                self.try_abstract_relational_comparison(right, left, false)
-            }
-            BinaryOperator::LessEqualThan => {
-                self.try_abstract_relational_comparison(right, left, true).not()
-            }
-            BinaryOperator::GreaterEqualThan => {
-                self.try_abstract_relational_comparison(left, right, true).not()
-            }
+            BinaryOperator::GreaterThan => self.try_abstract_relational_comparison(right, left, false), 
+            BinaryOperator::LessEqualThan => self.try_abstract_relational_comparison(right, left, true).not(),
+            BinaryOperator::GreaterEqualThan => self.try_abstract_relational_comparison(left, right, true).not(),
             _ => Tri::Unknown,
         }
     }

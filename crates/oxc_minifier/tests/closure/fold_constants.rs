@@ -164,7 +164,7 @@ fn unary_ops() {
 fn unary_with_big_int() {
     test("-(1n)", "-1n");
     // test("- -1n", "1n");
-    // test("!1n", "!1");
+    // test("!1n", "false");
     // test("~0n", "-1n");
 }
 
