@@ -75,7 +75,7 @@ The current objectives are:
 This project is an invitation for you to come and learn Rust with us,
 any contributions to this project are appreciated.
 
-To get started, check out some of the [Good First Issues](https://github.com/Boshen/oxc/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3A%22E-Good+First+Issue%22) or just directly ask us on Discord.
+To get started, check out some of the [good first issues](https://github.com/Boshen/oxc/contribute) or ask us on [Discord][discord-url].
 
 If you are unable to contribute by code, you can still participate by:
 
