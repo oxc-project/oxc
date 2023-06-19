@@ -2,7 +2,7 @@ use std::fmt;
 
 use num_bigint::BigUint;
 use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
@@ -218,6 +218,53 @@ impl<'a> Expression<'a> {
             Self::RegExpLiteral(_) => Some(true),
             Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
             _ => None,
+        }
+    }
+}
+
+impl<'a> GetSpan for Expression<'a> {
+    fn span(&self) -> Span {
+        match self {
+            Expression::BooleanLiteral(it) => it.span,
+            Expression::NullLiteral(it) => it.span,
+            Expression::NumberLiteral(it) => it.span,
+            Expression::BigintLiteral(it) => it.span,
+            Expression::RegExpLiteral(it) => it.span,
+            Expression::StringLiteral(it) => it.span,
+            Expression::TemplateLiteral(it) => it.span,
+            Expression::Identifier(it) => it.span,
+            Expression::MetaProperty(it) => it.span,
+            Expression::Super(it) => it.span,
+            Expression::ArrayExpression(it) => it.span,
+            Expression::ArrowExpression(it) => it.span,
+            Expression::AssignmentExpression(it) => it.span,
+            Expression::AwaitExpression(it) => it.span,
+            Expression::BinaryExpression(it) => it.span,
+            Expression::CallExpression(it) => it.span,
+            Expression::ChainExpression(it) => it.span,
+            Expression::ClassExpression(it) => it.span,
+            Expression::ConditionalExpression(it) => it.span,
+            Expression::FunctionExpression(it) => it.span,
+            Expression::ImportExpression(it) => it.span,
+            Expression::LogicalExpression(it) => it.span,
+            Expression::MemberExpression(it) => it.0.span(),
+            Expression::NewExpression(it) => it.span,
+            Expression::ObjectExpression(it) => it.span,
+            Expression::ParenthesizedExpression(it) => it.span,
+            Expression::SequenceExpression(it) => it.span,
+            Expression::TaggedTemplateExpression(it) => it.span,
+            Expression::ThisExpression(it) => it.span,
+            Expression::UnaryExpression(it) => it.span,
+            Expression::UpdateExpression(it) => it.span,
+            Expression::YieldExpression(it) => it.span,
+            Expression::PrivateInExpression(it) => it.span,
+            Expression::JSXElement(it) => it.span,
+            Expression::JSXFragment(it) => it.span,
+            Expression::TSAsExpression(it) => it.span,
+            Expression::TSSatisfiesExpression(it) => it.span,
+            Expression::TSTypeAssertion(it) => it.span,
+            Expression::TSNonNullExpression(it) => it.span,
+            Expression::TSInstantiationExpression(it) => it.span,
         }
     }
 }
