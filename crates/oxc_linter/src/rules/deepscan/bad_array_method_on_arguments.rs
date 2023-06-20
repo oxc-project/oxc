@@ -48,12 +48,12 @@ declare_oxc_lint!(
 
 impl Rule for BadArrayMethodOnArguments {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::IdentifierReference(reference) = node.get().kind()
+        if let AstKind::IdentifierReference(reference) = node.kind()
             && reference.name == "arguments"
-            && let Some(parent_node) = ctx.parent_node(node)
-            && let AstKind::MemberExpression(member_expr) = parent_node.get().kind()
-            && let Some(parent_node) = ctx.parent_node(parent_node)
-            && let AstKind::CallExpression(_) = parent_node.get().kind()
+            && let Some(parent_node_id) = ctx.nodes().parent_id(node.id())
+            && let AstKind::MemberExpression(member_expr) = ctx.nodes().kind(parent_node_id)
+            && let Some(parent_node_id) = ctx.nodes().parent_id(parent_node_id)
+            && let AstKind::CallExpression(_) = ctx.nodes().kind(parent_node_id)
         {
             match member_expr {
                 MemberExpression::StaticMemberExpression(expr) => {

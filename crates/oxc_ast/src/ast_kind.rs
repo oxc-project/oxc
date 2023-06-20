@@ -6,8 +6,6 @@ use crate::ast::*;
 /// Untyped AST Node Kind
 #[derive(Debug, Clone, Copy)]
 pub enum AstKind<'a> {
-    Root,
-
     Program(&'a Program<'a>),
     Directive(&'a Directive<'a>),
     Hashbang(&'a Hashbang<'a>),
@@ -230,8 +228,6 @@ impl<'a> GetSpan for AstKind<'a> {
     #[allow(clippy::match_same_arms, clippy::too_many_lines)]
     fn span(&self) -> Span {
         match self {
-            Self::Root => Span::default(),
-
             Self::Program(x) => x.span,
             Self::Directive(x) => x.span,
             Self::Hashbang(x) => x.span,

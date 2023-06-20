@@ -82,7 +82,7 @@ impl Rule for ArrayCallbackReturn {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_body, always_explicit_return) = match node.get().kind() {
+        let (function_body, always_explicit_return) = match node.kind() {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
             AstKind::ArrowExpression(arrow) => {
@@ -145,10 +145,8 @@ pub fn get_array_method_name<'a>(
     ctx: &LintContext<'a>,
 ) -> Option<&'static str> {
     let mut current_node = node;
-    while !matches!(current_node.get().kind(), AstKind::Root) {
-        let parent = ctx.parent_node(current_node).unwrap();
-
-        match parent.get().kind() {
+    while let Some(parent) = ctx.nodes().parent_node(current_node.id()) {
+        match parent.kind() {
             // foo.every(nativeFoo || function foo() { ... })
             AstKind::LogicalExpression(_)
             | AstKind::ConditionalExpression(_)
@@ -167,11 +165,11 @@ pub fn get_array_method_name<'a>(
                 let func_node = outermost_paren(func_node, ctx);
 
                 // the node that calls func_node
-                let func_parent = ctx.parent_node(func_node).unwrap();
+                let func_parent = ctx.nodes().parent_node(func_node.id()).unwrap();
 
-                if let AstKind::CallExpression(call) = func_parent.get().kind() {
+                if let AstKind::CallExpression(call) = func_parent.kind() {
                     let expected_callee = &call.callee;
-                    if expected_callee.span() == func_node.get().kind().span() {
+                    if expected_callee.span() == func_node.kind().span() {
                         current_node = func_parent;
                         continue;
                     }
@@ -181,7 +179,7 @@ pub fn get_array_method_name<'a>(
             }
 
             AstKind::CallExpression(call) => {
-                let AstKind::Argument(current_node_arg) = current_node.get().kind() else {
+                let AstKind::Argument(current_node_arg) = current_node.kind() else {
                   return None;
                 };
 

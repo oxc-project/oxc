@@ -49,7 +49,7 @@ fn safely_shadows_undefined(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool 
             }
         }
         let mut no_init = false;
-        let decl = ctx.nodes()[symbol_table.get_declaration(symbol_id)];
+        let decl = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
         if let AstKind::VariableDeclarator(var) = decl.kind() {
             no_init = var.init.is_none();
         }

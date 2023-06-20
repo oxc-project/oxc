@@ -42,7 +42,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ObjectExpression(obj_expr) = node.get().kind() {
+        if let AstKind::ObjectExpression(obj_expr) = node.kind() {
             let mut map = FxHashMap::default();
             for prop in obj_expr.properties.iter() {
                 if let ObjectPropertyKind::ObjectProperty(prop) = prop

@@ -65,7 +65,7 @@ impl Rule for NoBitwise {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.get().kind() {
+        match node.kind() {
             AstKind::BinaryExpression(bin_expr) => {
                 let op = bin_expr.operator.as_str();
 
@@ -110,7 +110,7 @@ fn is_int32_hint(int32_hint: bool, node: &AstNode) -> bool {
         return false;
     }
 
-    match node.get().kind() {
+    match node.kind() {
         AstKind::BinaryExpression(bin_expr) => {
             bin_expr.operator == BinaryOperator::BitwiseOR && bin_expr.right.is_number_0()
         }

@@ -81,7 +81,12 @@ impl<'a> Binder for Function<'a> {
         if let Some(ident) = &self.id {
             let current_scope_id = builder.current_scope_id;
             let flags = builder.scope.get_flags(current_scope_id);
-            if !flags.is_strict_mode() && matches!(builder.parent_kind(), AstKind::IfStatement(_)) {
+            if !flags.is_strict_mode()
+                && matches!(
+                    builder.nodes.parent_kind(builder.current_node_id),
+                    Some(AstKind::IfStatement(_))
+                )
+            {
                 // Do not declare in if single statements,
                 // if (false) function f() {} else function g() { }
             } else if self.r#type == FunctionType::FunctionDeclaration {

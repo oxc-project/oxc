@@ -48,7 +48,7 @@ impl Rule for NoEmpty {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.get().kind() {
+        match node.kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
                 if ctx.semantic().trivias().has_comments_between(block.span) {
                     return;

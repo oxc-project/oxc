@@ -38,7 +38,7 @@ fn main() {
     let mut errors: Vec<oxc_diagnostics::Error> = vec![];
 
     for node in semantic_ret.semantic.nodes().iter() {
-        match node.get().kind() {
+        match node.kind() {
             AstKind::DebuggerStatement(stmt) => {
                 errors.push(NoDebugger(stmt.span).into());
             }

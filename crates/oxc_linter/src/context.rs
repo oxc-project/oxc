@@ -1,10 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
-use indextree::{Ancestors, NodeId};
-use oxc_ast::AstKind;
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
-use oxc_semantic::{AstNodes, JSDocComment, ScopeTree, Semantic, SemanticNode, SymbolTable};
+use oxc_semantic::{AstNodes, JSDocComment, ScopeTree, Semantic, SymbolTable};
 use oxc_span::SourceType;
 
 use crate::{
@@ -83,29 +81,9 @@ impl<'a> LintContext<'a> {
         }
     }
 
-    /* Nodes */
-
     pub fn nodes(&self) -> &AstNodes<'a> {
         self.semantic().nodes()
     }
-
-    pub fn kind(&self, node_id: NodeId) -> AstKind<'a> {
-        self.nodes().kind(node_id)
-    }
-
-    pub fn parent_kind(&self, node: &AstNode<'a>) -> AstKind<'a> {
-        self.nodes().parent_kind(node)
-    }
-
-    pub fn parent_node(&self, node: &AstNode<'a>) -> Option<&AstNode<'a>> {
-        node.parent().and_then(|node_id| self.nodes().get(node_id))
-    }
-
-    pub fn ancestors(&self, node: &AstNode<'a>) -> Ancestors<'_, SemanticNode<'a>> {
-        self.nodes().ancestors(node)
-    }
-
-    /* Scopes */
 
     pub fn scopes(&self) -> &ScopeTree {
         self.semantic().scopes()

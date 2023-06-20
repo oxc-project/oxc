@@ -69,7 +69,7 @@ impl Rule for IsolatedDeclaration {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
         let symbol_table = ctx.semantic().symbols();
         if symbol_table.get_flag(symbol_id).is_export() {
-            let declaration = ctx.nodes()[symbol_table.get_declaration(symbol_id)];
+            let declaration = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
             match declaration.kind() {
                 AstKind::Class(class) => Self::check_class(class, ctx),
                 AstKind::Function(function) => Self::check_function(function, ctx),

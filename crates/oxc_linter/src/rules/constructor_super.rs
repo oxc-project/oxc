@@ -46,7 +46,7 @@ declare_oxc_lint!(
 
 impl Rule for ConstructorSuper {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Class(class) = node.get().kind() else { return };
+        let AstKind::Class(class) = node.kind() else { return };
         let Some(ctor) = class.body.body.iter().find_map(|el| match el {
             ClassElement::MethodDefinition(method_definition)
                 if method_definition.kind == MethodDefinitionKind::Constructor =>

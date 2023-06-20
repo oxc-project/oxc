@@ -110,7 +110,7 @@ impl GetterReturn {
 
 impl Rule for GetterReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.get().kind() {
+        match node.kind() {
             AstKind::MethodDefinition(method) if method.kind == MethodDefinitionKind::Get => {
                 let Some(body) = &method.value.body else { return };
 
