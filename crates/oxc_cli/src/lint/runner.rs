@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
     rc::Rc,
     sync::{
-        atomic::{AtomicUsize, Ordering},
         mpsc::{self, Sender},
         Arc, OnceLock,
     },
@@ -104,18 +103,19 @@ impl LintRunner {
     pub fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
 
-        let number_of_files = Arc::new(AtomicUsize::new(0));
         let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
 
         RESOLVER.set(Resolver::default()).unwrap();
 
-        self.process_paths(&number_of_files, tx_error);
+        let visited = Arc::new(DashSet::new());
+
+        self.process_paths(tx_error, &visited);
         let (number_of_warnings, number_of_diagnostics) = self.process_diagnostics(&rx_error);
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
             number_of_rules: self.linter.number_of_rules(),
-            number_of_files: number_of_files.load(Ordering::Relaxed),
+            number_of_files: visited.len(),
             number_of_diagnostics,
             number_of_warnings,
             max_warnings_exceeded: self
@@ -127,23 +127,20 @@ impl LintRunner {
 
     fn process_paths(
         &self,
-        number_of_files: &Arc<AtomicUsize>,
         tx_error: Sender<(PathBuf, Vec<Error>)>,
+        visited: &Arc<DashSet<PathBuf>>,
     ) {
-        let visited = Arc::new(DashSet::new());
-
         for path in &self.options.paths {
             let path = path.canonicalize().unwrap();
             let linter = Arc::clone(&self.linter);
             let tx_error = tx_error.clone();
-            let number_of_files = Arc::clone(number_of_files);
-            let visited = Arc::clone(&visited);
+            let visited = Arc::clone(visited);
 
             rayon::spawn(move || {
                 if path.is_file() {
-                    run_for_file(&path, &linter, &tx_error, &number_of_files, &visited);
+                    run_for_file(&path, &linter, &tx_error, &visited);
                 } else if path.is_dir() {
-                    run_for_dir(&path, &linter, &tx_error, &number_of_files, &visited);
+                    run_for_dir(&path, &linter, &tx_error, &visited);
                 }
             });
         }
@@ -215,7 +212,6 @@ fn run_for_dir(
     path: &Path,
     linter: &Arc<Linter>,
     tx_error: &Sender<(PathBuf, Vec<Error>)>,
-    number_of_files: &Arc<AtomicUsize>,
     visited: &Arc<DashSet<PathBuf>>,
 ) {
     for entry in fs::read_dir(path).unwrap() {
@@ -226,9 +222,9 @@ fn run_for_dir(
         }
 
         if path.is_file() {
-            run_for_file(&path, linter, tx_error, number_of_files, visited);
+            run_for_file(&path, linter, tx_error, visited);
         } else if path.is_dir() {
-            run_for_dir(&path, linter, tx_error, number_of_files, visited);
+            run_for_dir(&path, linter, tx_error, visited);
         }
     }
 }
@@ -239,10 +235,8 @@ fn run_for_file(
     path: &Path,
     linter: &Arc<Linter>,
     tx_error: &Sender<(PathBuf, Vec<Error>)>,
-    number_of_files: &Arc<AtomicUsize>,
     visited: &Arc<DashSet<PathBuf>>,
 ) {
-    number_of_files.fetch_add(1, Ordering::Relaxed);
     visited.insert(path.to_path_buf());
 
     let source = fs::read_to_string(path).unwrap_or_else(|_| panic!("{path:?} not found"));
@@ -290,11 +284,10 @@ fn run_for_file(
 
         let linter = Arc::clone(linter);
         let tx_error = tx_error.clone();
-        let number_of_files = Arc::clone(number_of_files);
         let visited = Arc::clone(visited);
 
         rayon::spawn(move || {
-            run_for_file(&path, &linter, &tx_error, &number_of_files, &visited);
+            run_for_file(&path, &linter, &tx_error, &visited);
         });
     }
 
