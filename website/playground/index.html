@@ -20,6 +20,7 @@
       #panel { height: 20%; overflow-y: auto; padding: 1em; color: #d1d5da; background-color: #24292e; border-top: 1px solid #444!important; }
       #right { flex: 1; display:flex; flex-direction: column }
       .controls { color: white; background: #24292e; padding: .8em 1em; border-bottom: 1px solid #444; display: flex; align-items: center; justify-content: space-between; }
+      .controls label { font-size: 14px; }
       #viewer { flex: 1; overflow-y: auto; }
       #mangle { display: inline-flex; align-items: center }
     </style>
@@ -33,6 +34,7 @@
         <div class="controls">
           <div id="logo"><img height="100%" width="20" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/oxc.ico" alt="logo"></img><span>Oxc</span></div>
           <div>
+            <label id="type-check">Type Check (experimental)<input id="type-check-checkbox" type="checkbox"></label>
             <label id="syntax">Check Syntax<input id="syntax-checkbox" type="checkbox" checked></label>
             <label id="lint">Lint<input id="lint-checkbox" type="checkbox" checked></label>
           </div>

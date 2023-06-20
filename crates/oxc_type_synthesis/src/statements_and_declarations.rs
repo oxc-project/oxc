@@ -34,7 +34,10 @@ pub(crate) fn hoist_statements<T: FSResolver>(
                 ast::Declaration::ClassDeclaration(_) => {}
                 ast::Declaration::TSTypeAliasDeclaration(alias) => {
                     if alias.type_parameters.is_some() {
-                        todo!()
+                        checking_data.raise_unimplemented_error(
+                            "type alias with type parameters",
+                            oxc_span_to_source_map_span(alias.span),
+                        );
                     }
 
                     // TODO eager and so won't work with hoisting
@@ -64,7 +67,7 @@ pub(crate) fn hoist_statements<T: FSResolver>(
     // Second stage
     for (idx, statement) in statements.iter().enumerate() {
         match statement {
-            Statement::ModuleDeclaration(_) => todo!(),
+            Statement::ModuleDeclaration(_) => {}
             Statement::Declaration(declaration) => match declaration {
                 ast::Declaration::VariableDeclaration(declaration) => {
                     let is_declare = declaration.modifiers.contains(ast::ModifierKind::Declare);
@@ -109,14 +112,13 @@ pub(crate) fn hoist_statements<T: FSResolver>(
                         mutability:
                             ezno_checker::structures::variables::VariableMutability::Constant,
                     };
-                    environment
-                        .register_variable(
-                            func.id.as_ref().unwrap().name.as_str(),
-                            VariableId(oxc_span_to_source_map_span(func.span)),
-                            behavior,
-                            &mut checking_data.types,
-                        )
-                        .unwrap();
+                    // TODO catch reassignment
+                    let _result = environment.register_variable(
+                        func.id.as_ref().unwrap().name.as_str(),
+                        VariableId(oxc_span_to_source_map_span(func.span)),
+                        behavior,
+                        &mut checking_data.types,
+                    );
                 }
                 ast::Declaration::ClassDeclaration(_) => {}
                 ast::Declaration::TSTypeAliasDeclaration(_) => {}
@@ -204,17 +206,18 @@ pub(crate) fn synthesize_statement<T: FSResolver>(
         ast::Statement::BlockStatement(block) => {
             synthesize_statements(&block.body, environment, checking_data);
         }
-        ast::Statement::BreakStatement(item) => {
-            checking_data.raise_unimplemented_error("break statement", oxc_span_to_source_map_span(item.span))
-        }
-        ast::Statement::ContinueStatement(item) => {
-            checking_data.raise_unimplemented_error("continue statement", oxc_span_to_source_map_span(item.span))
-        }
+        ast::Statement::BreakStatement(item) => checking_data
+            .raise_unimplemented_error("break statement", oxc_span_to_source_map_span(item.span)),
+        ast::Statement::ContinueStatement(item) => checking_data.raise_unimplemented_error(
+            "continue statement",
+            oxc_span_to_source_map_span(item.span),
+        ),
         ast::Statement::EmptyStatement(_) => {}
         ast::Statement::DebuggerStatement(_) => {}
-        ast::Statement::DoWhileStatement(item) => {
-            checking_data.raise_unimplemented_error("do while statement", oxc_span_to_source_map_span(item.span))
-        }
+        ast::Statement::DoWhileStatement(item) => checking_data.raise_unimplemented_error(
+            "do while statement",
+            oxc_span_to_source_map_span(item.span),
+        ),
         ast::Statement::ExpressionStatement(expr) => {
             expressions::synthesize_expression(&expr.expression, environment, checking_data);
         }
@@ -229,9 +232,8 @@ pub(crate) fn synthesize_statement<T: FSResolver>(
         ast::Statement::IfStatement(if_stmt) => {
             synthesize_if_statement(if_stmt, environment, checking_data)
         }
-        ast::Statement::LabeledStatement(item) => {
-            checking_data.raise_unimplemented_error("labeled statement", oxc_span_to_source_map_span(item.span))
-        }
+        ast::Statement::LabeledStatement(item) => checking_data
+            .raise_unimplemented_error("labeled statement", oxc_span_to_source_map_span(item.span)),
         ast::Statement::ReturnStatement(ret_stmt) => {
             if let Some(ref value) = ret_stmt.argument {
                 let returned =
@@ -264,12 +266,12 @@ pub(crate) fn synthesize_statement<T: FSResolver>(
                 oxc_span_to_source_map_span(statement.span()),
             );
         }
-        ast::Statement::WithStatement(item) => {
-            checking_data.raise_unimplemented_error("with statement", oxc_span_to_source_map_span(item.span))
-        }
-        ast::Statement::ModuleDeclaration(item) => {
-            checking_data.raise_unimplemented_error("module declaration", oxc_span_to_source_map_span(item.span()))
-        }
+        ast::Statement::WithStatement(item) => checking_data
+            .raise_unimplemented_error("with statement", oxc_span_to_source_map_span(item.span)),
+        ast::Statement::ModuleDeclaration(item) => checking_data.raise_unimplemented_error(
+            "module declaration",
+            oxc_span_to_source_map_span(item.span()),
+        ),
         ast::Statement::Declaration(declaration) => {
             if !matches!(declaration, ast::Declaration::FunctionDeclaration(..)) {
                 synthesize_declaration(declaration, environment, checking_data)
@@ -375,42 +377,48 @@ pub(crate) fn synthesize_declaration<T: FSResolver>(
                     )
                 });
 
-                // TODO temp
-                let value = declaration.init.as_ref().unwrap();
-                let value_ty =
-                    expressions::synthesize_expression(value, environment, checking_data);
+                let value_ty = if let Some(value) = declaration.init.as_ref() {
+                    let value_ty =
+                        expressions::synthesize_expression(value, environment, checking_data);
 
-                if let Some((var_ty, ta_pos)) = var_ty_and_pos {
-                    // TODO temp
-                    let ta_span = oxc_span_to_source_map_span(ta_pos);
-                    let value_span = oxc_span_to_source_map_span(oxc_span::GetSpan::span(value));
+                    if let Some((var_ty, ta_pos)) = var_ty_and_pos {
+                        // TODO temp
+                        let ta_span = oxc_span_to_source_map_span(ta_pos);
+                        let value_span =
+                            oxc_span_to_source_map_span(oxc_span::GetSpan::span(value));
 
-                    ezno_checker::check_variable_initialization(
-                        (var_ty, Cow::Owned(ta_span)),
-                        (value_ty, Cow::Owned(value_span)),
-                        environment,
-                        checking_data,
-                    );
-                }
+                        ezno_checker::check_variable_initialization(
+                            (var_ty, Cow::Owned(ta_span)),
+                            (value_ty, Cow::Owned(value_span)),
+                            environment,
+                            checking_data,
+                        );
+                    }
+                    value_ty
+                } else {
+                    // TODO if const raise error
+                    TypeId::UNDEFINED_TYPE
+                };
 
                 let id = VariableId(oxc_span_to_source_map_span(declaration.span));
                 environment.register_initial_variable_declaration_value(id, value_ty)
             }
         }
         ast::Declaration::FunctionDeclaration(_) => unreachable!("should be hoisted..."),
-        ast::Declaration::ClassDeclaration(item) => {
-            checking_data.raise_unimplemented_error("class declaration", oxc_span_to_source_map_span(item.span))
-        }
+        ast::Declaration::ClassDeclaration(item) => checking_data
+            .raise_unimplemented_error("class declaration", oxc_span_to_source_map_span(item.span)),
         ast::Declaration::TSTypeAliasDeclaration(_) => {}
         ast::Declaration::TSInterfaceDeclaration(_) => {}
-        ast::Declaration::TSEnumDeclaration(item) => {
-            checking_data.raise_unimplemented_error("enum declaration", oxc_span_to_source_map_span(item.span))
-        }
-        ast::Declaration::TSModuleDeclaration(item) => {
-            checking_data.raise_unimplemented_error("module declaration", oxc_span_to_source_map_span(item.span))
-        }
-        ast::Declaration::TSImportEqualsDeclaration(item) => {
-            checking_data.raise_unimplemented_error("import equals declaration", oxc_span_to_source_map_span(item.span))
-        }
+        ast::Declaration::TSEnumDeclaration(item) => checking_data
+            .raise_unimplemented_error("enum declaration", oxc_span_to_source_map_span(item.span)),
+        ast::Declaration::TSModuleDeclaration(item) => checking_data.raise_unimplemented_error(
+            "module declaration",
+            oxc_span_to_source_map_span(item.span),
+        ),
+        ast::Declaration::TSImportEqualsDeclaration(item) => checking_data
+            .raise_unimplemented_error(
+                "import equals declaration",
+                oxc_span_to_source_map_span(item.span),
+            ),
     }
 }

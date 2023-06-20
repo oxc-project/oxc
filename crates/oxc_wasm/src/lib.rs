@@ -11,14 +11,14 @@ use oxc_minifier::{CompressOptions, Compressor, ManglerBuilder, Printer, Printer
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 use crate::options::{
-    OxcFormatterOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions, OxcTypeCheckingOptions,
+    OxcFormatterOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions,
+    OxcTypeCheckingOptions,
 };
-
-use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 
 #[wasm_bindgen(start)]
 pub fn main() {
@@ -52,6 +52,7 @@ pub struct OxcDiagnostic {
     pub message: String,
 }
 
+#[wasm_bindgen]
 impl Oxc {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
@@ -117,23 +118,32 @@ impl Oxc {
             })
             .chain(self.type_check_diagnostics.borrow().iter().flat_map(|diagnostic| {
                 match diagnostic {
-                    TypeCheckDiagnostic::Global { reason, kind } => None,
-                    TypeCheckDiagnostic::Position { reason, position, kind } => {
-                        Some(OxcDiagnostic {
-                            start: position.start,
-                            end: position.end,
+                    TypeCheckDiagnostic::Global { .. } => None,
+                    TypeCheckDiagnostic::Position { reason, position, kind } => Some(
+                        OxcDiagnostic {
+                            start: position.start as usize,
+                            end: position.end as usize,
                             severity: format!("{:?}", kind),
                             message: format!("{reason}"),
-                        })
-                    }
-                    TypeCheckDiagnostic::PositionWithAdditionLabels { reason, position, kind, labels: _ } => {
-                        Some(OxcDiagnostic {
-                            start: position.start,
-                            end: position.end,
+                        }
+                        .serialize(&self.serializer)
+                        .unwrap(),
+                    ),
+                    TypeCheckDiagnostic::PositionWithAdditionLabels {
+                        reason,
+                        position,
+                        kind,
+                        labels: _,
+                    } => Some(
+                        OxcDiagnostic {
+                            start: position.start as usize,
+                            end: position.end as usize,
                             severity: format!("{:?}", kind),
                             message: format!("{reason}"),
-                        })
-                    }
+                        }
+                        .serialize(&self.serializer)
+                        .unwrap(),
+                    ),
                 }
             }))
             .collect::<Vec<_>>())
@@ -149,7 +159,7 @@ impl Oxc {
         _linter_options: &OxcLinterOptions,
         formatter_options: &OxcFormatterOptions,
         minifier_options: &OxcMinifierOptions,
-        type_checking_options: &OxcTypeCheckingOptions,
+        _type_checking_options: &OxcTypeCheckingOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
 
@@ -212,8 +222,7 @@ impl Oxc {
         }
 
         if run_options.type_check() {
-            let (diagnostics, ..) =
-                synthesize_program(&ret.program, |_: &std::path::Path| None);
+            let (diagnostics, ..) = synthesize_program(&program, |_: &std::path::Path| None);
 
             *self.type_check_diagnostics.borrow_mut() = diagnostics.get_diagnostics();
         }

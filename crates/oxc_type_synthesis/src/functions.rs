@@ -141,16 +141,26 @@ pub(crate) fn synthesize_parameters<T: ezno_checker::FSResolver>(
         );
 
         match &param.pattern.kind {
-            p @ ast::BindingPatternKind::BindingIdentifier(_)
-            | p @ ast::BindingPatternKind::ObjectPattern(_)
-            | p @ ast::BindingPatternKind::ArrayPattern(_) => {
+            p @ (ast::BindingPatternKind::BindingIdentifier(_)
+            | ast::BindingPatternKind::ObjectPattern(_)
+            | ast::BindingPatternKind::ArrayPattern(_)) => {
                 parameters.push(SynthesizedParameter {
-                    name: param_to_string(p),
+                    name: match param_to_string(p) {
+                        crate::PartiallyImplemented::Ok(name) => name,
+                        crate::PartiallyImplemented::NotImplemented(item, span) => {
+                            checking_data.raise_unimplemented_error(item, span);
+                            "temp".into()
+                        }
+                    },
                     ty: param_type,
                     position: oxc_span_to_source_map_span(param.span),
                 });
             }
-            ast::BindingPatternKind::AssignmentPattern(_) => todo!(),
+            ast::BindingPatternKind::AssignmentPattern(item) => checking_data
+                .raise_unimplemented_error(
+                    "parameter with default value",
+                    oxc_span_to_source_map_span(item.span),
+                ),
             // ast::BindingPatternKind::RestElement(element) => {
             // 	rest_parameter = Some(SynthesizedRestParameter {
             // 		name: param_to_string(&element.argument.kind),
@@ -164,13 +174,29 @@ pub(crate) fn synthesize_parameters<T: ezno_checker::FSResolver>(
     SynthesizedParameters { parameters, optional_parameters, rest_parameter }
 }
 
-fn param_to_string(binding: &ast::BindingPatternKind) -> String {
+fn param_to_string(binding: &ast::BindingPatternKind) -> crate::PartiallyImplemented<String> {
     match binding {
-        ast::BindingPatternKind::BindingIdentifier(ident) => ident.name.as_str().to_owned(),
-        ast::BindingPatternKind::ObjectPattern(_) => todo!(),
-        ast::BindingPatternKind::ArrayPattern(_) => todo!(),
-        // ast::BindingPatternKind::RestElement(_) => todo!(),
-        ast::BindingPatternKind::AssignmentPattern(_) => todo!(),
+        ast::BindingPatternKind::BindingIdentifier(ident) => {
+            crate::PartiallyImplemented::Ok(ident.name.as_str().to_owned())
+        }
+        ast::BindingPatternKind::ObjectPattern(param) => {
+            crate::PartiallyImplemented::NotImplemented(
+                "stringing complex parameters",
+                oxc_span_to_source_map_span(param.span),
+            )
+        }
+        ast::BindingPatternKind::ArrayPattern(param) => {
+            crate::PartiallyImplemented::NotImplemented(
+                "stringing complex parameters",
+                oxc_span_to_source_map_span(param.span),
+            )
+        }
+        ast::BindingPatternKind::AssignmentPattern(param) => {
+            crate::PartiallyImplemented::NotImplemented(
+                "stringing complex parameters",
+                oxc_span_to_source_map_span(param.span),
+            )
+        }
     }
 }
 

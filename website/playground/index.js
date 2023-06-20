@@ -23,7 +23,7 @@ import initWasm, {
   OxcLinterOptions,
   OxcMinifierOptions,
   OxcFormatterOptions,
-  OxcTypeCheckOptions
+  OxcTypeCheckingOptions
 } from "@oxc/wasm-web";
 
 const placeholderText = `
@@ -76,7 +76,7 @@ class Playground {
     this.formatterOptions = new OxcFormatterOptions();
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
-    this.typeCheckOptions = new OxcTypeCheckOptions();
+    this.typeCheckOptions = new OxcTypeCheckingOptions();
     // This will trigger `stateListener`.
     this.updateEditorText(this.editor, this.urlParams.code || placeholderText);
   }
@@ -459,6 +459,12 @@ async function main() {
     const checked = document.getElementById("mangle-checkbox").checked;
     playground.minifierOptions.mangle = checked;
     playground.updateView("minify");
+  };
+
+  document.getElementById("type-check").onchange = function () {
+    const checked = document.getElementById("type-check-checkbox").checked;
+    playground.runOptions.type_check = checked;
+    playground.updateView();
   };
 }
 

@@ -9,7 +9,7 @@ pub struct OxcRunOptions {
     format: bool,
     hir: bool,
     minify: bool,
-    type_check: bool
+    type_check: bool,
 }
 
 #[wasm_bindgen]
@@ -148,3 +148,11 @@ impl OxcMinifierOptions {
 #[wasm_bindgen]
 #[derive(Default, Clone, Copy)]
 pub struct OxcTypeCheckingOptions;
+
+#[wasm_bindgen]
+impl OxcTypeCheckingOptions {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self::default()
+    }
+}

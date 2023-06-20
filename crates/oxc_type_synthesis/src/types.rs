@@ -35,13 +35,15 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
                 .raise_unimplemented_error("this type", oxc_span_to_source_map_span(item.span));
             TypeId::ERROR_TYPE
         }
-        ast::TSType::TSUndefinedKeyword(_) => TypeId::UNDEFINED_TYPE,
+        // 🔥
+        ast::TSType::TSVoidKeyword(_) | ast::TSType::TSUndefinedKeyword(_) => {
+            TypeId::UNDEFINED_TYPE
+        }
         ast::TSType::TSUnknownKeyword(item) => {
             checking_data
                 .raise_unimplemented_error("unknown type", oxc_span_to_source_map_span(item.span));
             TypeId::ERROR_TYPE
         }
-        ast::TSType::TSVoidKeyword(_) => TypeId::UNDEFINED_TYPE,
         ast::TSType::TSArrayType(item) => {
             checking_data
                 .raise_unimplemented_error("array type", oxc_span_to_source_map_span(item.span));
@@ -238,13 +240,17 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
             }
         }
         ast::TSType::JSDocNullableType(item) => {
-            checking_data
-                .raise_unimplemented_error("js doc nullable", oxc_span_to_source_map_span(item.span));
+            checking_data.raise_unimplemented_error(
+                "js doc nullable",
+                oxc_span_to_source_map_span(item.span),
+            );
             TypeId::ERROR_TYPE
         }
         ast::TSType::JSDocUnknownType(item) => {
-            checking_data
-                .raise_unimplemented_error("js doc unknown", oxc_span_to_source_map_span(item.span));
+            checking_data.raise_unimplemented_error(
+                "js doc unknown",
+                oxc_span_to_source_map_span(item.span),
+            );
             TypeId::ERROR_TYPE
         }
     }

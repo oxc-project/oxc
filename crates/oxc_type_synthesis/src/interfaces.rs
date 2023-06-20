@@ -37,14 +37,23 @@ pub(crate) fn synthesize_signatures<T: ezno_checker::FSResolver>(
                 );
             }
             ast::TSSignature::TSIndexSignature(item) => {
-				checking_data.raise_unimplemented_error("ts index signature", oxc_span_to_source_map_span(item.span));
-			}
+                checking_data.raise_unimplemented_error(
+                    "ts index signature",
+                    oxc_span_to_source_map_span(item.span),
+                );
+            }
             ast::TSSignature::TSCallSignatureDeclaration(item) => {
-				checking_data.raise_unimplemented_error("ts call signature", oxc_span_to_source_map_span(item.span));
-			}
+                checking_data.raise_unimplemented_error(
+                    "ts call signature",
+                    oxc_span_to_source_map_span(item.span),
+                );
+            }
             ast::TSSignature::TSConstructSignatureDeclaration(item) => {
-				checking_data.raise_unimplemented_error("ts construct signature", oxc_span_to_source_map_span(item.span));
-			}
+                checking_data.raise_unimplemented_error(
+                    "ts construct signature",
+                    oxc_span_to_source_map_span(item.span),
+                );
+            }
             ast::TSSignature::TSMethodSignature(method) => {
                 // TODO reuse more functions
                 let key_ty = property_key_to_type(&method.key, environment, checking_data);

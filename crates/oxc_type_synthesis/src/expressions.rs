@@ -67,9 +67,7 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
 
             match result {
                 Ok(ok) => Instance::LValue(ok),
-                Err(err) => {
-                    return err
-                },
+                Err(err) => return err,
             }
         }
         ast::Expression::MetaProperty(meta_prop) => {
@@ -187,9 +185,11 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
             );
             return TypeId::ERROR_TYPE;
         }
-        ast::Expression::FunctionExpression(func) => {
-            Instance::RValue(environment.new_function(checking_data, &OxcFunction(&**func, None), RegisterAsType))
-        }
+        ast::Expression::FunctionExpression(func) => Instance::RValue(environment.new_function(
+            checking_data,
+            &OxcFunction(&**func, None),
+            RegisterAsType,
+        )),
         ast::Expression::ImportExpression(item) => {
             checking_data.raise_unimplemented_error(
                 "import expression",
@@ -283,6 +283,13 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
                 environment,
                 checking_data,
             );
+            let target = match target {
+                crate::PartiallyImplemented::Ok(target) => target,
+                crate::PartiallyImplemented::NotImplemented(item, span) => {
+                    checking_data.raise_unimplemented_error(item, span);
+                    return TypeId::ERROR_TYPE;
+                }
+            };
             // TODO need to cast as number...
             let result = environment.assign_to_assignable_handle_errors(
                 Assignable::Reference(target),
@@ -345,7 +352,12 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
             let item_ty = synthesize_expression(&item.expression, environment, checking_data);
             let to_satisfy =
                 synthesize_type_annotation(&item.type_annotation, environment, checking_data);
-            checking_data.check_satisfies(item_ty, to_satisfy, oxc_span_to_source_map_span(item.span), environment);
+            checking_data.check_satisfies(
+                item_ty,
+                to_satisfy,
+                oxc_span_to_source_map_span(item.span),
+                environment,
+            );
             return item_ty;
         }
         ast::Expression::TSTypeAssertion(item) => {
@@ -369,12 +381,15 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
             );
             return TypeId::ERROR_TYPE;
         }
-        ast::Expression::ArrowExpression(func) => {
-            Instance::RValue(environment.new_function(checking_data, &OxcArrowFunction(&**func), RegisterAsType))
-        }
+        ast::Expression::ArrowExpression(func) => Instance::RValue(environment.new_function(
+            checking_data,
+            &OxcArrowFunction(&**func),
+            RegisterAsType,
+        )),
     };
 
-    checking_data.add_expression_mapping(oxc_span_to_source_map_span(expr.span()), instance.clone());
+    checking_data
+        .add_expression_mapping(oxc_span_to_source_map_span(expr.span()), instance.clone());
 
     instance.get_value()
 }
@@ -385,6 +400,13 @@ fn synthesize_assignment<T: FSResolver>(
     checking_data: &mut CheckingData<T>,
 ) -> TypeId {
     let lhs = synthesize_assignment_target_to_assignable(&expr.left, environment, checking_data);
+    let lhs = match lhs {
+        crate::PartiallyImplemented::Ok(lhs) => lhs,
+        crate::PartiallyImplemented::NotImplemented(item, span) => {
+            checking_data.raise_unimplemented_error(item, span);
+            return TypeId::ERROR_TYPE;
+        }
+    };
     let operator = match expr.operator {
         AssignmentOperator::Assign => ezno_checker::AssignmentKind::Assign,
         AssignmentOperator::Addition => ezno_checker::AssignmentKind::Update(
@@ -410,7 +432,7 @@ fn synthesize_assignment<T: FSResolver>(
                 "this assignment operator",
                 oxc_span_to_source_map_span(expr.span),
             );
-            return TypeId::ERROR_TYPE
+            return TypeId::ERROR_TYPE;
         }
     };
 
@@ -428,16 +450,35 @@ fn synthesize_assignment_target_to_assignable<T: FSResolver>(
     target: &ast::AssignmentTarget,
     environment: &mut Environment,
     checking_data: &mut CheckingData<T>,
-) -> Assignable {
+) -> crate::PartiallyImplemented<Assignable> {
     match target {
-        ast::AssignmentTarget::SimpleAssignmentTarget(simple) => Assignable::Reference(
-            synthesize_simple_assignment_target_to_reference(simple, environment, checking_data),
-        ),
-        ast::AssignmentTarget::AssignmentTargetPattern(pattern) => match pattern {
-            ast::AssignmentTargetPattern::ArrayAssignmentTarget(_array) => {
-                todo!()
+        ast::AssignmentTarget::SimpleAssignmentTarget(simple) => {
+            match synthesize_simple_assignment_target_to_reference(
+                simple,
+                environment,
+                checking_data,
+            ) {
+                crate::PartiallyImplemented::Ok(reference) => {
+                    crate::PartiallyImplemented::Ok(Assignable::Reference(reference))
+                }
+                crate::PartiallyImplemented::NotImplemented(item, span) => {
+                    crate::PartiallyImplemented::NotImplemented(item, span)
+                }
             }
-            ast::AssignmentTargetPattern::ObjectAssignmentTarget(_object) => todo!(),
+        }
+        ast::AssignmentTarget::AssignmentTargetPattern(pattern) => match pattern {
+            ast::AssignmentTargetPattern::ArrayAssignmentTarget(array) => {
+                crate::PartiallyImplemented::NotImplemented(
+                    "array assignment pattern",
+                    oxc_span_to_source_map_span(array.span),
+                )
+            }
+            ast::AssignmentTargetPattern::ObjectAssignmentTarget(object) => {
+                crate::PartiallyImplemented::NotImplemented(
+                    "object assignment pattern",
+                    oxc_span_to_source_map_span(object.span),
+                )
+            }
         },
     }
 }
@@ -446,12 +487,14 @@ fn synthesize_simple_assignment_target_to_reference<T: FSResolver>(
     simple: &ast::SimpleAssignmentTarget,
     environment: &mut Environment,
     checking_data: &mut CheckingData<T>,
-) -> Reference {
+) -> crate::PartiallyImplemented<Reference> {
     match simple {
-        ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(identifier) => Reference::Variable(
-            identifier.name.as_str().to_owned(),
-            oxc_span_to_source_map_span(identifier.span),
-        ),
+        ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(identifier) => {
+            crate::PartiallyImplemented::Ok(Reference::Variable(
+                identifier.name.as_str().to_owned(),
+                oxc_span_to_source_map_span(identifier.span),
+            ))
+        }
         ast::SimpleAssignmentTarget::MemberAssignmentTarget(expr) => {
             let (parent_ty, key_ty) = match &**expr {
                 ast::MemberExpression::ComputedMemberExpression(comp) => {
@@ -467,18 +510,29 @@ fn synthesize_simple_assignment_target_to_reference<T: FSResolver>(
                     );
                     (parent, property)
                 }
-                ast::MemberExpression::PrivateFieldExpression(_) => todo!(),
+                ast::MemberExpression::PrivateFieldExpression(item) => {
+                    return crate::PartiallyImplemented::NotImplemented(
+                        "private field expression",
+                        oxc_span_to_source_map_span(item.span),
+                    );
+                }
             };
-            Reference::Property {
+            crate::PartiallyImplemented::Ok(Reference::Property {
                 on: parent_ty,
                 with: key_ty,
                 span: oxc_span_to_source_map_span(expr.span()),
-            }
+            })
         }
-        ast::SimpleAssignmentTarget::TSAsExpression(_) => todo!(),
-        ast::SimpleAssignmentTarget::TSSatisfiesExpression(_) => todo!(),
-        ast::SimpleAssignmentTarget::TSNonNullExpression(_) => todo!(),
-        ast::SimpleAssignmentTarget::TSTypeAssertion(_) => todo!(),
+        // TODO not sure if these exist...?
+        ast::SimpleAssignmentTarget::TSAsExpression(_)
+        | ast::SimpleAssignmentTarget::TSSatisfiesExpression(_)
+        | ast::SimpleAssignmentTarget::TSNonNullExpression(_)
+        | ast::SimpleAssignmentTarget::TSTypeAssertion(_) => {
+            crate::PartiallyImplemented::NotImplemented(
+                "left hand side typescript",
+                oxc_span_to_source_map_span(GetSpan::span(simple)),
+            )
+        }
     }
 }
 
@@ -509,7 +563,11 @@ pub(crate) fn synthesize_object<T: FSResolver>(
                 };
                 environment.register_property(ty, key_ty, property);
             }
-            ast::ObjectPropertyKind::SpreadProperty(_) => todo!(),
+            ast::ObjectPropertyKind::SpreadProperty(spread) => checking_data
+                .raise_unimplemented_error(
+                    "spread object property",
+                    oxc_span_to_source_map_span(spread.span),
+                ),
         }
     }
     ty
@@ -555,9 +613,12 @@ fn synthesize_binary_expression<T: FSResolver>(
         | BinaryOperator::In
         | BinaryOperator::Instanceof
         | BinaryOperator::Exponential => {
-            checking_data.raise_unimplemented_error("this operator", oxc_span_to_source_map_span(lhs.span()));
+            checking_data.raise_unimplemented_error(
+                "this operator",
+                oxc_span_to_source_map_span(lhs.span()),
+            );
 
-            return TypeId::ERROR_TYPE
+            return TypeId::ERROR_TYPE;
         }
     };
     ezno_checker::evaluate_binary_operator_handle_errors(

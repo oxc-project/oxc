@@ -2,7 +2,7 @@
 
 use ezno_checker::{
     events::Event, types::TypeStore, CheckingData, Environment, FSResolver, Root, Scope,
-    Span as SourceMapSpan, TypeId, TypeMappings,
+    Span as SourceMapSpan, TypeCheckSettings, TypeId, TypeMappings,
 };
 pub use ezno_checker::{
     Diagnostic, DiagnosticKind, DiagnosticsContainer, SourceId as EznoSourceId, Span as EznoSpan,
@@ -21,7 +21,7 @@ pub fn synthesize_program<T: FSResolver>(
     program: &ast::Program,
     resolver: T,
 ) -> (DiagnosticsContainer, Vec<Event>, TypeStore, TypeMappings, Root) {
-    let default_settings = Default::default();
+    let default_settings = TypeCheckSettings::default();
     let mut checking_data = CheckingData::new(default_settings, &resolver);
 
     let mut root = Root::new_with_primitive_references_and_ezno_magic();
@@ -30,13 +30,13 @@ pub fn synthesize_program<T: FSResolver>(
         Scope::Block {},
         &mut checking_data,
         |environment, checking_data| {
-            synthesize_statements(&program.body, environment, checking_data)
+            synthesize_statements(&program.body, environment, checking_data);
         },
     );
 
     (
         checking_data.diagnostics_container,
-        stuff.unwrap().0,
+        stuff.expect("block will always return events").0,
         checking_data.types,
         checking_data.type_mappings,
         root,
@@ -61,12 +61,23 @@ fn property_key_to_type<T: FSResolver>(
         ast::PropertyKey::Identifier(ident) => checking_data
             .types
             .new_constant_type(ezno_checker::Constant::String(ident.name.as_str().to_string())),
-        ast::PropertyKey::PrivateIdentifier(_) => todo!(),
-        ast::PropertyKey::Expression(expr) => {
-            let key = expressions::synthesize_expression(expr, environment, checking_data);
+        ast::PropertyKey::PrivateIdentifier(item) => {
+            checking_data.raise_unimplemented_error(
+                "private identifier",
+                oxc_span_to_source_map_span(item.span),
+            );
 
+            TypeId::ERROR_TYPE
+        }
+        ast::PropertyKey::Expression(expr) => {
             // TODO make key into key
-            key
+            expressions::synthesize_expression(expr, environment, checking_data)
         }
     }
+}
+
+// Marker type
+pub enum PartiallyImplemented<T> {
+    Ok(T),
+    NotImplemented(&'static str, EznoSpan),
 }
