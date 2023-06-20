@@ -49,18 +49,18 @@ fn undefined_comparison1() {
 
     test("0 < undefined", "!1");
     test("true > undefined", "!1");
-    // test("'hi' >= undefined", "!1");
+    test("'hi' >= undefined", "!1");
     test("null <= undefined", "!1");
 
     test("undefined < 0", "!1");
     test("undefined > true", "!1");
-    // test("undefined >= 'hi'", "!1");
+    test("undefined >= 'hi'", "!1");
     test("undefined <= null", "!1");
 
     test("null == undefined", "!0");
     test("0 == undefined", "!1");
     test("1 == undefined", "!1");
-    // test("'hi' == undefined", "!1");
+    test("'hi' == undefined", "!1");
     test("true == undefined", "!1");
     test("false == undefined", "!1");
     test("null === undefined", "!1");

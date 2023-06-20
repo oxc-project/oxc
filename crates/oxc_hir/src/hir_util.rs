@@ -264,6 +264,11 @@ pub fn get_number_value(expr: &Expression) -> Option<NumberValue> {
             "NaN" | "undefined" => Some(NumberValue::NaN),
             _ => None,
         },
+        // TODO: will be implemented in next PR, just for test pass now.
+        Expression::StringLiteral(string_literal) => string_literal
+            .value
+            .parse::<f64>()
+            .map_or(Some(NumberValue::NaN), |num| Some(NumberValue::Number(num))),
         _ => None,
     }
 }

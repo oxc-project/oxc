@@ -109,8 +109,6 @@ impl<'a> Compressor<'a> {
             },
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Typeof => {
-                    // typeof +-~! 0 -> typeof 2
-                    self.fold_expression(&mut unary_expr.argument);
                     self.try_fold_typeof(unary_expr.span, &unary_expr.argument)
                 }
                 UnaryOperator::UnaryPlus
@@ -283,9 +281,6 @@ impl<'a> Compressor<'a> {
         &mut self,
         unary_expr: &'b mut UnaryExpression<'a>,
     ) -> Option<Expression<'a>> {
-        // fold its children first, so that we can fold - -4.
-        self.fold_expression(&mut unary_expr.argument);
-
         if let Some(boolean) = get_boolean_value(&unary_expr.argument) {
             match unary_expr.operator {
                 // !100 -> false
