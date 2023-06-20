@@ -44,8 +44,13 @@ impl<'a> AstLower<'a> {
         self.semantic.declare_symbol(span, name, includes, excludes)
     }
 
-    pub fn enter_identifier_reference(&mut self, span: Span, name: &Atom) -> ReferenceId {
-        let reference = Reference::new(span, name.clone(), ReferenceFlag::read());
+    pub fn enter_identifier_reference(
+        &mut self,
+        span: Span,
+        name: &Atom,
+        reference_flag: ReferenceFlag,
+    ) -> ReferenceId {
+        let reference = Reference::new(span, name.clone(), reference_flag);
         self.semantic.declare_reference(reference)
     }
 
@@ -397,7 +402,7 @@ impl<'a> AstLower<'a> {
                     self.hir.literal_template_expression(lit)
                 }
                 ast::Expression::Identifier(ident) => {
-                    let lit = self.lower_identifier_reference(ident);
+                    let lit = self.lower_identifier_reference(ident, ReferenceFlag::Read);
                     self.hir.identifier_reference_expression(lit)
                 }
                 ast::Expression::MetaProperty(meta) => self.lower_meta_property(meta),
@@ -437,18 +442,18 @@ impl<'a> AstLower<'a> {
                 ast::Expression::Super(expr) => self.lower_super(expr),
                 ast::Expression::JSXElement(elem) => {
                     // TODO: implement JSX
-                    let ident = self.lower_identifier_reference(&ast::IdentifierReference {
-                        span: elem.span,
-                        name: "undefined".into(),
-                    });
+                    let ident = self.lower_identifier_reference(
+                        &ast::IdentifierReference { span: elem.span, name: "undefined".into() },
+                        ReferenceFlag::Read,
+                    );
                     self.hir.identifier_reference_expression(ident)
                 }
                 ast::Expression::JSXFragment(elem) => {
                     // TODO: implement JSX
-                    let ident = self.lower_identifier_reference(&ast::IdentifierReference {
-                        span: elem.span,
-                        name: "undefined".into(),
-                    });
+                    let ident = self.lower_identifier_reference(
+                        &ast::IdentifierReference { span: elem.span, name: "undefined".into() },
+                        ReferenceFlag::Read,
+                    );
                     self.hir.identifier_reference_expression(ident)
                 }
                 // Syntax trimmed for the following expressions
@@ -802,7 +807,7 @@ impl<'a> AstLower<'a> {
     ) -> hir::SimpleAssignmentTarget<'a> {
         match target {
             ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                let ident = self.lower_identifier_reference(ident);
+                let ident = self.lower_identifier_reference(ident, ReferenceFlag::Write);
                 self.hir.assignment_target_identifier(ident)
             }
             ast::SimpleAssignmentTarget::MemberAssignmentTarget(member_expr) => {
@@ -830,7 +835,7 @@ impl<'a> AstLower<'a> {
     ) -> hir::SimpleAssignmentTarget<'a> {
         match expr {
             ast::Expression::Identifier(ident) => {
-                let ident = self.lower_identifier_reference(ident);
+                let ident = self.lower_identifier_reference(ident, ReferenceFlag::Write);
                 self.hir.assignment_target_identifier(ident)
             }
             ast::Expression::MemberExpression(member_expr) => {
@@ -839,10 +844,10 @@ impl<'a> AstLower<'a> {
             }
             expr => {
                 // return undefined because this is invalid syntax
-                let ident = self.lower_identifier_reference(&ast::IdentifierReference {
-                    span: expr.span(),
-                    name: "undefined".into(),
-                });
+                let ident = self.lower_identifier_reference(
+                    &ast::IdentifierReference { span: expr.span(), name: "undefined".into() },
+                    ReferenceFlag::Write,
+                );
                 self.hir.assignment_target_identifier(ident)
             }
         }
@@ -931,7 +936,7 @@ impl<'a> AstLower<'a> {
         &mut self,
         ident: &ast::AssignmentTargetPropertyIdentifier<'a>,
     ) -> Box<'a, hir::AssignmentTargetPropertyIdentifier<'a>> {
-        let binding = self.lower_identifier_reference(&ident.binding);
+        let binding = self.lower_identifier_reference(&ident.binding, ReferenceFlag::Write);
         let init = ident.init.as_ref().map(|expr| self.lower_expression(expr));
         self.hir.assignment_target_property_identifier(ident.span, binding, init)
     }
@@ -1083,8 +1088,9 @@ impl<'a> AstLower<'a> {
     fn lower_identifier_reference(
         &mut self,
         ident: &ast::IdentifierReference,
+        reference_flag: ReferenceFlag,
     ) -> hir::IdentifierReference {
-        let reference_id = self.enter_identifier_reference(ident.span, &ident.name);
+        let reference_id = self.enter_identifier_reference(ident.span, &ident.name, reference_flag);
         self.hir.identifier_reference(ident.span, ident.name.clone(), reference_id)
     }
 
