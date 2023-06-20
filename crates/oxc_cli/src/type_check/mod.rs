@@ -172,16 +172,16 @@ mod type_check_output {
             // Conversion from Ezno -> codespan
             let diagnostic = match diagnostic {
                 TypeCheckDiagnostic::Global { reason, kind } => Diagnostic {
-                    severity: ezno_diagnostic_to_severity(kind),
+                    severity: ezno_diagnostic_to_severity(&kind),
                     code: None,
                     message: reason,
                     labels: Vec::new(),
                     notes: Vec::default(),
                 },
                 TypeCheckDiagnostic::Position { reason, position, kind } => Diagnostic {
-                    severity: ezno_diagnostic_to_severity(kind),
+                    severity: ezno_diagnostic_to_severity(&kind),
                     code: None,
-                    message: Default::default(),
+                    message: String::default(),
                     labels: vec![Label::primary((), position).with_message(reason)],
                     notes: Vec::default(),
                 },
@@ -195,9 +195,9 @@ mod type_check_output {
                         labels.into_iter().partition::<Vec<_>, _>(|(_, value)| value.is_some());
 
                     Diagnostic {
-                        severity: ezno_diagnostic_to_severity(kind),
+                        severity: ezno_diagnostic_to_severity(&kind),
                         code: None,
-                        message: Default::default(),
+                        message: String::default(),
                         labels: iter::once(Label::primary((), position).with_message(reason))
                             .chain(labels.into_iter().map(|(message, position)| {
                                 let position = position.unwrap();
@@ -213,7 +213,7 @@ mod type_check_output {
                 .unwrap();
         }
 
-        fn ezno_diagnostic_to_severity(kind: DiagnosticKind) -> Severity {
+        fn ezno_diagnostic_to_severity(kind: &DiagnosticKind) -> Severity {
             match kind {
                 DiagnosticKind::Error => Severity::Error,
                 DiagnosticKind::Warning => Severity::Warning,
