@@ -13,7 +13,7 @@ mod symbol;
 
 use std::rc::Rc;
 
-pub use builder::SemanticBuilder;
+pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
 use oxc_ast::{ast::IdentifierReference, module_record::ModuleRecord, AstKind, Trivias};
 use oxc_span::SourceType;

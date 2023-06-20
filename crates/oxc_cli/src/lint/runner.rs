@@ -6,12 +6,11 @@ use std::{
     sync::{
         atomic::{AtomicUsize, Ordering},
         mpsc::{self, Sender},
-        Arc,
+        Arc, OnceLock,
     },
 };
 
 use miette::NamedSource;
-use nodejs_resolver::{EnforceExtension, Options, ResolveResult};
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -20,11 +19,14 @@ use oxc_diagnostics::{
 };
 use oxc_linter::{Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::Parser;
-use oxc_semantic::SemanticBuilder;
+use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
 use rustc_hash::FxHashSet;
 
-use super::{AllowWarnDeny, LintOptions};
+use super::{
+    resolver::{ResolveResult, Resolver},
+    AllowWarnDeny, LintOptions,
+};
 use crate::CliRunResult;
 
 pub struct LintRunner {
@@ -104,6 +106,8 @@ impl LintRunner {
 
         let number_of_files = Arc::new(AtomicUsize::new(0));
         let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
+
+        RESOLVER.set(Resolver::default()).unwrap();
 
         self.process_paths(&number_of_files, tx_error);
         let (number_of_warnings, number_of_diagnostics) = self.process_diagnostics(&rx_error);
@@ -229,6 +233,8 @@ fn run_for_dir(
     }
 }
 
+static RESOLVER: OnceLock<Resolver> = OnceLock::new();
+
 fn run_for_file(
     path: &Path,
     linter: &Arc<Linter>,
@@ -253,22 +259,19 @@ fn run_for_file(
 
     let program = allocator.alloc(parser_return.program);
 
-    let semantic_return = SemanticBuilder::new(&source, source_type)
+    let SemanticBuilderReturn { errors, semantic } = SemanticBuilder::new(&source, source_type)
         .with_trivias(&parser_return.trivias)
         .with_check_syntax_error(true)
         .with_module_record_builder(true)
         .build(program);
 
-    if !semantic_return.errors.is_empty() {
-        tx_error.send(wrap_diagnostics(path, &source, semantic_return.errors)).unwrap();
+    if !errors.is_empty() {
+        tx_error.send(wrap_diagnostics(path, &source, errors)).unwrap();
     };
 
-    let semantic = semantic_return.semantic;
+    let resolver = RESOLVER.get().unwrap();
+    let resolve_path = path.parent().expect("File path always has a parent");
 
-    let options = Options { enforce_extension: EnforceExtension::Disabled, ..Default::default() };
-
-    let resolver = &nodejs_resolver::Resolver::new(options);
-    let resolve_path = path.parent().unwrap();
 
     for name in dbg!(semantic.module_record()).module_requests.keys() {
         if !dbg!(name).starts_with('.') {
@@ -276,11 +279,10 @@ fn run_for_file(
         }
 
         let resolve_result = resolver.resolve(resolve_path, name).unwrap_or_else(|_| {
-            panic!("Couldn't resolve '{name}' in '{}'", resolve_path.display())
+            panic!("Couldn't resolve '{name}' in '{}'.", resolve_path.display())
         });
 
         let ResolveResult::Resource(resource) = resolve_result else { continue; };
-
         let path = resource.path;
 
         if visited.contains(&path) {
