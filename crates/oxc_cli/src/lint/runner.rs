@@ -237,13 +237,20 @@ fn run_for_file(
     tx_error: &Sender<(PathBuf, Vec<Error>)>,
     visited: &Arc<DashSet<PathBuf>>,
 ) {
+    if visited.contains(path) {
+        return;
+    }
+
+    let Ok(source_type) = SourceType::from_path(path) else {
+        eprintln!("File {} is not supported, skipping.", path.display());
+        return;
+    };
+
     visited.insert(path.to_path_buf());
 
     let source = fs::read_to_string(path).unwrap_or_else(|_| panic!("{path:?} not found"));
 
     let allocator = Allocator::default();
-
-    let source_type = SourceType::from_path(path).unwrap_or_else(|_| panic!("incorrect {path:?}"));
 
     let parser_return = Parser::new(&allocator, &source, source_type).parse();
 
@@ -271,9 +278,10 @@ fn run_for_file(
             continue;
         }
 
-        let resolve_result = resolver.resolve(resolve_path, name).unwrap_or_else(|_| {
-            panic!("Couldn't resolve '{name}' in '{}'.", resolve_path.display())
-        });
+        let Ok(resolve_result) = resolver.resolve(resolve_path, name) else {
+            eprintln!("Couldn't resolve '{name}' in '{}'.", resolve_path.display());
+            continue;
+        };
 
         let ResolveResult::Resource(resource) = resolve_result else { continue; };
         let path = resource.path;
