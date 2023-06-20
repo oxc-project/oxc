@@ -116,30 +116,21 @@ impl Oxc {
                     })
                     .collect::<Vec<_>>()
             })
-            .chain(self.type_check_diagnostics.borrow().iter().flat_map(|diagnostic| {
+            .chain(self.type_check_diagnostics.borrow().iter().filter_map(|diagnostic| {
                 match diagnostic {
                     TypeCheckDiagnostic::Global { .. } => None,
-                    TypeCheckDiagnostic::Position { reason, position, kind } => Some(
-                        OxcDiagnostic {
-                            start: position.start as usize,
-                            end: position.end as usize,
-                            severity: format!("{:?}", kind),
-                            message: format!("{reason}"),
-                        }
-                        .serialize(&self.serializer)
-                        .unwrap(),
-                    ),
                     TypeCheckDiagnostic::PositionWithAdditionLabels {
                         reason,
                         position,
                         kind,
                         labels: _,
-                    } => Some(
+                    }
+                    | TypeCheckDiagnostic::Position { reason, position, kind } => Some(
                         OxcDiagnostic {
                             start: position.start as usize,
                             end: position.end as usize,
-                            severity: format!("{:?}", kind),
-                            message: format!("{reason}"),
+                            severity: format!("{kind:?}"),
+                            message: reason.to_string(),
                         }
                         .serialize(&self.serializer)
                         .unwrap(),
@@ -222,7 +213,7 @@ impl Oxc {
         }
 
         if run_options.type_check() {
-            let (diagnostics, ..) = synthesize_program(&program, |_: &std::path::Path| None);
+            let (diagnostics, ..) = synthesize_program(program, |_: &std::path::Path| None);
 
             *self.type_check_diagnostics.borrow_mut() = diagnostics.get_diagnostics();
         }

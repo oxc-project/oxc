@@ -153,6 +153,6 @@ pub struct OxcTypeCheckingOptions;
 impl OxcTypeCheckingOptions {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        Self::default()
+        Self
     }
 }
