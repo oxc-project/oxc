@@ -4,7 +4,10 @@
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
-use oxc_hir::hir_util::{get_boolean_value, get_number_value, IsLiteralValue, MayHaveSideEffects};
+use oxc_hir::hir_util::{
+    get_boolean_value, get_number_value, get_side_free_number_value, IsLiteralValue,
+    MayHaveSideEffects, NumberValue,
+};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     operator::{BinaryOperator, UnaryOperator},
@@ -19,6 +22,20 @@ enum Tri {
     True,
     False,
     Unknown,
+}
+
+impl Tri {
+    pub fn not(self) -> Self {
+        match self {
+            Self::True => Self::False,
+            Self::False => Self::True,
+            Self::Unknown => Self::Unknown,
+        }
+    }
+
+    pub fn for_boolean(boolean: bool) -> Self {
+        if boolean { Self::True } else { Self::False }
+    }
 }
 
 /// JavaScript Language Type
@@ -44,10 +61,26 @@ impl<'a> From<&Expression<'a>> for Ty {
             Expression::BooleanLiteral(_) => Self::Boolean,
             Expression::NullLiteral(_) => Self::Null,
             Expression::NumberLiteral(_) => Self::Number,
-            Expression::ObjectExpression(_) => Self::Object,
             Expression::StringLiteral(_) => Self::Str,
+            Expression::ObjectExpression(_)
+            | Expression::ArrayExpression(_)
+            | Expression::RegExpLiteral(_)
+            | Expression::FunctionExpression(_) => Self::Object,
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Self::Void,
+                "NaN" | "Infinity" => Self::Number,
+                _ => Self::Undetermined,
+            },
+            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+                UnaryOperator::Void => Self::Void,
+                UnaryOperator::UnaryNegation => {
+                    let argument_ty = Self::from(&unary_expr.argument);
+                    if argument_ty == Self::BigInt {
+                        return Self::BigInt;
+                    }
+                    Self::Number
+                }
+                UnaryOperator::LogicalNot => Self::Boolean,
                 _ => Self::Undetermined,
             },
             _ => Self::Undetermined,
@@ -59,7 +92,14 @@ impl<'a> Compressor<'a> {
     pub(crate) fn fold_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
         let folded_expr = match expr {
             Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
-                BinaryOperator::Equality => self.try_fold_comparison(
+                BinaryOperator::Equality
+                | BinaryOperator::Inequality
+                | BinaryOperator::StrictEquality
+                | BinaryOperator::StrictInequality
+                | BinaryOperator::LessThan
+                | BinaryOperator::LessEqualThan
+                | BinaryOperator::GreaterThan
+                | BinaryOperator::GreaterEqualThan => self.try_fold_comparison(
                     binary_expr.span,
                     binary_expr.operator,
                     &binary_expr.left,
@@ -69,8 +109,6 @@ impl<'a> Compressor<'a> {
             },
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::Typeof => {
-                    // typeof +-~! 0 -> typeof 2
-                    self.fold_expression(&mut unary_expr.argument);
                     self.try_fold_typeof(unary_expr.span, &unary_expr.argument)
                 }
                 UnaryOperator::UnaryPlus
@@ -112,8 +150,27 @@ impl<'a> Compressor<'a> {
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
     ) -> Tri {
+        if left.may_have_side_effects() || right.may_have_side_effects() {
+            return Tri::Unknown;
+        }
+
         match op {
             BinaryOperator::Equality => self.try_abstract_equality_comparison(left, right),
+            BinaryOperator::Inequality => self.try_abstract_equality_comparison(left, right).not(),
+            BinaryOperator::StrictEquality => self.try_strict_equality_comparison(left, right),
+            BinaryOperator::StrictInequality => {
+                self.try_strict_equality_comparison(left, right).not()
+            }
+            BinaryOperator::LessThan => self.try_abstract_relational_comparison(left, right, false),
+            BinaryOperator::GreaterThan => {
+                self.try_abstract_relational_comparison(right, left, false)
+            }
+            BinaryOperator::LessEqualThan => {
+                self.try_abstract_relational_comparison(right, left, true).not()
+            }
+            BinaryOperator::GreaterEqualThan => {
+                self.try_abstract_relational_comparison(left, right, true).not()
+            }
             _ => Tri::Unknown,
         }
     }
@@ -133,7 +190,30 @@ impl<'a> Compressor<'a> {
             if matches!((left, right), (Ty::Null, Ty::Void) | (Ty::Void, Ty::Null)) {
                 return Tri::True;
             }
+
+            return Tri::False;
         }
+        Tri::Unknown
+    }
+
+    /// <https://tc39.es/ecma262/#sec-abstract-relational-comparison>
+    fn try_abstract_relational_comparison<'b>(
+        &self,
+        left: &'b Expression<'a>,
+        right: &'b Expression<'a>,
+        will_negative: bool,
+    ) -> Tri {
+        // try comparing as Numbers.
+        let left_num = get_side_free_number_value(left);
+        let right_num = get_side_free_number_value(right);
+        if let Some(left_num) = left_num && let Some(right_num) = right_num {
+            match (left_num, right_num) {
+                (NumberValue::NaN, _) | (_, NumberValue::NaN) => return Tri::for_boolean(will_negative),
+                (NumberValue::Number(left_num), NumberValue::Number(right_num)) => return Tri::for_boolean(left_num < right_num),
+                _ => {}
+            }
+        }
+
         Tri::Unknown
     }
 
@@ -177,10 +257,13 @@ impl<'a> Compressor<'a> {
                 | Expression::ObjectExpression(_)
                 | Expression::ArrayExpression(_) => Some("object"),
                 Expression::Identifier(_) if argument.is_undefined() => Some("undefined"),
-                Expression::UnaryExpression(unary_expr)
-                    if unary_expr.operator == UnaryOperator::Void =>
-                {
-                    Some("undefined")
+                Expression::UnaryExpression(unary_expr) => {
+                    match unary_expr.operator {
+                        UnaryOperator::Void => Some("undefined"),
+                        // `unary_expr.argument` is literal value, so it's safe to fold
+                        UnaryOperator::LogicalNot => Some("boolean"),
+                        _ => None,
+                    }
                 }
                 _ => None,
             };
@@ -198,9 +281,6 @@ impl<'a> Compressor<'a> {
         &mut self,
         unary_expr: &'b mut UnaryExpression<'a>,
     ) -> Option<Expression<'a>> {
-        // fold its children first, so that we can fold - -4.
-        self.fold_expression(&mut unary_expr.argument);
-
         if let Some(boolean) = get_boolean_value(&unary_expr.argument) {
             match unary_expr.operator {
                 // !100 -> false
@@ -238,7 +318,8 @@ impl<'a> Compressor<'a> {
                         // +true -> 1
                         // +false -> 0
                         // +null -> 0
-                        if let Some(value) = get_number_value(&unary_expr.argument) {
+                        if let Some(value) = get_number_value(&unary_expr.argument)
+                            && let NumberValue::Number(value) = value {
                             let raw = self.hir.new_str(value.to_string().as_str());
                             let number_literal = self.hir.number_literal(
                                 unary_expr.span,

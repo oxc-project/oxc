@@ -279,11 +279,11 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     }
 
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
-        self.fold_expression(expr);
-        if self.compress_undefined(expr) || self.compress_boolean(expr) {
-            return;
-        }
         self.visit_expression_match(expr);
+        self.fold_expression(expr);
+        if !self.compress_undefined(expr) {
+            self.compress_boolean(expr);
+        }
     }
 
     fn visit_binary_expression(&mut self, expr: &'b mut BinaryExpression<'a>) {
