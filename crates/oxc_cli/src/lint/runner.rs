@@ -243,7 +243,7 @@ fn run_for_file(
     visited: &Arc<DashSet<PathBuf>>,
 ) {
     number_of_files.fetch_add(1, Ordering::Relaxed);
-    visited.insert(dbg!(path.to_path_buf()));
+    visited.insert(path.to_path_buf());
 
     let source = fs::read_to_string(path).unwrap_or_else(|_| panic!("{path:?} not found"));
 
@@ -272,9 +272,8 @@ fn run_for_file(
     let resolver = RESOLVER.get().unwrap();
     let resolve_path = path.parent().expect("File path always has a parent");
 
-
-    for name in dbg!(semantic.module_record()).module_requests.keys() {
-        if !dbg!(name).starts_with('.') {
+    for name in semantic.module_record().module_requests.keys() {
+        if !name.starts_with('.') {
             continue;
         }
 
