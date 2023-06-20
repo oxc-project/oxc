@@ -427,10 +427,19 @@ impl<'a> Parser<'a> {
         ))
     }
 
-    pub(crate) fn parse_ts_this_parameter(&mut self) -> Result<()> {
-        let _ident = self.parse_identifier_kind(Kind::Ident);
-        self.parse_ts_type_annotation()?;
-        Ok(())
+    pub(crate) fn parse_ts_this_parameter(&mut self) -> Result<FormalParameter<'a>> {
+        let span = self.start_span();
+        let (ident_span, name) = self.parse_identifier_kind(Kind::This);
+        let type_annotation = self.parse_ts_type_annotation()?;
+        let kind = self.ast.binding_identifier(BindingIdentifier { span: ident_span, name });
+        let binding = self.ast.binding_pattern(kind, type_annotation, /* optional */ false);
+        Ok(self.ast.formal_parameter(
+            self.end_span(span),
+            binding,
+            /* accessibility */ None,
+            /* readonly */ false,
+            /* decorators */ self.ast.new_vec(),
+        ))
     }
 
     pub(crate) fn eat_decorators(&mut self) -> Result<()> {

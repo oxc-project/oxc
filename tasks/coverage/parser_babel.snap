@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2072/2078 (99.71%)
 Positive Passed: 2069/2078 (99.57%)
-Negative Passed: 1330/1507 (88.25%)
+Negative Passed: 1323/1507 (87.79%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -45,6 +45,7 @@ Expect Syntax Error: "esprima/expression-primary-literal-regular-expression/.u-f
 Expect Syntax Error: "esprima/invalid-syntax/.GH-1106-09/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/.migrated_0035/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
+Expect Syntax Error: "esprima/rest-parameter/invalid-setter-rest/input.js"
 Expect Syntax Error: "esprima/statement-if/.migrated_0003/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.migrated_0021/input.js"
 Expect Syntax Error: "esprima/statement-iteration/.pattern-in-for-in/input.js"
@@ -116,6 +117,12 @@ Expect Syntax Error: "typescript/interface/abstract/input.ts"
 Expect Syntax Error: "typescript/interface/export-abstract-interface/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts"
+Expect Syntax Error: "typescript/interface/get-set-invalid-parameters/input.ts"
+Expect Syntax Error: "typescript/interface/get-set-invalid-parameters-babel-7/input.ts"
+Expect Syntax Error: "typescript/interface/get-set-invalid-reset-parameter/input.ts"
+Expect Syntax Error: "typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts"
+Expect Syntax Error: "typescript/interface/get-set-invalid-this-parameters/input.ts"
+Expect Syntax Error: "typescript/interface/get-set-invalid-this-parameters-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-property/input.ts"
@@ -9409,12 +9416,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                  ──────
    ╰────
 
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[esprima/rest-parameter/invalid-setter-rest/input.js:1:1]
- 1 │ x = { set f(...y) {} }
-   ·            ──────
-   ╰────
-
   × Invalid Unicode escape sequence
    ╭─[esprima/statement-expression/migrated_0002/input.js:1:1]
  1 │ \\u0061
@@ -9798,54 +9799,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                          ─
    ╰────
 
-  × A 'get' accessor must not have any formal parameters.
-   ╭─[typescript/interface/get-set-invalid-parameters/input.ts:1:1]
- 1 │ interface Foo {
- 2 │   get foo(param): string;
-   ·          ───────
- 3 │   set foo();
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[typescript/interface/get-set-invalid-parameters/input.ts:2:1]
- 2 │   get foo(param): string;
- 3 │   set foo();
-   ·          ──
- 4 │ }
-   ╰────
-
-  × A 'get' accessor must not have any formal parameters.
-   ╭─[typescript/interface/get-set-invalid-parameters-babel-7/input.ts:1:1]
- 1 │ interface Foo {
- 2 │   get foo(param): string;
-   ·          ───────
- 3 │   set foo();
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[typescript/interface/get-set-invalid-parameters-babel-7/input.ts:2:1]
- 2 │   get foo(param): string;
- 3 │   set foo();
-   ·          ──
- 4 │ }
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[typescript/interface/get-set-invalid-reset-parameter/input.ts:1:1]
- 1 │ interface Foo {
- 2 │   set bar(...v);
-   ·          ──────
- 3 │ }
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:1:1]
- 1 │ interface Foo {
- 2 │   set bar(...v);
-   ·          ──────
- 3 │ }
-   ╰────
-
   × TS1095: A 'set' accessor cannot have a return type annotation
    ╭─[typescript/interface/get-set-invalid-return-types/input.ts:1:1]
  1 │ interface Foo {
@@ -9860,22 +9813,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │   set foo(param): string;
    ·                 ────────
  3 │ }
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[typescript/interface/get-set-invalid-this-parameters/input.ts:2:1]
- 2 │   get bar(this: Foo);
- 3 │   set bar(this: Foo);
-   ·          ───────────
- 4 │ }
-   ╰────
-
-  × A 'set' accessor must have exactly one parameter.
-   ╭─[typescript/interface/get-set-invalid-this-parameters-babel-7/input.ts:2:1]
- 2 │   get bar(this: Foo);
- 3 │   set bar(this: Foo);
-   ·          ───────────
- 4 │ }
    ╰────
 
   × Expected `(` but found `<`

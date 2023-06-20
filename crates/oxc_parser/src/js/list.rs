@@ -260,9 +260,8 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
 
         match p.cur_kind() {
             Kind::This if p.ts_enabled() => {
-                p.parse_ts_this_parameter()?;
-                // don't add this to ast fow now, the ast span shouldn't be in BindingIdentifier
-                return Ok(());
+                let formal_parameter = p.parse_ts_this_parameter()?;
+                self.elements.push(formal_parameter);
             }
             Kind::Dot3 => {
                 let rest = p.parse_rest_element()?;

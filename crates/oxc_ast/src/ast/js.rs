@@ -1337,6 +1337,16 @@ pub struct FormalParameters<'a> {
     pub rest: Option<Box<'a, RestElement<'a>>>,
 }
 
+impl<'a> FormalParameters<'a> {
+    pub fn parameters_count(&self) -> usize {
+        self.items.len() + self.rest.as_ref().map_or(0, |_| 1)
+    }
+
+    pub fn this_parameter(&self) -> Option<&FormalParameter<'a>> {
+        self.items.first().filter(|item| matches!(&item.pattern.kind, BindingPatternKind::BindingIdentifier(ident) if ident.name == "this"))
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct FormalParameter<'a> {
