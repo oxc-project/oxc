@@ -1,38 +1,63 @@
 use ezno_checker::{
-    self, structures::functions::SynthesizedArgument, CheckingData, Environment, FSResolver, TypeId,
+    self, structures::functions::SynthesizedArgument, Assignable, CheckingData, Environment,
+    FSResolver, Instance, Property, Reference, RegisterAsType, RegisterOnExistingObject, TypeId,
 };
 use oxc_ast::ast;
 use oxc_span::GetSpan;
+use oxc_syntax::operator::AssignmentOperator;
 
 use super::property_key_to_type;
-use crate::{oxc_span_to_source_map_span, types::synthesize_type_annotation};
+use crate::{
+    functions::{OxcArrowFunction, OxcFunction},
+    oxc_span_to_source_map_span,
+    types::synthesize_type_annotation,
+};
 
 pub(crate) fn synthesize_expression<T: FSResolver>(
     expr: &ast::Expression,
     environment: &mut Environment,
     checking_data: &mut CheckingData<T>,
 ) -> TypeId {
-    match expr {
+    let instance = match expr {
         ast::Expression::BooleanLiteral(boolean) => {
-            checking_data.types.new_constant_type(ezno_checker::Constant::Boolean(boolean.value))
-        }
-        ast::Expression::NullLiteral(_) => TypeId::NULL_TYPE,
-        ast::Expression::BigintLiteral(_) => todo!(),
-        ast::Expression::RegExpLiteral(_) => todo!(),
-        ast::Expression::NumberLiteral(number) => checking_data.types.new_constant_type(
-            number
-                .value
-                .try_into()
-                .map(ezno_checker::Constant::Number)
-                .unwrap_or(ezno_checker::Constant::NaN),
-        ),
-        ast::Expression::StringLiteral(string) => {
-            // TODO could be better here :)
-            checking_data
+            return checking_data
                 .types
-                .new_constant_type(ezno_checker::Constant::String(string.value.as_str().to_owned()))
+                .new_constant_type(ezno_checker::Constant::Boolean(boolean.value));
         }
-        ast::Expression::TemplateLiteral(_) => todo!(),
+        ast::Expression::NullLiteral(_) => return TypeId::NULL_TYPE,
+        ast::Expression::BigintLiteral(big_int) => {
+            checking_data.raise_unimplemented_error(
+                "big int literal",
+                oxc_span_to_source_map_span(big_int.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::RegExpLiteral(regexp) => {
+            return checking_data.types.new_constant_type(ezno_checker::Constant::Regexp(
+                regexp.regex.pattern.to_string(),
+            ));
+        }
+        ast::Expression::NumberLiteral(number) => {
+            return checking_data.types.new_constant_type(
+                number
+                    .value
+                    .try_into()
+                    .map(ezno_checker::Constant::Number)
+                    .unwrap_or(ezno_checker::Constant::NaN),
+            );
+        }
+        ast::Expression::StringLiteral(string) => {
+            return checking_data.types.new_constant_type(ezno_checker::Constant::String(
+                string.value.as_str().to_owned(),
+            ));
+        }
+        ast::Expression::TemplateLiteral(tl) => {
+            checking_data.raise_unimplemented_error(
+                "template literals",
+                oxc_span_to_source_map_span(tl.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
         ast::Expression::Identifier(identifier) => {
             let result = environment.get_variable_or_error(
                 &identifier.name,
@@ -41,24 +66,51 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
             );
 
             match result {
-                Ok(ok) => ok.1,
-                Err(err) => err,
+                Ok(ok) => Instance::LValue(ok),
+                Err(err) => {
+                    return err
+                },
             }
         }
-        ast::Expression::MetaProperty(_) => todo!(),
-        ast::Expression::Super(_) => todo!(),
-        ast::Expression::ArrayExpression(_) => todo!(),
-        ast::Expression::AssignmentExpression(assignment) => {
-            synthesize_assignment(assignment, environment, checking_data)
+        ast::Expression::MetaProperty(meta_prop) => {
+            checking_data.raise_unimplemented_error(
+                "meta_prop",
+                oxc_span_to_source_map_span(meta_prop.span),
+            );
+            return TypeId::ERROR_TYPE;
         }
-        ast::Expression::AwaitExpression(_) => todo!(),
-        ast::Expression::BinaryExpression(bin_expr) => synthesize_binary_expression(
-            &bin_expr.left,
-            bin_expr.operator,
-            &bin_expr.right,
-            checking_data,
-            environment,
-        ),
+        ast::Expression::Super(super_item) => {
+            checking_data
+                .raise_unimplemented_error("super", oxc_span_to_source_map_span(super_item.span));
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::ArrayExpression(array_expr) => {
+            checking_data.raise_unimplemented_error(
+                "array expression",
+                oxc_span_to_source_map_span(array_expr.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::AssignmentExpression(assignment) => {
+            Instance::RValue(synthesize_assignment(assignment, environment, checking_data))
+        }
+        ast::Expression::AwaitExpression(r#await) => {
+            checking_data.raise_unimplemented_error(
+                "await expression",
+                oxc_span_to_source_map_span(r#await.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::BinaryExpression(bin_expr) => {
+            let value = synthesize_binary_expression(
+                &bin_expr.left,
+                bin_expr.operator,
+                &bin_expr.right,
+                checking_data,
+                environment,
+            );
+            Instance::RValue(value)
+        }
         ast::Expression::CallExpression(expr) => {
             let parent = synthesize_expression(&expr.callee, environment, checking_data);
 
@@ -78,7 +130,17 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
                 .arguments
                 .iter()
                 .map(|arg| match arg {
-                    ast::Argument::SpreadElement(_) => todo!(),
+                    ast::Argument::SpreadElement(expr) => {
+                        checking_data.raise_unimplemented_error(
+                            "spread argument",
+                            oxc_span_to_source_map_span(expr.span),
+                        );
+
+                        SynthesizedArgument::NonSpread {
+                            ty: TypeId::ERROR_TYPE,
+                            position: oxc_span_to_source_map_span(expr.span),
+                        }
+                    }
                     ast::Argument::Expression(expr) => {
                         let ty = synthesize_expression(expr, environment, checking_data);
                         SynthesizedArgument::NonSpread {
@@ -92,7 +154,7 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
             // TODO
             let this_argument = None;
 
-            ezno_checker::call_type_handle_errors(
+            let result = ezno_checker::call_type_handle_errors(
                 parent,
                 arguments,
                 this_argument,
@@ -101,24 +163,57 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
                 checking_data,
                 ezno_checker::events::CalledWithNew::None,
                 oxc_span_to_source_map_span(expr.span),
-            )
+            );
+            Instance::RValue(result)
         }
-        ast::Expression::ChainExpression(_) => todo!(),
-        ast::Expression::ClassExpression(_) => todo!(),
-        ast::Expression::ConditionalExpression(_) => todo!(),
-        ast::Expression::FunctionExpression(_) => todo!(),
-        ast::Expression::ImportExpression(_) => todo!(),
-        ast::Expression::LogicalExpression(_) => todo!(),
+        ast::Expression::ChainExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "chain expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::ClassExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "class expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::ConditionalExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "conditional expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::FunctionExpression(func) => {
+            Instance::RValue(environment.new_function(checking_data, &OxcFunction(&**func, None), RegisterAsType))
+        }
+        ast::Expression::ImportExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "import expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::LogicalExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "logical expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
         ast::Expression::MemberExpression(expr) => match &**expr {
             ast::MemberExpression::ComputedMemberExpression(comp) => {
-                let property = synthesize_expression(&comp.expression, environment, checking_data);
                 let parent = synthesize_expression(&comp.object, environment, checking_data);
-                environment.get_property_handle_errors(
+                let property = synthesize_expression(&comp.expression, environment, checking_data);
+                Instance::RValue(environment.get_property_handle_errors(
                     parent,
                     property,
                     checking_data,
                     oxc_span_to_source_map_span(comp.span),
-                )
+                ))
             }
             ast::MemberExpression::StaticMemberExpression(expr) => {
                 let parent = synthesize_expression(&expr.object, environment, checking_data);
@@ -126,66 +221,264 @@ pub(crate) fn synthesize_expression<T: FSResolver>(
                     ezno_checker::Constant::String(expr.property.name.as_str().to_owned()),
                 );
 
-                environment.get_property_handle_errors(
+                Instance::RValue(environment.get_property_handle_errors(
                     parent,
                     property,
                     checking_data,
                     oxc_span_to_source_map_span(expr.span),
-                )
+                ))
             }
-            ast::MemberExpression::PrivateFieldExpression(_) => todo!(),
+            ast::MemberExpression::PrivateFieldExpression(item) => {
+                checking_data.raise_unimplemented_error(
+                    "private field expression",
+                    oxc_span_to_source_map_span(item.span),
+                );
+                return TypeId::ERROR_TYPE;
+            }
         },
-        ast::Expression::NewExpression(_) => todo!(),
+        ast::Expression::NewExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "new expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
         ast::Expression::ObjectExpression(object) => {
-            synthesize_object(object, environment, checking_data)
+            Instance::RValue(synthesize_object(object, environment, checking_data))
         }
         ast::Expression::ParenthesizedExpression(inner) => {
-            synthesize_expression(&inner.expression, environment, checking_data)
+            return synthesize_expression(&inner.expression, environment, checking_data);
         }
-        ast::Expression::SequenceExpression(_) => todo!(),
-        ast::Expression::TaggedTemplateExpression(_) => todo!(),
-        ast::Expression::ThisExpression(_) => todo!(),
-        ast::Expression::UnaryExpression(_) => todo!(),
-        ast::Expression::UpdateExpression(_update_expr) => {
-            todo!("update_expr")
+        ast::Expression::SequenceExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "sequence expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
         }
-        ast::Expression::YieldExpression(_) => todo!(),
-        ast::Expression::PrivateInExpression(_) => todo!(),
-        ast::Expression::JSXElement(_) => todo!(),
-        ast::Expression::JSXFragment(_) => todo!(),
-        ast::Expression::TSAsExpression(_) => todo!(),
-        ast::Expression::TSSatisfiesExpression(_) => todo!(),
-        ast::Expression::TSTypeAssertion(_) => todo!(),
-        ast::Expression::TSNonNullExpression(_) => todo!(),
-        ast::Expression::TSInstantiationExpression(_) => todo!(),
-        ast::Expression::ArrowExpression(_) => todo!(),
-    }
+        ast::Expression::TaggedTemplateExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "tagged template literal expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::ThisExpression(this) => {
+            checking_data.raise_unimplemented_error(
+                "this expression",
+                oxc_span_to_source_map_span(this.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::UnaryExpression(unary) => {
+            checking_data.raise_unimplemented_error(
+                "unary expression",
+                oxc_span_to_source_map_span(unary.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::UpdateExpression(update_expr) => {
+            let target = synthesize_simple_assignment_target_to_reference(
+                &update_expr.argument,
+                environment,
+                checking_data,
+            );
+            // TODO need to cast as number...
+            let result = environment.assign_to_assignable_handle_errors(
+                Assignable::Reference(target),
+                ezno_checker::AssignmentKind::IncrementOrDecrement(
+                    match update_expr.operator {
+                        oxc_syntax::operator::UpdateOperator::Increment => {
+                            ezno_checker::IncrementOrDecrement::Increment
+                        }
+                        oxc_syntax::operator::UpdateOperator::Decrement => {
+                            ezno_checker::IncrementOrDecrement::Decrement
+                        }
+                    },
+                    match update_expr.prefix {
+                        true => ezno_checker::AssignmentReturnStatus::New,
+                        false => ezno_checker::AssignmentReturnStatus::Previous,
+                    },
+                ),
+                None::<&OxcExpression>,
+                oxc_span_to_source_map_span(update_expr.span),
+                checking_data,
+            );
+            Instance::RValue(result)
+        }
+        ast::Expression::YieldExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "yield expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::PrivateInExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "PrivateInExpression expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::JSXElement(item) => {
+            checking_data.raise_unimplemented_error(
+                "JSXElement expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::JSXFragment(item) => {
+            checking_data.raise_unimplemented_error(
+                "JSXFragment expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::TSAsExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "TSAsExpression expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::TSSatisfiesExpression(item) => {
+            let item_ty = synthesize_expression(&item.expression, environment, checking_data);
+            let to_satisfy =
+                synthesize_type_annotation(&item.type_annotation, environment, checking_data);
+            checking_data.check_satisfies(item_ty, to_satisfy, oxc_span_to_source_map_span(item.span), environment);
+            return item_ty;
+        }
+        ast::Expression::TSTypeAssertion(item) => {
+            checking_data.raise_unimplemented_error(
+                "TSTypeAssertion expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::TSNonNullExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "TSNonNullExpression expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::TSInstantiationExpression(item) => {
+            checking_data.raise_unimplemented_error(
+                "TSInstantiationExpression expression",
+                oxc_span_to_source_map_span(item.span),
+            );
+            return TypeId::ERROR_TYPE;
+        }
+        ast::Expression::ArrowExpression(func) => {
+            Instance::RValue(environment.new_function(checking_data, &OxcArrowFunction(&**func), RegisterAsType))
+        }
+    };
+
+    checking_data.add_expression_mapping(oxc_span_to_source_map_span(expr.span()), instance.clone());
+
+    instance.get_value()
 }
 
-// TODO others need to be built into helper methods in the checker
 fn synthesize_assignment<T: FSResolver>(
-    assignment: &ast::AssignmentExpression,
+    expr: &ast::AssignmentExpression,
     environment: &mut Environment,
     checking_data: &mut CheckingData<T>,
 ) -> TypeId {
-    match &assignment.left {
-        ast::AssignmentTarget::SimpleAssignmentTarget(simple) => match simple {
-            ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(identifier) => {
-                let rhs = synthesize_expression(&assignment.right, environment, checking_data);
-                environment.assign_variable_handle_errors(
-                    identifier.name.as_str(),
-                    oxc_span_to_source_map_span(assignment.span),
-                    rhs,
-                    checking_data,
-                )
+    let lhs = synthesize_assignment_target_to_assignable(&expr.left, environment, checking_data);
+    let operator = match expr.operator {
+        AssignmentOperator::Assign => ezno_checker::AssignmentKind::Assign,
+        AssignmentOperator::Addition => ezno_checker::AssignmentKind::Update(
+            ezno_checker::structures::operators::BinaryOperator::Add,
+        ),
+        AssignmentOperator::Multiplication => ezno_checker::AssignmentKind::Update(
+            ezno_checker::structures::operators::BinaryOperator::Multiply,
+        ),
+        AssignmentOperator::Subtraction
+        | AssignmentOperator::Division
+        | AssignmentOperator::Remainder
+        | AssignmentOperator::ShiftLeft
+        | AssignmentOperator::ShiftRight
+        | AssignmentOperator::ShiftRightZeroFill
+        | AssignmentOperator::BitwiseOR
+        | AssignmentOperator::BitwiseXOR
+        | AssignmentOperator::BitwiseAnd
+        | AssignmentOperator::LogicalAnd
+        | AssignmentOperator::LogicalOr
+        | AssignmentOperator::LogicalNullish
+        | AssignmentOperator::Exponential => {
+            checking_data.raise_unimplemented_error(
+                "this assignment operator",
+                oxc_span_to_source_map_span(expr.span),
+            );
+            return TypeId::ERROR_TYPE
+        }
+    };
+
+    environment.assign_to_assignable_handle_errors(
+        lhs,
+        operator,
+        Some(&OxcExpression(&expr.right)),
+        oxc_span_to_source_map_span(expr.span),
+        checking_data,
+    )
+}
+
+// TODO others need to be built into helper methods in the checker
+fn synthesize_assignment_target_to_assignable<T: FSResolver>(
+    target: &ast::AssignmentTarget,
+    environment: &mut Environment,
+    checking_data: &mut CheckingData<T>,
+) -> Assignable {
+    match target {
+        ast::AssignmentTarget::SimpleAssignmentTarget(simple) => Assignable::Reference(
+            synthesize_simple_assignment_target_to_reference(simple, environment, checking_data),
+        ),
+        ast::AssignmentTarget::AssignmentTargetPattern(pattern) => match pattern {
+            ast::AssignmentTargetPattern::ArrayAssignmentTarget(_array) => {
+                todo!()
             }
-            ast::SimpleAssignmentTarget::MemberAssignmentTarget(_) => todo!(),
-            ast::SimpleAssignmentTarget::TSAsExpression(_) => todo!(),
-            ast::SimpleAssignmentTarget::TSSatisfiesExpression(_) => todo!(),
-            ast::SimpleAssignmentTarget::TSNonNullExpression(_) => todo!(),
-            ast::SimpleAssignmentTarget::TSTypeAssertion(_) => todo!(),
+            ast::AssignmentTargetPattern::ObjectAssignmentTarget(_object) => todo!(),
         },
-        ast::AssignmentTarget::AssignmentTargetPattern(_) => todo!(),
+    }
+}
+
+fn synthesize_simple_assignment_target_to_reference<T: FSResolver>(
+    simple: &ast::SimpleAssignmentTarget,
+    environment: &mut Environment,
+    checking_data: &mut CheckingData<T>,
+) -> Reference {
+    match simple {
+        ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(identifier) => Reference::Variable(
+            identifier.name.as_str().to_owned(),
+            oxc_span_to_source_map_span(identifier.span),
+        ),
+        ast::SimpleAssignmentTarget::MemberAssignmentTarget(expr) => {
+            let (parent_ty, key_ty) = match &**expr {
+                ast::MemberExpression::ComputedMemberExpression(comp) => {
+                    let property =
+                        synthesize_expression(&comp.expression, environment, checking_data);
+                    let parent = synthesize_expression(&comp.object, environment, checking_data);
+                    (parent, property)
+                }
+                ast::MemberExpression::StaticMemberExpression(expr) => {
+                    let parent = synthesize_expression(&expr.object, environment, checking_data);
+                    let property = checking_data.types.new_constant_type(
+                        ezno_checker::Constant::String(expr.property.name.as_str().to_owned()),
+                    );
+                    (parent, property)
+                }
+                ast::MemberExpression::PrivateFieldExpression(_) => todo!(),
+            };
+            Reference::Property {
+                on: parent_ty,
+                with: key_ty,
+                span: oxc_span_to_source_map_span(expr.span()),
+            }
+        }
+        ast::SimpleAssignmentTarget::TSAsExpression(_) => todo!(),
+        ast::SimpleAssignmentTarget::TSSatisfiesExpression(_) => todo!(),
+        ast::SimpleAssignmentTarget::TSNonNullExpression(_) => todo!(),
+        ast::SimpleAssignmentTarget::TSTypeAssertion(_) => todo!(),
     }
 }
 
@@ -201,9 +494,20 @@ pub(crate) fn synthesize_object<T: FSResolver>(
         match property {
             ast::ObjectPropertyKind::ObjectProperty(property) => {
                 let key_ty = property_key_to_type(&property.key, environment, checking_data);
-
-                let value_ty = synthesize_expression(&property.value, environment, checking_data);
-                environment.register_property_on_object(ty, key_ty, value_ty);
+                let property = if let ast::Expression::FunctionExpression(func) = &property.value {
+                    environment.new_function(
+                        checking_data,
+                        &OxcFunction(&**func, Some(property.kind)),
+                        RegisterOnExistingObject,
+                    )
+                } else {
+                    Property::Value(synthesize_expression(
+                        &property.value,
+                        environment,
+                        checking_data,
+                    ))
+                };
+                environment.register_property(ty, key_ty, property);
             }
             ast::ObjectPropertyKind::SpreadProperty(_) => todo!(),
         }
@@ -223,36 +527,38 @@ fn synthesize_binary_expression<T: FSResolver>(
     use oxc_syntax::operator::BinaryOperator;
 
     let op = match operator {
-        BinaryOperator::Equality => {
-            todo!()
-        }
-        BinaryOperator::Inequality => todo!(),
         BinaryOperator::StrictEquality => {
             ezno_checker::structures::operators::BinaryOperator::RelationOperator(
                 ezno_checker::structures::operators::RelationOperator::Equal,
             )
         }
-        BinaryOperator::StrictInequality => todo!(),
-        BinaryOperator::LessThan => todo!(),
-        BinaryOperator::LessEqualThan => todo!(),
-        BinaryOperator::GreaterThan => todo!(),
-        BinaryOperator::GreaterEqualThan => todo!(),
-        BinaryOperator::ShiftLeft => todo!(),
-        BinaryOperator::ShiftRight => todo!(),
-        BinaryOperator::ShiftRightZeroFill => todo!(),
         BinaryOperator::Addition => ezno_checker::structures::operators::BinaryOperator::Add,
-        BinaryOperator::Subtraction => todo!(),
         BinaryOperator::Multiplication => {
             ezno_checker::structures::operators::BinaryOperator::Multiply
         }
-        BinaryOperator::Division => todo!(),
-        BinaryOperator::Remainder => todo!(),
-        BinaryOperator::BitwiseOR => todo!(),
-        BinaryOperator::BitwiseXOR => todo!(),
-        BinaryOperator::BitwiseAnd => todo!(),
-        BinaryOperator::In => todo!(),
-        BinaryOperator::Instanceof => todo!(),
-        BinaryOperator::Exponential => todo!(),
+        BinaryOperator::Equality
+        | BinaryOperator::Inequality
+        | BinaryOperator::StrictInequality
+        | BinaryOperator::LessThan
+        | BinaryOperator::LessEqualThan
+        | BinaryOperator::GreaterThan
+        | BinaryOperator::GreaterEqualThan
+        | BinaryOperator::ShiftLeft
+        | BinaryOperator::ShiftRight
+        | BinaryOperator::ShiftRightZeroFill
+        | BinaryOperator::Subtraction
+        | BinaryOperator::Division
+        | BinaryOperator::Remainder
+        | BinaryOperator::BitwiseOR
+        | BinaryOperator::BitwiseXOR
+        | BinaryOperator::BitwiseAnd
+        | BinaryOperator::In
+        | BinaryOperator::Instanceof
+        | BinaryOperator::Exponential => {
+            checking_data.raise_unimplemented_error("this operator", oxc_span_to_source_map_span(lhs.span()));
+
+            return TypeId::ERROR_TYPE
+        }
     };
     ezno_checker::evaluate_binary_operator_handle_errors(
         op,
@@ -261,4 +567,20 @@ fn synthesize_binary_expression<T: FSResolver>(
         environment,
         checking_data,
     )
+}
+
+struct OxcExpression<'a, 'b>(pub(crate) &'a ast::Expression<'b>);
+
+impl ezno_checker::SynthesizableExpression for OxcExpression<'_, '_> {
+    fn synthesize_expression<U: ezno_checker::FSResolver>(
+        &self,
+        environment: &mut Environment,
+        checking_data: &mut CheckingData<U>,
+    ) -> TypeId {
+        synthesize_expression(self.0, environment, checking_data)
+    }
+
+    fn get_position(&self) -> ezno_checker::Span {
+        oxc_span_to_source_map_span(self.0.span())
+    }
 }

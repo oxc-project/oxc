@@ -23,7 +23,6 @@ pub(crate) fn synthesize_signatures<T: ezno_checker::FSResolver>(
 ) {
     for declaration in signatures.iter() {
         match declaration {
-            ast::TSSignature::TSIndexSignature(_) => todo!(),
             ast::TSSignature::TSPropertySignature(property) => {
                 let key_ty = property_key_to_type(&property.key, environment, checking_data);
                 let value_ty = synthesize_type_annotation(
@@ -31,10 +30,21 @@ pub(crate) fn synthesize_signatures<T: ezno_checker::FSResolver>(
                     environment,
                     checking_data,
                 );
-                environment.register_property(onto, key_ty, value_ty);
+                environment.register_property(
+                    onto,
+                    key_ty,
+                    ezno_checker::Property::Value(value_ty),
+                );
             }
-            ast::TSSignature::TSCallSignatureDeclaration(_) => todo!(),
-            ast::TSSignature::TSConstructSignatureDeclaration(_) => todo!(),
+            ast::TSSignature::TSIndexSignature(item) => {
+				checking_data.raise_unimplemented_error("ts index signature", oxc_span_to_source_map_span(item.span));
+			}
+            ast::TSSignature::TSCallSignatureDeclaration(item) => {
+				checking_data.raise_unimplemented_error("ts call signature", oxc_span_to_source_map_span(item.span));
+			}
+            ast::TSSignature::TSConstructSignatureDeclaration(item) => {
+				checking_data.raise_unimplemented_error("ts construct signature", oxc_span_to_source_map_span(item.span));
+			}
             ast::TSSignature::TSMethodSignature(method) => {
                 // TODO reuse more functions
                 let key_ty = property_key_to_type(&method.key, environment, checking_data);
@@ -121,7 +131,7 @@ pub(crate) fn synthesize_signatures<T: ezno_checker::FSResolver>(
                     constant_fn,
                 );
 
-                environment.register_property(onto, key_ty, func_ty);
+                environment.register_property(onto, key_ty, ezno_checker::Property::Value(func_ty));
             }
         }
     }

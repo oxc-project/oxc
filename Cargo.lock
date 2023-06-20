@@ -553,9 +553,9 @@ dependencies = [
 
 [[package]]
 name = "ezno-checker"
-version = "0.0.2"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65e5c8dfbd90b19744169af6bc83e3b7b8dd0e359d8e39db9c959cdde8378aba"
+checksum = "ce89c36282d2e7e84de91cca6c2c32ba11f4839ae8c73fb7cc0024411ab28521"
 dependencies = [
  "bimap",
  "binary-serialize-derive",
@@ -1435,6 +1435,7 @@ dependencies = [
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
+ "oxc_type_synthesis",
  "serde",
  "serde-wasm-bindgen",
  "wasm-bindgen",

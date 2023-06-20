@@ -1,11 +1,11 @@
 #![allow(clippy::all, clippy::restriction, clippy::pedantic, clippy::nursery)]
 
 use ezno_checker::{
-    events::Event, CheckingData, Environment, FSResolver, Root, Scope, Span as SourceMapSpan,
-    TypeId,
+    events::Event, types::TypeStore, CheckingData, Environment, FSResolver, Root, Scope,
+    Span as SourceMapSpan, TypeId, TypeMappings,
 };
 pub use ezno_checker::{
-    Diagnostic, DiagnosticsContainer, ErrorWarningInfo, SourceId as EznoSourceId, Span as EznoSpan,
+    Diagnostic, DiagnosticKind, DiagnosticsContainer, SourceId as EznoSourceId, Span as EznoSpan,
 };
 use oxc_ast::ast;
 use oxc_span::Span;
@@ -20,7 +20,7 @@ mod types;
 pub fn synthesize_program<T: FSResolver>(
     program: &ast::Program,
     resolver: T,
-) -> (DiagnosticsContainer, Vec<Event>, Vec<(TypeId, ezno_checker::Type)>) {
+) -> (DiagnosticsContainer, Vec<Event>, TypeStore, TypeMappings, Root) {
     let default_settings = Default::default();
     let mut checking_data = CheckingData::new(default_settings, &resolver);
 
@@ -34,7 +34,13 @@ pub fn synthesize_program<T: FSResolver>(
         },
     );
 
-    (checking_data.diagnostics_container, stuff.unwrap().0, checking_data.types.into_vec_temp())
+    (
+        checking_data.diagnostics_container,
+        stuff.unwrap().0,
+        checking_data.types,
+        checking_data.type_mappings,
+        root,
+    )
 }
 
 fn oxc_span_to_source_map_span(span: Span) -> SourceMapSpan {

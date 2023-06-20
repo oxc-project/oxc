@@ -15,8 +15,10 @@ use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 use crate::options::{
-    OxcFormatterOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions,
+    OxcFormatterOptions, OxcLinterOptions, OxcMinifierOptions, OxcParserOptions, OxcRunOptions, OxcTypeCheckingOptions,
 };
+
+use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 
 #[wasm_bindgen(start)]
 pub fn main() {
@@ -37,6 +39,8 @@ pub struct Oxc {
 
     diagnostics: RefCell<Vec<Error>>,
 
+    type_check_diagnostics: RefCell<Vec<TypeCheckDiagnostic>>,
+
     serializer: serde_wasm_bindgen::Serializer,
 }
 
@@ -48,7 +52,6 @@ pub struct OxcDiagnostic {
     pub message: String,
 }
 
-#[wasm_bindgen]
 impl Oxc {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
@@ -112,6 +115,27 @@ impl Oxc {
                     })
                     .collect::<Vec<_>>()
             })
+            .chain(self.type_check_diagnostics.borrow().iter().flat_map(|diagnostic| {
+                match diagnostic {
+                    TypeCheckDiagnostic::Global { reason, kind } => None,
+                    TypeCheckDiagnostic::Position { reason, position, kind } => {
+                        Some(OxcDiagnostic {
+                            start: position.start,
+                            end: position.end,
+                            severity: format!("{:?}", kind),
+                            message: format!("{reason}"),
+                        })
+                    }
+                    TypeCheckDiagnostic::PositionWithAdditionLabels { reason, position, kind, labels: _ } => {
+                        Some(OxcDiagnostic {
+                            start: position.start,
+                            end: position.end,
+                            severity: format!("{:?}", kind),
+                            message: format!("{reason}"),
+                        })
+                    }
+                }
+            }))
             .collect::<Vec<_>>())
     }
 
@@ -125,6 +149,7 @@ impl Oxc {
         _linter_options: &OxcLinterOptions,
         formatter_options: &OxcFormatterOptions,
         minifier_options: &OxcMinifierOptions,
+        type_checking_options: &OxcTypeCheckingOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
 
@@ -184,6 +209,13 @@ impl Oxc {
             }
 
             self.minified_text = printer.build(hir);
+        }
+
+        if run_options.type_check() {
+            let (diagnostics, ..) =
+                synthesize_program(&ret.program, |_: &std::path::Path| None);
+
+            *self.type_check_diagnostics.borrow_mut() = diagnostics.get_diagnostics();
         }
 
         Ok(())

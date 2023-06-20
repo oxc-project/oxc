@@ -23,6 +23,7 @@ import initWasm, {
   OxcLinterOptions,
   OxcMinifierOptions,
   OxcFormatterOptions,
+  OxcTypeCheckOptions
 } from "@oxc/wasm-web";
 
 const placeholderText = `
@@ -75,6 +76,7 @@ class Playground {
     this.formatterOptions = new OxcFormatterOptions();
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
+    this.typeCheckOptions = new OxcTypeCheckOptions();
     // This will trigger `stateListener`.
     this.updateEditorText(this.editor, this.urlParams.code || placeholderText);
   }
@@ -163,7 +165,8 @@ class Playground {
       this.parserOptions,
       this.linterOptions,
       this.formatterOptions,
-      this.minifierOptions
+      this.minifierOptions,
+      this.typeCheckOptions
     );
     const elapsed = new Date() - start;
     document.getElementById("duration").innerText = `${elapsed}ms`;
