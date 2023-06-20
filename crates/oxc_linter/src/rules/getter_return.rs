@@ -71,7 +71,7 @@ impl GetterReturn {
                         return Some(span);
                     }
                 }
-                Expression::ArrowExpression(arrow) if !arrow.is_single_expression() => {
+                Expression::ArrowExpression(arrow) if !arrow.expression => {
                     if !self.is_correct_getter(&arrow.body) {
                         let span = Span::new(property.key.span().start, arrow.params.span.start);
                         return Some(span);

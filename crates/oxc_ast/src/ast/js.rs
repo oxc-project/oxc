@@ -1387,22 +1387,16 @@ impl<'a> FunctionBody<'a> {
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type", rename_all = "camelCase"))]
 pub struct ArrowExpression<'a> {
     pub span: Span,
+    /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
     pub generator: bool,
     pub r#async: bool,
-    pub params: Box<'a, FormalParameters<'a>>, // UniqueFormalParameters in spec
+    pub params: Box<'a, FormalParameters<'a>>,
+    /// See `expression` for whether this arrow expression returns an expression.
     pub body: Box<'a, FunctionBody<'a>>,
 
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-}
-
-impl<'a> ArrowExpression<'a> {
-    /// Is of form () => x without curly braces.
-    #[inline]
-    pub fn is_single_expression(&self) -> bool {
-        self.expression
-    }
 }
 
 /// Generator Function Definitions
