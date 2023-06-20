@@ -1,4 +1,3 @@
 minifier_test262 Summary:
 AST Parsed     : 44738/44738 (100.00%)
-Positive Passed: 44737/44738 (100.00%)
-Expect to Parse: "language/punctuators/S7.7_A1.js"
+Positive Passed: 44738/44738 (100.00%)

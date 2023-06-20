@@ -80,6 +80,7 @@ impl<'a> From<&Expression<'a>> for Ty {
                     }
                     Self::Number
                 }
+                UnaryOperator::LogicalNot => Self::Boolean,
                 _ => Self::Undetermined,
             },
             _ => Self::Undetermined,
@@ -159,11 +160,19 @@ impl<'a> Compressor<'a> {
             BinaryOperator::Equality => self.try_abstract_equality_comparison(left, right),
             BinaryOperator::Inequality => self.try_abstract_equality_comparison(left, right).not(),
             BinaryOperator::StrictEquality => self.try_strict_equality_comparison(left, right),
-            BinaryOperator::StrictInequality => self.try_strict_equality_comparison(left, right).not(),
+            BinaryOperator::StrictInequality => {
+                self.try_strict_equality_comparison(left, right).not()
+            }
             BinaryOperator::LessThan => self.try_abstract_relational_comparison(left, right, false),
-            BinaryOperator::GreaterThan => self.try_abstract_relational_comparison(right, left, false), 
-            BinaryOperator::LessEqualThan => self.try_abstract_relational_comparison(right, left, true).not(),
-            BinaryOperator::GreaterEqualThan => self.try_abstract_relational_comparison(left, right, true).not(),
+            BinaryOperator::GreaterThan => {
+                self.try_abstract_relational_comparison(right, left, false)
+            }
+            BinaryOperator::LessEqualThan => {
+                self.try_abstract_relational_comparison(right, left, true).not()
+            }
+            BinaryOperator::GreaterEqualThan => {
+                self.try_abstract_relational_comparison(left, right, true).not()
+            }
             _ => Tri::Unknown,
         }
     }
@@ -250,10 +259,13 @@ impl<'a> Compressor<'a> {
                 | Expression::ObjectExpression(_)
                 | Expression::ArrayExpression(_) => Some("object"),
                 Expression::Identifier(_) if argument.is_undefined() => Some("undefined"),
-                Expression::UnaryExpression(unary_expr)
-                    if unary_expr.operator == UnaryOperator::Void =>
-                {
-                    Some("undefined")
+                Expression::UnaryExpression(unary_expr) => {
+                    match unary_expr.operator {
+                        UnaryOperator::Void => Some("undefined"),
+                        // `unary_expr.argument` is literal value, so it's safe to fold
+                        UnaryOperator::LogicalNot => Some("boolean"),
+                        _ => None,
+                    }
                 }
                 _ => None,
             };
