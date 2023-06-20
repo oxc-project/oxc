@@ -937,9 +937,6 @@ impl<'a> Parser<'a> {
         let return_type = self.parse_ts_return_type_annotation()?;
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
-        if !params.is_empty() {
-            self.error(diagnostics::GetterParameters(params.span));
-        }
         Ok(self.ast.ts_method_signature(
             self.end_span(span),
             key,
@@ -960,9 +957,6 @@ impl<'a> Parser<'a> {
         let return_type = self.parse_ts_return_type_annotation()?;
         self.bump(Kind::Comma);
         self.bump(Kind::Semicolon);
-        if params.items.len() != 1 {
-            self.error(diagnostics::SetterParameters(params.span));
-        }
         if let Some(return_type) = return_type.as_ref() {
             self.error(diagnostics::ASetAccessorCannotHaveAReturnTypeAnnotation(return_type.span));
         }
