@@ -153,9 +153,11 @@ impl LintRunner {
         let mut buf_writer = BufWriter::new(std::io::stdout());
         let handler = GraphicalReportHandler::new();
 
-        while let Ok((path, diagnostics)) = rx_error.recv() {
+        for (path, diagnostics) in rx_error.iter() {
             number_of_diagnostics += diagnostics.len();
+
             let mut output = String::new();
+
             for diagnostic in diagnostics {
                 if diagnostic.severity() == Some(Severity::Warning) {
                     number_of_warnings += 1;
@@ -174,15 +176,18 @@ impl LintRunner {
 
                 let mut err = String::new();
                 handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
-                // Skip large output and print only once
-                if err.lines().any(|line| line.len() >= 400) {
-                    let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
-                    err = format!("{minified_diagnostic:?}");
-                    output = err;
-                    break;
+
+                if err.lines().all(|line| line.len() < 400) {
+                    output.push_str(&err);
+                    continue;
                 }
-                output.push_str(&err);
+
+                // If the error is too long, we assume it's a minified file
+                let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
+                output = format!("{minified_diagnostic:?}");
+                break;
             }
+
             buf_writer.write_all(output.as_bytes()).unwrap();
         }
 
