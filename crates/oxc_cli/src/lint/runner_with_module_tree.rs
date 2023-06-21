@@ -288,7 +288,7 @@ fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) {
 
         let Ok(resolve_result) = resolver.resolve(resolve_path, name) else {
             eprintln!("Couldn't resolve '{name}' in '{}'.", resolve_path.display());
-            return; 
+            return;
         };
 
         let ResolveResult::Resource(Resource{ path, .. }) = resolve_result else { return; };
