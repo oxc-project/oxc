@@ -40,12 +40,20 @@ declare var console: Console;
 #[allow(clippy::struct_excessive_bools)]
 pub struct TypeCheckOptions {
     pub path: PathBuf,
+    // TODO temp, for exhibition
+    pub print_expression_mappings: bool,
+    // TODO temp, for exhibition
+    pub print_called_functions: bool,
 }
 
 #[allow(clippy::fallible_impl_from)]
 impl<'a> From<&'a ArgMatches> for TypeCheckOptions {
     fn from(matches: &'a ArgMatches) -> Self {
-        Self { path: PathBuf::from(matches.get_one::<String>("path").unwrap()) }
+        Self {
+            path: PathBuf::from(matches.get_one::<String>("path").unwrap()),
+            print_called_functions: matches.contains_id("print_called_functions"),
+            print_expression_mappings: matches.contains_id("print_expression_mappings"),
+        }
     }
 }
 
@@ -54,7 +62,13 @@ pub fn type_check_command() -> Command {
         .about(
             "NOTE: Experimental / work in progress. Check source code for type errors using Ezno",
         )
-        .arg(Arg::new("path").value_name("PATH").num_args(1..).help("File to type check"))
+        .arg(Arg::new("path").value_name("PATH").num_args(1).help("File to type check"))
+        .arg(
+            Arg::new("print_expression_mappings")
+                .required(false)
+                .help("Print types of expressions"),
+        )
+        .arg(Arg::new("print_called_functions").required(false).help("Print called functions"))
 }
 
 pub struct TypeCheckRunner {
@@ -80,23 +94,23 @@ impl TypeCheckRunner {
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
         if ret.errors.is_empty() {
-            let (diagnostics, _events, _types) =
+            let (diagnostics, _events, types, mappings, root_env) =
                 synthesize_program(&ret.program, |_: &std::path::Path| None);
 
             let duration = now.elapsed();
 
-            // if args.iter().any(|arg| arg == "--types") {
-            //     eprintln!("Types:");
-            //     for item in types {
-            //         eprintln!("\t{:?}", item);
-            //     }
-            // }
-            // if args.iter().any(|arg| arg == "--events") {
-            //     eprintln!("Events:");
-            //     for item in events {
-            //         eprintln!("\t{:?}", item);
-            //     }
-            // }
+            if self.options.print_expression_mappings {
+                let mappings = mappings.print_type_mappings(
+                    &source_text,
+                    &root_env.into_general_environment(),
+                    &types,
+                );
+                eprintln!("{mappings}");
+            }
+            if self.options.print_called_functions {
+                let called_functions = mappings.print_called_functions(&source_text);
+                eprintln!("{called_functions}");
+            }
 
             // TODO
             let number_of_diagnostics = 0;
@@ -122,7 +136,7 @@ mod type_check_output {
     use std::iter;
 
     use codespan_reporting::{
-        diagnostic::{Diagnostic, Label},
+        diagnostic::{Diagnostic, Label, Severity},
         files::SimpleFile,
         term::{
             termcolor::{ColorChoice, StandardStream},
@@ -130,12 +144,12 @@ mod type_check_output {
         },
     };
     use oxc_type_synthesis::{
-        Diagnostic as TypeCheckDiagnostic, DiagnosticsContainer, ErrorWarningInfo,
+        Diagnostic as TypeCheckDiagnostic, DiagnosticKind, DiagnosticsContainer,
     };
 
     #[allow(clippy::items_after_statements)]
     pub(super) fn print_diagnostics_container(
-        error_handler: DiagnosticsContainer,
+        diagnostic_container: DiagnosticsContainer,
         path: String,
         content: String,
     ) {
@@ -151,72 +165,59 @@ mod type_check_output {
         //     file_id_to_source_id.insert(source_id, file_id);
         // }
 
-        for item in error_handler.into_iter().rev() {
-            // TODO tidy this up:
-            let (diagnostic, info) = match item {
-                ErrorWarningInfo::Error(error) => (Diagnostic::error(), error),
-                ErrorWarningInfo::Warning(warning) => (Diagnostic::warning(), warning),
-                ErrorWarningInfo::Info(info) => (Diagnostic::note(), info),
-                ErrorWarningInfo::Data(_) => {
-                    continue;
+        let writer = StandardStream::stderr(ColorChoice::Always);
+        let mut lock = writer.lock();
+
+        for diagnostic in diagnostic_container.into_iter().rev() {
+            // Conversion from Ezno -> codespan
+            let diagnostic = match diagnostic {
+                TypeCheckDiagnostic::Global { reason, kind } => Diagnostic {
+                    severity: ezno_diagnostic_to_severity(&kind),
+                    code: None,
+                    message: reason,
+                    labels: Vec::new(),
+                    notes: Vec::default(),
+                },
+                TypeCheckDiagnostic::Position { reason, position, kind } => Diagnostic {
+                    severity: ezno_diagnostic_to_severity(&kind),
+                    code: None,
+                    message: String::default(),
+                    labels: vec![Label::primary((), position).with_message(reason)],
+                    notes: Vec::default(),
+                },
+                TypeCheckDiagnostic::PositionWithAdditionLabels {
+                    reason,
+                    position,
+                    labels,
+                    kind,
+                } => {
+                    let (labels, notes) =
+                        labels.into_iter().partition::<Vec<_>, _>(|(_, value)| value.is_some());
+
+                    Diagnostic {
+                        severity: ezno_diagnostic_to_severity(&kind),
+                        code: None,
+                        message: String::default(),
+                        labels: iter::once(Label::primary((), position).with_message(reason))
+                            .chain(labels.into_iter().map(|(message, position)| {
+                                let position = position.unwrap();
+                                Label::secondary((), position).with_message(message)
+                            }))
+                            .collect(),
+                        notes: notes.into_iter().map(|(message, _)| message).collect(),
+                    }
                 }
             };
 
-            let diagnostic = checker_diagnostic_to_code_span_diagnostic(diagnostic, info);
-
-            emit(&files, &diagnostic);
-
-            #[cfg(target_arch = "wasm")]
-            fn emit<'a, F: codespan_reporting::files::Files<'a>>(
-                files: &F,
-                diagnostic: &Diagnostic<F::FileId>,
-            ) {
-                todo!("buffer then print")
-            }
-
-            #[cfg(not(target_arch = "wasm"))]
-            fn emit<'a, F: codespan_reporting::files::Files<'a>>(
-                files: &'a F,
-                diagnostic: &Diagnostic<F::FileId>,
-            ) {
-                let writer = StandardStream::stderr(ColorChoice::Always);
-
-                // TODO lines in diagnostic could be different
-                codespan_reporting::term::emit(
-                    &mut writer.lock(),
-                    &Config::default(),
-                    files,
-                    diagnostic,
-                )
+            codespan_reporting::term::emit(&mut lock, &Config::default(), &files, &diagnostic)
                 .unwrap();
-            }
         }
-    }
 
-    fn checker_diagnostic_to_code_span_diagnostic(
-        diagnostic: Diagnostic<()>,
-        information: TypeCheckDiagnostic,
-        // source_map: &HashMap<EznoSourceId, usize>,
-    ) -> Diagnostic<()> {
-        match information {
-            TypeCheckDiagnostic::Global(message) => diagnostic.with_message(message),
-            TypeCheckDiagnostic::Position { reason: message, pos } => {
-                diagnostic.with_labels(vec![Label::primary((), pos).with_message(message)])
-            }
-            TypeCheckDiagnostic::PositionWithAdditionLabels { reason, pos, labels } => {
-                let (labels, notes) =
-                    labels.into_iter().partition::<Vec<_>, _>(|(_, value)| value.is_some());
-
-                diagnostic
-                    .with_labels(
-                        iter::once(Label::primary((), pos).with_message(reason))
-                            .chain(labels.into_iter().map(|(message, pos)| {
-                                let pos = pos.unwrap();
-                                Label::secondary((), pos).with_message(message)
-                            }))
-                            .collect(),
-                    )
-                    .with_notes(notes.into_iter().map(|(message, _)| message).collect())
+        fn ezno_diagnostic_to_severity(kind: &DiagnosticKind) -> Severity {
+            match kind {
+                DiagnosticKind::Error => Severity::Error,
+                DiagnosticKind::Warning => Severity::Warning,
+                DiagnosticKind::Info => Severity::Note,
             }
         }
     }

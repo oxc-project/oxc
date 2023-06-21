@@ -10,19 +10,45 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
 ) -> TypeId {
     match ta {
         ast::TSType::TSAnyKeyword(_) => TypeId::ANY_TYPE,
-        ast::TSType::TSBigIntKeyword(_) => todo!(),
+        ast::TSType::TSBigIntKeyword(item) => {
+            checking_data.raise_unimplemented_error(
+                "big int keyword",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
         ast::TSType::TSBooleanKeyword(_) => TypeId::BOOLEAN_TYPE,
         ast::TSType::TSNeverKeyword(_) => TypeId::NEVER_TYPE,
         ast::TSType::TSNullKeyword(_) => TypeId::NULL_TYPE,
         ast::TSType::TSNumberKeyword(_) => TypeId::NUMBER_TYPE,
         ast::TSType::TSObjectKeyword(_) => TypeId::OBJECT_TYPE,
         ast::TSType::TSStringKeyword(_) => TypeId::STRING_TYPE,
-        ast::TSType::TSSymbolKeyword(_) => todo!(),
-        ast::TSType::TSThisKeyword(_) => todo!(),
-        ast::TSType::TSUndefinedKeyword(_) => TypeId::UNDEFINED_TYPE,
-        ast::TSType::TSUnknownKeyword(_) => todo!(),
-        ast::TSType::TSVoidKeyword(_) => TypeId::UNDEFINED_TYPE,
-        ast::TSType::TSArrayType(_) => todo!(),
+        ast::TSType::TSSymbolKeyword(item) => {
+            checking_data.raise_unimplemented_error(
+                "symbol keyword",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSThisKeyword(item) => {
+            checking_data
+                .raise_unimplemented_error("this type", oxc_span_to_source_map_span(item.span));
+            TypeId::ERROR_TYPE
+        }
+        // 🔥
+        ast::TSType::TSVoidKeyword(_) | ast::TSType::TSUndefinedKeyword(_) => {
+            TypeId::UNDEFINED_TYPE
+        }
+        ast::TSType::TSUnknownKeyword(item) => {
+            checking_data
+                .raise_unimplemented_error("unknown type", oxc_span_to_source_map_span(item.span));
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSArrayType(item) => {
+            checking_data
+                .raise_unimplemented_error("array type", oxc_span_to_source_map_span(item.span));
+            TypeId::ERROR_TYPE
+        }
         ast::TSType::TSConditionalType(condition) => {
             let check_type =
                 synthesize_type_annotation(&condition.check_type, environment, checking_data);
@@ -33,11 +59,35 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
 
             checking_data.types.new_conditional_extends_type(check_type, extends, lhs, rhs)
         }
-        ast::TSType::TSConstructorType(_) => todo!(),
-        ast::TSType::TSFunctionType(_) => todo!(),
-        ast::TSType::TSImportType(_) => todo!(),
-        ast::TSType::TSIndexedAccessType(_) => todo!(),
-        ast::TSType::TSInferType(_) => todo!(),
+        ast::TSType::TSConstructorType(item) => {
+            checking_data.raise_unimplemented_error(
+                "constructor type",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSFunctionType(item) => {
+            checking_data
+                .raise_unimplemented_error("function type", oxc_span_to_source_map_span(item.span));
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSImportType(item) => {
+            checking_data
+                .raise_unimplemented_error("import type", oxc_span_to_source_map_span(item.span));
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSIndexedAccessType(item) => {
+            checking_data.raise_unimplemented_error(
+                "index access type",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSInferType(item) => {
+            checking_data
+                .raise_unimplemented_error("infer type", oxc_span_to_source_map_span(item.span));
+            TypeId::ERROR_TYPE
+        }
         ast::TSType::TSUnionType(r#union) => {
             // Borrow checker doesn't like :(
             // r#union
@@ -80,15 +130,61 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
             ast::TSLiteral::StringLiteral(string) => checking_data.types.new_constant_type(
                 ezno_checker::Constant::String(string.value.as_str().to_owned()),
             ),
-            ast::TSLiteral::BigintLiteral(_) => todo!(),
-            ast::TSLiteral::RegExpLiteral(_) => todo!(),
-            ast::TSLiteral::TemplateLiteral(_) => todo!(),
-            ast::TSLiteral::UnaryExpression(_) => todo!(),
+            ast::TSLiteral::BigintLiteral(item) => {
+                checking_data.raise_unimplemented_error(
+                    "big int literal type",
+                    oxc_span_to_source_map_span(item.span),
+                );
+                TypeId::ERROR_TYPE
+            }
+            ast::TSLiteral::RegExpLiteral(item) => {
+                checking_data.raise_unimplemented_error(
+                    "regexp literal type",
+                    oxc_span_to_source_map_span(item.span),
+                );
+                TypeId::ERROR_TYPE
+            }
+            ast::TSLiteral::TemplateLiteral(item) => {
+                checking_data.raise_unimplemented_error(
+                    "template literal type",
+                    oxc_span_to_source_map_span(item.span),
+                );
+                TypeId::ERROR_TYPE
+            }
+            ast::TSLiteral::UnaryExpression(item) => {
+                checking_data.raise_unimplemented_error(
+                    "unary expression type",
+                    oxc_span_to_source_map_span(item.span),
+                );
+                TypeId::ERROR_TYPE
+            }
         },
-        ast::TSType::TSMappedType(_) => todo!(),
-        ast::TSType::TSQualifiedName(_name) => todo!(),
-        ast::TSType::TSTemplateLiteralType(_) => todo!(),
-        ast::TSType::TSTupleType(_) => todo!(),
+        ast::TSType::TSMappedType(item) => {
+            checking_data.raise_unimplemented_error(
+                "ts mapped type",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSQualifiedName(item) => {
+            checking_data.raise_unimplemented_error(
+                "ts qualified name",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSTemplateLiteralType(item) => {
+            checking_data.raise_unimplemented_error(
+                "ts template literal type",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSTupleType(item) => {
+            checking_data
+                .raise_unimplemented_error("tuple type", oxc_span_to_source_map_span(item.span));
+            TypeId::ERROR_TYPE
+        }
         ast::TSType::TSTypeLiteral(anom_interface) => {
             let ty = checking_data.types.new_anonymous_interface_ty();
             crate::interfaces::synthesize_signatures(
@@ -99,12 +195,32 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
             );
             ty
         }
-        ast::TSType::TSTypeOperatorType(_) => todo!(),
-        ast::TSType::TSTypePredicate(_) => todo!(),
-        ast::TSType::TSTypeQuery(_) => todo!(),
+        ast::TSType::TSTypeOperatorType(item) => {
+            checking_data.raise_unimplemented_error(
+                "ts operator type",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSTypePredicate(item) => {
+            checking_data.raise_unimplemented_error(
+                "ts type predicate",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::TSTypeQuery(item) => {
+            checking_data
+                .raise_unimplemented_error("ts type query", oxc_span_to_source_map_span(item.span));
+            TypeId::ERROR_TYPE
+        }
         ast::TSType::TSTypeReference(reference) => {
             if let Some(ref _args) = reference.type_parameters {
-                todo!()
+                checking_data.raise_unimplemented_error(
+                    "reference with parameters",
+                    oxc_span_to_source_map_span(reference.span),
+                );
+                return TypeId::ERROR_TYPE;
             }
             let tn = &reference.type_name;
             match tn {
@@ -114,10 +230,28 @@ pub(crate) fn synthesize_type_annotation<T: FSResolver>(
                         oxc_span_to_source_map_span(name.span),
                         checking_data,
                     ),
-                ast::TSTypeName::QualifiedName(_) => todo!(),
+                ast::TSTypeName::QualifiedName(item) => {
+                    checking_data.raise_unimplemented_error(
+                        "qualified name",
+                        oxc_span_to_source_map_span(item.span),
+                    );
+                    TypeId::ERROR_TYPE
+                }
             }
         }
-        ast::TSType::JSDocNullableType(_) => todo!(),
-        ast::TSType::JSDocUnknownType(_) => todo!(),
+        ast::TSType::JSDocNullableType(item) => {
+            checking_data.raise_unimplemented_error(
+                "js doc nullable",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
+        ast::TSType::JSDocUnknownType(item) => {
+            checking_data.raise_unimplemented_error(
+                "js doc unknown",
+                oxc_span_to_source_map_span(item.span),
+            );
+            TypeId::ERROR_TYPE
+        }
     }
 }

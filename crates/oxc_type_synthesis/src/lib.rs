@@ -1,11 +1,11 @@
 #![allow(clippy::all, clippy::restriction, clippy::pedantic, clippy::nursery)]
 
 use ezno_checker::{
-    events::Event, CheckingData, Environment, FSResolver, Root, Scope, Span as SourceMapSpan,
-    TypeId,
+    events::Event, types::TypeStore, CheckingData, Environment, FSResolver, Root, Scope,
+    Span as SourceMapSpan, TypeCheckSettings, TypeId, TypeMappings,
 };
 pub use ezno_checker::{
-    Diagnostic, DiagnosticsContainer, ErrorWarningInfo, SourceId as EznoSourceId, Span as EznoSpan,
+    Diagnostic, DiagnosticKind, DiagnosticsContainer, SourceId as EznoSourceId, Span as EznoSpan,
 };
 use oxc_ast::ast;
 use oxc_span::Span;
@@ -20,8 +20,8 @@ mod types;
 pub fn synthesize_program<T: FSResolver>(
     program: &ast::Program,
     resolver: T,
-) -> (DiagnosticsContainer, Vec<Event>, Vec<(TypeId, ezno_checker::Type)>) {
-    let default_settings = Default::default();
+) -> (DiagnosticsContainer, Vec<Event>, TypeStore, TypeMappings, Root) {
+    let default_settings = TypeCheckSettings::default();
     let mut checking_data = CheckingData::new(default_settings, &resolver);
 
     let mut root = Root::new_with_primitive_references_and_ezno_magic();
@@ -30,11 +30,17 @@ pub fn synthesize_program<T: FSResolver>(
         Scope::Block {},
         &mut checking_data,
         |environment, checking_data| {
-            synthesize_statements(&program.body, environment, checking_data)
+            synthesize_statements(&program.body, environment, checking_data);
         },
     );
 
-    (checking_data.diagnostics_container, stuff.unwrap().0, checking_data.types.into_vec_temp())
+    (
+        checking_data.diagnostics_container,
+        stuff.expect("block will always return events").0,
+        checking_data.types,
+        checking_data.type_mappings,
+        root,
+    )
 }
 
 fn oxc_span_to_source_map_span(span: Span) -> SourceMapSpan {
@@ -55,12 +61,23 @@ fn property_key_to_type<T: FSResolver>(
         ast::PropertyKey::Identifier(ident) => checking_data
             .types
             .new_constant_type(ezno_checker::Constant::String(ident.name.as_str().to_string())),
-        ast::PropertyKey::PrivateIdentifier(_) => todo!(),
-        ast::PropertyKey::Expression(expr) => {
-            let key = expressions::synthesize_expression(expr, environment, checking_data);
+        ast::PropertyKey::PrivateIdentifier(item) => {
+            checking_data.raise_unimplemented_error(
+                "private identifier",
+                oxc_span_to_source_map_span(item.span),
+            );
 
+            TypeId::ERROR_TYPE
+        }
+        ast::PropertyKey::Expression(expr) => {
             // TODO make key into key
-            key
+            expressions::synthesize_expression(expr, environment, checking_data)
         }
     }
+}
+
+// Marker type
+pub enum PartiallyImplemented<T> {
+    Ok(T),
+    NotImplemented(&'static str, EznoSpan),
 }

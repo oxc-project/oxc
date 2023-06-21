@@ -45,14 +45,14 @@ fn main() {
         println!("Program parsed");
         // println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
 
-        let (diagnostics, events, types) =
+        let (diagnostics, events, types, ..) =
             synthesize_program(&ret.program, |_: &std::path::Path| None);
 
         let args: Vec<_> = env::args().collect();
 
         if args.iter().any(|arg| arg == "--types") {
             eprintln!("Types:");
-            for item in types {
+            for item in types.into_vec_temp() {
                 eprintln!("\t{item:?}");
             }
         }
@@ -65,7 +65,7 @@ fn main() {
 
         eprintln!("Diagnostics:");
         for diag in diagnostics.into_iter() {
-            eprintln!("\t{}", diag.get_diagnostic().unwrap().reason());
+            eprintln!("\t{}", diag.reason());
         }
     } else {
         for error in ret.errors {

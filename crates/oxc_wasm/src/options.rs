@@ -9,6 +9,7 @@ pub struct OxcRunOptions {
     format: bool,
     hir: bool,
     minify: bool,
+    type_check: bool,
 }
 
 #[wasm_bindgen]
@@ -66,6 +67,16 @@ impl OxcRunOptions {
     #[wasm_bindgen(setter)]
     pub fn set_minify(&mut self, yes: bool) {
         self.minify = yes;
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn type_check(self) -> bool {
+        self.type_check
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_type_check(&mut self, yes: bool) {
+        self.type_check = yes;
     }
 }
 
@@ -131,5 +142,17 @@ impl OxcMinifierOptions {
     #[wasm_bindgen(setter)]
     pub fn set_mangle(&mut self, yes: bool) {
         self.mangle = yes;
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Default, Clone, Copy)]
+pub struct OxcTypeCheckingOptions;
+
+#[wasm_bindgen]
+impl OxcTypeCheckingOptions {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self
     }
 }
