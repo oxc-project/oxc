@@ -220,6 +220,17 @@ impl<'a> Expression<'a> {
             _ => None,
         }
     }
+
+    pub fn get_member_expr(&self) -> Option<&MemberExpression<'a>> {
+        match self.get_inner_expression() {
+            Expression::ChainExpression(chain_expr) => match &chain_expr.expression {
+                ChainElement::CallExpression(_) => None,
+                ChainElement::MemberExpression(member_expr) => Some(member_expr),
+            },
+            Expression::MemberExpression(member_expr) => Some(member_expr),
+            _ => None,
+        }
+    }
 }
 
 /// Identifier Name
