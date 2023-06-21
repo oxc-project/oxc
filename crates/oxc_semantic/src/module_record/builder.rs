@@ -16,6 +16,32 @@ impl ModuleRecordBuilder {
             if let Statement::ModuleDeclaration(module_decl) = stmt {
                 self.visit_module_declaration(module_decl);
             }
+
+            let Statement::Declaration(exp) = stmt else { continue; };
+            let Declaration::VariableDeclaration(var_decl) = exp else { continue; };
+
+            for declaration in &var_decl.declarations {
+                let Some(init) = &declaration.init else { continue; };
+                let Expression::CallExpression(call) = &init else { continue; };
+                let Expression::Identifier(ident) = &call.callee else { continue; };
+                if ident.name == "require" {
+                    let Some(Argument::Expression(Expression::StringLiteral(module))) = call.arguments.get(0) else { continue; };
+
+                    let module_request = NameSpan::new(module.value.clone(), module.span);
+
+                    declaration.id.bound_names(&mut |identifier| {
+                        let identifier = NameSpan::new(identifier.name.clone(), identifier.span);
+
+                        self.add_import_entry(ImportEntry {
+                            module_request: module_request.clone(),
+                            import_name: ImportImportName::Name(identifier.clone()),
+                            local_name: identifier,
+                        });
+                    });
+
+                    self.add_module_request(&module_request);
+                }
+            }
         }
 
         // The `ParseModule` algorithm requires `importedBoundNames` (import entries) to be
