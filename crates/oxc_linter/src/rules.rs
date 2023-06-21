@@ -31,6 +31,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::bad_bitwise_operator,
     deepscan::bad_comparison_sequence,
     deepscan::bad_array_method_on_arguments,
+    deepscan::missing_throw,
     use_isnan,
     valid_typeof,
     typescript::isolated_declaration
