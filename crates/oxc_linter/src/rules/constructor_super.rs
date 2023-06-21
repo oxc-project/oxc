@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ConstructorSuper,
-    nursery
+    correctness
 );
 
 impl Rule for ConstructorSuper {

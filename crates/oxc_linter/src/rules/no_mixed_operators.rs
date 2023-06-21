@@ -52,7 +52,7 @@ declare_oxc_lint! {
   /// var foo = a && (b || c || d);  /*GOOD*/
   /// ```
   NoMixedOperators,
-  nursery,
+  pedantic,
 }
 
 impl Rule for NoMixedOperators {

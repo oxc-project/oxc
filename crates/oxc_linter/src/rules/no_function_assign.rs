@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// foo = bar;
     /// ```
     NoFunctionAssign,
-    nursery
+    correctness
 );
 
 impl Rule for NoFunctionAssign {

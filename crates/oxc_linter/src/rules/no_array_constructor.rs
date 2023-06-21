@@ -29,7 +29,7 @@ declare_oxc_lint!(
     /// let arr = new Array();
     /// ```
     NoArrayConstructor,
-    nursery
+    pedantic
 );
 
 impl Rule for NoArrayConstructor {

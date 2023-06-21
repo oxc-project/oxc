@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// a == b
     /// ```
     EqEqEq,
-    nursery
+    pedantic
 );
 
 fn to_strict_operator(operator: BinaryOperator) -> BinaryOperator {
