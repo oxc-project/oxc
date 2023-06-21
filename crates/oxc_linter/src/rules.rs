@@ -33,6 +33,7 @@ oxc_macros::declare_all_lint_rules! {
     deepscan::bad_array_method_on_arguments,
     deepscan::missing_throw,
     deepscan::bad_min_max_func,
+    deepscan::bad_remove_event_listener,
     use_isnan,
     valid_typeof,
     typescript::isolated_declaration

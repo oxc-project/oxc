@@ -1,0 +1,19 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: bad_remove_event_listener
+---
+  ⚠ removeEventListener() should be called with a correct listener
+   ╭─[bad_remove_event_listener.tsx:1:1]
+ 1 │ document.removeEventListener('keydown', () => foo())
+   · ────────────────────────────────────────────────────
+   ╰────
+  help: This 'removeEventListener()' call does nothing because a newly created function is passed. Consider using the exact function instance that was added at the 'addEventListener()' call
+
+  ⚠ removeEventListener() should be called with a correct listener
+   ╭─[bad_remove_event_listener.tsx:1:1]
+ 1 │ document.removeEventListener('keydown', function () {})
+   · ───────────────────────────────────────────────────────
+   ╰────
+  help: This 'removeEventListener()' call does nothing because a newly created function is passed. Consider using the exact function instance that was added at the 'addEventListener()' call
+
+
