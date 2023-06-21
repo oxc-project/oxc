@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: number_arg_out_of_range
+---
+  ⚠ Radix or precision arguments of number-related functions should not exceed the limit
+   ╭─[number_arg_out_of_range.tsx:1:1]
+ 1 │ var x = 42;var s = x.toString(1);
+   ·                    ─────────────
+   ╰────
+  help: The first argument of 'Number.prototype.toString' should be a number between 2 and 36
+
+  ⚠ Radix or precision arguments of number-related functions should not exceed the limit
+   ╭─[number_arg_out_of_range.tsx:1:1]
+ 1 │ var x = 42;var s = x.toString(43);
+   ·                    ──────────────
+   ╰────
+  help: The first argument of 'Number.prototype.toString' should be a number between 2 and 36
+
+  ⚠ Radix or precision arguments of number-related functions should not exceed the limit
+   ╭─[number_arg_out_of_range.tsx:1:1]
+ 1 │ var x = 42;var s = x.toFixed(22);
+   ·                    ─────────────
+   ╰────
+  help: The first argument of 'Number.prototype.toFixed' should be a number between 0 and 20
+
+  ⚠ Radix or precision arguments of number-related functions should not exceed the limit
+   ╭─[number_arg_out_of_range.tsx:1:1]
+ 1 │ var x = 42;var s = x['toExponential'](22);
+   ·                    ──────────────────────
+   ╰────
+  help: The first argument of 'Number.prototype.toExponential' should be a number between 0 and 20
+
+  ⚠ Radix or precision arguments of number-related functions should not exceed the limit
+   ╭─[number_arg_out_of_range.tsx:1:1]
+ 1 │ var x = 42;var s = x.toPrecision(0);
+   ·                    ────────────────
+   ╰────
+  help: The first argument of 'Number.prototype.toPrecision' should be a number between 1 and 21
+
+  ⚠ Radix or precision arguments of number-related functions should not exceed the limit
+   ╭─[number_arg_out_of_range.tsx:1:1]
+ 1 │ var x = 42;var s = x.toPrecision(100);
+   ·                    ──────────────────
+   ╰────
+  help: The first argument of 'Number.prototype.toPrecision' should be a number between 1 and 21
+
+

@@ -440,7 +440,7 @@ impl<'a> MemberExpression<'a> {
         }
     }
 
-    pub fn static_property_name(&'a self) -> Option<&'a str> {
+    pub fn static_property_name(&self) -> Option<&str> {
         match self {
             MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
                 Expression::StringLiteral(lit) => Some(&lit.value),
@@ -453,7 +453,7 @@ impl<'a> MemberExpression<'a> {
                 }
                 _ => None,
             },
-            MemberExpression::StaticMemberExpression(expr) => Some(&expr.property.name),
+            MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
             MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
