@@ -39,7 +39,7 @@ declare_oxc_lint!(
     /// var x = y | z;
     /// ```
     NoBitwise,
-    nursery
+    restriction
 );
 
 impl Rule for NoBitwise {

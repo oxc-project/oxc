@@ -60,6 +60,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let canonical_name = name.to_string().to_case(Case::Kebab);
     let category = match category.to_string().as_str() {
         "correctness" => quote! { RuleCategory::Correctness },
+        "suspicious" => quote! { RuleCategory::Suspicious },
+        "pedantic" => quote! { RuleCategory::Pedantic },
         "restriction" => quote! { RuleCategory::Restriction },
         "nursery" => quote! { RuleCategory::Nursery },
         _ => panic!("invalid rule category"),

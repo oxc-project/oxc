@@ -71,7 +71,7 @@ declare_oxc_lint!(
     /// ```
     ///
     NoEmptyPattern,
-    nursery,
+    suspicious,
 );
 
 impl Rule for NoEmptyPattern {

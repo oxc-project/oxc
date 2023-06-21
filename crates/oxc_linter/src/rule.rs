@@ -30,6 +30,10 @@ pub trait RuleMeta {
 pub enum RuleCategory {
     /// Code that is outright wrong or useless
     Correctness,
+    ///
+    Suspicious,
+    /// Pedantic
+    Pedantic,
     /// Lints which prevent the use of language and library features
     /// The restriction category should, emphatically, not be enabled as a whole.
     /// The contained lints may lint against perfectly reasonable code, may not have an alternative suggestion,
@@ -44,6 +48,8 @@ impl RuleCategory {
     pub fn from(input: &str) -> Option<Self> {
         match input {
             "correctness" => Some(Self::Correctness),
+            "suspicious" => Some(Self::Suspicious),
+            "pedantic" => Some(Self::Pedantic),
             "restriction" => Some(Self::Restriction),
             "nursery" => Some(Self::Nursery),
             _ => None,
@@ -55,6 +61,8 @@ impl fmt::Display for RuleCategory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Correctness => write!(f, "Correctness"),
+            Self::Suspicious => write!(f, "Suspicious"),
+            Self::Pedantic => write!(f, "Pedantic"),
             Self::Restriction => write!(f, "Restriction"),
             Self::Nursery => write!(f, "Nursery"),
         }

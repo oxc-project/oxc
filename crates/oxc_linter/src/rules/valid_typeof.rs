@@ -45,7 +45,7 @@ declare_oxc_lint!(
     /// typeof foo === baz
     /// ```
     ValidTypeof,
-    nursery,
+    correctness,
 );
 
 impl Rule for ValidTypeof {

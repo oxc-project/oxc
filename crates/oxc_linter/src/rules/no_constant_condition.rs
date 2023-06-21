@@ -35,7 +35,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoConstantCondition,
-    nursery
+    correctness
 );
 
 impl Rule for NoConstantCondition {
