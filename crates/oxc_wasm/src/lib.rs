@@ -32,6 +32,7 @@ pub struct Oxc {
     source_text: String,
 
     ast: JsValue,
+    ir: JsValue,
     hir: JsValue,
 
     formatted_text: String,
@@ -74,6 +75,11 @@ impl Oxc {
     #[wasm_bindgen(getter)]
     pub fn ast(&self) -> JsValue {
         self.ast.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn ir(&self) -> JsValue {
+        self.ir.clone()
     }
 
     /// Returns HIR in JSON
@@ -164,6 +170,7 @@ impl Oxc {
         self.save_diagnostics(ret.errors);
 
         self.ast = ret.program.serialize(&self.serializer)?;
+        self.ir = format!("{:#?}", ret.program.body).into();
         let program = allocator.alloc(ret.program);
 
         if run_options.syntax() && !run_options.lint() {

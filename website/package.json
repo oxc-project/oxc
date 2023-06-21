@@ -12,6 +12,7 @@
   "dependencies": {
     "@codemirror/lang-javascript": "^6.1.8",
     "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/lang-rust": "^6.0.1",
     "@codemirror/language": "^6.7.0",
     "@codemirror/lint": "^6.2.1",
     "@codemirror/state": "^6.2.1",
