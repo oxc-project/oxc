@@ -58,10 +58,8 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
     node: &'b AstNode<'a>,
     ctx: &'b LintContext<'a>,
 ) -> bool {
-    let mut current_node_id = node.id();
-    loop {
-        current_node_id = ctx.nodes().parent_id(current_node_id).unwrap();
-        let kind = ctx.nodes().kind(current_node_id);
+    for node_id in ctx.nodes().ancestors(node.id()).skip(1) {
+        let kind = ctx.nodes().kind(node_id);
 
         // `a === b === c === d === e` only produce one error, since `(a === b === c) === d === e` will produce two errors.
         // So we should treat Parenthesized Expression as a boundary.
@@ -76,6 +74,7 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
             return false;
         }
     }
+    false
 }
 
 fn is_bad_comparison(expr: &BinaryExpression) -> bool {
