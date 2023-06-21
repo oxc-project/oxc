@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
-pub use nodejs_resolver::ResolveResult;
 use nodejs_resolver::{EnforceExtension, Options, Resolver as NodeJSResolver};
+pub use nodejs_resolver::{ResolveResult, Resource};
 use oxc_span::VALID_EXTENSIONS;
 
 #[derive(Debug)]

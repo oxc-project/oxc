@@ -8,7 +8,6 @@ use std::{
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use miette::NamedSource;
-use nodejs_resolver::Resource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -23,7 +22,7 @@ use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 
 use super::{
-    resolver::{ResolveResult, Resolver},
+    resolver::{ResolveResult, Resolver, Resource},
     AllowWarnDeny, LintOptions,
 };
 use crate::CliRunResult;
