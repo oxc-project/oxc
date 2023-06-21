@@ -8,7 +8,7 @@ alias c := coverage
 
 # Initialize the project by installing all the necessary tools
 init:
-  cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
+  cargo install cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov
 
 # We are ready, let's run the same CI commands
 ready:
