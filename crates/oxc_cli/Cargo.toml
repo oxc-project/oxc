@@ -28,12 +28,13 @@ oxc_span           = { workspace = true }
 # TODO temp, for type check output, replace with Miette
 codespan-reporting = "0.11.1"
 
-clap            = { workspace = true }
-dashmap         = { workspace = true }
-rayon           = { workspace = true }
-miette          = { workspace = true, features = ["fancy-no-backtrace"] }
-rustc-hash      = { workspace = true }
-num_cpus        = { workspace = true }
-ignore          = { workspace = true, features = ["simd-accel"] }
-nodejs-resolver = { workspace = true }
+clap              = { workspace = true }
+crossbeam-channel = { workspace = true }
+dashmap           = { workspace = true }
+rayon             = { workspace = true }
+miette            = { workspace = true, features = ["fancy-no-backtrace"] }
+rustc-hash        = { workspace = true }
+num_cpus          = { workspace = true }
+ignore            = { workspace = true, features = ["simd-accel"] }
+nodejs-resolver   = { workspace = true }
 # git2 = { version = "0.16.1", default_features = false }

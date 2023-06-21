@@ -1242,6 +1242,7 @@ version = "0.0.0"
 dependencies = [
  "clap",
  "codespan-reporting",
+ "crossbeam-channel",
  "dashmap",
  "ignore",
  "jemallocator",

@@ -3,12 +3,10 @@ use std::{
     io::{BufWriter, Write},
     path::{Path, PathBuf},
     rc::Rc,
-    sync::{
-        mpsc::{self, Sender},
-        Arc, OnceLock,
-    },
+    sync::{Arc, OnceLock},
 };
 
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
@@ -104,6 +102,7 @@ impl LintRunner {
         let now = std::time::Instant::now();
 
         let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
+        let (tx_error, rx_error) = unbounded();
 
         RESOLVER.set(Resolver::default()).unwrap();
 
@@ -148,10 +147,7 @@ impl LintRunner {
         drop(tx_error);
     }
 
-    fn process_diagnostics(
-        &self,
-        rx_error: &mpsc::Receiver<(PathBuf, Vec<Error>)>,
-    ) -> (usize, usize) {
+    fn process_diagnostics(&self, rx_error: &Receiver<(PathBuf, Vec<Error>)>) -> (usize, usize) {
         let mut number_of_warnings = 0;
         let mut number_of_diagnostics = 0;
         let mut buf_writer = BufWriter::new(std::io::stdout());
