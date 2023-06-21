@@ -9,6 +9,7 @@ import {
   RangeSet,
 } from "@codemirror/state";
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
+import { rust, rustLanguage } from "@codemirror/lang-rust";
 import { json, jsonLanguage } from "@codemirror/lang-json";
 import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
@@ -58,7 +59,7 @@ class Playground {
 
   editor;
   viewer;
-  currentView = "ast"; // "ast" | "hir" | "format" | "minify"
+  currentView = "ast"; // "ast" | "hir" | "format" | "minify" | "ir"
   languageConf;
   urlParams;
 
@@ -145,6 +146,10 @@ class Playground {
               if (currentLanguage == javascriptLanguage) return null;
               newLanguage = javascript();
               break;
+            case "rust":
+              if (currentLanguage == rustLanguage) return null;
+              newLanguage = rust();
+              break;
           }
           return {
             effects: this.languageConf.reconfigure(newLanguage),
@@ -174,6 +179,8 @@ class Playground {
 
   currentLanguage() {
     switch (this.currentView) {
+      case "ir":
+        return "rust";
       case "ast":
       case "hir":
         return "json";
@@ -202,6 +209,7 @@ class Playground {
     this.currentView = view;
 
     document.getElementById("mangle").style.visibility = "hidden";
+    document.getElementById("ir-copy").style.visibility = "hidden";
     this.runOptions.format = false;
     this.runOptions.hir = false;
     this.runOptions.minify = false;
@@ -216,6 +224,12 @@ class Playground {
         this.runOptions.hir = true;
         this.run();
         text = JSON.stringify(this.oxc.hir, null, 2);
+        break;
+      case "ir":
+        document.getElementById("ir-copy").style.visibility = "visible";
+        this.runOptions.ir = true;
+        this.run();
+        text = this.oxc.ir;
         break;
       case "format":
         this.runOptions.format = true;
@@ -427,8 +441,16 @@ async function main() {
     playground.updateView("hir");
   };
 
+  document.getElementById("ir").onclick = () => {
+    playground.updateView("ir");
+  };
+
+  document.getElementById("ir-copy").onclick = () => {
+    navigator.clipboard.writeText(playground.oxc.ir);
+  };
+
   // document.getElementById("format").onclick = () => {
-    // playground.updateView("format");
+  // playground.updateView("format");
   // };
 
   document.getElementById("minify").onclick = function () {
