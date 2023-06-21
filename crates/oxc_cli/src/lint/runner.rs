@@ -8,16 +8,18 @@ use std::{
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use miette::NamedSource;
+use nodejs_resolver::Resource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
     Error, GraphicalReportHandler, Severity,
 };
-use oxc_linter::{Fixer, Linter, RuleCategory, RuleEnum, RULES};
-use oxc_parser::Parser;
+use oxc_linter::{FixResult, Fixer, Linter, RuleCategory, RuleEnum, RULES};
+use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, VALID_EXTENSIONS};
+use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 
 use super::{
@@ -26,10 +28,15 @@ use super::{
 };
 use crate::CliRunResult;
 
+#[derive(Clone)]
+struct LinterRuntimeData {
+    linter: Arc<Linter>,
+    visited: Arc<DashSet<PathBuf>>,
+    tx_error: Sender<(PathBuf, Vec<Error>)>,
+}
+
 pub struct LintRunner {
     options: LintOptions,
-
-    linter: Arc<Linter>,
 }
 use dashmap::DashSet;
 
@@ -40,8 +47,7 @@ pub struct MinifiedFileError(pub PathBuf);
 
 impl LintRunner {
     pub fn new(options: LintOptions) -> Self {
-        let linter = Linter::from_rules(Self::derive_rules(&options)).with_fix(options.fix);
-        Self { options, linter: Arc::new(linter) }
+        Self { options }
     }
 
     pub fn print_rules() {
@@ -101,19 +107,30 @@ impl LintRunner {
     pub fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
 
-        let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
+        let linter =
+            Linter::from_rules(Self::derive_rules(&self.options)).with_fix(self.options.fix);
+        let linter = Arc::new(linter);
+
         let (tx_error, rx_error) = unbounded();
 
         RESOLVER.set(Resolver::default()).unwrap();
 
         let visited = Arc::new(DashSet::new());
 
-        self.process_paths(tx_error, &visited);
+        process_paths(
+            &self.options.paths,
+            LinterRuntimeData {
+                linter: Arc::clone(&linter),
+                visited: Arc::clone(&visited),
+                tx_error,
+            },
+        );
+
         let (number_of_warnings, number_of_diagnostics) = self.process_diagnostics(&rx_error);
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
-            number_of_rules: self.linter.number_of_rules(),
+            number_of_rules: linter.number_of_rules(),
             number_of_files: visited.len(),
             number_of_diagnostics,
             number_of_warnings,
@@ -122,29 +139,6 @@ impl LintRunner {
                 .max_warnings
                 .map_or(false, |max_warnings| number_of_warnings > max_warnings),
         }
-    }
-
-    fn process_paths(
-        &self,
-        tx_error: Sender<(PathBuf, Vec<Error>)>,
-        visited: &Arc<DashSet<PathBuf>>,
-    ) {
-        for path in &self.options.paths {
-            let path = path.canonicalize().unwrap();
-            let linter = Arc::clone(&self.linter);
-            let tx_error = tx_error.clone();
-            let visited = Arc::clone(visited);
-
-            rayon::spawn(move || {
-                if path.is_file() {
-                    run_for_file(&path, &linter, &tx_error, &visited);
-                } else if path.is_dir() {
-                    run_for_dir(&path, &linter, &tx_error, &visited);
-                }
-            });
-        }
-
-        drop(tx_error);
     }
 
     fn process_diagnostics(&self, rx_error: &Receiver<(PathBuf, Vec<Error>)>) -> (usize, usize) {
@@ -196,6 +190,18 @@ impl LintRunner {
     }
 }
 
+fn process_paths(paths: &[PathBuf], runtime_data: LinterRuntimeData) {
+    paths.par_iter().for_each(move |path| {
+        let path = path.canonicalize().unwrap();
+
+        if path.is_file() {
+            run_for_file(&path, &runtime_data);
+        } else if path.is_dir() {
+            run_for_dir(&path, &runtime_data);
+        }
+    });
+}
+
 fn wrap_diagnostics(
     path: &Path,
     source_text: &str,
@@ -209,35 +215,26 @@ fn wrap_diagnostics(
     (path.to_path_buf(), diagnostics)
 }
 
-fn run_for_dir(
-    path: &Path,
-    linter: &Arc<Linter>,
-    tx_error: &Sender<(PathBuf, Vec<Error>)>,
-    visited: &Arc<DashSet<PathBuf>>,
-) {
-    for entry in fs::read_dir(path).unwrap() {
-        let path = entry.unwrap().path();
-
-        if visited.contains(&path) {
-            continue;
-        }
-
-        if path.is_file() {
-            run_for_file(&path, linter, tx_error, visited);
-        } else if path.is_dir() {
-            run_for_dir(&path, linter, tx_error, visited);
-        }
-    }
+fn run_for_dir(path: &Path, runtime_data: &LinterRuntimeData) {
+    fs::read_dir(path)
+        .expect("Can't read directory")
+        .par_bridge()
+        .map(|entry| entry.expect("Can't read directory entry").path())
+        .filter(|path| !runtime_data.visited.contains(path))
+        .for_each(|path| {
+            if path.is_file() {
+                run_for_file(&path, runtime_data);
+            } else if path.is_dir() {
+                run_for_dir(&path, runtime_data);
+            }
+        });
 }
 
 static RESOLVER: OnceLock<Resolver> = OnceLock::new();
 
-fn run_for_file(
-    path: &Path,
-    linter: &Arc<Linter>,
-    tx_error: &Sender<(PathBuf, Vec<Error>)>,
-    visited: &Arc<DashSet<PathBuf>>,
-) {
+fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) {
+    let LinterRuntimeData { linter, visited, tx_error } = &runtime_data;
+
     if visited.contains(path) {
         return;
     }
@@ -253,52 +250,60 @@ fn run_for_file(
 
     let allocator = Allocator::default();
 
-    let parser_return = Parser::new(&allocator, &source, source_type).parse();
+    let (program, trivias) = {
+        let ParserReturn { program, errors, trivias, .. } =
+            Parser::new(&allocator, &source, source_type).parse();
 
-    if !parser_return.errors.is_empty() {
-        tx_error.send(wrap_diagnostics(path, &source, parser_return.errors)).unwrap();
+        if !errors.is_empty() {
+            tx_error.send(wrap_diagnostics(path, &source, errors)).unwrap();
+            return;
+        };
+
+        (allocator.alloc(program), trivias)
     };
 
-    let program = allocator.alloc(parser_return.program);
+    let semantic = {
+        let SemanticBuilderReturn { errors, semantic } = SemanticBuilder::new(&source, source_type)
+            .with_trivias(&trivias)
+            .with_check_syntax_error(true)
+            .with_module_record_builder(true)
+            .build(program);
 
-    let SemanticBuilderReturn { errors, semantic } = SemanticBuilder::new(&source, source_type)
-        .with_trivias(&parser_return.trivias)
-        .with_check_syntax_error(true)
-        .with_module_record_builder(true)
-        .build(program);
+        if !errors.is_empty() {
+            tx_error.send(wrap_diagnostics(path, &source, errors)).unwrap();
+            return;
+        };
 
-    if !errors.is_empty() {
-        tx_error.send(wrap_diagnostics(path, &source, errors)).unwrap();
+        semantic
     };
 
     let resolver = RESOLVER.get().unwrap();
     let resolve_path = path.parent().expect("File path always has a parent");
 
-    for name in semantic.module_record().module_requests.keys() {
+    let imported_modules = semantic.module_record().module_requests.keys();
+
+    imported_modules.par_bridge().for_each(|name| {
         if !name.starts_with('.') {
-            continue;
+            return;
         }
 
         let Ok(resolve_result) = resolver.resolve(resolve_path, name) else {
             eprintln!("Couldn't resolve '{name}' in '{}'.", resolve_path.display());
-            continue;
+            return; 
         };
 
-        let ResolveResult::Resource(resource) = resolve_result else { continue; };
-        let path = resource.path;
+        let ResolveResult::Resource(Resource{ path, .. }) = resolve_result else { return; };
 
-        if visited.contains(&path) {
-            continue;
+        if !path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap())) {
+            return;
         }
 
-        let linter = Arc::clone(linter);
-        let tx_error = tx_error.clone();
-        let visited = Arc::clone(visited);
+        if visited.contains(&path) {
+            return;
+        }
 
-        rayon::spawn(move || {
-            run_for_file(&path, &linter, &tx_error, &visited);
-        });
-    }
+        run_for_file(&path, runtime_data);
+    });
 
     let result = linter.run(&Rc::new(semantic));
 
@@ -306,15 +311,15 @@ fn run_for_file(
         return;
     }
 
-    let diagnostic = if linter.has_fix() {
-        let fix_result = Fixer::new(&source, result).fix();
-        fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
-        let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
-        wrap_diagnostics(path, &source, errors)
+    let messages = if linter.has_fix() {
+        let FixResult { messages, fixed_code, .. } = Fixer::new(&source, result).fix();
+        fs::write(path, fixed_code.as_bytes()).unwrap();
+        messages
     } else {
-        let errors = result.into_iter().map(|diagnostic| diagnostic.error).collect();
-        wrap_diagnostics(path, &source, errors)
+        result
     };
 
+    let errors = messages.into_iter().map(|m| m.error).collect();
+    let diagnostic = wrap_diagnostics(path, &source, errors);
     tx_error.send(diagnostic).unwrap();
 }

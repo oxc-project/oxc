@@ -14,7 +14,7 @@ mod rules;
 
 use std::{fs, io::Write, rc::Rc};
 
-pub use fixer::{Fixer, Message};
+pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 use rustc_hash::FxHashMap;
