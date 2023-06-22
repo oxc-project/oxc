@@ -239,7 +239,6 @@ fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) {
     }
 
     let Ok(source_type) = SourceType::from_path(path) else {
-        // eprintln!("File {} is not supported, skipping.", path.display());
         return;
     };
 
