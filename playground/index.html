@@ -24,7 +24,7 @@
       #viewer { flex: 1; overflow-y: auto; }
       #mangle { display: inline-flex; align-items: center }
     </style>
-    <script type="module" crossorigin src="https://boshen.github.io/oxc/assets/playground-c6d667f4.js"></script>
+    <script type="module" crossorigin src="https://boshen.github.io/oxc/assets/playground-91ae00ba.js"></script>
     <link rel="modulepreload" crossorigin href="https://boshen.github.io/oxc/assets/modulepreload-polyfill-3cfb730f.js">
   </head>
   <body>
@@ -49,8 +49,10 @@
           <div>
             <button type="button" id="ast">AST</button>
             <button type="button" id="hir">HIR</button>
+            <button type="button" id="ir">IR</button>
             <!-- The formatter is WIP <button type="button" id="format">Format</button> -->
             <button type="button" id="minify">Minify</button>
+            <button type="button" id="ir-copy">Copy IR to clipboard</button>
             <label id="mangle">Mangle<input id="mangle-checkbox" type="checkbox"></label>
           </div>
           <span id="duration"></span>
