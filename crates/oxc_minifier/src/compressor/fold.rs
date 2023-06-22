@@ -390,6 +390,7 @@ impl<'a> Compressor<'a> {
                     unary_expr.span,
                     ident.name.clone(),
                     ident.reference_id.clone().into_inner(),
+                    ident.reference_flag,
                 );
                 return Some(self.hir.identifier_reference_expression(ident));
             }
@@ -405,7 +406,6 @@ impl<'a> Compressor<'a> {
     fn try_reduce_void(&mut self, unary_expr: &UnaryExpression<'a>) -> Option<Expression<'a>> {
         let can_replace = match &unary_expr.argument {
             Expression::NumberLiteral(number_literal) => number_literal.value != 0_f64,
-            Expression::Identifier(_) => true,
             _ => !unary_expr.may_have_side_effects(),
         };
 

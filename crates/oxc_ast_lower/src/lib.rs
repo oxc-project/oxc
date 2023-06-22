@@ -1091,7 +1091,7 @@ impl<'a> AstLower<'a> {
         reference_flag: ReferenceFlag,
     ) -> hir::IdentifierReference {
         let reference_id = self.enter_identifier_reference(ident.span, &ident.name, reference_flag);
-        self.hir.identifier_reference(ident.span, ident.name.clone(), reference_id)
+        self.hir.identifier_reference(ident.span, ident.name.clone(), reference_id, reference_flag)
     }
 
     fn lower_private_identifier(

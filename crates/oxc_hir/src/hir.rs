@@ -7,7 +7,7 @@ use std::{
 use bitflags::bitflags;
 use num_bigint::BigUint;
 use oxc_allocator::{Box, Vec};
-use oxc_semantic::{ReferenceId, SymbolId};
+use oxc_semantic::{ReferenceFlag, ReferenceId, SymbolId};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     operator::{
@@ -408,6 +408,8 @@ pub struct IdentifierReference {
     pub name: Atom,
     #[cfg_attr(feature = "serde", serde(skip))]
     pub reference_id: Cell<ReferenceId>,
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub reference_flag: ReferenceFlag,
 }
 
 impl Hash for IdentifierReference {
