@@ -6,6 +6,7 @@ use std::{
 #[derive(Debug)]
 pub enum CliRunResult {
     None,
+    IOError(crate::lint::Error),
     PathNotFound {
         paths: Vec<PathBuf>,
     },
@@ -29,6 +30,10 @@ impl Termination for CliRunResult {
             Self::None => ExitCode::from(0),
             Self::PathNotFound { paths } => {
                 println!("Path {paths:?} does not exist.");
+                ExitCode::from(1)
+            }
+            Self::IOError(e) => {
+                println!("IO Error: {e}");
                 ExitCode::from(1)
             }
             Self::LintResult {

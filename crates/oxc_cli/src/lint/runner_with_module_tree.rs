@@ -1,6 +1,7 @@
 use std::{
+    ffi::OsStr,
     fs,
-    io::{BufWriter, Write},
+    io::{self, BufWriter, Write},
     path::{Path, PathBuf},
     rc::Rc,
     sync::{Arc, OnceLock},
@@ -22,6 +23,7 @@ use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 
 use super::{
+    error::{ErrorWithPath, Result},
     resolver::{ResolveResult, Resolver, Resource},
     AllowWarnDeny, LintOptions,
 };
@@ -100,9 +102,6 @@ impl LintRunnerWithModuleTree {
         rules
     }
 
-    /// # Panics
-    ///
-    /// * When `mpsc::channel` fails to send.
     pub fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
 
@@ -110,13 +109,19 @@ impl LintRunnerWithModuleTree {
             Linter::from_rules(Self::derive_rules(&self.options)).with_fix(self.options.fix);
         let linter = Arc::new(linter);
 
+        // Unless other panic happens, calling `Sender::send` can't fail, because we hold the
+        // receiver until all senders are dropped. This allows us to safely unwrap all calls to send.
         let (tx_error, rx_error) = unbounded();
 
-        RESOLVER.set(Resolver::default()).unwrap();
+        // we can ignore the result because nothing bad happens if the resolver is already set
+        // TODO: make sure this is still true once we allow options to be set
+        // during runtime (config file, args, etc.)
+        let _ = RESOLVER.set(Resolver::default());
 
         let visited = Arc::new(DashSet::new());
 
-        process_paths(
+        // TODO: try to process as many files as possible even if some of them fail
+        let result = process_paths(
             &self.options.paths,
             LinterRuntimeData {
                 linter: Arc::clone(&linter),
@@ -126,6 +131,10 @@ impl LintRunnerWithModuleTree {
         );
 
         let (number_of_warnings, number_of_diagnostics) = self.process_diagnostics(&rx_error);
+
+        if let Err(err) = result {
+            return CliRunResult::IOError(err);
+        }
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
@@ -168,37 +177,44 @@ impl LintRunnerWithModuleTree {
                 }
 
                 let mut err = String::new();
-                handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
+                handler
+                    .render_report(&mut err, diagnostic.as_ref())
+                    .expect("Writing to a string can't fail");
 
                 if err.lines().all(|line| line.len() < 400) {
                     output.push_str(&err);
                     continue;
                 }
 
-                // If the error is too long, we assume it's a minified file
                 let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
                 output = format!("{minified_diagnostic:?}");
+                // If the error is too long, we assume it's a minified file and print it as only error
                 break;
             }
 
-            buf_writer.write_all(output.as_bytes()).unwrap();
+            // write operations on stdout can't fail according to RFC 1014
+            // https://rust-lang.github.io/rfcs/1014-stdout-existential-crisis.html
+            buf_writer.write_all(output.as_bytes()).expect("Writing to stdout can't fail");
         }
 
-        buf_writer.flush().unwrap();
+        // see comment above
+        buf_writer.flush().expect("Flushing stdout can't fail");
         (number_of_warnings, number_of_diagnostics)
     }
 }
 
-fn process_paths(paths: &[PathBuf], runtime_data: LinterRuntimeData) {
-    paths.par_iter().for_each(move |path| {
-        let path = path.canonicalize().unwrap();
+fn process_paths(paths: &[PathBuf], runtime_data: LinterRuntimeData) -> Result<()> {
+    paths.par_iter().try_for_each(move |path| {
+        let path = path.canonicalize().with_path(path)?;
 
         if path.is_file() {
-            run_for_file(&path, &runtime_data);
+            run_for_file(&path, &runtime_data)
         } else if path.is_dir() {
-            run_for_dir(&path, &runtime_data);
+            run_for_dir(&path, &runtime_data)
+        } else {
+            Ok(())
         }
-    });
+    })
 }
 
 fn wrap_diagnostics(
@@ -207,44 +223,48 @@ fn wrap_diagnostics(
     diagnostics: Vec<Error>,
 ) -> (PathBuf, Vec<Error>) {
     let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
+
     let diagnostics = diagnostics
         .into_iter()
         .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
         .collect();
+
     (path.to_path_buf(), diagnostics)
 }
 
-fn run_for_dir(path: &Path, runtime_data: &LinterRuntimeData) {
-    fs::read_dir(path)
-        .expect("Can't read directory")
-        .par_bridge()
-        .map(|entry| entry.expect("Can't read directory entry").path())
-        .filter(|path| !runtime_data.visited.contains(path))
-        .for_each(|path| {
-            if path.is_file() {
-                run_for_file(&path, runtime_data);
-            } else if path.is_dir() {
-                run_for_dir(&path, runtime_data);
+fn run_for_dir(path: &Path, runtime_data: &LinterRuntimeData) -> Result<()> {
+    fs::read_dir(path).with_path(path)?.par_bridge().try_for_each(|entry| {
+        let path = entry.with_path(path)?.path();
+
+        if path.is_file() {
+            if !runtime_data.visited.contains(&path) {
+                run_for_file(&path, runtime_data)?;
             }
-        });
+        } else if path.is_dir() {
+            run_for_dir(&path, runtime_data)?;
+        }
+
+        Ok(())
+    })
 }
 
 static RESOLVER: OnceLock<Resolver> = OnceLock::new();
 
-fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) {
+fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) -> Result<()> {
     let LinterRuntimeData { linter, visited, tx_error } = &runtime_data;
 
     if visited.contains(path) {
-        return;
+        return Ok(());
     }
-
-    let Ok(source_type) = SourceType::from_path(path) else {
-        return;
-    };
 
     visited.insert(path.to_path_buf());
 
-    let source = fs::read_to_string(path).unwrap_or_else(|_| panic!("{path:?} not found"));
+    let Ok(source_type) = SourceType::from_path(path) else {
+        // skip unsupported file types (e.g. .css or .json)
+        return Ok(());
+    };
+
+    let source = fs::read_to_string(path).with_path(path)?;
 
     let allocator = Allocator::default();
 
@@ -254,7 +274,7 @@ fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) {
 
         if !errors.is_empty() {
             tx_error.send(wrap_diagnostics(path, &source, errors)).unwrap();
-            return;
+            return Ok(());
         };
 
         (allocator.alloc(program), trivias)
@@ -269,49 +289,52 @@ fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) {
 
         if !errors.is_empty() {
             tx_error.send(wrap_diagnostics(path, &source, errors)).unwrap();
-            return;
+            return Ok(());
         };
 
         semantic
     };
 
+    // this is ok to unwrap because we know that the resolver is initialized, otherwise this function wouldn't be called
     let resolver = RESOLVER.get().unwrap();
-    let resolve_path = path.parent().expect("File path always has a parent");
+
+    let resolve_path = path.parent().expect("Absolute file path always has a parent");
 
     let imported_modules = semantic.module_record().module_requests.keys();
 
-    imported_modules.par_bridge().for_each(|name| {
-        if !name.starts_with('.') {
-            return;
-        }
-
-        let Ok(resolve_result) = resolver.resolve(resolve_path, name) else {
-            eprintln!("Couldn't resolve '{name}' in '{}'.", resolve_path.display());
-            return;
-        };
-
-        let ResolveResult::Resource(Resource{ path, .. }) = resolve_result else { return; };
-
-        if !path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap())) {
-            return;
-        }
-
-        if visited.contains(&path) {
-            return;
-        }
-
-        run_for_file(&path, runtime_data);
-    });
+    imported_modules
+        .par_bridge()
+        .filter(|name| name.starts_with('.'))
+        .filter_map(|name| {
+            resolver.resolve(resolve_path, name).map_or_else(
+                |_| {
+                    eprintln!("Couldn't resolve '{name}' in '{}'.", resolve_path.display());
+                    None
+                },
+                Some,
+            )
+        })
+        .filter_map(|resolved| match resolved {
+            ResolveResult::Resource(Resource { path, .. }) => Some(path),
+            ResolveResult::Ignored => None,
+        })
+        .filter(|path| {
+            path.extension()
+                .and_then(OsStr::to_str)
+                .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext))
+        })
+        .filter(|path| !visited.contains(path))
+        .try_for_each(|path| run_for_file(&path, runtime_data))?;
 
     let result = linter.run(&Rc::new(semantic));
 
     if result.is_empty() {
-        return;
+        return Ok(());
     }
 
     let messages = if linter.has_fix() {
         let FixResult { messages, fixed_code, .. } = Fixer::new(&source, result).fix();
-        fs::write(path, fixed_code.as_bytes()).unwrap();
+        fs::write(path, fixed_code.as_bytes()).with_path(path)?;
         messages
     } else {
         result
@@ -320,4 +343,6 @@ fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) {
     let errors = messages.into_iter().map(|m| m.error).collect();
     let diagnostic = wrap_diagnostics(path, &source, errors);
     tx_error.send(diagnostic).unwrap();
+
+    Ok(())
 }
