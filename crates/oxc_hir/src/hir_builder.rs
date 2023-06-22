@@ -7,7 +7,7 @@
 
 use num_bigint::BigUint;
 use oxc_allocator::{Allocator, Box, String, Vec};
-use oxc_semantic::{ReferenceId, SymbolId};
+use oxc_semantic::{ReferenceFlag, ReferenceId, SymbolId};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     operator::{
@@ -181,8 +181,9 @@ impl<'a> HirBuilder<'a> {
         span: Span,
         name: Atom,
         reference_id: ReferenceId,
+        reference_flag: ReferenceFlag,
     ) -> IdentifierReference {
-        IdentifierReference { span, name, reference_id: reference_id.into() }
+        IdentifierReference { span, name, reference_id: reference_id.into(), reference_flag }
     }
 
     pub fn binding_identifier(

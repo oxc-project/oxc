@@ -175,3 +175,11 @@ fn test_unary_ops_string_compare() {
     test("a = ~1", "a=-2");
     test("a = ~101", "a=-102");
 }
+
+#[test]
+fn test_fold_void() {
+    test_same("void 0");
+    test("void 1", "void 0");
+    test("void x", "void 0");
+    test_same("void x()");
+}

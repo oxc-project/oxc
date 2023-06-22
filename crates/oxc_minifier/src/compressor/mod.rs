@@ -272,10 +272,11 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     }
 
     fn visit_return_statement(&mut self, stmt: &'b mut ReturnStatement<'a>) {
-        self.compress_return_statement(stmt);
         if let Some(arg) = &mut stmt.argument {
             self.visit_expression(arg);
         }
+        // We may fold `void 1` to `void 0`, so compress it after visiting
+        self.compress_return_statement(stmt);
     }
 
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {

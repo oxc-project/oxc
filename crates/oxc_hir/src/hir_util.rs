@@ -1,4 +1,5 @@
 use num_bigint::BigUint;
+use oxc_semantic::ReferenceFlag;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 use crate::hir::{
@@ -110,9 +111,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
             | Self::NullLiteral(_)
             | Self::RegExpLiteral(_)
             | Self::FunctionExpression(_) => false,
-            Self::Identifier(ident) => {
-                !matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
-            }
+            Self::Identifier(ident) => ident.reference_flag == ReferenceFlag::Write,
             Self::UnaryExpression(unary_expr) => {
                 unary_expr.check_for_state_change(check_for_new_objects)
             }
