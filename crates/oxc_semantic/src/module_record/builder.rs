@@ -17,6 +17,8 @@ impl ModuleRecordBuilder {
                 self.visit_module_declaration(module_decl);
             }
 
+            // try to find require calls by searching all top-level variable declarations
+            // and add them to the module record
             let Statement::Declaration(exp) = stmt else { continue; };
             let Declaration::VariableDeclaration(var_decl) = exp else { continue; };
 
