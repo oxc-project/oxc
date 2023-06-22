@@ -53,4 +53,8 @@ impl ScopeFlags {
     pub fn is_class(&self) -> bool {
         self.intersects(Self::Var)
     }
+
+    pub fn is_set_accessor(&self) -> bool {
+        self.contains(Self::SetAccessor)
+    }
 }

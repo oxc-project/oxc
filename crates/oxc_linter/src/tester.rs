@@ -73,7 +73,9 @@ impl Tester {
         let allocator = Allocator::default();
         let path = PathBuf::from(name).with_extension("tsx");
         let source_type = SourceType::from_path(&path).expect("incorrect {path:?}");
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let ret = Parser::new(&allocator, source_text, source_type)
+            .allow_return_outside_function(true)
+            .parse();
         assert!(ret.errors.is_empty(), "{:?}", &ret.errors);
         let program = allocator.alloc(ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
