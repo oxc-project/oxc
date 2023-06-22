@@ -52,7 +52,7 @@ impl LintRunnerWithModuleTree {
     }
 
     pub fn print_rules() {
-        let mut stdout = BufWriter::new(std::io::stdout());
+        let mut stdout = BufWriter::new(io::stdout());
         Linter::print_rules(&mut stdout);
     }
 
@@ -152,7 +152,7 @@ impl LintRunnerWithModuleTree {
     fn process_diagnostics(&self, rx_error: &Receiver<(PathBuf, Vec<Error>)>) -> (usize, usize) {
         let mut number_of_warnings = 0;
         let mut number_of_diagnostics = 0;
-        let mut buf_writer = BufWriter::new(std::io::stdout());
+        let mut buf_writer = BufWriter::new(io::stdout());
         let handler = GraphicalReportHandler::new();
 
         for (path, diagnostics) in rx_error.iter() {
@@ -186,9 +186,8 @@ impl LintRunnerWithModuleTree {
                     continue;
                 }
 
-                let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
-                output = format!("{minified_diagnostic:?}");
                 // If the error is too long, we assume it's a minified file and print it as only error
+                output = format!("{:?}", Error::new(MinifiedFileError(path.clone())));
                 break;
             }
 
