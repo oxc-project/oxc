@@ -336,17 +336,32 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
             }
         }
         Expression::LogicalExpression(logical_expr) => {
-            let predict = |expr: &&Expression| get_boolean_value(expr) == Some(true);
             match logical_expr.operator {
                 // true && true -> true
                 // true && false -> false
+                // a && true -> None
                 LogicalOperator::And => {
-                    Some([&logical_expr.left, &logical_expr.right].iter().all(predict))
+                    let left = get_boolean_value(&logical_expr.left);
+                    let right = get_boolean_value(&logical_expr.right);
+
+                    match (left, right) {
+                        (Some(true), Some(true)) => Some(true),
+                        (Some(false), _) | (_, Some(false)) => Some(false),
+                        (None, _) | (_, None) => None,
+                    }
                 }
                 // true || false -> true
                 // false || false -> false
+                // a || b -> None
                 LogicalOperator::Or => {
-                    Some([&logical_expr.left, &logical_expr.right].iter().any(predict))
+                    let left = get_boolean_value(&logical_expr.left);
+                    let right = get_boolean_value(&logical_expr.right);
+
+                    match (left, right) {
+                        (Some(true), _) | (_, Some(true)) => Some(true),
+                        (Some(false), Some(false)) => Some(false),
+                        (None, _) | (_, None) => None,
+                    }
                 }
                 LogicalOperator::Coalesce => None,
             }
