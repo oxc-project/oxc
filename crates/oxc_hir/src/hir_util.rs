@@ -385,7 +385,7 @@ fn get_string_value(expr: &Expression) -> Option<String> {
         Expression::StringLiteral(string_literal) => Some(string_literal.value.to_string()),
         Expression::TemplateLiteral(template_literal) => {
             // TODO: I don't know how to iterate children of TemplateLiteral in order,so only checkout string like `hi`.
-            // Closure-compiler do more: [case TEMPLATELIT:](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L241-L256).
+            // Closure-compiler do more: [case TEMPLATELIT](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L241-L256).
             if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
                 quasi.value.cooked.as_ref().map(|cooked| {cooked.to_string()})
             } else {
@@ -408,7 +408,7 @@ fn get_string_value(expr: &Expression) -> Option<String> {
             match unary_expr.operator {
                 UnaryOperator::Void => Some(String::from("undefined")),
                 UnaryOperator::LogicalNot => {
-                    // reversed.
+                    // need reversed.
                     get_boolean_value(&unary_expr.argument).map(|boolean| (!boolean).to_string())
                 }
                 _ => None,
