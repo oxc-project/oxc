@@ -5,7 +5,7 @@ Original   -> Minified   -> Gzip       Brotli
 
 287.63 kB  -> 93.07 kB   -> 32.33 kB   29.24 kB   jquery.js
 
-342.15 kB  -> 123.19 kB  -> 45.03 kB   39.70 kB   vue.js
+342.15 kB  -> 123.09 kB  -> 44.99 kB   39.67 kB   vue.js
 
 544.10 kB  -> 74.51 kB   -> 26.02 kB   23.15 kB   lodash.js
 
@@ -17,9 +17,9 @@ Original   -> Minified   -> Gzip       Brotli
 
 2.14 MB    -> 743.86 kB  -> 181.82 kB  138.89 kB  victory.js
 
-3.20 MB    -> 1.04 MB    -> 333.32 kB  269.37 kB  echarts.js
+3.20 MB    -> 1.03 MB    -> 332.93 kB  268.96 kB  echarts.js
 
-6.69 MB    -> 2.40 MB    -> 498.46 kB  390.61 kB  antd.js
+6.69 MB    -> 2.40 MB    -> 498.41 kB  390.35 kB  antd.js
 
 10.82 MB   -> 3.53 MB    -> 903.10 kB  692.91 kB  typescript.js
 

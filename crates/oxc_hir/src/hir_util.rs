@@ -110,6 +110,10 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
             | Self::NullLiteral(_)
             | Self::RegExpLiteral(_)
             | Self::FunctionExpression(_) => false,
+            Self::TemplateLiteral(template) => template
+                .expressions
+                .iter()
+                .any(|expr| expr.check_for_state_change(check_for_new_objects)),
             Self::Identifier(ident) => ident.reference_flag == ReferenceFlag::Write,
             Self::UnaryExpression(unary_expr) => {
                 unary_expr.check_for_state_change(check_for_new_objects)
@@ -370,4 +374,67 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         }
         _ => None,
     }
+}
+
+/// Port from [closure-compiler](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L234)
+/// Gets the value of a node as a String, or `None` if it cannot be converted. When it returns a
+/// String, this method effectively emulates the `String()` JavaScript cast function.
+/// This method does not consider whether `expr` may have side effects.
+fn get_string_value(expr: &Expression) -> Option<String> {
+    match expr {
+        Expression::StringLiteral(string_literal) => Some(string_literal.value.to_string()),
+        Expression::TemplateLiteral(template_literal) => {
+            // TODO: I don't know how to iterate children of TemplateLiteral in order,so only checkout string like `hi`.
+            // Closure-compiler do more: [case TEMPLATELIT:](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L241-L256).
+            if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
+                quasi.value.cooked.as_ref().map(|cooked| {cooked.to_string()})
+            } else {
+                None
+            }
+        }
+        Expression::Identifier(ident) => {
+            let name = ident.name.as_str();
+            if matches!(name, "undefined" | "Infinity" | "NaN") {
+                Some(name.to_string())
+            } else {
+                None
+            }
+        }
+        Expression::NumberLiteral(number_literal) => Some(number_literal.value.to_string()),
+        Expression::BigintLiteral(big_int_literal) => Some(format!("{}n", big_int_literal.value)),
+        Expression::NullLiteral(_) => Some(String::from("null")),
+        Expression::BooleanLiteral(bool_literal) => Some(bool_literal.value.to_string()),
+        Expression::UnaryExpression(unary_expr) => {
+            match unary_expr.operator {
+                UnaryOperator::Void => Some(String::from("undefined")),
+                UnaryOperator::LogicalNot => {
+                    // reversed.
+                    get_boolean_value(&unary_expr.argument).map(|boolean| (!boolean).to_string())
+                }
+                _ => None,
+            }
+        }
+        Expression::ArrayExpression(_) => {
+            // TODO: https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L302-L303
+            None
+        }
+        Expression::ObjectExpression(_) => Some(String::from("[object Object]")),
+        _ => None,
+    }
+}
+
+/// Port from [closure-cimpiler](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L139-L149)
+/// Gets the value of a node as a String, or `None` if it cannot be converted.
+/// This method effectively emulates the `String()` JavaScript cast function when
+/// possible and the node has no side effects. Otherwise, it returns `None`.
+pub fn get_side_free_string_value(expr: &Expression) -> Option<String> {
+    let value = get_string_value(expr);
+    // Calculating the string value, if any, is likely to be faster than calculating side effects,
+    // and there are only a very few cases where we can compute a string value, but there could
+    // also be side effects. e.g. `void doSomething()` has value 'undefined', regardless of the
+    // behavior of `doSomething()`
+    if value.is_some() && !expr.may_have_side_effects() {
+        return value;
+    }
+    None
 }
