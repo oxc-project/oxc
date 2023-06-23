@@ -1,11 +1,17 @@
 mod command;
+mod error;
+mod resolver;
 mod runner;
+mod runner_with_module_tree;
 
 use std::{collections::BTreeMap, path::PathBuf};
 
 use clap::ArgMatches;
 
-pub use self::{command::lint_command, runner::LintRunner};
+pub use self::{
+    command::lint_command, error::Error, runner::LintRunner,
+    runner_with_module_tree::LintRunnerWithModuleTree,
+};
 
 #[derive(Debug)]
 #[allow(clippy::struct_excessive_bools)]

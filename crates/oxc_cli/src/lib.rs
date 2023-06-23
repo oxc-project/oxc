@@ -8,7 +8,7 @@ use clap::{Arg, Command};
 
 use crate::{lint::lint_command, type_check::type_check_command};
 pub use crate::{
-    lint::{LintOptions, LintRunner},
+    lint::{LintOptions, LintRunner, LintRunnerWithModuleTree},
     result::CliRunResult,
     type_check::{TypeCheckOptions, TypeCheckRunner},
     walk::Walk,
