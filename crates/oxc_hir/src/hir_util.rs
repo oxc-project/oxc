@@ -423,7 +423,7 @@ fn get_string_value(expr: &Expression) -> Option<String> {
     }
 }
 
-/// Port from [closure-cimpiler](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L139-L149)
+/// Port from [closure-compiler](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L139-L149)
 /// Gets the value of a node as a String, or `None` if it cannot be converted.
 /// This method effectively emulates the `String()` JavaScript cast function when
 /// possible and the node has no side effects. Otherwise, it returns `None`.
