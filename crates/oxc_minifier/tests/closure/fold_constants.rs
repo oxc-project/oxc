@@ -103,6 +103,24 @@ fn undefined_comparison1() {
 }
 
 #[test]
+fn test_undefined_comparison2() {
+    test("'123' !== void 0", "true");
+    test("'123' === void 0", "false");
+
+    test("void 0 !== '123'", "true");
+    test("void 0 === '123'", "false");
+}
+
+#[test]
+fn test_undefined_comparison3() {
+    test("'123' !== undefined", "true");
+    test("'123' === undefined", "false");
+
+    test("undefined !== '123'", "true");
+    test("undefined === '123'", "false");
+}
+
+#[test]
 fn js_typeof() {
     test("x = typeof 1", "x='number'");
     test("x = typeof 'foo'", "x='string'");
