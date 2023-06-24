@@ -1,5 +1,7 @@
 # Benchmarks
 
+This benchmark does not compare against Rome because the rules do not match.
+
 ## Initialize
 
 ```bash
@@ -14,7 +16,7 @@
 
 ## Results
 
-The benchmark uses the `webpack/lib` directory, which contains 537 lintable files.
+The benchmark uses the `vscode/src` directory, which contains 3628 lintable files.
 
 ### CPU
 
@@ -50,17 +52,18 @@ Summary
 
 ```
 Benchmark 1: oxc
-  Time (mean ± σ):      22.0 ms ±   1.0 ms    [User: 101.3 ms, System: 23.2 ms]
-  Range (min … max):    20.3 ms …  26.8 ms    122 runs
+  Time (mean ± σ):     297.0 ms ±  31.7 ms    [User: 1772.3 ms, System: 205.7 ms]
+  Range (min … max):   269.8 ms … 379.7 ms    10 runs
+
+  Warning: Ignoring non-zero exit code.
 
 Benchmark 2: eslint
-  Time (mean ± σ):      1.413 s ±  0.014 s    [User: 2.435 s, System: 0.105 s]
-  Range (min … max):    1.396 s …  1.438 s    10 runs
+  Time (mean ± σ):     22.722 s ±  0.470 s    [User: 39.437 s, System: 1.705 s]
+  Range (min … max):   22.177 s … 23.805 s    10 runs
+
+  Warning: Ignoring non-zero exit code.
 
 Summary
   'oxc' ran
-   64.27 ± 2.93 times faster than 'eslint'
+   76.50 ± 8.32 times faster than 'eslint'
 ```
-
-Update:
-* Rome has been removed from the benchmark because the rules are not the same anymore

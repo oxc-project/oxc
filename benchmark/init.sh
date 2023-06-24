@@ -2,11 +2,11 @@
 
 mkdir -p tmp
 pushd tmp
-[ ! -d "webpack" ] && git clone --depth=1 git@github.com:webpack/webpack.git
+[ ! -d "vscode" ] && git clone --depth=1 git@github.com:microsoft/vscode.git
 popd
 
 npm install
 
-rm -rf ./tmp/webpack/.eslintrc.js
+rm -rf ./tmp/vscode/.eslintrc.json
 
 cargo build --release -p oxc_cli
