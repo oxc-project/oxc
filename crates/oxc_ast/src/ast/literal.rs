@@ -6,7 +6,7 @@ use std::{
 };
 
 use bitflags::bitflags;
-use num_bigint::BigUint;
+use num_bigint::BigInt;
 use oxc_span::{Atom, Span};
 use oxc_syntax::NumberBase;
 #[cfg(feature = "serde")]
@@ -70,7 +70,7 @@ pub struct BigintLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     #[cfg_attr(feature = "serde", serde(serialize_with = "crate::serialize::serialize_bigint"))]
-    pub value: BigUint,
+    pub value: BigInt,
 }
 
 #[derive(Debug, Clone, Hash)]

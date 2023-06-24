@@ -1,6 +1,5 @@
 //! Token
 
-use num_bigint::BigUint;
 use oxc_ast::ast::RegExpFlags;
 use oxc_span::Span;
 
@@ -43,7 +42,7 @@ impl<'a> Token<'a> {
 pub enum TokenValue<'a> {
     None,
     Number(f64),
-    BigInt(BigUint),
+    BigInt(num_bigint::BigInt),
     String(&'a str),
     RegExp(RegExp<'a>),
 }
@@ -68,7 +67,7 @@ impl<'a> TokenValue<'a> {
         }
     }
 
-    pub fn as_bigint(&self) -> BigUint {
+    pub fn as_bigint(&self) -> num_bigint::BigInt {
         match self {
             Self::BigInt(s) => s.clone(),
             _ => panic!("expected bigint!"),

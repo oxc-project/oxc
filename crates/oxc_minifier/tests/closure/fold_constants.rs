@@ -1,6 +1,6 @@
 //! <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeFoldConstantsTest.java>
 
-use crate::{test, test_same};
+use crate::{test, test_same, test_without_compress_booleans};
 
 #[test]
 fn undefined_comparison1() {
@@ -163,9 +163,9 @@ fn unary_ops() {
 #[test]
 fn unary_with_big_int() {
     test("-(1n)", "-1n");
-    // test("- -1n", "1n");
-    // test("!1n", "false");
-    // test("~0n", "-1n");
+    test("- -1n", "1n");
+    test_without_compress_booleans("!1n", "false");
+    test("~0n", "-1n");
 }
 
 #[test]

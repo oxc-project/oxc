@@ -1,7 +1,7 @@
 //! Parsing utilities for converting Javascript numbers to Rust f64
 //! code copied from [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src/numeric_value.rs)
 
-use num_bigint::BigUint;
+use num_bigint::BigInt;
 
 use super::kind::Kind;
 
@@ -75,7 +75,7 @@ fn parse_hex(s: &str) -> f64 {
     result
 }
 
-pub fn parse_big_int(s: &str, kind: Kind) -> Result<BigUint, &'static str> {
+pub fn parse_big_int(s: &str, kind: Kind) -> Result<BigInt, &'static str> {
     let s = match kind {
         Kind::Decimal => s,
         Kind::Binary | Kind::Octal | Kind::Hex => &s[2..],
@@ -88,5 +88,5 @@ pub fn parse_big_int(s: &str, kind: Kind) -> Result<BigUint, &'static str> {
         Kind::Hex => 16,
         _ => unreachable!(),
     };
-    BigUint::parse_bytes(s.as_bytes(), radix).ok_or("invalid bigint")
+    BigInt::parse_bytes(s.as_bytes(), radix).ok_or("invalid bigint")
 }

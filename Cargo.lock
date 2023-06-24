@@ -1190,6 +1190,7 @@ version = "0.0.6"
 dependencies = [
  "bitflags 2.3.2",
  "num-bigint",
+ "num-traits",
  "oxc_allocator",
  "oxc_index",
  "oxc_span",
@@ -1315,6 +1316,7 @@ version = "0.0.0"
 dependencies = [
  "bitflags 2.3.2",
  "num-bigint",
+ "num-traits",
  "oxc_allocator",
  "oxc_index",
  "oxc_semantic",
@@ -1374,6 +1376,7 @@ dependencies = [
  "bitflags 2.3.2",
  "jemallocator",
  "mimalloc",
+ "num-traits",
  "oxc_allocator",
  "oxc_ast",
  "oxc_ast_lower",
