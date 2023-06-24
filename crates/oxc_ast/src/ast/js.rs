@@ -407,10 +407,19 @@ pub struct TemplateElement {
     pub value: TemplateElementValue,
 }
 
+/// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
+/// for more info
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize))]
 pub struct TemplateElementValue {
+    /// A raw interpretation where backslashes do not have special meaning.
+    /// For example, \t produces two characters – a backslash and a t.
+    /// This interpretation of the template strings is stored in property .raw of the first argument (an Array).
     pub raw: Atom,
+    /// A cooked interpretation where backslashes have special meaning.
+    /// For example, \t produces a tab character.
+    /// This interpretation of the template strings is stored as an Array in the first argument.
+    /// cooked = None when template literal has invalid escape sequence
     pub cooked: Option<Atom>,
 }
 
