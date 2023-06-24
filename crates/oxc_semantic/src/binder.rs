@@ -78,8 +78,8 @@ fn function_as_var(flags: ScopeFlags, source_type: SourceType) -> bool {
 
 impl<'a> Binder for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
+        let current_scope_id = builder.current_scope_id;
         if let Some(ident) = &self.id {
-            let current_scope_id = builder.current_scope_id;
             let flags = builder.scope.get_flags(current_scope_id);
             if !flags.is_strict_mode()
                 && matches!(
@@ -114,6 +114,31 @@ impl<'a> Binder for Function<'a> {
                     includes,
                     excludes,
                 );
+            }
+        }
+
+        // bind scope flags: Constructor | GetAccessor | SetAccessor
+        debug_assert!(builder.scope.get_flags(current_scope_id).contains(ScopeFlags::Function));
+        if let Some(kind) = builder.nodes.parent_kind(builder.current_node_id) {
+            match kind {
+                AstKind::MethodDefinition(def) => {
+                    let flag = builder.scope.get_flags_mut(current_scope_id);
+                    *flag |= match def.kind {
+                        MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
+                        MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
+                        MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
+                        MethodDefinitionKind::Method => ScopeFlags::empty(),
+                    };
+                }
+                AstKind::ObjectProperty(prop) => {
+                    let flag = builder.scope.get_flags_mut(current_scope_id);
+                    *flag |= match prop.kind {
+                        PropertyKind::Get => ScopeFlags::GetAccessor,
+                        PropertyKind::Set => ScopeFlags::SetAccessor,
+                        PropertyKind::Init => ScopeFlags::empty(),
+                    };
+                }
+                _ => {}
             }
         }
     }
