@@ -117,7 +117,7 @@ impl Linter {
         for (category, rules) in rules_by_category {
             writeln!(writer, "{} ({}):", category, rules.len()).unwrap();
             for rule in rules {
-                writeln!(writer, "  • {}", rule.name()).unwrap();
+                writeln!(writer, "• {}/{}", rule.plugin_name(), rule.name()).unwrap();
             }
         }
         writeln!(writer, "Total: {}", RULES.len()).unwrap();

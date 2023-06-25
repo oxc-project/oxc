@@ -54,6 +54,15 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let mod_stmts = module_tries.iter().map(|node| node.mod_stmt(true));
     let use_stmts = module_tries.iter().map(|node| node.use_stmt(true));
     let struct_names = rules.iter().map(|rule| &rule.name).collect::<Vec<_>>();
+    let mod_names = rules.iter().map(|node| {
+        node.path
+            .segments
+            .iter()
+            .take(node.path.segments.len() - 1)
+            .map(|s| format!("{}", s.ident))
+            .collect::<Vec<_>>()
+            .join("/")
+    });
 
     quote! {
         #(#mod_stmts)*
@@ -84,6 +93,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub fn documentation(&self) -> Option<&'static str> {
                 match self {
                     #(Self::#struct_names(_) => #struct_names::documentation()),*
+                }
+            }
+
+            pub fn plugin_name(&self) -> &str {
+                match self {
+                    #(Self::#struct_names(_) => #mod_names),*
                 }
             }
 
