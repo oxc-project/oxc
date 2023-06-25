@@ -4,7 +4,6 @@
 
 use std::ops::Not;
 
-use num_traits::Zero;
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::hir_util::{
@@ -301,10 +300,7 @@ impl<'a> Compressor<'a> {
                         let bool_literal = self.hir.boolean_literal(unary_expr.span, !boolean);
                         return Some(self.hir.literal_boolean_expression(bool_literal));
                     }
-                    Expression::BigintLiteral(big_int_literal) => {
-                        if big_int_literal.value.is_zero() {
-                            return None;
-                        }
+                    Expression::BigintLiteral(_) => {
                         let bool_literal = self.hir.boolean_literal(unary_expr.span, !boolean);
                         return Some(self.hir.literal_boolean_expression(bool_literal));
                     }
