@@ -382,7 +382,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
 /// Gets the value of a node as a String, or `None` if it cannot be converted. When it returns a
 /// String, this method effectively emulates the `String()` JavaScript cast function.
 /// This method does not consider whether `expr` may have side effects.
-fn get_string_value<'a, 'b>(expr: &'a Expression) -> Option<Cow<'a, str>> {
+fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
     match expr {
         Expression::StringLiteral(string_literal) => Some(string_literal.value.as_str().into()),
         Expression::TemplateLiteral(template_literal) => {
@@ -396,14 +396,12 @@ fn get_string_value<'a, 'b>(expr: &'a Expression) -> Option<Cow<'a, str>> {
         }
         Expression::Identifier(ident) => {
             let name = ident.name.as_str();
-            if matches!(name, "undefined" | "Infinity" | "NaN") {
-                Some(name.into())
-            } else {
-                None
-            }
+            if matches!(name, "undefined" | "Infinity" | "NaN") { Some(name.into()) } else { None }
         }
         Expression::NumberLiteral(number_literal) => Some(number_literal.value.to_string().into()),
-        Expression::BigintLiteral(big_int_literal) => Some(format!("{}n", big_int_literal.value).into()),
+        Expression::BigintLiteral(big_int_literal) => {
+            Some(format!("{}n", big_int_literal.value).into())
+        }
         Expression::NullLiteral(_) => Some("null".to_string().into()),
         Expression::BooleanLiteral(bool_literal) => Some(bool_literal.value.to_string().into()),
         Expression::UnaryExpression(unary_expr) => {
@@ -411,7 +409,8 @@ fn get_string_value<'a, 'b>(expr: &'a Expression) -> Option<Cow<'a, str>> {
                 UnaryOperator::Void => Some("undefined".to_string().into()),
                 UnaryOperator::LogicalNot => {
                     // need reversed.
-                    get_boolean_value(&unary_expr.argument).map(|boolean| (!boolean).to_string().into())
+                    get_boolean_value(&unary_expr.argument)
+                        .map(|boolean| (!boolean).to_string().into())
                 }
                 _ => None,
             }

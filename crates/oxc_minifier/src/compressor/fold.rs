@@ -2,9 +2,7 @@
 //!
 //! <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 
-use std::ops::Not;
-
-use std::cmp::Ordering;
+use std::{cmp::Ordering, ops::Not};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
