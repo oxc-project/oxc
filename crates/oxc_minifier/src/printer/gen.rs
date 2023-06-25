@@ -898,6 +898,11 @@ fn print_non_negative_float(value: f64, p: &mut Printer) -> String {
 
 impl Gen for BigintLiteral {
     fn gen(&self, p: &mut Printer, ctx: Context) {
+        use num_bigint::Sign;
+
+        if self.value.sign() == Sign::Minus {
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
+        }
         p.print_str(self.value.to_string().as_bytes());
         p.print(b'n');
     }

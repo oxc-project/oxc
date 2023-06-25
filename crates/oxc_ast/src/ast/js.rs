@@ -1,6 +1,5 @@
 use std::fmt;
 
-use num_bigint::BigUint;
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::operator::{
@@ -210,11 +209,13 @@ impl<'a> Expression<'a> {
     /// Returns literal's value converted to the Boolean type
     /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
     pub fn get_boolean_value(&self) -> Option<bool> {
+        use num_traits::Zero;
+
         match self {
             Self::BooleanLiteral(lit) => Some(lit.value),
             Self::NullLiteral(_) => Some(false),
             Self::NumberLiteral(lit) => Some(lit.value != 0.0),
-            Self::BigintLiteral(lit) => Some(lit.value != BigUint::new(vec![])),
+            Self::BigintLiteral(lit) => Some(!lit.value.is_zero()),
             Self::RegExpLiteral(_) => Some(true),
             Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
             _ => None,

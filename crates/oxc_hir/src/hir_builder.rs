@@ -5,7 +5,7 @@
     clippy::unused_self,
 )]
 
-use num_bigint::BigUint;
+use num_bigint::BigInt;
 use oxc_allocator::{Allocator, Box, String, Vec};
 use oxc_semantic::{ReferenceFlag, ReferenceId, SymbolId};
 use oxc_span::{Atom, Span};
@@ -96,7 +96,7 @@ impl<'a> HirBuilder<'a> {
         NullLiteral { span }
     }
 
-    pub fn bigint_literal(&mut self, span: Span, value: BigUint) -> BigintLiteral {
+    pub fn bigint_literal(&mut self, span: Span, value: BigInt) -> BigintLiteral {
         BigintLiteral { span, value }
     }
 

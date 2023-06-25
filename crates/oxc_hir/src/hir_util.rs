@@ -1,4 +1,3 @@
-use num_bigint::BigUint;
 use oxc_semantic::ReferenceFlag;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
@@ -291,6 +290,8 @@ pub fn get_side_free_number_value(expr: &Expression) -> Option<NumberValue> {
 /// such value can be determined by static analysis.
 /// This method does not consider whether the node may have side-effects.
 pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
+    use num_traits::Zero;
+
     match expr {
         Expression::RegExpLiteral(_)
         | Expression::ArrayExpression(_)
@@ -302,9 +303,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         Expression::NullLiteral(_) => Some(false),
         Expression::BooleanLiteral(boolean_literal) => Some(boolean_literal.value),
         Expression::NumberLiteral(number_literal) => Some(number_literal.value != 0.0),
-        Expression::BigintLiteral(big_int_literal) => {
-            Some(big_int_literal.value == BigUint::default())
-        }
+        Expression::BigintLiteral(big_int_literal) => Some(!big_int_literal.value.is_zero()),
         Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
             // only for ``

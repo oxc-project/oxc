@@ -5,7 +5,7 @@ use std::{
 };
 
 use bitflags::bitflags;
-use num_bigint::BigUint;
+use num_bigint::BigInt;
 use oxc_allocator::{Box, Vec};
 use oxc_semantic::{ReferenceFlag, ReferenceId, SymbolId};
 use oxc_span::{Atom, Span};
@@ -182,11 +182,13 @@ impl<'a> Expression<'a> {
     /// Returns literal's value converted to the Boolean type
     /// returns `true` when node is truthy, `false` when node is falsy, `None` when it cannot be determined.
     pub fn get_boolean_value(&self) -> Option<bool> {
+        use num_traits::Zero;
+
         match self {
             Self::BooleanLiteral(lit) => Some(lit.value),
             Self::NullLiteral(_) => Some(false),
             Self::NumberLiteral(lit) => Some(lit.value != 0.0),
-            Self::BigintLiteral(lit) => Some(lit.value != BigUint::new(vec![])),
+            Self::BigintLiteral(lit) => Some(!lit.value.is_zero()),
             Self::RegExpLiteral(_) => Some(true),
             Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
             _ => None,
@@ -287,7 +289,7 @@ pub struct BigintLiteral {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     #[cfg_attr(feature = "serde", serde(serialize_with = "crate::serialize::serialize_bigint"))]
-    pub value: BigUint,
+    pub value: BigInt,
 }
 
 #[derive(Debug, Clone, Hash)]
