@@ -1376,6 +1376,7 @@ dependencies = [
  "bitflags 2.3.2",
  "jemallocator",
  "mimalloc",
+ "num-bigint",
  "num-traits",
  "oxc_allocator",
  "oxc_ast",
