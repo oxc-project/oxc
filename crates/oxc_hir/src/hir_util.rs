@@ -384,33 +384,48 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
 /// This method does not consider whether `expr` may have side effects.
 fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
     match expr {
-        Expression::StringLiteral(string_literal) => Some(string_literal.value.as_str().into()),
+        Expression::StringLiteral(string_literal) => {
+            Some(Cow::Borrowed(string_literal.value.as_str()))
+        }
         Expression::TemplateLiteral(template_literal) => {
             // TODO: I don't know how to iterate children of TemplateLiteral in order,so only checkout string like `hi`.
             // Closure-compiler do more: [case TEMPLATELIT](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L241-L256).
             if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
-                quasi.value.cooked.as_ref().map(|cooked| cooked.as_str().into())
+                quasi.value.cooked.as_ref().map(|cooked| Cow::Borrowed(cooked.as_str()))
             } else {
                 None
             }
         }
         Expression::Identifier(ident) => {
             let name = ident.name.as_str();
-            if matches!(name, "undefined" | "Infinity" | "NaN") { Some(name.into()) } else { None }
+            if matches!(name, "undefined" | "Infinity" | "NaN") {
+                Some(Cow::Borrowed(name))
+            } else {
+                None
+            }
         }
-        Expression::NumberLiteral(number_literal) => Some(number_literal.value.to_string().into()),
+        Expression::NumberLiteral(number_literal) => {
+            Some(Cow::Owned(number_literal.value.to_string()))
+        }
         Expression::BigintLiteral(big_int_literal) => {
-            Some(format!("{}n", big_int_literal.value).into())
+            Some(Cow::Owned(format!("{}n", big_int_literal.value)))
         }
-        Expression::NullLiteral(_) => Some("null".to_string().into()),
-        Expression::BooleanLiteral(bool_literal) => Some(bool_literal.value.to_string().into()),
+        Expression::NullLiteral(_) => Some(Cow::Borrowed("null")),
+        Expression::BooleanLiteral(bool_literal) => {
+            if bool_literal.value {
+                Some(Cow::Borrowed("true"))
+            } else {
+                Some(Cow::Borrowed("false"))
+            }
+        }
         Expression::UnaryExpression(unary_expr) => {
             match unary_expr.operator {
-                UnaryOperator::Void => Some("undefined".into()),
+                UnaryOperator::Void => Some(Cow::Borrowed("undefined")),
                 UnaryOperator::LogicalNot => {
-                    // need reversed.
-                    get_boolean_value(&unary_expr.argument)
-                        .map(|boolean| (!boolean).to_string().into())
+                    get_boolean_value(&unary_expr.argument).map(|boolean| {
+                        // need reversed.
+                        if boolean { Cow::Borrowed("false") } else { Cow::Borrowed("true") }
+                    })
                 }
                 _ => None,
             }
@@ -419,7 +434,7 @@ fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
             // TODO: https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L302-L303
             None
         }
-        Expression::ObjectExpression(_) => Some("[object Object]".into()),
+        Expression::ObjectExpression(_) => Some(Cow::Borrowed("[object Object]")),
         _ => None,
     }
 }
