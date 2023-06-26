@@ -107,6 +107,14 @@ impl<'a> Compressor<'a> {
                     &binary_expr.left,
                     &binary_expr.right,
                 ),
+                BinaryOperator::ShiftLeft
+                | BinaryOperator::ShiftRight
+                | BinaryOperator::ShiftRightZeroFill => self.try_fold_shift(
+                    binary_expr.span,
+                    binary_expr.operator,
+                    &binary_expr.left,
+                    &binary_expr.right,
+                ),
                 _ => None,
             },
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
@@ -458,6 +466,65 @@ impl<'a> Compressor<'a> {
             let argument = self.hir.literal_number_expression(number_literal);
             return Some(self.hir.unary_expression(unary_expr.span, UnaryOperator::Void, argument));
         }
+        None
+    }
+
+    /// ported from [closure-compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1114-L1162)
+    #[allow(clippy::cast_possible_truncation)]
+    fn try_fold_shift<'b>(
+        &mut self,
+        span: Span,
+        op: BinaryOperator,
+        left: &'b Expression<'a>,
+        right: &'b Expression<'a>,
+    ) -> Option<Expression<'a>> {
+        let left_num = get_side_free_number_value(left);
+        let right_num = get_side_free_number_value(right);
+
+        if let Some(NumberValue::Number(left_val)) = left_num &&
+           let Some(NumberValue::Number(right_val)) = right_num {
+            if left_val.fract() != 0.0 || right_val.fract() != 0.0 {
+                return None;
+            }
+
+            // only the lower 5 bits are used when shifting, so don't do anything
+            // if the shift amount is outside [0,32)
+            if !(0.0..32.0).contains(&right_val) {
+                return None;
+            }
+
+            let right_val_int = right_val as i32;
+            let bits = NumberLiteral::ecmascript_to_int32(left_val);
+
+            let result_val: f64 = match op {
+                BinaryOperator::ShiftLeft => {
+                    f64::from(bits << right_val_int)
+                }
+                BinaryOperator::ShiftRight => {
+                    f64::from(bits >> right_val_int)
+                }
+                BinaryOperator::ShiftRightZeroFill => {
+                    // JavaScript always treats the result of >>> as unsigned.
+                    // We must force Rust to do the same here.
+                    #[allow(clippy::cast_sign_loss)]
+                    let res = bits as u32 >> right_val_int as u32;
+                    f64::from(res)
+                }
+                _ => unreachable!("Unknown binary operator {:?}", op)
+            };
+
+            let value_raw = self.hir.new_str(result_val.to_string().as_str());
+
+            let number_literal = self.hir.number_literal(
+                span,
+                result_val,
+                value_raw,
+                NumberBase::Decimal,
+            );
+
+            return Some(self.hir.literal_number_expression(number_literal));
+        }
+
         None
     }
 }

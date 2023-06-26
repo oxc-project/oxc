@@ -183,3 +183,38 @@ fn test_fold_void() {
     test("void x", "void 0");
     test_same("void x()");
 }
+
+#[test]
+fn test_fold_bit_shift() {
+    test("x = 1 << 0", "x=1");
+    test("x = -1 << 0", "x=-1");
+    test("x = 1 << 1", "x=2");
+    test("x = 3 << 1", "x=6");
+    test("x = 1 << 8", "x=256");
+
+    test("x = 1 >> 0", "x=1");
+    test("x = -1 >> 0", "x=-1");
+    test("x = 1 >> 1", "x=0");
+    test("x = 2 >> 1", "x=1");
+    test("x = 5 >> 1", "x=2");
+    test("x = 127 >> 3", "x=15");
+    test("x = 3 >> 1", "x=1");
+    test("x = 3 >> 2", "x=0");
+    test("x = 10 >> 1", "x=5");
+    test("x = 10 >> 2", "x=2");
+    test("x = 10 >> 5", "x=0");
+
+    test("x = 10 >>> 1", "x=5");
+    test("x = 10 >>> 2", "x=2");
+    test("x = 10 >>> 5", "x=0");
+    test("x = -1 >>> 1", "x=2147483647"); // 0x7fffffff
+    test("x = -1 >>> 0", "x=4294967295"); // 0xffffffff
+    test("x = -2 >>> 0", "x=4294967294"); // 0xfffffffe
+    test("x = 0x90000000 >>> 28", "x=9");
+
+    test("x = 0xffffffff << 0", "x=-1");
+    test("x = 0xffffffff << 4", "x=-16");
+    test("1 << 32", "1<<32");
+    test("1 << -1", "1<<-1");
+    test("1 >> 32", "1>>32");
+}
