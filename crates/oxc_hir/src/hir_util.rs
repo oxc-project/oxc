@@ -406,7 +406,7 @@ fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
         Expression::BooleanLiteral(bool_literal) => Some(bool_literal.value.to_string().into()),
         Expression::UnaryExpression(unary_expr) => {
             match unary_expr.operator {
-                UnaryOperator::Void => Some("undefined".to_string().into()),
+                UnaryOperator::Void => Some("undefined".into()),
                 UnaryOperator::LogicalNot => {
                     // need reversed.
                     get_boolean_value(&unary_expr.argument)
@@ -419,7 +419,7 @@ fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
             // TODO: https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L302-L303
             None
         }
-        Expression::ObjectExpression(_) => Some("[object Object]".to_string().into()),
+        Expression::ObjectExpression(_) => Some("[object Object]".into()),
         _ => None,
     }
 }
