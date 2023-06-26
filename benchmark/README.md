@@ -16,12 +16,7 @@ This benchmark does not compare against Rome because the rules do not match.
 
 ## Results
 
-The benchmark uses the `vscode/src` directory, which contains 3628 lintable files.
-
-### CPU
-
-* machdep.cpu.brand_string: Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
-* machdep.cpu.core_count: 6
+The benchmark uses the `vscode/src` directory, which contains 3629 lintable files.
 
 ### Single Run
 
@@ -36,16 +31,16 @@ Using the shell `time` command for cpu utilization
 
 ```
 Benchmark 1: oxc
-  Time (mean ± σ):      36.0 ms ±   3.2 ms    [User: 166.0 ms, System: 69.2 ms]
-  Range (min … max):    32.4 ms …  51.8 ms    63 runs
+  Time (mean ± σ):     366.6 ms ±  16.8 ms    [User: 3116.9 ms, System: 507.3 ms]
+  Range (min … max):   343.6 ms … 399.8 ms    10 runs
 
 Benchmark 2: eslint
-  Time (mean ± σ):      3.044 s ±  0.187 s    [User: 4.606 s, System: 0.260 s]
-  Range (min … max):    2.824 s …  3.387 s    10 runs
+  Time (mean ± σ):     50.486 s ±  1.975 s    [User: 82.670 s, System: 3.590 s]
+  Range (min … max):   47.101 s … 54.417 s    10 runs
 
 Summary
   'oxc' ran
-   84.66 ± 9.18 times faster than 'eslint'
+  137.70 ± 8.28 times faster than 'eslint'
 ```
 
 ## M2 8-cores

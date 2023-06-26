@@ -5,8 +5,8 @@ pushd tmp
 [ ! -d "vscode" ] && git clone --depth=1 git@github.com:microsoft/vscode.git
 popd
 
-npm install
+pnpm install
 
-rm -rf ./tmp/vscode/.eslintrc.json
+rm -rf ./tmp/vscode/**/.eslintrc.json
 
 cargo build --release -p oxc_cli
