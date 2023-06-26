@@ -1442,7 +1442,6 @@ version = "0.0.6"
 dependencies = [
  "bitflags 2.3.2",
  "indexmap",
- "once_cell",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
