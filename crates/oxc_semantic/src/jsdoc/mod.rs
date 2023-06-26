@@ -1,9 +1,8 @@
 mod builder;
 
-use std::collections::BTreeMap;
+use std::{cell::OnceCell, collections::BTreeMap};
 
 pub use builder::JSDocBuilder;
-use once_cell::unsync::OnceCell;
 use oxc_span::{GetSpan, Span};
 
 use self::parser::JSDocParser;

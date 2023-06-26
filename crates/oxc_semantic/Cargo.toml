@@ -18,7 +18,6 @@ oxc_index       = { workspace = true }
 
 bitflags   = { workspace = true }
 rustc-hash = { workspace = true }
-once_cell  = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
 indexmap   = { workspace = true }
 

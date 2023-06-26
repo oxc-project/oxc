@@ -65,7 +65,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     ArrayCallbackReturn,
-    correctness
+    pedantic
 );
 
 impl Rule for ArrayCallbackReturn {

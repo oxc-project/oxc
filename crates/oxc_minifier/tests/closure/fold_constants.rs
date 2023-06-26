@@ -103,6 +103,57 @@ fn undefined_comparison1() {
 }
 
 #[test]
+fn test_undefined_comparison2() {
+    test("'123' !== void 0", "!0");
+    test("'123' === void 0", "!1");
+
+    test("void 0 !== '123'", "!0");
+    test("void 0 === '123'", "!1");
+}
+
+#[test]
+fn test_undefined_comparison3() {
+    test("'123' !== undefined", "!0");
+    test("'123' === undefined", "!1");
+
+    test("undefined !== '123'", "!0");
+    test("undefined === '123'", "!1");
+}
+
+#[test]
+fn test_string_string_comparison() {
+    test("'a' < 'b'", "!0");
+    test("'a' <= 'b'", "!0");
+    test("'a' > 'b'", "!1");
+    test("'a' >= 'b'", "!1");
+    test("+'a' < +'b'", "!1");
+    test_same("typeof a<'a'");
+    test_same("'a'>=typeof a");
+    test("typeof a < typeof a", "!1");
+    test("typeof a >= typeof a", "!0");
+    test("typeof 3 > typeof 4", "!1");
+    test("typeof function() {} < typeof function() {}", "!1");
+    test("'a' == 'a'", "!0");
+    test("'b' != 'a'", "!0");
+    test_same("'undefined'==typeof a");
+    test_same("typeof a!='number'");
+    test_same("'undefined'==typeof a");
+    test_same("'undefined'==typeof a");
+    test("typeof a == typeof a", "!0");
+    test("'a' === 'a'", "!0");
+    test("'b' !== 'a'", "!0");
+    test("typeof a === typeof a", "!0");
+    test("typeof a !== typeof a", "!1");
+    test_same("''+x<=''+y");
+    test_same("''+x!=''+y");
+    test_same("''+x===''+y");
+
+    test_same("''+x<=''+x"); // potentially foldable
+    test_same("''+x!=''+x"); // potentially foldable
+    test_same("''+x===''+x"); // potentially foldable
+}
+
+#[test]
 fn js_typeof() {
     test("x = typeof 1", "x='number'");
     test("x = typeof 'foo'", "x='string'");
