@@ -1634,12 +1634,20 @@ pub struct StaticBlock<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ModuleDeclaration<'a> {
+    /// import hello from './world.js';
+    /// import * as t from './world.js';
     ImportDeclaration(Box<'a, ImportDeclaration<'a>>),
+    /// export * as numbers from '../numbers.js'
     ExportAllDeclaration(Box<'a, ExportAllDeclaration<'a>>),
+    /// export default 5;
     ExportDefaultDeclaration(Box<'a, ExportDefaultDeclaration<'a>>),
+    /// export {five} from './numbers.js';
+    /// export {six, seven};
     ExportNamedDeclaration(Box<'a, ExportNamedDeclaration<'a>>),
 
+    /// export = 5;
     TSExportAssignment(Box<'a, TSExportAssignment<'a>>),
+    /// export as namespace React;
     TSNamespaceExportDeclaration(Box<'a, TSNamespaceExportDeclaration>),
 }
 
