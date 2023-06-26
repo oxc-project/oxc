@@ -2,13 +2,13 @@
 //!
 //! <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 
-use std::ops::Not;
+use std::{cmp::Ordering, ops::Not};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::hir_util::{
-    get_boolean_value, get_number_value, get_side_free_number_value, IsLiteralValue,
-    MayHaveSideEffects, NumberValue,
+    get_boolean_value, get_number_value, get_side_free_number_value, get_side_free_string_value,
+    IsLiteralValue, MayHaveSideEffects, NumberValue,
 };
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
@@ -83,6 +83,7 @@ impl<'a> From<&Expression<'a>> for Ty {
                     Self::Number
                 }
                 UnaryOperator::LogicalNot => Self::Boolean,
+                UnaryOperator::Typeof => Self::Str,
                 _ => Self::Undetermined,
             },
             _ => Self::Undetermined,
@@ -202,13 +203,40 @@ impl<'a> Compressor<'a> {
     /// <https://tc39.es/ecma262/#sec-abstract-relational-comparison>
     fn try_abstract_relational_comparison<'b>(
         &self,
-        left: &'b Expression<'a>,
-        right: &'b Expression<'a>,
+        left_expr: &'b Expression<'a>,
+        right_expr: &'b Expression<'a>,
         will_negative: bool,
     ) -> Tri {
+        let left = Ty::from(left_expr);
+        let right = Ty::from(right_expr);
+
+        // First, check for a string comparison.
+        if left == Ty::Str && right == Ty::Str {
+            let left_string = get_side_free_string_value(left_expr);
+            let right_string = get_side_free_string_value(right_expr);
+            if let Some(left_string) = left_string && let Some(right_string) = right_string {
+                // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
+                if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
+                    return Tri::Unknown;
+                }
+
+                return Tri::for_boolean(left_string.cmp(&right_string) == Ordering::Less)
+            }
+
+            if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) = (left_expr, right_expr)
+                && (left.operator, right.operator) == (UnaryOperator::Typeof, UnaryOperator::Typeof)
+                && let Expression::Identifier(left) = &left.argument
+                && let Expression::Identifier(right) = &right.argument
+                && left.name == right.name
+            {
+                // Special case: `typeof a < typeof a` is always false.
+                return Tri::False;
+            }
+        }
+
         // try comparing as Numbers.
-        let left_num = get_side_free_number_value(left);
-        let right_num = get_side_free_number_value(right);
+        let left_num = get_side_free_number_value(left_expr);
+        let right_num = get_side_free_number_value(right_expr);
         if let Some(left_num) = left_num && let Some(right_num) = right_num {
             match (left_num, right_num) {
                 (NumberValue::NaN, _) | (_, NumberValue::NaN) => return Tri::for_boolean(will_negative),
@@ -229,10 +257,35 @@ impl<'a> Compressor<'a> {
         let left = Ty::from(left_expr);
         let right = Ty::from(right_expr);
         if left != Ty::Undetermined && right != Ty::Undetermined {
+            // Strict equality can only be true for values of the same type.
             if left != right {
                 return Tri::False;
             }
             return match left {
+                Ty::Str => {
+                    let left_string = get_side_free_string_value(left_expr);
+                    let right_string = get_side_free_string_value(right_expr);
+                    if let Some(left_string) = left_string && let Some(right_string) = right_string {
+                        // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
+                        if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
+                            return Tri::Unknown;
+                        }
+
+                        return Tri::for_boolean(left_string == right_string)
+                    }
+
+                    if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) = (left_expr, right_expr)
+                        && (left.operator, right.operator) == (UnaryOperator::Typeof, UnaryOperator::Typeof)
+                        && let Expression::Identifier(left) = &left.argument
+                        && let Expression::Identifier(right) = &right.argument
+                        && left.name == right.name
+                    {
+                        // Special case, typeof a == typeof a is always true.
+                        return Tri::True;
+                    }
+
+                    Tri::Unknown
+                }
                 Ty::Void | Ty::Null => Tri::True,
                 _ => Tri::Unknown,
             };
