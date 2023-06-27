@@ -16,7 +16,7 @@
 [![Code Coverage][code-coverage-badge]][code-coverage-url]
 [![Code Size][code-size-badge]][code-size-url]
 [![MIT licensed][mit-badge]][mit-url]
-  
+
 ### [Playground](https://boshen.github.io/oxc/playground)
 </div>
 
@@ -26,8 +26,8 @@
 [mit-url]: LICENSE
 [ci-badge]: https://github.com/Boshen/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
 [ci-url]: https://github.com/Boshen/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
-[npm-badge]: https://img.shields.io/npm/v/oxidation-compiler/latest?color=brightgreen
-[npm-url]: https://www.npmjs.com/package/oxidation-compiler/v/latest
+[npm-badge]: https://img.shields.io/npm/v/oxlint/latest?color=brightgreen
+[npm-url]: https://www.npmjs.com/package/oxlint/v/latest
 [crates-badge]: https://img.shields.io/crates/v/oxc_parser.svg
 [crates-url]: https://crates.io/crates/oxc_parser
 [docs-badge]: https://docs.rs/oxc_parser/badge.svg
@@ -41,7 +41,7 @@ The Oxidation Compiler is creating a suite of tools for the JavaScript / TypeScr
 
 * [AST](./crates/oxc_ast) - See [docs.rs/oxc_ast][docs-ast]
 * [Parser](./crates/oxc_parser) - See [docs.rs/oxc_parser][docs-parser], [@oxidation-compiler/napi][npm-napi]
-* [Linter](./crates/oxc_linter) - Work in progress. Try it out! `npx oxidation-compiler@latest lint path`
+* [Linter](./crates/oxc_linter) - Work in progress. Try it out! `npx oxlint@latest path`
 * Formatter
 * Transpiler
 * [Minifier](./crates/oxc_minifier) - Prototype
@@ -88,12 +88,12 @@ If you are unable to contribute by code, you can still participate by:
 
 The linter is fast to the extent that it feels broken.
 
-With 20 rules implemented, testing in the [VSCode](https://github.com/microsoft/vscode) repo:
+With 31 rules implemented, testing in the [VSCode](https://github.com/microsoft/vscode) repo on a M2:
 
 ```
-vscode  main ❯ npx oxidation-compiler@latest lint src
-Checked 3479 files in 335ms using 12 cores.
-Found 17 errors.
+vscode  main ❯ npx oxlint@latest src
+Finished in 388ms on 3628 files with 31 rules using 8 threads.
+Found 53 errors.
 ```
 
 And also in a huge monorepo:
@@ -103,8 +103,7 @@ Checked 73660 files in 7415ms using 12 cores.
 Found 470 errors.
 ```
 
-On my Intel i7 6-core, the linter is around 84 times faster than ESLint.
-But we'll get slightly slower as we add more features.
+On my Intel i7 6-core, the linter is around 80 times faster than ESLint.
 
 See [benchmark](./benchmark/) for details.
 
@@ -113,10 +112,8 @@ See [benchmark](./benchmark/) for details.
 The linter is currently usable and it can potentially catch a few mistakes for you:
 
 ```
-npx oxidation-compiler@latest lint path
+npx oxlint@latest path
 ```
-
-All feedbacks are welcome.
 
 ## Parser Conformance
 
