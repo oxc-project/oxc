@@ -326,3 +326,13 @@ impl<'a> GetSpan for ExportDefaultDeclarationKind<'a> {
         }
     }
 }
+
+impl GetSpan for ImportDeclarationSpecifier {
+    fn span(&self) -> Span {
+        match self {
+            Self::ImportSpecifier(specifier) => specifier.span,
+            Self::ImportDefaultSpecifier(specifier) => specifier.span,
+            Self::ImportNamespaceSpecifier(specifier) => specifier.span,
+        }
+    }
+}
