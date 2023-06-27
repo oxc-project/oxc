@@ -1,0 +1,53 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_dupe_args
+---
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, b) {}
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, a, a) {}
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, a) {}
+   · ──────────────────────
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ function a(a, b, a, b) {}
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, b) {}
+   ·         ────────────────────
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, a, a) {}
+   ·         ────────────────────
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, a) {}
+   ·         ────────────────────
+   ╰────
+
+  ⚠ eslint(no-dupe-args): Disallow duplicate arguments in function definitions
+   ╭─[no_dupe_args.tsx:1:1]
+ 1 │ var a = function(a, b, a, b) {}
+   ·         ───────────────────────
+   ╰────
+
+
