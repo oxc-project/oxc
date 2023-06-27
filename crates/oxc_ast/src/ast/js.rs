@@ -1732,6 +1732,16 @@ pub struct ImportNamespaceSpecifier {
     pub local: BindingIdentifier,
 }
 
+impl GetSpan for ImportDeclarationSpecifier {
+    fn span(&self) -> Span {
+        match self {
+            Self::ImportSpecifier(specifier) => specifier.span,
+            Self::ImportDefaultSpecifier(specifier) => specifier.span,
+            Self::ImportNamespaceSpecifier(specifier) => specifier.span,
+        }
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct ImportAttribute {
