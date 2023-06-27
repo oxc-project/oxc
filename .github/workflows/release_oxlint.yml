@@ -14,36 +14,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # check:
-    # name: Check version
-    # runs-on: ubuntu-latest
-    # outputs:
-      # version: ${{ env.version }}
-      # version_changed: ${{ steps.version.outputs.changed }}
-    # steps:
-      # - uses: actions/checkout@v3
+  check:
+    name: Check version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ env.version }}
+      version_changed: ${{ steps.version.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v3
 
-      # - name: Check version changes
-        # uses: EndBug/version-check@v1
-        # id: version
-        # with:
-          # static-checking: localIsNew
-          # file-url: https://unpkg.com/oxlint@latest/package.json
-          # file-name: npm/oxlint/package.json
+      - name: Check version changes
+        uses: EndBug/version-check@v1
+        id: version
+        with:
+          static-checking: localIsNew
+          file-url: https://unpkg.com/oxlint@latest/package.json
+          file-name: npm/oxlint/package.json
 
-      # - name: Set version name
-        # if: steps.version.outputs.changed == 'true'
-        # run: |
-          # echo "Version change found! New version: ${{ steps.version.outputs.version }} (${{ steps.version.outputs.version_type }})"
-          # echo "version=${{ steps.version.outputs.version }}" >> $GITHUB_ENV
+      - name: Set version name
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          echo "Version change found! New version: ${{ steps.version.outputs.version }} (${{ steps.version.outputs.version_type }})"
+          echo "version=${{ steps.version.outputs.version }}" >> $GITHUB_ENV
 
   build:
-    # needs: check
-    # if: needs.check.outputs.version_changed == 'true'
-    # env:
-      # version: ${{ needs.check.outputs.version }}
-    # outputs:
-      # version: ${{ env.version }}
+    needs: check
+    if: needs.check.outputs.version_changed == 'true'
+    env:
+      version: ${{ needs.check.outputs.version }}
+    outputs:
+      version: ${{ env.version }}
     strategy:
       matrix:
         include:
