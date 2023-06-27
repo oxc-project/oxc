@@ -336,3 +336,15 @@ impl GetSpan for ImportDeclarationSpecifier {
         }
     }
 }
+
+impl<'a> GetSpan for JSXChild<'a> {
+    fn span(&self) -> Span {
+        match self {
+            Self::Element(element) => element.span,
+            Self::ExpressionContainer(container) => container.span,
+            Self::Text(text) => text.span,
+            Self::Fragment(fragment) => fragment.span,
+            Self::Spread(spread) => spread.span,
+        }
+    }
+}
