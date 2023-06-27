@@ -1,7 +1,7 @@
 use std::fmt;
 
 use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, GetSpan, SourceType, Span};
+use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
@@ -1730,16 +1730,6 @@ pub struct ImportNamespaceSpecifier {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub local: BindingIdentifier,
-}
-
-impl GetSpan for ImportDeclarationSpecifier {
-    fn span(&self) -> Span {
-        match self {
-            Self::ImportSpecifier(specifier) => specifier.span,
-            Self::ImportDefaultSpecifier(specifier) => specifier.span,
-            Self::ImportNamespaceSpecifier(specifier) => specifier.span,
-        }
-    }
 }
 
 #[derive(Debug, Hash)]
