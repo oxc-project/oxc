@@ -61,11 +61,11 @@ impl Termination for CliRunResult {
                 }
 
                 if number_of_diagnostics > 0 {
-                    println!("Found {number_of_diagnostics} errors.");
+                    println!("Found {number_of_diagnostics} warnings.");
                     return ExitCode::from(1);
                 }
 
-                println!("Found no errors.");
+                println!("Found no warnings.");
                 ExitCode::from(0)
             }
             Self::TypeCheckResult { duration, number_of_diagnostics } => {
@@ -73,7 +73,7 @@ impl Termination for CliRunResult {
                 println!("Finished in {ms}ms.");
 
                 if number_of_diagnostics > 0 {
-                    println!("Found {number_of_diagnostics} warnings.");
+                    println!("Found {number_of_diagnostics} errors.");
                     return ExitCode::from(1);
                 }
 
