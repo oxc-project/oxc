@@ -1698,8 +1698,12 @@ pub struct ImportDeclaration<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ImportDeclarationSpecifier {
+    /// import {imported} from "source"
+    /// import {imported as local} from "source"
     ImportSpecifier(ImportSpecifier),
+    /// import local from "source"
     ImportDefaultSpecifier(ImportDefaultSpecifier),
+    /// import * as local from "source"
     ImportNamespaceSpecifier(ImportNamespaceSpecifier),
 }
 
