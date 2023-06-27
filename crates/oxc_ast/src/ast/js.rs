@@ -1,8 +1,7 @@
 use std::fmt;
 
 use oxc_allocator::{Box, Vec};
-use oxc_span::GetSpan;
-use oxc_span::{Atom, SourceType, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
