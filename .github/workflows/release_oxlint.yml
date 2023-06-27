@@ -1,0 +1,165 @@
+name: Release Oxlint
+
+# When main is pushed and npm/oxlint/package.json has been changed,
+# trigger the jobs after the ci workflow has been passed.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - npm/oxlint/package.json # Please only commit this file, so we don't need to wait for test CI to pass.
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # check:
+    # name: Check version
+    # runs-on: ubuntu-latest
+    # outputs:
+      # version: ${{ env.version }}
+      # version_changed: ${{ steps.version.outputs.changed }}
+    # steps:
+      # - uses: actions/checkout@v3
+
+      # - name: Check version changes
+        # uses: EndBug/version-check@v1
+        # id: version
+        # with:
+          # static-checking: localIsNew
+          # file-url: https://unpkg.com/oxlint@latest/package.json
+          # file-name: npm/oxlint/package.json
+
+      # - name: Set version name
+        # if: steps.version.outputs.changed == 'true'
+        # run: |
+          # echo "Version change found! New version: ${{ steps.version.outputs.version }} (${{ steps.version.outputs.version_type }})"
+          # echo "version=${{ steps.version.outputs.version }}" >> $GITHUB_ENV
+
+  build:
+    # needs: check
+    # if: needs.check.outputs.version_changed == 'true'
+    # env:
+      # version: ${{ needs.check.outputs.version }}
+    # outputs:
+      # version: ${{ env.version }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            code-target: win32-x64
+
+          - os: windows-latest
+            target: aarch64-pc-windows-msvc
+            code-target: win32-arm64
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            code-target: linux-x64
+
+          - os: ubuntu-20.04
+            target: aarch64-unknown-linux-gnu
+            code-target: linux-arm64
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            code-target: darwin-x64
+
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            code-target: darwin-arm64
+
+    name: Package ${{ matrix.code-target }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install cross
+        uses: taiki-e/install-action@cross
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release-${{ matrix.target }}
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build with cross
+        run: cross build -p oxc_cli --bin oxlint --release --target=${{ matrix.target }}
+
+      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binary
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          BIN_NAME=oxlint-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxlint.exe $BIN_NAME.exe
+          7z a $BIN_NAME.zip $BIN_NAME.exe
+
+      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binary
+        if: runner.os != 'Windows'
+        run: |
+          BIN_NAME=oxlint-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxlint $BIN_NAME
+          tar czf $BIN_NAME.tar.gz $BIN_NAME
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: binaries
+          path: |
+            *.zip
+            *.tar.gz
+
+  publish:
+    name: Publish
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: binaries
+
+      - name: Unzip
+        uses: montudor/action-zip@v1
+        with:
+          args: unzip -qq *.zip -d .
+
+      - name: Untar
+        run: ls *.gz | xargs -i tar xf {}
+
+      - name: Generate npm packages
+        run: |
+          node npm/oxlint/scripts/generate-packages.mjs
+          cat npm/oxlint/package.json
+          for package in npm/oxlint*; do cat $package/package.json ; echo ; done
+
+      - name: Publish npm packages as latest
+        # NOTE: The trailing slash on $package/ changes it to publishing the directory
+        run: for package in npm/oxlint*; do npm publish $package/ --dry-run --tag latest --access public; done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: oxlint v${{ needs.build.outputs.version }}
+          draft: true
+          files: oxlint-*
+          fail_on_unmatched_files: true
+          generate_release_notes: true

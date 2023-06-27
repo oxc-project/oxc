@@ -6,11 +6,10 @@ mod walk;
 
 use clap::{Arg, Command};
 
-use crate::{lint::lint_command, type_check::type_check_command};
 pub use crate::{
-    lint::{LintOptions, LintRunner, LintRunnerWithModuleTree},
+    lint::{lint_command, LintOptions, LintRunner, LintRunnerWithModuleTree},
     result::CliRunResult,
-    type_check::{TypeCheckOptions, TypeCheckRunner},
+    type_check::{type_check_command, TypeCheckOptions, TypeCheckRunner},
     walk::Walk,
 };
 
@@ -22,7 +21,7 @@ pub fn command() -> Command {
         .about("The JavaScript Oxidation Compiler")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .subcommand(lint_command())
+        .subcommand(lint_command(Command::new("lint").about("Lint this repository.")))
         .subcommand(type_check_command())
         .arg(
             Arg::new("threads")

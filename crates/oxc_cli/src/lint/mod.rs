@@ -99,15 +99,18 @@ impl LintOptions {
 mod test {
     use std::path::PathBuf;
 
+    use clap::Command;
+
     use super::{lint_command, AllowWarnDeny, LintOptions};
 
     #[test]
     fn verify_command() {
-        lint_command().debug_assert();
+        lint_command(Command::new("oxc")).debug_assert();
     }
 
     fn get_lint_options(arg: &str) -> LintOptions {
-        let matches = lint_command().try_get_matches_from(arg.split(' ')).unwrap();
+        let matches =
+            lint_command(Command::new("oxc")).try_get_matches_from(arg.split(' ')).unwrap();
         LintOptions::from(&matches)
     }
 

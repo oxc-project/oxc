@@ -10,6 +10,10 @@ keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
 
+[[bin]]
+name = "oxlint"
+path = "src/lint/main.rs"
+
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 jemallocator = { workspace = true }
 

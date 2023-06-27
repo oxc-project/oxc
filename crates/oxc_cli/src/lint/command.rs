@@ -1,8 +1,7 @@
 use clap::{builder::ValueParser, Arg, ArgAction, Command};
 
-pub fn lint_command() -> Command {
-    Command::new("lint")
-            .about("Lint this repository.")
+pub fn lint_command(command: Command) -> Command {
+    command
             .arg_required_else_help(true)
             .after_help(
                 "To allow or deny a rule, multiple -A <NAME> or -D <NAME>.
