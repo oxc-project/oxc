@@ -1244,7 +1244,6 @@ dependencies = [
  "miette",
  "mimalloc",
  "nodejs-resolver",
- "num_cpus",
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_linter",

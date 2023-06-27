@@ -45,9 +45,9 @@ impl Termination for CliRunResult {
                 max_warnings_exceeded,
             } => {
                 let ms = duration.as_millis();
-                let cpus = num_cpus::get();
+                let threads = rayon::current_num_threads();
                 println!(
-                    "Finished in {ms}ms on {number_of_files} files with {number_of_rules} rules using {cpus} cores."
+                    "Finished in {ms}ms on {number_of_files} files with {number_of_rules} rules using {threads} threads."
                 );
 
                 if max_warnings_exceeded {
