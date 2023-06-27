@@ -49,7 +49,7 @@ declare_oxc_lint!(
     /// eval(someString);
     /// ```
     NoEval,
-    correctness
+    restriction
 );
 
 impl Rule for NoEval {
