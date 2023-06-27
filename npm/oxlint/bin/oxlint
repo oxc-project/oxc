@@ -3,16 +3,16 @@ const { platform, arch, env, version, release } = process;
 
 const PLATFORMS = {
   win32: {
-    x64: "oxlint/win32-x64/oxlint.exe",
-    arm64: "oxlint/win32-arm64/oxlint.exe",
+    x64: "@oxlint/win32-x64/oxlint.exe",
+    arm64: "@oxlint/win32-arm64/oxlint.exe",
   },
   darwin: {
-    x64: "oxlint/darwin-x64/oxlint",
-    arm64: "oxlint/darwin-arm64/oxlint",
+    x64: "@oxlint/darwin-x64/oxlint",
+    arm64: "@oxlint/darwin-arm64/oxlint",
   },
   linux: {
-    x64: "oxlint/linux-x64/oxlint",
-    arm64: "oxlint/linux-arm64/oxlint",
+    x64: "@oxlint/linux-x64/oxlint",
+    arm64: "@oxlint/linux-arm64/oxlint",
   },
 };
 
