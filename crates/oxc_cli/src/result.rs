@@ -46,6 +46,11 @@ impl Termination for CliRunResult {
             } => {
                 let ms = duration.as_millis();
                 let threads = rayon::current_num_threads();
+
+                if number_of_diagnostics > 0 {
+                    println!();
+                }
+
                 println!(
                     "Finished in {ms}ms on {number_of_files} files with {number_of_rules} rules using {threads} threads."
                 );
@@ -68,7 +73,7 @@ impl Termination for CliRunResult {
                 println!("Finished in {ms}ms.");
 
                 if number_of_diagnostics > 0 {
-                    println!("Found {number_of_diagnostics} errors.");
+                    println!("Found {number_of_diagnostics} warnings.");
                     return ExitCode::from(1);
                 }
 
