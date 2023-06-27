@@ -1,6 +1,6 @@
 {
   "name": "oxlint",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Linter for the JavaScript Oxidation Compiler",
   "keywords": [],
   "author": "Boshen and oxc contributors",
