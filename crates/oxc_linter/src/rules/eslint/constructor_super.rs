@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ClassElement, Expression, MethodDefinitionKind, Statement},
+    ast::{Expression, MethodDefinitionKind, Statement},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -46,15 +46,11 @@ declare_oxc_lint!(
 
 impl Rule for ConstructorSuper {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Class(class) = node.kind() else { return };
-        let Some(ctor) = class.body.body.iter().find_map(|el| match el {
-            ClassElement::MethodDefinition(method_definition)
-                if method_definition.kind == MethodDefinitionKind::Constructor =>
-            {
-                Some(method_definition)
-            }
-            _ => None,
-        }) else { return };
+        let (ctor, class) = if let AstKind::MethodDefinition(def) = node.kind()
+            && def.kind == MethodDefinitionKind::Constructor
+            && def.value.body.is_some()
+            && let Some(AstKind::Class(class)) = ctx.nodes().parent_kind(node.id()) {
+            (def, class) } else { return };
 
         // In cases where there's no super-class, calling 'super()' inside the constructor
         // is handled by the parser.
