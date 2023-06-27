@@ -151,7 +151,7 @@ jobs:
 
       - name: Publish npm packages as latest
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
-        run: for package in npm/oxlint*; do npm publish $package/ --dry-run --tag latest --access public; done
+        run: for package in npm/oxlint*; do npm publish $package/ --tag latest --access public; done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
