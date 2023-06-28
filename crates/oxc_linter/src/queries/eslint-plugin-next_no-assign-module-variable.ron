@@ -1,0 +1,24 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    ast_node {
+      ... on AssignmentExpression {
+        left {
+          ... on AssignmentToIdentifier {
+            name @filter(op: "=", value: ["$module"])
+          }
+        }
+        span_: span {
+          start @output
+          end @output
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+      "module": String("module")
+    },
+    reason: "Prevent assignment to the `module` variable."
+)

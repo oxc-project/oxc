@@ -1,0 +1,22 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    ast_node {
+      ... on ObjectExpression {
+        properties {
+          ... on SpreadObjectProperty {
+            span_: span {
+              start @output
+              end @output
+            }
+          }
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+    },
+    reason: "Don't spread into an object literal."
+)

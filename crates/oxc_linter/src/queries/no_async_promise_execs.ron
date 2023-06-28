@@ -1,0 +1,36 @@
+InputQuery (
+    query: r#"
+{
+  File {
+    ast_node {
+      ... on NewExpression {
+        callee {
+          ... on Identifier {
+            name @filter(op: "=", value: ["$Promise"])
+          }
+        }
+
+        arguments {
+          ... on ExpressionArgument {
+            inner_expr {
+              ... on Function {
+                is_async @filter(op: "=", value: ["$true"])
+                
+                span {
+                  span_start: start @output
+                  span_end: end @output
+                }
+              } 
+            }
+          }
+        }
+      }
+    }
+  }
+}"#,
+  args: {
+      "Promise": String("Promise"),
+      "true": Boolean(true)
+  },
+  reason: "no async promise excutors"
+)

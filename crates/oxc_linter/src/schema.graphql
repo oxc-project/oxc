@@ -1,0 +1,814 @@
+schema {
+  query: RootSchemaQuery
+}
+directive @filter(
+  """
+  Name of the filter operation to perform.
+  """
+  op: String!
+  """
+  List of string operands for the operator.
+  """
+  value: [String!]
+) on FIELD | INLINE_FRAGMENT
+directive @tag(
+  """
+  Name to apply to the given property field.
+  """
+  name: String
+) on FIELD
+directive @output(
+  """
+  What to designate the output field generated from this property field.
+  """
+  name: String
+) on FIELD
+directive @optional on FIELD
+directive @recurse(
+  """
+  Recurse up to this many times on this edge. A depth of 1 produces the current
+  vertex and its immediate neighbors along the given edge.
+  """
+  depth: Int!
+) on FIELD
+directive @fold on FIELD
+directive @transform(
+  """
+  Name of the transformation operation to perform.
+  """
+  op: String!
+) on FIELD
+
+"""
+All the possible data types where querying can begin in this API.
+"""
+type RootSchemaQuery {
+  File: File!
+}
+
+type File {
+  ast_node: [ASTNode!]!
+}
+
+################### ModuleDeclaration ###################
+
+"""
+import * as local from "source"
+"""
+type ImportStarSpecifier implements Specifier & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+"""
+import local from "source"
+"""
+type ImportDefaultSpecifier implements Specifier & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+"""
+import {imported as local} from "source"
+import {imported} from "source"
+"""
+type ImportSpecificSpecifier implements Specifier & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+interface Specifier implements HasSpan {
+  # HasSpan
+  span: Span
+}
+
+"""
+import hello from './world.js';
+import * as t from './world.js';
+import {a, b, c} from './world.js';
+import hello, {a,b,c} from './world.js';
+"""
+type ImportDeclaration implements ASTNode & HasSpan {
+  """
+  in "import hello, {a,b,c} from './world.js';"
+  this would return: './world.js'
+  """
+  source: ConstantString!
+
+  """
+  Either this is true or is_type_import is true
+  """
+  is_value_import: Boolean!
+  """
+  Either this is true or is_value_import is true
+  import type { foo } from 'bar'
+  """
+  is_type_import: Boolean!
+
+  specifiers: [Specifier!]!
+
+  # HasSpan
+  span: Span
+}
+
+################### ModuleDeclaration ###################
+
+################### TSSignature ###################
+
+type TSPropertySignature implements TSSignature & ASTNode & HasSpan {
+  is_optional: Boolean!
+
+  """
+  Can be null if this property doesn't have a type.
+  """
+  type_annotation: TSTypeAnnotation
+
+  # HasSpan
+  span: Span
+}
+
+type TSMethodSignature implements TSSignature & ASTNode & HasSpan & FunctionSignature {
+  name: String
+  key: PropertyKey!
+
+  # HasFunctionSignature
+  return_type: TSTypeAnnotation
+
+  # HasFunctionSignature
+  """
+  Inside a function, arguments are called parameters
+  """
+  parameters: [Parameter!]!
+
+  # HasSpan
+  span: Span
+}
+
+interface TSSignature implements HasSpan {
+  # HasSpan
+  span: Span
+}
+################### TSSignature ###################
+
+################### Parameter ###################
+"""
+Parameters with a single name. ie. "function foo(a, b, c){}" has IdentifierParameters for a, b, c
+"""
+type IdentifierParameter implements Parameter & HasIndex {
+  # TODO: provide name span
+  name: String!
+
+  # HasIndex
+  index: Int!
+
+  # HasSpan
+  span: Span
+}
+
+"""
+Inside of a function, the arguments are called parameters
+"""
+interface Parameter implements HasIndex {
+  # HasIndex
+  index: Int!
+
+  # HasSpan
+  span: Span
+}
+################### Parameter ###################
+
+################### Argument ###################
+type ExpressionArgument implements Argument & Expression & HasSpan & HasIndex {
+  # Expression
+  inner_expr: Expression!
+
+  # HasIndex
+  index: Int!
+
+  # HasSpan
+  span: Span
+}
+
+interface Argument implements HasIndex {
+  # HasIndex
+  index: Int!
+}
+################### Argument ###################
+
+interface Operator {
+  is_equality: Boolean!
+  is_bitwise: Boolean!
+  str: String!
+}
+
+interface UnaryOperator {
+  str: String!
+}
+
+"""
+Operators that take 1 argument: +'a', -'a', !'a', ~'a', typeof 'a', delete obj['a'], void 0
+"""
+type UnaryExpression implements ASTNode & Expression & HasSpan {
+  operator: UnaryOperator
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type RegExpLiteral implements RegExp & ASTNode & Expression & HasSpan {
+  # RegExp
+  pattern: String!
+
+  # Expression
+  inner_expr: Expression!
+
+  # TODO: This gives the entire span of a new RegExp("hello"),
+  # maybe we should just give the span ofthe first argument?
+  # HasSpan
+  span: Span
+}
+
+"""
+Can be a RegExpLiteral or a NewExpression that calls the RegExp constructor
+"""
+interface RegExp implements ASTNode & Expression & HasSpan {
+  pattern: String!
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+"""
+Such as "let c = bar;" and "let c = undefined;" the IdentifierReference is bar / undefined.
+"""
+type Identifier implements ASTNode & Expression & HasSpan {
+  name: String!
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type Function implements ASTNode & Expression & HasSpan & FunctionSignature {
+  name: String
+  # HasFunctionSignature
+  return_type: TSTypeAnnotation
+
+  # HasFunctionSignature
+  """
+  Inside a function, arguments are called parameters
+  """
+  parameters: [Parameter!]!
+
+  is_async: Boolean!
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type BinaryExpression implements ASTNode & Expression & HasSpan {
+  left: Expression!
+  right: Expression!
+  both_sides: [Expression!]!
+  operator: Operator!
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type IdentifierPropertyKey implements PropertyKey & HasSpan {
+  # Should this be a Identifier! ?
+  identifier: String!
+  # HasSpan
+  span: Span
+}
+
+interface PropertyKey implements HasSpan {
+  # HasSpan
+  span: Span
+}
+
+type ClassPropertyDefinition implements ASTNode & Expression & HasSpan {
+  key: PropertyKey
+
+  value: Expression!
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+interface ConstantString implements HasSpan {
+  """
+  If this string is constant (StringLiteral) or effectively constant
+  (TemplateLiteral with no expressions), then this will have a value,
+  otherwise it will be null
+  """
+  constant_value: String
+
+  # HasSpan
+  span: Span
+}
+
+type StringASTNode implements ASTNode & HasSpan & ConstantString {
+  """
+  If this string is constant (StringLiteral) or effectively constant
+  (TemplateLiteral with no expressions), then this will have a value,
+  otherwise it will be null
+  """
+  constant_value: String
+
+  # HasSpan
+  span: Span
+}
+
+type StringExpression implements ASTNode & Expression & HasSpan & TSLiteral & ConstantString {
+  """
+  If this string is constant (StringLiteral) or effectively constant
+  (TemplateLiteral with no expressions), then this will have a value,
+  otherwise it will be null
+  """
+  constant_value: String
+
+  # HasSpan
+  span: Span
+
+  # Expression
+  inner_expr: Expression!
+}
+
+interface Expression implements HasSpan {
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type ForInStatement implements ASTNode & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+################### AssignmentType ###################
+type AssignmentOnObject implements AssignmentType & HasSpan & HasFinalAssignment {
+  # HasFinalAssignment
+  final_assignment: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type AssignmentToIdentifier implements AssignmentType & HasSpan {
+  name: String!
+
+  # HasSpan
+  span: Span
+}
+
+# NOT EXPOSED YET
+#"""
+#In, "const [, b] = [1, 2];"
+#the first element is a DestructuringSkipAssignment
+#"""
+# type DestructingSkipAssignment implements AssignmentType & HasSpan {
+#   # HasSpan
+#   span: Span
+# }
+
+# NOT EXPOSED YET
+#"""
+#In, "const [a = 1] = [1];"
+#the "a = 1" is the DestructuredAssignmentPart
+#"""
+#type # interface DestructuredAssignmentPart {
+#   has_default: Boolean!
+#   # HasSpan
+#   span: Span
+# }
+
+"""
+In, "const {a = 1} = z",
+"a = 1" is the DefaultedDestructuringAssignment
+"""
+type DefaultedDestructuringAssignment implements AssignmentType & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+type ObjectDestructingAssignment implements AssignmentType & HasSpan {
+  rest: AssignmentToIdentifier
+  # HasSpan
+  span: Span
+}
+
+type ArrayDestructuringAssignment implements AssignmentType & HasSpan {
+  rest: AssignmentToIdentifier
+  # HasSpan
+  span: Span
+}
+
+interface DestructuringAssignment implements AssignmentType & HasSpan {
+  variables: [AssignmentType!]!
+  # HasSpan
+  span: Span
+}
+
+interface AssignmentType implements HasSpan {
+  # HasSpan
+  span: Span
+}
+################### AssignmentType ###################
+
+interface AssignmentOperator {
+  is_bitwise: Boolean!
+  str: String!
+}
+
+"""
+Anything assignment that is not prefixed by const/var/let.
+ie: "x+=1", "x=1", "x/=1"
+If you need variables that are prefixed by const/var/let see: VariableDeclarations
+"""
+type AssignmentExpression implements ASTNode & Expression & HasSpan & Assignment {
+  # Assignment
+  left: AssignmentType!
+  # Assignment
+  right: Expression!
+  # Assignment
+  operator: AssignmentOperator!
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type VariableDeclaration implements Assignment & HasSpan {
+  # Assignment
+  left: AssignmentType!
+  left_type: TSTypeAnnotation
+  # Assignment
+  right: Expression!
+  # Assignment
+  operator: AssignmentOperator!
+
+  # HasSpan
+  span: Span
+}
+
+"""
+Any variable declared with const/let/var.
+const x = 1
+let y = 'h'
+var z = null
+
+Multiple vars can be defined at once using comma, hence declaration(s).
+"""
+type VariableDeclarations implements ASTNode & HasSpan {
+  """
+  Multiple vars can be defined at once using comma.
+  """
+  declarations: [VariableDeclaration!]!
+  # HasSpan
+  span: Span
+}
+
+interface Assignment {
+  left: AssignmentType!
+  right: Expression!
+  operator: AssignmentOperator!
+}
+
+type PropertyAccess {
+  name: String!
+  span: Span
+}
+
+type ParenthesizedExpression implements ASTNode & Expression & HasSpan {
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type AwaitExpression implements ASTNode & Expression & HasSpan {
+  """
+  Expression being awaited
+  """
+  expression: Expression!
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+"""
+Also known as MemberExpression
+"""
+type FieldAccessOnObject implements ASTNode & Expression & HasSpan & HasFinalAssignment {
+  """
+  If the whole statement is "JSON.stringify()"
+  and the MemberExpression is on stringify,
+  this will return ("stringify", span of stringify)
+  """
+  property_name: PropertyAccess
+
+  # HasFinalAssignment
+  final_assignment: Expression!
+
+  called_on: Expression!
+
+  """
+  This Span will be the full span of the member expression,
+  leading up to the one you want.
+  ie: Object.fromEntries() and you call the span on the fromEntries,
+  you will get the span of "Object.fromEntries"
+
+  if you want just fromEntries look at property_name->span
+  """
+  # HasSpan
+  span: Span
+
+  # Expression
+  inner_expr: Expression!
+}
+
+type CallExpression implements ASTNode & HasSpan & Expression & HasArguments {
+  callee: Expression!
+
+  # HasArguments
+  arguments: [Argument!]!
+
+  # HasSpan
+  span: Span
+
+  # Expression
+  inner_expr: Expression!
+}
+
+interface PossiblyNumber {
+  is_finite: Boolean!
+  is_nan: Boolean!
+  """
+  Nullable if not finite, see is_nan and is_finite
+  """
+  value: Float
+}
+
+type SpreadObjectProperty implements ObjectProperty & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+type SingleObjectProperty implements ObjectProperty & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+interface ObjectProperty implements HasSpan {
+  # HasSpan
+  span: Span
+}
+
+type ObjectExpression implements ASTNode & Expression & HasSpan {
+  properties: [ObjectProperty!]!
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type NumberLiteral implements ASTNode & HasSpan & Expression & TSLiteral {
+  value: PossiblyNumber!
+
+  # HasSpan
+  span: Span
+
+  # Expression
+  inner_expr: Expression!
+}
+
+interface IfStatementOrTernary implements ASTNode & HasSpan {
+  # Conditional
+  test: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+"""
+A ternary operator
+"""
+type ConditionalExpression implements IfStatementOrTernary & ASTNode & HasSpan & Expression {
+  # Conditional
+  test: Expression!
+
+  # HasSpan
+  span: Span
+
+  # Expression
+  inner_expr: Expression!
+}
+
+type IfStatement implements IfStatementOrTernary & ASTNode & HasSpan {
+  # Conditional
+  test: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type ExportDefault implements ASTNode & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+type TSInterfaceDeclaration implements ASTNode & HasSpan {
+  # TODO: Provide name span?
+  name: String!
+  body: [TSSignature!]!
+  # HasSpan
+  span: Span
+}
+
+type TSAny implements TSType & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+interface TSLiteral implements HasSpan { # inherited by NumberLiteral & StringExpression
+  # HasSpan
+  span: Span
+}
+
+# In "type A = a.b.c.d;", the right hand side is a TSIdentifierReference
+type TSQualifiedReference implements TSTypeName & HasSpan {
+  # HasSpan
+  span: Span
+}
+
+# In "type A = a.b.c.d;", the right hand side is a TSIdentifierReference
+type TSIdentifierReference implements TSTypeName & HasSpan {
+  # TODO: Provide name span?
+  name: String!
+
+  # HasSpan
+  span: Span
+}
+
+interface TSTypeName implements HasSpan {
+  # HasSpan
+  span: Span
+}
+
+type TSTypeReference implements ASTNode & TSType & HasSpan {
+  name: TSTypeName
+
+  # HasSpan
+  span: Span
+}
+
+type TSLiteralType implements TSType & HasSpan {
+  expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+type TSUnionType implements TSType & HasSpan {
+  subtypes: [TSType!]!
+  # HasSpan
+  span: Span
+}
+
+interface TSType implements HasSpan {
+  # HasSpan
+  span: Span
+}
+
+type TSTypeAnnotation implements ASTNode & HasSpan {
+  ts_type: TSType!
+
+  # HasSpan
+  span: Span
+}
+
+type NewExpression implements ASTNode & HasSpan & HasArguments {
+  callee: Expression!
+
+  # HasArguments
+  arguments: [Argument!]!
+
+  # HasSpan
+  span: Span
+}
+
+################### JSX ###################
+type JSXClosingElement implements HasSpan {
+  name: JSXElementName!
+
+  # HasSpan
+  span: Span
+}
+
+type JSXElement implements Expression & HasSpan {
+  opening_element: JSXOpeningElement!
+  closing_element: JSXClosingElement
+
+  # Expression
+  inner_expr: Expression!
+
+  # HasSpan
+  span: Span
+}
+
+interface JSXChild implements HasSpan {
+  # HasSpan
+  span: Span
+}
+"""
+<Foo />
+"""
+type JSXSimpleName implements JSXElementName & ASTNode & HasSpan {
+  name: ConstantString!
+
+  # HasSpan
+  span: Span
+}
+
+interface JSXElementName implements HasSpan {
+  # HasSpan
+  span: Span
+}
+
+type JSXOpeningElement implements ASTNode & HasSpan {
+  name: JSXElementName!
+
+  # HasSpan
+  span: Span
+}
+################### JSX ###################
+
+interface ASTNode implements HasSpan {
+  # HasSpan
+  span: Span
+}
+
+interface FunctionSignature implements ASTNode & HasSpan {
+  name: String
+
+  return_type: TSTypeAnnotation
+  # HasArguments
+  parameters: [Parameter!]!
+
+  # HasSpan
+  span: Span
+}
+
+interface HasArguments {
+  arguments: [Argument!]!
+}
+
+interface HasIndex {
+  index: Int!
+}
+
+interface HasFinalAssignment {
+  """
+  When you see a.b.c.d, a will be the final_assignment
+  but if you see ({}).b.c.d, then {} will be the final_assignment
+  """
+  final_assignment: Expression!
+}
+
+interface HasSpan {
+  span: Span
+}
+
+interface Span {
+  start: Int!
+  end: Int!
+}

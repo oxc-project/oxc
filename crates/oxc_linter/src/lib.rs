@@ -9,21 +9,46 @@ mod context;
 mod disable_directives;
 mod fixer;
 mod globals;
+mod lint_adapter;
 pub mod rule;
 mod rules;
 
-use std::{fs, io::Write, rc::Rc};
+use std::{collections::BTreeMap, fs, io::Write, rc::Rc, sync::Arc};
 
-pub use fixer::{FixResult, Fixer, Message};
+pub use fixer::{Fixer, Message};
+use lazy_static::lazy_static;
+use lint_adapter::{InputQuery, LintAdapter};
+use miette::{miette, LabeledSpan};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 use rustc_hash::FxHashMap;
+use trustfall::{execute_query, Schema, TransparentValue};
 
 use crate::context::LintContext;
 pub use crate::{
     rule::RuleCategory,
     rules::{RuleEnum, RULES},
 };
+
+lazy_static! {
+    static ref TRUSTFALL_RULES: Vec<InputQuery> = fs::read_dir("queries")
+        .unwrap()
+        .filter_map(std::result::Result::ok)
+        .filter(|dir_entry| dir_entry.path().is_file())
+        .filter(|f| f.path().as_os_str().to_str().unwrap().ends_with(".ron"))
+        .map(|f| fs::read_to_string(f.path()))
+        .map(std::result::Result::unwrap)
+        .map(|rule| { ron::from_str::<InputQuery>(rule.as_str()).unwrap() })
+        .collect();
+    static ref SCHEMA: Schema = match Schema::parse(fs::read_to_string("./schema.graphql").unwrap())
+    {
+        Ok(schema) => schema,
+        Err(err) => {
+            println!("{}", err);
+            unimplemented!()
+        }
+    };
+}
 
 #[derive(Debug)]
 pub struct Linter {
@@ -87,6 +112,44 @@ impl Linter {
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
                 rule.run(node, &ctx);
+            }
+        }
+
+        let adapter = LintAdapter { semantic: semantic.clone() };
+        let la = Arc::from(adapter);
+        for input_query in TRUSTFALL_RULES.iter() {
+            for data_item in execute_query(
+                &SCHEMA,
+                Arc::clone(&la),
+                input_query.query.as_str(),
+                input_query.args.clone(),
+            )
+            .expect(
+                format!("not a legal query in query: \n\n\n{}", input_query.query.as_str())
+                    .as_str(),
+            )
+            .take(usize::MAX)
+            {
+                let transparent: BTreeMap<_, TransparentValue> =
+                    data_item.into_iter().map(|(k, v)| (k, v.into())).collect();
+                // println!("\n{}", serde_json::to_string_pretty(&transparent).unwrap());
+                ctx.with_rule_name("a rule");
+                let TransparentValue::Uint64(start) = &transparent["span_start"] else {
+                        println!("{:?}", transparent);
+                        unreachable!()
+                    };
+                let TransparentValue::Uint64(end) = &transparent["span_end"] else {
+                        println!("{:?}", transparent);
+                        unreachable!()
+                    };
+                let c = miette!(
+                    labels = vec![LabeledSpan::at(
+                        (*start as usize, (*end - *start) as usize),
+                        input_query.reason.as_str()
+                    )],
+                    "Unexpected error"
+                );
+                ctx.diagnostic(c);
             }
         }
 
