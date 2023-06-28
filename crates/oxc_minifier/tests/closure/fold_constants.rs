@@ -296,11 +296,10 @@ fn test_fold_logical_op() {
 }
 
 #[test]
-#[ignore]
 fn test_fold_logical_op2() {
-    test("x = function(){} && x", "x = x");
-    test("x = true && function(){}", "x = function(){}");
-    test("x = [(function(){alert(x)})()] && x", "x = ([(function(){alert(x)})()],x)");
+    test("x = function(){} && x", "x=x");
+    test("x = true && function(){}", "x=function(){}");
+    test("x = [(function(){alert(x)})()] && x", "x=([function(){alert(x)}()],x)");
 }
 
 #[test]
