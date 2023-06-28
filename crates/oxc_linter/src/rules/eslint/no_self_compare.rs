@@ -37,7 +37,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoSelfCompare,
-    correctness
+    pedantic // The code is not wrong if it is intended to check for NaNs, which is the majority of
+             // the case.
 );
 
 impl Rule for NoSelfCompare {
