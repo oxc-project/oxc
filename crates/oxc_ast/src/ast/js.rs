@@ -1236,9 +1236,16 @@ pub struct BindingPattern<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum BindingPatternKind<'a> {
+    /// const a = 1
     BindingIdentifier(Box<'a, BindingIdentifier>),
+    /// const {a} = 1
     ObjectPattern(Box<'a, ObjectPattern<'a>>),
+    /// const [a] = 1
     ArrayPattern(Box<'a, ArrayPattern<'a>>),
+    /// A defaulted binding pattern, ie:
+    /// const {a = 1} = 1
+    /// the assignment pattern is a = 1
+    /// it has an inner left that has a BindingIdentifier
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>),
 }
 
