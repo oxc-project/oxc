@@ -30,6 +30,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_empty,
     eslint::no_empty_pattern,
     eslint::no_eval,
+    eslint::no_ex_assign,
     eslint::no_func_assign,
     eslint::no_mixed_operators,
     eslint::no_new_symbol,
