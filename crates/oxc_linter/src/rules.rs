@@ -14,6 +14,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::getter_return,
     eslint::no_array_constructor,
     eslint::no_async_promise_executor,
+    eslint::no_case_declarations,
     eslint::no_bitwise,
     eslint::no_caller,
     eslint::no_class_assign,
