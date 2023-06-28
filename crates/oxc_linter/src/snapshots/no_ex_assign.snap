@@ -1,0 +1,35 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_ex_assign
+---
+  ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
+   ╭─[no_ex_assign.tsx:1:1]
+ 1 │ try { } catch (e) { e = 10; }
+   ·                     ─
+   ╰────
+
+  ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
+   ╭─[no_ex_assign.tsx:1:1]
+ 1 │ try { } catch (ex) { ex = 10; }
+   ·                      ──
+   ╰────
+
+  ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
+   ╭─[no_ex_assign.tsx:1:1]
+ 1 │ try { } catch (ex) { [ex] = []; }
+   ·                       ──
+   ╰────
+
+  ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
+   ╭─[no_ex_assign.tsx:1:1]
+ 1 │ try { } catch (ex) { ({x: ex = 0} = {}); }
+   ·                           ──
+   ╰────
+
+  ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
+   ╭─[no_ex_assign.tsx:1:1]
+ 1 │ try { } catch ({message}) { message = 10; }
+   ·                             ───────
+   ╰────
+
+
