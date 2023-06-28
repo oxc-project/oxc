@@ -135,7 +135,7 @@ impl<'a> Compressor<'a> {
             },
             Expression::LogicalExpression(logic_expr) => match logic_expr.operator {
                 LogicalOperator::And | LogicalOperator::Or => {
-                    self.try_fold_and_or(logic_expr.span, logic_expr.operator, logic_expr)
+                    self.try_fold_and_or(logic_expr.operator, logic_expr)
                 }
                 LogicalOperator::Coalesce => None,
             },
@@ -591,7 +591,6 @@ impl<'a> Compressor<'a> {
     /// Try to fold a AND/OR node.
     fn try_fold_and_or(
         &mut self,
-        _span: Span,
         op: LogicalOperator,
         logic_expr: &mut LogicalExpression<'a>,
     ) -> Option<Expression<'a>> {
