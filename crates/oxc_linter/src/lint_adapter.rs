@@ -139,6 +139,15 @@ macro_rules! coerce_ast_or_x {
     };
 }
 
+macro_rules! coerce_ast {
+    ($contexts:ident, $typed:ident) => {
+        resolve_coercion_with($contexts, |v| match v {
+            Vertex::AstNode(node) => matches!(node.kind(), AstKind::$typed(..)),
+            _ => false,
+        })
+    };
+}
+
 macro_rules! get_ast_or_x_or_y {
     ($v:ident, $x:ident, $y:ident, $typed:ident) => {
         match $v {
@@ -1029,23 +1038,18 @@ impl<'a> Adapter<'a> for LintAdapter<'a> {
         _resolve_info: &ResolveInfo,
     ) -> ContextOutcomeIterator<'a, Self::Vertex, bool> {
         match coerce_to_type.as_ref() {
-            "NewExpression" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_ast_node().unwrap().kind(), AstKind::NewExpression(_))
-            }),
-            "ExpressionArgument" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_argument().unwrap().0, Argument::Expression(_))
-            }),
+            "NewExpression" => coerce_ast!(contexts, NewExpression),
+            "ExpressionArgument" => resolve_coercion_with(
+                contexts,
+                |v| matches!(v, Vertex::Argument(arg, _) if matches!(arg, Argument::Expression(_))),
+            ),
             "Function" => resolve_coercion_with(contexts, Vertex::function_coercion),
             "AssignmentExpression" => coerce_ast_or_x!(contexts, Expression, AssignmentExpression),
             "ConditionalExpression" => {
                 coerce_ast_or_x!(contexts, Expression, ConditionalExpression)
             }
-            "IfStatement" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_ast_node().unwrap().kind(), AstKind::IfStatement(_))
-            }),
-            "ForInStatement" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_ast_node().unwrap().kind(), AstKind::ForInStatement(_))
-            }),
+            "IfStatement" => coerce_ast!(contexts, IfStatement),
+            "ForInStatement" => coerce_ast!(contexts, ForInStatement),
             "AssignmentToIdentifier" => resolve_coercion_with(contexts, |v| {
                 matches!(v, Vertex::AssignmentToIdentifier(_, _))
             }),
@@ -1073,16 +1077,15 @@ impl<'a> Adapter<'a> for LintAdapter<'a> {
             "UnaryExpression" => coerce_ast_or_x!(contexts, Expression, UnaryExpression),
             "RegExp" => resolve_coercion_with(contexts, Vertex::regexp_resolve_coercion),
             "RegExpLiteral" => coerce_ast_or_x!(contexts, Expression, RegExpLiteral),
-            "ClassPropertyDefinition" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_ast_node().unwrap().kind(), AstKind::PropertyDefinition(_))
-            }),
+            "ClassPropertyDefinition" => coerce_ast!(contexts, PropertyDefinition),
             "ExportDefault" => resolve_coercion_with(
                 contexts,
-                |v| matches!(v.as_ast_node().unwrap().kind(), AstKind::ModuleDeclaration(md) if matches!(md, ModuleDeclaration::ExportDefaultDeclaration(_))),
+                |v| matches!(v, Vertex::AstNode(node) if matches!(node.kind(), AstKind::ModuleDeclaration(md) if matches!(md, ModuleDeclaration::ExportDefaultDeclaration(_)))),
             ),
-            "IdentifierPropertyKey" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_property_key().unwrap(), PropertyKey::Identifier(_))
-            }),
+            "IdentifierPropertyKey" => resolve_coercion_with(
+                contexts,
+                |v| matches!(v, Vertex::PropertyKey(pk) if matches!(pk, PropertyKey::Identifier(_))),
+            ),
             "StringASTNode" | "StringExpression" | "ConstantString" => {
                 resolve_coercion_with(contexts, Vertex::string_resolve_coercion)
             }
@@ -1095,14 +1098,13 @@ impl<'a> Adapter<'a> for LintAdapter<'a> {
             "TSAny" => coerce_ast_or_x!(contexts, TSType, TSAnyKeyword),
             "TSLiteralType" => coerce_ast_or_x!(contexts, TSType, TSLiteralType),
             "TSUnionType" => coerce_ast_or_x!(contexts, TSType, TSUnionType),
-            "TSInterfaceDeclaration" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_ast_node().unwrap().kind(), AstKind::TSInterfaceDeclaration(_))
-            }),
+            "TSInterfaceDeclaration" => coerce_ast!(contexts, TSInterfaceDeclaration),
             "TSPropertySignature" => coerce_ast_or_x!(contexts, TSSignature, TSPropertySignature),
             "TSMethodSignature" => coerce_ast_or_x!(contexts, TSSignature, TSMethodSignature),
-            "IdentifierParameter" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_parameter().unwrap().0, BindingPatternKind::BindingIdentifier(_))
-            }),
+            "IdentifierParameter" => resolve_coercion_with(
+                contexts,
+                |v| matches!(v, Vertex::Parameter(param, _) if matches!(param, BindingPatternKind::BindingIdentifier(_))),
+            ),
             "TSTypeReference" => coerce_ast_or_x!(contexts, TSType, TSTypeReference),
             "TSIdentifierReference" => resolve_coercion_with(contexts, |v| match *v {
                 Vertex::TSType(tst) if matches!(tst, TSType::TSTypeReference(tsr) if matches!(tsr.type_name, TSTypeName::IdentifierName(..))) => {
@@ -1120,10 +1122,10 @@ impl<'a> Adapter<'a> for LintAdapter<'a> {
                 Vertex::function_coercion(v)
                     || coerce_ast_or_x_match!(v, TSSignature, TSMethodSignature)
             }),
-            "ImportDeclaration" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_ast_node().unwrap().kind(), AstKind::ModuleDeclaration(md)
-                    if matches!(md, ModuleDeclaration::ImportDeclaration(_)))
-            }),
+            "ImportDeclaration" => resolve_coercion_with(
+                contexts,
+                |v| matches!(v, Vertex::AstNode(node) if matches!(node.kind(), AstKind::ModuleDeclaration(md) if matches!(md, ModuleDeclaration::ImportDeclaration(_)))),
+            ),
             "ImportStarSpecifier" => resolve_coercion_with(contexts, |v| {
                 let import_specifier = v.as_import_specifier();
                 let Some(import_specifier) = import_specifier else {return false};
@@ -1139,15 +1141,15 @@ impl<'a> Adapter<'a> for LintAdapter<'a> {
                 let Some(import_specifier) = import_specifier else {return false};
                 matches!(import_specifier, ImportDeclarationSpecifier::ImportSpecifier(_))
             }),
-            "JSXOpeningElement" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_ast_node().unwrap().kind(), AstKind::JSXOpeningElement(_))
-            }),
-            "JSXSimpleName" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_jsx_element_name().unwrap(), JSXElementName::Identifier(_))
-            }),
-            "JSXElement" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_expression().unwrap(), Expression::JSXElement(_))
-            }),
+            "JSXOpeningElement" => coerce_ast!(contexts, JSXOpeningElement),
+            "JSXSimpleName" => resolve_coercion_with(
+                contexts,
+                |v| matches!(v, Vertex::JsxElementName(op) if matches!(op, JSXElementName::Identifier(_))),
+            ),
+            "JSXElement" => resolve_coercion_with(
+                contexts,
+                |v| matches!(v, Vertex::Expression(op) if matches!(op, Expression::JSXElement(_))),
+            ),
             "ArrayDestructuringAssignment" => resolve_coercion_with(contexts, |v| match v {
                 Vertex::DestructuringAssignment(da) => match da {
                     DestructuringAssignment::AssignmentExpression(
@@ -1162,15 +1164,15 @@ impl<'a> Adapter<'a> for LintAdapter<'a> {
                 Vertex::DestructuringAssignment(_) => true,
                 _ => false,
             }),
-            "SingleObjectProperty" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_object_property().unwrap(), ObjectPropertyKind::ObjectProperty(_))
-            }),
-            "SpreadObjectProperty" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_object_property().unwrap(), ObjectPropertyKind::SpreadProperty(_))
-            }),
-            "VariableDeclarations" => resolve_coercion_with(contexts, |v| {
-                matches!(v.as_ast_node().unwrap().kind(), AstKind::VariableDeclaration(_))
-            }),
+            "SingleObjectProperty" => resolve_coercion_with(
+                contexts,
+                |v| matches!(v, Vertex::ObjectProperty(op) if matches!(op, ObjectPropertyKind::ObjectProperty(_))),
+            ),
+            "SpreadObjectProperty" => resolve_coercion_with(
+                contexts,
+                |v| matches!(v, Vertex::ObjectProperty(op) if matches!(op, ObjectPropertyKind::SpreadProperty(_))),
+            ),
+            "VariableDeclarations" => coerce_ast!(contexts, VariableDeclaration),
             "VariableDeclaration" => {
                 resolve_coercion_with(contexts, |v| matches!(v, Vertex::VariableDeclaration(_)))
             }
