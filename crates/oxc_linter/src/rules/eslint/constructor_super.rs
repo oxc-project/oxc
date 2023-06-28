@@ -41,7 +41,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     ConstructorSuper,
-    correctness
+    nursery // This rule should be implemented with CFG, the current implementation has a lot of
+            // false positives.
 );
 
 impl Rule for ConstructorSuper {
