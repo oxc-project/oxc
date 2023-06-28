@@ -54,12 +54,8 @@ To initialize all the required tools, run
 just init
 ```
 
-This installs:
-
-* `cargo nextest`, a faster test runner compared to `cargo test`
-* `cargo watch`, for watching and running commands
-* `cargo insta`, for snapshot testing
-
 ## Commands
 
 Run `just` for the list of available commands.
+
+Checkout `just new-rule` if you need to start writing a new linter rule from ESLint.
