@@ -92,6 +92,7 @@ impl Linter {
 
         for symbol in semantic.symbols().iter() {
             for rule in &self.rules {
+                ctx.with_rule_name(rule.name());
                 rule.run_on_symbol(symbol, &ctx);
             }
         }

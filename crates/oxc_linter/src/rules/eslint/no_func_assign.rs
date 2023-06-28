@@ -12,11 +12,7 @@ use crate::{context::LintContext, rule::Rule};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-func-assign): '{0}' is a function.")]
 #[diagnostic(severity(warning))]
-struct NoFuncAssignDiagnostic(
-    Atom,
-    #[label("function {0} is declared here")] pub Span,
-    #[label("{0} is re-assigned here")] pub Span,
-);
+struct NoFuncAssignDiagnostic(Atom, #[label("{0} is re-assigned here")] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoFuncAssign;
@@ -48,7 +44,6 @@ impl Rule for NoFuncAssign {
                 if reference.is_write() {
                     ctx.diagnostic(NoFuncAssignDiagnostic(
                         symbol_table.get_name(symbol_id).clone(),
-                        symbol_table.get_span(symbol_id),
                         reference.span(),
                     ));
                 }
