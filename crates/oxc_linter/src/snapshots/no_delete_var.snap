@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_delete_var
+---
+  ⚠ eslint(no-delete-var): variables should not be deleted
+   ╭─[no_delete_var.tsx:1:1]
+ 1 │ delete x
+   · ────────
+   ╰────
+
+
