@@ -348,3 +348,12 @@ impl<'a> GetSpan for JSXChild<'a> {
         }
     }
 }
+
+impl<'a> GetSpan for AssignmentTargetPattern<'a> {
+    fn span(&self) -> Span {
+        match &self {
+            Self::ArrayAssignmentTarget(x) => x.span,
+            Self::ObjectAssignmentTarget(x) => x.span,
+        }
+    }
+}
