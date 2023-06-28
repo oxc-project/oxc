@@ -346,8 +346,7 @@ impl<'a> Parser<'a> {
     ///     ,
     ///    Elision ,
     pub(crate) fn parse_elision(&mut self) -> ArrayExpressionElement<'a> {
-        let span = self.start_span();
-        ArrayExpressionElement::Elision(self.end_span(span))
+        ArrayExpressionElement::Elision(self.cur_token().span())
     }
 
     /// Section [Template Literal](https://tc39.es/ecma262/#prod-TemplateLiteral)
