@@ -13,7 +13,7 @@ mod lint_adapter;
 pub mod rule;
 mod rules;
 
-use std::{collections::BTreeMap, fs, io::Write, rc::Rc, sync::Arc};
+use std::{fs, io::Write, rc::Rc, sync::Arc};
 
 pub use fixer::{FixResult, Fixer, Message};
 use lazy_static::lazy_static;
@@ -22,7 +22,7 @@ use oxc_diagnostics::miette::{miette, LabeledSpan};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 use rustc_hash::FxHashMap;
-use trustfall::{execute_query, Schema, TransparentValue};
+use trustfall::{execute_query, Schema, TryIntoStruct};
 
 use crate::context::LintContext;
 pub use crate::{
@@ -40,14 +40,15 @@ lazy_static! {
         .map(std::result::Result::unwrap)
         .map(|rule| { ron::from_str::<InputQuery>(rule.as_str()).unwrap() })
         .collect();
-    static ref SCHEMA: Schema = match Schema::parse(fs::read_to_string("./schema.graphql").unwrap())
-    {
-        Ok(schema) => schema,
-        Err(err) => {
-            println!("{}", err);
-            unimplemented!()
-        }
-    };
+    static ref SCHEMA: Schema =
+        Schema::parse(fs::read_to_string("./schema.graphql").expect("failed to read schema file"))
+            .expect("schema file failed to parse");
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct SpanInfo {
+    span_start: u64,
+    span_end: u64,
 }
 
 #[derive(Debug)]
@@ -115,36 +116,30 @@ impl Linter {
             }
         }
 
-        let adapter = LintAdapter { semantic: semantic.clone() };
-        let la = Arc::from(adapter);
+        let adapter = Arc::from(LintAdapter { semantic: semantic.clone() });
         for input_query in TRUSTFALL_RULES.iter() {
             for data_item in execute_query(
                 &SCHEMA,
-                Arc::clone(&la),
-                input_query.query.as_str(),
+                Arc::clone(&adapter),
+                &input_query.query,
                 input_query.args.clone(),
             )
             .expect(
                 format!("not a legal query in query: \n\n\n{}", input_query.query.as_str())
                     .as_str(),
             )
+            .map(|v| {
+                v.try_into_struct::<SpanInfo>().expect(
+                    "Could not deserialize query results into SpanInfo{span_start, span_end}",
+                )
+            })
             .take(usize::MAX)
             {
-                let transparent: BTreeMap<_, TransparentValue> =
-                    data_item.into_iter().map(|(k, v)| (k, v.into())).collect();
-                // println!("\n{}", serde_json::to_string_pretty(&transparent).unwrap());
                 ctx.with_rule_name("a rule");
-                let TransparentValue::Uint64(start) = &transparent["span_start"] else {
-                        println!("{:?}", transparent);
-                        unreachable!()
-                    };
-                let TransparentValue::Uint64(end) = &transparent["span_end"] else {
-                        println!("{:?}", transparent);
-                        unreachable!()
-                    };
+                let SpanInfo { span_start: start, span_end: end } = data_item;
                 let c = miette!(
                     labels = vec![LabeledSpan::at(
-                        (*start as usize, (*end - *start) as usize),
+                        (start as usize, (end - start) as usize),
                         input_query.reason.as_str()
                     )],
                     "Unexpected error"
