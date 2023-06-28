@@ -15,10 +15,10 @@ mod rules;
 
 use std::{collections::BTreeMap, fs, io::Write, rc::Rc, sync::Arc};
 
-pub use fixer::{Fixer, Message};
+pub use fixer::{FixResult, Fixer, Message};
 use lazy_static::lazy_static;
 use lint_adapter::{InputQuery, LintAdapter};
-use miette::{miette, LabeledSpan};
+use oxc_diagnostics::miette::{miette, LabeledSpan};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
 use rustc_hash::FxHashMap;
