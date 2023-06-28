@@ -1277,6 +1277,12 @@ pub struct ObjectPattern<'a> {
     pub rest: Option<Box<'a, RestElement<'a>>>,
 }
 
+impl<'a> ObjectPattern<'a> {
+    pub fn is_empty(&self) -> bool {
+        self.properties.is_empty() && self.rest.is_none()
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BindingProperty<'a> {
@@ -1295,6 +1301,12 @@ pub struct ArrayPattern<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
     pub rest: Option<Box<'a, RestElement<'a>>>,
+}
+
+impl<'a> ArrayPattern<'a> {
+    pub fn is_empty(&self) -> bool {
+        self.elements.is_empty() && self.rest.is_none()
+    }
 }
 
 #[derive(Debug, Hash)]
