@@ -208,6 +208,7 @@ macro_rules! once_vertex_iter_if_some {
 
 impl<'a> LintAdapter<'a> {
     fn get_ast_node_iter(&self) -> VertexIterator<'a, Vertex<'a>> {
+        // TODO: Stop cloning this and instead just use iter. Then, remove the pub from nodes
         Box::new(self.semantic.nodes().nodes.clone().into_iter().map(|v| Vertex::AstNode(v)))
     }
 }

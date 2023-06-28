@@ -31,6 +31,8 @@ pub use crate::{
 };
 
 lazy_static! {
+    // TODO: Figure out a way to make this work with wasm
+    // TODO: Testing infra?
     static ref TRUSTFALL_RULES: Vec<InputQuery> = fs::read_dir("queries")
         .unwrap()
         .filter_map(std::result::Result::ok)
@@ -40,6 +42,7 @@ lazy_static! {
         .map(std::result::Result::unwrap)
         .map(|rule| { ron::from_str::<InputQuery>(rule.as_str()).unwrap() })
         .collect();
+    // TODO: We can include the schema in the binary, it will never change
     static ref SCHEMA: Schema =
         Schema::parse(fs::read_to_string("./schema.graphql").expect("failed to read schema file"))
             .expect("schema file failed to parse");
@@ -137,6 +140,7 @@ impl Linter {
             {
                 ctx.with_rule_name("a rule");
                 let SpanInfo { span_start: start, span_end: end } = data_item;
+                // TODO: this isn't how we do this at all, need to make this consistent with the project's miette style
                 let c = miette!(
                     labels = vec![LabeledSpan::at(
                         (start as usize, (end - start) as usize),
