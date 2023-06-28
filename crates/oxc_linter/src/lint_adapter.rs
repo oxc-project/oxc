@@ -62,7 +62,6 @@ pub enum Vertex<'a> {
     DestructuringAssignment(DestructuringAssignment<'a>),
 
     File(Rc<AstNodeIterator<'a>>),
-    // Comment(u32, u32, &'a str), // span_start, span_end, comment
 }
 
 #[derive(Debug, Clone)]
@@ -96,7 +95,6 @@ impl std::fmt::Debug for AstNodeIterator<'_> {
 
 impl<'a> Clone for AstNodeIterator<'a> {
     fn clone(&self) -> Self {
-        println!("cloning AstNodeIterator");
         Self { iter: None.into() }
     }
 }
@@ -226,7 +224,7 @@ fn solve_member_expr_for_lowest<'a>(object: &'a Expression<'a>) -> &'a Expressio
 
 fn formal_parameters_to_iter<'a>(
     params: &'a FormalParameters<'a>,
-) -> Box<dyn Iterator<Item = Vertex<'a>> + 'a> {
+) -> VertexIterator<'a, Vertex<'a>> {
     Box::new(
         params
             .items
@@ -261,32 +259,6 @@ fn assignment_target_to_vertex<'a>(at: &'a AssignmentTarget<'a>) -> Vertex<'a> {
     }
 }
 
-// impl From<&AssignmentTargetPattern<'_>> for Vertex<'_> {
-//     fn from(ap: &AssignmentTargetPattern) -> Self {
-//         Vertex::DestructuringAssignment(DestructuringAssignment::AssignmentExpression(ap))
-//     }
-// }
-
-// impl From<&ArrayPattern<'_>> for Vertex<'_> {
-//     fn from(ap: &ArrayPattern) -> Self {
-//         Vertex::DestructuringAssignment(DestructuringAssignment::ArrayPattern(ap))
-//     }
-// }
-
-// impl From<&ObjectPattern<'_>> for Vertex<'_> {
-//     fn from(ap: &ObjectPattern) -> Self {
-//         Vertex::DestructuringAssignment(DestructuringAssignment::ObjectPattern(ap))
-//     }
-// }
-
-// impl From<&AssignmentPattern<'_>> for Vertex<'_> {
-//     fn from(ap: &AssignmentPattern) -> Self {
-//         Vertex::DestructuringAssignment(DestructuringAssignment::DefaultedDestructuringAssignment(
-//             ap,
-//         ))
-//     }
-// }
-
 fn binding_pattern_kind_to_vertex<'a>(bpk: &'a BindingPatternKind<'a>) -> Vertex<'a> {
     match bpk {
         BindingPatternKind::BindingIdentifier(id) => {
@@ -316,7 +288,7 @@ impl<'a> Vertex<'a> {
         }
     }
 
-    fn ts_type_annotation_type_annotation(&self) -> Box<dyn Iterator<Item = Vertex<'a>> + 'a> {
+    fn ts_type_annotation_type_annotation(&self) -> VertexIterator<'a, Vertex<'a>> {
         Box::new(std::iter::once(Vertex::TSType(match self {
             Vertex::TSTypeAnnotation(tsta) => &tsta.type_annotation,
             Vertex::AstNode(ast) => match ast.kind() {
@@ -358,7 +330,7 @@ impl<'a> Vertex<'a> {
         .into()
     }
 
-    fn function_signature_arguments(&self) -> Box<dyn Iterator<Item = Vertex<'a>> + 'a> {
+    fn function_signature_arguments(&self) -> VertexIterator<'a, Vertex<'a>> {
         formal_parameters_to_iter(
             &match self {
                 Vertex::Expression(expr) => match expr {
@@ -382,7 +354,7 @@ impl<'a> Vertex<'a> {
         )
     }
 
-    fn function_signature_return_type(&self) -> Box<dyn Iterator<Item = Vertex<'a>> + 'a> {
+    fn function_signature_return_type(&self) -> VertexIterator<'a, Vertex<'a>> {
         let return_type = &match self {
             Vertex::Expression(expr) => match expr {
                 Expression::FunctionExpression(fe) => &fe.0.return_type,
@@ -526,7 +498,7 @@ impl<'a> Vertex<'a> {
         }
     }
 
-    fn get_span_from_ast_node(&self) -> Box<dyn Iterator<Item = Vertex<'a>> + 'a> {
+    fn get_span_from_ast_node(&self) -> VertexIterator<'a, Vertex<'a>> {
         Box::new(std::iter::once(Vertex::Span(match self {
             Vertex::AstNode(ast) => ast.kind().span(),
             Vertex::Expression(expr) => expr.span(),
