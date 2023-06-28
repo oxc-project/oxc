@@ -13,8 +13,24 @@ define_index_type! {
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct NodeFlags: u8 {
-        const JSDoc = 1 << 0; // If the Node has a JSDoc comment attached
-        const Class = 1 << 1; // If Node is inside a class
+        const JSDoc    = 1 << 0; // If the Node has a JSDoc comment attached
+        const Class    = 1 << 1; // If Node is inside a class
+        const HasYield = 1 << 2; // If function has yield statement
+
+    }
+}
+
+impl NodeFlags {
+    pub fn has_jsdoc(&self) -> bool {
+        self.contains(Self::JSDoc)
+    }
+
+    pub fn has_class(&self) -> bool {
+        self.contains(Self::Class)
+    }
+
+    pub fn has_yield(&self) -> bool {
+        self.contains(Self::HasYield)
     }
 }
 
@@ -48,17 +64,17 @@ impl<'a> AstNode<'a> {
         self.scope_id
     }
 
+    pub fn flags(&self) -> NodeFlags {
+        self.flags
+    }
+
+    pub fn flags_mut(&mut self) -> &mut NodeFlags {
+        &mut self.flags
+    }
+
     pub fn strict_mode(&self, flags: ScopeFlags) -> bool {
         // All parts of a ClassDeclaration or a ClassExpression are strict mode code.
-        flags.is_strict_mode() || self.in_class()
-    }
-
-    pub fn in_class(self) -> bool {
-        self.flags.contains(NodeFlags::Class)
-    }
-
-    pub fn has_jsdoc(&self) -> bool {
-        self.flags.contains(NodeFlags::JSDoc)
+        flags.is_strict_mode() || self.flags.has_class()
     }
 }
 
@@ -92,6 +108,10 @@ impl<'a> AstNodes<'a> {
 
     pub fn get_node(&self, ast_node_id: AstNodeId) -> &AstNode<'a> {
         &self.nodes[ast_node_id]
+    }
+
+    pub fn get_node_mut(&mut self, ast_node_id: AstNodeId) -> &mut AstNode<'a> {
+        &mut self.nodes[ast_node_id]
     }
 
     pub fn ancestors(&self, ast_node_id: AstNodeId) -> impl Iterator<Item = AstNodeId> + '_ {

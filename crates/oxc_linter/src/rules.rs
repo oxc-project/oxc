@@ -38,6 +38,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_shadow_restricted_names,
     eslint::no_unsafe_negation,
     eslint::no_unused_labels,
+    eslint::require_yield,
     eslint::use_isnan,
     eslint::valid_typeof,
     typescript::isolated_declaration
