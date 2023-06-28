@@ -69,7 +69,7 @@ impl Rule for NoDupeArgs {
         if let AstKind::Function(stmt) = node.kind() {
 
             if has_dupe_args(stmt) {
-                ctx.diagnostic(NoDupeArgsDiagnostic(stmt.span));
+                ctx.diagnostic(NoDupeArgsDiagnostic(stmt.params.span));
             }
         }
     }
