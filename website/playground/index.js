@@ -51,6 +51,22 @@ export default DummyComponent
 
 const STORAGE_KEY_CODE = "playground.code"; 
 
+const getCodeFromStorage = () => {
+  try {
+    return localStorage.getItem(STORAGE_KEY_CODE);
+  }catch(_e) {
+    return "";
+  }
+}
+
+const setCodeToStorage = (code) => {
+  try {
+    localStorage.setItem(STORAGE_KEY_CODE, code);
+  }catch(_e) {
+    return;
+  }
+}
+
 class Playground {
   oxc;
 
@@ -364,7 +380,7 @@ class URLParams {
     this.params = new URLSearchParams(window.location.search);
     this.code = this.params.has("code")
       ? this.decodeCode(this.params.get("code"))
-      : localStorage.getItem(STORAGE_KEY_CODE);
+      : getCodeFromStorage();
   }
 
   updateCode = throttle(
@@ -375,7 +391,7 @@ class URLParams {
         window.location.pathname
       }?${this.params.toString()}`;
       window.history.replaceState({ path: url }, "", url);
-      localStorage.setItem(STORAGE_KEY_CODE, code);
+      setCodeToStorage(code);
     },
     URLParams.URL_UPDATE_THROTTLE,
     { trailing: true }
