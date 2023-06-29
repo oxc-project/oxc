@@ -15,8 +15,8 @@ use oxc_span::{SourceType, Span};
 
 // Instruction:
 // create a `test.js`,
-// run `OXC_PLUGIN=1 cargo run -p oxc_linter --example plugin`
-// or `OXC_PLUGIN=1 cargo watch -x "run -p oxc_linter --example plugin"`
+// run `OXC_PLUGIN=./crates/oxc_linter/examples/queries cargo run -p oxc_linter --example plugin`
+// or `OXC_PLUGIN=./crates/oxc_linter/examples/queries cargo watch -x "run -p oxc_linter --example plugin"`
 
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
