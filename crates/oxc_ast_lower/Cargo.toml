@@ -20,7 +20,7 @@ oxc_semantic  = { workspace = true }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 stacker = { workspace = true }
 
-[dev_dependencies]
+[dev-dependencies]
 oxc_allocator = { workspace = true }
 oxc_parser    = { workspace = true }
 oxc_hir       = { workspace = true, features = ["serde"] }

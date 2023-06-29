@@ -21,6 +21,6 @@ rustc-hash = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
 indexmap   = { workspace = true }
 
-[dev_dependencies]
+[dev-dependencies]
 oxc_parser    = { workspace = true }
 oxc_allocator = { workspace = true }
