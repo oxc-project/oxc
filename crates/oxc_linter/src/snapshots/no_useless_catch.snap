@@ -1,0 +1,58 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_useless_catch
+---
+  ⚠ eslint(no-useless-catch): Unnecessary try/catch wrapper
+   ╭─[no_useless_catch.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶         try {
+ 3 │ │             foo();
+ 4 │ │           } catch (err) {
+ 5 │ │             throw err;
+ 6 │ ╰─▶         }
+ 7 │           
+   ╰────
+
+  ⚠ eslint(no-useless-catch): Unnecessary catch clause
+   ╭─[no_useless_catch.tsx:3:1]
+ 3 │               foo();
+ 4 │ ╭─▶         } catch (err) {
+ 5 │ │             throw err;
+ 6 │ ╰─▶         } finally {
+ 7 │               foo();
+   ╰────
+
+  ⚠ eslint(no-useless-catch): Unnecessary try/catch wrapper
+   ╭─[no_useless_catch.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶         try {
+ 3 │ │             foo();
+ 4 │ │           } catch (err) {
+ 5 │ │             /* some comment */
+ 6 │ │             throw err;
+ 7 │ ╰─▶         }
+ 8 │           
+   ╰────
+
+  ⚠ eslint(no-useless-catch): Unnecessary catch clause
+   ╭─[no_useless_catch.tsx:3:1]
+ 3 │               foo();
+ 4 │ ╭─▶         } catch (err) {
+ 5 │ │             /* some comment */
+ 6 │ │             throw err;
+ 7 │ ╰─▶         } finally {
+ 8 │               foo();
+   ╰────
+
+  ⚠ eslint(no-useless-catch): Unnecessary try/catch wrapper
+   ╭─[no_useless_catch.tsx:2:1]
+ 2 │             async () => {
+ 3 │ ╭─▶           try {
+ 4 │ │               await doSomething();
+ 5 │ │             } catch (e) {
+ 6 │ │               throw e;
+ 7 │ ╰─▶           }
+ 8 │             }
+   ╰────
+
+
