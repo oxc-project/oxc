@@ -1236,9 +1236,16 @@ pub struct BindingPattern<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum BindingPatternKind<'a> {
+    /// const a = 1
     BindingIdentifier(Box<'a, BindingIdentifier>),
+    /// const {a} = 1
     ObjectPattern(Box<'a, ObjectPattern<'a>>),
+    /// const [a] = 1
     ArrayPattern(Box<'a, ArrayPattern<'a>>),
+    /// A defaulted binding pattern, ie:
+    /// const {a = 1} = 1
+    /// the assignment pattern is a = 1
+    /// it has an inner left that has a BindingIdentifier
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>),
 }
 
@@ -1270,6 +1277,12 @@ pub struct ObjectPattern<'a> {
     pub rest: Option<Box<'a, RestElement<'a>>>,
 }
 
+impl<'a> ObjectPattern<'a> {
+    pub fn is_empty(&self) -> bool {
+        self.properties.is_empty() && self.rest.is_none()
+    }
+}
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct BindingProperty<'a> {
@@ -1288,6 +1301,12 @@ pub struct ArrayPattern<'a> {
     pub span: Span,
     pub elements: Vec<'a, Option<BindingPattern<'a>>>,
     pub rest: Option<Box<'a, RestElement<'a>>>,
+}
+
+impl<'a> ArrayPattern<'a> {
+    pub fn is_empty(&self) -> bool {
+        self.elements.is_empty() && self.rest.is_none()
+    }
 }
 
 #[derive(Debug, Hash)]

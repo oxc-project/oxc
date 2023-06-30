@@ -19,5 +19,5 @@ serde_json    = { workspace = true }
 
 ezno-checker = { version = "0.0.4" }
 
-[dev_dependencies]
+[dev-dependencies]
 miette = { workspace = true, features = ["fancy-no-backtrace"] }

@@ -23,7 +23,7 @@ pub use oxc_syntax::{
 };
 
 pub use crate::{
-    node::{AstNode, AstNodeId, AstNodes},
+    node::{AstNode, AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::ScopeTree,
     symbol::SymbolTable,

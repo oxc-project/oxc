@@ -10,16 +10,12 @@ use oxc_span::{Atom, Span};
 use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-function-assign): '{0}' is a function.")]
+#[error("eslint(no-func-assign): '{0}' is a function.")]
 #[diagnostic(severity(warning))]
-struct NoFunctionAssignDiagnostic(
-    Atom,
-    #[label("function {0} is declared here")] pub Span,
-    #[label("{0} is re-assigned here")] pub Span,
-);
+struct NoFuncAssignDiagnostic(Atom, #[label("{0} is re-assigned here")] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoFunctionAssign;
+pub struct NoFuncAssign;
 
 declare_oxc_lint!(
     /// ### What it does
@@ -34,11 +30,11 @@ declare_oxc_lint!(
     /// function foo() {}
     /// foo = bar;
     /// ```
-    NoFunctionAssign,
+    NoFuncAssign,
     correctness
 );
 
-impl Rule for NoFunctionAssign {
+impl Rule for NoFuncAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
         let decl = symbol_table.get_declaration(symbol_id);
@@ -46,9 +42,8 @@ impl Rule for NoFunctionAssign {
             for reference_id in symbol_table.get_resolved_references(symbol_id) {
                 let reference = symbol_table.get_reference(*reference_id);
                 if reference.is_write() {
-                    ctx.diagnostic(NoFunctionAssignDiagnostic(
+                    ctx.diagnostic(NoFuncAssignDiagnostic(
                         symbol_table.get_name(symbol_id).clone(),
-                        symbol_table.get_span(symbol_id),
                         reference.span(),
                     ));
                 }
@@ -83,5 +78,5 @@ fn test() {
         // ("var a = function foo() { foo = 123; };", None),
     ];
 
-    Tester::new(NoFunctionAssign::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoFuncAssign::NAME, pass, fail).test_and_snapshot();
 }

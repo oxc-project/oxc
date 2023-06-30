@@ -30,7 +30,7 @@ impl<'a> JSDoc<'a> {
     }
 
     pub fn get_by_node<'b>(&'b self, node: &AstNode<'a>) -> Option<JSDocComment<'a>> {
-        if !node.has_jsdoc() {
+        if !node.flags().has_jsdoc() {
             return None;
         }
         let span = node.kind().span();

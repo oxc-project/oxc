@@ -1,0 +1,54 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_func_assign
+---
+  ⚠ eslint(no-func-assign): 'foo' is a function.
+   ╭─[no_func_assign.tsx:1:1]
+ 1 │ function foo() {}; foo = bar;
+   ·                    ─┬─
+   ·                     ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-func-assign): 'foo' is a function.
+   ╭─[no_func_assign.tsx:1:1]
+ 1 │ function foo() { foo = bar; }
+   ·                  ─┬─
+   ·                   ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-func-assign): 'foo' is a function.
+   ╭─[no_func_assign.tsx:1:1]
+ 1 │ foo = bar; function foo() { };
+   · ─┬─
+   ·  ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-func-assign): 'foo' is a function.
+   ╭─[no_func_assign.tsx:1:1]
+ 1 │ [foo] = bar; function foo() { };
+   ·  ─┬─
+   ·   ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-func-assign): 'foo' is a function.
+   ╭─[no_func_assign.tsx:1:1]
+ 1 │ ({x: foo = 0} = bar); function foo() { };
+   ·      ─┬─
+   ·       ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-func-assign): 'foo' is a function.
+   ╭─[no_func_assign.tsx:1:1]
+ 1 │ function foo() { [foo] = bar; }
+   ·                   ─┬─
+   ·                    ╰── foo is re-assigned here
+   ╰────
+
+  ⚠ eslint(no-func-assign): 'foo' is a function.
+   ╭─[no_func_assign.tsx:1:1]
+ 1 │ (function() { ({x: foo = 0} = bar); function foo() { }; })();
+   ·                    ─┬─
+   ·                     ╰── foo is re-assigned here
+   ╰────
+
+

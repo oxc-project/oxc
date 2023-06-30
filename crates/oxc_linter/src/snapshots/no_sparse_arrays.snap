@@ -1,0 +1,19 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_sparse_arrays
+---
+  ⚠ eslint(no-sparse-arrays): Unexpected comma in middle of array
+   ╭─[no_sparse_arrays.tsx:1:1]
+ 1 │ var a = [,];
+   ·          ▲
+   ╰────
+  help: remove the comma or insert `undefined`
+
+  ⚠ eslint(no-sparse-arrays): Unexpected comma in middle of array
+   ╭─[no_sparse_arrays.tsx:1:1]
+ 1 │ var a = [ 1,, 2];
+   ·             ▲
+   ╰────
+  help: remove the comma or insert `undefined`
+
+

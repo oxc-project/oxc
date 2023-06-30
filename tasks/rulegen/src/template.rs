@@ -29,8 +29,8 @@ impl<'a> Template<'a> {
             .render_template(RULE_TEMPLATE, &handlebars::to_json(self.context))
             .unwrap();
 
-        let out_path =
-            Path::new("crates/oxc_linter/src/rules").join(format!("{}.rs", self.context.rule_name));
+        let out_path = Path::new("crates/oxc_linter/src/rules/eslint")
+            .join(format!("{}.rs", self.context.rule_name));
 
         File::create(out_path.clone())?.write_all(rendered.as_bytes())?;
         format_rule_output(&out_path)?;

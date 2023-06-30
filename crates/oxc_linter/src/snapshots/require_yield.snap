@@ -1,0 +1,41 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: require_yield
+---
+  ⚠ eslint(require-yield): This generator function does not have 'yield'
+   ╭─[require_yield.tsx:1:1]
+ 1 │ function* foo() { return 0; }
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ eslint(require-yield): This generator function does not have 'yield'
+   ╭─[require_yield.tsx:1:1]
+ 1 │ (function* foo() { return 0; })();
+   ·  ─────────────────────────────
+   ╰────
+
+  ⚠ eslint(require-yield): This generator function does not have 'yield'
+   ╭─[require_yield.tsx:1:1]
+ 1 │ var obj = { *foo() { return 0; } }
+   ·                 ────────────────
+   ╰────
+
+  ⚠ eslint(require-yield): This generator function does not have 'yield'
+   ╭─[require_yield.tsx:1:1]
+ 1 │ class A { *foo() { return 0; } }
+   ·               ────────────────
+   ╰────
+
+  ⚠ eslint(require-yield): This generator function does not have 'yield'
+   ╭─[require_yield.tsx:1:1]
+ 1 │ function* foo() { function* bar() { yield 0; } }
+   · ────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(require-yield): This generator function does not have 'yield'
+   ╭─[require_yield.tsx:1:1]
+ 1 │ function* foo() { function* bar() { return 0; } yield 0; }
+   ·                   ─────────────────────────────
+   ╰────
+
+

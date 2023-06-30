@@ -2,7 +2,7 @@
 //!
 //! <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 
-use std::{cmp::Ordering, ops::Not};
+use std::{cmp::Ordering, mem, ops::Not};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
@@ -12,7 +12,7 @@ use oxc_hir::hir_util::{
 };
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
-    operator::{BinaryOperator, UnaryOperator},
+    operator::{BinaryOperator, LogicalOperator, UnaryOperator},
     NumberBase,
 };
 
@@ -132,6 +132,12 @@ impl<'a> Compressor<'a> {
                 }
                 UnaryOperator::Void => self.try_reduce_void(unary_expr),
                 _ => None,
+            },
+            Expression::LogicalExpression(logic_expr) => match logic_expr.operator {
+                LogicalOperator::And | LogicalOperator::Or => {
+                    self.try_fold_and_or(logic_expr.operator, logic_expr)
+                }
+                LogicalOperator::Coalesce => None,
             },
             _ => None,
         };
@@ -578,6 +584,65 @@ impl<'a> Compressor<'a> {
             return Some(self.hir.literal_number_expression(number_literal));
         }
 
+        None
+    }
+
+    /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
+    /// Try to fold a AND/OR node.
+    fn try_fold_and_or(
+        &mut self,
+        op: LogicalOperator,
+        logic_expr: &mut LogicalExpression<'a>,
+    ) -> Option<Expression<'a>> {
+        let boolean_value = get_boolean_value(&logic_expr.left);
+
+        let mut move_out = |dest: &mut Expression<'a>| {
+            let null_literal = self.hir.null_literal(dest.span());
+            let null_expr = self.hir.literal_null_expression(null_literal);
+            mem::replace(dest, null_expr)
+        };
+
+        if let Some(boolean_value) = boolean_value {
+            // (TRUE || x) => TRUE (also, (3 || x) => 3)
+            // (FALSE && x) => FALSE
+            if (boolean_value && op == LogicalOperator::Or)
+                || (!boolean_value && op == LogicalOperator::And)
+            {
+                return Some(move_out(&mut logic_expr.left));
+            } else if !logic_expr.left.may_have_side_effects() {
+                // (FALSE || x) => x
+                // (TRUE && x) => x
+                return Some(move_out(&mut logic_expr.right));
+            }
+            // Left side may have side effects, but we know its boolean value.
+            // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
+            // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
+            let left = move_out(&mut logic_expr.left);
+            let right = move_out(&mut logic_expr.right);
+            let mut vec = self.hir.new_vec_with_capacity(2);
+            vec.push(left);
+            vec.push(right);
+            let sequence_expr = self.hir.sequence_expression(logic_expr.span, vec);
+            return Some(sequence_expr);
+        } else if let Expression::LogicalExpression(left_child) = &mut logic_expr.left && left_child.operator == logic_expr.operator {
+            let left_child_right_boolean = get_boolean_value(&left_child.right);
+            let left_child_op = left_child.operator;
+            if let Some(right_boolean) = left_child_right_boolean && !left_child.right.may_have_side_effects() {
+                // a || false || b => a || b
+                // a && true && b => a && b
+                if !right_boolean && left_child_op == LogicalOperator::Or  || right_boolean && left_child_op == LogicalOperator::And {
+                    let left = move_out(&mut left_child.left);
+                    let right = move_out(&mut logic_expr.right);
+                    let logic_expr = self.hir.logical_expression(
+                        logic_expr.span,
+                        left,
+                        left_child_op,
+                        right,
+                    );
+                    return Some(logic_expr)
+                }
+            }
+        }
         None
     }
 }

@@ -48,6 +48,8 @@ pub struct SemanticBuilder<'a> {
     pub current_node_flags: NodeFlags,
     pub current_symbol_flags: SymbolFlags,
     pub current_scope_id: ScopeId,
+    /// Stores current `AstKind::Function` and `AstKind::ArrowExpression` during AST visit
+    pub function_stack: Vec<AstNodeId>,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -83,6 +85,7 @@ impl<'a> SemanticBuilder<'a> {
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
             current_scope_id,
+            function_stack: vec![],
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
@@ -212,6 +215,12 @@ impl<'a> SemanticBuilder<'a> {
     pub fn strict_mode(&self) -> bool {
         self.scope.get_flags(self.current_scope_id).is_strict_mode()
             || self.current_node_flags.contains(NodeFlags::Class)
+    }
+
+    pub fn set_function_node_flag(&mut self, flag: NodeFlags) {
+        if let Some(current_function) = self.function_stack.last() {
+            *self.nodes.get_node_mut(*current_function).flags_mut() |= flag;
+        }
     }
 
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
@@ -431,7 +440,11 @@ impl<'a> SemanticBuilder<'a> {
                 decl.bind(self);
             }
             AstKind::Function(func) => {
+                self.function_stack.push(self.current_node_id);
                 func.bind(self);
+            }
+            AstKind::ArrowExpression(_) => {
+                self.function_stack.push(self.current_node_id);
             }
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
@@ -475,6 +488,9 @@ impl<'a> SemanticBuilder<'a> {
                     }
                 }
             }
+            AstKind::YieldExpression(_) => {
+                self.set_function_node_flag(NodeFlags::HasYield);
+            }
             _ => {}
         }
     }
@@ -494,6 +510,9 @@ impl<'a> SemanticBuilder<'a> {
                     self.unused_labels.labels.push(self.current_node_id);
                 }
                 self.unused_labels.curr_scope = scope.parent;
+            }
+            AstKind::Function(_) | AstKind::ArrowExpression(_) => {
+                self.function_stack.pop();
             }
             _ => {}
         }

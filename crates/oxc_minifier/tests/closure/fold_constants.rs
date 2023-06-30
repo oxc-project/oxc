@@ -228,6 +228,81 @@ fn test_unary_ops_string_compare() {
 }
 
 #[test]
+fn test_fold_logical_op() {
+    test("x = true && x", "x=x");
+    test("x = [foo()] && x", "x=([foo()],x)");
+
+    test("x = false && x", "x=!1");
+    test("x = true || x", "x=!0");
+    test("x = false || x", "x=x");
+    test("x = 0 && x", "x=0");
+    test("x = 3 || x", "x=3");
+    test("x = 0n && x", "x=0n");
+    test("x = 3n || x", "x=3n");
+    test("x = false || 0", "x=0");
+
+    // unfoldable, because the right-side may be the result
+    test("a = x && true", "a=x&&!0");
+    test("a = x && false", "a=x&&!1");
+    test("a = x || 3", "a=x||3");
+    test("a = x || false", "a=x||!1");
+    test("a = b ? c : x || false", "a=b?c:x||!1");
+    test("a = b ? x || false : c", "a=b?x||!1:c");
+    test("a = b ? c : x && true", "a=b?c:x&&!0");
+    test("a = b ? x && true : c", "a=b?x&&!0:c");
+
+    // folded, but not here.
+    test_without_compress_booleans("a = x || false ? b : c", "a=x||false?b:c");
+    test_without_compress_booleans("a = x && true ? b : c", "a=x&&true?b:c");
+
+    test("x = foo() || true || bar()", "x=foo()||!0");
+    test("x = foo() || true && bar()", "x=foo()||bar()");
+    test("x = foo() || false && bar()", "x=foo()||!1");
+    test("x = foo() && false && bar()", "x=foo()&&!1");
+    test("x = foo() && false || bar()", "x=(foo()&&!1,bar())");
+    test("x = foo() || false || bar()", "x=foo()||bar()");
+    test("x = foo() && true && bar()", "x=foo()&&bar()");
+    test("x = foo() || true || bar()", "x=foo()||!0");
+    test("x = foo() && false && bar()", "x=foo()&&!1");
+    test("x = foo() && 0 && bar()", "x=foo()&&0");
+    test("x = foo() && 1 && bar()", "x=foo()&&bar()");
+    test("x = foo() || 0 || bar()", "x=foo()||bar()");
+    test("x = foo() || 1 || bar()", "x=foo()||1");
+    test("x = foo() && 0n && bar()", "x=foo()&&0n");
+    test("x = foo() && 1n && bar()", "x=foo()&&bar()");
+    test("x = foo() || 0n || bar()", "x=foo()||bar()");
+    test("x = foo() || 1n || bar()", "x=foo()||1n");
+    test_same("x=foo()||bar()||baz()");
+    test_same("x=foo()&&bar()&&baz()");
+
+    test("0 || b()", "b()");
+    test("1 && b()", "b()");
+    test("a() && (1 && b())", "a()&&b()");
+    test("(a() && 1) && b()", "a()&&b()");
+
+    test("(x || '') || y;", "x||y");
+    test("false || (x || '');", "x||''");
+    test("(x && 1) && y;", "x&&y");
+    test("true && (x && 1);", "x&&1");
+
+    // Really not foldable, because it would change the type of the
+    // expression if foo() returns something truthy but not true.
+    // Cf. FoldConstants.tryFoldAndOr().
+    // An example would be if foo() is 1 (truthy) and bar() is 0 (falsey):
+    // (1 && true) || 0 == true
+    // 1 || 0 == 1, but true =/= 1
+    test_without_compress_booleans("x=foo()&&true||bar()", "x=foo()&&true||bar()");
+    test_without_compress_booleans("foo()&&true||bar()", "foo()&&true||bar()");
+}
+
+#[test]
+fn test_fold_logical_op2() {
+    test("x = function(){} && x", "x=x");
+    test("x = true && function(){}", "x=function(){}");
+    test("x = [(function(){alert(x)})()] && x", "x=([function(){alert(x)}()],x)");
+}
+
+#[test]
 fn test_fold_void() {
     test_same("void 0");
     test("void 1", "void 0");

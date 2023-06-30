@@ -198,11 +198,14 @@ impl LintRunner {
     }
 
     fn lint_path(linter: &Linter, path: &Path) -> Option<(PathBuf, Vec<Error>)> {
-        let source_text = fs::read_to_string(path).unwrap_or_else(|_| panic!("{path:?} not found"));
+        let source_text =
+            fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}"));
         let allocator = Allocator::default();
         let source_type =
-            SourceType::from_path(path).unwrap_or_else(|_| panic!("incorrect {path:?}"));
-        let ret = Parser::new(&allocator, &source_text, source_type).parse();
+            SourceType::from_path(path).unwrap_or_else(|_| panic!("Incorrect {path:?}"));
+        let ret = Parser::new(&allocator, &source_text, source_type)
+            .allow_return_outside_function(true)
+            .parse();
 
         if !ret.errors.is_empty() {
             return Some(Self::wrap_diagnostics(path, &source_text, ret.errors));
