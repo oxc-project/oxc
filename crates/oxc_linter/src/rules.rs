@@ -38,6 +38,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_setter_return,
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
+    eslint::no_unsafe_finally,
     eslint::no_unsafe_negation,
     eslint::no_unsafe_optional_chaining,
     eslint::no_unused_labels,
