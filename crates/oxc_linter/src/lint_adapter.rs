@@ -714,7 +714,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
     ) -> ContextOutcomeIterator<'b, Self::Vertex, VertexIterator<'b, Self::Vertex>> {
         let res = match (type_name.as_ref(), edge_name.as_ref()) {
             ("File", "ast_node") => resolve_neighbors_with(contexts, |_| {
-                Box::new((*self).semantic.nodes().iter().map(|x| Vertex::AstNode(*x)))
+                Box::new(self.semantic.nodes().iter().map(|x| Vertex::AstNode(*x)))
             }),
             ("AssignmentOnObject", "final_assignment") => resolve_neighbors_with(contexts, |v| {
                 let first = v.as_assignment_on_object().unwrap();
