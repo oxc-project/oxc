@@ -41,7 +41,9 @@ declare_oxc_lint!(
     /// }
     /// ```
     GetterReturn,
-    correctness
+    nursery // This rule need a CFG to cover cases like
+            // `class Foo { get bar() { throw new Error() } }`
+            // which passes with ESLint
 );
 
 impl GetterReturn {
