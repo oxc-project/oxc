@@ -68,7 +68,7 @@ pub enum DestructuringAssignment<'a> {
     AssignmentExpression(&'a AssignmentTargetPattern<'a>),
     ArrayPattern(&'a ArrayPattern<'a>),
     ObjectPattern(&'a ObjectPattern<'a>),
-    DefaultedDestructuringAssignment(&'a AssignmentPattern<'a>),
+    Defaulted(&'a AssignmentPattern<'a>),
 }
 
 impl<'a> GetSpan for DestructuringAssignment<'a> {
@@ -77,7 +77,7 @@ impl<'a> GetSpan for DestructuringAssignment<'a> {
             DestructuringAssignment::AssignmentExpression(expr) => expr.span(),
             DestructuringAssignment::ArrayPattern(expr) => expr.span,
             DestructuringAssignment::ObjectPattern(expr) => expr.span,
-            DestructuringAssignment::DefaultedDestructuringAssignment(expr) => expr.span,
+            DestructuringAssignment::Defaulted(expr) => expr.span,
         }
     }
 }
@@ -93,10 +93,7 @@ macro_rules! get_ast_or_x {
                 AstKind::$typed(be) => be,
                 _ => unreachable!(),
             },
-            Vertex::$alternate_vertex(expr) => match expr {
-                $alternate_vertex::$typed(be) => &be.0,
-                _ => unreachable!(),
-            },
+            Vertex::$alternate_vertex($alternate_vertex::$typed(be)) => &be.0,
             _ => unreachable!(),
         }
     };
@@ -138,14 +135,8 @@ macro_rules! get_ast_or_x_or_y {
                 AstKind::$typed(be) => be,
                 _ => unreachable!(),
             },
-            Vertex::$x(expr, ..) => match expr {
-                $x::$typed(be) => &be.0,
-                _ => unreachable!(),
-            },
-            Vertex::$y(expr2, ..) => match expr2 {
-                $y::$typed(be) => &be.0,
-                _ => unreachable!(),
-            },
+            Vertex::$x($x::$typed(be), ..) => &be.0,
+            Vertex::$y($y::$typed(be), ..) => &be.0,
             _ => unreachable!(),
         }
     };
@@ -179,10 +170,7 @@ macro_rules! ast_node_or_expression_field {
                 AstKind::$typed(be) => &be.$attr,
                 _ => unreachable!(),
             },
-            Vertex::Expression(expr) => match expr {
-                Expression::$typed(be) => &be.$attr,
-                _ => unreachable!(),
-            },
+            Vertex::Expression(Expression::$typed(be)) => &be.$attr,
             _ => unreachable!(),
         }
     };
@@ -223,7 +211,7 @@ fn formal_parameters_to_iter<'a>(
 fn field_value_from_template_lit(tlit: &TemplateLiteral) -> FieldValue {
     if tlit.expressions.len() == 0 && tlit.quasis.len() == 1 {
         let quasi = &tlit.quasis[0].value;
-        FieldValue::String(quasi.cooked.as_ref().unwrap_or_else(|| &quasi.raw).as_str().into())
+        FieldValue::String(quasi.cooked.as_ref().unwrap_or(&quasi.raw).as_str().into())
     } else {
         FieldValue::Null
     }
@@ -236,7 +224,7 @@ fn assignment_target_to_vertex<'a>(at: &'a AssignmentTarget<'a>) -> Vertex<'a> {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
                     Vertex::AssignmentToIdentifier(&ident.span, &ident.name)
                 }
-                _ => Vertex::AssignmentOnObject(&simple_assignment_target),
+                _ => Vertex::AssignmentOnObject(simple_assignment_target),
             }
         }
         AssignmentTarget::AssignmentTargetPattern(d) => {
@@ -256,9 +244,9 @@ fn binding_pattern_kind_to_vertex<'a>(bpk: &'a BindingPatternKind<'a>) -> Vertex
         BindingPatternKind::ObjectPattern(op) => {
             Vertex::DestructuringAssignment(DestructuringAssignment::ObjectPattern(op))
         }
-        BindingPatternKind::AssignmentPattern(ap) => Vertex::DestructuringAssignment(
-            DestructuringAssignment::DefaultedDestructuringAssignment(ap),
-        ),
+        BindingPatternKind::AssignmentPattern(ap) => {
+            Vertex::DestructuringAssignment(DestructuringAssignment::Defaulted(ap))
+        }
     }
 }
 
@@ -266,10 +254,7 @@ impl<'a> Vertex<'a> {
     fn ts_type_annotation_coercion(&self) -> bool {
         match self {
             Vertex::TSTypeAnnotation(_) => true,
-            Vertex::AstNode(ast) => match ast.kind() {
-                AstKind::TSTypeAnnotation(_) => true,
-                _ => false,
-            },
+            Vertex::AstNode(ast) => matches!(ast.kind(), AstKind::TSTypeAnnotation(_)),
             _ => false,
         }
     }
@@ -290,14 +275,12 @@ impl<'a> Vertex<'a> {
 
     fn function_coercion(&self) -> bool {
         match self {
-            Vertex::Expression(expr) => match expr {
-                Expression::FunctionExpression(_) | Expression::ArrowExpression(_) => true,
-                _ => false,
-            },
-            Vertex::AstNode(ast) => match ast.kind() {
-                AstKind::ArrowExpression(_) | AstKind::Function(_) => true,
-                _ => false,
-            },
+            Vertex::Expression(expr) => {
+                matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowExpression(_))
+            }
+            Vertex::AstNode(ast) => {
+                matches!(ast.kind(), AstKind::ArrowExpression(_) | AstKind::Function(_))
+            }
             _ => false,
         }
     }
@@ -324,7 +307,7 @@ impl<'a> Vertex<'a> {
         'a: 'b,
     {
         formal_parameters_to_iter(
-            &match self {
+            match self {
                 Vertex::Expression(expr) => match expr {
                     Expression::FunctionExpression(fe) => &fe.0.params,
                     Expression::ArrowExpression(ae) => &ae.0.params,
@@ -336,10 +319,9 @@ impl<'a> Vertex<'a> {
                     AstKind::TSMethodSignature(tsms) => &tsms.params,
                     _ => unreachable!(),
                 },
-                Vertex::TSSignature(tss) => match tss {
-                    TSSignature::TSMethodSignature(tsms) => &tsms.0.params,
-                    _ => unreachable!(),
-                },
+                Vertex::TSSignature(TSSignature::TSMethodSignature(method_signature)) => {
+                    &method_signature.0.params
+                }
                 _ => unreachable!(),
             }
             .0, // unbox
@@ -362,10 +344,7 @@ impl<'a> Vertex<'a> {
                 AstKind::TSMethodSignature(tsms) => &tsms.return_type,
                 _ => unreachable!(),
             },
-            Vertex::TSSignature(tss) => match tss {
-                TSSignature::TSMethodSignature(tsms) => &tsms.0.return_type,
-                _ => unreachable!(),
-            },
+            Vertex::TSSignature(TSSignature::TSMethodSignature(tsms)) => &tsms.0.return_type,
             _ => unreachable!(),
         };
 
@@ -420,14 +399,12 @@ impl<'a> Vertex<'a> {
                 }
                 _ => unreachable!(),
             },
-            Vertex::Expression(expr) => match expr {
-                Expression::RegExpLiteral(re) => re.regex.pattern.to_string().into(),
-                _ => unreachable!(),
-            },
-            Vertex::TSLiteral(tslit, ..) => match tslit {
-                TSLiteral::RegExpLiteral(rlit) => rlit.regex.pattern.to_string().into(),
-                _ => unreachable!(),
-            },
+            Vertex::Expression(Expression::RegExpLiteral(re)) => {
+                re.regex.pattern.to_string().into()
+            }
+            Vertex::TSLiteral(TSLiteral::RegExpLiteral(rlit, ..), ..) => {
+                rlit.regex.pattern.to_string().into()
+            }
             _ => unreachable!(),
         }
     }
@@ -450,31 +427,22 @@ impl<'a> Vertex<'a> {
                 AstKind::IdentifierReference(ir) => &ir.name,
                 _ => unreachable!(),
             },
-            Vertex::Expression(expr) => match expr {
-                Expression::Identifier(id) => &id.0.name,
-                _ => unreachable!(),
-            },
+            Vertex::Expression(Expression::Identifier(id)) => &id.0.name,
             _ => unreachable!(),
         }
     }
 
     fn string_resolve_coercion(&self) -> bool {
         match &self {
-            Vertex::AstNode(node) => match node.kind() {
-                AstKind::StringLiteral(_) => true,
-                AstKind::TemplateLiteral(_) => true,
-                _ => false,
-            },
-            Vertex::Expression(expr) => match expr {
-                Expression::StringLiteral(_) => true,
-                Expression::TemplateLiteral(_) => true,
-                _ => false,
-            },
-            Vertex::TSLiteral(tslit, _) => match tslit {
-                TSLiteral::StringLiteral(_) => true,
-                TSLiteral::TemplateLiteral(_) => true,
-                _ => false,
-            },
+            Vertex::AstNode(node) => {
+                matches!(node.kind(), AstKind::StringLiteral(_) | AstKind::TemplateLiteral(_))
+            }
+            Vertex::Expression(expr) => {
+                matches!(expr, Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
+            }
+            Vertex::TSLiteral(tslit, _) => {
+                matches!(tslit, TSLiteral::StringLiteral(_) | TSLiteral::TemplateLiteral(_))
+            }
             _ => false,
         }
     }
@@ -501,7 +469,10 @@ impl<'a> Vertex<'a> {
             Vertex::AstNode(ast) => ast.kind().span(),
             Vertex::Expression(expr) => expr.span(),
             Vertex::Argument(arg, _) => arg.span(),
-            Vertex::AssignmentToIdentifier(span, _) => **span,
+            Vertex::AssignmentToIdentifier(span, _)
+            | Vertex::TSLiteral(_, span)
+            | Vertex::TSTypeName(_, span)
+            | Vertex::EffectivelyLiteralString(span, _) => **span,
             Vertex::File | Vertex::Span(_) | Vertex::Operator(_) | Vertex::PossiblyNumber(_) => {
                 unreachable!(
                     "tried to get span out of Vertex::Span | Vertex::Operator | Vertex::PossiblyNumber | Vertex::File"
@@ -521,11 +492,8 @@ impl<'a> Vertex<'a> {
             Vertex::TSType(tt) => tt.span(),
             Vertex::TSSignature(tss) => tss.span(),
             Vertex::TSTypeAnnotation(tst) => tst.span,
-            Vertex::TSLiteral(_, span) => **span,
-            Vertex::TSTypeName(_, span) => **span,
             Vertex::ImportSpecifier(sl) => sl.span(),
             Vertex::JsxElementName(sl) => sl.span(),
-            Vertex::EffectivelyLiteralString(span, _) => **span,
             Vertex::JsxOpeningElement(joe) => joe.span,
             Vertex::JsxClosingElement(joe) => joe.span,
             Vertex::DestructuringAssignment(da) => da.span(),
@@ -605,7 +573,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 ident.name.to_string().into()
             }),
             ("PropertyAccess", "name") => resolve_property_with(contexts, |v| {
-                v.as_property_access().unwrap().1.to_string().into()
+                (*v.as_property_access().unwrap().1).to_string().into()
             }),
             ("StringASTNode" | "StringExpression" | "ConstantString", "constant_value") => {
                 resolve_property_with(contexts, Vertex::string_constant_value)
@@ -614,7 +582,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 resolve_property_with(contexts, |v| Vertex::identifier_reference_name(v).into())
             }
             ("RegExp" | "RegExpLiteral", "pattern") => {
-                resolve_property_with(contexts, |v| v.regexp_pattern())
+                resolve_property_with(contexts, crate::lint_adapter::Vertex::regexp_pattern)
             }
             ("TSInterfaceDeclaration", "name") => resolve_property_with(contexts, |v| {
                 let AstKind::TSInterfaceDeclaration(tsid) = v.as_ast_node().unwrap().kind() else {unreachable!()};
@@ -681,13 +649,12 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                             .map_or_else(|| FieldValue::Null, |id| id.to_string().into()),
                         _ => unreachable!(),
                     },
-                    Vertex::TSSignature(tss) => match tss {
-                        TSSignature::TSMethodSignature(tsms) => tsms
+                    Vertex::TSSignature(TSSignature::TSMethodSignature(method_signature)) => {
+                        method_signature
                             .key
                             .static_name()
-                            .map_or_else(|| FieldValue::Null, |id| id.to_string().into()),
-                        _ => unreachable!(),
-                    },
+                            .map_or_else(|| FieldValue::Null, |id| id.to_string().into())
+                    }
                     _ => unreachable!(),
                 })
             }
@@ -802,7 +769,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                     get_ast_or_x!(v, Expression, ObjectExpression)
                         .properties
                         .iter()
-                        .map(|v| Vertex::ObjectProperty(v)),
+                        .map(Vertex::ObjectProperty),
                 )
             }),
             ("CallExpression", "callee") => resolve_neighbors_with(contexts, |v| {
@@ -859,7 +826,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
             }),
             ("VariableDeclarations", "declarations") => resolve_neighbors_with(contexts, |v| {
                 let AstKind::VariableDeclaration(decl) = v.as_ast_node().unwrap().kind() else { unreachable!() };
-                Box::new(decl.declarations.iter().map(|decl| Vertex::VariableDeclaration(decl)))
+                Box::new(decl.declarations.iter().map(Vertex::VariableDeclaration))
             }),
             ("VariableDeclaration", "left_type") => resolve_neighbors_with(contexts, |v| {
                 let decl = v.as_variable_declaration().unwrap();
@@ -877,9 +844,9 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                     BindingPatternKind::ObjectPattern(op) => {
                         Vertex::DestructuringAssignment(DestructuringAssignment::ObjectPattern(op))
                     }
-                    BindingPatternKind::AssignmentPattern(ap) => Vertex::DestructuringAssignment(
-                        DestructuringAssignment::DefaultedDestructuringAssignment(ap),
-                    ),
+                    BindingPatternKind::AssignmentPattern(ap) => {
+                        Vertex::DestructuringAssignment(DestructuringAssignment::Defaulted(ap))
+                    }
                 }))
             }),
             (_, "span") => resolve_neighbors_with(contexts, Vertex::get_span_from_ast_node),
@@ -945,7 +912,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
             }),
             ("JSXElement", "opening_element") => resolve_neighbors_with(contexts, |v| {
                 let Expression::JSXElement(el) = v.as_expression().unwrap() else {unreachable!()};
-                Box::new(std::iter::once(Vertex::JsxOpeningElement(&el.opening_element.0)))
+                Box::new(std::iter::once(Vertex::JsxOpeningElement(el.opening_element.0)))
             }),
             ("JSXElement", "closing_element") => resolve_neighbors_with(contexts, |v| {
                 let Expression::JSXElement(el) = v.as_expression().unwrap() else {unreachable!()};
@@ -963,7 +930,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 let AstKind::ModuleDeclaration(md) = v.as_ast_node().unwrap().kind() else { unreachable!("expected module declaration") };
                 let ModuleDeclaration::ImportDeclaration(id) = md else { unreachable!("expected import declaration") };
                 let StringLiteral { span, value } = &id.source;
-                Box::new(std::iter::once(Vertex::EffectivelyLiteralString(&span, &value)))
+                Box::new(std::iter::once(Vertex::EffectivelyLiteralString(span, value)))
             }),
             ("ImportDeclaration", "specifiers") => resolve_neighbors_with(contexts, |v| {
                 let AstKind::ModuleDeclaration(md) = v.as_ast_node().unwrap().kind() else { unreachable!("expected module declaration") };
@@ -979,27 +946,19 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                                 AssignmentTargetPattern::ObjectAssignmentTarget(oat) => &oat.rest,
                             };
 
-                            if let Some(assignment_target) = temp {
-                                Some(assignment_target_to_vertex(&assignment_target))
-                            } else {
-                                None
-                            }
+                            temp.as_ref().map(|assignment_target| {
+                                assignment_target_to_vertex(assignment_target)
+                            })
                         }
-                        DestructuringAssignment::ArrayPattern(ap) => {
-                            if let Some(rest) = &ap.rest {
-                                Some(binding_pattern_kind_to_vertex(&rest.0.argument.kind))
-                            } else {
-                                None
-                            }
-                        }
-                        DestructuringAssignment::ObjectPattern(op) => {
-                            if let Some(rest) = &op.rest {
-                                Some(binding_pattern_kind_to_vertex(&rest.0.argument.kind))
-                            } else {
-                                None
-                            }
-                        }
-                        DestructuringAssignment::DefaultedDestructuringAssignment(_) => None,
+                        DestructuringAssignment::ArrayPattern(ap) => ap
+                            .rest
+                            .as_ref()
+                            .map(|rest| binding_pattern_kind_to_vertex(&rest.0.argument.kind)),
+                        DestructuringAssignment::ObjectPattern(op) => op
+                            .rest
+                            .as_ref()
+                            .map(|rest| binding_pattern_kind_to_vertex(&rest.0.argument.kind)),
+                        DestructuringAssignment::Defaulted(_) => None,
                     };
                     if let Some(rest) = rest {
                         Box::new(std::iter::once(rest))
@@ -1042,11 +1001,10 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
             }
             "BinaryExpression" => coerce_ast_or_x!(contexts, Expression, BinaryExpression),
             "IfStatementOrTernary" => resolve_coercion_with(contexts, |v| match v {
-                Vertex::AstNode(node) => match node.kind() {
-                    AstKind::IfStatement(_) => true,
-                    AstKind::ConditionalExpression(_) => true,
-                    _ => false,
-                },
+                Vertex::AstNode(node) => matches!(
+                    node.kind(),
+                    AstKind::IfStatement(_) | AstKind::ConditionalExpression(_)
+                ),
                 Vertex::Expression(expr) => {
                     matches!(expr, Expression::ConditionalExpression(_))
                 }
@@ -1135,19 +1093,17 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 |v| matches!(v, Vertex::Expression(op) if matches!(op, Expression::JSXElement(_))),
             ),
             "ArrayDestructuringAssignment" => resolve_coercion_with(contexts, |v| match v {
-                Vertex::DestructuringAssignment(da) => match da {
+                Vertex::DestructuringAssignment(da) => matches!(
+                    da,
                     DestructuringAssignment::AssignmentExpression(
                         AssignmentTargetPattern::ArrayAssignmentTarget(_),
-                    ) => true,
-                    DestructuringAssignment::ArrayPattern(_) => true,
-                    _ => false,
-                },
+                    ) | DestructuringAssignment::ArrayPattern(_)
+                ),
                 _ => false,
             }),
-            "ObjectDestructingAssignment" => resolve_coercion_with(contexts, |v| match v {
-                Vertex::DestructuringAssignment(_) => true,
-                _ => false,
-            }),
+            "ObjectDestructingAssignment" => {
+                resolve_coercion_with(contexts, |v| matches!(v, Vertex::DestructuringAssignment(_)))
+            }
             "SingleObjectProperty" => resolve_coercion_with(
                 contexts,
                 |v| matches!(v, Vertex::ObjectProperty(op) if matches!(op, ObjectPropertyKind::ObjectProperty(_))),

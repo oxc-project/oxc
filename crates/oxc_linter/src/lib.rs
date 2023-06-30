@@ -50,7 +50,7 @@ impl Linter {
         let plugin = env::var("OXC_PLUGIN")
             .ok()
             .is_some_and(|value| !value.is_empty())
-            .then(|| LinterPlugin::new());
+            .then(LinterPlugin::new);
         Self { rules, fix: false, plugin }
     }
 

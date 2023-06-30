@@ -27,7 +27,11 @@ impl LinterPlugin {
             .unwrap()
             .filter_map(std::result::Result::ok)
             .filter(|dir_entry| dir_entry.path().is_file())
-            .filter(|f| f.path().as_os_str().to_str().unwrap().ends_with(".ron"))
+            .filter(|f| {
+                std::path::Path::new(f.path().as_os_str().to_str().unwrap())
+                    .extension()
+                    .map_or(false, |ext| ext.eq_ignore_ascii_case("ron"))
+            })
             .map(|f| fs::read_to_string(f.path()))
             .map(std::result::Result::unwrap)
             .map(|rule| ron::from_str::<InputQuery>(rule.as_str()).unwrap())
@@ -39,10 +43,10 @@ impl LinterPlugin {
         Self { rules, schema }
     }
 
-    pub fn run<'a>(&self, ctx: &mut LintContext, semantic: &Rc<Semantic<'a>>) {
-        let inner = LintAdapter { semantic: semantic.clone() };
+    pub fn run(&self, ctx: &mut LintContext, semantic: &Rc<Semantic<'_>>) {
+        let inner = LintAdapter { semantic: Rc::clone(semantic) };
         let adapter = Arc::from(&inner);
-        for input_query in self.rules.iter() {
+        for input_query in &self.rules {
             for data_item in execute_query(
                 &self.schema,
                 Arc::clone(&adapter),
