@@ -2,84 +2,84 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_dupe_keys
 ---
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { a: b, ['a']: b };
    ·           ─      ───
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { y: 1, y: 2 };
    ·           ─     ─
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { '': 1, '': 2 };
    ·           ──     ──
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { '': 1, [``]: 2 };
    ·           ──      ──
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var foo = { 0x1: 1, 1: 2};
    ·             ───     ─
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { 012: 1, 10: 2 };
    ·           ───     ──
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { 0b1: 1, 1: 2 };
    ·           ───     ─
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { 0o1: 1, 1: 2 };
    ·           ───     ─
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { 1n: 1, 1: 2 };
    ·           ──     ─
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { 1_0: 1, 10: 2 };
    ·           ───     ──
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { "z": 1, z: 2 };
    ·           ───     ─
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var foo = {
  2 │   bar: 1,
@@ -90,28 +90,28 @@ expression: no_dupe_keys
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { a: 1, get a() {} };
    ·           ─         ─
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { a: 1, set a(value) {} };
    ·           ─         ─
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = { a: 1, b: { a: 2 }, get b() {} };
    ·                 ─                ─
    ╰────
   help: Consider removing the duplicated key
 
-  ⚠ eslint(no-dupe_keys): Disallow duplicate keys in object literals
+  ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:1]
  1 │ var x = ({ '/(?<zero>0)/': 1, [/(?<zero>0)/]: 2 })
    ·            ──────────────      ────────────

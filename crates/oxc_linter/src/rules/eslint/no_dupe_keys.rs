@@ -13,7 +13,7 @@ use rustc_hash::FxHashMap;
 use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-dupe_keys): Disallow duplicate keys in object literals")]
+#[error("eslint(no-dupe-keys): Disallow duplicate keys in object literals")]
 #[diagnostic(severity(warning), help("Consider removing the duplicated key"))]
 struct NoDupeKeysDiagnostic(#[label] pub Span, #[label] pub Span);
 
