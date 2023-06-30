@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_unsafe_optional_chaining
+---
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:1]
+ 1 │ (obj?.foo && obj?.baz).bar
+   ·  ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:1]
+ 1 │ (obj?.foo && obj?.baz).bar
+   ·              ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:1]
+ 1 │ with (obj?.foo) {};
+   ·       ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:1]
+ 1 │ async function foo() { with ( await obj?.foo) {}; }
+   ·                                     ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:1]
+ 1 │ (foo ? obj?.foo : obj?.bar).bar
+   ·        ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+  ⚠ eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining
+   ╭─[no_unsafe_optional_chaining.tsx:1:1]
+ 1 │ (foo ? obj?.foo : obj?.bar).bar
+   ·                   ────────
+   ╰────
+  help: If this short-circuits with 'undefined' the evaluation will throw TypeError
+
+

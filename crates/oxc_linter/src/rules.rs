@@ -39,6 +39,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
     eslint::no_unsafe_negation,
+    eslint::no_unsafe_optional_chaining,
     eslint::no_unused_labels,
     eslint::no_useless_catch,
     eslint::require_yield,
