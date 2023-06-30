@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_lines)]
+#![allow(clippy::unimplemented)]
 use std::{collections::BTreeMap, rc::Rc, sync::Arc};
 
 use oxc_ast::{
@@ -472,7 +474,8 @@ impl<'a> Vertex<'a> {
             Vertex::AssignmentToIdentifier(span, _)
             | Vertex::TSLiteral(_, span)
             | Vertex::TSTypeName(_, span)
-            | Vertex::EffectivelyLiteralString(span, _) => *span,
+            | Vertex::EffectivelyLiteralString(span, _)
+            | Vertex::PropertyAccess(span, _) => *span,
             Vertex::File | Vertex::Span(_) | Vertex::Operator(_) | Vertex::PossiblyNumber(_) => {
                 unreachable!(
                     "tried to get span out of Vertex::Span | Vertex::Operator | Vertex::PossiblyNumber | Vertex::File"
@@ -485,7 +488,6 @@ impl<'a> Vertex<'a> {
                 SimpleAssignmentTarget::MemberAssignmentTarget(member) => member.0.span(),
                 _ => assignment.span(),
             },
-            Vertex::PropertyAccess(span, _) => *span,
             Vertex::Parameter(param, _) => param.span(),
             Vertex::AssignmentOperator(aso) => aso.span,
             Vertex::PropertyKey(pk) => pk.span(),
@@ -957,6 +959,8 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                             .map(|rest| binding_pattern_kind_to_vertex(&rest.0.argument.kind)),
                         DestructuringAssignment::Defaulted(_) => None,
                     };
+
+                    #[allow(clippy::option_if_let_else)]
                     if let Some(rest) = rest {
                         Box::new(std::iter::once(rest))
                     } else {
