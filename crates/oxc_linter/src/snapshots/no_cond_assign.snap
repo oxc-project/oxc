@@ -1,0 +1,201 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_cond_assign
+---
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ var x; if (x = 0) { var b = 1; }
+   ·            ─────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ var x; while (x = 0) { var b = 1; }
+   ·               ─────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ var x = 0, y; do { y = x; } while (x = x + 1);
+   ·                                    ─────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ var x; for(; x+=1 ;){};
+   ·              ────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ var x; if ((x) = (0));
+   ·            ─────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ if (someNode || (someNode = parentNode)) { }
+   ·     ───────────────────────────────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ while (someNode || (someNode = parentNode)) { }
+   ·        ───────────────────────────────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ do { } while (someNode || (someNode = parentNode));
+   ·               ───────────────────────────────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ for (; (typeof l === 'undefined' ? (l = 0) : l); i++) { }
+   ·         ────────────────────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ if (x = 0) { }
+   ·     ─────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ if (x = 0) { }
+   ·     ─────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ while (x = 0) { }
+   ·        ─────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ while (x = 0) { }
+   ·        ─────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ do { } while (x = x + 1);
+   ·               ─────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ do { } while (x = x + 1);
+   ·               ─────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ for(; x = y; ) { }
+   ·       ─────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ for(; x = y; ) { }
+   ·       ─────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ if ((x = 0)) { }
+   ·     ───────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ if ((x = 0)) { }
+   ·     ───────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ while ((x = 0)) { }
+   ·        ───────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ while ((x = 0)) { }
+   ·        ───────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ do { } while ((x = x + 1));
+   ·               ───────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ do { } while ((x = x + 1));
+   ·               ───────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ for(; (x = y); ) { }
+   ·       ───────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ for(; (x = y); ) { }
+   ·       ───────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ var x; var b = (x = 0) ? 1 : 0;
+   ·                ───────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ var x; var b = x && (y = 0) ? 1 : 0;
+   ·                ────────────
+   ╰────
+  help: 
+
+  ⚠ 
+   ╭─[no_cond_assign.tsx:1:1]
+ 1 │ (((3496.29)).bkufyydt = 2e308) ? foo : bar;
+   · ──────────────────────────────
+   ╰────
+  help: 
+
+

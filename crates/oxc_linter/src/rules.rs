@@ -19,6 +19,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_case_declarations,
     eslint::no_class_assign,
     eslint::no_compare_neg_zero,
+    eslint::no_cond_assign,
     eslint::no_const_assign,
     eslint::no_constant_binary_expression,
     eslint::no_constant_condition,
