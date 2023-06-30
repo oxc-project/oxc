@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
+use std::{collections::BTreeMap, rc::Rc, sync::Arc};
 
 use oxc_ast::{
     ast::{
@@ -196,13 +196,6 @@ macro_rules! once_vertex_iter_if_some {
             Box::new(std::iter::empty())
         }
     };
-}
-
-impl<'a> LintAdapter<'a> {
-    fn get_ast_node_iter<'b>(&'b self) -> VertexIterator<'b, Vertex<'a>> {
-        // TODO: Stop cloning this and instead just use iter. Then, remove the pub from nodes
-        Box::new(self.semantic.nodes().nodes.clone().into_iter().map(|v| Vertex::AstNode(v)))
-    }
 }
 
 fn solve_member_expr_for_lowest<'a>(object: &'a Expression<'a>) -> &'a Expression<'a> {
