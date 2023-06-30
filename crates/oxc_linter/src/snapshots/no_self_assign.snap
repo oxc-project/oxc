@@ -1,0 +1,285 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_self_assign
+---
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a = a
+   ·     ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ [a] = [a]
+   ·        ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ [a, b] = [a, b]
+   ·           ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ [a, b] = [a, b]
+   ·              ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ [a, b] = [a, c]
+   ·           ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ [a, b] = [, b]
+   ·             ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ [a, ...b] = [a, ...b]
+   ·              ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ [[a], {b}] = [[a], {b}]
+   ·                ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ [[a], {b}] = [[a], {b}]
+   ·                     ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a} = {a})
+   ·         ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a: b} = {a: b})
+   ·               ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({'a': b} = {'a': b})
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a: b} = {'a': b})
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({'a': b} = {a: b})
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({1: b} = {1: b})
+   ·               ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({1: b} = {'1': b})
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({'1': b} = {1: b})
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({['a']: b} = {a: b})
+   ·                   ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({'a': b} = {[`a`]: b})
+   ·                     ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({1: b} = {[1]: b})
+   ·                 ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a, b} = {a, b})
+   ·            ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a, b} = {a, b})
+   ·               ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a, b} = {b, a})
+   ·               ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a, b} = {b, a})
+   ·            ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a, b} = {c, a})
+   ·               ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a: {b}, c: [d]} = {a: {b}, c: [d]})
+   ·                          ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a: {b}, c: [d]} = {a: {b}, c: [d]})
+   ·                                  ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ ({a, b} = {a, ...x, b})
+   ·                     ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a.b = a.b
+   ·       ───
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a.b.c = a.b.c
+   ·         ─────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a[b] = a[b]
+   ·        ────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a['b'] = a['b']
+   ·          ──────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:2:1]
+ 2 │         'b'
+ 3 │ ╭─▶ ] = a[
+ 4 │ │       'b'
+ 5 │ ╰─▶ ]
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a.b = a.b
+   ·       ───
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a.b.c = a.b.c
+   ·         ─────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a[b] = a[b]
+   ·        ────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a['b'] = a['b']
+   ·          ──────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:2:1]
+ 2 │         'b'
+ 3 │ ╭─▶ ] = a[
+ 4 │ │       'b'
+ 5 │ ╰─▶ ]
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ this.x = this.x
+   ·          ──────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ (a?.b).c = (a?.b).c
+   ·            ────────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a.b = a?.b
+   ·       ────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ class C { #field; foo() { this.#field = this.#field; } }
+   ·                                         ───────────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ class C { #field; foo() { [this.#field] = [this.#field]; } }
+   ·                                            ───────────
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a &&= a
+   ·       ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a ||= a
+   ·       ─
+   ╰────
+
+  ⚠ eslint(no-self-assign): this expression is assigned to itself
+   ╭─[no_self_assign.tsx:1:1]
+ 1 │ a ??= a
+   ·       ─
+   ╰────
+
+

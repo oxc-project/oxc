@@ -11,6 +11,7 @@ license.workspace     = true
 repository.workspace  = true
 
 [dependencies]
+oxc_allocator   = { workspace = true }
 oxc_span        = { workspace = true }
 oxc_ast         = { workspace = true }
 oxc_diagnostics = { workspace = true }
@@ -28,7 +29,6 @@ num-traits  = { workspace = true }
 rust-lapper = "1.1.0"
 
 [dev-dependencies]
-oxc_allocator = { workspace = true }
 oxc_parser    = { workspace = true }
 miette        = { workspace = true, features = ["fancy-no-backtrace"] }
 
