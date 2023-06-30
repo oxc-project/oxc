@@ -44,9 +44,9 @@ pub enum Vertex<'a> {
     TSType(&'a TSType<'a>),
     TSSignature(&'a TSSignature<'a>),
     TSTypeAnnotation(&'a TSTypeAnnotation<'a>),
-    TSLiteral(&'a TSLiteral<'a>, &'a Span),
-    TSTypeName(&'a TSTypeName<'a>, &'a Span),
-    EffectivelyLiteralString(&'a Span, &'a Atom),
+    TSLiteral(&'a TSLiteral<'a>, Span),
+    TSTypeName(&'a TSTypeName<'a>, Span),
+    EffectivelyLiteralString(Span, &'a Atom),
     ImportSpecifier(&'a ImportDeclarationSpecifier),
     JsxElementName(&'a JSXElementName<'a>),
     JsxOpeningElement(&'a JSXOpeningElement<'a>),
@@ -57,7 +57,7 @@ pub enum Vertex<'a> {
     Operator(&'a BinaryOperator),
     AssignmentOperator(&'a AssignmentExpression<'a>),
     // assignment to ...
-    AssignmentToIdentifier(&'a Span, &'a Atom),
+    AssignmentToIdentifier(Span, &'a Atom),
     AssignmentOnObject(&'a SimpleAssignmentTarget<'a>),
     DestructuringAssignment(DestructuringAssignment<'a>),
     File,
@@ -222,7 +222,7 @@ fn assignment_target_to_vertex<'a>(at: &'a AssignmentTarget<'a>) -> Vertex<'a> {
         AssignmentTarget::SimpleAssignmentTarget(simple_assignment_target) => {
             match simple_assignment_target {
                 SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    Vertex::AssignmentToIdentifier(&ident.span, &ident.name)
+                    Vertex::AssignmentToIdentifier(ident.span, &ident.name)
                 }
                 _ => Vertex::AssignmentOnObject(simple_assignment_target),
             }
@@ -236,7 +236,7 @@ fn assignment_target_to_vertex<'a>(at: &'a AssignmentTarget<'a>) -> Vertex<'a> {
 fn binding_pattern_kind_to_vertex<'a>(bpk: &'a BindingPatternKind<'a>) -> Vertex<'a> {
     match bpk {
         BindingPatternKind::BindingIdentifier(id) => {
-            Vertex::AssignmentToIdentifier(&id.span, &id.name)
+            Vertex::AssignmentToIdentifier(id.span, &id.name)
         }
         BindingPatternKind::ArrayPattern(ap) => {
             Vertex::DestructuringAssignment(DestructuringAssignment::ArrayPattern(ap))
@@ -472,7 +472,7 @@ impl<'a> Vertex<'a> {
             Vertex::AssignmentToIdentifier(span, _)
             | Vertex::TSLiteral(_, span)
             | Vertex::TSTypeName(_, span)
-            | Vertex::EffectivelyLiteralString(span, _) => **span,
+            | Vertex::EffectivelyLiteralString(span, _) => *span,
             Vertex::File | Vertex::Span(_) | Vertex::Operator(_) | Vertex::PossiblyNumber(_) => {
                 unreachable!(
                     "tried to get span out of Vertex::Span | Vertex::Operator | Vertex::PossiblyNumber | Vertex::File"
@@ -836,7 +836,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 let decl = v.as_variable_declaration().unwrap();
                 Box::new(std::iter::once(match &decl.id.kind {
                     BindingPatternKind::BindingIdentifier(id) => {
-                        Vertex::AssignmentToIdentifier(&id.span, &id.name)
+                        Vertex::AssignmentToIdentifier(id.span, &id.name)
                     }
                     BindingPatternKind::ArrayPattern(ap) => {
                         Vertex::DestructuringAssignment(DestructuringAssignment::ArrayPattern(ap))
@@ -884,7 +884,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 let literal_type = get_ast_or_x!(v, TSType, TSLiteralType);
                 Box::new(std::iter::once(Vertex::TSLiteral(
                     &literal_type.literal,
-                    &literal_type.span,
+                    literal_type.span,
                 )))
             }),
             ("TSUnionType", "subtypes") => resolve_neighbors_with(contexts, |v| {
@@ -905,10 +905,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
             }),
             ("JSXSimpleName", "name") => resolve_neighbors_with(contexts, |v| {
                 let JSXElementName::Identifier(ident) = v.as_jsx_element_name().unwrap() else {unreachable!()};
-                Box::new(std::iter::once(Vertex::EffectivelyLiteralString(
-                    &ident.span,
-                    &ident.name,
-                )))
+                Box::new(std::iter::once(Vertex::EffectivelyLiteralString(ident.span, &ident.name)))
             }),
             ("JSXElement", "opening_element") => resolve_neighbors_with(contexts, |v| {
                 let Expression::JSXElement(el) = v.as_expression().unwrap() else {unreachable!()};
@@ -920,7 +917,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
             }),
             ("TSTypeReference", "name") => resolve_neighbors_with(contexts, |v| {
                 let tstr = get_ast_or_x!(v, TSType, TSTypeReference);
-                Box::new(std::iter::once(Vertex::TSTypeName(&tstr.type_name, &tstr.span)))
+                Box::new(std::iter::once(Vertex::TSTypeName(&tstr.type_name, tstr.span)))
             }),
             ("AwaitExpression", "expression") => resolve_neighbors_with(contexts, |v| {
                 let await_expr = get_ast_or_x!(v, Expression, AwaitExpression);
@@ -930,7 +927,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 let AstKind::ModuleDeclaration(md) = v.as_ast_node().unwrap().kind() else { unreachable!("expected module declaration") };
                 let ModuleDeclaration::ImportDeclaration(id) = md else { unreachable!("expected import declaration") };
                 let StringLiteral { span, value } = &id.source;
-                Box::new(std::iter::once(Vertex::EffectivelyLiteralString(span, value)))
+                Box::new(std::iter::once(Vertex::EffectivelyLiteralString(*span, value)))
             }),
             ("ImportDeclaration", "specifiers") => resolve_neighbors_with(contexts, |v| {
                 let AstKind::ModuleDeclaration(md) = v.as_ast_node().unwrap().kind() else { unreachable!("expected module declaration") };
