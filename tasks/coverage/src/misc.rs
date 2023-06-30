@@ -64,7 +64,7 @@ impl Case for MiscCase {
     }
 
     fn run(&mut self) {
-        let source_type = SourceType::default();
+        let source_type = SourceType::from_path(&self.path).unwrap();
         self.result = self.execute(source_type);
     }
 }
