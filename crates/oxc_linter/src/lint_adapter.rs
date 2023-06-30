@@ -60,8 +60,7 @@ pub enum Vertex<'a> {
     AssignmentToIdentifier(&'a Span, &'a Atom),
     AssignmentOnObject(&'a SimpleAssignmentTarget<'a>),
     DestructuringAssignment(DestructuringAssignment<'a>),
-
-    File(Rc<AstNodeIterator<'a>>),
+    File,
 }
 
 #[derive(Debug, Clone)]
@@ -80,22 +79,6 @@ impl<'a> GetSpan for DestructuringAssignment<'a> {
             DestructuringAssignment::ObjectPattern(expr) => expr.span,
             DestructuringAssignment::DefaultedDestructuringAssignment(expr) => expr.span,
         }
-    }
-}
-
-pub struct AstNodeIterator<'a> {
-    iter: RefCell<Option<VertexIterator<'a, Vertex<'a>>>>,
-}
-
-impl std::fmt::Debug for AstNodeIterator<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AstNodeIterator").finish()
-    }
-}
-
-impl<'a> Clone for AstNodeIterator<'a> {
-    fn clone(&self) -> Self {
-        Self { iter: None.into() }
     }
 }
 
@@ -216,7 +199,7 @@ macro_rules! once_vertex_iter_if_some {
 }
 
 impl<'a> LintAdapter<'a> {
-    fn get_ast_node_iter(&self) -> VertexIterator<'a, Vertex<'a>> {
+    fn get_ast_node_iter<'b>(&'b self) -> VertexIterator<'b, Vertex<'a>> {
         // TODO: Stop cloning this and instead just use iter. Then, remove the pub from nodes
         Box::new(self.semantic.nodes().nodes.clone().into_iter().map(|v| Vertex::AstNode(v)))
     }
@@ -298,7 +281,10 @@ impl<'a> Vertex<'a> {
         }
     }
 
-    fn ts_type_annotation_type_annotation(&self) -> VertexIterator<'a, Vertex<'a>> {
+    fn ts_type_annotation_type_annotation<'b>(&self) -> VertexIterator<'b, Vertex<'a>>
+    where
+        'a: 'b,
+    {
         Box::new(std::iter::once(Vertex::TSType(match self {
             Vertex::TSTypeAnnotation(tsta) => &tsta.type_annotation,
             Vertex::AstNode(ast) => match ast.kind() {
@@ -340,7 +326,10 @@ impl<'a> Vertex<'a> {
         .into()
     }
 
-    fn function_signature_arguments(&self) -> VertexIterator<'a, Vertex<'a>> {
+    fn function_signature_arguments<'b>(&self) -> VertexIterator<'b, Vertex<'a>>
+    where
+        'a: 'b,
+    {
         formal_parameters_to_iter(
             &match self {
                 Vertex::Expression(expr) => match expr {
@@ -364,7 +353,10 @@ impl<'a> Vertex<'a> {
         )
     }
 
-    fn function_signature_return_type(&self) -> VertexIterator<'a, Vertex<'a>> {
+    fn function_signature_return_type<'b>(&self) -> VertexIterator<'b, Vertex<'a>>
+    where
+        'a: 'b,
+    {
         let return_type = &match self {
             Vertex::Expression(expr) => match expr {
                 Expression::FunctionExpression(fe) => &fe.0.return_type,
@@ -508,13 +500,16 @@ impl<'a> Vertex<'a> {
         }
     }
 
-    fn get_span_from_ast_node(&self) -> VertexIterator<'a, Vertex<'a>> {
+    fn get_span_from_ast_node<'b>(&self) -> VertexIterator<'b, Vertex<'a>>
+    where
+        'a: 'b,
+    {
         Box::new(std::iter::once(Vertex::Span(match self {
             Vertex::AstNode(ast) => ast.kind().span(),
             Vertex::Expression(expr) => expr.span(),
             Vertex::Argument(arg, _) => arg.span(),
             Vertex::AssignmentToIdentifier(span, _) => **span,
-            Vertex::File(_) | Vertex::Span(_) | Vertex::Operator(_) | Vertex::PossiblyNumber(_) => {
+            Vertex::File | Vertex::Span(_) | Vertex::Operator(_) | Vertex::PossiblyNumber(_) => {
                 unreachable!(
                     "tried to get span out of Vertex::Span | Vertex::Operator | Vertex::PossiblyNumber | Vertex::File"
                 )
@@ -547,7 +542,7 @@ impl<'a> Vertex<'a> {
     }
 }
 
-impl<'a> Adapter<'a> for LintAdapter<'a> {
+impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
     type Vertex = Vertex<'a>;
 
     fn resolve_starting_vertices(
@@ -555,24 +550,20 @@ impl<'a> Adapter<'a> for LintAdapter<'a> {
         edge_name: &Arc<str>,
         _parameters: &EdgeParameters,
         _resolve_info: &ResolveInfo,
-    ) -> VertexIterator<'a, Self::Vertex> {
+    ) -> VertexIterator<'b, Self::Vertex> {
         match edge_name.as_ref() {
-            "File" => {
-                let iter = AstNodeIterator { iter: Some(self.get_ast_node_iter()).into() };
-                let ret = Box::new(std::iter::once(Vertex::File(iter.into())));
-                ret
-            }
+            "File" => Box::new(std::iter::once(Vertex::File)),
             _ => unimplemented!("unexpected starting edge: {edge_name}"),
         }
     }
 
     fn resolve_property(
         &self,
-        contexts: ContextIterator<'a, Self::Vertex>,
+        contexts: ContextIterator<'b, Self::Vertex>,
         type_name: &Arc<str>,
         property_name: &Arc<str>,
         _resolve_info: &ResolveInfo,
-    ) -> ContextOutcomeIterator<'a, Self::Vertex, FieldValue> {
+    ) -> ContextOutcomeIterator<'b, Self::Vertex, FieldValue> {
         let res = match (type_name.as_ref(), property_name.as_ref()) {
             ("Identifier", "name") => resolve_property_with(contexts, |v| {
                 let Expression::Identifier(ident) = v.as_expression().unwrap() else { unreachable!("expected identifier") };
@@ -715,15 +706,15 @@ impl<'a> Adapter<'a> for LintAdapter<'a> {
 
     fn resolve_neighbors(
         &self,
-        contexts: ContextIterator<'a, Self::Vertex>,
+        contexts: ContextIterator<'b, Self::Vertex>,
         type_name: &Arc<str>,
         edge_name: &Arc<str>,
         _parameters: &EdgeParameters,
         _resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Self::Vertex, VertexIterator<'a, Self::Vertex>> {
+    ) -> ContextOutcomeIterator<'b, Self::Vertex, VertexIterator<'b, Self::Vertex>> {
         let res = match (type_name.as_ref(), edge_name.as_ref()) {
-            ("File", "ast_node") => resolve_neighbors_with(contexts, |v| {
-                v.as_file().unwrap().iter.borrow_mut().take().unwrap()
+            ("File", "ast_node") => resolve_neighbors_with(contexts, |_| {
+                Box::new(self.semantic.nodes().iter().map(|x| Vertex::AstNode(*x)))
             }),
             ("AssignmentOnObject", "final_assignment") => resolve_neighbors_with(contexts, |v| {
                 let first = v.as_assignment_on_object().unwrap();
@@ -1032,11 +1023,11 @@ impl<'a> Adapter<'a> for LintAdapter<'a> {
 
     fn resolve_coercion(
         &self,
-        contexts: ContextIterator<'a, Self::Vertex>,
+        contexts: ContextIterator<'b, Self::Vertex>,
         _type_name: &Arc<str>,
         coerce_to_type: &Arc<str>,
         _resolve_info: &ResolveInfo,
-    ) -> ContextOutcomeIterator<'a, Self::Vertex, bool> {
+    ) -> ContextOutcomeIterator<'b, Self::Vertex, bool> {
         match coerce_to_type.as_ref() {
             "NewExpression" => coerce_ast!(contexts, NewExpression),
             "ExpressionArgument" => resolve_coercion_with(

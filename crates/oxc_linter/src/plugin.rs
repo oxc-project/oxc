@@ -40,7 +40,8 @@ impl LinterPlugin {
     }
 
     pub fn run<'a>(&self, ctx: &mut LintContext, semantic: &Rc<Semantic<'a>>) {
-        let adapter = Arc::from(LintAdapter { semantic: semantic.clone() });
+        let inner = LintAdapter { semantic: semantic.clone() };
+        let adapter = Arc::from(&inner);
         for input_query in self.rules.iter() {
             for data_item in execute_query(
                 &self.schema,
