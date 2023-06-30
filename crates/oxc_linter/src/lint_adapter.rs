@@ -631,20 +631,17 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                             .id
                             .as_ref()
                             .map_or_else(|| FieldValue::Null, |id| id.name.to_string().into()),
-                        AstKind::ArrowExpression(_) => {
-                            // TODO: Look at parent node for assignment for name
-                            FieldValue::Null
-                            // match self.semantic.nodes().parent_node(ast.id()) {
-                            //     Some(parent) => match parent.kind() {
-                            //         AstKind::BindingIdentifier(ident) => ident.name.to_string().into(),
-                            //         AstKind::IdentifierReference(ident) => {
-                            //             ident.name.to_string().into()
-                            //         }
-                            //         _ => FieldValue::Null,
-                            //     },
-                            //     None => FieldValue::Null,
-                            // }
-                        }
+                        AstKind::ArrowExpression(_) => self
+                            .semantic
+                            .nodes()
+                            .parent_node(ast.id())
+                            .map_or(FieldValue::Null, |parent| match parent.kind() {
+                                AstKind::BindingIdentifier(ident) => ident.name.to_string().into(),
+                                AstKind::IdentifierReference(ident) => {
+                                    ident.name.to_string().into()
+                                }
+                                _ => FieldValue::Null,
+                            }),
                         AstKind::TSMethodSignature(tsms) => tsms
                             .key
                             .static_name()
