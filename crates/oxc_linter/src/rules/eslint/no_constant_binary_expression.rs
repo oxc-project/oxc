@@ -61,7 +61,7 @@ struct NoConstantBinaryExpressionDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "eslint(no-constant-binary-expression): Unexpected constant {0:?} on the left-hand side of a `{1:?}` expression"
+    "eslint(no-constant-binary-expression): Unexpected constant {0:?} on the left-hand side of a {1:?} expression"
 )]
 #[diagnostic(severity(warning))]
 struct ConstantShortCircuit(
@@ -76,7 +76,7 @@ struct ConstantShortCircuit(
 struct ConstantBinaryOperand(
     &'static str, // otherSide
     &'static str, // operator
-    #[label("This compares constantly with the {0}-hand side of the `{1}`")] Span,
+    #[label("This compares constantly with the {0}-hand side of the {1}")] Span,
 );
 
 #[derive(Debug, Error, Diagnostic)]
