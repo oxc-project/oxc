@@ -970,6 +970,10 @@ pub enum VariableDeclarationKind {
 }
 
 impl VariableDeclarationKind {
+    pub fn is_var(&self) -> bool {
+        matches!(self, Self::Var)
+    }
+
     pub fn is_const(&self) -> bool {
         matches!(self, Self::Const)
     }

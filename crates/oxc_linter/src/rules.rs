@@ -35,6 +35,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_ex_assign,
     eslint::no_func_assign,
     eslint::no_import_assign,
+    eslint::no_inner_declarations,
     eslint::no_mixed_operators,
     eslint::no_new_symbol,
     eslint::no_self_assign,
