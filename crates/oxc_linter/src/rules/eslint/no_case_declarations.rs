@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{Statement, Declaration}};
+use oxc_ast::{
+    ast::{Declaration, Statement, VariableDeclarationKind},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -22,7 +25,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     /// The reason is that the lexical declaration is visible
-    /// in the entire switch block but it only gets initialized when it is assigned, 
+    /// in the entire switch block but it only gets initialized when it is assigned,
     /// which will only happen if the case where it is defined is reached.
     ///
     /// ### Example
@@ -45,27 +48,37 @@ declare_oxc_lint!(
     correctness
 );
 
-
 impl Rule for NoCaseDeclarations {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::SwitchCase(switch_case) = node.kind() {
             let consequent = &switch_case.consequent;
 
             for stmt in consequent {
-              if let Statement::Declaration(dcl) = stmt {
-                match dcl {
-                  Declaration::FunctionDeclaration(d) => {
-                    ctx.diagnostic(NoCaseDeclarationsDiagnostic(d.span));
-                  }
-                  Declaration::ClassDeclaration(d) => {
-                    ctx.diagnostic(NoCaseDeclarationsDiagnostic(d.span));
-                  }
-                  Declaration::VariableDeclaration(var) if var.kind.is_lexical() => {
-                    ctx.diagnostic(NoCaseDeclarationsDiagnostic(var.span));
-                  }
-                  _ => {}
-                }
-              };
+                if let Statement::Declaration(dcl) = stmt {
+                    match dcl {
+                        Declaration::FunctionDeclaration(d) => {
+                            let start = d.span.start;
+                            let end = start + 8;
+                            ctx.diagnostic(NoCaseDeclarationsDiagnostic(Span::new(start, end)));
+                        }
+                        Declaration::ClassDeclaration(d) => {
+                            let start = d.span.start;
+                            let end = start + 5;
+                            ctx.diagnostic(NoCaseDeclarationsDiagnostic(Span::new(start, end)));
+                        }
+                        Declaration::VariableDeclaration(var) if var.kind.is_lexical() => {
+                            let start = var.span.start;
+                            let end = match var.kind {
+                                VariableDeclarationKind::Var => unreachable!(),
+                                VariableDeclarationKind::Const => 5,
+                                VariableDeclarationKind::Let => 3,
+                            };
+                            let end = start + end;
+                            ctx.diagnostic(NoCaseDeclarationsDiagnostic(Span::new(start, end)));
+                        }
+                        _ => {}
+                    }
+                };
             }
         }
     }
@@ -76,21 +89,24 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-      ("switch (a) { case 1: { let x = 1; break; } default: { let x = 2; break; } }", None),
-      ("switch (a) { case 1: { const x = 1; break; } default: { const x = 2; break; } }", None),
-      ("switch (a) { case 1: { function f() {} break; } default: { function f() {} break; } }", None),
-      ("switch (a) { case 1: { class C {} break; } default: { class C {} break; } }", None)
+        ("switch (a) { case 1: { let x = 1; break; } default: { let x = 2; break; } }", None),
+        ("switch (a) { case 1: { const x = 1; break; } default: { const x = 2; break; } }", None),
+        (
+            "switch (a) { case 1: { function f() {} break; } default: { function f() {} break; } }",
+            None,
+        ),
+        ("switch (a) { case 1: { class C {} break; } default: { class C {} break; } }", None),
     ];
 
     let fail = vec![
-      ("switch (a) { case 1: let x = 1; break; }", None),
-      ("switch (a) { default: let x = 2; break; }", None),
-      ("switch (a) { case 1: const x = 1; break; }", None),
-      ("switch (a) { default: const x = 2; break; }", None),
-      ("switch (a) { case 1: function f() {} break; }", None),
-      ("switch (a) { default: function f() {} break; }", None),
-      ("switch (a) { case 1: class C {} break; }", None),
-      ("switch (a) { default: class C {} break; }", None)
+        ("switch (a) { case 1: let x = 1; break; }", None),
+        ("switch (a) { default: let x = 2; break; }", None),
+        ("switch (a) { case 1: const x = 1; break; }", None),
+        ("switch (a) { default: const x = 2; break; }", None),
+        ("switch (a) { case 1: function f() {} break; }", None),
+        ("switch (a) { default: function f() {} break; }", None),
+        ("switch (a) { case 1: class C {} break; }", None),
+        ("switch (a) { default: class C {} break; }", None),
     ];
 
     Tester::new(NoCaseDeclarations::NAME, pass, fail).test_and_snapshot();
