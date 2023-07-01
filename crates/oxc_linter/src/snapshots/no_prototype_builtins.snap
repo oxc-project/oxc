@@ -1,0 +1,89 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_prototype_builtins
+---
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "hasOwnProperty" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo.hasOwnProperty('bar')
+   · ──────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.hasOwnProperty.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "isPrototypeOf" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo.isPrototypeOf('bar')
+   · ─────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.isPrototypeOf.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "propertyIsEnumerable" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo.propertyIsEnumerable('bar')
+   · ────────────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.propertyIsEnumerable.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "hasOwnProperty" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo.bar.hasOwnProperty('bar')
+   · ──────────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.hasOwnProperty.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "isPrototypeOf" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo.bar.baz.isPrototypeOf('bar')
+   · ─────────────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.isPrototypeOf.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "hasOwnProperty" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo['hasOwnProperty']('bar')
+   · ─────────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.hasOwnProperty.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "isPrototypeOf" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo[`isPrototypeOf`]('bar').baz
+   · ────────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.isPrototypeOf.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "propertyIsEnumerable" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo.bar["propertyIsEnumerable"]('baz')
+   · ───────────────────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.propertyIsEnumerable.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "hasOwnProperty" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo?.hasOwnProperty('bar')
+   · ───────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.hasOwnProperty.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "hasOwnProperty" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ (foo?.hasOwnProperty)('bar')
+   ·  ───────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.hasOwnProperty.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "hasOwnProperty" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ foo?.['hasOwnProperty']('bar')
+   · ───────────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.hasOwnProperty.call` instead
+
+  ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "hasOwnProperty" from target object
+   ╭─[no_prototype_builtins.tsx:1:1]
+ 1 │ (foo?.[`hasOwnProperty`])('bar')
+   ·  ───────────────────────
+   ╰────
+  help: to avoid prototype pollution, use `Object.prototype.hasOwnProperty.call` instead
+
+
