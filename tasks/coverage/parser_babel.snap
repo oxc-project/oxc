@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2072/2078 (99.71%)
 Positive Passed: 2069/2078 (99.57%)
-Negative Passed: 1323/1507 (87.79%)
+Negative Passed: 1324/1507 (87.86%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -138,7 +138,6 @@ Expect Syntax Error: "typescript/scope/redeclaration-enum-let/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-enum-type/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-enum-var/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-function-enum/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-import-type-import/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-interface-enum/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-let-enum/input.ts"
 Expect Syntax Error: "typescript/scope/redeclaration-type-class/input.ts"
@@ -9906,6 +9905,16 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │ class A {}
    ·       ┬
    ·       ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Context` has already been declared
+   ╭─[typescript/scope/redeclaration-import-type-import/input.ts:1:1]
+ 1 │ import type { Context } from 'react';
+   ·               ───┬───
+   ·                  ╰── `Context` has already been declared here
+ 2 │ import { Context } from 'react';
+   ·          ───┬───
+   ·             ╰── It can not be redeclared here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

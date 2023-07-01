@@ -187,8 +187,8 @@ impl<'a> Binder for ModuleDeclaration<'a> {
             builder.declare_symbol(
                 ident.span,
                 &ident.name,
-                SymbolFlags::empty(),
-                SymbolFlags::empty(),
+                SymbolFlags::ImportBinding,
+                SymbolFlags::ImportBindingExcludes,
             );
         });
     }

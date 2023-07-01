@@ -23,6 +23,7 @@ bitflags! {
         const Class                   = 1 << 5;
         const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
         const Function                = 1 << 7;
+        const ImportBinding           = 1 << 8; // Imported ESM binding
 
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
         const Value = Self::Variable.bits() | Self::Class.bits();
@@ -36,6 +37,7 @@ bitflags! {
         const BlockScopedVariableExcludes = Self::Value.bits();
 
         const ClassExcludes = Self::Value.bits();
+        const ImportBindingExcludes = Self::ImportBinding.bits();
     }
 }
 
@@ -66,5 +68,9 @@ impl SymbolFlags {
 
     pub fn is_export(&self) -> bool {
         self.contains(Self::Export)
+    }
+
+    pub fn is_import_binding(&self) -> bool {
+        self.contains(Self::ImportBinding)
     }
 }
