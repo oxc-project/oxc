@@ -9,9 +9,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-useless-escape): Unnecessary escape character `{0:?}`")]
-#[diagnostic(severity(warning), help(""))]
-struct NoUselessEscapeDiagnostic(String, #[label] pub Span);
+#[error("eslint(no-useless-escape): Unnecessary escape character {0:?}")]
+#[diagnostic(severity(warning))]
+struct NoUselessEscapeDiagnostic(char, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessEscape;
@@ -67,10 +67,8 @@ fn check(ctx: &LintContext<'_>, start: u32, offsets: &[usize]) {
     let source_text = ctx.source_text();
     for offset in offsets {
         let offset = start as usize + offset;
-        ctx.diagnostic(NoUselessEscapeDiagnostic(
-            source_text[offset..=offset].to_string(),
-            Span::new(offset as u32, offset as u32),
-        ));
+        let c = source_text[offset..].chars().next().unwrap();
+        ctx.diagnostic(NoUselessEscapeDiagnostic(c, Span::new(offset as u32, offset as u32)));
     }
 }
 
@@ -82,11 +80,11 @@ fn check_regexp(regex: &str) -> Vec<usize> {
     let mut in_escape = false;
     let mut in_character_class = false;
     let mut start_char_class = false;
-    let mut offset = 0;
+    let mut offset = 1;
 
-    let mut chars = regex[1..].chars().peekable();
+    // Skip the leading and trailing `/`
+    let mut chars = regex[1..regex.len() - 1].chars().peekable();
     while let Some(c) = chars.next() {
-        offset += c.len_utf8();
         if in_escape {
             in_escape = false;
             match c {
@@ -118,6 +116,7 @@ fn check_regexp(regex: &str) -> Vec<usize> {
         } else {
             start_char_class = false;
         }
+        offset += c.len_utf8();
     }
 
     offsets
@@ -354,6 +353,7 @@ fn test() {
         "`template literal with mixed linebreaks \r\r\n\n\\and useless escape`",
         "`template literal with mixed linebreaks in line continuations \\\n\\\r\\\r\n\\and useless escape`",
         "`\\a```",
+        r#"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;"#,
     ];
 
     Tester::new_without_config(NoUselessEscape::NAME, pass, fail).test_and_snapshot();
