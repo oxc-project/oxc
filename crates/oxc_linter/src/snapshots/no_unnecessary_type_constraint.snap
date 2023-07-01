@@ -1,0 +1,152 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_unnecessary_type_constraint
+---
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ function data<T extends any>() {}
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ function data<T extends any, U>() {}
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "U" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ function data<T, U extends any>() {}
+   ·                  ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ function data<T extends any, U extends T>() {}
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends any>() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends any,>() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends any, >() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends any ,>() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends any , >() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends any = unknown>() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends any, U extends any>() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "U" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends any, U extends any>() => {};
+   ·                              ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ function data<T extends unknown>() {}
+   ·               ─         ───────
+   ╰────
+  help: Remove the unnecessary "unknown" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends any>() => {};
+   ·               ─         ───
+   ╰────
+  help: Remove the unnecessary "any" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const data = <T extends unknown>() => {};
+   ·               ─         ───────
+   ╰────
+  help: Remove the unnecessary "unknown" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ class Data<T extends unknown> {}
+   ·            ─         ───────
+   ╰────
+  help: Remove the unnecessary "unknown" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const Data = class<T extends unknown> {};
+   ·                    ─         ───────
+   ╰────
+  help: Remove the unnecessary "unknown" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ class Data { member<T extends unknown>() {} }
+   ·                     ─         ───────
+   ╰────
+  help: Remove the unnecessary "unknown" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ const Data = class { member<T extends unknown>() {} };
+   ·                             ─         ───────
+   ╰────
+  help: Remove the unnecessary "unknown" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ interface Data<T extends unknown> {}
+   ·                ─         ───────
+   ╰────
+  help: Remove the unnecessary "unknown" constraint
+
+  ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "unknown" does nothing and is unnecessary
+   ╭─[no_unnecessary_type_constraint.tsx:1:1]
+ 1 │ type Data<T extends unknown> = {};
+   ·           ─         ───────
+   ╰────
+  help: Remove the unnecessary "unknown" constraint
+
+

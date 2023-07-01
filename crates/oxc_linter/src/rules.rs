@@ -56,7 +56,8 @@ oxc_macros::declare_all_lint_rules! {
     typescript::isolated_declaration,
     typescript::no_empty_interface,
     typescript::no_extra_non_null_assertion,
-    typescript::no_non_null_asserted_optional_chain
+    typescript::no_non_null_asserted_optional_chain,
+    typescript::no_unnecessary_type_constraint
 }
 
 #[cfg(test)]
