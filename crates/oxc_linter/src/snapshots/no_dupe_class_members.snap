@@ -265,23 +265,100 @@ expression: no_dupe_class_members
 
   ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
    ╭─[no_dupe_class_members.tsx:1:1]
- 1 │ class A { get foo() {} set foo(val) {} get foo() {} }
-   ·               ─┬─                          ─┬─
-   ·                │                            ╰── "foo" is re-declared here
+ 1 │ class A { foo() {}  foo() {}}
+   ·           ─┬─       ─┬─
+   ·            │         ╰── "foo" is re-declared here
+   ·            ╰── "foo" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ !class A { foo() {}  foo() {}};
+   ·            ─┬─       ─┬─
+   ·             │         ╰── "foo" is re-declared here
+   ·             ╰── "foo" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ class A { 'foo'() {}  'foo'() {}}
+   ·           ──┬──       ──┬──
+   ·             │           ╰── "foo" is re-declared here
+   ·             ╰── "foo" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "10"
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ class A { 10() {}  1e1() {}}
+   ·           ─┬       ─┬─
+   ·            │        ╰── "10" is re-declared here
+   ·            ╰── "10" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ class A { foo() {}  foo() {}  foo() {}}
+   ·           ─┬─       ─┬─
+   ·            │         ╰── "foo" is re-declared here
+   ·            ╰── "foo" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ class A { foo() {}  foo() {}  foo() {}}
+   ·           ─┬─                 ─┬─
+   ·            │                   ╰── "foo" is re-declared here
+   ·            ╰── "foo" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ class A { static foo() {}  static foo() {}}
+   ·                  ─┬─              ─┬─
+   ·                   │                ╰── "foo" is re-declared here
+   ·                   ╰── "foo" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ class A { foo() {}  get foo() {}}
+   ·           ─┬─           ─┬─
+   ·            │             ╰── "foo" is re-declared here
+   ·            ╰── "foo" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ class A { set foo(value) {}  foo() {}}
+   ·               ─┬─            ─┬─
+   ·                │              ╰── "foo" is re-declared here
    ·                ╰── "foo" is previously declared here
    ╰────
   help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
 
   ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
-   ╭─[no_dupe_class_members.tsx:3:1]
- 3 │         foo(a: number): number;
- 4 │         foo(a: any): any {}
-   ·         ─┬─
-   ·          ╰── "foo" is previously declared here
- 5 │         foo(b: string | number): any {}
-   ·         ─┬─
-   ·          ╰── "foo" is re-declared here
- 6 │       }
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ class A { foo;  foo = 42;}
+   ·           ─┬─   ─┬─
+   ·            │     ╰── "foo" is re-declared here
+   ·            ╰── "foo" is previously declared here
+   ╰────
+  help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
+
+  ⚠ eslint(no-dupe-class-members): Duplicate class member: "foo"
+   ╭─[no_dupe_class_members.tsx:1:1]
+ 1 │ class A { foo;  foo() {}}
+   ·           ─┬─   ─┬─
+   ·            │     ╰── "foo" is re-declared here
+   ·            ╰── "foo" is previously declared here
    ╰────
   help: The last declaration overwrites previous ones, remove one of them or rename if both should be retained
 
