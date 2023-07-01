@@ -26,6 +26,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_debugger,
     eslint::no_delete_var,
     eslint::no_dupe_class_members,
+    eslint::no_dupe_else_if,
     eslint::no_dupe_keys,
     eslint::no_duplicate_case,
     eslint::no_empty,
