@@ -15,8 +15,8 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("")]
-#[diagnostic(severity(warning), help(""))]
+#[error("eslint(no-cond-assign): Expected a conditional expression and instead saw an assignment")]
+#[diagnostic(severity(warning), help("Consider wrapping the assignment in additional parentheses"))]
 struct NoCondAssignDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
