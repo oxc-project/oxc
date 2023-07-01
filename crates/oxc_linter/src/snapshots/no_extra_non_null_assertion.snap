@@ -1,0 +1,53 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_extra_non_null_assertion
+---
+  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
+   ╭─[no_extra_non_null_assertion.tsx:1:1]
+ 1 │ const foo: { bar: number } | null = null; const bar = foo!!.bar; 
+   ·                                                          ▲
+   ╰────
+
+  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
+   ╭─[no_extra_non_null_assertion.tsx:1:1]
+ 1 │ function foo(bar: number | undefined) { const a: number = bar!!; }
+   ·                                                              ▲
+   ╰────
+
+  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
+   ╭─[no_extra_non_null_assertion.tsx:1:1]
+ 1 │ function foo(bar?: { n: number }) { return bar!?.n; }
+   ·                                               ▲
+   ╰────
+
+  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
+   ╭─[no_extra_non_null_assertion.tsx:1:1]
+ 1 │ function foo(bar?: { n: number }) { return bar!?.(); }
+   ·                                               ▲
+   ╰────
+
+  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
+   ╭─[no_extra_non_null_assertion.tsx:1:1]
+ 1 │ const foo: { bar: number } | null = null; const bar = (foo!)!.bar;
+   ·                                                           ▲
+   ╰────
+
+  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
+   ╭─[no_extra_non_null_assertion.tsx:1:1]
+ 1 │ function foo(bar?: { n: number }) { return (bar!)?.n; }
+   ·                                                ▲
+   ╰────
+
+  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
+   ╭─[no_extra_non_null_assertion.tsx:1:1]
+ 1 │ function foo(bar?: { n: number }) { return (bar)!?.n; }
+   ·                                                 ▲
+   ╰────
+
+  ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
+   ╭─[no_extra_non_null_assertion.tsx:1:1]
+ 1 │ function foo(bar?: { n: number }) { return (bar!)?.(); }
+   ·                                                ▲
+   ╰────
+
+

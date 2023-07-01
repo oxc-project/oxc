@@ -53,7 +53,8 @@ oxc_macros::declare_all_lint_rules! {
     eslint::require_yield,
     eslint::use_isnan,
     eslint::valid_typeof,
-    typescript::isolated_declaration
+    typescript::isolated_declaration,
+    typescript::no_extra_non_null_assertion
 }
 
 #[cfg(test)]
