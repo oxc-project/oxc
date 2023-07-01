@@ -22,7 +22,7 @@ declare_oxc_lint!(
     /// Disallow extra non-null assertions.
     ///
     /// ### Why is this bad?
-    /// The ! non-null assertion operator in TypeScript is used to assert that a value's type does not include null or undefined. Using the operator any more than once on a single value does nothing.
+    /// The `!` non-null assertion operator in TypeScript is used to assert that a value's type does not include null or undefined. Using the operator any more than once on a single value does nothing.
     ///
     /// ### Example
     /// ```javascript

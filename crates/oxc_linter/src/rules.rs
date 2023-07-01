@@ -54,7 +54,8 @@ oxc_macros::declare_all_lint_rules! {
     eslint::use_isnan,
     eslint::valid_typeof,
     typescript::isolated_declaration,
-    typescript::no_extra_non_null_assertion
+    typescript::no_extra_non_null_assertion,
+    typescript::no_non_null_asserted_optional_chain
 }
 
 #[cfg(test)]

@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_non_null_asserted_optional_chain
+---
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ foo?.bar!;
+   ·    ▲    ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ foo?.['bar']!;
+   ·    ▲        ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ foo?.bar()!;
+   ·    ▲      ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ foo.bar?.()!;
+   ·        ▲   ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ (foo?.bar)!.baz
+   ·     ▲     ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ (foo?.bar)!().baz
+   ·     ▲     ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ (foo?.bar)!
+   ·     ▲     ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ (foo?.bar)!()
+   ·     ▲     ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ (foo?.bar!)
+   ·     ▲    ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+  ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
+   ╭─[no_non_null_asserted_optional_chain.tsx:1:1]
+ 1 │ (foo?.bar!)()
+   ·     ▲    ▲
+   ╰────
+  help: Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong. You should remove the non-null assertion.
+
+
