@@ -1,20 +1,15 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::{Span, Atom};
+use oxc_span::{Atom, Span};
+
 use crate::{context::LintContext, rule::Rule};
 
-const NON_CALLABLE_GLOBALS: [&str; 5] = [
-    "Atomics",
-    "Intl",
-    "JSON",
-    "Math",
-    "Reflect"
-];
+const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-obj-calls): Disallow calling some global objects as functions")]
@@ -43,19 +38,19 @@ declare_oxc_lint! {
     /// // Bad
     /// let math = Math();
     /// let newMath = new Math();
-    /// 
+    ///
     /// let json = JSON();
     /// let newJson = new JSON();
-    /// 
+    ///
     /// let atomics = Atomics();
     /// let newAtomics = new Atomics();
-    /// 
+    ///
     /// let intl = Intl();
     /// let newIntl = new Intl();
-    /// 
+    ///
     /// let reflect = Reflect();
     /// let newReflect = new Reflect();
-    /// 
+    ///
     /// // Good
     /// let area = r => 2 * Math.PI * r * r;
     /// let object = JSON.parse("{}");
@@ -67,9 +62,7 @@ declare_oxc_lint! {
 }
 
 fn is_global_obj<'a>(str: impl PartialEq<&'a str>) -> bool {
-    NON_CALLABLE_GLOBALS
-        .iter()
-        .any(|&n| str == n)
+    NON_CALLABLE_GLOBALS.iter().any(|&n| str == n)
 }
 
 impl Rule for NoObjCalls {
@@ -77,7 +70,7 @@ impl Rule for NoObjCalls {
         let (callee, span) = match node.kind() {
             AstKind::NewExpression(expr) => (&expr.callee, expr.span),
             AstKind::CallExpression(expr) => (&expr.callee, expr.span),
-            _ => { return }
+            _ => return,
         };
 
         let ident: Atom = match callee {
@@ -85,10 +78,9 @@ impl Rule for NoObjCalls {
             Expression::Identifier(ident) => {
                 ident.name.clone()
             },
+
             // handle new globalThis.Math(), globalThis.Math(), etc
             Expression::MemberExpression(expr) => {
-                // let is_static_member = expr.static_property_name()
-                // if let MemberExpression::StaticMemberExpression(static_member) = expr.unbox() &&
                 if let Expression::Identifier(static_ident) = expr.object() &&
                 static_ident.name == "globalThis" &&
                 let Some(static_member) = expr.static_property_name()
@@ -136,7 +128,7 @@ fn test() {
         ("let obj = Intl();", None),
         ("let newObj = new Reflect();", None),
         ("let obj = Reflect();", None),
-        ("function() { JSON.parse(Atomics()) }", None)
+        ("function() { JSON.parse(Atomics()) }", None),
     ];
 
     Tester::new(NoObjCalls::NAME, pass, fail).test_and_snapshot();
