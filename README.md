@@ -37,38 +37,41 @@
 [code-coverage-badge]: https://codecov.io/gh/Boshen/oxc/branch/main/graph/badge.svg
 [code-coverage-url]: https://codecov.io/gh/Boshen/oxc
 
-The Oxidation Compiler is creating a suite of tools for the JavaScript / TypeScript language:
+The Oxidation Compiler is creating a suite of high-performance tools for the JavaScript / TypeScript language re-written in Rust:
 
 * [AST](./crates/oxc_ast) - See [docs.rs/oxc_ast][docs-ast]
-* [Parser](./crates/oxc_parser) - See [docs.rs/oxc_parser][docs-parser], [@oxidation-compiler/napi][npm-napi]
-* [Linter](./crates/oxc_linter) - Work in progress. Try it out! `npx oxlint@latest path`
-* Formatter
-* Transpiler
-* [Minifier](./crates/oxc_minifier) - Prototype
-* Type Checker - See [ezno](https://github.com/kaleidawave/ezno), available via `npx oxidation-compiler@latest check path`
+* [Parser](./crates/oxc_parser) ([acorn][acorn]) - See [docs.rs/oxc_parser][docs-parser], [@oxidation-compiler/napi][npm-napi]
+* [Linter](./crates/oxc_linter) ([ESLint][ESLint]) - Prototype - Try it out! `npx oxlint@latest path`
+* Formatter ([prettier][prettier])
+* Transpiler ([babel][babel])
+* [Minifier](./crates/oxc_minifier) ([terser][terser]) - [Prototype](https://github.com/Boshen/oxc/tree/main/crates/oxc_minifier)
+* Type Checker - See [ezno][ezno], available via `npx oxidation-compiler@latest check path`
 
 [docs-ast]: https://docs.rs/oxc_ast
 [docs-parser]: https://docs.rs/oxc_parser
 [npm-napi]: https://www.npmjs.com/package/@oxidation-compiler/napi
+[acorn]: https://github.com/acornjs/acorn
+[babel]: https://babel.dev
+[prettier]: https://prettier.io
+[ESLint]: https://eslint.org/
+[prettier]: https://github.com/prettier/prettier
+[ezno]: https://github.com/kaleidawave/ezno
 
-## Goals
+## Philosophy
 
-The primary objectives for this project include:
+This project follows philosophies from the [Rome](https://rome.tools) and [Ruff](https://beta.ruff.rs) projects.
 
-* Create a *really* fast native program by using the Rust programming language
-* Provide the basic building blocks for creating your own tools by having good API designs
-* Provide good documentation on learning Rust and compiler techniques
-
-> Performance issues are considered as bugs in this project.
+1. JavaScript tooling could be rewritten in a more performant language
+2. An integrated toolchain can tap into efficiencies that are not available to a disparate set of tools
 
 ## Milestone
 
-As of now, Oxc has a fully working parser, a prototype for the linter and the minifier.
+This project currently has a fully working parser, a prototype for the linter as well as the minifier.
 
 The current objectives are:
 
-* A MVP (Minimal Viable Product) for the minifier.
-* A MVP for the linter.
+* Publish the linter as a product
+* Finish the minifier
 
 ## Contributing
 
@@ -80,6 +83,7 @@ To get started, check out some of the [good first issues](https://github.com/Bos
 If you are unable to contribute by code, you can still participate by:
 
 * star and watch this project
+* test the linter by running `npx oxlint@latest .` in your own projects
 * join us on [Discord](https://discord.gg/9uXCAwqQZW)
 * [follow me on twitter](https://twitter.com/boshen_c)
 * provide your wisdom in [discussions](https://github.com/Boshen/oxc/discussions)
@@ -88,19 +92,18 @@ If you are unable to contribute by code, you can still participate by:
 
 The linter is fast to the extent that it feels broken.
 
-With 31 rules implemented, testing in the [VSCode](https://github.com/microsoft/vscode) repo on a M2:
+With 45 rules implemented, testing in the [VSCode](https://github.com/microsoft/vscode) repo on a Mac M2:
 
 ```
 vscode  main ❯ npx oxlint@latest src
-Finished in 388ms on 3628 files with 31 rules using 8 threads.
-Found 53 errors.
+Finished in 388ms on 3477 files with 45 rules using 8 threads.
+Found 798 warnings.
 ```
 
-And also in a huge monorepo:
+And also in a huge monorepo using Mac i7:
 
 ```
-Checked 73660 files in 7415ms using 12 cores.
-Found 470 errors.
+Finished in 5568ms on 51931 files with 45 rules using 12 threads.
 ```
 
 On my Intel i7 6-core, the linter is around 80 times faster than ESLint.
@@ -136,7 +139,7 @@ Positive Passed: 2331/2337 (99.74%)
 Negative Passed: 673/2535 (26.55%)
 ```
 
-Test262 conformance is complete. TypeScript parsing is complete.
+[Test262 conformance](https://github.com/tc39/test262) is complete. TypeScript parsing is complete.
 
 Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 
@@ -146,21 +149,6 @@ Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 * My small article - [Pursuit of Performance on Building a JavaScript Compiler](https://rustmagazine.org/issue-3/javascript-compiler/)
 * [Crafting Interpreters](https://craftinginterpreters.com)
 * [Create an issue and insert your inspirational learning resources here]
-
-## Rust [cloc](https://github.com/boyter/scc)
-
-`scc . --include-ext=rs --no-complexity`
-
-```
-───────────────────────────────────────────────────────────────────────────────
-Language                     Files       Lines     Blanks    Comments      Code
-───────────────────────────────────────────────────────────────────────────────
-Rust                           194       54278       5933        4636     43709
-───────────────────────────────────────────────────────────────────────────────
-Estimated Cost to Develop (organic) $1,426,246
-Estimated Schedule Effort (organic) 15.74 months
-Estimated People Required (organic) 8.05
-```
 
 ## Credits
 
