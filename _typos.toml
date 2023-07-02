@@ -17,7 +17,5 @@ extend-exclude = [
 AttributeIDSupressMenu = "AttributeIDSupressMenu"
 
 [default.extend-words]
-# Don't correct the surname "Teh"
-teh = "teh"
 xdescribe = "xdescribe"
 trivias = "trivias"
