@@ -8,11 +8,8 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use std::env;
-
 use oxc_cli::{
-    command, CliRunResult, LintOptions, LintRunner, LintRunnerWithModuleTree, TypeCheckOptions,
-    TypeCheckRunner,
+    command, matches_to_lint_options, CliRunResult, LintRunner, TypeCheckOptions, TypeCheckRunner,
 };
 
 fn main() -> CliRunResult {
@@ -26,18 +23,14 @@ fn main() -> CliRunResult {
 
     match subcommand {
         "lint" => {
-            let options = LintOptions::from(matches);
+            let options = matches_to_lint_options(matches);
 
             if options.list_rules {
                 LintRunner::print_rules();
                 return CliRunResult::None;
             }
 
-            if matches!(env::var("OXC_MODULE_TREE"), Ok(x) if x == "true" || x == "1") {
-                LintRunnerWithModuleTree::new(options).run()
-            } else {
-                LintRunner::new(options).run()
-            }
+            LintRunner::run(options)
         }
         "check" => {
             let options = TypeCheckOptions::from(matches);

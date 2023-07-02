@@ -9,7 +9,7 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use clap::{Arg, Command};
-use oxc_cli::{lint_command, CliRunResult, LintOptions, LintRunner};
+use oxc_cli::{lint_command, matches_to_lint_options, CliRunResult, LintRunner};
 
 pub fn command() -> Command {
     lint_command(
@@ -35,12 +35,12 @@ fn main() -> CliRunResult {
         rayon::ThreadPoolBuilder::new().num_threads(*threads).build_global().unwrap();
     }
 
-    let options = LintOptions::from(&matches);
+    let options = matches_to_lint_options(&matches);
 
     if options.list_rules {
         LintRunner::print_rules();
         return CliRunResult::None;
     }
 
-    LintRunner::new(options).run()
+    LintRunner::run(options)
 }

@@ -1,11 +1,20 @@
 //! [ECMAScript Module Record](https://tc39.es/ecma262/#sec-abstract-module-records)
 
+use std::{
+    path::{Path, PathBuf},
+    sync::{Arc, RwLock},
+};
+
 use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
 
 /// [Source Text Module Record](https://tc39.es/ecma262/#table-additional-fields-of-source-text-module-records)
 #[derive(Debug, Default)]
 pub struct ModuleRecord {
+    /// Resolved absolute path for this module record
+    /// Set by the runtime
+    pub resolved_absolute_path: Arc<RwLock<PathBuf>>,
+
     /// <https://tc39.es/ecma262/#sec-static-semantics-modulerequests>
     /// Module requests from:
     ///   import ImportClause FromClause
@@ -13,6 +22,9 @@ pub struct ModuleRecord {
     ///   export ExportFromClause FromClause
     /// Keyed by FromClause, valued by all node occurrences
     pub module_requests: FxHashMap<Atom, Vec<Span>>,
+
+    /// Resolved Module Requests, values are resolved by a "runtime"
+    pub resolved_module_requests: Arc<RwLock<FxHashMap<Atom, Box<Path>>>>,
 
     /// A List of ImportEntry records derived from the code of this module
     pub import_entries: Vec<ImportEntry>,
@@ -31,6 +43,10 @@ pub struct ModuleRecord {
     /// not including export * as namespace declarations.
     pub star_export_entries: Vec<ExportEntry>,
 
+    /// Star export binding, values are resolved by a "runtime"
+    pub star_export_bindings: Arc<RwLock<FxHashMap<Box<Path>, Vec<Atom>>>>,
+
+    /// Exported Bindings from this file, does not include `star_export_bindings`
     pub exported_bindings: FxHashMap<Atom, Span>,
     pub exported_bindings_duplicated: Vec<NameSpan>,
 

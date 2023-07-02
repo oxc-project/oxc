@@ -33,11 +33,10 @@ oxc_resolver       = { workspace = true }
 # TODO temp, for type check output, replace with Miette
 codespan-reporting = "0.11.1"
 
-clap              = { workspace = true }
-crossbeam-channel = { workspace = true }
-dashmap           = { workspace = true }
-rayon             = { workspace = true }
-miette            = { workspace = true, features = ["fancy-no-backtrace"] }
-rustc-hash        = { workspace = true }
-ignore            = { workspace = true, features = ["simd-accel"] }
+clap       = { workspace = true }
+dashmap    = { workspace = true }
+rayon      = { workspace = true }
+miette     = { workspace = true, features = ["fancy-no-backtrace"] }
+rustc-hash = { workspace = true }
+ignore     = { workspace = true, features = ["simd-accel"] }
 # git2 = { version = "0.16.1", default_features = false }

@@ -11,7 +11,7 @@ mod reference;
 mod scope;
 mod symbol;
 
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
@@ -43,7 +43,7 @@ pub struct Semantic<'a> {
 
     trivias: Rc<Trivias>,
 
-    module_record: ModuleRecord,
+    module_record: Arc<ModuleRecord>,
 
     jsdoc: JSDoc<'a>,
 
@@ -79,7 +79,7 @@ impl<'a> Semantic<'a> {
         &self.jsdoc
     }
 
-    pub fn module_record(&self) -> &ModuleRecord {
+    pub fn module_record(&self) -> &Arc<ModuleRecord> {
         &self.module_record
     }
 

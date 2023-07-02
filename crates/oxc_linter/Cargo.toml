@@ -12,6 +12,7 @@ repository.workspace  = true
 
 [dependencies]
 oxc_allocator   = { workspace = true }
+oxc_parser      = { workspace = true }
 oxc_span        = { workspace = true }
 oxc_ast         = { workspace = true }
 oxc_diagnostics = { workspace = true }
@@ -19,18 +20,20 @@ oxc_macros      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_formatter   = { workspace = true }
+oxc_resolver    = { workspace = true }
 
-lazy_static = { workspace = true }                        # used in oxc_macros
-serde_json  = { workspace = true }
+dashmap     = { workspace = true }
+lazy_static = { workspace = true }                                    # used in oxc_macros
+miette      = { workspace = true, features = ["fancy-no-backtrace"] }
+num-traits  = { workspace = true }
+phf         = { workspace = true, features = ["macros"] }
+rayon       = { workspace = true }
 regex       = { workspace = true }
 rustc-hash  = { workspace = true }
-phf         = { workspace = true, features = ["macros"] }
-num-traits  = { workspace = true }
+serde_json  = { workspace = true }
 
 rust-lapper = "1.1.0"
 
 [dev-dependencies]
-oxc_parser = { workspace = true }
-miette     = { workspace = true, features = ["fancy-no-backtrace"] }
-
-insta = { version = "1.28.0", features = ["glob"] }
+miette = { workspace = true, features = ["fancy-no-backtrace"] }
+insta  = { version = "1.28.0", features = ["glob"] }

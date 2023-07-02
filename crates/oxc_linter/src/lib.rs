@@ -10,25 +10,35 @@ mod disable_directives;
 mod fixer;
 mod globals;
 mod jest_ast_util;
-pub mod rule;
+mod options;
+mod rule;
 mod rules;
+mod runner;
 
 use std::{fs, io::Write, rc::Rc};
 
-pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 pub use crate::{
     context::LintContext,
-    rule::RuleCategory,
+    fixer::{FixResult, Fixer, Message},
+    options::{AllowWarnDeny, LintOptions},
+    rule::{RuleCategory, RuleMeta},
     rules::{RuleEnum, RULES},
+    runner::Runner,
 };
 
 #[derive(Debug)]
 pub struct Linter {
     rules: Vec<RuleEnum>,
     fix: bool,
+}
+
+impl Default for Linter {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Linter {
@@ -43,6 +53,10 @@ impl Linter {
 
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
         Self { rules, fix: false }
+    }
+
+    pub fn from_options(options: &LintOptions) -> Self {
+        Self { rules: Self::derive_rules(options), fix: false }
     }
 
     pub fn has_fix(&self) -> bool {
@@ -107,6 +121,52 @@ impl Linter {
             .and_then(|s| serde_json::from_str(&s).ok())
             .and_then(|v: serde_json::Value| v.get("rules").cloned())
             .and_then(|v| v.as_object().cloned())
+    }
+
+    pub fn derive_rules(options: &LintOptions) -> Vec<RuleEnum> {
+        let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
+
+        for (allow_warn_deny, name_or_category) in &options.rules {
+            let maybe_category = RuleCategory::from(name_or_category.as_str());
+            match allow_warn_deny {
+                AllowWarnDeny::Deny => {
+                    match maybe_category {
+                        Some(category) => rules.extend(
+                            RULES.iter().filter(|rule| rule.category() == category).cloned(),
+                        ),
+                        None => {
+                            if name_or_category == "all" {
+                                rules.extend(RULES.iter().cloned());
+                            } else {
+                                rules.extend(
+                                    RULES
+                                        .iter()
+                                        .filter(|rule| rule.name() == name_or_category)
+                                        .cloned(),
+                                );
+                            }
+                        }
+                    };
+                }
+                AllowWarnDeny::Allow => {
+                    match maybe_category {
+                        Some(category) => rules.retain(|rule| rule.category() != category),
+                        None => {
+                            if name_or_category == "all" {
+                                rules.clear();
+                            } else {
+                                rules.retain(|rule| rule.name() == name_or_category);
+                            }
+                        }
+                    };
+                }
+            }
+        }
+
+        let mut rules = rules.into_iter().collect::<Vec<_>>();
+        // for stable diagnostics output ordering
+        rules.sort_unstable_by_key(|rule| rule.name());
+        rules
     }
 
     pub fn print_rules<W: Write>(writer: &mut W) {

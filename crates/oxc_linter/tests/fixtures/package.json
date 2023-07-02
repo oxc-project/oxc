@@ -1,0 +1,22 @@
+{
+  "dummy": true,
+  "devDependencies": {
+    "glob": "1.0.0",
+    "eslint": "2.x"
+  },
+  "peerDependencies": {
+    "eslint": "2.x"
+  },
+  "dependencies": {
+    "@org/package": "^1.0.0",
+    "esm-package": "^1.0.0",
+    "jquery": "^3.1.0",
+    "lodash.cond": "^4.3.0",
+    "find-up": "^1.0.0",
+    "rxjs": "^1.0.0"
+  },
+  "optionalDependencies": {
+    "lodash.isarray": "^4.0.0"
+  },
+  "bundledDependencies": ["@generated/foo"]
+}

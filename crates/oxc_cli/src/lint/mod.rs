@@ -1,96 +1,55 @@
 mod command;
 mod error;
 mod runner;
-mod runner_with_module_tree;
 
 use std::{collections::BTreeMap, path::PathBuf};
 
 use clap::ArgMatches;
+use oxc_linter::{AllowWarnDeny, LintOptions};
 
-pub use self::{
-    command::lint_command, error::Error, runner::LintRunner,
-    runner_with_module_tree::LintRunnerWithModuleTree,
-};
+pub use self::{command::lint_command, error::Error, runner::LintRunner};
 
-#[derive(Debug)]
-#[allow(clippy::struct_excessive_bools)]
-pub struct LintOptions {
-    pub paths: Vec<PathBuf>,
-    /// Allow / Deny rules in order. [("allow" / "deny", rule name)]
-    /// Defaults to [("deny", "correctness")]
-    pub rules: Vec<(AllowWarnDeny, String)>,
-    pub list_rules: bool,
-    pub fix: bool,
-    pub quiet: bool,
-    pub ignore_path: PathBuf,
-    pub no_ignore: bool,
-    pub ignore_pattern: Vec<String>,
-    pub max_warnings: Option<usize>,
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum AllowWarnDeny {
-    Allow,
-    // Warn,
-    Deny,
-}
-
-impl From<&'static str> for AllowWarnDeny {
-    fn from(s: &'static str) -> Self {
-        match s {
-            "allow" => Self::Allow,
-            "deny" => Self::Deny,
-            _ => unreachable!(),
-        }
+pub fn matches_to_lint_options(matches: &ArgMatches) -> LintOptions {
+    let list_rules = matches.get_flag("rules");
+    LintOptions {
+        paths: matches.get_many("path").map_or_else(
+            || if list_rules { vec![] } else { vec![PathBuf::from(".")] },
+            |paths| paths.into_iter().cloned().collect(),
+        ),
+        rules: get_rules(matches),
+        fix: matches.get_flag("fix"),
+        quiet: matches.get_flag("quiet"),
+        ignore_path: matches
+            .get_one::<PathBuf>("ignore-path")
+            .map_or_else(|| PathBuf::from(".eslintignore"), Clone::clone),
+        no_ignore: matches.get_flag("no-ignore"),
+        ignore_pattern: matches
+            .get_many::<String>("ignore-pattern")
+            .map(|patterns| patterns.into_iter().cloned().collect())
+            .unwrap_or_default(),
+        max_warnings: matches.get_one("max-warnings").copied(),
+        list_rules,
     }
 }
 
-impl<'a> From<&'a ArgMatches> for LintOptions {
-    fn from(matches: &'a ArgMatches) -> Self {
-        let list_rules = matches.get_flag("rules");
-
-        Self {
-            paths: matches.get_many("path").map_or_else(
-                || if list_rules { vec![] } else { vec![PathBuf::from(".")] },
-                |paths| paths.into_iter().cloned().collect(),
-            ),
-            rules: Self::get_rules(matches),
-            fix: matches.get_flag("fix"),
-            quiet: matches.get_flag("quiet"),
-            ignore_path: matches
-                .get_one::<PathBuf>("ignore-path")
-                .map_or_else(|| PathBuf::from(".eslintignore"), Clone::clone),
-            no_ignore: matches.get_flag("no-ignore"),
-            ignore_pattern: matches
-                .get_many::<String>("ignore-pattern")
-                .map(|patterns| patterns.into_iter().cloned().collect())
-                .unwrap_or_default(),
-            max_warnings: matches.get_one("max-warnings").copied(),
-            list_rules,
+/// Get all rules in order, e.g.
+/// `-A all -D no-var -D -eqeqeq` => [("allow", "all"), ("deny", "no-var"), ("deny", "eqeqeq")]
+/// Defaults to [("deny", "correctness")];
+fn get_rules(matches: &ArgMatches) -> Vec<(AllowWarnDeny, String)> {
+    let mut map: BTreeMap<usize, (AllowWarnDeny, String)> = BTreeMap::new();
+    for key in ["allow", "deny"] {
+        let allow_warn_deny = AllowWarnDeny::from(key);
+        if let Some(values) = matches.get_many::<String>(key) {
+            let indices = matches.indices_of(key).unwrap();
+            let zipped =
+                values.zip(indices).map(|(value, i)| (i, (allow_warn_deny, value.clone())));
+            map.extend(zipped);
         }
     }
-}
-
-impl LintOptions {
-    /// Get all rules in order, e.g.
-    /// `-A all -D no-var -D -eqeqeq` => [("allow", "all"), ("deny", "no-var"), ("deny", "eqeqeq")]
-    /// Defaults to [("deny", "correctness")];
-    fn get_rules(matches: &ArgMatches) -> Vec<(AllowWarnDeny, String)> {
-        let mut map: BTreeMap<usize, (AllowWarnDeny, String)> = BTreeMap::new();
-        for key in ["allow", "deny"] {
-            let allow_warn_deny = AllowWarnDeny::from(key);
-            if let Some(values) = matches.get_many::<String>(key) {
-                let indices = matches.indices_of(key).unwrap();
-                let zipped =
-                    values.zip(indices).map(|(value, i)| (i, (allow_warn_deny, value.clone())));
-                map.extend(zipped);
-            }
-        }
-        if map.is_empty() {
-            vec![(AllowWarnDeny::Deny, "correctness".into())]
-        } else {
-            map.into_values().collect()
-        }
+    if map.is_empty() {
+        vec![(AllowWarnDeny::Deny, "correctness".into())]
+    } else {
+        map.into_values().collect()
     }
 }
 
@@ -99,8 +58,9 @@ mod test {
     use std::path::PathBuf;
 
     use clap::Command;
+    use oxc_linter::LintOptions;
 
-    use super::{lint_command, AllowWarnDeny, LintOptions};
+    use super::{lint_command, matches_to_lint_options, AllowWarnDeny};
 
     #[test]
     fn verify_command() {
@@ -110,7 +70,7 @@ mod test {
     fn get_lint_options(arg: &str) -> LintOptions {
         let matches =
             lint_command(Command::new("oxc")).try_get_matches_from(arg.split(' ')).unwrap();
-        LintOptions::from(&matches)
+        matches_to_lint_options(&matches)
     }
 
     #[test]

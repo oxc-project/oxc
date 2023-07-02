@@ -7,7 +7,7 @@ mod walk;
 use clap::{Arg, Command};
 
 pub use crate::{
-    lint::{lint_command, LintOptions, LintRunner, LintRunnerWithModuleTree},
+    lint::{lint_command, matches_to_lint_options, LintRunner},
     result::CliRunResult,
     type_check::{type_check_command, TypeCheckOptions, TypeCheckRunner},
     walk::Walk,

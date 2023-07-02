@@ -1255,7 +1255,6 @@ version = "0.0.0"
 dependencies = [
  "clap",
  "codespan-reporting",
- "crossbeam-channel",
  "dashmap",
  "ignore",
  "jemallocator",
@@ -1356,6 +1355,7 @@ dependencies = [
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
+ "dashmap",
  "insta",
  "lazy_static",
  "miette",
@@ -1366,10 +1366,12 @@ dependencies = [
  "oxc_formatter",
  "oxc_macros",
  "oxc_parser",
+ "oxc_resolver",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
  "phf",
+ "rayon",
  "regex",
  "rust-lapper",
  "rustc-hash",

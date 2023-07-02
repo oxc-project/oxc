@@ -1,0 +1,89 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: named
+---
+  ⚠ eslint-plugin-import(named): named import "somethingElse" not found
+   ╭─[named.js:1:1]
+ 1 │ import { somethingElse } from './test-module'
+   ·          ─────────────
+   ╰────
+  help: does "./test-module" have the export "somethingElse"?
+
+  ⚠ eslint-plugin-import(named): named import "baz" not found
+   ╭─[named.js:1:1]
+ 1 │ import { baz } from './bar'
+   ·          ───
+   ╰────
+  help: does "./bar" have the export "baz"?
+
+  ⚠ eslint-plugin-import(named): named import "baz" not found
+   ╭─[named.js:1:1]
+ 1 │ import { baz, bop } from './bar'
+   ·          ───
+   ╰────
+  help: does "./bar" have the export "baz"?
+
+  ⚠ eslint-plugin-import(named): named import "bop" not found
+   ╭─[named.js:1:1]
+ 1 │ import { baz, bop } from './bar'
+   ·               ───
+   ╰────
+  help: does "./bar" have the export "bop"?
+
+  ⚠ eslint-plugin-import(named): named import "c" not found
+   ╭─[named.js:1:1]
+ 1 │ import {a, b, c} from './named-exports'
+   ·               ─
+   ╰────
+  help: does "./named-exports" have the export "c"?
+
+  ⚠ eslint-plugin-import(named): named import "a" not found
+   ╭─[named.js:1:1]
+ 1 │ import { a } from './default-export'
+   ·          ─
+   ╰────
+  help: does "./default-export" have the export "a"?
+
+  ⚠ eslint-plugin-import(named): named import "ActionTypes1" not found
+   ╭─[named.js:1:1]
+ 1 │ import { ActionTypes1 } from './qc'
+   ·          ────────────
+   ╰────
+  help: does "./qc" have the export "ActionTypes1"?
+
+  ⚠ eslint-plugin-import(named): named import "e" not found
+   ╭─[named.js:1:1]
+ 1 │ import {a, b, c, d, e} from './re-export'
+   ·                     ─
+   ╰────
+  help: does "./re-export" have the export "e"?
+
+  ⚠ eslint-plugin-import(named): named import "a" not found
+   ╭─[named.js:1:1]
+ 1 │ import { a } from './re-export-names'
+   ·          ─
+   ╰────
+  help: does "./re-export-names" have the export "a"?
+
+  ⚠ eslint-plugin-import(named): named import "bap" not found
+   ╭─[named.js:1:1]
+ 1 │ import { foo, bar, bap } from './re-export-default'
+   ·                    ───
+   ╰────
+  help: does "./re-export-default" have the export "bap"?
+
+  ⚠ eslint-plugin-import(named): named import "default" not found
+   ╭─[named.js:1:1]
+ 1 │ import { default as barDefault } from './re-export'
+   ·          ───────
+   ╰────
+  help: does "./re-export" have the export "default"?
+
+  ⚠ eslint-plugin-import(named): named import "bar" not found
+   ╭─[named.js:1:1]
+ 1 │ import { bar } from './export-all'
+   ·          ───
+   ╰────
+  help: does "./export-all" have the export "bar"?
+
+

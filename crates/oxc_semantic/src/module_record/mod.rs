@@ -4,6 +4,8 @@ pub use builder::ModuleRecordBuilder;
 
 #[cfg(test)]
 mod module_record_tests {
+    use std::sync::Arc;
+
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
@@ -12,7 +14,7 @@ mod module_record_tests {
 
     use crate::SemanticBuilder;
 
-    fn build(source_text: &str) -> ModuleRecord {
+    fn build(source_text: &str) -> Arc<ModuleRecord> {
         let source_type = SourceType::default().with_module(true);
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
@@ -21,7 +23,7 @@ mod module_record_tests {
             .with_trivias(&ret.trivias)
             .with_module_record_builder(true)
             .build(program);
-        semantic_ret.semantic.module_record
+        Arc::clone(&semantic_ret.semantic.module_record)
     }
 
     // Table 55 gives examples of ImportEntry records fields used to represent the syntactic import forms:
