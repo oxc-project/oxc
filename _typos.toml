@@ -1,0 +1,23 @@
+[default]
+extend-ignore-identifiers-re = [
+    # *sigh* this just isn't worth the cost of fixing
+    "AttributeID.*Supress.*",
+]
+
+[files]
+extend-exclude = [
+    "*.js",
+    "tasks/coverage/*",
+    "*.snap",
+    "*.toml"
+]
+
+[default.extend-identifiers]
+# *sigh* this just isn't worth the cost of fixing
+AttributeIDSupressMenu = "AttributeIDSupressMenu"
+
+[default.extend-words]
+# Don't correct the surname "Teh"
+teh = "teh"
+xdescribe = "xdescribe"
+trivias = "trivias"

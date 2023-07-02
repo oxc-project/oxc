@@ -61,6 +61,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unnecessary_type_constraint,
     typescript::no_misused_new,
     typescript::no_this_alias
+    eslint_plugin_jest::no_disabled_tests,
 }
 
 #[cfg(test)]
