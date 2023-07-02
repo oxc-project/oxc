@@ -186,6 +186,8 @@ This project partially copies code from the following projects:
 | ------------- | ------------- |
 | [eslint/eslint](https://github.com/eslint/eslint) | [MIT](https://github.com/eslint/eslint/blob/main/LICENSE)  |
 | [typescript-eslint/typescript-eslint](https://github.com/typescript-eslint/typescript-eslint) | [MIT](https://github.com/typescript-eslint/typescript-eslint/blob/main/LICENSE)  |
+| [import-js/eslint-plugin-import](https://github.com/import-js/eslint-plugin-import) | [MIT](https://github.com/import-js/eslint-plugin-import/blob/main/LICENSE)  |
+| [jest-community/eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest) | [MIT](https://github.com/jest-community/eslint-plugin-jest/blob/main/LICENSE)  |
 | [microsoft/TypeScript](https://github.com/microsoft/TypeScript) | [Apache 2.0](https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt)  |
 | [rome/tools](https://github.com/rome/tools) | [MIT](https://github.com/rome/tools/blob/main/LICENSE)  |
 | [mozilla-spidermonkey/jsparagus](https://github.com/mozilla-spidermonkey/jsparagus) | [MIT](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-MIT) [Apache 2.0](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/LICENSE-APACHE-2.0)  |
