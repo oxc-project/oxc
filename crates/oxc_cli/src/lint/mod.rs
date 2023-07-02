@@ -1,6 +1,5 @@
 mod command;
 mod error;
-mod resolver;
 mod runner;
 mod runner_with_module_tree;
 

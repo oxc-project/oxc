@@ -1,0 +1,16 @@
+[package]
+name                  = "oxc_resolver"
+version               = "0.0.0"
+publish               = false
+authors.workspace     = true
+description.workspace = true
+edition.workspace     = true
+homepage.workspace    = true
+keywords.workspace    = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+oxc_span = { workspace = true }
+
+nodejs-resolver   = { workspace = true }

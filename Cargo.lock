@@ -1243,11 +1243,11 @@ dependencies = [
  "jemallocator",
  "miette",
  "mimalloc",
- "nodejs-resolver",
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_linter",
  "oxc_parser",
+ "oxc_resolver",
  "oxc_semantic",
  "oxc_span",
  "oxc_type_synthesis",
@@ -1433,6 +1433,14 @@ dependencies = [
  "oxc_syntax",
  "rustc-hash",
  "serde_json",
+]
+
+[[package]]
+name = "oxc_resolver"
+version = "0.0.0"
+dependencies = [
+ "nodejs-resolver",
+ "oxc_span",
 ]
 
 [[package]]

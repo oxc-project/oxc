@@ -33,7 +33,7 @@ oxc_hir            = { version = "0.0.0", path = "crates/oxc_hir" }
 oxc_ast_lower      = { version = "0.0.0", path = "crates/oxc_ast_lower" }
 oxc_syntax         = { version = "0.0.0", path = "crates/oxc_syntax" }
 oxc_index          = { version = "0.0.0", path = "crates/oxc_index" }
-oxc_semantic2      = { version = "0.0.0", path = "crates/oxc_semantic2" }
+oxc_resolver       = { version = "0.0.0", path = "crates/oxc_resolver" }
 
 oxc_tasks_common = { path = "tasks/common" }
 

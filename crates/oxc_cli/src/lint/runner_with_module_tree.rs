@@ -17,6 +17,7 @@ use oxc_diagnostics::{
 };
 use oxc_linter::{FixResult, Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::{Parser, ParserReturn};
+use oxc_resolver::{ResolveResult, Resolver};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
 use rayon::prelude::*;
@@ -24,7 +25,6 @@ use rustc_hash::FxHashSet;
 
 use super::{
     error::{ErrorWithPath, Result},
-    resolver::{ResolveResult, Resolver, Resource},
     AllowWarnDeny, LintOptions,
 };
 use crate::CliRunResult;
@@ -314,7 +314,7 @@ fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) -> Result<()> {
             )
         })
         .filter_map(|resolved| match resolved {
-            ResolveResult::Resource(Resource { path, .. }) => Some(path),
+            ResolveResult::Resource(r) => Some(r.path),
             ResolveResult::Ignored => None,
         })
         .filter(|path| {
