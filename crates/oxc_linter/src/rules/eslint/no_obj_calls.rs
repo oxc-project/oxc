@@ -65,7 +65,7 @@ declare_oxc_lint! {
     correctness,
 }
 
-fn is_global_obj<'a>(str: &Atom) -> bool {
+fn is_global_obj(str: &Atom) -> bool {
     NON_CALLABLE_GLOBALS.iter().any(|&n| str == &n)
 }
 
