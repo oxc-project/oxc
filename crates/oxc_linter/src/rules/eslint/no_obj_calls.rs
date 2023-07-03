@@ -65,7 +65,7 @@ declare_oxc_lint! {
     correctness,
 }
 
-fn is_global_obj<'a>(str: &impl PartialEq<&'a str>) -> bool {
+fn is_global_obj<'a>(str: &Atom) -> bool {
     NON_CALLABLE_GLOBALS.iter().any(|&n| str == &n)
 }
 
@@ -123,7 +123,6 @@ impl Rule for NoObjCalls {
         let (callee, span) = match node.kind() {
             AstKind::NewExpression(expr) => (&expr.callee, expr.span),
             AstKind::CallExpression(expr) => (&expr.callee, expr.span),
-
             _ => return,
         };
 
