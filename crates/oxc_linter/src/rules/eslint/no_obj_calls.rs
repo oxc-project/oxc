@@ -151,26 +151,6 @@ impl Rule for NoObjCalls {
 }
 
 #[test]
-fn test_ref() {
-    use crate::tester::Tester;
-    let pass = vec![(
-        "let j = JSON;
-            function foo() {
-                let j = x => x;
-                return x();
-            }",
-        None,
-    )];
-    let fail = vec![
-        ("let j = JSON; j();", None),
-        ("let a = JSON; let b = a; let c = b; b();", None),
-        ("let m = globalThis.Math; new m();", None),
-    ];
-
-    Tester::new(NoObjCalls::NAME, pass, fail).test();
-}
-
-#[test]
 fn test() {
     use crate::tester::Tester;
     // see: https://github.com/eslint/eslint/blob/main/tests/lib/rules/no-obj-calls.js
@@ -181,6 +161,12 @@ fn test() {
         ("JSON.parse(\"{}\")", None),
         ("Math.PI * 2 * (r * r)", None),
         ("bar.Atomic(foo)", None),
+        // reference test cases
+        ("let j = JSON;
+            function foo() {
+                let j = x => x;
+                return x();
+            }", None),
     ];
 
     let fail = vec![
@@ -200,6 +186,10 @@ fn test() {
         ("let newObj = new Reflect();", None),
         ("let obj = Reflect();", None),
         ("function() { JSON.parse(Atomics()) }", None),
+        // reference test cases
+        ("let j = JSON; j();", None),
+        ("let a = JSON; let b = a; let c = b; b();", None),
+        ("let m = globalThis.Math; new m();", None),
     ];
 
     Tester::new(NoObjCalls::NAME, pass, fail).test_and_snapshot();

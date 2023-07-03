@@ -114,4 +114,25 @@ expression: no_obj_calls
    ╰────
   help: Atomics is not a function.
 
+  × eslint(no-obj-calls): Disallow calling some global objects as functions
+   ╭─[no_obj_calls.tsx:1:1]
+ 1 │ let j = JSON; j();
+   ·               ───
+   ╰────
+  help: j is not a function.
+
+  × eslint(no-obj-calls): Disallow calling some global objects as functions
+   ╭─[no_obj_calls.tsx:1:1]
+ 1 │ let a = JSON; let b = a; let c = b; b();
+   ·                                     ───
+   ╰────
+  help: b is not a function.
+
+  × eslint(no-obj-calls): Disallow calling some global objects as functions
+   ╭─[no_obj_calls.tsx:1:1]
+ 1 │ let m = globalThis.Math; new m();
+   ·                          ───────
+   ╰────
+  help: m is not a function.
+
 
