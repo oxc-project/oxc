@@ -1,14 +1,18 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{
+    ast::{Expression, IdentifierReference, MemberExpression},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, ScopeId};
 use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
+const GLOBAL_THIS: &str = "globalThis";
 const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
 #[derive(Debug, Error, Diagnostic)]
@@ -61,8 +65,56 @@ declare_oxc_lint! {
     correctness,
 }
 
-fn is_global_obj<'a>(str: impl PartialEq<&'a str>) -> bool {
-    NON_CALLABLE_GLOBALS.iter().any(|&n| str == n)
+fn is_global_obj<'a>(str: &impl PartialEq<&'a str>) -> bool {
+    NON_CALLABLE_GLOBALS.iter().any(|&n| str == &n)
+}
+
+fn global_this_member(expr: &oxc_allocator::Box<'_, MemberExpression<'_>>) -> Option<Atom> {
+    if let Expression::Identifier(static_ident) = expr.object() &&
+    static_ident.name == GLOBAL_THIS &&
+    let Some(static_member) = expr.static_property_name() {
+        return Some(static_member.into())
+    } else {
+        return None
+    }
+}
+
+fn resolve_global_binding<'a, 'b: 'a>(
+    ident: &oxc_allocator::Box<'a, IdentifierReference>,
+    scope_id: ScopeId,
+    ctx: &LintContext<'a>,
+) -> Option<Atom> {
+    if ctx.semantic().is_reference_to_global_variable(ident) {
+        return Some(ident.name.clone());
+    } else {
+        let scope = ctx.scopes();
+        let nodes = ctx.nodes();
+        let symbols = ctx.symbols();
+        if let Some(binding_id) = scope.get_binding(scope_id, &ident.name) {
+            let decl = nodes.get_node(symbols.get_declaration(binding_id));
+            let decl_scope = decl.scope_id();
+            match decl.kind() {
+                AstKind::VariableDeclarator(&ref parent_decl) => {
+                    match &parent_decl.init {
+                        // handles "let a = JSON; let b = a; a();"
+                        Some(Expression::Identifier(parent_ident)) => {
+                            return resolve_global_binding(&parent_ident, decl_scope, ctx);
+                        }
+                        // handles "let a = globalThis.JSON; let b = a; a();"
+                        Some(Expression::MemberExpression(parent_expr)) => {
+                            return global_this_member(parent_expr);
+                        }
+                        _ => None,
+                    }
+                }
+                _ => {
+                    return None;
+                }
+            }
+        } else {
+            panic!("No binding id found, but this IdentifierReference is not a global");
+        }
+    }
 }
 
 impl Rule for NoObjCalls {
@@ -70,33 +122,52 @@ impl Rule for NoObjCalls {
         let (callee, span) = match node.kind() {
             AstKind::NewExpression(expr) => (&expr.callee, expr.span),
             AstKind::CallExpression(expr) => (&expr.callee, expr.span),
+
             _ => return,
         };
 
-        let ident: Atom = match callee {
-            // handle new Math(), Math(), etc
+        match callee {
             Expression::Identifier(ident) => {
-                ident.name.clone()
-            },
+                // handle new Math(), Math(), etc
+                if let Some(top_level_reference) = resolve_global_binding(&ident, node.scope_id(), ctx) &&
+                is_global_obj(&top_level_reference) {
+                    ctx.diagnostic(NoObjCallsDiagnostic(ident.name.clone(), span));
+                    return;
+                }
+            }
 
-            // handle new globalThis.Math(), globalThis.Math(), etc
             Expression::MemberExpression(expr) => {
-                if let Expression::Identifier(static_ident) = expr.object() &&
-                static_ident.name == "globalThis" &&
-                let Some(static_member) = expr.static_property_name()
+                // handle new globalThis.Math(), globalThis.Math(), etc
+                if let Some(global_member) = global_this_member(expr) &&
+                is_global_obj(&global_member)
                 {
-                    static_member.into()
-                } else {
+                    ctx.diagnostic(NoObjCallsDiagnostic(global_member, span));
                     return
                 }
             }
-            _ => { return }
+            _ => return,
         };
-
-        if is_global_obj(ident.clone()) {
-            ctx.diagnostic(NoObjCallsDiagnostic(ident, span));
-        }
     }
+}
+
+#[test]
+fn test_ref() {
+    use crate::tester::Tester;
+    let pass = vec![(
+        "let j = JSON;
+            function foo() {
+                let j = x => x;
+                return x();
+            }",
+        None,
+    )];
+    let fail = vec![
+        ("let j = JSON; j();", None),
+        ("let a = JSON; let b = a; let c = b; b();", None),
+        ("let m = globalThis.Math; new m();", None),
+    ];
+
+    Tester::new(NoObjCalls::NAME, pass, fail).test();
 }
 
 #[test]
