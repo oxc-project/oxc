@@ -73,9 +73,9 @@ fn global_this_member(expr: &oxc_allocator::Box<'_, MemberExpression<'_>>) -> Op
     if let Expression::Identifier(static_ident) = expr.object() &&
     static_ident.name == GLOBAL_THIS &&
     let Some(static_member) = expr.static_property_name() {
-        return Some(static_member.into())
+        Some(static_member.into())
     } else {
-        return None
+        None
     }
 }
 
@@ -85,40 +85,41 @@ fn resolve_global_binding<'a, 'b: 'a>(
     ctx: &LintContext<'a>,
 ) -> Option<Atom> {
     if ctx.semantic().is_reference_to_global_variable(ident) {
-        return Some(ident.name.clone());
+        Some(ident.name.clone())
     } else {
         let scope = ctx.scopes();
         let nodes = ctx.nodes();
         let symbols = ctx.symbols();
-        if let Some(binding_id) = scope.get_binding(scope_id, &ident.name) {
+        scope.get_binding(scope_id, &ident.name).map_or_else(|| {
+            panic!("No binding id found, but this IdentifierReference is not a global");
+        }, |binding_id| {
             let decl = nodes.get_node(symbols.get_declaration(binding_id));
             let decl_scope = decl.scope_id();
             match decl.kind() {
-                AstKind::VariableDeclarator(&ref parent_decl) => {
+                AstKind::VariableDeclarator(parent_decl) => {
                     match &parent_decl.init {
                         // handles "let a = JSON; let b = a; a();"
                         Some(Expression::Identifier(parent_ident)) => {
-                            return resolve_global_binding(&parent_ident, decl_scope, ctx);
+                            resolve_global_binding(parent_ident, decl_scope, ctx)
                         }
                         // handles "let a = globalThis.JSON; let b = a; a();"
                         Some(Expression::MemberExpression(parent_expr)) => {
-                            return global_this_member(parent_expr);
+                            global_this_member(parent_expr)
                         }
                         _ => None,
                     }
                 }
                 _ => {
-                    return None;
+                    None
                 }
             }
-        } else {
-            panic!("No binding id found, but this IdentifierReference is not a global");
-        }
+        })
     }
 }
 
 impl Rule for NoObjCalls {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        #[allow(clippy::needless_return)]
         let (callee, span) = match node.kind() {
             AstKind::NewExpression(expr) => (&expr.callee, expr.span),
             AstKind::CallExpression(expr) => (&expr.callee, expr.span),
@@ -129,10 +130,9 @@ impl Rule for NoObjCalls {
         match callee {
             Expression::Identifier(ident) => {
                 // handle new Math(), Math(), etc
-                if let Some(top_level_reference) = resolve_global_binding(&ident, node.scope_id(), ctx) &&
+                if let Some(top_level_reference) = resolve_global_binding(ident, node.scope_id(), ctx) &&
                 is_global_obj(&top_level_reference) {
                     ctx.diagnostic(NoObjCallsDiagnostic(ident.name.clone(), span));
-                    return;
                 }
             }
 
@@ -142,10 +142,11 @@ impl Rule for NoObjCalls {
                 is_global_obj(&global_member)
                 {
                     ctx.diagnostic(NoObjCallsDiagnostic(global_member, span));
-                    return
                 }
             }
-            _ => return,
+            _ => {
+                // noop
+            }
         };
     }
 }
