@@ -5,10 +5,10 @@ pub use builder::ModuleRecordBuilder;
 #[cfg(test)]
 mod module_record_tests {
     use oxc_allocator::Allocator;
-    #[allow(clippy::wildcard_imports)]
-    use oxc_ast::module_record::*;
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
+    #[allow(clippy::wildcard_imports)]
+    use oxc_syntax::module_record::*;
 
     use crate::SemanticBuilder;
 

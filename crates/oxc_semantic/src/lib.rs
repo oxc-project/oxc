@@ -15,9 +15,10 @@ use std::rc::Rc;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
-use oxc_ast::{ast::IdentifierReference, module_record::ModuleRecord, AstKind, Trivias};
+use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
 use oxc_span::SourceType;
 pub use oxc_syntax::{
+    module_record::ModuleRecord,
     scope::{ScopeFlags, ScopeId},
     symbol::{SymbolFlags, SymbolId},
 };

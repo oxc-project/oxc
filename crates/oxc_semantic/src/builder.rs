@@ -3,9 +3,10 @@
 use std::{cell::RefCell, rc::Rc};
 
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, module_record::ModuleRecord, AstKind, Trivias, Visit};
+use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{Atom, SourceType, Span};
+use oxc_syntax::module_record::ModuleRecord;
 use rustc_hash::FxHashMap;
 
 use crate::{

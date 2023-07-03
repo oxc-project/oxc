@@ -1,6 +1,7 @@
 //! Common code for JavaScript Syntax
 
 pub mod identifier;
+pub mod module_record;
 pub mod operator;
 pub mod precedence;
 pub mod scope;

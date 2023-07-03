@@ -1,7 +1,6 @@
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{
     ast::*,
-    module_record::ExportLocalName,
     syntax_directed_operations::{BoundNames, IsSimpleParameterList, PropName},
     AstKind,
 };
@@ -11,6 +10,7 @@ use oxc_diagnostics::{
 };
 use oxc_span::{Atom, GetSpan, ModuleKind, Span};
 use oxc_syntax::{
+    module_record::ExportLocalName,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
     NumberBase,
 };
