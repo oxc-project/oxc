@@ -1059,6 +1059,7 @@ impl<'a> Lexer<'a> {
                 self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
                 continue;
             }
+            // todo: use `ch.try_into()`
             let flag = match ch {
                 'g' => RegExpFlags::G,
                 'i' => RegExpFlags::I,

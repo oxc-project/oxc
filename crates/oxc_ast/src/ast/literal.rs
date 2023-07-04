@@ -112,6 +112,25 @@ bitflags! {
     }
 }
 
+impl TryFrom<char> for RegExpFlags {
+    type Error = char;
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            'g' => Ok(RegExpFlags::G),
+            'i' => Ok(RegExpFlags::I),
+            'm' => Ok(RegExpFlags::M),
+            's' => Ok(RegExpFlags::S),
+            'u' => Ok(RegExpFlags::U),
+            'y' => Ok(RegExpFlags::Y),
+            'd' => Ok(RegExpFlags::D),
+            'v' => Ok(RegExpFlags::V),
+            _ =>   Err(value)
+        }
+    }
+}
+
+// TODO: should we implement TryFrom<&str> too?
+
 impl fmt::Display for RegExpFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.contains(Self::G) {
