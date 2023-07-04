@@ -1553,7 +1553,6 @@ impl<'a> Gen for Class<'a> {
                     ClassElement::PropertyDefinition(_) | ClassElement::AccessorProperty(_)
                 ) {
                     p.print_semicolon_after_statement();
-                } else {
                 }
             }
             p.needs_semicolon = false;
