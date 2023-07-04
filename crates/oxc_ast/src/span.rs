@@ -357,3 +357,12 @@ impl<'a> GetSpan for AssignmentTargetPattern<'a> {
         }
     }
 }
+
+impl<'a> GetSpan for JSXAttributeItem<'a> {
+    fn span(&self) -> Span {
+        match &self {
+            JSXAttributeItem::Attribute(attr) => attr.span,
+            JSXAttributeItem::SpreadAttribute(attr) => attr.span,
+        }
+    }
+}
