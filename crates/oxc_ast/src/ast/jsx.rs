@@ -71,8 +71,11 @@ pub struct JSXClosingFragment {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum JSXElementName<'a> {
+    /// <Apple />
     Identifier(JSXIdentifier),
+    /// <Apple:Orange />
     NamespacedName(Box<'a, JSXNamespacedName>),
+    /// <Apple.Orange />
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
