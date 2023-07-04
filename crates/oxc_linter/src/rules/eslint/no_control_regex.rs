@@ -68,7 +68,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoControlRegex {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, context: &LintContext<'a>) {
         if let Some((pattern, flags, span)) = regex_pattern(node) {
             let mut violations: Vec<&str> = Vec::with_capacity(usize::min(4, pattern.len()));
             for m in control_patterns(pattern) {
@@ -113,11 +113,9 @@ impl Rule for NoControlRegex {
                         //    interpreting \u{`nn`} as a unicode character
                         if !has_unicode_flag || !numeric_part.ends_with('}') {
                             continue;
-                        } else if  {
-                            continue;
-                        } else {
-                            numeric_part = &numeric_part[1..numeric_part.len() - 1];
                         }
+
+                        numeric_part = &numeric_part[1..numeric_part.len() - 1];
                     }
 
                     match u32::from_str_radix(numeric_part, 16) {
@@ -132,7 +130,7 @@ impl Rule for NoControlRegex {
 
             if !violations.is_empty() {
                 let violations = violations.join(", ");
-                ctx.diagnostic(NoControlRegexDiagnostic(violations.into(), span));
+                context.diagnostic(NoControlRegexDiagnostic(violations.into(), span));
             }
         }
     }
