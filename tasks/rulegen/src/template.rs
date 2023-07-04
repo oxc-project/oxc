@@ -7,7 +7,7 @@ use std::{
 
 use handlebars::Handlebars;
 
-use crate::Context;
+use crate::{Context, RuleKind};
 
 const RULE_TEMPLATE: &str = include_str!("../template.txt");
 
@@ -23,14 +23,18 @@ impl<'a> Template<'a> {
         Self { context, registry }
     }
 
-    pub fn render(&self) -> Result<(), Error> {
+    pub fn render(&self, rule_kind: RuleKind) -> Result<(), Error> {
         let rendered = self
             .registry
             .render_template(RULE_TEMPLATE, &handlebars::to_json(self.context))
             .unwrap();
 
-        let out_path = Path::new("crates/oxc_linter/src/rules/eslint")
-            .join(format!("{}.rs", self.context.rule_name));
+        let path = match rule_kind {
+            RuleKind::ESLint => Path::new("crates/oxc_linter/src/rules/eslint"),
+            RuleKind::Jest => Path::new("crates/oxc_linter/src/rules/jest"),
+        };
+
+        let out_path = path.join(format!("{}.rs", self.context.rule_name));
 
         File::create(out_path.clone())?.write_all(rendered.as_bytes())?;
         format_rule_output(&out_path)?;
