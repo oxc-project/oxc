@@ -56,6 +56,7 @@ The Oxidation Compiler is creating a suite of high-performance tools for the Jav
 [ESLint]: https://eslint.org/
 [prettier]: https://github.com/prettier/prettier
 [ezno]: https://github.com/kaleidawave/ezno
+[terser]: https://terser.org
 
 ## Philosophy
 
