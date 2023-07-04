@@ -116,14 +116,14 @@ impl TryFrom<char> for RegExpFlags {
     type Error = char;
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value {
-            'g' => Ok(RegExpFlags::G),
-            'i' => Ok(RegExpFlags::I),
-            'm' => Ok(RegExpFlags::M),
-            's' => Ok(RegExpFlags::S),
-            'u' => Ok(RegExpFlags::U),
-            'y' => Ok(RegExpFlags::Y),
-            'd' => Ok(RegExpFlags::D),
-            'v' => Ok(RegExpFlags::V),
+            'g' => Ok(Self::G),
+            'i' => Ok(Self::I),
+            'm' => Ok(Self::M),
+            's' => Ok(Self::S),
+            'u' => Ok(Self::U),
+            'y' => Ok(Self::Y),
+            'd' => Ok(Self::D),
+            'v' => Ok(Self::V),
             _ =>   Err(value)
         }
     }

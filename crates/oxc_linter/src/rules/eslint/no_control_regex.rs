@@ -31,16 +31,16 @@ declare_oxc_lint!(
     /// control characters in regular expressions.
     ///
     /// ### Why is this bad?
-    /// 
+    ///
     /// Control characters are special, invisible characters in the ASCII range
     /// 0-31. These characters are rarely used in JavaScript strings so a
     /// regular expression containing elements that explicitly match these
     /// characters is most likely a mistake.
     ///
     /// ### Example
-    /// 
+    ///
     /// Examples of **incorrect** code for this rule:
-    /// 
+    ///
     /// ```javascript
     /// var pattern1 = /\x00/;
     /// var pattern2 = /\x0C/;
@@ -50,9 +50,9 @@ declare_oxc_lint!(
     /// var pattern6 = new RegExp("\x0C"); // raw U+000C character in the pattern
     /// var pattern7 = new RegExp("\\x0C"); // \x0C pattern
     /// ```
-    /// 
+    ///
     /// Examples of **correct** code for this rule:
-    /// 
+    ///
     /// ```javascript
     /// var pattern1 = /\x20/;
     /// var pattern2 = /\u0020/;
@@ -70,12 +70,6 @@ declare_oxc_lint!(
 impl Rule for NoControlRegex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let Some((pattern, flags, span)) = regex_pattern(node) {
-            // #[cfg(debug_assertions)] {
-            {
-                let chars = pattern.chars();
-                println!("{:?}", chars)
-            }
-
             let mut violations: Vec<&str> = Vec::with_capacity(usize::min(4, pattern.len()));
             for m in control_patterns(pattern) {
                 let ctl = m.as_str();
@@ -84,7 +78,6 @@ impl Rule for NoControlRegex {
                 // prevent the pattern from being a control sequence
                 if ctl.starts_with('\\') && m.start() > 0 {
                     let pattern_chars: Vec<char> = pattern.chars().collect(); // ew
-                    // pattern_chars.insert(0, '\x00');
 
                     let mut first_backslash = m.start();
                     while first_backslash > 0 && pattern_chars[first_backslash] == '\\' {
@@ -112,12 +105,15 @@ impl Rule for NoControlRegex {
                                 continue;
                             }
                         };
-                        if !has_unicode_flag {
+
+                        // 1. Unicode control pattern is missing a curly brace
+                        //    and is therefore invalid. (note: we may want to
+                        //    report this?)
+                        // 2. Unicode flag is missing, which is needed for
+                        //    interpreting \u{`nn`} as a unicode character
+                        if !has_unicode_flag || !numeric_part.ends_with('}') {
                             continue;
-                        } else if !numeric_part.ends_with('}') {
-                            // invalid unicode control character, missing
-                            // ending curly. filter it out.
-                            // TODO: should we do something else here?
+                        } else if  {
                             continue;
                         } else {
                             numeric_part = &numeric_part[1..numeric_part.len() - 1];
@@ -136,7 +132,7 @@ impl Rule for NoControlRegex {
 
             if !violations.is_empty() {
                 let violations = violations.join(", ");
-                ctx.diagnostic(NoControlRegexDiagnostic(violations.into(), span))
+                ctx.diagnostic(NoControlRegexDiagnostic(violations.into(), span));
             }
         }
     }
@@ -220,7 +216,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<(&'a Atom, Option<RegExpFlags
     }
 }
 
-fn control_patterns<'a>(pattern: &'a Atom) -> Matches<'static, 'a> {
+fn control_patterns(pattern: &Atom) -> Matches<'static, '_> {
     lazy_static! {
         static ref CTL_PAT: Regex = Regex::new(
             r"([\x00-\x1f]|(?:\\x\w{2})|(?:\\u\w{4})|(?:\\u\{\w{1,4}\}))"
