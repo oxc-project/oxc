@@ -27,12 +27,41 @@ pub struct NoControlRegex;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallows control characters and some escape sequences that match
+    /// control characters in regular expressions.
     ///
     /// ### Why is this bad?
-    ///
+    /// 
+    /// Control characters are special, invisible characters in the ASCII range
+    /// 0-31. These characters are rarely used in JavaScript strings so a
+    /// regular expression containing elements that explicitly match these
+    /// characters is most likely a mistake.
     ///
     /// ### Example
+    /// 
+    /// Examples of **incorrect** code for this rule:
+    /// 
     /// ```javascript
+    /// var pattern1 = /\x00/;
+    /// var pattern2 = /\x0C/;
+    /// var pattern3 = /\x1F/;
+    /// var pattern4 = /\u000C/;
+    /// var pattern5 = /\u{C}/u;
+    /// var pattern6 = new RegExp("\x0C"); // raw U+000C character in the pattern
+    /// var pattern7 = new RegExp("\\x0C"); // \x0C pattern
+    /// ```
+    /// 
+    /// Examples of **correct** code for this rule:
+    /// 
+    /// ```javascript
+    /// var pattern1 = /\x20/;
+    /// var pattern2 = /\u0020/;
+    /// var pattern3 = /\u{20}/u;
+    /// var pattern4 = /\t/;
+    /// var pattern5 = /\n/;
+    /// var pattern6 = new RegExp("\x20");
+    /// var pattern7 = new RegExp("\\t");
+    /// var pattern8 = new RegExp("\\n");
     /// ```
     NoControlRegex,
     correctness
@@ -88,6 +117,7 @@ impl Rule for NoControlRegex {
                         } else if !numeric_part.ends_with('}') {
                             // invalid unicode control character, missing
                             // ending curly. filter it out.
+                            // TODO: should we do something else here?
                             continue;
                         } else {
                             numeric_part = &numeric_part[1..numeric_part.len() - 1];
