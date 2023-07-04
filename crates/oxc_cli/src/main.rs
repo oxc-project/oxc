@@ -22,9 +22,7 @@ fn main() -> CliRunResult {
         rayon::ThreadPoolBuilder::new().num_threads(*threads).build_global().unwrap();
     }
 
-    let Some((subcommand, matches)) = matches.subcommand() else {
-        return CliRunResult::None
-    };
+    let Some((subcommand, matches)) = matches.subcommand() else { return CliRunResult::None };
 
     match subcommand {
         "lint" => {

@@ -986,7 +986,11 @@ impl<'a> Parser<'a> {
         let optional = self.eat(Kind::Question);
 
         if self.at(Kind::LParen) || self.at(Kind::LAngle) {
-            let TSSignature::TSCallSignatureDeclaration(call_signature) = self.parse_ts_call_signature_member()? else { unreachable!() };
+            let TSSignature::TSCallSignatureDeclaration(call_signature) =
+                self.parse_ts_call_signature_member()?
+            else {
+                unreachable!()
+            };
             self.bump(Kind::Comma);
             self.bump(Kind::Semicolon);
             let call_signature = call_signature.unbox();

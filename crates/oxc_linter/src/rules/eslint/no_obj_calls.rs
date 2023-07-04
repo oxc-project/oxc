@@ -91,7 +91,9 @@ fn resolve_global_binding<'a, 'b: 'a>(
         let nodes = ctx.nodes();
         let symbols = ctx.symbols();
         scope.get_binding(scope_id, &ident.name).map_or_else(|| {
-            panic!("No binding id found, but this IdentifierReference is not a global");
+            // panic!("No binding id found for {}, but this IdentifierReference
+            // is not a global", &ident.name);
+            None
         }, |binding_id| {
             let decl = nodes.get_node(symbols.get_declaration(binding_id));
             let decl_scope = decl.scope_id();

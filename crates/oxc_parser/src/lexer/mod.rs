@@ -1249,7 +1249,7 @@ impl<'a> Lexer<'a> {
         };
 
         let Some(value) = value else {
-            let range = Span::new(start,self.offset());
+            let range = Span::new(start, self.offset());
             self.error(diagnostics::UnicodeEscapeSequence(range));
             return;
         };

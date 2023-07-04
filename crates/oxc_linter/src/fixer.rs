@@ -72,7 +72,7 @@ impl<'a> Fixer<'a> {
     /// # Panics
     pub fn fix(mut self) -> FixResult<'a> {
         let source_text = self.source_text;
-        if self.messages.iter().all(|m| matches!(m.fix, None)) {
+        if self.messages.iter().all(|m| m.fix.is_none()) {
             return FixResult {
                 fixed: false,
                 fixed_code: Cow::Borrowed(source_text),
@@ -84,7 +84,7 @@ impl<'a> Fixer<'a> {
         let mut fixed = false;
         let mut output = String::with_capacity(source_text.len());
         let mut last_pos: i64 = -1;
-        self.messages.iter_mut().filter(|m| matches!(m.fix, Some(_))).for_each(|m| {
+        self.messages.iter_mut().filter(|m| m.fix.is_some()).for_each(|m| {
             let Fix { content, span } = m.fix.as_ref().unwrap();
             let start = span.start;
             let end = span.end;
