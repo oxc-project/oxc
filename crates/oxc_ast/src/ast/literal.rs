@@ -114,6 +114,7 @@ bitflags! {
 
 impl TryFrom<char> for RegExpFlags {
     type Error = char;
+
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value {
             'g' => Ok(Self::G),
@@ -124,7 +125,7 @@ impl TryFrom<char> for RegExpFlags {
             'y' => Ok(Self::Y),
             'd' => Ok(Self::D),
             'v' => Ok(Self::V),
-            _ =>   Err(value)
+            _ => Err(value),
         }
     }
 }

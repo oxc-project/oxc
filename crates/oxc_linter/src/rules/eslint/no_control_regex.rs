@@ -285,7 +285,7 @@ mod tests {
                 r"let r = new RegExp('\\u001f');"
             ]
         )
-        .test()
+        .test();
     }
 
     #[test]
@@ -346,6 +346,6 @@ mod tests {
                 r"new RegExp('\\u{1F}', 'ugi')"
             ]
         )
-        .test_and_snapshot()
+        .test_and_snapshot();
     }
 }
