@@ -49,6 +49,7 @@ declare_oxc_lint!(
     /// it('foo', () => {
     ///   pending();
     /// });
+    /// ```
     NoDisabledTests,
     suspicious
 );
@@ -92,6 +93,7 @@ impl Rule for NoDisabledTests {
                 }
                 
                 // `it.skip('foo', function () {})'`
+                // `describe.skip('foo', function () {})'`
                 if members.iter().any(|name| name == "skip") {
                     let (error, help) = if matches!(kind, JestFnKind::Describe) {
                         MESSAGES["disabledSuiteWithSkip"]
