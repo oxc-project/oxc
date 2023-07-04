@@ -9,7 +9,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
-use regex::{Match, Matches, Regex};
+use regex::{Matches, Regex};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -88,35 +88,28 @@ impl Rule for NoControlRegex {
     }
 }
 
-fn callee_args<'a, 'alloc>(
-    node: &AstNode<'a>,
-) -> Option<(&'a Atom, &'a oxc_allocator::Vec<'alloc, Argument<'a>>)> {
-    let (callee, args) = match node.kind() {
-        AstKind::NewExpression(expr) => Some((&expr.callee, &expr.arguments)),
-        AstKind::CallExpression(expr) => Some((&expr.callee, &expr.arguments)),
-        _ => None,
-    }?;
-
-    if let Expression::Identifier(fn_or_constructor) = callee {
-        Some((&fn_or_constructor.name, args))
+fn extract_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<RegExpFlags> {
+    if args.len() > 1 &&
+    let Argument::Expression(Expression::StringLiteral(flag_arg)) = &args[1] {
+        // TODO: how should we handle invalid flags?
+        let mut flags = RegExpFlags::empty();
+        for ch in flag_arg.value.chars() {
+            let flag = RegExpFlags::try_from(ch).ok()?;
+            // TODO: should we check for duplicates?
+            flags |= flag;
+        }
+        Some(flags)
     } else {
         None
     }
 }
-fn callish_expr<'a>(node: &'a AstNode<'a>) -> Option<&'a Expression<'a>> {
-    match node.kind() {
-        AstKind::NewExpression(expr) => Some(&expr.callee),
-        AstKind::CallExpression(expr) => Some(&expr.callee),
-        _ => None,
-    }
-}
-// enum Flags(O)
+
 /// Returns the regex pattern inside a node, if it's applicable.
 ///
 /// e.g.:
 /// * /foo/ -> "foo"
 /// * new RegExp("foo") -> foo
-/// 
+///
 /// note: [`RegExpFlags`] and [`Span`]s are both tiny and cloneable.
 fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<(&'a Atom, Option<RegExpFlags>, Span)> {
     let kind = node.kind();
@@ -138,24 +131,11 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<(&'a Atom, Option<RegExpFlags
             // references
             let Argument::Expression(Expression::StringLiteral(pattern)) = &expr.arguments[0]
             {
-                let flags = if expr.arguments.len() > 1 &&
-                    let Argument::Expression(Expression::StringLiteral(flag_arg)) = &expr.arguments[1] {
-                        // TODO: how should we handle invalid flags?
-                        let mut flags = RegExpFlags::empty();
-                        for ch in flag_arg.value.chars() {
-                            let flag = RegExpFlags::try_from(ch).ok()?;
-                            // TODO: should we check for duplicates?
-                            flags |= flag;
-                        }
-                        Some(flags)
-                } else {
-                    None
-                };
                 // get pattern from arguments. Missing or non-string arguments
                 // will be runtime errors, but are not covered by this rule.
                 // Note that we're intentionally reporting the entire "new
                 // RegExp("pat") expression, not just "pat".
-                Some((&pattern.value, flags, kind.span()))
+                Some((&pattern.value, extract_flags(&expr.arguments), kind.span()))
             } else {
                 None
             }
@@ -173,24 +153,11 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<(&'a Atom, Option<RegExpFlags
             // references
             let Argument::Expression(Expression::StringLiteral(pattern)) = &expr.arguments[0]
             {
-                let flags = if expr.arguments.len() > 1 &&
-                    let Argument::Expression(Expression::StringLiteral(flag_arg)) = &expr.arguments[1] {
-                        // TODO: how should we handle invalid flags?
-                        let mut flags = RegExpFlags::empty();
-                        for ch in flag_arg.value.chars() {
-                            let flag = RegExpFlags::try_from(ch).ok()?;
-                            // TODO: should we check for duplicates?
-                            flags |= flag;
-                        }
-                        Some(flags)
-                } else {
-                    None
-                };
                 // get pattern from arguments. Missing or non-string arguments
                 // will be runtime errors, but are not covered by this rule.
                 // Note that we're intentionally reporting the entire "new
                 // RegExp("pat") expression, not just "pat".
-                Some((&pattern.value, flags, kind.span()))
+                Some((&pattern.value, extract_flags(&expr.arguments), kind.span()))
             } else {
                 None
             }
@@ -285,8 +252,8 @@ mod tests {
             [
                 r"let r = /\u{0}/u",
                 r"let r = /\u{c}/u",
-                r"let r = /\u{1F}/u" // todo
-                                     // r"let r = new RegExp('\\u{1F}', 'u');" // flags are known & contain u
+                r"let r = /\u{1F}/u",
+                r"let r = new RegExp('\\u{1F}', 'u');" // flags are known & contain u
             ]
         )
         .test();
@@ -313,7 +280,6 @@ mod tests {
                 r"new RegExp('\\u{1F}', 'g')",
                 r"new RegExp('\\u{1F}', flags)" // unknown flags, we assume no 'u'
             ],
-            // [],
             [
                 r"var regex = /\x1f/",
                 r"var regex = /\\\x1f\\x1e/",
@@ -330,49 +296,8 @@ mod tests {
                 r"/\u{1F}/ugi",
                 r"new RegExp('\\u{1F}', 'u')",
                 r"new RegExp('\\u{1F}', 'ugi')"
-            ] // [
-              // "var regex = RegExp('\\x1f')"
-              // ]
+            ]
         )
-        .test()
-        // let pass = vec![
-        //     ("var regex = /x1f/", None), // not a control pattern
-        //     ("var regex = /x1F/", None),
-        //     ("var regex = new RegExp('x1f')", None),
-        //     ("var regex = RegExp('x1f')", None),
-        //     ("new RegExp('[')", None),
-        //     ("RegExp('[')", None),
-        //     ("new (function foo(){})('\\x1f')", None),
-        //     // \t and \n are ok
-        //     ("/\\t/", None),
-        //     ("/\\n/", None),
-        //     ("new RegExp(\"\\\\t\");", None),
-        //     ("new RegExp(\"\\\\n\");", None),
-        // ];
-
-        // let fail = vec![
-        //     // tab
-        //     // U+0000
-        //     ("/\\x00/", None),
-        //     (r"let r = /\u{0}/u", None),
-        //     ("/\\x0000/", None),
-        //     ("var reg = new RegExp(\"\\x0C\")", None), // new RegExp("\x0C") - contains raw U+0000 character
-        //     // somewhere in the middle
-        //     ("/\\x0c/", None),
-        //     ("/\\x000c/", None),
-        //     ("var reg = new RegExp(\"\\\\x0C\")", None), // new RegExp("\\x0C") - \x0c pattern
-        //     // U+001F
-        //     ("/\\x1F/", None),
-        //     ("var regex = /\x1f/", None),
-        //     ("/\\x{{1f}}/", None),
-        //     ("/\\x001F/", None),
-        //     ("var regex = new RegExp('\\x1f\\x1e')", None),
-        //     ("var regex = new RegExp('\\x1fFOO\\x00')", None),
-        //     ("var regex = new RegExp('FOO\\x1fFOO\\x1f')", None),
-        //     ("var regex = RegExp('\\x1f')", None),
-        //     ("var regex = /(?<a>\\x1f)/", None),
-        // ];
-
-        // Tester::new(NoControlRegex::NAME, pass, fail).test();
+        .test_and_snapshot()
     }
 }
