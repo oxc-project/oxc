@@ -160,8 +160,8 @@ impl<'a> Expression<'a> {
             Expression::MemberExpression(expr) => expr.is_specific_member_access(object, property),
             Expression::ChainExpression(chain) => {
                 let ChainElement::MemberExpression(expr) = &chain.expression else {
-                return false;
-              };
+                    return false;
+                };
                 expr.is_specific_member_access(object, property)
             }
             _ => false,

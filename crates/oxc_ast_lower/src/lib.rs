@@ -566,13 +566,17 @@ impl<'a> AstLower<'a> {
     fn lower_chain_expression(&mut self, expr: &ast::ChainExpression<'a>) -> hir::Expression<'a> {
         let expression = match &expr.expression {
             ast::ChainElement::CallExpression(call_expr) => {
-                let hir::Expression::CallExpression(call_expr) = self.lower_call_expression(call_expr) else {
+                let hir::Expression::CallExpression(call_expr) =
+                    self.lower_call_expression(call_expr)
+                else {
                     unreachable!()
                 };
                 hir::ChainElement::CallExpression(call_expr)
             }
             ast::ChainElement::MemberExpression(member_expr) => {
-                let hir::Expression::MemberExpression(member_expr) = self.lower_member_expression(member_expr) else {
+                let hir::Expression::MemberExpression(member_expr) =
+                    self.lower_member_expression(member_expr)
+                else {
                     unreachable!()
                 };
                 hir::ChainElement::MemberExpression(member_expr)

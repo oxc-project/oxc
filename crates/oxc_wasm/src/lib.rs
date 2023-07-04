@@ -106,9 +106,7 @@ impl Oxc {
             .borrow()
             .iter()
             .flat_map(|error| {
-                let Some(labels) = error.labels() else {
-                    return vec![]
-                };
+                let Some(labels) = error.labels() else { return vec![] };
                 labels
                     .map(|label| {
                         OxcDiagnostic {

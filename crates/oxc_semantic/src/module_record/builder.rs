@@ -21,15 +21,29 @@ impl ModuleRecordBuilder {
 
             // try to find require calls by searching all top-level variable declarations
             // and add them to the module record
-            let Statement::Declaration(exp) = stmt else { continue; };
-            let Declaration::VariableDeclaration(var_decl) = exp else { continue; };
+            let Statement::Declaration(exp) = stmt else {
+                continue;
+            };
+            let Declaration::VariableDeclaration(var_decl) = exp else {
+                continue;
+            };
 
             for declaration in &var_decl.declarations {
-                let Some(init) = &declaration.init else { continue; };
-                let Expression::CallExpression(call) = &init else { continue; };
-                let Expression::Identifier(ident) = &call.callee else { continue; };
+                let Some(init) = &declaration.init else {
+                    continue;
+                };
+                let Expression::CallExpression(call) = &init else {
+                    continue;
+                };
+                let Expression::Identifier(ident) = &call.callee else {
+                    continue;
+                };
                 if ident.name == "require" {
-                    let Some(Argument::Expression(Expression::StringLiteral(module))) = call.arguments.get(0) else { continue; };
+                    let Some(Argument::Expression(Expression::StringLiteral(module))) =
+                        call.arguments.get(0)
+                    else {
+                        continue;
+                    };
 
                     let module_request = NameSpan::new(module.value.clone(), module.span);
 

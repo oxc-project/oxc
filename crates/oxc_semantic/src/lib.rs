@@ -93,7 +93,9 @@ impl<'a> Semantic<'a> {
 
     pub fn is_unresolved_reference(&self, node_id: AstNodeId) -> bool {
         let reference_node = self.nodes.get_node(node_id);
-        let AstKind::IdentifierReference(id) = reference_node.kind() else { return false; };
+        let AstKind::IdentifierReference(id) = reference_node.kind() else {
+            return false;
+        };
         self.scopes().root_unresolved_references().contains_key(&id.name)
     }
 

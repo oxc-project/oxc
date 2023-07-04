@@ -29,7 +29,7 @@ num-traits  = { workspace = true }
 rust-lapper = "1.1.0"
 
 [dev-dependencies]
-oxc_parser    = { workspace = true }
-miette        = { workspace = true, features = ["fancy-no-backtrace"] }
+oxc_parser = { workspace = true }
+miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 
 insta = { version = "1.28.0", features = ["glob"] }

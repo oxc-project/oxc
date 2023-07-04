@@ -79,7 +79,10 @@ impl<'a> Visit<'a> for TestCase<'a> {
                 // ['class A {', '}'].join('\n')
                 let mut code = String::new();
                 for arg in &array_expr.elements {
-                    let ArrayExpressionElement::Expression(Expression::StringLiteral(lit)) = arg else { continue };
+                    let ArrayExpressionElement::Expression(Expression::StringLiteral(lit)) = arg
+                    else {
+                        continue;
+                    };
                     code.push_str(lit.value.as_str());
                     code.push('\n');
                 }
