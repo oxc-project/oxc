@@ -42,6 +42,12 @@ impl<'alloc, T: ?Sized> ops::DerefMut for Box<'alloc, T> {
     }
 }
 
+impl<'alloc, T: ?Sized> AsRef<T> for Box<'alloc, T> {
+    fn as_ref(&self) -> &T {
+        &self.0
+    }
+}
+
 impl<'alloc, T: ?Sized + Debug> Debug for Box<'alloc, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
@@ -125,6 +131,28 @@ impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
+    }
+}
+
+impl<'alloc, T> ops::Index<usize> for Vec<'alloc, T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        self.0.index(index)
+    }
+}
+
+impl<'alloc, T> ops::Index<usize> for &'alloc Vec<'alloc, T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        self.0.index(index)
+    }
+}
+
+impl<'alloc, T> ops::IndexMut<usize> for Vec<'alloc, T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        self.0.index_mut(index)
     }
 }
 

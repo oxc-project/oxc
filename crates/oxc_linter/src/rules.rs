@@ -23,6 +23,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_const_assign,
     eslint::no_constant_binary_expression,
     eslint::no_constant_condition,
+    eslint::no_control_regex,
     eslint::no_debugger,
     eslint::no_delete_var,
     eslint::no_dupe_class_members,
