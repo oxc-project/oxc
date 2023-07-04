@@ -1,4 +1,8 @@
-use std::borrow::Cow;
+use std::{
+    borrow::Cow,
+    fmt,
+    fmt::{Display, Formatter},
+};
 
 use convert_case::{Case, Casing};
 use oxc_allocator::Allocator;
@@ -6,7 +10,7 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression,
         ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StringLiteral, TemplateLiteral,
+        PropertyKey, Statement, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
     },
     Visit,
 };
@@ -20,6 +24,9 @@ mod template;
 
 const ESLINT_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint/eslint/main/tests/lib/rules";
+
+const JEST_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/jest-community/eslint-plugin-jest/main/src/rules/__tests__";
 
 struct TestCase<'a> {
     source_text: &'a str,
@@ -57,6 +64,9 @@ impl<'a> Visit<'a> for TestCase<'a> {
         match expr {
             Expression::StringLiteral(lit) => self.visit_string_literal(lit),
             Expression::TemplateLiteral(lit) => self.visit_template_literal(lit),
+            Expression::TaggedTemplateExpression(tag_expr) => {
+                self.visit_tagged_template_expression(tag_expr);
+            }
             Expression::ObjectExpression(obj_expr) => self.visit_object_expression(obj_expr),
             Expression::CallExpression(call_expr) => self.visit_call_expression(call_expr),
             _ => {}
@@ -104,6 +114,11 @@ impl<'a> Visit<'a> for TestCase<'a> {
 
     fn visit_template_literal(&mut self, lit: &'a TemplateLiteral<'a>) {
         self.code = Some(Cow::Borrowed(lit.quasi().unwrap().as_str()));
+        self.test_code = None;
+    }
+
+    fn visit_tagged_template_expression(&mut self, tag_expr: &'a TaggedTemplateExpression<'a>) {
+        self.code = Some(Cow::Borrowed(tag_expr.quasi.quasi().unwrap().as_str()));
         self.test_code = None;
     }
 
@@ -212,15 +227,43 @@ impl<'a> Visit<'a> for State<'a> {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum RuleKind {
+    ESLint,
+    Jest,
+}
+
+impl RuleKind {
+    fn from(kind: &str) -> Self {
+        match kind {
+            "jest" => Self::Jest,
+            _ => Self::ESLint,
+        }
+    }
+}
+
+impl Display for RuleKind {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ESLint => write!(f, "eslint"),
+            Self::Jest => write!(f, "eslint-plugin-jest"),
+        }
+    }
+}
+
 fn main() {
     let mut args = std::env::args();
     args.next();
 
     let rule_name = args.next().expect("expected rule name").to_case(Case::Snake);
+    let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| RuleKind::from(&kind));
     let upper_rule_name = rule_name.to_case(Case::UpperCamel);
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
 
-    let rule_test_path = format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js");
+    let rule_test_path = match rule_kind {
+        RuleKind::ESLint => format!("{ESLINT_TEST_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Jest => format!("{JEST_TEST_PATH}/{kebab_rule_name}.test.ts"),
+    };
     println!("Reading test file from {rule_test_path}");
 
     let body = ureq::get(&rule_test_path).call().map(Response::into_string);
@@ -245,7 +288,7 @@ fn main() {
             Context::new(&upper_rule_name, &rule_name, &pass_cases, &fail_cases)
         }
         Err(_err) => {
-            println!("Rule {rule_name} cannot be found in eslint, use empty template.");
+            println!("Rule {rule_name} cannot be found in {rule_kind}, use empty template.");
             Context::new(&upper_rule_name, &rule_name, "", "")
         }
         Ok(Err(err)) => {
@@ -255,7 +298,7 @@ fn main() {
     };
 
     let template = template::Template::with_context(&context);
-    if let Err(err) = template.render() {
+    if let Err(err) = template.render(rule_kind) {
         let rule_name = context.rule;
         eprintln!("failed to render {rule_name} rule template: {err}");
     }
