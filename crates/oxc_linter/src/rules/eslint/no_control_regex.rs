@@ -46,40 +46,64 @@ impl Rule for NoControlRegex {
                 let chars = pattern.chars();
                 println!("{:?}", chars)
             }
-            let ctl_matches = control_patterns(pattern);
-            let violations = ctl_matches
-                .map(|ctl| ctl.as_str())
-                .filter(|ctl| {
-                    if ctl.starts_with(r"\x") || ctl.starts_with(r"\u") {
-                        let mut numeric_part = &ctl[2..];
 
-                        // extract numeric part from \u{00}
-                        if numeric_part.starts_with('{') {
-                            let has_unicode_flag = match flags {
-                                Some(flags) if flags.contains(RegExpFlags::U) => true,
-                                _ => false,
-                            };
-                            if !has_unicode_flag {
-                                return false;
-                            }
-                            if !numeric_part.ends_with('}') {
-                                // invalid unicode control character, missing
-                                // ending curly. filter it out.
-                                return false;
-                            } else {
-                                numeric_part = &numeric_part[1..numeric_part.len() - 1];
-                            }
-                        }
+            let mut violations: Vec<&str> = Vec::with_capacity(usize::min(4, pattern.len()));
+            for m in control_patterns(pattern) {
+                let ctl = m.as_str();
 
-                        match u32::from_str_radix(numeric_part, 16) {
-                            Err(_) => false,
-                            Ok(as_num) => as_num <= 0x1f,
-                        }
-                    } else {
-                        true
+                // check for an even number of backslashes, since these will
+                // prevent the pattern from being a control sequence
+                if ctl.starts_with('\\') && m.start() > 0 {
+                    let pattern_chars: Vec<char> = pattern.chars().collect(); // ew
+                    // pattern_chars.insert(0, '\x00');
+
+                    let mut first_backslash = m.start();
+                    while first_backslash > 0 && pattern_chars[first_backslash] == '\\' {
+                        first_backslash -= 1;
                     }
-                })
-                .collect::<Vec<_>>();
+
+                    let mut num_slashes = m.start() - first_backslash;
+                    if first_backslash == 0 && pattern_chars[first_backslash] == '\\' {
+                        num_slashes += 1;
+                    }
+                    // even # of slashes
+                    if num_slashes % 2 == 0 {
+                        continue;
+                    }
+                }
+
+                if ctl.starts_with(r"\x") || ctl.starts_with(r"\u") {
+                    let mut numeric_part = &ctl[2..];
+
+                    // extract numeric part from \u{00}
+                    if numeric_part.starts_with('{') {
+                        let has_unicode_flag = match flags {
+                            Some(flags) if flags.contains(RegExpFlags::U) => true,
+                            _ => {
+                                continue;
+                            }
+                        };
+                        if !has_unicode_flag {
+                            continue;
+                        } else if !numeric_part.ends_with('}') {
+                            // invalid unicode control character, missing
+                            // ending curly. filter it out.
+                            continue;
+                        } else {
+                            numeric_part = &numeric_part[1..numeric_part.len() - 1];
+                        }
+                    }
+
+                    match u32::from_str_radix(numeric_part, 16) {
+                        Err(_) => continue,
+                        Ok(as_num) if as_num > 0x1f => continue,
+                        Ok(_) => { /* noop */ }
+                    }
+                }
+
+                violations.push(ctl);
+            }
+
             if !violations.is_empty() {
                 let violations = violations.join(", ");
                 ctx.diagnostic(NoControlRegexDiagnostic(violations.into(), span))
@@ -266,7 +290,7 @@ mod tests {
         make_test!(
             [
                 "var regex = /x1f/;",
-                // r"var regex = /\\x1f/",               // todo
+                r"var regex = /\\x1f/",
                 "var regex = new RegExp(\"x1f\");",
                 "var regex = RegExp(\"x1f\");",
                 "new RegExp('[')",
