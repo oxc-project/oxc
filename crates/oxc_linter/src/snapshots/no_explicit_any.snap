@@ -1,0 +1,341 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_explicit_any
+---
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ const number: any = 1
+   ·               ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(): any {}
+   ·                     ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(): Array<any> {}
+   ·                           ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(): any[] {}
+   ·                     ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: Array<any>): number {}
+   ·                               ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: any[]): number {}
+   ·                         ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: Array<any>): Array<any> {}
+   ·                               ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(param: Array<any>): Array<any> {}
+   ·                                            ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(): Array<Array<any>> {}
+   ·                                 ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function generic(): Array<any[]> {}
+   ·                           ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { constructor(param: Array<any>) {} }
+   ·                                          ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { message: any; }
+   ·                          ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { message: Array<any>; }
+   ·                                ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { message: any[]; }
+   ·                          ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { message: Array<Array<any>>; }
+   ·                                      ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Greeter { message: Array<any[]>; }
+   ·                                ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { message: any; }
+   ·                              ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { message: Array<any>; }
+   ·                                    ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { message: any[]; }
+   ·                              ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { message: Array<Array<any>>; }
+   ·                                          ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Greeter { message: Array<any[]>; }
+   ·                                    ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: any; }
+   ·                       ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: Array<any>; }
+   ·                             ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: any[]; }
+   ·                       ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: Array<Array<any>>; }
+   ·                                   ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: Array<any[]>; }
+   ·                             ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string | any; }
+   ·                                ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string | Array<any>; }
+   ·                                      ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string | any[]; }
+   ·                                ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string | Array<Array<any>>; }
+   ·                                            ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string | Array<any[]>; }
+   ·                                      ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & any; }
+   ·                                ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & Array<any>; }
+   ·                                      ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & any[]; }
+   ·                                ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & Array<Array<any>>; }
+   ·                                            ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type obj = { message: string & Array<any[]>; }
+   ·                                      ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Foo<t = any> extends Bar<any> {}
+   ·               ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ class Foo<t = any> extends Bar<any> {}
+   ·                                ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ abstract class Foo<t = any> extends Bar<any> {}
+   ·                        ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ abstract class Foo<t = any> extends Bar<any> {}
+   ·                                         ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ abstract class Foo<t = any> implements Bar<any>, Baz<any> {}
+   ·                        ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ new Foo<any>()
+   ·         ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ Foo<any>()
+   ·     ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function foo(a: number, ...rest: any[]): void { return; }
+   ·                                  ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type Any = any;
+   ·            ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function foo5(...args: any) {}
+   ·                        ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ const bar5 = function (...args: any) {}
+   ·                                 ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ const baz5 = (...args: any) => {}
+   ·                        ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Qux5 { (...args: any): void; }
+   ·                            ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function quux5(fn: (...args: any) => void): void {}
+   ·                              ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function quuz5(): ((...args: any) => void) {}
+   ·                              ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type Fred5 = (...args: any) => void;
+   ·                        ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ type Corge5 = new (...args: any) => void;
+   ·                             ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Grault5 { new (...args: any): void; }
+   ·                                   ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ interface Garply5 { f(...args: any): void; }
+   ·                                ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ declare function waldo5(...args: any): void;
+   ·                                  ───
+   ╰────
+
+
