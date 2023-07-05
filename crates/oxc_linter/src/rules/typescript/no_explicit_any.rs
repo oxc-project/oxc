@@ -45,13 +45,10 @@ declare_oxc_lint!(
 impl Rule for NoExplicitAny {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if self.ignore_rest_args {
-            // 
-        } else {
-            if let AstKind::TSAnyKeyword(decl) = node.kind() {
-                ctx.diagnostic(NoExplicitAnyDiagnostic(decl.span));
-            }
+// todo!("implement linting for the ignoreRestArgs option");
+        } else if let AstKind::TSAnyKeyword(decl) = node.kind() {
+            ctx.diagnostic(NoExplicitAnyDiagnostic(decl.span));
         }
-        
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -66,146 +63,312 @@ impl Rule for NoExplicitAny {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "const number: number = 1;",
-        "function greet(): string {}",
-        "function greet(): Array<string> {}",
-        "function greet(): string[] {}",
-        "function greet(): Array<Array<string>> {}",
-        "function greet(): Array<string[]> {}",
-        "function greet(param: Array<string>): Array<string> {}",
-        "class Greeter {message: string;}",
-        "class Greeter {message: Array<string>;}",
-        "class Greeter {message: string[];}",
-        "class Greeter {message: Array<Array<string>>;}",
-        "class Greeter {message: Array<string[]>;}",
-        "interface Greeter {message: string;}",
-        "interface Greeter {message: Array<string>;}",
-        "interface Greeter {message: string[];}",
-        "interface Greeter {message: Array<Array<string>>;}",
-        "interface Greeter {message: Array<string[]>;}",
-        "type obj = {message: string;};",
-        "type obj = {message: Array<string>;};",
-        "type obj = {message: string[];};",
-        "type obj = {message: Array<Array<string>>;};",
-        "type obj = {message: Array<string[]>;};",
-        "type obj = {message: string | number;};",
-        "type obj = {message: string | Array<string>;};",
-        "type obj = {message: string | string[];};",
-        "type obj = {message: string | Array<Array<string>>;};",
-        "type obj = {message: string & number;};",
-        "type obj = {message: string & Array<string>;};",
-        "type obj = {message: string & string[];};",
-        "type obj = {message: string & Array<Array<string>>;};",
-        // // TODO: the following are dependent on the option `ignoreRestArgs` - how to reference this option?
-        // "function foo(a: number, ...rest: any[]): void {return;}",
-        // "function foo1(...args: any[]) {}",
-        // "const bar1 = function (...args: any[]) {};",
-        // "const baz1 = (...args: any[]) => {};",
-        // "function foo2(...args: readonly any[]) {}",
-        // "const bar2 = function (...args: readonly any[]) {};",
-        // "const baz2 = (...args: readonly any[]) => {};",
-        // "function foo3(...args: Array<any>) {}",
-        // "const bar3 = function (...args: Array<any>) {};",
-        // "const baz3 = (...args: Array<any>) => {};",
-        // "function foo4(...args: ReadonlyArray<any>) {}",
-        // "const bar4 = function (...args: ReadonlyArray<any>) {};",
-        // "const baz4 = (...args: ReadonlyArray<any>) => {};",
-        // "interface Qux1 {(...args: any[]): void;}",
-        // "interface Qux2 {(...args: readonly any[]): void;}",
-        // "interface Qux3 {(...args: Array<any>): void;}",
-        // "interface Qux4 {(...args: ReadonlyArray<any>): void;}",
-        // "function quux1(fn: (...args: any[]) => void): void {}",
-        // "function quux2(fn: (...args: readonly any[]) => void): void {}",
-        // "function quux3(fn: (...args: Array<any>) => void): void {}",
-        // "function quux4(fn: (...args: ReadonlyArray<any>) => void): void {}",
-        // "function quuz1(): (...args: any[]) => void {}",
-        // "function quuz2(): (...args: readonly any[]) => void {}",
-        // "function quuz3(): (...args: Array<any>) => void {}",
-        // "function quuz4(): (...args: ReadonlyArray<any>) => void {}",
-        // "type Fred1 = (...args: any[]) => void;",
-        // "type Fred2 = (...args: readonly any[]) => void;",
-        // "type Fred3 = (...args: Array<any>) => void;",
-        // "type Fred4 = (...args: ReadonlyArray<any>) => void;",
-        // "type Corge1 = new (...args: any[]) => void;",
-        // "type Corge2 = new (...args: readonly any[]) => void;",
-        // "type Corge3 = new (...args: Array<any>) => void;",
-        // "type Corge4 = new (...args: ReadonlyArray<any>) => void;",
-        // "interface Grault1 {new (...args: any[]): void;}",
-        // "interface Grault2 {new (...args: readonly any[]): void;}",
-        // "interface Grault3 {new (...args: Array<any>): void;}",
-        // "interface Grault4 {new (...args: ReadonlyArray<any>): void;}",
-        // "interface Garply1 {f(...args: any[]): void;}",
-        // "interface Garply2 {f(...args: readonly any[]): void;}",
-        // "interface Garply3 {f(...args: Array<any>): void;}",
-        // "interface Garply4 {f(...args: ReadonlyArray<any>): void;}",
-        // "declare function waldo1(...args: any[]): void;",
-        // "declare function waldo2(...args: readonly any[]): void;",
-        // "declare function waldo3(...args: Array<any>): void;",
-        // "declare function waldo4(...args: ReadonlyArray<any>): void;",
+        ("const number: number = 1;", None),
+        ("function greet(): string {}", None),
+        ("function greet(): Array<string> {}", None),
+        ("function greet(): string[] {}", None),
+        ("function greet(): Array<Array<string>> {}", None),
+        ("function greet(): Array<string[]> {}", None),
+        ("function greet(param: Array<string>): Array<string> {}", None),
+        ("class Greeter {message: string;}  ", None),
+        ("class Greeter {message: Array<string>;}  ", None),
+        ("class Greeter {message: string[];}  ", None),
+        ("class Greeter {message: Array<Array<string>>;}  ", None),
+        ("class Greeter {message: Array<string[]>;}  ", None),
+        ("interface Greeter {message: string;}  ", None),
+        ("interface Greeter {message: Array<string>;}  ", None),
+        ("interface Greeter {message: string[];}  ", None),
+        ("interface Greeter {message: Array<Array<string>>;}  ", None),
+        ("interface Greeter {message: Array<string[]>;}  ", None),
+        ("type obj = {message: string;};  ", None),
+        ("type obj = {message: Array<string>;};  ", None),
+        ("type obj = {message: string[];};  ", None),
+        ("type obj = {message: Array<Array<string>>;};  ", None),
+        ("type obj = {message: Array<string[]>;};  ", None),
+        ("type obj = {message: string | number;};  ", None),
+        ("type obj = {message: string | Array<string>;};  ", None),
+        ("type obj = {message: string | string[];};  ", None),
+        ("type obj = {message: string | Array<Array<string>>;};  ", None),
+        ("type obj = {message: string & number;};  ", None),
+        ("type obj = {message: string & Array<string>;};  ", None),
+        ("type obj = {message: string & string[];};  ", None),
+        ("type obj = {message: string & Array<Array<string>>;};  ", None),
+        // (
+        //     "function foo(a: number, ...rest: any[]): void { return; }",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // ("function foo1(...args: any[]) {}", Some(serde_json::json!([{ "ignoreRestArgs": true }]))),
+        // (
+        //     "const bar1 = function (...args: any[]) {};",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "const baz1 = (...args: any[]) => {};",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function foo2(...args: readonly any[]) {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "const bar2 = function (...args: readonly any[]) {};",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "const baz2 = (...args: readonly any[]) => {};",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function foo3(...args: Array<any>) {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "const bar3 = function (...args: Array<any>) {};",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "const baz3 = (...args: Array<any>) => {};",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function foo4(...args: ReadonlyArray<any>) {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "const bar4 = function (...args: ReadonlyArray<any>) {};",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "const baz4 = (...args: ReadonlyArray<any>) => {};",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Qux1 {(...args: any[]): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Qux2 {(...args: readonly any[]): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Qux3 {(...args: Array<any>): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Qux4 {(...args: ReadonlyArray<any>): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quux1(fn: (...args: any[]) => void): void {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quux2(fn: (...args: readonly any[]) => void): void {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quux3(fn: (...args: Array<any>) => void): void {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quux4(fn: (...args: ReadonlyArray<any>) => void): void {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quuz1(): (...args: any[]) => void {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quuz2(): (...args: readonly any[]) => void {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quuz3(): (...args: Array<any>) => void {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quuz4(): (...args: ReadonlyArray<any>) => void {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Fred1 = (...args: any[]) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Fred2 = (...args: readonly any[]) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Fred3 = (...args: Array<any>) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Fred4 = (...args: ReadonlyArray<any>) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Corge1 = new (...args: any[]) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Corge2 = new (...args: readonly any[]) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Corge3 = new (...args: Array<any>) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Corge4 = new (...args: ReadonlyArray<any>) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Grault1 {new (...args: any[]): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Grault2 {new (...args: readonly any[]): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Grault3 {new (...args: Array<any>): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Grault4 {new (...args: ReadonlyArray<any>): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Garply1 {f(...args: any[]): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Garply2 {f(...args: readonly any[]): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Garply3 {f(...args: Array<any>): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Garply4 {f(...args: ReadonlyArray<any>): void;}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "declare function waldo1(...args: any[]): void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "declare function waldo2(...args: readonly any[]): void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "declare function waldo3(...args: Array<any>): void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "declare function waldo4(...args: ReadonlyArray<any>): void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
     ];
 
     let fail = vec![
-        "const number: any = 1",
-        "function generic(): any {}",
-        "function generic(): Array<any> {}",
-        "function generic(): any[] {}",
-        "function generic(param: Array<any>): number {}",
-        "function generic(param: any[]): number {}",
-        "function generic(param: Array<any>): Array<any> {}",
-        "function generic(): Array<Array<any>> {}",
-        "function generic(): Array<any[]> {}",
-        "class Greeter { constructor(param: Array<any>) {} }",
-        "class Greeter { message: any; }",
-        "class Greeter { message: Array<any>; }",
-        "class Greeter { message: any[]; }",
-        "class Greeter { message: Array<Array<any>>; }",
-        "class Greeter { message: Array<any[]>; }",
-        "interface Greeter { message: any; }",
-        "interface Greeter { message: Array<any>; }",
-        "interface Greeter { message: any[]; }",
-        "interface Greeter { message: Array<Array<any>>; }",
-        "interface Greeter { message: Array<any[]>; }",
-        "type obj = { message: any; }",
-        "type obj = { message: Array<any>; }",
-        "type obj = { message: any[]; }",
-        "type obj = { message: Array<Array<any>>; }",
-        "type obj = { message: Array<any[]>; }",
-        "type obj = { message: string | any; }",
-        "type obj = { message: string | Array<any>; }",
-        "type obj = { message: string | any[]; }",
-        "type obj = { message: string | Array<Array<any>>; }",
-        "type obj = { message: string | Array<any[]>; }",
-        "type obj = { message: string & any; }",
-        "type obj = { message: string & Array<any>; }",
-        "type obj = { message: string & any[]; }",
-        "type obj = { message: string & Array<Array<any>>; }",
-        "type obj = { message: string & Array<any[]>; }",
-        "class Foo<t = any> extends Bar<any> {}",
-        "abstract class Foo<t = any> extends Bar<any> {}",
-        "abstract class Foo<t = any> implements Bar<any>, Baz<any> {}",
-        "new Foo<any>()",
-        "Foo<any>()",
-        "function foo(a: number, ...rest: any[]): void { return; }",
-        "type Any = any;",
-        // TODO: those are dependent on the option `ignoreRestArgs` - how to reference this option?
-        "function foo5(...args: any) {}",
-        "const bar5 = function (...args: any) {}",
-        "const baz5 = (...args: any) => {}",
-        "interface Qux5 { (...args: any): void; }",
-        "function quux5(fn: (...args: any) => void): void {}",
-        "function quuz5(): ((...args: any) => void) {}",
-        "type Fred5 = (...args: any) => void;",
-        "type Corge5 = new (...args: any) => void;",
-        "interface Grault5 { new (...args: any): void; }",
-        "interface Garply5 { f(...args: any): void; }",
-        "declare function waldo5(...args: any): void;",
-        // TODO: this gives a parsing error right now
-        // "function test<T extends Partial<any>>() {} const test = <T extends Partial<any>>() => {};",
+        ("const number: any = 1", None),
+        ("function generic(): any {}", None),
+        ("function generic(): Array<any> {}", None),
+        ("function generic(): any[] {}", None),
+        ("function generic(param: Array<any>): number {}", None),
+        ("function generic(param: any[]): number {}", None),
+        ("function generic(param: Array<any>): Array<any> {}", None),
+        ("function generic(): Array<Array<any>> {}", None),
+        ("function generic(): Array<any[]> {}", None),
+        ("class Greeter { constructor(param: Array<any>) {}}", None),
+        ("class Greeter { message: any; }", None),
+        ("class Greeter { message: Array<any>; }", None),
+        ("class Greeter { message: any[]; }", None),
+        ("class Greeter { message: Array<Array<any>>; }", None),
+        ("class Greeter { message: Array<any[]>; }", None),
+        ("interface Greeter { message: any; }", None),
+        ("interface Greeter { message: Array<any>; }", None),
+        ("interface Greeter { message: any[]; }", None),
+        ("interface Greeter { message: Array<Array<any>>; }", None),
+        ("interface Greeter { message: Array<any[]>; }", None),
+        ("type obj = { message: any; }", None),
+        ("type obj = { message: Array<any>; }", None),
+        ("type obj = { message: any[]; }", None),
+        ("type obj = { message: Array<Array<any>>; }", None),
+        ("type obj = { message: Array<any[]>; }", None),
+        ("type obj = { message: string | any; }", None),
+        ("type obj = { message: string | Array<any>; }", None),
+        ("type obj = { message: string | any[]; }", None),
+        ("type obj = { message: string | Array<Array<any>>; }", None),
+        ("type obj = { message: string | Array<any[]>; }", None),
+        ("type obj = { message: string & any; }", None),
+        ("type obj = { message: string & Array<any>; }", None),
+        ("type obj = { message: string & any[]; }", None),
+        ("type obj = { message: string & Array<Array<any>>; }", None),
+        ("type obj = { message: string & Array<any[]>; }", None),
+        ("class Foo<t = any> extends Bar<any> {}", None),
+        ("abstract class Foo<t = any> extends Bar<any> {}", None),
+        ("abstract class Foo<t = any> implements Bar<any>, Baz<any> {}", None),
+        ("new Foo<any>()", None),
+        ("Foo<any>()", None),
+        // TODO: this is a parsing error - possible bug in oxc parser?
+        // (
+        //     "function test<T extends Partial<any>>() {} const test = <T extends Partial<any>>() => {};",
+        //     None,
+        // ),
+        ("function foo(a: number, ...rest: any[]): void { return; }", None),
+        
+        
+        // ("type Any = any;", Some(serde_json::json!([{ "ignoreRestArgs": true }]))),
+        // ("function foo5(...args: any) {}", Some(serde_json::json!([{ "ignoreRestArgs": true }]))),
+        // (
+        //     "const bar5 = function (...args: any) {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "const baz5 = (...args: any) => {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Qux5 { (...args: any): void; }",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quux5(fn: (...args: any) => void): void {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "function quuz5(): ((...args: any) => void) {}",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Fred5 = (...args: any) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "type Corge5 = new (...args: any) => void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Grault5 { new (...args: any): void; }",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "interface Garply5 { f(...args: any): void; }",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
+        // (
+        //     "declare function waldo5(...args: any): void;",
+        //     Some(serde_json::json!([{ "ignoreRestArgs": true }])),
+        // ),
     ];
 
-    Tester::new_without_config(NoExplicitAny::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoExplicitAny::NAME, pass, fail).test_and_snapshot();
 }

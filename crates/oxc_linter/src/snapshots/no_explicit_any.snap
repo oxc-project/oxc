@@ -64,7 +64,7 @@ expression: no_explicit_any
 
   ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
    ╭─[no_explicit_any.tsx:1:1]
- 1 │ class Greeter { constructor(param: Array<any>) {} }
+ 1 │ class Greeter { constructor(param: Array<any>) {}}
    ·                                          ───
    ╰────
 
@@ -263,78 +263,6 @@ expression: no_explicit_any
   ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
    ╭─[no_explicit_any.tsx:1:1]
  1 │ function foo(a: number, ...rest: any[]): void { return; }
-   ·                                  ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ type Any = any;
-   ·            ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ function foo5(...args: any) {}
-   ·                        ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ const bar5 = function (...args: any) {}
-   ·                                 ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ const baz5 = (...args: any) => {}
-   ·                        ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ interface Qux5 { (...args: any): void; }
-   ·                            ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ function quux5(fn: (...args: any) => void): void {}
-   ·                              ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ function quuz5(): ((...args: any) => void) {}
-   ·                              ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ type Fred5 = (...args: any) => void;
-   ·                        ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ type Corge5 = new (...args: any) => void;
-   ·                             ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ interface Grault5 { new (...args: any): void; }
-   ·                                   ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ interface Garply5 { f(...args: any): void; }
-   ·                                ───
-   ╰────
-
-  ⚠ typescript-eslint(no-explicit-any): Using any disables many type checking rules and is generally best used only as a last resort or when prototyping code
-   ╭─[no_explicit_any.tsx:1:1]
- 1 │ declare function waldo5(...args: any): void;
    ·                                  ───
    ╰────
 
