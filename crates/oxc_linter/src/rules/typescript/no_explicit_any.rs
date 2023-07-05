@@ -16,7 +16,9 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 struct NoExplicitAnyDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-pub struct NoExplicitAny;
+pub struct NoExplicitAny {
+    pub ignore_rest_args: bool,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -42,9 +44,24 @@ declare_oxc_lint!(
 
 impl Rule for NoExplicitAny {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::TSAnyKeyword(decl) = node.kind() {
-            ctx.diagnostic(NoExplicitAnyDiagnostic(decl.span));
+        if self.ignore_rest_args {
+            // 
+        } else {
+            if let AstKind::TSAnyKeyword(decl) = node.kind() {
+                ctx.diagnostic(NoExplicitAnyDiagnostic(decl.span));
+            }
         }
+        
+    }
+
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let ignore_rest_args = value
+            .get(0)
+            .and_then(|config| config.get("ignoreRestArgs"))
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+
+        Self { ignore_rest_args }
     }
 }
 
