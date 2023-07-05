@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_ast::ast::{CallExpression, Expression, IdentifierReference};
+use oxc_span::Atom;
 
 use crate::context::LintContext;
 
@@ -38,10 +39,8 @@ pub fn parse_jest_fn_call<'a>(
 ) -> Option<ParsedJestFnCall<'a>> {
     let callee = &call_expr.callee;
 
-    let resolved = resolve_to_jest_fn(call_expr, ctx);
-
     // if bailed out, we're not a jest function
-    resolved.as_ref()?;
+    let resolved = resolve_to_jest_fn(call_expr, ctx)?;
 
     let chain = get_node_chain(callee);
     if let Some(first) = chain.first() && let Some(last) = chain.last() {
@@ -68,23 +67,20 @@ pub fn parse_jest_fn_call<'a>(
             members.push(member);
         }
 
-        if let Some(resolved) = resolved {
-            let name = resolved.local;
-            let is_valid_jest_call = if members.is_empty() {
-                VALID_JEST_FN_CALL_CHAINS.iter().any(|chain| chain[0] == name)
-            } else if members.len() == 1 {
-                VALID_JEST_FN_CALL_CHAINS_2.iter().any(|chain| chain[0] == name && chain[1] == members[0])
-            } else if members.len() == 2 {
-                VALID_JEST_FN_CALL_CHAINS_3.iter().any(|chain| chain[0] == name && chain[1] == members[0] && chain[2] == members[1])
-            } else if members.len() == 3 {
-                VALID_JEST_FN_CALL_CHAINS_4.iter().any(|chain| chain[0] == name && chain[1] == members[0] && chain[2] == members[1] && chain[3] == members[2])
-            } else { false };
+        let name = resolved.local.as_str();
+        let is_valid_jest_call = if members.is_empty() {
+            VALID_JEST_FN_CALL_CHAINS.iter().any(|chain| chain[0] == name)
+        } else if members.len() == 1 {
+            VALID_JEST_FN_CALL_CHAINS_2.iter().any(|chain| chain[0] == name && chain[1] == members[0])
+        } else if members.len() == 2 {
+            VALID_JEST_FN_CALL_CHAINS_3.iter().any(|chain| chain[0] == name && chain[1] == members[0] && chain[2] == members[1])
+        } else if members.len() == 3 {
+            VALID_JEST_FN_CALL_CHAINS_4.iter().any(|chain| chain[0] == name && chain[1] == members[0] && chain[2] == members[1] && chain[3] == members[2])
+        } else { false };
 
-            if !is_valid_jest_call {
-                return None;
-            }
+        if !is_valid_jest_call {
+            return None;
         }
-
         return Some(ParsedJestFnCall { kind, members, raw: first });
     }
 
@@ -92,19 +88,17 @@ pub fn parse_jest_fn_call<'a>(
 }
 
 struct ResolvedJestFn<'a> {
-    pub local: Cow<'a, str>,
+    pub local: &'a Atom,
 }
 
 fn resolve_to_jest_fn<'a>(
     call_expr: &'a CallExpression,
     ctx: &'a LintContext,
 ) -> Option<ResolvedJestFn<'a>> {
-    let ident = resolve_first_ident(&call_expr.callee);
+    let ident = resolve_first_ident(&call_expr.callee)?;
 
-    if let Some(ident) = ident {
-        if ctx.semantic().is_reference_to_global_variable(ident) {
-            return Some(ResolvedJestFn { local: Cow::Borrowed(ident.name.as_str()) });
-        }
+    if ctx.semantic().is_reference_to_global_variable(ident) {
+        return Some(ResolvedJestFn { local: &ident.name });
     }
 
     None

@@ -5,7 +5,6 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::{phf_map, Map};
 
 use crate::{
     context::LintContext,
@@ -51,7 +50,7 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoDisabledTests,
-    suspicious
+    nursery
 );
 
 #[derive(Debug, Error, Diagnostic)]
@@ -59,14 +58,27 @@ declare_oxc_lint!(
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct NoDisabledTestsDiagnostic(&'static str, &'static str, #[label] pub Span);
 
-const MESSAGES: Map<&'static str, (&'static str, &'static str)> = phf_map! {
-    "missingFunction" => ("Test is missing function argument", "Add function argument"),
-    "pending" => ("Call to pending()", "Remove pending() call"),
-    "disabledSuiteWithSkip" => ("Disabled test suite", "Remove the appending `.skip`"),
-    "disabledSuiteWithX" => ("Disabled test suite", "Remove x prefix"),
-    "disabledTestWithSkip" => ("Disabled test", "Remove the appending `.skip`"),
-    "disabledTestWithX" => ("Disabled test", "Remove x prefix"),
-};
+pub enum Message {
+    MissingFunction,
+    Pending,
+    DisabledSuiteWithSkip,
+    DisabledSuiteWithX,
+    DisabledTestWithSkip,
+    DisabledTestWithX,
+}
+
+impl Message {
+    pub fn details(&self) -> (&'static str, &'static str) {
+        match self {
+            Self::MissingFunction => ("Test is missing function argument", "Add function argument"),
+            Self::Pending => ("Call to pending()", "Remove pending() call"),
+            Self::DisabledSuiteWithSkip => ("Disabled test suite", "Remove the appending `.skip`"),
+            Self::DisabledSuiteWithX => ("Disabled test suite", "Remove x prefix"),
+            Self::DisabledTestWithSkip => ("Disabled test", "Remove the appending `.skip`"),
+            Self::DisabledTestWithX => ("Disabled test", "Remove x prefix"),
+        }
+    }
+}
 
 impl Rule for NoDisabledTests {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -75,7 +87,7 @@ impl Rule for NoDisabledTests {
                 let ParsedJestFnCall { kind, members, raw } = jest_fn_call;
                 // `test('foo')`
                 if matches!(kind, JestFnKind::Test) && call_expr.arguments.len() < 2 && members.iter().all(|name| name != "todo")  {
-                    let (error, help) = MESSAGES["missingFunction"];
+                    let (error, help) = Message::MissingFunction.details();
                     ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
                     return
                 } 
@@ -84,9 +96,9 @@ impl Rule for NoDisabledTests {
                 // `xdescribe('foo', () => {})`
                 if raw.starts_with('x') {
                     let (error, help) = if matches!(kind, JestFnKind::Describe) {
-                        MESSAGES["disabledSuiteWithX"]
+                        Message::DisabledSuiteWithX.details()
                     } else {
-                        MESSAGES["disabledTestWithX"]
+                        Message::DisabledTestWithX.details()
                     };
                     ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
                     return
@@ -96,16 +108,16 @@ impl Rule for NoDisabledTests {
                 // `describe.skip('foo', function () {})'`
                 if members.iter().any(|name| name == "skip") {
                     let (error, help) = if matches!(kind, JestFnKind::Describe) {
-                        MESSAGES["disabledSuiteWithSkip"]
+                        Message::DisabledSuiteWithSkip.details()
                     } else {
-                        MESSAGES["disabledTestWithSkip"]
+                        Message::DisabledTestWithSkip.details()
                     };
                     ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
                 }
             } else if let Expression::Identifier(ident) = &call_expr.callee 
                 && ident.name.as_str() == "pending" && ctx.semantic().is_reference_to_global_variable(ident) {
                 // `describe('foo', function () { pending() })` 
-                let (error, help) = MESSAGES["pending"];
+                let (error, help) = Message::Pending.details();
                 ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
             } 
         }
@@ -182,6 +194,7 @@ fn test() {
         ("it('contains a call to pending', function () { pending() })", None),
         ("pending()", None),
         ("describe('contains a call to pending', function () { pending() })", None),
+        // TODO: Continue work on it when [#510](https://github.com/Boshen/oxc/issues/510) solved
         // ("import { test } from '@jest/globals';test('something');", None),
     ];
 
