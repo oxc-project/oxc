@@ -4,7 +4,7 @@
 mod graphic_reporter;
 mod graphical_theme;
 
-pub use graphic_reporter::GraphicalReportHandler;
+pub use graphic_reporter::{GraphicalReportHandler, GraphicalTheme};
 pub use miette;
 pub use thiserror;
 

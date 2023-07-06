@@ -9,7 +9,7 @@ use owo_colors::{style, Style};
 
 /**
 Theme used by [`GraphicalReportHandler`](crate::GraphicalReportHandler) to
-render fancy [`Diagnostic`](crate::Diagnostic) reports.
+render fancy [`Diagnostic`](miette::Diagnostic) reports.
 A theme consists of two things: the set of characters to be used for drawing,
 and the
 [`owo_colors::Style`](https://docs.rs/owo-colors/latest/owo_colors/struct.Style.html)s to be used to paint various items.
@@ -45,8 +45,8 @@ impl GraphicalTheme {
     /// A "basic" graphical theme that skips colors and unicode characters and
     /// just does monochrome ascii art. If you want a completely non-graphical
     /// rendering of your `Diagnostic`s, check out
-    /// [crate::NarratableReportHandler], or write your own
-    /// [crate::ReportHandler]!
+    /// [miette::NarratableReportHandler], or write your own
+    /// [miette::ReportHandler]!
     pub fn none() -> Self {
         Self { characters: ThemeCharacters::ascii(), styles: ThemeStyles::none() }
     }

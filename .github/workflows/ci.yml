@@ -149,6 +149,20 @@ jobs:
       - name: Run Clippy
         run: cargo lint -- -D warnings
 
+  doc:
+    name: Doc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+        with:
+          docs: true
+
+      - name: Run doc
+        run: RUSTDOCFLAGS='-D warnings' cargo doc -p oxc
+
   test:
     name: Test
     strategy:
