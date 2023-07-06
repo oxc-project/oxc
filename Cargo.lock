@@ -1177,7 +1177,7 @@ checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
 name = "oxc"
-version = "0.0.0"
+version = "0.0.7"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
