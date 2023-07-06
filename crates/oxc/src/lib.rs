@@ -1,4 +1,6 @@
-//! # [The JavaScript Oxidation Compiler](https://github.com/Boshen/oxc)
+//! # The JavaScript Oxidation Compiler
+//!
+//! <https://github.com/Boshen/oxc>
 //!
 //! Note: This crate requires nightly and the public APIs are highly unstable.
 
