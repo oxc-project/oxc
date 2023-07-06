@@ -1221,7 +1221,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_lower"
-version = "0.0.0"
+version = "0.0.6"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1329,7 +1329,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_hir"
-version = "0.0.0"
+version = "0.0.6"
 dependencies = [
  "bitflags 2.3.2",
  "num-bigint",
@@ -1346,7 +1346,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "0.0.0"
+version = "0.0.6"
 dependencies = [
  "index_vec",
  "static_assertions",
@@ -1388,7 +1388,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.0.0"
+version = "0.0.6"
 dependencies = [
  "bitflags 2.3.2",
  "jemallocator",
@@ -1480,7 +1480,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.0.0"
+version = "0.0.6"
 dependencies = [
  "compact_str",
  "miette",
@@ -1489,7 +1489,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.0.0"
+version = "0.0.6"
 dependencies = [
  "bitflags 2.3.2",
  "oxc_index",

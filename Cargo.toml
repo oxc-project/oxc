@@ -22,18 +22,18 @@ oxc_diagnostics = { version = "0.0.6", path = "crates/oxc_diagnostics" }
 oxc_parser      = { version = "0.0.6", path = "crates/oxc_parser" }
 oxc_formatter   = { version = "0.0.6", path = "crates/oxc_formatter" }
 oxc_semantic    = { version = "0.0.6", path = "crates/oxc_semantic" }
+oxc_span        = { version = "0.0.6", path = "crates/oxc_span" }
+oxc_minifier    = { version = "0.0.6", path = "crates/oxc_minifier" }
+oxc_hir         = { version = "0.0.6", path = "crates/oxc_hir" }
+oxc_ast_lower   = { version = "0.0.6", path = "crates/oxc_ast_lower" }
+oxc_syntax      = { version = "0.0.6", path = "crates/oxc_syntax" }
+oxc_index       = { version = "0.0.6", path = "crates/oxc_index" }
 
 # publish = false
-oxc_span           = { version = "0.0.0", path = "crates/oxc_span" }
-oxc_macros         = { version = "0.0.0", path = "crates/oxc_macros" }
-oxc_linter         = { version = "0.0.0", path = "crates/oxc_linter" }
-oxc_type_synthesis = { version = "0.0.0", path = "crates/oxc_type_synthesis" }
-oxc_minifier       = { version = "0.0.0", path = "crates/oxc_minifier" }
-oxc_hir            = { version = "0.0.0", path = "crates/oxc_hir" }
-oxc_ast_lower      = { version = "0.0.0", path = "crates/oxc_ast_lower" }
-oxc_syntax         = { version = "0.0.0", path = "crates/oxc_syntax" }
-oxc_index          = { version = "0.0.0", path = "crates/oxc_index" }
-oxc_resolver       = { version = "0.0.0", path = "crates/oxc_resolver" }
+oxc_macros         = { path = "crates/oxc_macros" }
+oxc_linter         = { path = "crates/oxc_linter" }
+oxc_type_synthesis = { path = "crates/oxc_type_synthesis" }
+oxc_resolver       = { path = "crates/oxc_resolver" }
 
 oxc_tasks_common = { path = "tasks/common" }
 
