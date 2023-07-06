@@ -9,7 +9,7 @@
  * <https://github.com/babel/babel/blob/main/packages/babel-parser/typings/babel-parser.d.ts>
  */
 export interface ParserOptions {
-  sourceType?: string
+  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
   sourceFilename?: string
 }
 export interface ParseResult {
