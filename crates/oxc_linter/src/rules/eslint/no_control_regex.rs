@@ -69,22 +69,22 @@ declare_oxc_lint!(
 
 impl Rule for NoControlRegex {
     fn run<'a>(&self, node: &AstNode<'a>, context: &LintContext<'a>) {
-        if let Some((pattern, flags, span)) = regex_pattern(node) {
-            let mut violations: Vec<&str> = Vec::with_capacity(usize::min(4, pattern.len()));
-            for m in control_patterns(pattern) {
-                let ctl = m.as_str();
+        if let Some(RegexPatternData { pattern, flags, span }) = regex_pattern(node) {
+            let mut violations: Vec<&str> = Vec::new();
+            for matched_ctl_pattern in control_patterns(pattern) {
+                let ctl = matched_ctl_pattern.as_str();
 
                 // check for an even number of backslashes, since these will
                 // prevent the pattern from being a control sequence
-                if ctl.starts_with('\\') && m.start() > 0 {
+                if ctl.starts_with('\\') && matched_ctl_pattern.start() > 0 {
                     let pattern_chars: Vec<char> = pattern.chars().collect(); // ew
 
-                    let mut first_backslash = m.start();
+                    let mut first_backslash = matched_ctl_pattern.start();
                     while first_backslash > 0 && pattern_chars[first_backslash] == '\\' {
                         first_backslash -= 1;
                     }
 
-                    let mut num_slashes = m.start() - first_backslash;
+                    let mut num_slashes = matched_ctl_pattern.start() - first_backslash;
                     if first_backslash == 0 && pattern_chars[first_backslash] == '\\' {
                         num_slashes += 1;
                     }
@@ -152,6 +152,23 @@ fn extract_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<R
     }
 }
 
+struct RegexPatternData<'a> {
+    /// A regex pattern, either from a literal (`/foo/`) a RegExp constructor
+    /// (`new RegExp("foo")`), or a RegExp function call (`RegExp("foo"))
+    pattern: &'a Atom,
+    /// Regex flags, if found. It's possible for this to be `Some` but have
+    /// no flags.
+    ///
+    /// Note that flags are represented by a `u8` and therefore safely clonable
+    /// with low performance overhead.
+    flags: Option<RegExpFlags>,
+    /// The pattern's span. For [`Expression::NewExpression`]s and [`Expression::CallExpression`]s,
+    /// this will match the entire new/call expression.
+    ///
+    /// Note that spans are 8 bytes and safely clonable with low performance overhead
+    span: Span,
+}
+
 /// Returns the regex pattern inside a node, if it's applicable.
 ///
 /// e.g.:
@@ -159,11 +176,15 @@ fn extract_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<R
 /// * new RegExp("foo") -> foo
 ///
 /// note: [`RegExpFlags`] and [`Span`]s are both tiny and cloneable.
-fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<(&'a Atom, Option<RegExpFlags>, Span)> {
+fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
     let kind = node.kind();
     match kind {
         // regex literal
-        AstKind::RegExpLiteral(reg) => Some((&reg.regex.pattern, Some(reg.regex.flags), reg.span)),
+        AstKind::RegExpLiteral(reg) => Some(RegexPatternData {
+            pattern: &reg.regex.pattern,
+            flags: Some(reg.regex.flags),
+            span: reg.span,
+        }),
 
         // FIXME: we need a more graceful way to handle NewExpr/CallExprs
 
@@ -183,7 +204,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<(&'a Atom, Option<RegExpFlags
                 // will be runtime errors, but are not covered by this rule.
                 // Note that we're intentionally reporting the entire "new
                 // RegExp("pat") expression, not just "pat".
-                Some((&pattern.value, extract_flags(&expr.arguments), kind.span()))
+                Some(RegexPatternData { pattern: &pattern.value, flags: extract_flags(&expr.arguments), span: kind.span() })
             } else {
                 None
             }
@@ -205,7 +226,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<(&'a Atom, Option<RegExpFlags
                 // will be runtime errors, but are not covered by this rule.
                 // Note that we're intentionally reporting the entire "new
                 // RegExp("pat") expression, not just "pat".
-                Some((&pattern.value, extract_flags(&expr.arguments), kind.span()))
+                Some(RegexPatternData { pattern: &pattern.value, flags: extract_flags(&expr.arguments), span: kind.span() })
             } else {
                 None
             }
