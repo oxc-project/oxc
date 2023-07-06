@@ -15,7 +15,8 @@ use oxc_span::SourceType;
 #[napi(object)]
 #[derive(Default)]
 pub struct ParserOptions {
-    pub source_type: Option<String>, // "script" | "module" | "unambiguous";
+    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
     pub source_filename: Option<String>,
 }
 
