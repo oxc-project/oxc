@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_misused_new
+---
+  ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
+   ╭─[no_misused_new.tsx:1:1]
+ 1 │ interface I { new (): I; constructor(): void;}
+   ·               ──────────
+   ╰────
+
+  ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
+   ╭─[no_misused_new.tsx:1:1]
+ 1 │ interface I { new (): I; constructor(): void;}
+   ·                          ────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
+   ╭─[no_misused_new.tsx:1:1]
+ 1 │ interface G { new <T>(): G<T>;}
+   ·               ────────────────
+   ╰────
+
+  ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
+   ╭─[no_misused_new.tsx:1:1]
+ 1 │ type T = { constructor(): void;};
+   ·            ────────────────────
+   ╰────
+
+  ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
+   ╭─[no_misused_new.tsx:1:1]
+ 1 │ class C { new(): C;}
+   ·           ─────────
+   ╰────
+
+  ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
+   ╭─[no_misused_new.tsx:1:1]
+ 1 │ declare abstract class C { new(): C;}
+   ·                            ─────────
+   ╰────
+
+  ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
+   ╭─[no_misused_new.tsx:1:1]
+ 1 │ interface I { constructor(): '';}
+   ·               ──────────────────
+   ╰────
+
+
