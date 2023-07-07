@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Span, GetSpan};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -68,7 +68,9 @@ impl Rule for NoMisusedNew {
                  let TSTypeName::IdentifierName(id) = &type_ref.type_name &&
                  id.name == decl_name {
 
-                     ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(sig.span));
+                     ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(
+                      Span::new(sig.span.start, sig.span.start + 3)
+                    ));
                  }
                
             }
@@ -76,7 +78,7 @@ impl Rule for NoMisusedNew {
           AstKind::TSMethodSignature(method_sig) => {
             if let PropertyKey::Identifier(id) = &method_sig.key {
               if id.name == "constructor" {
-                ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(method_sig.span));
+                ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(method_sig.key.span()));
               }
             }
           }
@@ -93,8 +95,8 @@ impl Rule for NoMisusedNew {
                    let TSType::TSTypeReference(type_ref) = &return_type.type_annotation &&
                    let TSTypeName::IdentifierName(current_id) = &type_ref.type_name &&
                    current_id.name == cls_name {
-                   
-                    ctx.diagnostic(NoMisusedNewClassDiagnostic(method.span));
+
+                    ctx.diagnostic(NoMisusedNewClassDiagnostic(method.key.span()));
                   
                 }
               }
