@@ -105,6 +105,7 @@ pub enum AstKind<'a> {
 
     // JSX
     // Please make sure to add these to `is_jsx` below.
+    JSXElement(&'a JSXElement<'a>),
     JSXOpeningElement(&'a JSXOpeningElement<'a>),
     JSXElementName(&'a JSXElementName<'a>),
 
@@ -220,7 +221,7 @@ impl<'a> AstKind<'a> {
     }
 
     pub fn is_jsx(self) -> bool {
-        matches!(self, Self::JSXOpeningElement(_) | Self::JSXElementName(_))
+        matches!(self, Self::JSXElement(_) | Self::JSXOpeningElement(_) | Self::JSXElementName(_))
     }
 }
 
@@ -327,6 +328,7 @@ impl<'a> GetSpan for AstKind<'a> {
 
             Self::JSXOpeningElement(x) => x.span,
             Self::JSXElementName(x) => x.span(),
+            Self::JSXElement(x) => x.span,
 
             Self::TSModuleBlock(x) => x.span,
 
