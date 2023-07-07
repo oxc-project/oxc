@@ -20,7 +20,7 @@ struct NoMisusedNewInterfaceDiagnostic(#[label] pub Span);
 #[error("typescript-eslint(no-misused-new): Class cannot have method named `new`.")]
 #[diagnostic(
     severity(warning),
-    help("This method name is confusing , consider renaming the method to `constructor`")
+    help("This method name is confusing, consider renaming the method to `constructor`")
 )]
 struct NoMisusedNewClassDiagnostic(#[label] pub Span);
 
