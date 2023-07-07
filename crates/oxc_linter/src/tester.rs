@@ -7,7 +7,7 @@ use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use serde_json::Value;
 
-use crate::{rules::RULES, Linter};
+use crate::{rules::RULES, LintContext, Linter};
 
 pub struct Tester {
     rule_name: &'static str,
@@ -87,8 +87,8 @@ impl Tester {
             .find(|rule| rule.name() == self.rule_name)
             .unwrap_or_else(|| panic!("Rule not found: {}", &self.rule_name));
         let rule = rule.read_json(config);
-        let result =
-            Linter::from_rules(vec![rule]).with_fix(false).run(&Rc::new(semantic_ret.semantic));
+        let lint_context = LintContext::new(&Rc::new(semantic_ret.semantic));
+        let result = Linter::from_rules(vec![rule]).with_fix(false).run(lint_context);
         if result.is_empty() {
             return true;
         }

@@ -15,7 +15,7 @@ use oxc_diagnostics::{
     thiserror::Error,
     Error, GraphicalReportHandler, Severity,
 };
-use oxc_linter::{FixResult, Fixer, Linter, RuleCategory, RuleEnum, RULES};
+use oxc_linter::{FixResult, Fixer, LintContext, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_resolver::{ResolveResult, Resolver};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
@@ -325,7 +325,8 @@ fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) -> Result<()> {
         .filter(|path| !visited.contains(path))
         .try_for_each(|path| run_for_file(&path, runtime_data))?;
 
-    let result = linter.run(&Rc::new(semantic));
+    let lint_ctx = LintContext::new(&Rc::new(semantic));
+    let result = linter.run(lint_ctx);
 
     if result.is_empty() {
         return Ok(());
