@@ -35,14 +35,14 @@ expression: no_misused_new
  1 │ class C { new(): C;}
    ·           ───
    ╰────
-  help: This method name is confusing , consider renaming the method to `constructor`
+  help: This method name is confusing, consider renaming the method to `constructor`
 
   ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
    ╭─[no_misused_new.tsx:1:1]
  1 │ declare abstract class C { new(): C;}
    ·                            ───
    ╰────
-  help: This method name is confusing , consider renaming the method to `constructor`
+  help: This method name is confusing, consider renaming the method to `constructor`
 
   ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:1]
