@@ -11,14 +11,16 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.")]
 #[diagnostic(
-    severity(warning)
+    severity(warning),
+    help("Consider removing this method from your interface.")
 )]
 struct NoMisusedNewInterfaceDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(no-misused-new): Class cannot have method named `new`.")]
 #[diagnostic(
-    severity(warning)
+    severity(warning),
+    help("This method name is confusing , consider renaming the method to `constructor`")
 )]
 struct NoMisusedNewClassDiagnostic(#[label] pub Span);
 

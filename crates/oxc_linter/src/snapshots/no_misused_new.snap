@@ -7,41 +7,48 @@ expression: no_misused_new
  1 │ interface I { new (): I; constructor(): void;}
    ·               ───
    ╰────
+  help: Consider removing this method from your interface.
 
   ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:1]
  1 │ interface I { new (): I; constructor(): void;}
    ·                          ───────────
    ╰────
+  help: Consider removing this method from your interface.
 
   ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:1]
  1 │ interface G { new <T>(): G<T>;}
    ·               ───
    ╰────
+  help: Consider removing this method from your interface.
 
   ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:1]
  1 │ type T = { constructor(): void;};
    ·            ───────────
    ╰────
+  help: Consider removing this method from your interface.
 
   ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
    ╭─[no_misused_new.tsx:1:1]
  1 │ class C { new(): C;}
    ·           ───
    ╰────
+  help: This method name is confusing , consider renaming the method to `constructor`
 
   ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
    ╭─[no_misused_new.tsx:1:1]
  1 │ declare abstract class C { new(): C;}
    ·                            ───
    ╰────
+  help: This method name is confusing , consider renaming the method to `constructor`
 
   ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:1]
  1 │ interface I { constructor(): '';}
    ·               ───────────
    ╰────
+  help: Consider removing this method from your interface.
 
 
