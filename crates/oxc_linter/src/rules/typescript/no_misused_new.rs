@@ -67,7 +67,7 @@ impl Rule for NoMisusedNew {
                  let TSType::TSTypeReference(type_ref) = &return_type.type_annotation &&
                  let TSTypeName::IdentifierName(id) = &type_ref.type_name &&
                  id.name == decl_name {
-                  
+
                      ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(sig.span));
                  }
                
@@ -76,7 +76,7 @@ impl Rule for NoMisusedNew {
           AstKind::TSMethodSignature(method_sig) => {
             if let PropertyKey::Identifier(id) = &method_sig.key {
               if id.name == "constructor" {
-                ctx.diagnostic(NoMisusedNewClassDiagnostic(method_sig.span));
+                ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(method_sig.span));
               }
             }
           }

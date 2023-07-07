@@ -8,7 +8,7 @@ expression: no_misused_new
    ·               ──────────
    ╰────
 
-  ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
+  ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:1]
  1 │ interface I { new (): I; constructor(): void;}
    ·                          ────────────────────
@@ -20,7 +20,7 @@ expression: no_misused_new
    ·               ────────────────
    ╰────
 
-  ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
+  ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:1]
  1 │ type T = { constructor(): void;};
    ·            ────────────────────
@@ -38,7 +38,7 @@ expression: no_misused_new
    ·                            ─────────
    ╰────
 
-  ⚠ typescript-eslint(no-misused-new): Class cannot have method named `new`.
+  ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:1]
  1 │ interface I { constructor(): '';}
    ·               ──────────────────
