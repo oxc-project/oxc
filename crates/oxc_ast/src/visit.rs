@@ -911,10 +911,13 @@ pub trait Visit<'a>: Sized {
     /* ----------  Expression ---------- */
 
     fn visit_jsx_element(&mut self, elem: &'a JSXElement<'a>) {
+        let kind = AstKind::JSXElement(elem);
+        self.enter_node(kind);
         self.visit_jsx_opening_element(&elem.opening_element);
         for child in &elem.children {
             self.visit_jsx_child(child);
         }
+        self.leave_node(kind);
     }
 
     fn visit_jsx_opening_element(&mut self, elem: &'a JSXOpeningElement<'a>) {

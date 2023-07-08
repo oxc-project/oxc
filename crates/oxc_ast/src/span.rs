@@ -366,3 +366,12 @@ impl<'a> GetSpan for JSXAttributeItem<'a> {
         }
     }
 }
+
+impl<'a> GetSpan for JSXExpression<'a> {
+    fn span(&self) -> Span {
+        match &self {
+            JSXExpression::Expression(expr) => expr.span(),
+            JSXExpression::EmptyExpression(exmpty_expr) => exmpty_expr.span,
+        }
+    }
+}

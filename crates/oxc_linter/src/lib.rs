@@ -16,11 +16,10 @@ use std::{fs, io::Write, rc::Rc};
 
 pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
-use oxc_semantic::Semantic;
 use rustc_hash::FxHashMap;
 
-use crate::context::LintContext;
 pub use crate::{
+    context::LintContext,
     rule::RuleCategory,
     rules::{RuleEnum, RULES},
 };
@@ -28,7 +27,6 @@ pub use crate::{
 #[derive(Debug)]
 pub struct Linter {
     rules: Vec<RuleEnum>,
-
     fix: bool,
 }
 
@@ -81,8 +79,9 @@ impl Linter {
         Self::from_rules(rules)
     }
 
-    pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>) -> Vec<Message<'a>> {
-        let mut ctx = LintContext::new(semantic, self.fix);
+    pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
+        let semantic = Rc::clone(ctx.semantic());
+        let mut ctx = ctx.with_fix(self.fix);
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());

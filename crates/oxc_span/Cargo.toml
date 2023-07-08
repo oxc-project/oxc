@@ -1,7 +1,7 @@
 [package]
 name                  = "oxc_span"
-version               = "0.0.0"
-publish               = false
+version               = "0.0.7"
+publish               = true
 authors.workspace     = true
 description.workspace = true
 edition.workspace     = true

@@ -25,19 +25,25 @@ pub struct LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(semantic: &Rc<Semantic<'a>>, fix: bool) -> Self {
+    pub fn new(semantic: &Rc<Semantic<'a>>) -> Self {
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
             semantic: Rc::clone(semantic),
             diagnostics: RefCell::new(vec![]),
             disable_directives,
-            fix,
+            fix: false,
             current_rule_name: "",
         }
     }
 
-    pub fn semantic(&self) -> &Semantic<'a> {
+    #[must_use]
+    pub fn with_fix(mut self, fix: bool) -> Self {
+        self.fix = fix;
+        self
+    }
+
+    pub fn semantic(&self) -> &Rc<Semantic<'a>> {
         &self.semantic
     }
 

@@ -30,8 +30,8 @@
 [npm-url]: https://www.npmjs.com/package/oxlint/v/latest
 [crates-badge]: https://img.shields.io/crates/v/oxc_parser.svg
 [crates-url]: https://crates.io/crates/oxc_parser
-[docs-badge]: https://docs.rs/oxc_parser/badge.svg
-[docs-url]: https://docs.rs/oxc_parser
+[docs-badge]: https://docs.rs/oxc/badge.svg
+[docs-url]: https://docs.rs/oxc
 [code-size-badge]: https://img.shields.io/github/languages/code-size/Boshen/oxc
 [code-size-url]: https://github.com/Boshen/oxc
 [code-coverage-badge]: https://codecov.io/gh/Boshen/oxc/branch/main/graph/badge.svg
@@ -39,16 +39,16 @@
 
 The Oxidation Compiler is creating a suite of high-performance tools for the JavaScript / TypeScript language re-written in Rust:
 
-* [AST](./crates/oxc_ast) - See [docs.rs/oxc_ast][docs-ast]
-* [Parser](./crates/oxc_parser) ([acorn][acorn]) - See [docs.rs/oxc_parser][docs-parser], [@oxidation-compiler/napi][npm-napi]
+* [AST](./crates/oxc_ast) - See [docs.rs][docs-ast]
+* [Parser](./crates/oxc_parser) ([acorn][acorn]) - See [docs.rs][docs-parser], [@oxidation-compiler/napi][npm-napi]
 * [Linter](./crates/oxc_linter) ([ESLint][ESLint]) - Prototype - Try it out! `npx oxlint@latest path`
 * Formatter ([prettier][prettier])
 * Transpiler ([babel][babel])
 * [Minifier](./crates/oxc_minifier) ([terser][terser]) - [Prototype](https://github.com/Boshen/oxc/tree/main/crates/oxc_minifier)
 * Type Checker - See [ezno][ezno], available via `npx oxidation-compiler@latest check path`
 
-[docs-ast]: https://docs.rs/oxc_ast
-[docs-parser]: https://docs.rs/oxc_parser
+[docs-ast]: https://docs.rs/oxc/latest/oxc/ast/index.html
+[docs-parser]: https://docs.rs/oxc/latest/oxc/parser/index.html
 [npm-napi]: https://www.npmjs.com/package/@oxidation-compiler/napi
 [acorn]: https://github.com/acornjs/acorn
 [babel]: https://babel.dev

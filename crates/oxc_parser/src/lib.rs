@@ -7,7 +7,7 @@
 //! * Short strings are inlined by [CompactString](https://github.com/ParkMyCar/compact_str)
 //! * No other heap allocations are done except the above two
 //! * SIMD is used for skipping whitespace and multiline comments
-//! * [oxc_ast::Span] offsets uses `u32` instead of `usize`
+//! * [oxc_span::Span] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are deligated to the [semantic analyzer](https://docs.rs/oxc_semantic)
 //!
@@ -43,7 +43,7 @@
 //!
 //! # Visitor
 //!
-//! See [oxc_ast::visit::Visit] and [oxc_ast::visit_mut::VisitMut]
+//! See [oxc_ast::Visit] and [oxc_ast::VisitMut]
 //!
 //! # Visiting without a visitor
 //!

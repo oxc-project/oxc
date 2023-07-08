@@ -216,8 +216,8 @@ impl<'a> Lexer<'a> {
     }
 
     /// Expand the current token for `JSXIdentifier`
-    pub fn next_jsx_identifier(&mut self, prev_len: u32) -> Token<'a> {
-        let kind = self.read_jsx_identifier(prev_len);
+    pub fn next_jsx_identifier(&mut self, start_offset: u32) -> Token<'a> {
+        let kind = self.read_jsx_identifier(start_offset);
         self.lookahead.clear();
         self.finish_next(kind)
     }
@@ -1128,8 +1128,8 @@ impl<'a> Lexer<'a> {
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    fn read_jsx_identifier(&mut self, prev_len: u32) -> Kind {
-        let prev_str = &self.source[prev_len as usize..self.offset() as usize];
+    fn read_jsx_identifier(&mut self, start_offset: u32) -> Kind {
+        let prev_str = &self.source[start_offset as usize..self.offset() as usize];
 
         let mut builder = AutoCow::new(self);
         loop {
