@@ -1,0 +1,122 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_this_alias
+---
+  × typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:1]
+ 1 │ const self = this;
+   ·       ────
+   ╰────
+  help: Unexpected aliasing of 'this' to local variable.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of members of 'this' to local variables.
+   ╭─[no_this_alias.tsx:1:1]
+ 1 │ const { props, state } = this;
+   ·       ────────────────
+   ╰────
+  help: Unexpected aliasing of members of 'this' to local variables.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of members of 'this' to local variables.
+   ╭─[no_this_alias.tsx:1:1]
+ 1 │ const [ props, state ] = this;
+   ·       ────────────────
+   ╰────
+  help: Unexpected aliasing of members of 'this' to local variables.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:5:1]
+ 5 │ 
+ 6 │ foo = this
+   · ───
+   ╰────
+  help: Unexpected aliasing of 'this' to local variable.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:1]
+ 1 │ let foo; (foo as any) = this
+   ·           ───
+   ╰────
+  help: Unexpected aliasing of 'this' to local variable.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:1]
+ 1 │ function testFunction() {
+ 2 │             let inFunction = this;
+   ·                 ──────────
+ 3 │           }
+   ╰────
+  help: Unexpected aliasing of 'this' to local variable.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:1]
+ 1 │ const testLambda = () => {
+ 2 │             const inLambda = this;
+   ·                   ────────
+ 3 │           };
+   ╰────
+  help: Unexpected aliasing of 'this' to local variable.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:2:1]
+ 2 │             constructor() {
+ 3 │               const inConstructor = this;
+   ·                     ─────────────
+ 4 │               const asThis: this = this;
+   ╰────
+  help: Unexpected aliasing of 'this' to local variable.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:3:1]
+ 3 │               const inConstructor = this;
+ 4 │               const asThis: this = this;
+   ·                     ──────
+ 5 │           
+   ╰────
+  help: Unexpected aliasing of 'this' to local variable.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.
+    ╭─[no_this_alias.tsx:11:1]
+ 11 │             public act(scope: this = this) {
+ 12 │               const inMemberFunction = this;
+    ·                     ────────────────
+ 13 │               const { act1 } = this;
+    ╰────
+  help: Unexpected aliasing of 'this' to local variable.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of members of 'this' to local variables.
+    ╭─[no_this_alias.tsx:12:1]
+ 12 │               const inMemberFunction = this;
+ 13 │               const { act1 } = this;
+    ·                     ────────
+ 14 │               const { act2, constructor } = this;
+    ╰────
+  help: Unexpected aliasing of members of 'this' to local variables.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of members of 'this' to local variables.
+    ╭─[no_this_alias.tsx:13:1]
+ 13 │               const { act1 } = this;
+ 14 │               const { act2, constructor } = this;
+    ·                     ─────────────────────
+ 15 │               const [foo1] = this;
+    ╰────
+  help: Unexpected aliasing of members of 'this' to local variables.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of members of 'this' to local variables.
+    ╭─[no_this_alias.tsx:14:1]
+ 14 │               const { act2, constructor } = this;
+ 15 │               const [foo1] = this;
+    ·                     ──────
+ 16 │               const [foo, bar] = this;
+    ╰────
+  help: Unexpected aliasing of members of 'this' to local variables.
+
+  × typescript-eslint(no-this alias): Unexpected aliasing of members of 'this' to local variables.
+    ╭─[no_this_alias.tsx:15:1]
+ 15 │               const [foo1] = this;
+ 16 │               const [foo, bar] = this;
+    ·                     ──────────
+ 17 │             }
+    ╰────
+  help: Unexpected aliasing of members of 'this' to local variables.
+
+
