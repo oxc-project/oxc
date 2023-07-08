@@ -248,47 +248,32 @@ fn control_patterns(pattern: &Atom) -> Matches<'static, '_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    macro_rules! test_vec {
-        [ $($TestCase:expr),* ] => {
-            vec![ $( ($TestCase, None) ),*]
-        }
-    }
-
-    /// Creates a [`Tester`] from a set of `pass`, `fail` cases, where each case
-    /// is a string.
-    macro_rules! make_test {
-        ([$($Pass:expr),*], [$($Fail:expr),*]) => {
-            {
-                let pass = test_vec![ $($Pass),* ];
-                let fail = test_vec![ $($Fail),* ];
-                crate::tester::Tester::new(NoControlRegex::NAME, pass, fail)
-            }
-        }
-    }
+    use crate::tester::Tester;
 
     #[test]
     fn test_hex_literals() {
-        make_test!(
-            [
+        Tester::new_without_config(
+            NoControlRegex::NAME,
+            vec![
                 "x1f",                 // not a control sequence
                 r"new RegExp('\x20')", // control sequence in valid range
                 r"new RegExp('\xff')",
-                r"let r = /\xff/"
+                r"let r = /\xff/",
             ],
-            [r"new RegExp('\x00')", r"/\x00/", r"new RegExp('\x1f')", r"/\x1f/"]
+            vec![r"new RegExp('\x00')", r"/\x00/", r"new RegExp('\x1f')", r"/\x1f/"],
         )
         .test();
     }
 
     #[test]
     fn test_unicode_literals() {
-        make_test!(
-            [
+        Tester::new_without_config(
+            NoControlRegex::NAME,
+            vec![
                 r"u00",    // not a control sequence
-                r"\u00ff"  // in valid range
+                r"\u00ff", // in valid range
             ],
-            [
+            vec![
                 // regex literal
                 r"let r = /\u0000/",
                 r"let r = /\u000c/",
@@ -303,27 +288,28 @@ mod tests {
                 r"let r = new RegExp('\\u0000');",
                 r"let r = new RegExp('\\u000c');",
                 r"let r = new RegExp('\\u000C');",
-                r"let r = new RegExp('\\u001f');"
-            ]
+                r"let r = new RegExp('\\u001f');",
+            ],
         )
         .test();
     }
 
     #[test]
     fn test_unicode_brackets() {
-        make_test!(
-            [
+        Tester::new_without_config(
+            NoControlRegex::NAME,
+            vec![
                 r"let r = /\u{0}/", // no unicode flag, this is valid
                 r"let r = /\u{ff}/u",
                 r"let r = /\u{00ff}/u",
-                r"let r = new RegExp('\\u{1F}', flags);" // flags are unknown
+                r"let r = new RegExp('\\u{1F}', flags);", // flags are unknown
             ],
-            [
+            vec![
                 r"let r = /\u{0}/u",
                 r"let r = /\u{c}/u",
                 r"let r = /\u{1F}/u",
-                r"let r = new RegExp('\\u{1F}', 'u');" // flags are known & contain u
-            ]
+                r"let r = new RegExp('\\u{1F}', 'u');", // flags are known & contain u
+            ],
         )
         .test();
     }
@@ -332,8 +318,9 @@ mod tests {
     fn test() {
         // test cases taken from eslint. See:
         // https://github.com/eslint/eslint/blob/main/tests/lib/rules/no-control-regex.js
-        make_test!(
-            [
+        Tester::new_without_config(
+            NoControlRegex::NAME,
+            vec![
                 "var regex = /x1f/;",
                 r"var regex = /\\x1f/",
                 "var regex = new RegExp(\"x1f\");",
@@ -347,9 +334,9 @@ mod tests {
                 r"new RegExp('\\u{20}', 'u')",
                 r"new RegExp('\\u{1F}')",
                 r"new RegExp('\\u{1F}', 'g')",
-                r"new RegExp('\\u{1F}', flags)" // unknown flags, we assume no 'u'
+                r"new RegExp('\\u{1F}', flags)", // unknown flags, we assume no 'u'
             ],
-            [
+            vec![
                 r"var regex = /\x1f/",
                 r"var regex = /\\\x1f\\x1e/",
                 r"var regex = /\\\x1fFOO\\x00/",
@@ -364,8 +351,8 @@ mod tests {
                 r"/\u{1F}/u",
                 r"/\u{1F}/ugi",
                 r"new RegExp('\\u{1F}', 'u')",
-                r"new RegExp('\\u{1F}', 'ugi')"
-            ]
+                r"new RegExp('\\u{1F}', 'ugi')",
+            ],
         )
         .test_and_snapshot();
     }

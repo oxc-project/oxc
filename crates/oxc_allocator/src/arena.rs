@@ -42,12 +42,6 @@ impl<'alloc, T: ?Sized> ops::DerefMut for Box<'alloc, T> {
     }
 }
 
-impl<'alloc, T: ?Sized> AsRef<T> for Box<'alloc, T> {
-    fn as_ref(&self) -> &T {
-        self.0
-    }
-}
-
 impl<'alloc, T: ?Sized + Debug> Debug for Box<'alloc, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
