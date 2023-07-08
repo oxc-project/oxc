@@ -1,5 +1,6 @@
 #![allow(clippy::unused_self)]
 
+mod drop;
 mod fold;
 
 use oxc_allocator::{Allocator, Vec};
@@ -24,6 +25,10 @@ pub struct CompressOptions {
     /// Default true
     pub drop_debugger: bool,
 
+    /// Remove `console.*` statements
+    /// Default `false`
+    pub drop_console: bool,
+
     /// Join consecutive var statements
     /// Default true
     pub join_vars: bool,
@@ -39,7 +44,14 @@ pub struct CompressOptions {
 
 impl Default for CompressOptions {
     fn default() -> Self {
-        Self { booleans: true, drop_debugger: true, join_vars: true, loops: true, typeofs: true }
+        Self {
+            booleans: true,
+            drop_debugger: true,
+            drop_console: false,
+            join_vars: true,
+            loops: true,
+            typeofs: true,
+        }
     }
 }
 
@@ -93,12 +105,6 @@ impl<'a> Compressor<'a> {
                 self.compress_block(stmt);
             }
         }
-    }
-
-    /// Drop `drop_debugger` statement.
-    /// Enabled by `compress.drop_debugger`
-    fn drop_debugger<'b>(&mut self, stmt: &'b Statement<'a>) -> bool {
-        matches!(stmt, Statement::DebuggerStatement(_)) && self.options.drop_debugger
     }
 
     /// Join consecutive var statements
@@ -256,7 +262,7 @@ impl<'a> Compressor<'a> {
 
 impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
-        stmts.retain(|stmt| !self.drop_debugger(stmt));
+        stmts.retain(|stmt| !self.should_drop(stmt));
 
         self.join_vars(stmts);
 
