@@ -16,7 +16,7 @@ use oxc_diagnostics::{
     thiserror::Error,
     Error, GraphicalReportHandler, Severity,
 };
-use oxc_linter::{Fixer, Linter, RuleCategory, RuleEnum, RULES};
+use oxc_linter::{calculate::Calculate, Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -221,7 +221,8 @@ impl LintRunner {
             return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));
         };
 
-        let result = linter.run(&Rc::new(semantic_ret.semantic));
+        let result =
+            linter.run(&Rc::new(semantic_ret.semantic), path.related_to(Path::new(".")).unwrap());
 
         if result.is_empty() {
             return None;
