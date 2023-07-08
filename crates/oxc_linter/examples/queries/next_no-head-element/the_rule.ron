@@ -1,0 +1,46 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    import {
+      from_path @filter(op: "=", value: ["$nextslashhead"])
+      default_import {
+        local_name @tag(name: "nextslashhead_defaultimport_name")
+      }
+    }
+    import {
+      from_path @filter(op: "=", value: ["$nextslashscript"])
+      default_import {
+        local_name @tag(name: "nextslashscript_defaultimport_name")
+      }
+    }
+
+    jsx_element {
+      opening_element {
+        name @filter(op: "=", value: ["%nextslashhead_defaultimport_name"])
+      }
+
+      child_element @recurse(depth: 10) {
+        opening_element {
+          name @filter(op: "=", value: ["%nextslashscript_defaultimport_name"])
+        }
+      }
+
+      span_: span {
+        start @output
+        end @output
+      }
+    }
+
+    path_ends_with(regex: ["^pages$", "^_document\\..+"]) {
+      result @filter(op: "=", value: ["$false"])
+    }
+  }
+}"#,
+    args: {
+      "nextslashhead": String("next/head"),
+      "nextslashscript": String("next/script"),
+      "false": Boolean(false),
+    },
+    reason: "`next/script` should not be used in `next/head` component. Move `<Script />` outside of `<Head>` instead."
+)

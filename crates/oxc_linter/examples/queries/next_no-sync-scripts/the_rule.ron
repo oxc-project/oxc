@@ -1,0 +1,35 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    jsx_element {
+      opening_element {
+        name @filter(op: "=", value: ["$script"])
+
+        span_: span {
+          start @output
+          end @output
+        }
+
+        attribute @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+          name @filter(op: "=", value: ["$src"])
+        }
+
+        attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+          name @output @filter(op: "one_of", value: ["$async_or_defer"])
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+      "script": String("script"),
+      "zero": Uint64(0),
+      "src": String("src"),
+      "async_or_defer": List([
+        String("async"),
+        String("defer")
+      ])
+    },
+    reason: "Synchronous scripts should not be used."
+)

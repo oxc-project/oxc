@@ -1,0 +1,36 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    jsx_element {
+      opening_element {
+        name @filter(op: "=", value: ["$link"])
+
+        span_: span {
+          start @output
+          end @output
+        }
+
+        attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+          name @filter(op: "=", value: ["$rel"])
+          value_as_constant_string @filter(op: "=", value: ["$preconnect"])
+        }
+
+        attribute {
+          name @output @filter(op: "=", value: ["$href"])
+          value_as_constant_string @output @filter(op: "has_prefix", value: ["$href_value_start"])
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+      "zero": Uint64(0),
+      "link": String("link"),
+      "href": String("href"),
+      "rel": String("rel"),
+      "preconnect": String("preconnect"),
+      "href_value_start": String("https://fonts.gstatic.com")
+    },
+    reason: "`rel=\"preconnect\"` is missing from Google Font."
+)

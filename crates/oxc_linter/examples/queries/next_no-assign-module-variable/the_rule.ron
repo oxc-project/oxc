@@ -1,0 +1,20 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    variable_declaration {
+      left {
+        assignment_to_variable_name @filter(op: "=", value: ["$module"])
+        span_: span {
+          start @output
+          end @output
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+      "module": String("module"),
+    },
+    reason: "Do not assign to the variable `module`."
+)

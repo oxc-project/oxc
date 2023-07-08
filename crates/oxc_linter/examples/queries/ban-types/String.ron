@@ -1,0 +1,20 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    type_annotation {
+      type {
+        str @filter(op: "=", value: ["$String"])
+        span_: span {
+          start @output
+          end @output
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+      "String": String("String")
+    },
+    reason: "Use string instead"
+)

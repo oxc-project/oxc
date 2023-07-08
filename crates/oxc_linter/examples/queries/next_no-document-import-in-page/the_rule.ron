@@ -1,0 +1,23 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    import {
+      from_path @filter(op: "=", value: ["$nextslashdocument"])
+      span_: entire_span {
+        start @output
+        end @output
+      }
+    }
+
+    path_ends_with(regex: ["^pages$", "^_document\\..+"]) {
+      result @filter(op: "=", value: ["$false"])
+    }
+  }
+}"#,
+    args: {
+      "nextslashdocument": String("next/document"),
+      "false": Boolean(false),
+    },
+    reason: "`<Document />` from `next/document` should not be imported outside of `pages/_document.js`."
+)

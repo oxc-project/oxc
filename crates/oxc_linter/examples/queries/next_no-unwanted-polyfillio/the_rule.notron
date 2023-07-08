@@ -1,0 +1,116 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    import {
+      from_path @filter(op: "=", value: ["$nextslashscript"])
+
+      default_import {
+        local_name @tag(name: "nextslashscript_localname")
+      }
+    }
+
+    jsx_element {
+      opening_element {
+        name @filter(op: "=", value: ["%nextslashscript_localname"])
+
+        attribute {
+          name @filter(op: "=", value: ["$src"])
+
+          value_as_constant_string @filter(op: "regex", value: ["$cdn_url_regex"])
+
+          value_as_url {
+            search_parameter {
+              name @filter(op: "=", value: ["$features"])
+
+              value @transform(value: "split", value: [","])
+                    @tag(name: "split")
+                    @filter(op: "intersection", value: ["$unwanted_polyfills"])
+                    @filter(op: ">", value: ["$zero"])
+                    @transform(op: "join", value: [","])
+                    @output(name: "duplicated_features")
+            }
+          }
+        }
+
+        span_: span {
+          start @output
+          end @output
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+      "nextslashscript": String("next/script"),
+      "src": String("src"),
+      "features": String("features"),
+      // https://cdn.polyfill.io/v2/ || https://polyfill.io/v3/
+      "cdn_url_regex": String("^(?:https:\\/\\/cdn\\.polyfill\\.io\\/v2\\/)|(?:https:\\/\\/polyfill\\.io\\/v3\\/)"),
+      "unwanted_polyfills": List([
+        String("Array.prototype.@@iterator"),
+        String("Array.prototype.copyWithin"),
+        String("Array.prototype.fill"),
+        String("Array.prototype.find"),
+        String("Array.prototype.findIndex"),
+        String("Array.prototype.flatMap"),
+        String("Array.prototype.flat"),
+        String("Array.from"),
+        String("Array.prototype.includes"),
+        String("Array.of"),
+        String("Function.prototype.name"),
+        String("fetch"),
+        String("Map"),
+        String("Number.EPSILON"),
+        String("Number.Epsilon"),
+        String("Number.isFinite"),
+        String("Number.isNaN"),
+        String("Number.isInteger"),
+        String("Number.isSafeInteger"),
+        String("Number.MAX_SAFE_INTEGER"),
+        String("Number.MIN_SAFE_INTEGER"),
+        String("Number.parseFloat"),
+        String("Number.parseInt"),
+        String("Object.assign"),
+        String("Object.entries"),
+        String("Object.fromEntries"),
+        String("Object.getOwnPropertyDescriptor"),
+        String("Object.getOwnPropertyDescriptors"),
+        String("Object.is"),
+        String("Object.keys"),
+        String("Object.values"),
+        String("Reflect"),
+        String("Set"),
+        String("Symbol"),
+        String("Symbol.asyncIterator"),
+        String("String.prototype.codePointAt"),
+        String("String.prototype.endsWith"),
+        String("String.fromCodePoint"),
+        String("String.prototype.includes"),
+        String("String.prototype.@@iterator"),
+        String("String.prototype.padEnd"),
+        String("String.prototype.padStart"),
+        String("String.prototype.repeat"),
+        String("String.raw"),
+        String("String.prototype.startsWith"),
+        String("String.prototype.trimEnd"),
+        String("String.prototype.trimStart"),
+        String("URL"),
+        String("URL.prototype.toJSON"),
+        String("URLSearchParams"),
+        String("WeakMap"),
+        String("WeakSet"),
+        String("Promise"),
+        String("Promise.prototype.finally"),
+        String("es2015"),
+        String("es2016"),
+        String("es2017"),
+        String("es2018"),
+        String("es2019"),
+        String("es5"),
+        String("es6"),
+        String("es7"),
+      ]),
+    },
+    reason: "No duplicate polyfills from Polyfill.io are allowed. {duplicated_features} already shipped with Next.js."
+)

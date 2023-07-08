@@ -1,0 +1,20 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    type_annotation {
+      type {
+        str @filter(op: "=", value: ["$Symbol"])
+        span_: span {
+          start @output
+          end @output
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+      "Symbol": String("Symbol")
+    },
+    reason: "Use symbol instead"
+)

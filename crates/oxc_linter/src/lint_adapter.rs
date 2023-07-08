@@ -1,21 +1,11 @@
 #![allow(clippy::too_many_lines)]
 #![allow(clippy::unimplemented)]
-use std::{collections::BTreeMap, rc::Rc, sync::Arc};
+use std::{collections::BTreeMap, path::PathBuf, rc::Rc, sync::Arc};
 
-use oxc_ast::{
-    ast::{
-        Argument, ArrayPattern, AssignmentExpression, AssignmentPattern, AssignmentTarget,
-        AssignmentTargetPattern, BindingPatternKind, Expression, FormalParameters,
-        ImportDeclarationSpecifier, ImportOrExportKind, JSXClosingElement, JSXElementName,
-        JSXOpeningElement, ModuleDeclaration, ObjectPattern, ObjectPropertyKind, PropertyKey,
-        SimpleAssignmentTarget, StringLiteral, TSLiteral, TSSignature, TSType, TSTypeAnnotation,
-        TSTypeName, TemplateLiteral, VariableDeclarator,
-    },
-    AstKind,
-};
-use oxc_semantic::{AstNode, Semantic};
-use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::operator::BinaryOperator;
+use oxc_ast::{ast::*, AstKind};
+use oxc_semantic::{AstNode, AstNodeId, Semantic};
+use oxc_span::{GetSpan, Span};
+use regex::Regex;
 use serde::Deserialize;
 use trustfall::{
     provider::{
@@ -25,6 +15,7 @@ use trustfall::{
     },
     FieldValue,
 };
+use url::Url;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct InputQuery {
@@ -33,476 +24,69 @@ pub struct InputQuery {
     pub reason: String,
 }
 
+// https://typescript-eslint.io/rules/prefer-function-type
 #[derive(Debug, Clone, TrustfallEnumVertex)]
 pub enum Vertex<'a> {
-    AstNode(AstNode<'a>),
-    Expression(&'a Expression<'a>),
-    Argument(&'a Argument<'a>, i32), // i32 is argument index
+    TypeAnnotation(&'a TSTypeAnnotation<'a>, Option<AstNodeId>),
+    Type(&'a TSType<'a>),
     Span(Span),
-    Parameter(&'a BindingPatternKind<'a>, i32), // i32 is argument index
-    PossiblyNumber(f64),
-    PropertyAccess(Span, &'a str),
-    PropertyKey(&'a PropertyKey<'a>),
-    TSType(&'a TSType<'a>),
-    TSSignature(&'a TSSignature<'a>),
-    TSTypeAnnotation(&'a TSTypeAnnotation<'a>),
-    TSLiteral(&'a TSLiteral<'a>, Span),
-    TSTypeName(&'a TSTypeName<'a>, Span),
-    EffectivelyLiteralString(Span, &'a Atom),
-    ImportSpecifier(&'a ImportDeclarationSpecifier),
-    JsxElementName(&'a JSXElementName<'a>),
+    Class(&'a Class<'a>, Option<AstNodeId>), // ASTNode
+    ClassMethod(Rc<ClassMethod<'a>>),
+    ClassProperty(Rc<ClassProperty<'a>>),
+    Interface(&'a TSInterfaceDeclaration<'a>, Option<AstNodeId>),
+    InterfaceExtends(Rc<InterfaceExtends<'a>>),
     JsxOpeningElement(&'a JSXOpeningElement<'a>),
-    JsxClosingElement(&'a JSXClosingElement<'a>),
-    ObjectProperty(&'a ObjectPropertyKind<'a>),
-    VariableDeclaration(&'a VariableDeclarator<'a>),
-    // operators
-    Operator(&'a BinaryOperator),
-    AssignmentOperator(&'a AssignmentExpression<'a>),
-    // assignment to ...
-    AssignmentToIdentifier(Span, &'a Atom),
-    AssignmentOnObject(&'a SimpleAssignmentTarget<'a>),
-    DestructuringAssignment(DestructuringAssignment<'a>),
+    JsxAttribute(&'a JSXAttribute<'a>),
+    JsxSpreadAttribute(&'a JSXSpreadAttribute<'a>),
+    JsxText(&'a JSXText),
+    JsxFragment(&'a JSXFragment<'a>),
+    JsxExpressionContainer(&'a JSXExpressionContainer<'a>),
+    JsxSpreadChild(&'a JSXSpreadChild<'a>),
+    Import(&'a ImportDeclaration<'a>, Option<AstNodeId>),
+    SpecificImport(&'a ImportSpecifier),
+    DefaultImport(&'a ImportDefaultSpecifier),
+    VariableDeclaration(&'a VariableDeclarator<'a>, Option<AstNodeId>),
+    AssignmentType(&'a BindingPatternKind<'a>),
+    Url(Rc<Url>),
     File,
+    PathCompareResult(bool),
+    SearchParameter(SearchParameter),
+    // ASTNode
+    AstNode(AstNode<'a>),
+    ReturnStatementAst(&'a ReturnStatement<'a>, AstNodeId),
+    // Expression
+    Expression(&'a Expression<'a>),
+    JsxElement(&'a JSXElement<'a>, Option<AstNodeId>),
+    ObjectLiteral(&'a ObjectExpression<'a>),
 }
 
 #[derive(Debug, Clone)]
-pub enum DestructuringAssignment<'a> {
-    AssignmentExpression(&'a AssignmentTargetPattern<'a>),
-    ArrayPattern(&'a ArrayPattern<'a>),
-    ObjectPattern(&'a ObjectPattern<'a>),
-    Defaulted(&'a AssignmentPattern<'a>),
+pub enum InterfaceExtends<'a> {
+    Identifier(&'a IdentifierReference),
+    MemberExpression(&'a MemberExpression<'a>),
 }
 
-impl<'a> GetSpan for DestructuringAssignment<'a> {
-    fn span(&self) -> Span {
-        match self {
-            DestructuringAssignment::AssignmentExpression(expr) => expr.span(),
-            DestructuringAssignment::ArrayPattern(expr) => expr.span,
-            DestructuringAssignment::ObjectPattern(expr) => expr.span,
-            DestructuringAssignment::Defaulted(expr) => expr.span,
-        }
-    }
+#[derive(Debug, Clone)]
+pub struct ClassMethod<'a> {
+    method: &'a MethodDefinition<'a>,
+    is_abstract: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct SearchParameter {
+    key: String,
+    value: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct ClassProperty<'a> {
+    property: &'a PropertyDefinition<'a>,
+    is_abstract: bool,
 }
 
 pub struct LintAdapter<'a> {
     pub semantic: Rc<Semantic<'a>>,
-}
-
-macro_rules! get_ast_or_x {
-    ($v:ident, $alternate_vertex:ident, $typed:ident) => {
-        match $v {
-            Vertex::AstNode(node) => match node.kind() {
-                AstKind::$typed(be) => be,
-                _ => unreachable!(),
-            },
-            Vertex::$alternate_vertex($alternate_vertex::$typed(be)) => &be.0,
-            _ => unreachable!(),
-        }
-    };
-}
-
-macro_rules! coerce_ast_or_x_match {
-    ($v:ident, $alternate_vertex:ident, $typed:ident) => {
-        match $v {
-            Vertex::AstNode(node) => matches!(node.kind(), AstKind::$typed(..)),
-            Vertex::$alternate_vertex(expr) => matches!(expr, $alternate_vertex::$typed(..)),
-            _ => false,
-        }
-    };
-}
-
-macro_rules! coerce_ast_or_x {
-    ($contexts:ident, $alternate_vertex:ident, $typed:ident) => {
-        resolve_coercion_with($contexts, |v| match v {
-            Vertex::AstNode(node) => matches!(node.kind(), AstKind::$typed(..)),
-            Vertex::$alternate_vertex(expr) => matches!(expr, $alternate_vertex::$typed(..)),
-            _ => false,
-        })
-    };
-}
-
-macro_rules! coerce_ast {
-    ($contexts:ident, $typed:ident) => {
-        resolve_coercion_with($contexts, |v| match v {
-            Vertex::AstNode(node) => matches!(node.kind(), AstKind::$typed(..)),
-            _ => false,
-        })
-    };
-}
-
-macro_rules! get_ast_or_x_or_y {
-    ($v:ident, $x:ident, $y:ident, $typed:ident) => {
-        match $v {
-            Vertex::AstNode(node) => match node.kind() {
-                AstKind::$typed(be) => be,
-                _ => unreachable!(),
-            },
-            Vertex::$x($x::$typed(be), ..) => &be.0,
-            Vertex::$y($y::$typed(be), ..) => &be.0,
-            _ => unreachable!(),
-        }
-    };
-}
-
-macro_rules! coerce_ast_or_x_or_y {
-    ($contexts:ident, $alternate_x:ident, $alternate_y:ident, $typed:ident) => {
-        resolve_coercion_with($contexts, |v| match v {
-            Vertex::AstNode(node) => matches!(node.kind(), AstKind::$typed(..)),
-            Vertex::$alternate_x(expr, ..) => matches!(expr, $alternate_x::$typed(..)),
-            Vertex::$alternate_y(expr, ..) => matches!(expr, $alternate_y::$typed(..)),
-            _ => unreachable!(),
-        })
-    };
-}
-
-macro_rules! string_matcher {
-    ($Self:ident, $t:ident, $expr:expr) => {
-        match $expr {
-            $t::StringLiteral(slit) => slit.value.as_str().into(),
-            $t::TemplateLiteral(tlit) => $Self::field_value_from_template_lit(tlit),
-            _ => FieldValue::Null,
-        }
-    };
-}
-
-macro_rules! ast_node_or_expression_field {
-    ($self:ident, $typed:ident, $attr:ident) => {
-        match $self {
-            Vertex::AstNode(node) => match node.kind() {
-                AstKind::$typed(be) => &be.$attr,
-                _ => unreachable!(),
-            },
-            Vertex::Expression(Expression::$typed(be)) => &be.$attr,
-            _ => unreachable!(),
-        }
-    };
-}
-
-macro_rules! once_vertex_iter_if_some {
-    ($maybe_some:expr, $vertex_type:ident) => {
-        if let Some(some) = &$maybe_some {
-            Box::new(std::iter::once(Vertex::$vertex_type(&some.0)))
-        } else {
-            Box::new(std::iter::empty())
-        }
-    };
-}
-
-fn solve_member_expr_for_lowest<'a>(object: &'a Expression<'a>) -> &'a Expression<'a> {
-    let mut obj = object;
-
-    while let Expression::MemberExpression(b) = obj {
-        obj = b.object();
-    }
-
-    obj
-}
-
-fn formal_parameters_to_iter<'a>(
-    params: &'a FormalParameters<'a>,
-) -> VertexIterator<'a, Vertex<'a>> {
-    Box::new(
-        params
-            .items
-            .iter()
-            .enumerate()
-            .map(|(index, item)| Vertex::Parameter(&item.pattern.kind, index.try_into().unwrap())),
-    )
-}
-
-fn field_value_from_template_lit(tlit: &TemplateLiteral) -> FieldValue {
-    if tlit.expressions.len() == 0 && tlit.quasis.len() == 1 {
-        let quasi = &tlit.quasis[0].value;
-        FieldValue::String(quasi.cooked.as_ref().unwrap_or(&quasi.raw).as_str().into())
-    } else {
-        FieldValue::Null
-    }
-}
-
-fn assignment_target_to_vertex<'a>(at: &'a AssignmentTarget<'a>) -> Vertex<'a> {
-    match &at {
-        AssignmentTarget::SimpleAssignmentTarget(simple_assignment_target) => {
-            match simple_assignment_target {
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                    Vertex::AssignmentToIdentifier(ident.span, &ident.name)
-                }
-                _ => Vertex::AssignmentOnObject(simple_assignment_target),
-            }
-        }
-        AssignmentTarget::AssignmentTargetPattern(d) => {
-            Vertex::DestructuringAssignment(DestructuringAssignment::AssignmentExpression(d))
-        }
-    }
-}
-
-fn binding_pattern_kind_to_vertex<'a>(bpk: &'a BindingPatternKind<'a>) -> Vertex<'a> {
-    match bpk {
-        BindingPatternKind::BindingIdentifier(id) => {
-            Vertex::AssignmentToIdentifier(id.span, &id.name)
-        }
-        BindingPatternKind::ArrayPattern(ap) => {
-            Vertex::DestructuringAssignment(DestructuringAssignment::ArrayPattern(ap))
-        }
-        BindingPatternKind::ObjectPattern(op) => {
-            Vertex::DestructuringAssignment(DestructuringAssignment::ObjectPattern(op))
-        }
-        BindingPatternKind::AssignmentPattern(ap) => {
-            Vertex::DestructuringAssignment(DestructuringAssignment::Defaulted(ap))
-        }
-    }
-}
-
-impl<'a> Vertex<'a> {
-    fn ts_type_annotation_coercion(&self) -> bool {
-        match self {
-            Vertex::TSTypeAnnotation(_) => true,
-            Vertex::AstNode(ast) => matches!(ast.kind(), AstKind::TSTypeAnnotation(_)),
-            _ => false,
-        }
-    }
-
-    fn ts_type_annotation_type_annotation<'b>(&self) -> VertexIterator<'b, Vertex<'a>>
-    where
-        'a: 'b,
-    {
-        Box::new(std::iter::once(Vertex::TSType(match self {
-            Vertex::TSTypeAnnotation(tsta) => &tsta.type_annotation,
-            Vertex::AstNode(ast) => match ast.kind() {
-                AstKind::TSTypeAnnotation(tsta) => &tsta.type_annotation,
-                _ => unreachable!(),
-            },
-            _ => unreachable!(),
-        })))
-    }
-
-    fn function_coercion(&self) -> bool {
-        match self {
-            Vertex::Expression(expr) => {
-                matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowExpression(_))
-            }
-            Vertex::AstNode(ast) => {
-                matches!(ast.kind(), AstKind::ArrowExpression(_) | AstKind::Function(_))
-            }
-            _ => false,
-        }
-    }
-
-    fn function_is_async(&self) -> FieldValue {
-        match self {
-            Vertex::Expression(expr) => match expr {
-                Expression::FunctionExpression(fe) => fe.r#async,
-                Expression::ArrowExpression(ae) => ae.r#async,
-                _ => unreachable!(),
-            },
-            Vertex::AstNode(ast) => match ast.kind() {
-                AstKind::ArrowExpression(ae) => ae.r#async,
-                AstKind::Function(fun) => fun.r#async,
-                _ => unreachable!(),
-            },
-            _ => unreachable!(),
-        }
-        .into()
-    }
-
-    fn function_signature_arguments<'b>(&self) -> VertexIterator<'b, Vertex<'a>>
-    where
-        'a: 'b,
-    {
-        formal_parameters_to_iter(
-            match self {
-                Vertex::Expression(expr) => match expr {
-                    Expression::FunctionExpression(fe) => &fe.0.params,
-                    Expression::ArrowExpression(ae) => &ae.0.params,
-                    _ => unreachable!(),
-                },
-                Vertex::AstNode(ast) => match ast.kind() {
-                    AstKind::Function(fun) => &fun.params,
-                    AstKind::ArrowExpression(ae) => &ae.params,
-                    AstKind::TSMethodSignature(tsms) => &tsms.params,
-                    _ => unreachable!(),
-                },
-                Vertex::TSSignature(TSSignature::TSMethodSignature(method_signature)) => {
-                    &method_signature.0.params
-                }
-                _ => unreachable!(),
-            }
-            .0, // unbox
-        )
-    }
-
-    fn function_signature_return_type<'b>(&self) -> VertexIterator<'b, Vertex<'a>>
-    where
-        'a: 'b,
-    {
-        let return_type = &match self {
-            Vertex::Expression(expr) => match expr {
-                Expression::FunctionExpression(fe) => &fe.0.return_type,
-                Expression::ArrowExpression(ae) => &ae.0.return_type,
-                _ => unreachable!(),
-            },
-            Vertex::AstNode(ast) => match ast.kind() {
-                AstKind::Function(fun) => &fun.return_type,
-                AstKind::ArrowExpression(ae) => &ae.return_type,
-                AstKind::TSMethodSignature(tsms) => &tsms.return_type,
-                _ => unreachable!(),
-            },
-            Vertex::TSSignature(TSSignature::TSMethodSignature(tsms)) => &tsms.0.return_type,
-            _ => unreachable!(),
-        };
-
-        once_vertex_iter_if_some!(return_type, TSTypeAnnotation)
-    }
-
-    fn binary_expression_left(&self) -> &'a Expression<'a> {
-        ast_node_or_expression_field!(self, BinaryExpression, left)
-    }
-
-    fn binary_expression_right(&self) -> &'a Expression<'a> {
-        ast_node_or_expression_field!(self, BinaryExpression, right)
-    }
-
-    fn regexp_resolve_coercion(&self) -> bool {
-        match &self {
-            Vertex::AstNode(node) if matches!(node.kind(), AstKind::RegExpLiteral(_)) => true,
-            Vertex::AstNode(node)
-                if matches!(node.kind(), AstKind::NewExpression(newexpr)
-                if matches!(&newexpr.callee, Expression::Identifier(identifier)
-                    if identifier.name.as_str() == "RegExp") &&
-                   matches!(newexpr.arguments.first(), Some(arg)
-                    if matches!(arg, Argument::Expression(expr) // there must be a constant string for the first argument
-                      if matches!(expr, Expression::StringLiteral(_)) || // if a string literal that's fine
-                         matches!(expr, Expression::TemplateLiteral(tlit)
-                          if !matches!( // it has to be a constant templated string
-                              field_value_from_template_lit(tlit),
-                              FieldValue::Null)
-                          )))) =>
-            {
-                true
-            }
-            Vertex::Expression(expr) if matches!(expr, Expression::RegExpLiteral(_)) => true,
-            Vertex::TSLiteral(expr, ..) if matches!(expr, TSLiteral::RegExpLiteral(_)) => true,
-            _ => false,
-        }
-    }
-
-    fn regexp_pattern(&self) -> FieldValue {
-        match self {
-            Vertex::AstNode(node) => match node.kind() {
-                AstKind::RegExpLiteral(re) => re.regex.pattern.to_string().into(),
-                AstKind::NewExpression(newexpr) => {
-                    let Some(arg) = newexpr.arguments.first() else {unreachable!("Got None from the first argument of a NewExpr that should be coercible to a string according to Regexp coercion rules")};
-                    let Argument::Expression(expr) = arg else {unreachable!("Got a spread element from the first argument of a NewExpr that should be coercible to a ArgumentExpression according to Regexp coercion rules")};
-                    let value = Self::expression_to_constant_string_or_null(expr);
-                    debug_assert!(
-                        !matches!(value, FieldValue::Null),
-                        "String must always be constant or effectively constant according to coercion rules"
-                    );
-                    value
-                }
-                _ => unreachable!(),
-            },
-            Vertex::Expression(Expression::RegExpLiteral(re)) => {
-                re.regex.pattern.to_string().into()
-            }
-            Vertex::TSLiteral(TSLiteral::RegExpLiteral(rlit, ..), ..) => {
-                rlit.regex.pattern.to_string().into()
-            }
-            _ => unreachable!(),
-        }
-    }
-
-    fn identifier_reference_resolve_coercion(&self) -> bool {
-        match &self {
-            Vertex::AstNode(ast_node)
-                if matches!(ast_node.kind(), AstKind::IdentifierReference(_)) =>
-            {
-                true
-            }
-            Vertex::Expression(Expression::Identifier(_)) => true,
-            _ => false,
-        }
-    }
-
-    fn identifier_reference_name(&self) -> &'a str {
-        match self {
-            Vertex::AstNode(ast_node) => match ast_node.kind() {
-                AstKind::IdentifierReference(ir) => &ir.name,
-                _ => unreachable!(),
-            },
-            Vertex::Expression(Expression::Identifier(id)) => &id.0.name,
-            _ => unreachable!(),
-        }
-    }
-
-    fn string_resolve_coercion(&self) -> bool {
-        match &self {
-            Vertex::AstNode(node) => {
-                matches!(node.kind(), AstKind::StringLiteral(_) | AstKind::TemplateLiteral(_))
-            }
-            Vertex::Expression(expr) => {
-                matches!(expr, Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
-            }
-            Vertex::TSLiteral(tslit, _) => {
-                matches!(tslit, TSLiteral::StringLiteral(_) | TSLiteral::TemplateLiteral(_))
-            }
-            _ => false,
-        }
-    }
-
-    fn expression_to_constant_string_or_null(expr: &Expression<'a>) -> FieldValue {
-        string_matcher!(self, Expression, expr)
-    }
-
-    fn string_constant_value(&self) -> FieldValue {
-        match &self {
-            Vertex::AstNode(node) => string_matcher!(self, AstKind, node.kind()),
-            Vertex::Expression(expr) => Self::expression_to_constant_string_or_null(expr),
-            Vertex::TSLiteral(tslit, _) => string_matcher!(self, TSLiteral, tslit),
-            Vertex::EffectivelyLiteralString(_, atom) => atom.as_str().to_string().into(),
-            _ => unreachable!(),
-        }
-    }
-
-    fn get_span_from_ast_node<'b>(&self) -> VertexIterator<'b, Vertex<'a>>
-    where
-        'a: 'b,
-    {
-        Box::new(std::iter::once(Vertex::Span(match self {
-            Vertex::AstNode(ast) => ast.kind().span(),
-            Vertex::Expression(expr) => expr.span(),
-            Vertex::Argument(arg, _) => arg.span(),
-            Vertex::AssignmentToIdentifier(span, _)
-            | Vertex::TSLiteral(_, span)
-            | Vertex::TSTypeName(_, span)
-            | Vertex::EffectivelyLiteralString(span, _)
-            | Vertex::PropertyAccess(span, _) => *span,
-            Vertex::File | Vertex::Span(_) | Vertex::Operator(_) | Vertex::PossiblyNumber(_) => {
-                unreachable!(
-                    "tried to get span out of Vertex::Span | Vertex::Operator | Vertex::PossiblyNumber | Vertex::File"
-                )
-            }
-            Vertex::AssignmentOnObject(assignment) => match &assignment {
-                SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => {
-                    unreachable!("handled by AssignmentToIdentifier vertex")
-                }
-                SimpleAssignmentTarget::MemberAssignmentTarget(member) => member.0.span(),
-                _ => assignment.span(),
-            },
-            Vertex::Parameter(param, _) => param.span(),
-            Vertex::AssignmentOperator(aso) => aso.span,
-            Vertex::PropertyKey(pk) => pk.span(),
-            Vertex::TSType(tt) => tt.span(),
-            Vertex::TSSignature(tss) => tss.span(),
-            Vertex::TSTypeAnnotation(tst) => tst.span,
-            Vertex::ImportSpecifier(sl) => sl.span(),
-            Vertex::JsxElementName(sl) => sl.span(),
-            Vertex::JsxOpeningElement(joe) => joe.span,
-            Vertex::JsxClosingElement(joe) => joe.span,
-            Vertex::DestructuringAssignment(da) => da.span(),
-            Vertex::ObjectProperty(op) => op.span(),
-            Vertex::VariableDeclaration(vd) => vd.span,
-        })))
-    }
+    pub path: PathBuf,
 }
 
 impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
@@ -527,140 +111,146 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
         property_name: &Arc<str>,
         _resolve_info: &ResolveInfo,
     ) -> ContextOutcomeIterator<'b, Self::Vertex, FieldValue> {
-        let res = match (type_name.as_ref(), property_name.as_ref()) {
-            ("Identifier", "name") => resolve_property_with(contexts, |v| {
-                let Expression::Identifier(ident) = v.as_expression().unwrap() else { unreachable!("expected identifier") };
-                ident.name.to_string().into()
-            }),
-            ("AssignmentToIdentifier", "name") => resolve_property_with(contexts, |v| {
-                v.as_assignment_to_identifier().unwrap().1.to_string().into()
-            }),
-            ("Function", "is_async") => resolve_property_with(contexts, Vertex::function_is_async),
+        match (type_name.as_ref(), property_name.as_ref()) {
             ("Span", "start") => {
                 resolve_property_with(contexts, |v| v.as_span().unwrap().start.into())
             }
             ("Span", "end") => resolve_property_with(contexts, |v| v.as_span().unwrap().end.into()),
-            ("Operator", "is_equality") => {
-                resolve_property_with(contexts, |v| v.as_operator().unwrap().is_equality().into())
-            }
-            ("Operator", "is_bitwise") => {
-                resolve_property_with(contexts, |v| v.as_operator().unwrap().is_bitwise().into())
-            }
-            ("AssignmentOperator", "str") => resolve_property_with(contexts, |v| {
-                v.as_assignment_operator().unwrap().operator.as_str().into()
+            ("Type", "str") => resolve_property_with(contexts, |v| {
+                let span = v.as_type().unwrap().span();
+                self.semantic.source_text()[span.start as usize..span.end as usize].into()
             }),
-            ("AssignmentOperator", "is_bitwise") => resolve_property_with(contexts, |v| {
-                v.as_assignment_operator().unwrap().operator.is_bitwise().into()
+            ("JSXOpeningElement", "name") => resolve_property_with(contexts, |v| {
+                let jsx = v.as_jsx_opening_element().unwrap();
+                jsx.name.to_string_jsx().into()
             }),
-            ("Operator", "str") => {
-                resolve_property_with(contexts, |v| v.as_operator().unwrap().as_str().into())
-            }
-            ("ExpressionArgument", "index") => {
-                resolve_property_with(contexts, |v| (*v.as_argument().unwrap().1).into())
-            }
-            ("Parameter", "index") => {
-                resolve_property_with(contexts, |v| (*v.as_parameter().unwrap().1).into())
-            }
-            ("IdentifierParameter", "name") => resolve_property_with(contexts, |v| {
-                let BindingPatternKind::BindingIdentifier(ident) = v.as_parameter().unwrap().0 else { unreachable!() };
-                ident.name.to_string().into()
+            ("JSXOpeningElement", "attribute_count") => resolve_property_with(contexts, |v| {
+                let jsx = v.as_jsx_opening_element().unwrap();
+                (jsx.attributes.len() as u64).into()
             }),
-            ("PossiblyNumber", "value") => resolve_property_with(contexts, |v| {
-                let num = v.as_possibly_number().unwrap();
-                if num.is_finite() { FieldValue::Float64(*num) } else { FieldValue::Null }
+            ("JSXAttribute", "name") => resolve_property_with(contexts, |v| {
+                let attr = v.as_jsx_attribute().unwrap();
+                attr.name.to_string_jsx().into()
             }),
-            ("IdentifierPropertyKey", "identifier") => resolve_property_with(contexts, |v| {
-                let PropertyKey::Identifier(ident) = v.as_property_key().unwrap() else { unreachable!() };
-
-                ident.name.to_string().into()
+            ("JSXAttribute", "value_as_constant_string") => resolve_property_with(contexts, |v| {
+                let attr = v.as_jsx_attribute().unwrap();
+                jsx_attribute_to_constant_string(attr)
+                    .map_or_else(|| FieldValue::Null, std::convert::Into::into)
             }),
-            ("PropertyAccess", "name") => resolve_property_with(contexts, |v| {
-                (*v.as_property_access().unwrap().1).to_string().into()
+            ("ImportAST" | "Import", "from_path") => resolve_property_with(contexts, |v| {
+                let Vertex::Import(import, ..) = &v else {unreachable!()};
+                import.source.value.to_string().into()
             }),
-            ("StringASTNode" | "StringExpression" | "ConstantString", "constant_value") => {
-                resolve_property_with(contexts, Vertex::string_constant_value)
-            }
-            ("IdentifierReference", "name") => {
-                resolve_property_with(contexts, |v| Vertex::identifier_reference_name(v).into())
-            }
-            ("RegExp" | "RegExpLiteral", "pattern") => {
-                resolve_property_with(contexts, crate::lint_adapter::Vertex::regexp_pattern)
-            }
-            ("TSInterfaceDeclaration", "name") => resolve_property_with(contexts, |v| {
-                let AstKind::TSInterfaceDeclaration(tsid) = v.as_ast_node().unwrap().kind() else {unreachable!()};
-                tsid.id.name.to_string().into()
+            ("SpecificImport", "original_name") => resolve_property_with(contexts, |v| {
+                v.as_specific_import().unwrap().imported.name().to_string().into()
             }),
-            ("ImportDeclaration", "is_value_import") => resolve_property_with(contexts, |v| {
-                let AstKind::ModuleDeclaration(md) = v.as_ast_node().unwrap().kind() else { unreachable!("expected module declaration") };
-                let ModuleDeclaration::ImportDeclaration(id) = md else { unreachable!("expected import declaration") };
-                matches!(id.import_kind, ImportOrExportKind::Value).into()
+            ("SpecificImport", "local_name") => resolve_property_with(contexts, |v| {
+                v.as_specific_import().unwrap().local.name.to_string().into()
             }),
-            ("ImportDeclaration", "is_type_import") => resolve_property_with(contexts, |v| {
-                let AstKind::ModuleDeclaration(md) = v.as_ast_node().unwrap().kind() else { unreachable!("expected module declaration") };
-                let ModuleDeclaration::ImportDeclaration(id) = md else { unreachable!("expected import declaration") };
-                matches!(id.import_kind, ImportOrExportKind::Type).into()
+            ("DefaultImport", "local_name") => resolve_property_with(contexts, |v| {
+                v.as_default_import().unwrap().local.name.to_string().into()
             }),
-            ("TSPropertySignature", "is_optional") => resolve_property_with(contexts, |v| {
-                let property_signature = get_ast_or_x!(v, TSSignature, TSPropertySignature);
-                property_signature.optional.into()
+            ("JSXText", "text") => resolve_property_with(contexts, |v| {
+                v.as_jsx_text().unwrap().value.to_string().into()
             }),
-            ("TSIdentifierReference", "name") => resolve_property_with(contexts, |v| {
-                let tstn = match *v {
-                    Vertex::TSTypeName(tstn, ..) => tstn,
-                    Vertex::AstNode(_) | Vertex::TSType(_) => {
-                        &get_ast_or_x!(v, TSType, TSTypeReference).type_name
-                    }
-                    _ => unreachable!(),
-                };
-                let TSTypeName::IdentifierName(ident) = tstn else { unreachable!() };
-                ident.0.name.to_string().into()
-            }),
-            ("FunctionSignature" | "Function" | "TSMethodSignature", "name") => {
-                resolve_property_with(contexts, |v| match v {
-                    Vertex::Expression(expr) => match expr {
-                        Expression::FunctionExpression(fe) => {
-                            fe.0.id
-                                .as_ref()
-                                .map_or_else(|| FieldValue::Null, |id| id.name.to_string().into())
-                        }
-                        Expression::ArrowExpression(_) => FieldValue::Null,
-                        _ => unreachable!(),
-                    },
-                    Vertex::AstNode(ast) => match ast.kind() {
-                        AstKind::Function(fun) => fun
-                            .id
-                            .as_ref()
-                            .map_or_else(|| FieldValue::Null, |id| id.name.to_string().into()),
-                        AstKind::ArrowExpression(_) => self
-                            .semantic
-                            .nodes()
-                            .parent_node(ast.id())
-                            .map_or(FieldValue::Null, |parent| match parent.kind() {
-                                AstKind::BindingIdentifier(ident) => ident.name.to_string().into(),
-                                AstKind::IdentifierReference(ident) => {
-                                    ident.name.to_string().into()
-                                }
-                                _ => FieldValue::Null,
-                            }),
-                        AstKind::TSMethodSignature(tsms) => tsms
-                            .key
-                            .static_name()
-                            .map_or_else(|| FieldValue::Null, |id| id.to_string().into()),
-                        _ => unreachable!(),
-                    },
-                    Vertex::TSSignature(TSSignature::TSMethodSignature(method_signature)) => {
-                        method_signature
-                            .key
-                            .static_name()
-                            .map_or_else(|| FieldValue::Null, |id| id.to_string().into())
-                    }
-                    _ => unreachable!(),
+            ("JSXElementAST" | "JSXElement", "child_count") => {
+                resolve_property_with(contexts, |v| {
+                    let Vertex::JsxElement(el, ..) = &v else {unreachable!()};
+                    (el.children.len() as u64).into()
                 })
             }
-            _ => unimplemented!("unexpected property: {type_name} {property_name}"),
-        };
+            ("ClassAST" | "Class", "is_abstract") => resolve_property_with(contexts, |v| {
+                v.as_class()
+                    .unwrap()
+                    .0
+                    .modifiers
+                    .contains(oxc_ast::ast::ModifierKind::Abstract)
+                    .into()
+            }),
+            ("ClassAST" | "Class", "extended_class_name") => resolve_property_with(contexts, |v| {
+                let Some(Expression::Identifier(ref ident)) = v.as_class().unwrap().0.super_class else {return FieldValue::Null};
+                ident.name.to_string().into()
+            }),
+            ("ClassMethod", "is_abstract") => {
+                resolve_property_with(contexts, |v| v.as_class_method().unwrap().is_abstract.into())
+            }
+            ("ClassProperty", "is_abstract") => resolve_property_with(contexts, |v| {
+                v.as_class_property().unwrap().is_abstract.into()
+            }),
+            ("ClassMethod", "accessibility") => resolve_property_with(contexts, |v| {
+                v.as_class_method().unwrap().method.accessibility.map_or(
+                    FieldValue::Null,
+                    |access| {
+                        match access {
+                            oxc_ast::ast::TSAccessibility::Private => "private",
+                            oxc_ast::ast::TSAccessibility::Protected => "protected",
+                            oxc_ast::ast::TSAccessibility::Public => "public",
+                        }
+                        .into()
+                    },
+                )
+            }),
+            ("ClassProperty", "accessibility") => resolve_property_with(contexts, |v| {
+                v.as_class_property().unwrap().property.accessibility.map_or(
+                    FieldValue::Null,
+                    |access| {
+                        match access {
+                            oxc_ast::ast::TSAccessibility::Private => "private",
+                            oxc_ast::ast::TSAccessibility::Protected => "protected",
+                            oxc_ast::ast::TSAccessibility::Public => "public",
+                        }
+                        .into()
+                    },
+                )
+            }),
+            ("InterfaceExtend" | "SimpleExtend" | "MemberExtend", "str") => {
+                resolve_property_with(contexts, |v| {
+                    match v.as_interface_extends().unwrap().as_ref() {
+                        InterfaceExtends::Identifier(ident) => ident.name.to_string(),
+                        InterfaceExtends::MemberExpression(first_membexpr) => {
+                            let MemberExpression::StaticMemberExpression(static_membexpr) = first_membexpr else {unreachable!("TS:2499")};
+                            let mut parts = vec![static_membexpr.property.name.to_string()];
+                            let mut membexpr = first_membexpr.object();
+                            while let Expression::MemberExpression(expr) = membexpr {
+                                let MemberExpression::StaticMemberExpression(static_membexpr) = &expr.0 else {unreachable!("TS:2499")};
+                                parts.push(static_membexpr.property.name.to_string());
+                                membexpr = expr.object();
+                            }
 
-        res
+                            let Expression::Identifier(ident) = membexpr else {unreachable!("TS:2499")};
+                            parts.push(ident.name.to_string());
+
+                            parts.reverse();
+
+                            parts.join(".")
+                        }
+                    }
+                    .into()
+                })
+            }
+            ("AssignmentType", "assignment_to_variable_name") => {
+                resolve_property_with(contexts, |v| {
+                    let Vertex::AssignmentType(BindingPatternKind::BindingIdentifier(ident)) = v else {return FieldValue::Null};
+                    ident.name.to_string().into()
+                })
+            }
+            // expression case
+            (_, "as_constant_string") => resolve_property_with(contexts, |v| match v {
+                Vertex::Expression(expr) => expr_to_maybe_const_string(expr)
+                    .map_or_else(|| FieldValue::Null, std::convert::Into::into),
+                _ => FieldValue::Null,
+            }),
+            ("PathCompareResult", "result") => {
+                resolve_property_with(contexts, |v| (*v.as_path_compare_result().unwrap()).into())
+            }
+            ("SearchParameter", "key") => resolve_property_with(contexts, |v| {
+                v.as_search_parameter().unwrap().key.clone().into()
+            }),
+            ("SearchParameter", "value") => resolve_property_with(contexts, |v| {
+                v.as_search_parameter().unwrap().value.clone().into()
+            }),
+            _ => unimplemented!("unexpected property of: {type_name}.{property_name}"),
+        }
     }
 
     fn resolve_neighbors(
@@ -668,307 +258,527 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
         contexts: ContextIterator<'b, Self::Vertex>,
         type_name: &Arc<str>,
         edge_name: &Arc<str>,
-        _parameters: &EdgeParameters,
+        parameters: &EdgeParameters,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'b, Self::Vertex, VertexIterator<'b, Self::Vertex>> {
-        let res = match (type_name.as_ref(), edge_name.as_ref()) {
+        match (type_name.as_ref(), edge_name.as_ref()) {
             ("File", "ast_node") => resolve_neighbors_with(contexts, |_| {
-                Box::new(self.semantic.nodes().iter().map(|x| Vertex::AstNode(*x)))
+                Box::new(self.semantic.nodes().iter().map(|node| materialize_ast_node(*node)))
             }),
-            ("AssignmentOnObject", "final_assignment") => resolve_neighbors_with(contexts, |v| {
-                let first = v.as_assignment_on_object().unwrap();
-                let object = match &first {
-                    SimpleAssignmentTarget::AssignmentTargetIdentifier(_) => {
-                        unreachable!(
-                            "This should be handled by AssignmentToIdentifier vertex, and not here"
-                        )
-                    }
-                    SimpleAssignmentTarget::MemberAssignmentTarget(target) => target.0.object(),
-                    _ => first.get_expression().unwrap(),
-                };
-
-                Box::new(std::iter::once(Vertex::Expression(solve_member_expr_for_lowest(object))))
+            ("File", "type_annotation") => resolve_neighbors_with(contexts, |_| {
+                Box::new(self.semantic.nodes().iter().filter_map(|x| {
+                    let AstKind::TSTypeAnnotation(annot) = x.kind() else {return None};
+                    Some(materialize_ast_node(*x))
+                }))
             }),
-            ("FieldAccessOnObject", "final_assignment") => resolve_neighbors_with(contexts, |v| {
-                Box::new(std::iter::once(Vertex::Expression(solve_member_expr_for_lowest(
-                    get_ast_or_x!(v, Expression, MemberExpression).object(),
-                ))))
+            ("File", "class") => resolve_neighbors_with(contexts, |_| {
+                Box::new(self.semantic.nodes().iter().filter_map(|x| {
+                    let AstKind::Class(class) = x.kind() else {return None};
+                    Some(materialize_ast_node(*x))
+                }))
             }),
-            ("FieldAccessOnObject", "property_name") => resolve_neighbors_with(contexts, |v| {
-                let (a, b) =
-                    get_ast_or_x!(v, Expression, MemberExpression).static_property_info().unwrap();
-                Box::new(std::iter::once(Vertex::PropertyAccess(a, b)))
+            ("File", "interface") => resolve_neighbors_with(contexts, |_| {
+                Box::new(self.semantic.nodes().iter().filter_map(|x| {
+                    let AstKind::TSInterfaceDeclaration(class) = x.kind() else {return None};
+                    Some(materialize_ast_node(*x))
+                }))
             }),
-            ("CallExpression", "arguments") => resolve_neighbors_with(contexts, |v| {
-                Box::new(
-                    get_ast_or_x!(v, Expression, CallExpression)
-                        .arguments
-                        .iter()
-                        .enumerate()
-                        .map(|(ix, arg)| Vertex::Argument(arg, ix.try_into().unwrap())),
-                )
+            ("File", "jsx_element") => resolve_neighbors_with(contexts, |_| {
+                Box::new(self.semantic.nodes().iter().filter_map(|x| {
+                    let AstKind::JSXElement(element) = x.kind() else {return None};
+                    Some(materialize_ast_node(*x))
+                }))
             }),
-            ("NewExpression", "callee") => resolve_neighbors_with(contexts, |v| {
-                let v = v.as_ast_node().unwrap();
-                let AstKind::NewExpression(expr) = v.kind() else { unreachable!() };
-
-                Box::new(std::iter::once(Vertex::Expression(&expr.callee)))
+            ("File", "variable_declaration") => resolve_neighbors_with(contexts, |_| {
+                Box::new(self.semantic.nodes().iter().filter_map(|x| {
+                    let AstKind::VariableDeclarator(element) = x.kind() else {return None};
+                    Some(materialize_ast_node(*x))
+                }))
             }),
-            ("ClassPropertyDefinition", "key") => resolve_neighbors_with(contexts, |v| {
-                let v = v.as_ast_node().unwrap();
-                let AstKind::PropertyDefinition(expr) = v.kind() else { unreachable!() };
-
-                Box::new(std::iter::once(Vertex::PropertyKey(&expr.key)))
+            ("File", "import") => resolve_neighbors_with(contexts, |_| {
+                Box::new(self.semantic.nodes().iter().filter_map(|x| {
+                    let AstKind::ModuleDeclaration(element) = x.kind() else {return None};
+                    let ModuleDeclaration::ImportDeclaration(import) = element else {return None};
+                    Some(materialize_ast_node(*x))
+                }))
             }),
-            ("TSTypeAnnotation", "ts_type") => {
-                resolve_neighbors_with(contexts, Vertex::ts_type_annotation_type_annotation)
-            }
-            ("TSPropertySignature", "type_annotation") => resolve_neighbors_with(contexts, |v| {
-                let v = v.as_ast_node().unwrap();
-                let AstKind::TSPropertySignature(expr) = v.kind() else { unreachable!() };
-
-                once_vertex_iter_if_some!(expr.type_annotation, TSTypeAnnotation)
-            }),
-            ("NewExpression", "arguments") => resolve_neighbors_with(contexts, |v| {
-                let v = v.as_ast_node().unwrap();
-                let AstKind::NewExpression(expr) = v.kind() else { unreachable!() };
-
-                Box::new(
-                    expr.arguments
-                        .iter()
-                        .enumerate()
-                        .map(|(ix, arg)| Vertex::Argument(arg, ix.try_into().unwrap())),
-                )
-            }),
-            ("IfStatementOrTernary" | "IfStatement" | "ConditionalExpression", "test") => {
-                resolve_neighbors_with(contexts, |v| match v {
-                    Vertex::AstNode(node) => match node.kind() {
-                        AstKind::IfStatement(expr) => {
-                            Box::new(std::iter::once(Vertex::Expression(&expr.test)))
-                        }
-                        AstKind::ConditionalExpression(condexpr) => {
-                            Box::new(std::iter::once(Vertex::Expression(&condexpr.test)))
-                        }
-                        _ => unreachable!(),
-                    },
-                    Vertex::Expression(expr) => {
-                        let Expression::ConditionalExpression(condexpr) = expr else { unreachable!() };
-                        Box::new(std::iter::once(Vertex::Expression(&condexpr.test)))
-                    }
-                    _ => unreachable!(),
+            ("File", "path_part") => {
+                let params = parameters.clone();
+                let path = self.path.clone();
+                resolve_neighbors_with(contexts, move |v| {
+                    let matcher =
+                        Regex::new(params["regex"].as_str().expect(
+                            "for File.path_includes to have a regex parameter of type string",
+                        ))
+                        .expect("for File.path_includes to have a valid regex passed to it");
+                    Box::new(std::iter::once(Vertex::PathCompareResult(
+                        path.components()
+                            .skip_while(|comp| !matches!(comp, std::path::Component::Normal(_)))
+                            .any(|x| match x {
+                                std::path::Component::ParentDir
+                                | std::path::Component::CurDir
+                                | std::path::Component::RootDir
+                                | std::path::Component::Prefix(_) => unreachable!(),
+                                std::path::Component::Normal(file_or_directory) => {
+                                    file_or_directory
+                                        .to_str()
+                                        .map_or_else(|| false, |str| matcher.is_match(str))
+                                }
+                            }),
+                    )))
                 })
             }
-            ("FieldAccessOnObject", "called_on") => resolve_neighbors_with(contexts, |v| {
-                Box::new(std::iter::once(Vertex::Expression(
-                    get_ast_or_x!(v, Expression, MemberExpression).object(),
-                )))
-            }),
-            ("ObjectExpression", "properties") => resolve_neighbors_with(contexts, |v| {
-                Box::new(
-                    get_ast_or_x!(v, Expression, ObjectExpression)
-                        .properties
-                        .iter()
-                        .map(Vertex::ObjectProperty),
-                )
-            }),
-            ("CallExpression", "callee") => resolve_neighbors_with(contexts, |v| {
-                Box::new(std::iter::once(Vertex::Expression(
-                    &get_ast_or_x!(v, Expression, CallExpression).callee,
-                )))
-            }),
-            (
-                "ExpressionArgument"
-                | "Expression"
-                | "BinaryExpression"
-                | "FieldAccessOnObject"
-                | "CallExpression"
-                | "AwaitExpression",
-                "inner_expr",
-            ) => resolve_neighbors_with(contexts, |v| {
-                Box::new(std::iter::once(Vertex::Expression(match v {
-                    Vertex::AstNode(astnode) => match astnode.kind() {
-                        AstKind::AssignmentExpression(ase) => ase.right.get_inner_expression(),
-                        AstKind::CallExpression(cexpr) => cexpr.callee.get_inner_expression(),
-                        AstKind::ParenthesizedExpression(pexpr) => {
-                            pexpr.expression.get_inner_expression()
-                        }
-                        AstKind::UnaryExpression(uexpr) => uexpr.argument.get_inner_expression(),
-                        AstKind::AwaitExpression(aexpr) => aexpr.argument.get_inner_expression(),
-                        _ => unreachable!(),
-                    },
-                    Vertex::Expression(expr) => expr.get_inner_expression(),
-                    Vertex::Argument(arg, _) => {
-                        let Argument::Expression(expr_arg) = arg else { unreachable!("expected expression argument") };
-                        expr_arg.get_inner_expression()
-                    }
-                    _ => unreachable!(),
-                })))
-            }),
-            ("AssignmentExpression", "left") => resolve_neighbors_with(contexts, |v| {
-                let assignment_expression = get_ast_or_x!(v, Expression, AssignmentExpression);
-
-                Box::new(std::iter::once(assignment_target_to_vertex(&assignment_expression.left)))
-            }),
-            ("AssignmentExpression", "right") => resolve_neighbors_with(contexts, |v| {
-                Box::new(std::iter::once(Vertex::Expression(ast_node_or_expression_field!(
-                    v,
-                    AssignmentExpression,
-                    right
-                ))))
-            }),
-            ("AssignmentExpression", "operator") => resolve_neighbors_with(contexts, |v| {
-                Box::new(std::iter::once(Vertex::AssignmentOperator(get_ast_or_x!(
-                    v,
-                    Expression,
-                    AssignmentExpression
-                ))))
-            }),
-            ("VariableDeclarations", "declarations") => resolve_neighbors_with(contexts, |v| {
-                let AstKind::VariableDeclaration(decl) = v.as_ast_node().unwrap().kind() else { unreachable!() };
-                Box::new(decl.declarations.iter().map(Vertex::VariableDeclaration))
-            }),
-            ("VariableDeclaration", "left_type") => resolve_neighbors_with(contexts, |v| {
-                let decl = v.as_variable_declaration().unwrap();
-                once_vertex_iter_if_some!(decl.id.type_annotation, TSTypeAnnotation)
-            }),
-            ("VariableDeclaration", "left") => resolve_neighbors_with(contexts, |v| {
-                let decl = v.as_variable_declaration().unwrap();
-                Box::new(std::iter::once(match &decl.id.kind {
-                    BindingPatternKind::BindingIdentifier(id) => {
-                        Vertex::AssignmentToIdentifier(id.span, &id.name)
-                    }
-                    BindingPatternKind::ArrayPattern(ap) => {
-                        Vertex::DestructuringAssignment(DestructuringAssignment::ArrayPattern(ap))
-                    }
-                    BindingPatternKind::ObjectPattern(op) => {
-                        Vertex::DestructuringAssignment(DestructuringAssignment::ObjectPattern(op))
-                    }
-                    BindingPatternKind::AssignmentPattern(ap) => {
-                        Vertex::DestructuringAssignment(DestructuringAssignment::Defaulted(ap))
+            ("File", "path_starts_with") => {
+                let params = parameters.clone();
+                let path = self.path.clone();
+                resolve_neighbors_with(contexts, move |v| {
+                    Box::new(std::iter::once(Vertex::PathCompareResult(
+                        path.components().skip_while(|comp| !matches!(comp, std::path::Component::Normal(_)))
+                            .zip(
+                                params["regex"]
+                                    .as_slice()
+                                    .expect("to have slice of values")
+                                    .iter()
+                                    .map(|x| x.as_str().unwrap()),
+                            )
+                            .all(|x| match x.0 {
+                                std::path::Component::ParentDir | std::path::Component::CurDir | std::path::Component::RootDir | std::path::Component::Prefix(_) => unreachable!(),
+                                std::path::Component::Normal(file_or_directory) => {
+                                    file_or_directory.to_str().map_or_else(
+                                        || false,
+                                        |str| {
+                                            Regex::new(x.1).expect(&format!(
+                                                "The following is invalid regex put into File.path_starts_with: {}",
+                                                x.1
+                                            )).is_match(str)
+                                        },
+                                    )
+                                },
+                            }),
+                    )))
+                })
+            }
+            ("File", "path_ends_with") => {
+                let params = parameters.clone();
+                let path = self.path.clone();
+                resolve_neighbors_with(contexts, move |v| {
+                    Box::new(std::iter::once(Vertex::PathCompareResult(
+                        path.components().filter(|comp| !matches!(comp, std::path::Component::Normal(_)))
+                            .rev()
+                            .zip(
+                                params["regex"]
+                                    .as_slice()
+                                    .expect("to have slice of values")
+                                    .iter()
+                                    .rev()
+                                    .map(|x| x.as_str().unwrap()),
+                            )
+                            .all(|x| match x.0 {
+                                std::path::Component::ParentDir | std::path::Component::CurDir | std::path::Component::RootDir | std::path::Component::Prefix(_) => unreachable!(),
+                                std::path::Component::Normal(file_or_directory) => {
+                                    file_or_directory.to_str().map_or_else(
+                                        || false,
+                                        |str| {
+                                            Regex::new(x.1).expect(&format!(
+                                                "The following is invalid regex put into File.path_ends_with: {}",
+                                                x.1
+                                            )).is_match(str)
+                                        },
+                                    )
+                                }
+                            }),
+                    )))
+                })
+            }
+            ("TypeAnnotationAST" | "TypeAnnotation", "type") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::TypeAnnotation(ta, ..) = &v else {unreachable!()};
+                    Box::new(std::iter::once(Vertex::Type(&ta.type_annotation)))
+                })
+            }
+            ("ClassAST" | "Class", "method") => resolve_neighbors_with(contexts, |v| {
+                Box::new(v.as_class().unwrap().0.body.body.iter().filter_map(|class_el| {
+                    if let ClassElement::MethodDefinition(method) = class_el && matches!(method.kind, MethodDefinitionKind::Method) {
+                        Some(Vertex::ClassMethod(Rc::new(ClassMethod{ method, is_abstract: false })))
+                    } else if let ClassElement::TSAbstractMethodDefinition(def) = class_el && matches!(def.method_definition.kind, MethodDefinitionKind::Method) {
+                        Some(Vertex::ClassMethod(Rc::new(ClassMethod{ method: &def.method_definition, is_abstract: true })))
+                    } else {
+                        None
                     }
                 }))
             }),
-            (_, "span") => resolve_neighbors_with(contexts, Vertex::get_span_from_ast_node),
-            ("BinaryExpression", "left") => resolve_neighbors_with(contexts, |v| {
-                Box::new(std::iter::once(Vertex::Expression(v.binary_expression_left())))
-            }),
-            ("BinaryExpression", "right") => resolve_neighbors_with(contexts, |v| {
-                Box::new(std::iter::once(v.binary_expression_right()).map(Vertex::Expression))
-            }),
-            ("BinaryExpression", "both_sides") => resolve_neighbors_with(contexts, |v| {
-                Box::new(
-                    vec![v.binary_expression_left(), v.binary_expression_right()]
-                        .into_iter()
-                        .map(Vertex::Expression),
-                )
-            }),
-            ("BinaryExpression", "operator") => resolve_neighbors_with(contexts, |v| {
-                Box::new(std::iter::once(Vertex::Operator(ast_node_or_expression_field!(
-                    v,
-                    BinaryExpression,
-                    operator
-                ))))
-            }),
-            ("FunctionSignature" | "Function" | "TSMethodSignature", "parameters") => {
-                resolve_neighbors_with(contexts, Vertex::function_signature_arguments)
-            }
-            ("FunctionSignature" | "Function" | "TSMethodSignature", "return_type") => {
-                resolve_neighbors_with(contexts, Vertex::function_signature_return_type)
-            }
-            ("TSMethodSignature", "key") => resolve_neighbors_with(contexts, |v| {
-                let method_signature = get_ast_or_x!(v, TSSignature, TSMethodSignature);
-                Box::new(std::iter::once(Vertex::PropertyKey(&method_signature.key)))
-            }),
-            ("TSLiteralType", "expr") => resolve_neighbors_with(contexts, |v| {
-                let literal_type = get_ast_or_x!(v, TSType, TSLiteralType);
-                Box::new(std::iter::once(Vertex::TSLiteral(
-                    &literal_type.literal,
-                    literal_type.span,
-                )))
-            }),
-            ("TSUnionType", "subtypes") => resolve_neighbors_with(contexts, |v| {
-                let union_type = get_ast_or_x!(v, TSType, TSUnionType);
-                Box::new(union_type.types.iter().map(Vertex::TSType))
-            }),
-            ("NumberLiteral", "value") => resolve_neighbors_with(contexts, |v| {
-                let i = get_ast_or_x_or_y!(v, Expression, TSLiteral, NumberLiteral);
-                Box::new(std::iter::once(Vertex::PossiblyNumber(i.value)))
-            }),
-            ("TSInterfaceDeclaration", "body") => resolve_neighbors_with(contexts, |v| {
-                let AstKind::TSInterfaceDeclaration(tsid) = v.as_ast_node().unwrap().kind() else {unreachable!()};
-                Box::new(tsid.body.body.iter().map(Vertex::TSSignature))
-            }),
-            ("JSXOpeningElement", "name") => resolve_neighbors_with(contexts, |v| {
-                let AstKind::JSXOpeningElement(joe) = v.as_ast_node().unwrap().kind() else {unreachable!()};
-                Box::new(std::iter::once(Vertex::JsxElementName(&joe.name)))
-            }),
-            ("JSXSimpleName", "name") => resolve_neighbors_with(contexts, |v| {
-                let JSXElementName::Identifier(ident) = v.as_jsx_element_name().unwrap() else {unreachable!()};
-                Box::new(std::iter::once(Vertex::EffectivelyLiteralString(ident.span, &ident.name)))
-            }),
-            ("JSXElement", "opening_element") => resolve_neighbors_with(contexts, |v| {
-                let Expression::JSXElement(el) = v.as_expression().unwrap() else {unreachable!()};
-                Box::new(std::iter::once(Vertex::JsxOpeningElement(el.opening_element.0)))
-            }),
-            ("JSXElement", "closing_element") => resolve_neighbors_with(contexts, |v| {
-                let Expression::JSXElement(el) = v.as_expression().unwrap() else {unreachable!()};
-                once_vertex_iter_if_some!(el.closing_element, JsxClosingElement)
-            }),
-            ("TSTypeReference", "name") => resolve_neighbors_with(contexts, |v| {
-                let tstr = get_ast_or_x!(v, TSType, TSTypeReference);
-                Box::new(std::iter::once(Vertex::TSTypeName(&tstr.type_name, tstr.span)))
-            }),
-            ("AwaitExpression", "expression") => resolve_neighbors_with(contexts, |v| {
-                let await_expr = get_ast_or_x!(v, Expression, AwaitExpression);
-                Box::new(std::iter::once(Vertex::Expression(&await_expr.argument)))
-            }),
-            ("ImportDeclaration", "source") => resolve_neighbors_with(contexts, |v| {
-                let AstKind::ModuleDeclaration(md) = v.as_ast_node().unwrap().kind() else { unreachable!("expected module declaration") };
-                let ModuleDeclaration::ImportDeclaration(id) = md else { unreachable!("expected import declaration") };
-                let StringLiteral { span, value } = &id.source;
-                Box::new(std::iter::once(Vertex::EffectivelyLiteralString(*span, value)))
-            }),
-            ("ImportDeclaration", "specifiers") => resolve_neighbors_with(contexts, |v| {
-                let AstKind::ModuleDeclaration(md) = v.as_ast_node().unwrap().kind() else { unreachable!("expected module declaration") };
-                let ModuleDeclaration::ImportDeclaration(id) = md else { unreachable!("expected import declaration") };
-                Box::new(id.specifiers.iter().map(Vertex::ImportSpecifier))
-            }),
-            ("ObjectDestructingAssignment" | "ArrayDestructuringAssignment", "rest") => {
-                resolve_neighbors_with(contexts, |v| {
-                    let rest = match v.as_destructuring_assignment().unwrap() {
-                        DestructuringAssignment::AssignmentExpression(ae) => {
-                            let temp = match ae {
-                                AssignmentTargetPattern::ArrayAssignmentTarget(aat) => &aat.rest,
-                                AssignmentTargetPattern::ObjectAssignmentTarget(oat) => &oat.rest,
-                            };
-
-                            temp.as_ref().map(|assignment_target| {
-                                assignment_target_to_vertex(assignment_target)
-                            })
-                        }
-                        DestructuringAssignment::ArrayPattern(ap) => ap
-                            .rest
-                            .as_ref()
-                            .map(|rest| binding_pattern_kind_to_vertex(&rest.0.argument.kind)),
-                        DestructuringAssignment::ObjectPattern(op) => op
-                            .rest
-                            .as_ref()
-                            .map(|rest| binding_pattern_kind_to_vertex(&rest.0.argument.kind)),
-                        DestructuringAssignment::Defaulted(_) => None,
-                    };
-
-                    #[allow(clippy::option_if_let_else)]
-                    if let Some(rest) = rest {
-                        Box::new(std::iter::once(rest))
+            ("ClassAST" | "Class", "getter") => resolve_neighbors_with(contexts, |v| {
+                Box::new(v.as_class().unwrap().0.body.body.iter().filter_map(|class_el| {
+                    if let ClassElement::MethodDefinition(method) = class_el && matches!(method.kind, MethodDefinitionKind::Get) {
+                        Some(Vertex::ClassMethod(Rc::new(ClassMethod{ method, is_abstract: false })))
+                    } else if let ClassElement::TSAbstractMethodDefinition(def) = class_el && matches!(def.method_definition.kind, MethodDefinitionKind::Get) {
+                        Some(Vertex::ClassMethod(Rc::new(ClassMethod{ method: &def.method_definition, is_abstract: true })))
                     } else {
-                        Box::new(std::iter::empty())
+                        None
                     }
+                }))
+            }),
+            ("ClassAST" | "Class", "setter") => resolve_neighbors_with(contexts, |v| {
+                Box::new(v.as_class().unwrap().0.body.body.iter().filter_map(|class_el| {
+                    if let ClassElement::MethodDefinition(method) = class_el && matches!(method.kind, MethodDefinitionKind::Set) {
+                        Some(Vertex::ClassMethod(Rc::new(ClassMethod{ method, is_abstract: false })))
+                    } else if let ClassElement::TSAbstractMethodDefinition(def) = class_el && matches!(def.method_definition.kind, MethodDefinitionKind::Set) {
+                        Some(Vertex::ClassMethod(Rc::new(ClassMethod{ method: &def.method_definition, is_abstract: true })))
+                    } else {
+                        None
+                    }
+                }))
+            }),
+            ("ClassAST" | "Class", "constructor") => resolve_neighbors_with(contexts, |v| {
+                Box::new(v.as_class().unwrap().0.body.body.iter().filter_map(|class_el| {
+                    if let ClassElement::MethodDefinition(method) = class_el && matches!(method.kind, MethodDefinitionKind::Constructor) {
+                        Some(Vertex::ClassMethod(Rc::new(ClassMethod{ method, is_abstract: false })))
+                    } else if let ClassElement::TSAbstractMethodDefinition(def) = class_el && matches!(def.method_definition.kind, MethodDefinitionKind::Constructor) {
+                        Some(Vertex::ClassMethod(Rc::new(ClassMethod{ method: &def.method_definition, is_abstract: true })))
+                    } else {
+                        None
+                    }
+                }))
+            }),
+            ("ClassAST" | "Class", "property") => resolve_neighbors_with(contexts, |v| {
+                Box::new(v.as_class().unwrap().0.body.body.iter().filter_map(|class_el| {
+                    if let ClassElement::PropertyDefinition(property) = class_el {
+                        Some(Vertex::ClassProperty(Rc::new(ClassProperty {
+                            property,
+                            is_abstract: false,
+                        })))
+                    } else if let ClassElement::TSAbstractPropertyDefinition(def) = class_el {
+                        Some(Vertex::ClassProperty(Rc::new(ClassProperty {
+                            property: &def.property_definition,
+                            is_abstract: true,
+                        })))
+                    } else {
+                        None
+                    }
+                }))
+            }),
+            ("VariableDeclarationAST" | "VariableDeclaration", "entire_span") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::VariableDeclaration(vdecl, ..) = &v else {unreachable!()};
+                    Box::new(std::iter::once(Vertex::Span(vdecl.span)))
                 })
             }
-            _ => unimplemented!("unexpected neighbor: {type_name} {edge_name}"),
-        };
+            ("ImportAST" | "Import", "entire_span") => resolve_neighbors_with(contexts, |v| {
+                let Vertex::Import(import, ..) = &v else {unreachable!()};
+                Box::new(std::iter::once(Vertex::Span(import.span)))
+            }),
+            ("ImportAST" | "Import", "specific_import") => resolve_neighbors_with(contexts, |v| {
+                let Vertex::Import(import, ..) = &v else {unreachable!()};
+                Box::new(import.specifiers.iter().filter_map(|the_specifier| {
+                    if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = the_specifier {
+                        Some(Vertex::SpecificImport(specifier))
+                    } else {
+                        None
+                    }
+                }))
+            }),
+            ("ImportAST" | "Import", "default_import") => resolve_neighbors_with(contexts, |v| {
+                let Vertex::Import(import, ..) = &v else {unreachable!()};
+                Box::new(import.specifiers.iter().filter_map(|the_specifier| {
+                    if let ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) =
+                        the_specifier
+                    {
+                        Some(Vertex::DefaultImport(specifier))
+                    } else {
+                        None
+                    }
+                }))
+            }),
+            ("InterfaceAST" | "Interface", "name_span") => resolve_neighbors_with(contexts, |v| {
+                let Vertex::Interface(iface, ..) = &v else {unreachable!()};
+                Box::new(std::iter::once(Vertex::Span(iface.id.span)))
+            }),
+            ("InterfaceAST" | "Interface", "entire_span") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::Interface(iface, ..) = &v else {unreachable!()};
+                    Box::new(std::iter::once(Vertex::Span(iface.span)))
+                })
+            }
+            ("InterfaceAST" | "Interface", "extend") => resolve_neighbors_with(contexts, |v| {
+                let Vertex::Interface(iface, ..) = &v else {unreachable!()};
+                if let Some(extends) = &iface.extends {
+                    Box::new(extends.iter().map(|extend| match &extend.expression {
+                        Expression::Identifier(ident) => {
+                            Vertex::InterfaceExtends(Rc::new(InterfaceExtends::Identifier(ident)))
+                        }
+                        Expression::MemberExpression(membexpr) => {
+                            Vertex::InterfaceExtends(Rc::new(InterfaceExtends::MemberExpression(membexpr)))
+                        }
+                        _ => unreachable!("Only ever possible to have an interface extend an identifier or memberexpr. see TS:2499"),
+                    }))
+                } else {
+                    Box::new(std::iter::empty())
+                }
+            }),
+            ("ClassAST" | "Class", "name_span") => resolve_neighbors_with(contexts, |v| {
+                if let Some(id) = &v.as_class().unwrap().0.id {
+                    Box::new(std::iter::once(Vertex::Span(id.span)))
+                } else {
+                    Box::new(std::iter::empty())
+                }
+            }),
+            ("ClassAST" | "Class", "entire_class_span") => resolve_neighbors_with(contexts, |v| {
+                Box::new(std::iter::once(Vertex::Span(v.as_class().unwrap().0.span)))
+            }),
+            ("JSXOpeningElement", "attribute") => resolve_neighbors_with(contexts, |v| {
+                Box::new(
+                    v.as_jsx_opening_element()
+                        .expect("to have a jsx opening element")
+                        .attributes
+                        .iter()
+                        .filter_map(|attr| match attr {
+                            JSXAttributeItem::Attribute(attr) => Some(Vertex::JsxAttribute(attr)),
+                            JSXAttributeItem::SpreadAttribute(_) => None,
+                        }),
+                )
+            }),
+            ("JSXElementAST" | "JSXElement", "opening_element") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::JsxElement(el, ..) = &v else {unreachable!()};
 
-        res
+                    Box::new(std::iter::once(Vertex::JsxOpeningElement(&el.opening_element)))
+                })
+            }
+            ("JSXElementAST" | "JSXElement", "child_element") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::JsxElement(el, ..) = &v else {unreachable!()};
+                    Box::new(el.children.iter().filter_map(|child| {
+                        let JSXChild::Element(element) = &child else {return None};
+                        Some(Vertex::JsxElement(element, None))
+                    }))
+                })
+            }
+            ("JSXElementAST" | "JSXElement", "child_text") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::JsxElement(el, ..) = &v else {unreachable!()};
+                    Box::new(el.children.iter().filter_map(|child| {
+                        let JSXChild::Text(t) = &child else {return None};
+                        Some(Vertex::JsxText(t))
+                    }))
+                })
+            }
+            ("JSXElementAST" | "JSXElement", "child_fragment") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::JsxElement(el, ..) = &v else {unreachable!()};
+                    Box::new(el.children.iter().filter_map(|child| {
+                        let JSXChild::Fragment(f) = &child else {return None};
+                        Some(Vertex::JsxFragment(f))
+                    }))
+                })
+            }
+            ("JSXElementAST" | "JSXElement", "child_expression_container") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::JsxElement(el, ..) = &v else {unreachable!()};
+                    Box::new(el.children.iter().filter_map(|child| {
+                        let JSXChild::ExpressionContainer(expr_cont) = &child else {return None};
+                        Some(Vertex::JsxExpressionContainer(expr_cont))
+                    }))
+                })
+            }
+            ("JSXElementAST" | "JSXElement", "child_spread") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::JsxElement(el, ..) = &v else {unreachable!()};
+                    Box::new(el.children.iter().filter_map(|child| {
+                        let JSXChild::Spread(s) = &child else {return None};
+                        Some(Vertex::JsxSpreadChild(s))
+                    }))
+                })
+            }
+            ("JSXOpeningElement", "spread_attribute") => resolve_neighbors_with(contexts, |v| {
+                Box::new(
+                    v.as_jsx_opening_element()
+                        .expect("to have a jsx opening element")
+                        .attributes
+                        .iter()
+                        .filter_map(|attr| match attr {
+                            JSXAttributeItem::Attribute(_) => None,
+                            JSXAttributeItem::SpreadAttribute(spread_attr) => {
+                                Some(Vertex::JsxSpreadAttribute(spread_attr))
+                            }
+                        }),
+                )
+            }),
+            ("JSXAttribute", "value_as_expression") => resolve_neighbors_with(contexts, |v| {
+                let attr = v.as_jsx_attribute().unwrap();
+                let Some(attr_value) = &attr.value else {return Box::new(std::iter::empty())};
+                Box::new(
+                    std::iter::once(match attr_value {
+                        JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
+                            oxc_ast::ast::JSXExpression::Expression(expr) => {
+                                Some(Vertex::Expression(expr))
+                            }
+                            oxc_ast::ast::JSXExpression::EmptyExpression(_) => None,
+                        },
+                        JSXAttributeValue::Fragment(_)
+                        | JSXAttributeValue::StringLiteral(_)
+                        | JSXAttributeValue::Element(_) => None,
+                    })
+                    .flatten(),
+                )
+            }),
+            ("JSXAttribute", "value_as_url") => resolve_neighbors_with(contexts, |v| {
+                let attr = v.as_jsx_attribute().unwrap();
+                let Some(maybe_url) = jsx_attribute_to_constant_string(attr) else {return Box::new(std::iter::empty())};
+                let Ok(parsed_url) = Url::parse(&maybe_url) else {return Box::new(std::iter::empty())};
+                return Box::new(std::iter::once(Vertex::Url(Rc::new(parsed_url))));
+            }),
+            ("VariableDeclarationAST" | "VariableDeclaration", "left") => {
+                resolve_neighbors_with(contexts, |v| {
+                    let Vertex::VariableDeclaration(var, ..) = &v else {unreachable!()};
+                    return Box::new(std::iter::once(Vertex::AssignmentType(&var.id.kind)));
+                })
+            }
+            ("URL", "search_parameter") => resolve_neighbors_with(contexts, |v| {
+                Box::new(
+                    v.as_url()
+                        .unwrap()
+                        .query_pairs()
+                        .map(|(key, value)| {
+                            Vertex::SearchParameter(SearchParameter {
+                                key: key.to_string(),
+                                value: value.to_string(),
+                            })
+                        })
+                        .collect::<Vec<_>>()
+                        .into_iter(),
+                )
+            }),
+            ("ObjectLiteral", "value") => {
+                let key_wanted = Rc::new(
+                    parameters
+                        .get("key")
+                        .expect("key to always be non-null")
+                        .as_str()
+                        .expect("key to be a string")
+                        .to_string(),
+                );
+                resolve_neighbors_with(contexts, move |v| {
+                    let key_wanted = Rc::clone(&key_wanted);
+                    let obj = v.as_object_literal().expect("to have an objectliteral");
+
+                    Box::new(obj.properties.iter().filter(move |property| {
+                        let ObjectPropertyKind::ObjectProperty(prop) = property else {return false};
+                        match &prop.key {
+                            oxc_ast::ast::PropertyKey::Identifier(ident) => {
+                                ident.name.as_str() == key_wanted.as_ref()
+                            }
+                            oxc_ast::ast::PropertyKey::PrivateIdentifier(priv_ident) => unimplemented!("getting a private property on an object is unimplemented as of yet"),
+                            oxc_ast::ast::PropertyKey::Expression(expr) => expr_to_maybe_const_string(expr).map_or_else(|| false, |key| key.as_str() == key_wanted.as_ref())
+                        }
+                    }).map(|x| {
+                        let ObjectPropertyKind::ObjectProperty(prop) = &x else {unreachable!()};
+                        materialize_expression(&prop.value)
+                    }))
+                })
+            }
+            (
+                "ASTNode"
+                | "JSXElementAST"
+                | "InterfaceAST"
+                | "ImportAST"
+                | "ClassAST"
+                | "ReturnStatementAST"
+                | "TypeAnnotationAST"
+                | "VariableDeclarationAST",
+                "ancestor",
+            ) => resolve_neighbors_with(contexts, |v| {
+                let id = match v {
+                    Vertex::AstNode(node) => node.id(),
+                    Vertex::JsxElement(_, Some(id))
+                    | Vertex::Interface(_, Some(id))
+                    | Vertex::Import(_, Some(id))
+                    | Vertex::Class(_, Some(id))
+                    | Vertex::TypeAnnotation(_, Some(id))
+                    | Vertex::VariableDeclaration(_, Some(id))
+                    | Vertex::ReturnStatementAst(_, id) => *id,
+                    _ => unreachable!(),
+                };
+                Box::new(
+                    Box::new(self.semantic.nodes().ancestors(id))
+                        .map(|ancestor| self.semantic.nodes().get_node(ancestor))
+                        .map(|ancestor| materialize_ast_node(*ancestor)),
+                )
+            }),
+            (
+                "ASTNode"
+                | "JSXElementAST"
+                | "InterfaceAST"
+                | "ImportAST"
+                | "ClassAST"
+                | "ReturnStatementAST"
+                | "TypeAnnotationAST"
+                | "VariableDeclarationAST",
+                "parent",
+            ) => resolve_neighbors_with(contexts, |v| {
+                let id = match v {
+                    Vertex::AstNode(node) => node.id(),
+                    Vertex::JsxElement(_, Some(id))
+                    | Vertex::Interface(_, Some(id))
+                    | Vertex::Import(_, Some(id))
+                    | Vertex::Class(_, Some(id))
+                    | Vertex::TypeAnnotation(_, Some(id))
+                    | Vertex::VariableDeclaration(_, Some(id))
+                    | Vertex::ReturnStatementAst(_, id) => *id,
+                    _ => unreachable!(),
+                };
+                if let Some(parent) = self.semantic.nodes().parent_node(id) {
+                    Box::new(std::iter::once(materialize_ast_node(*parent)))
+                } else {
+                    Box::new(std::iter::empty())
+                }
+            }),
+            ("ReturnStatementAST", "expression") => resolve_neighbors_with(contexts, |v| {
+                if let Some(expr) = &v.as_return_statement_ast().unwrap().0.argument {
+                    Box::new(std::iter::once(materialize_expression(expr)))
+                } else {
+                    Box::new(std::iter::empty())
+                }
+            }),
+            (_, "span") => resolve_neighbors_with(contexts, |v| {
+                Box::new(std::iter::once(Vertex::Span(match v {
+                    Vertex::TypeAnnotation(ta, ..) => ta.span,
+                    Vertex::Type(typed) => typed.span(),
+                    Vertex::Url(_)
+                    | Vertex::SearchParameter(..)
+                    | Vertex::PathCompareResult(_)
+                    | Vertex::Class(..)
+                    | Vertex::Span(_)
+                    | Vertex::File => unreachable!(),
+                    Vertex::ClassMethod(it) => it.method.span,
+                    Vertex::ClassProperty(it) => it.property.span,
+                    Vertex::Interface(it, ..) => it.span,
+                    Vertex::InterfaceExtends(iextends) => match iextends.as_ref() {
+                        InterfaceExtends::Identifier(ident) => ident.span,
+                        InterfaceExtends::MemberExpression(membexpr) => membexpr.span(),
+                    },
+                    Vertex::JsxOpeningElement(el) => el.span,
+                    Vertex::JsxAttribute(attr) => attr.span,
+                    Vertex::JsxSpreadAttribute(spr_attr) => spr_attr.span,
+                    Vertex::Expression(expr) => expr.span(),
+                    Vertex::Import(import, ..) => import.span,
+                    Vertex::SpecificImport(import) => import.span,
+                    Vertex::DefaultImport(import) => import.span,
+                    Vertex::AstNode(node) => node.kind().span(),
+                    Vertex::JsxElement(expr, ..) => expr.span,
+                    Vertex::ObjectLiteral(objlit) => objlit.span,
+                    Vertex::ReturnStatementAst(node, ..) => node.span,
+                    Vertex::JsxText(t) => t.span,
+                    Vertex::JsxFragment(f) => f.span,
+                    Vertex::JsxExpressionContainer(c) => c.span,
+                    Vertex::JsxSpreadChild(sc) => sc.span,
+                    Vertex::VariableDeclaration(vd, ..) => vd.span,
+                    Vertex::AssignmentType(assmt, ..) => assmt.span(),
+                })))
+            }),
+            _ => {
+                unimplemented!("unexpected neighbor of: {type_name}.{edge_name}")
+            }
+        }
     }
 
     fn resolve_coercion(
@@ -979,143 +789,146 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
         _resolve_info: &ResolveInfo,
     ) -> ContextOutcomeIterator<'b, Self::Vertex, bool> {
         match coerce_to_type.as_ref() {
-            "NewExpression" => coerce_ast!(contexts, NewExpression),
-            "ExpressionArgument" => resolve_coercion_with(
+            "SimpleExtend" => resolve_coercion_with(
                 contexts,
-                |v| matches!(v, Vertex::Argument(arg, _) if matches!(arg, Argument::Expression(_))),
+                |v| matches!(v, Vertex::InterfaceExtends(iex) if matches!(iex.as_ref(), InterfaceExtends::Identifier(..))),
             ),
-            "Function" => resolve_coercion_with(contexts, Vertex::function_coercion),
-            "AssignmentExpression" => coerce_ast_or_x!(contexts, Expression, AssignmentExpression),
-            "ConditionalExpression" => {
-                coerce_ast_or_x!(contexts, Expression, ConditionalExpression)
+            "MemberExtend" => resolve_coercion_with(
+                contexts,
+                |v| matches!(v, Vertex::InterfaceExtends(iex) if matches!(iex.as_ref(), InterfaceExtends::MemberExpression(..))),
+            ),
+            // Expression
+            "ObjectLiteral" => {
+                resolve_coercion_with(contexts, |v| matches!(v, Vertex::ObjectLiteral(_)))
             }
-            "IfStatement" => coerce_ast!(contexts, IfStatement),
-            "ForInStatement" => coerce_ast!(contexts, ForInStatement),
-            "AssignmentToIdentifier" => resolve_coercion_with(contexts, |v| {
-                matches!(v, Vertex::AssignmentToIdentifier(_, _))
-            }),
-            "AssignmentOnObject" => {
-                resolve_coercion_with(contexts, |v| matches!(v, Vertex::AssignmentOnObject(_)))
+            "JSXElementAST" => {
+                resolve_coercion_with(contexts, |v| matches!(v, Vertex::JsxElement(_, Some(_))))
             }
-            "BinaryExpression" => coerce_ast_or_x!(contexts, Expression, BinaryExpression),
-            "IfStatementOrTernary" => resolve_coercion_with(contexts, |v| match v {
-                Vertex::AstNode(node) => matches!(
-                    node.kind(),
-                    AstKind::IfStatement(_) | AstKind::ConditionalExpression(_)
-                ),
-                Vertex::Expression(expr) => {
-                    matches!(expr, Expression::ConditionalExpression(_))
-                }
-                _ => false,
-            }),
-            "FieldAccessOnObject" => coerce_ast_or_x!(contexts, Expression, MemberExpression),
-            "ObjectExpression" => coerce_ast_or_x!(contexts, Expression, ObjectExpression),
-            "NumberLiteral" => {
-                coerce_ast_or_x_or_y!(contexts, Expression, TSLiteral, NumberLiteral)
+            "JSXElement" => {
+                resolve_coercion_with(contexts, |v| matches!(v, Vertex::JsxElement(..)))
             }
-            "CallExpression" => coerce_ast_or_x!(contexts, Expression, CallExpression),
-            "UnaryExpression" => coerce_ast_or_x!(contexts, Expression, UnaryExpression),
-            "RegExp" => resolve_coercion_with(contexts, Vertex::regexp_resolve_coercion),
-            "RegExpLiteral" => coerce_ast_or_x!(contexts, Expression, RegExpLiteral),
-            "ClassPropertyDefinition" => coerce_ast!(contexts, PropertyDefinition),
-            "ExportDefault" => resolve_coercion_with(
-                contexts,
-                |v| matches!(v, Vertex::AstNode(node) if matches!(node.kind(), AstKind::ModuleDeclaration(md) if matches!(md, ModuleDeclaration::ExportDefaultDeclaration(_)))),
-            ),
-            "IdentifierPropertyKey" => resolve_coercion_with(
-                contexts,
-                |v| matches!(v, Vertex::PropertyKey(pk) if matches!(pk, PropertyKey::Identifier(_))),
-            ),
-            "StringASTNode" | "StringExpression" | "ConstantString" => {
-                resolve_coercion_with(contexts, Vertex::string_resolve_coercion)
+            // ASTNode
+            "ReturnStatementAST" => {
+                resolve_coercion_with(contexts, |v| matches!(v, Vertex::ReturnStatementAst(..)))
             }
-            "Identifier" => {
-                resolve_coercion_with(contexts, Vertex::identifier_reference_resolve_coercion)
+            "ClassAST" => {
+                resolve_coercion_with(contexts, |v| matches!(v, Vertex::Class(_, Some(_))))
             }
-            "TSTypeAnnotation" => {
-                resolve_coercion_with(contexts, Vertex::ts_type_annotation_coercion)
+            "InterfaceAST" => {
+                resolve_coercion_with(contexts, |v| matches!(v, Vertex::Class(_, Some(_))))
             }
-            "TSAny" => coerce_ast_or_x!(contexts, TSType, TSAnyKeyword),
-            "TSLiteralType" => coerce_ast_or_x!(contexts, TSType, TSLiteralType),
-            "TSUnionType" => coerce_ast_or_x!(contexts, TSType, TSUnionType),
-            "TSInterfaceDeclaration" => coerce_ast!(contexts, TSInterfaceDeclaration),
-            "TSPropertySignature" => coerce_ast_or_x!(contexts, TSSignature, TSPropertySignature),
-            "TSMethodSignature" => coerce_ast_or_x!(contexts, TSSignature, TSMethodSignature),
-            "IdentifierParameter" => resolve_coercion_with(
-                contexts,
-                |v| matches!(v, Vertex::Parameter(param, _) if matches!(param, BindingPatternKind::BindingIdentifier(_))),
-            ),
-            "TSTypeReference" => coerce_ast_or_x!(contexts, TSType, TSTypeReference),
-            "TSIdentifierReference" => resolve_coercion_with(contexts, |v| match *v {
-                Vertex::TSType(tst) if matches!(tst, TSType::TSTypeReference(tsr) if matches!(tsr.type_name, TSTypeName::IdentifierName(..))) => {
-                    true
-                }
-                Vertex::TSTypeName(tstn, ..) if matches!(&tstn, TSTypeName::IdentifierName(..)) => {
-                    true
-                }
-                Vertex::AstNode(node) if matches!(node.kind(), AstKind::TSTypeReference(tsr) if matches!(tsr.type_name, TSTypeName::IdentifierName(..))) => {
-                    true
-                }
-                _ => false,
-            }),
-            "FunctionSignature" => resolve_coercion_with(contexts, |v| {
-                Vertex::function_coercion(v)
-                    || coerce_ast_or_x_match!(v, TSSignature, TSMethodSignature)
-            }),
-            "ImportDeclaration" => resolve_coercion_with(
-                contexts,
-                |v| matches!(v, Vertex::AstNode(node) if matches!(node.kind(), AstKind::ModuleDeclaration(md) if matches!(md, ModuleDeclaration::ImportDeclaration(_)))),
-            ),
-            "ImportStarSpecifier" => resolve_coercion_with(contexts, |v| {
-                let import_specifier = v.as_import_specifier();
-                let Some(import_specifier) = import_specifier else {return false};
-                matches!(import_specifier, ImportDeclarationSpecifier::ImportNamespaceSpecifier(_))
-            }),
-            "ImportDefaultSpecifier" => resolve_coercion_with(contexts, |v| {
-                let import_specifier = v.as_import_specifier();
-                let Some(import_specifier) = import_specifier else {return false};
-                matches!(import_specifier, ImportDeclarationSpecifier::ImportDefaultSpecifier(_))
-            }),
-            "ImportSpecificSpecifier" => resolve_coercion_with(contexts, |v| {
-                let import_specifier = v.as_import_specifier();
-                let Some(import_specifier) = import_specifier else {return false};
-                matches!(import_specifier, ImportDeclarationSpecifier::ImportSpecifier(_))
-            }),
-            "JSXOpeningElement" => coerce_ast!(contexts, JSXOpeningElement),
-            "JSXSimpleName" => resolve_coercion_with(
-                contexts,
-                |v| matches!(v, Vertex::JsxElementName(op) if matches!(op, JSXElementName::Identifier(_))),
-            ),
-            "JSXElement" => resolve_coercion_with(
-                contexts,
-                |v| matches!(v, Vertex::Expression(op) if matches!(op, Expression::JSXElement(_))),
-            ),
-            "ArrayDestructuringAssignment" => resolve_coercion_with(contexts, |v| match v {
-                Vertex::DestructuringAssignment(da) => matches!(
-                    da,
-                    DestructuringAssignment::AssignmentExpression(
-                        AssignmentTargetPattern::ArrayAssignmentTarget(_),
-                    ) | DestructuringAssignment::ArrayPattern(_)
-                ),
-                _ => false,
-            }),
-            "ObjectDestructingAssignment" => {
-                resolve_coercion_with(contexts, |v| matches!(v, Vertex::DestructuringAssignment(_)))
-            }
-            "SingleObjectProperty" => resolve_coercion_with(
-                contexts,
-                |v| matches!(v, Vertex::ObjectProperty(op) if matches!(op, ObjectPropertyKind::ObjectProperty(_))),
-            ),
-            "SpreadObjectProperty" => resolve_coercion_with(
-                contexts,
-                |v| matches!(v, Vertex::ObjectProperty(op) if matches!(op, ObjectPropertyKind::SpreadProperty(_))),
-            ),
-            "VariableDeclarations" => coerce_ast!(contexts, VariableDeclaration),
-            "VariableDeclaration" => {
-                resolve_coercion_with(contexts, |v| matches!(v, Vertex::VariableDeclaration(_)))
-            }
-            "AwaitExpression" => coerce_ast_or_x!(contexts, Expression, AwaitExpression),
             _ => unimplemented!("unexpected coercion to: {coerce_to_type}"),
         }
+    }
+}
+
+trait ToStringJSX {
+    fn to_string_jsx(&self) -> String;
+}
+
+impl ToStringJSX for JSXIdentifier {
+    fn to_string_jsx(&self) -> String {
+        self.name.to_string()
+    }
+}
+
+impl ToStringJSX for JSXNamespacedName {
+    fn to_string_jsx(&self) -> String {
+        format!("{}:{}", &self.namespace.name.as_str(), &self.property.name.as_str())
+    }
+}
+
+impl<'a> ToStringJSX for JSXMemberExpression<'a> {
+    fn to_string_jsx(&self) -> String {
+        let mut parts = vec![self.property.name.to_string()];
+        let mut obj = &self.object;
+        loop {
+            match obj {
+                oxc_ast::ast::JSXMemberExpressionObject::Identifier(ident) => {
+                    parts.push(ident.name.to_string());
+                    break;
+                }
+                oxc_ast::ast::JSXMemberExpressionObject::MemberExpression(inner_memexpr) => {
+                    parts.push(inner_memexpr.property.name.to_string());
+                    obj = &inner_memexpr.object;
+                }
+            }
+        }
+        parts.reverse();
+        parts.join(".")
+    }
+}
+
+impl<'a> ToStringJSX for JSXElementName<'a> {
+    fn to_string_jsx(&self) -> String {
+        match self {
+            JSXElementName::Identifier(ident) => ident.to_string_jsx(),
+            JSXElementName::NamespacedName(nsn) => nsn.to_string_jsx(),
+            JSXElementName::MemberExpression(memexpr) => memexpr.to_string_jsx(),
+        }
+    }
+}
+
+impl<'a> ToStringJSX for JSXAttributeName<'a> {
+    fn to_string_jsx(&self) -> String {
+        match self {
+            JSXAttributeName::Identifier(ident) => ident.to_string_jsx(),
+            JSXAttributeName::NamespacedName(nsn) => nsn.to_string_jsx(),
+        }
+    }
+}
+
+fn try_get_constant_string_field_value_from_template_lit(tlit: &TemplateLiteral) -> Option<String> {
+    if tlit.expressions.len() == 0 && tlit.quasis.len() == 1 {
+        let quasi = &tlit.quasis[0].value;
+        Some(quasi.cooked.as_ref().unwrap_or(&quasi.raw).to_string())
+    } else {
+        None
+    }
+}
+
+fn expr_to_maybe_const_string<'a>(expr: &'a Expression<'a>) -> Option<String> {
+    match expr {
+        Expression::StringLiteral(slit) => Some(slit.value.to_string()),
+        Expression::TemplateLiteral(tlit) => {
+            try_get_constant_string_field_value_from_template_lit(tlit.0)
+        }
+        _ => None,
+    }
+}
+
+fn jsx_attribute_to_constant_string<'a>(attr: &'a JSXAttribute<'a>) -> Option<String> {
+    let Some(attr_value) = &attr.value else {return None};
+    match attr_value {
+        JSXAttributeValue::StringLiteral(slit) => slit.value.to_string().into(),
+        JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
+            oxc_ast::ast::JSXExpression::Expression(expr) => expr_to_maybe_const_string(expr),
+            oxc_ast::ast::JSXExpression::EmptyExpression(_) => None,
+        },
+        JSXAttributeValue::Element(_) | JSXAttributeValue::Fragment(_) => None,
+    }
+}
+
+fn materialize_expression<'a>(expr: &'a Expression<'a>) -> Vertex {
+    match &expr.get_inner_expression() {
+        Expression::ObjectExpression(objexpr) => Vertex::ObjectLiteral(objexpr),
+        Expression::JSXElement(element) => Vertex::JsxElement(element, None),
+        _ => Vertex::Expression(expr),
+    }
+}
+
+fn materialize_ast_node(ast_node: AstNode<'_>) -> Vertex {
+    match ast_node.kind() {
+        AstKind::ReturnStatement(ret_stmt) => Vertex::ReturnStatementAst(ret_stmt, ast_node.id()),
+        AstKind::Class(class) => Vertex::Class(class, Some(ast_node.id())),
+        AstKind::JSXElement(el) => Vertex::JsxElement(el, Some(ast_node.id())),
+        AstKind::TSInterfaceDeclaration(iface) => Vertex::Interface(iface, Some(ast_node.id())),
+        AstKind::TSTypeAnnotation(anno) => Vertex::TypeAnnotation(anno, Some(ast_node.id())),
+        AstKind::VariableDeclarator(var) => Vertex::VariableDeclaration(var, Some(ast_node.id())),
+        AstKind::ModuleDeclaration(md) if matches!(md, ModuleDeclaration::ImportDeclaration(_)) => {
+            let ModuleDeclaration::ImportDeclaration(id) = md else {unreachable!()};
+            Vertex::Import(id, Some(ast_node.id()))
+        }
+        _ => Vertex::AstNode(ast_node),
     }
 }

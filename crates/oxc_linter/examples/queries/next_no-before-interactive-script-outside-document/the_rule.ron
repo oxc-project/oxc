@@ -1,0 +1,47 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    path_starts_with(regex: ["^src$", "^app$"]) {
+      result @filter(op: "=", value: ["$false"])
+    }
+
+    path_starts_with(regex: ["^src$"]) {
+      result @filter(op: "=", value: ["$true"])
+    }
+
+    import {
+      from_path @filter(op: "=", value: ["$nextslashscript"])
+      default_import {
+        local_name @tag(name: "default_imported_class_name")
+      }
+    }
+
+    jsx_element {
+      opening_element {
+        name  @filter(op: "=", value: ["%default_imported_class_name"])
+        attribute {
+          name @filter(op: "=", value: ["$strategy"])
+          value_as_constant_string @filter(op: "=", value: ["$beforeInteractive"])
+        }
+        span_: span {
+          start @output
+          end @output
+        }
+      }
+    }
+
+    path_ends_with(regex: ["^pages$", "^_document\\..+"]) {
+      result @filter(op: "=", value: ["$false"])
+    }
+  }
+}"#,
+    args: {
+      "nextslashscript": String("next/script"),
+      "strategy": String("strategy"),
+      "beforeInteractive": String("beforeInteractive"),
+      "true": Boolean(true),
+      "false": Boolean(false),
+    },
+    reason: "`next/script`'s `beforeInteractive` strategy should not be used outside of `pages/_document.js`"
+)

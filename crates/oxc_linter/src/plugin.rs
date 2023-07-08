@@ -1,4 +1,4 @@
-use std::{env, fs, rc::Rc, sync::Arc};
+use std::{env, fs, path::PathBuf, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::miette::{miette, LabeledSpan};
 use oxc_semantic::Semantic;
@@ -9,10 +9,21 @@ use crate::{
     lint_adapter::{InputQuery, LintAdapter},
 };
 
+enum SpanInfo {
+    SingleSpanInfo(SingleSpanInfo),
+    MultipleSpanInfo(MultipleSpanInfo),
+}
+
 #[derive(Debug, serde::Deserialize)]
-struct SpanInfo {
+struct SingleSpanInfo {
     span_start: u64,
     span_end: u64,
+}
+
+#[derive(Debug, serde::Deserialize)]
+struct MultipleSpanInfo {
+    span_start: Box<[u64]>,
+    span_end: Box<[u64]>,
 }
 
 pub struct LinterPlugin {
@@ -24,7 +35,12 @@ impl LinterPlugin {
     pub fn new() -> Self {
         let queries_path = env::var("OXC_PLUGIN").unwrap();
         let rules = fs::read_dir(queries_path)
-            .unwrap()
+            .expect("to readdir queries_path folder")
+            .filter_map(std::result::Result::ok)
+            .filter(|dir_entry| dir_entry.path().is_dir())
+            .filter(|dir| !dir.path().to_str().map_or_else(|| true, |f| f.contains("ignore_")))
+            .filter_map(|folder| fs::read_dir(folder.path()).ok())
+            .flat_map(std::iter::IntoIterator::into_iter)
             .filter_map(std::result::Result::ok)
             .filter(|dir_entry| dir_entry.path().is_file())
             .filter(|f| {
@@ -43,8 +59,8 @@ impl LinterPlugin {
         Self { rules, schema }
     }
 
-    pub fn run(&self, ctx: &mut LintContext, semantic: &Rc<Semantic<'_>>) {
-        let inner = LintAdapter { semantic: Rc::clone(semantic) };
+    pub fn run(&self, ctx: &mut LintContext, semantic: &Rc<Semantic<'_>>, path: &PathBuf) {
+        let inner = LintAdapter { semantic: Rc::clone(semantic), path: path.clone() };
         let adapter = Arc::from(&inner);
         for input_query in &self.rules {
             for data_item in execute_query(
@@ -58,23 +74,50 @@ impl LinterPlugin {
                     .as_str(),
             )
             .map(|v| {
-                v.try_into_struct::<SpanInfo>().expect(
-                    "Could not deserialize query results into SpanInfo{span_start, span_end}",
+                if env::var("OXC_PRINT_TFALL_OUTPUTS").unwrap_or_else(|_| "false".to_owned())
+                    == "true"
+                {
+                    println!("{v:#?}");
+                }
+                let multi = v.clone().try_into_struct::<MultipleSpanInfo>();
+                let single = v.try_into_struct::<SingleSpanInfo>();
+                single.map_or_else(
+                    |_| SpanInfo::MultipleSpanInfo(multi.unwrap()),
+                    SpanInfo::SingleSpanInfo,
                 )
             })
             .take(usize::MAX)
             {
                 ctx.with_rule_name("a rule");
-                let SpanInfo { span_start: start, span_end: end } = data_item;
                 // TODO: this isn't how we do this at all, need to make this consistent with the project's miette style
-                let c = miette!(
-                    labels = vec![LabeledSpan::at(
-                        (start as usize, (end - start) as usize),
-                        input_query.reason.as_str()
-                    )],
-                    "Unexpected error"
-                );
-                ctx.diagnostic(c);
+                match data_item {
+                    SpanInfo::SingleSpanInfo(SingleSpanInfo {
+                        span_start: start,
+                        span_end: end,
+                    }) => {
+                        ctx.diagnostic(miette!(
+                            labels = vec![LabeledSpan::at(
+                                (start as usize, (end - start) as usize),
+                                input_query.reason.as_str()
+                            )],
+                            "Unexpected error"
+                        ));
+                    }
+                    SpanInfo::MultipleSpanInfo(MultipleSpanInfo {
+                        span_start: start,
+                        span_end: end,
+                    }) => {
+                        for i in 0..start.len() {
+                            ctx.diagnostic(miette!(
+                                labels = vec![LabeledSpan::at(
+                                    (start[i] as usize, (end[i] - start[i]) as usize),
+                                    input_query.reason.as_str()
+                                )],
+                                "Unexpected error"
+                            ));
+                        }
+                    }
+                }
             }
         }
     }

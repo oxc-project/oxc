@@ -1,0 +1,19 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    class {
+      method {
+        accessibility @filter(op: "is_null")
+        span_: span {
+          start @output
+          end @output
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+    },
+    reason: "Add access modifier."
+)

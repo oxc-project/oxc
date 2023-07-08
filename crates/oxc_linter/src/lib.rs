@@ -1,10 +1,12 @@
 #![allow(clippy::self_named_module_files)] // for rules.rs
+#![allow(unused_variables)]
 #![feature(let_chains, const_trait_impl, const_slice_index)]
 
 #[cfg(test)]
 mod tester;
 
 mod ast_util;
+pub mod calculate;
 mod context;
 mod disable_directives;
 mod fixer;
@@ -14,7 +16,7 @@ mod plugin;
 pub mod rule;
 mod rules;
 
-use std::{env, fs, io::Write, rc::Rc};
+use std::{env, fs, io::Write, path::PathBuf, rc::Rc};
 
 pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
@@ -89,7 +91,7 @@ impl Linter {
         Self::from_rules(rules)
     }
 
-    pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>) -> Vec<Message<'a>> {
+    pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, path: PathBuf) -> Vec<Message<'a>> {
         let mut ctx = LintContext::new(semantic, self.fix);
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
@@ -106,7 +108,7 @@ impl Linter {
         }
 
         if let Some(plugin) = &self.plugin {
-            plugin.run(&mut ctx, semantic);
+            plugin.run(&mut ctx, semantic, &path);
         }
 
         ctx.into_message()

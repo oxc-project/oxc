@@ -1,0 +1,36 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    jsx_element {
+      opening_element {
+        name @filter(op: "=", value: ["$script"])
+
+        span_: span {
+          start @output
+          end @output
+        }
+
+        attribute @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+          name @filter(op: "=", value: ["$dangerouslySetInnerHTML"])
+
+          value_as_expression @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+            ... on ObjectLiteral {
+              value(key: "__html") {
+                as_constant_string @filter(op: "regex", value: ["$g_analytics_urls_regex"])
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}"#,
+    args: {
+      "zero": Uint64(0),
+      "script": String("script"),
+      "dangerouslySetInnerHTML": String("dangerouslySetInnerHTML"),
+      "g_analytics_urls_regex": String("(www\\.google-analytics\\.com\\/analytics\\.js)|(www\\.googletagmanager\\.com\\/gtm\\.js)"),
+    },
+    reason: "Prefer `next/script` component when using the inline script for Google Analytics."
+)

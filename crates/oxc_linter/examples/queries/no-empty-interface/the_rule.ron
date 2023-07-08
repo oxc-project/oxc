@@ -1,0 +1,23 @@
+InputQuery (
+    query: r#"
+query {
+  File {
+    interface {
+      extend @fold @transform(op: "count") @filter(op: "<", value: ["$two"]) {
+        span {
+          start
+        }
+      }
+
+      span_: entire_span {
+        start @output
+        end @output
+      }
+    }
+  }
+}"#,
+    args: {
+      "two": Uint64(2)
+    },
+    reason: "Don't use interfaces with less than two extends and no members."
+)
