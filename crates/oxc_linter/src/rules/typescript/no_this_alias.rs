@@ -63,7 +63,7 @@ impl Rule for NoThisAlias {
             .unwrap_or(&vec![])
             .iter()
             .map(serde_json::Value::as_str)
-            .filter(|x| x.is_some())
+            .filter(std::option::Option::is_some)
             .map(|x| x.unwrap().to_string())
             .collect::<Vec<String>>();
 
@@ -137,7 +137,7 @@ impl Rule for NoThisAlias {
 }
 
 fn rhs_is_this_reference(rhs_expression: &Expression) -> bool {
-    return matches!(rhs_expression, Expression::ThisExpression(_));
+    matches!(rhs_expression, Expression::ThisExpression(_))
 }
 
 #[test]
