@@ -40,6 +40,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_new_symbol,
     eslint::no_obj_calls,
     eslint::no_prototype_builtins,
+    eslint::no_return_await,
     eslint::no_self_assign,
     eslint::no_self_compare,
     eslint::no_setter_return,
