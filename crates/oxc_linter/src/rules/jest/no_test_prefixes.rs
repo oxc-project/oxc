@@ -44,11 +44,11 @@ declare_oxc_lint!(
     correctness
 );
 
-fn get_prefered_node_names(jest_fn_call: &ParsedJestFnCall) -> String {
+fn get_preferred_node_names(jest_fn_call: &ParsedJestFnCall) -> String {
 
     let ParsedJestFnCall { members, raw, .. } = jest_fn_call;
 
-    let prefered_modifier = if raw.starts_with('f') {
+    let preferred_modifier = if raw.starts_with('f') {
         "only"
     } else {
         "skip"
@@ -56,7 +56,7 @@ fn get_prefered_node_names(jest_fn_call: &ParsedJestFnCall) -> String {
     let member_names = members.iter().map(Borrow::borrow).collect::<Vec<&str>>().join(".");
     let name_slice = &raw[1..];
 
-    format!("{name_slice}.{prefered_modifier}.{member_names}")
+    format!("{name_slice}.{preferred_modifier}.{member_names}")
 }
 
 impl Rule for NoTestPrefixes {
@@ -85,12 +85,12 @@ impl Rule for NoTestPrefixes {
                     }
                 };
 
-                let prefered_node_name = get_prefered_node_names(&jest_fn_call);
-                let prefered_node_name_cloned = prefered_node_name.clone();
+                let preferred_node_name = get_preferred_node_names(&jest_fn_call);
+                let preferred_node_name_cloned = preferred_node_name.clone();
 
                 ctx.diagnostic_with_fix(
-                    NoTestPrefixesDiagnostic(Box::leak(prefered_node_name.into_boxed_str()), span),
-                    || Fix::new(prefered_node_name_cloned, span)
+                    NoTestPrefixesDiagnostic(Box::leak(preferred_node_name.into_boxed_str()), span),
+                    || Fix::new(preferred_node_name_cloned, span)
                 );
             }
         }
