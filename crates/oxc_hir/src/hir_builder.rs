@@ -1056,9 +1056,8 @@ impl<'a> HirBuilder<'a> {
         local: ModuleExportName,
         exported: ModuleExportName,
         export_kind: ImportOrExportKind, // `export type { foo }`
-
     ) -> ExportSpecifier {
-        ExportSpecifier { span, local, exported, export_kind}
+        ExportSpecifier { span, local, exported, export_kind }
     }
 
     /* ---------- JSX ----------------- */

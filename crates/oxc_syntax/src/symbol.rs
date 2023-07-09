@@ -48,6 +48,7 @@ impl SymbolFlags {
     pub fn is_type(&self) -> bool {
         self.intersects(Self::Type)
     }
+
     pub fn is_variable(&self) -> bool {
         self.intersects(Self::Variable)
     }

@@ -1253,12 +1253,17 @@ impl<'a> AstLower<'a> {
             }
         }
     }
-    fn lower_import_export_type_or_value(&mut self, import_export_kind: ast::ImportOrExportKind) -> hir::ImportOrExportKind{
+
+    fn lower_import_export_type_or_value(
+        &mut self,
+        import_export_kind: ast::ImportOrExportKind,
+    ) -> hir::ImportOrExportKind {
         match import_export_kind {
             ast::ImportOrExportKind::Value => hir::ImportOrExportKind::Value,
-            ast::ImportOrExportKind::Type => hir::ImportOrExportKind::Type
+            ast::ImportOrExportKind::Type => hir::ImportOrExportKind::Type,
         }
     }
+
     fn lower_module_export_name(&mut self, name: &ast::ModuleExportName) -> hir::ModuleExportName {
         match name {
             ast::ModuleExportName::Identifier(ident) => {
