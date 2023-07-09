@@ -58,7 +58,7 @@ declare_oxc_lint!(
 #[diagnostic(severity(warning), help("{1:?}"))]
 struct NoDisabledTestsDiagnostic(&'static str, &'static str, #[label] pub Span);
 
-pub enum Message {
+enum Message {
     MissingFunction,
     Pending,
     DisabledSuiteWithSkip,
