@@ -14,6 +14,6 @@ query: |
   }
 
 args:
-  "String": !String "String"
+  "String": "String"
 
 reason: Use string instead

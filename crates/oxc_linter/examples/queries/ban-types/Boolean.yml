@@ -14,6 +14,6 @@ query: |
   }
 
 args:
-  "Boolean": !String "Boolean"
+  "Boolean": "Boolean"
 
 reason: Use boolean instead

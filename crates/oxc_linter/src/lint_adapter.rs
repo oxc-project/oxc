@@ -13,14 +13,14 @@ use trustfall::{
         ContextIterator, ContextOutcomeIterator, EdgeParameters, ResolveEdgeInfo, ResolveInfo,
         TrustfallEnumVertex, VertexIterator,
     },
-    FieldValue,
+    FieldValue, TransparentValue,
 };
 use url::Url;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct InputQuery {
     pub query: String,
-    pub args: BTreeMap<Arc<str>, FieldValue>,
+    pub args: BTreeMap<Arc<str>, TransparentValue>,
     pub reason: String,
 }
 

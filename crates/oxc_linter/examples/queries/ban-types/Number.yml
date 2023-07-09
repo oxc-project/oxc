@@ -14,6 +14,6 @@ query: |
   }
 
 args:
-  "Number": !String "Number"
+  "Number": "Number"
 
 reason: Use number instead

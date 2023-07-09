@@ -33,7 +33,6 @@ oxc_hir            = { version = "0.0.0", path = "crates/oxc_hir" }
 oxc_ast_lower      = { version = "0.0.0", path = "crates/oxc_ast_lower" }
 oxc_syntax         = { version = "0.0.0", path = "crates/oxc_syntax" }
 oxc_index          = { version = "0.0.0", path = "crates/oxc_index" }
-oxc_semantic2      = { version = "0.0.0", path = "crates/oxc_semantic2" }
 
 oxc_tasks_common = { path = "tasks/common" }
 
@@ -46,9 +45,7 @@ criterion         = { version = "0.5.1", default-features = false }
 crossbeam-channel = { version = "0.5.8" }
 dashmap           = { version = "5.4.0" }
 flate2            = { version = "1.0.26" }
-glob              = { version = "0.3.1" }
 ignore            = { version = "0.4.20" }
-indextree         = { version = "4.6.0" }
 itertools         = { version = "0.10.5" }
 jemallocator      = { version = "0.5.0" }
 lazy_static       = { version = "1.4.0" }
@@ -82,9 +79,6 @@ stacker           = { version = "0.1.15" }
 
 [workspace.metadata.workspaces]
 allow_branch = "main"
-
-[profile.release.package.oxc_wasm]
-opt-level = 'z'
 
 [profile.release]
 # Configurations explicitly listed here for clarity.
