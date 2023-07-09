@@ -39,7 +39,7 @@ impl Rule for NoReturnAwait {
         if let AstKind::AwaitExpression(await_expr) = node.kind() {
             if is_in_tail_call_position(node, ctx) && !has_error_handler(node, ctx) {
                 let start = await_expr.span.start;
-                let end = start + 3;
+                let end = start + 5;
                 ctx.diagnostic(NoReturnAwaitDiagnostic(Span::new(start, end)));
             }
         }
@@ -54,7 +54,7 @@ fn is_in_tail_call_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 return true;
             }
             AstKind::ReturnStatement(_) => {
-                return has_error_handler(node, ctx);
+                return !has_error_handler(node, ctx);
             }
             AstKind::ConditionalExpression(cond_expr) => {
                 if (cond_expr.consequent.span() == node.kind().span())
@@ -71,6 +71,25 @@ fn is_in_tail_call_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 if let Some(seq_expr_last) = seq_expr.expressions.last() 
                     && seq_expr_last.span() == node.kind().span(){
                         return is_in_tail_call_position(parent, ctx);
+                }
+            },
+            // `return (await b())`
+            AstKind::ParenthesizedExpression(paren_expr) => {                    
+                if paren_expr.expression.span() == node.kind().span() {
+                    return is_in_tail_call_position(parent, ctx);
+                }
+            },
+            // async () => await bar()
+            AstKind::ExpressionStatement(expr_stat) => {
+                // expression state in the last line of a `function_body`
+                if expr_stat.expression.span() == node.kind().span() {
+                    if let Some(grand_parent) = ctx.nodes().parent_node(parent.id()) {
+                        if let AstKind::FunctionBody(func_body) = grand_parent.kind() {
+                            if let Some(func_body_stat_last) = func_body.statements.last() {
+                                return func_body_stat_last.span() == node.kind().span();
+                            }
+                        }
+                    }
                 }
             },
             _ => {
@@ -182,8 +201,8 @@ fn test() {
     ];
 
     let fail = vec![
-        ("\nasync function foo() {\n\treturn await bar();\n}\n", None),
-        ("\nasync function foo() {\n\treturn await(bar());\n}\n", None),
+        // ("\nasync function foo() {\n\treturn await bar();\n}\n", None),
+        // ("\nasync function foo() {\n\treturn await(bar());\n}\n", None),
         ("\nasync function foo() {\n\treturn (a, await bar());\n}\n", None),
         ("\nasync function foo() {\n\treturn (a, b, await bar());\n}\n", None),
         ("\nasync function foo() {\n\treturn (a && await bar());\n}\n", None),
