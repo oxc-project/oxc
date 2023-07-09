@@ -56,7 +56,11 @@ fn get_preferred_node_names(jest_fn_call: &ParsedJestFnCall) -> String {
     let member_names = members.iter().map(Borrow::borrow).collect::<Vec<&str>>().join(".");
     let name_slice = &raw[1..];
 
-    format!("{name_slice}.{preferred_modifier}.{member_names}")
+    if member_names.is_empty() {
+        format!("{name_slice}.{preferred_modifier}")
+    } else {
+        format!("{name_slice}.{preferred_modifier}.{member_names}")
+    }
 }
 
 impl Rule for NoTestPrefixes {
