@@ -14,3 +14,4 @@ extend-exclude = [
 [default.extend-words]
 trivias = "trivias"
 trivia = "trivia"
+xdescribe = "xdescribe"

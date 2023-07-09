@@ -9,6 +9,7 @@ mod context;
 mod disable_directives;
 mod fixer;
 mod globals;
+mod jest_ast_util;
 pub mod rule;
 mod rules;
 
