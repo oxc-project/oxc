@@ -177,32 +177,35 @@ fn test() {
         ("\nasync () => (baz() ? a : (await bar(), b))\n", None),
         ("\nasync () => (baz() ? a : (await bar() && b))\n", None),
         (
-            "\nasync function foo() {\ntry {\nreturn await bar();\n} catch (e) {\nbaz();\n}\n}\n",
-            None,
-        ),
-        ("\nasync function foo() {\ntry {\nreturn await bar();\n} finally {\nbaz();\n}\n}\n", None),
-        (
-            "\nasync function foo() {\ntry {}\ncatch (e) {\nreturn await bar();\n} finally {\nbaz();\n}\n}\n",
+            "\n          async function foo() {\n            try {\n              return await bar();\n            } catch (e) {\n              baz();\n            }\n          }\n        ",
             None,
         ),
         (
-            "\nasync function foo() {\ntry {\ntry {}\nfinally {\nreturn await bar();\n}\n} finally {\nbaz();\n}\n}\n",
+            "\n          async function foo() {\n            try {\n              return await bar();\n            } finally {\n              baz();\n            }\n          }\n        ",
             None,
         ),
         (
-            "\nasync function foo() {\ntry {\ntry {}\ncatch (e) {\nreturn await bar();\n}\n} finally {\nbaz();\n}\n}\n",
+            "\n          async function foo() {\n            try {}\n            catch (e) {\n              return await bar();\n            } finally {\n              baz();\n            }\n          }\n        ",
             None,
         ),
         (
-            "\nasync function foo() {\ntry {\nreturn (a, await bar());\n} catch (e) {\nbaz();\n}\n}\n",
+            "\n          async function foo() {\n            try {\n              try {}\n              finally {\n                return await bar();\n              }\n            } finally {\n              baz();\n            }\n          }\n        ",
             None,
         ),
         (
-            "\nasync function foo() {\ntry {\nreturn (qux() ? await bar() : b);\n} catch (e) {\nbaz();\n}\n}\n",
+            "\n          async function foo() {\n            try {\n              try {}\n              catch (e) {\n                return await bar();\n              }\n            } finally {\n              baz();\n            }\n          }\n        ",
             None,
         ),
         (
-            "\nasync function foo() {\ntry {\nreturn (a && await bar());\n} catch (e) {\nbaz();\n}\n}\n",
+            "\n          async function foo() {\n            try {\n              return (a, await bar());\n            } catch (e) {\n              baz();\n            }\n          }\n        ",
+            None,
+        ),
+        (
+            "\n          async function foo() {\n            try {\n              return (qux() ? await bar() : b);\n            } catch (e) {\n              baz();\n            }\n          }\n        ",
+            None,
+        ),
+        (
+            "\n          async function foo() {\n            try {\n              return (a && await bar());\n            } catch (e) {\n              baz();\n            }\n          }\n        ",
             None,
         ),
     ];
@@ -231,14 +234,8 @@ fn test() {
         ("\nasync () => (baz() ? await bar() : b)\n", None),
         ("\nasync () => (baz() ? a : (b, await bar()))\n", None),
         ("\nasync () => (baz() ? a : (b && await bar()))\n", None),
-        (
-            "\nasync function foo() {\nif (a) {\n\t\tif (b) {\n\t\t\treturn await bar();\n\t\t}\n\t}\n}\n",
-            None,
-        ),
-        (
-            "\nasync () => {\nif (a) {\n\t\tif (b) {\n\t\t\treturn await bar();\n\t\t}\n\t}\n}\n",
-            None,
-        ),
+        ("\nasync function foo() {\nif (a) {\n\t\tif (b) {\n\t\t\treturn await bar();\n\t\t}\n\t}\n}\n", None),
+        ("\nasync () => {\nif (a) {\n\t\tif (b) {\n\t\t\treturn await bar();\n\t\t}\n\t}\n}\n", None),
         ("\nasync function foo() { try {}\nfinally {\nreturn await bar();\n}\n}\n", None),
         ("\nasync function foo() {\ntry {}\ncatch (e) {\nreturn await bar();\n}\n}\n", None),
         ("\ntry {\nasync function foo() {\nreturn await bar();\n}\n} catch (e) {}\n", None),
@@ -253,7 +250,7 @@ fn test() {
         ),
         ("\nasync () => {\nreturn await (\nfoo()\n)\n};\n", None),
         ("\nasync function foo() {\nreturn await // Test\n5;\n}\n", None),
-    ];
+      ];
 
     Tester::new(NoReturnAwait::NAME, pass, fail).test_and_snapshot();
 }
