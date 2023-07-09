@@ -41,7 +41,9 @@ impl<'a> AstLower<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
-        self.semantic.declare_symbol(span, name, includes, excludes)
+        self.semantic.declare_symbol(
+            span, name, includes, excludes, false, /* this is so much leaked complexity omg */
+        )
     }
 
     pub fn enter_identifier_reference(
@@ -1254,6 +1256,16 @@ impl<'a> AstLower<'a> {
         }
     }
 
+    fn lower_import_export_type_or_value(
+        &mut self,
+        import_export_kind: ast::ImportOrExportKind,
+    ) -> hir::ImportOrExportKind {
+        match import_export_kind {
+            ast::ImportOrExportKind::Value => hir::ImportOrExportKind::Value,
+            ast::ImportOrExportKind::Type => hir::ImportOrExportKind::Type,
+        }
+    }
+
     fn lower_module_export_name(&mut self, name: &ast::ModuleExportName) -> hir::ModuleExportName {
         match name {
             ast::ModuleExportName::Identifier(ident) => {
@@ -1352,17 +1364,17 @@ impl<'a> AstLower<'a> {
         let declaration = decl.declaration.as_ref().and_then(|decl| self.lower_declaration(decl));
         let specifiers = self.lower_vec(&decl.specifiers, Self::lower_export_specifier);
         let source = decl.source.as_ref().map(|source| self.lower_string_literal(source));
-        let export_kind = match decl.export_kind {
-            ast::ImportOrExportKind::Value => hir::ImportOrExportKind::Value,
-            ast::ImportOrExportKind::Type => hir::ImportOrExportKind::Type,
-        };
+        let export_kind = self.lower_import_export_type_or_value(decl.export_kind);
+
         self.hir.export_named_declaration(decl.span, declaration, specifiers, source, export_kind)
     }
 
     fn lower_export_specifier(&mut self, specifier: &ast::ExportSpecifier) -> hir::ExportSpecifier {
         let local = self.lower_module_export_name(&specifier.local);
         let exported = self.lower_module_export_name(&specifier.exported);
-        self.hir.export_specifier(specifier.span, local, exported)
+        let export_kind = self.lower_import_export_type_or_value(specifier.export_kind);
+
+        self.hir.export_specifier(specifier.span, local, exported, export_kind)
     }
 
     fn lower_declaration(&mut self, decl: &ast::Declaration<'a>) -> Option<hir::Declaration<'a>> {

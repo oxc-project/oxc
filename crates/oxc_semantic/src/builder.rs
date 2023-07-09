@@ -237,8 +237,11 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
         excludes: SymbolFlags,
+        is_type: bool,
     ) -> SymbolId {
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
+        if let Some(symbol_id) =
+            self.check_redeclaration(scope_id, span, name, excludes, true, is_type)
+        {
             return symbol_id;
         }
 
@@ -246,7 +249,7 @@ impl<'a> SemanticBuilder<'a> {
         let symbol_id =
             self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
         self.symbols.add_declaration(self.current_node_id);
-        self.scope.add_binding(scope_id, name.clone(), symbol_id);
+        self.scope.add_biding_generic(scope_id, name.clone(), symbol_id, is_type);
         symbol_id
     }
 
@@ -256,8 +259,9 @@ impl<'a> SemanticBuilder<'a> {
         name: &Atom,
         includes: SymbolFlags,
         excludes: SymbolFlags,
+        is_type: bool,
     ) -> SymbolId {
-        self.declare_symbol_on_scope(span, name, self.current_scope_id, includes, excludes)
+        self.declare_symbol_on_scope(span, name, self.current_scope_id, includes, excludes, is_type)
     }
 
     pub fn declare_symbol_for_mangler(
@@ -276,7 +280,9 @@ impl<'a> SemanticBuilder<'a> {
             self.current_scope_id
         };
 
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, false) {
+        if let Some(symbol_id) = self.check_redeclaration(
+            scope_id, span, name, excludes, false, false, /* todo: eli u broke it */
+        ) {
             return symbol_id;
         }
 
@@ -308,8 +314,9 @@ impl<'a> SemanticBuilder<'a> {
         name: &Atom,
         excludes: SymbolFlags,
         report_error: bool,
+        is_type: bool,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scope.get_binding(scope_id, name)?;
+        let symbol_id = self.scope.get_binding_generic(scope_id, name, is_type)?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
             self.error(Redeclaration(name.clone(), symbol_span, span));
@@ -456,6 +463,9 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::CatchClause(clause) => {
                 clause.bind(self);
+            }
+            AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
+                type_alias_declaration.bind(self);
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
