@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ExportNamedDeclaration, ModuleDeclaration},
+    ast::{ExportNamedDeclaration, ImportOrExportKind, ModuleDeclaration},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -73,6 +73,9 @@ fn check_export_named_declaration(
     let symbol_table = ctx.semantic().symbols();
     let scopes = ctx.scopes();
     for specifier in export_named_declaration.specifiers.iter() {
+        if matches!(specifier.export_kind, ImportOrExportKind::Type) {
+            continue;
+        }
         // {export {foo} }
         let Some(symbol_id) = scopes.get_binding(scope_id, specifier.local.name()) else {
             continue;
@@ -83,11 +86,6 @@ fn check_export_named_declaration(
         if symbol_is_type {
             ctx.diagnostic(ConsistentTypeExportDiagnostic(specifier.span));
         }
-
-        match specifier.export_kind {
-            oxc_ast::ast::ImportOrExportKind::Value => println!("Value"),
-            oxc_ast::ast::ImportOrExportKind::Type => println!("Type"),
-        }
     }
 }
 
@@ -95,9 +93,8 @@ fn check_export_named_declaration(
 fn test() {
     use crate::tester::Tester;
 
-    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
-        //("export function foo(a: number): number { return a; }", None),
-    ];
+    let pass: Vec<(&str, Option<serde_json::Value>)> =
+        vec![("type foo = number; export {type foo}", None)];
 
     let fail = vec![("type foo = number; export {foo}", None)];
 
