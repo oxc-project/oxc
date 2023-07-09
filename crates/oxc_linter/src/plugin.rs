@@ -66,7 +66,6 @@ impl LinterPlugin {
         let inner = LintAdapter { semantic: Rc::clone(semantic), path: path.to_path_buf() };
         let adapter = Arc::from(&inner);
         for input_query in &self.rules {
-            println!("{:#?}", input_query.args);
             for data_item in execute_query(
                 &self.schema,
                 Arc::clone(&adapter),
