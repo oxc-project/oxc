@@ -72,7 +72,6 @@ fn check_export_named_declaration(
 ) {
     let symbol_table = ctx.semantic().symbols();
     let scopes = ctx.scopes();
-    println!("{:?}", symbol_table);
     for specifier in export_named_declaration.specifiers.iter() {
         if matches!(specifier.export_kind, ImportOrExportKind::Type) {
             continue;

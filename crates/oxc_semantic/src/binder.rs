@@ -27,7 +27,8 @@ impl<'a> Binder for VariableDeclarator<'a> {
             }
         };
         self.id.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes, false);
+            let symbol_id =
+                builder.declare_symbol(ident.span, &ident.name, includes, excludes, false);
             if self.kind == VariableDeclarationKind::Var
                 && !builder.scope.get_flags(current_scope_id).is_var()
             {
@@ -41,7 +42,14 @@ impl<'a> Binder for VariableDeclarator<'a> {
                 }
                 for scope_id in scope_ids {
                     if builder
-                        .check_redeclaration(scope_id, ident.span, &ident.name, excludes, true, false)
+                        .check_redeclaration(
+                            scope_id,
+                            ident.span,
+                            &ident.name,
+                            excludes,
+                            true,
+                            false,
+                        )
                         .is_none()
                     {
                         builder
@@ -71,7 +79,13 @@ impl<'a> Binder for Class<'a> {
 
 impl<'a> Binder for TSTypeAliasDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        builder.declare_symbol(self.id.span, &self.id.name, SymbolFlags::Type, SymbolFlags::Value, true);
+        builder.declare_symbol(
+            self.id.span,
+            &self.id.name,
+            SymbolFlags::Type,
+            SymbolFlags::Value,
+            true,
+        );
     }
 }
 
@@ -120,7 +134,7 @@ impl<'a> Binder for Function<'a> {
                     parent_scope_id,
                     includes,
                     excludes,
-                    false
+                    false,
                 );
             }
         }

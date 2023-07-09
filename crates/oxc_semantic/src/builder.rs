@@ -237,9 +237,11 @@ impl<'a> SemanticBuilder<'a> {
         scope_id: ScopeId,
         includes: SymbolFlags,
         excludes: SymbolFlags,
-        is_type: bool
+        is_type: bool,
     ) -> SymbolId {
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true, is_type) {
+        if let Some(symbol_id) =
+            self.check_redeclaration(scope_id, span, name, excludes, true, is_type)
+        {
             return symbol_id;
         }
 
@@ -257,7 +259,7 @@ impl<'a> SemanticBuilder<'a> {
         name: &Atom,
         includes: SymbolFlags,
         excludes: SymbolFlags,
-        is_type: bool
+        is_type: bool,
     ) -> SymbolId {
         self.declare_symbol_on_scope(span, name, self.current_scope_id, includes, excludes, is_type)
     }
@@ -278,7 +280,9 @@ impl<'a> SemanticBuilder<'a> {
             self.current_scope_id
         };
 
-        if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, false, false /* todo: eli u broke it */) {
+        if let Some(symbol_id) = self.check_redeclaration(
+            scope_id, span, name, excludes, false, false, /* todo: eli u broke it */
+        ) {
             return symbol_id;
         }
 
@@ -310,7 +314,7 @@ impl<'a> SemanticBuilder<'a> {
         name: &Atom,
         excludes: SymbolFlags,
         report_error: bool,
-        is_type: bool
+        is_type: bool,
     ) -> Option<SymbolId> {
         let symbol_id = self.scope.get_binding_generic(scope_id, name, is_type)?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {

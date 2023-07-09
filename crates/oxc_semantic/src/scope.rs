@@ -26,7 +26,6 @@ pub struct ScopeTree {
     unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
 }
 
-
 impl ScopeTree {
     pub fn new(source_type: SourceType) -> Self {
         let mut scope_tree = Self::default();
@@ -79,10 +78,15 @@ impl ScopeTree {
     pub fn get_binding(&self, scope_id: ScopeId, name: &Atom) -> Option<SymbolId> {
         self.bindings[scope_id].get(name).copied()
     }
-    
-    pub fn get_binding_generic(&self, scope_id: ScopeId, name: &Atom, is_type: bool) -> Option<SymbolId> {
+
+    pub fn get_binding_generic(
+        &self,
+        scope_id: ScopeId,
+        name: &Atom,
+        is_type: bool,
+    ) -> Option<SymbolId> {
         if is_type {
-            return self.get_type_binding(scope_id, name)
+            return self.get_type_binding(scope_id, name);
         }
         self.get_binding(scope_id, name)
     }
@@ -111,14 +115,22 @@ impl ScopeTree {
     pub(crate) fn add_binding(&mut self, scope_id: ScopeId, name: Atom, symbol_id: SymbolId) {
         self.bindings[scope_id].insert(name, symbol_id);
     }
+
     pub(crate) fn add_type_biding(&mut self, scope_id: ScopeId, name: Atom, symbol_id: SymbolId) {
         self.type_bindings[scope_id].insert(name, symbol_id);
     }
-    pub(crate) fn add_biding_generic(&mut self, scope_id: ScopeId, name: Atom, symbol_id: SymbolId, is_type: bool) {
+
+    pub(crate) fn add_biding_generic(
+        &mut self,
+        scope_id: ScopeId,
+        name: Atom,
+        symbol_id: SymbolId,
+        is_type: bool,
+    ) {
         if is_type {
-            self.add_type_biding(scope_id, name, symbol_id)
+            self.add_type_biding(scope_id, name, symbol_id);
         } else {
-            self.add_binding(scope_id, name, symbol_id)
+            self.add_binding(scope_id, name, symbol_id);
         }
     }
 
