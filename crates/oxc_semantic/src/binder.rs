@@ -70,8 +70,7 @@ impl<'a> Binder for Class<'a> {
 
 impl<'a> Binder for TSTypeAliasDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        println!("Binder for TSTypeAliasDeclaration");
-        builder.declare_symbol(self.span, &self.id.name, SymbolFlags::Type, SymbolFlags::Value);
+        builder.declare_symbol(self.id.span, &self.id.name, SymbolFlags::Type, SymbolFlags::Value);
     }
 }
 
