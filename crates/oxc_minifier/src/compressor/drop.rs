@@ -18,7 +18,8 @@ impl<'a> Compressor<'a> {
     /// Drop `console.*` expressions.
     /// Enabled by `compress.drop_console
     fn drop_console<'b>(&mut self, stmt: &'b Statement<'a>) -> bool {
-        self.options.drop_console && matches!(stmt, Statement::ExpressionStatement(expr) if self.is_console(&expr.expression))
+        self.options.drop_console
+            && matches!(stmt, Statement::ExpressionStatement(expr) if self.is_console(&expr.expression))
     }
 
     pub(super) fn is_console<'b>(&self, expr: &'b Expression<'a>) -> bool {
@@ -29,5 +30,4 @@ impl<'a> Compressor<'a> {
         let Some(ident) = obj.get_identifier_reference() else { return false };
         ident.name == "console"
     }
-
 }
