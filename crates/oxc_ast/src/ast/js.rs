@@ -1830,10 +1830,9 @@ pub struct ExportSpecifier {
     pub local: ModuleExportName,
     pub exported: ModuleExportName,
     pub export_kind: ImportOrExportKind, // `export { type foo }`
-
 }
 
-#[derive(Debug, Hash)] 
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum ExportDefaultDeclarationKind<'a> {
     Expression(Expression<'a>),

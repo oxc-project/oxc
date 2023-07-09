@@ -1827,7 +1827,6 @@ pub struct ExportSpecifier {
     pub local: ModuleExportName,
     pub exported: ModuleExportName,
     pub export_kind: ImportOrExportKind, // `export type { foo }`
-
 }
 
 #[derive(Debug, Hash)]

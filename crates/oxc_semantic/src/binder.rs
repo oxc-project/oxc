@@ -75,7 +75,6 @@ impl<'a> Binder for TSTypeAliasDeclaration<'a> {
     }
 }
 
-
 // It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
 // unless the source text matched by this production is not strict mode code
 // and the duplicate entries are only bound by FunctionDeclarations.
