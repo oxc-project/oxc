@@ -87,13 +87,13 @@ fn is_in_tail_call_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
             AstKind::ExpressionStatement(expr_stat) => {
                 // expression state in the last line of a `function_body`
                 if expr_stat.expression.span() == node.kind().span() {
-                    if let Some(grand_parent) = ctx.nodes().parent_node(parent.id()) {
-                        if let AstKind::FunctionBody(func_body) = grand_parent.kind() {
-                            if let Some(func_body_stat_last) = func_body.statements.last() {
-                                return func_body_stat_last.span() == node.kind().span();
-                            }
-                        }
-                    }
+                    return is_in_tail_call_position(parent, ctx);
+                }
+            },
+            // last statement in `func_body`
+            AstKind::FunctionBody(func_body) => {
+                if let Some(func_body_stat_last) = func_body.statements.last() {
+                    return func_body_stat_last.span() == node.kind().span();
                 }
             },
             _ => {
