@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Span, GetSpan};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode, fixer::Fix};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-return-await): Redundant use of `await` on a return value.")]
@@ -40,7 +40,11 @@ impl Rule for NoReturnAwait {
             if is_in_tail_call_position(node, ctx) && !has_error_handler(node, ctx) {
                 let start = await_expr.span.start;
                 let end = start + 5;
-                ctx.diagnostic(NoReturnAwaitDiagnostic(Span::new(start, end)));
+                let await_keyword_span = Span::new(start, end);
+                ctx.diagnostic_with_fix(
+                    NoReturnAwaitDiagnostic(await_keyword_span),
+                    || Fix::new("", await_keyword_span),
+                );
             }
         }
     }
