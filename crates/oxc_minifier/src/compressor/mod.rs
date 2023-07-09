@@ -234,6 +234,36 @@ impl<'a> Compressor<'a> {
         }
     }
 
+    /// Transforms variable declarations with `undefined` assignments into
+    /// declaration-only statements.
+    ///
+    /// > _note: cannot use this on `const` declarations. `const x;` is not valid._
+    ///
+    /// `let x = undefined; -> let x`
+    ///
+    /// Returns `true` if compression (mutation) occurred.
+    fn compress_declare_undefined<'b>(&mut self, stmt: &'b mut VariableDeclarator<'a>) -> bool {
+        // short circuit if we don't need compression. Helps avoid borrow
+        // checker violations when mutating
+        match &stmt.init {
+            // todo: handle `void 0` also?
+            Some(expr) if expr.is_undefined() => { /* noop */ }
+            Some(expr) if self.options.drop_console && self.is_console(expr) => { /* noop */ }
+            _ => return false,
+        }
+        stmt.init = None;
+        true
+    }
+
+    fn compress_console<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
+        if self.options.drop_console && self.is_console(expr) {
+            *expr = self.create_void_0();
+            true
+        } else {
+            false
+        }
+    }
+
     /// [Peephole Reorder Constant Expression](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeReorderConstantExpression.java)
     ///
     /// Reorder constant expression hoping for a better compression.
@@ -277,6 +307,16 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
         self.visit_statement_match(stmt);
     }
 
+    fn visit_variable_declaration(&mut self, decl: &'b mut VariableDeclaration<'a>) {
+        for declarator in decl.declarations.iter_mut() {
+            // let x = undefined; -> let x;
+            if !decl.kind.is_const() {
+                self.compress_declare_undefined(declarator);
+            }
+            self.visit_variable_declarator(declarator);
+        }
+    }
+
     fn visit_return_statement(&mut self, stmt: &'b mut ReturnStatement<'a>) {
         if let Some(arg) = &mut stmt.argument {
             self.visit_expression(arg);
@@ -288,6 +328,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
         self.visit_expression_match(expr);
         self.fold_expression(expr);
+        self.compress_console(expr);
         if !self.compress_undefined(expr) {
             self.compress_boolean(expr);
         }
