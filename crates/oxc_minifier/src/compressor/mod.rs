@@ -18,27 +18,33 @@ use oxc_syntax::{
 #[derive(Debug, Clone, Copy)]
 pub struct CompressOptions {
     /// Various optimizations for boolean context, for example `!!a ? b : c` → `a ? b : c`
-    /// Default true
+    /// 
+    /// Default `true`
     pub booleans: bool,
 
     /// Remove `debugger;` statements
-    /// Default true
+    /// 
+    /// Default `true`
     pub drop_debugger: bool,
 
     /// Remove `console.*` statements
+    /// 
     /// Default `false`
     pub drop_console: bool,
 
     /// Join consecutive var statements
-    /// Default true
+    /// 
+    /// Default `true`
     pub join_vars: bool,
 
     /// Optimizations for do, while and for loops when we can statically determine the condition
-    /// Default: true
+    /// 
+    /// Default `true`
     pub loops: bool,
 
     /// Transforms `typeof foo == "undefined" into `foo === void 0`
-    /// Default true
+    /// 
+    /// Default `true`
     pub typeofs: bool,
 }
 
