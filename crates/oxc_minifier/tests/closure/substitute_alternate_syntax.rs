@@ -14,10 +14,10 @@ fn fold_return_result() {
 
 #[test]
 fn undefined() {
-    test("var x = undefined", "var x=void 0");
+    test("var x = undefined", "var x");
     test(
-        "var undefined = 1;function f() {var undefined=2;var x = undefined;}",
-        "var undefined=1;function f(){var undefined=2,x=undefined}",
+        "var undefined = 1;function f() {var undefined=2;var x;}",
+        "var undefined=1;function f(){var undefined=2,x}",
     );
     test("function f(undefined) {}", "function f(undefined){}");
     test("try {} catch(undefined) {}", "try{}catch(undefined){}");

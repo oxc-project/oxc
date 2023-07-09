@@ -228,6 +228,19 @@ impl<'a> Compressor<'a> {
         }
     }
 
+    fn compress_variable_declarator<'b>(
+        &mut self,
+        decl: &'b mut VariableDeclarator<'a>,
+        is_const: bool,
+    ) {
+        if is_const {
+            return;
+        }
+        if let Some(init) = &decl.init && (init.is_undefined() || init.is_void_0()) {
+            decl.init = None;
+        }
+    }
+
     /// [Peephole Reorder Constant Expression](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeReorderConstantExpression.java)
     ///
     /// Reorder constant expression hoping for a better compression.
@@ -277,6 +290,14 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
         }
         // We may fold `void 1` to `void 0`, so compress it after visiting
         self.compress_return_statement(stmt);
+    }
+
+    fn visit_variable_declaration(&mut self, decl: &'b mut VariableDeclaration<'a>) {
+        let is_const = decl.kind.is_const(); // let, var
+        for declarator in decl.declarations.iter_mut() {
+            self.compress_variable_declarator(declarator, is_const);
+            self.visit_variable_declarator(declarator);
+        }
     }
 
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
