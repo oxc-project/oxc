@@ -59,7 +59,8 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_extra_non_null_assertion,
     typescript::no_non_null_asserted_optional_chain,
     typescript::no_unnecessary_type_constraint,
-    typescript::no_misused_new
+    typescript::no_misused_new,
+    typescript::no_this_alias
 }
 
 #[cfg(test)]
