@@ -3,6 +3,31 @@ use std::{
     process::{ExitCode, Termination},
 };
 
+use clap::Command;
+
+pub trait RunnerOptions: for<'a> From<&'a clap::ArgMatches> {
+    /// Add CLI arguments to a [`Command`], usually created from a [`Runner`].
+    fn build_args(cmd: Command) -> Command;
+}
+
+/// A trait for exposing Oxide functionality to the CLI.
+pub trait Runner: Send + Sync {
+    /// The name of the runner. Used to create a subcommand.
+    const NAME: &'static str;
+    /// A short description about what the runner does
+    const ABOUT: &'static str;
+    type Options: RunnerOptions;
+
+    fn command() -> Command {
+        let cmd = Command::new(Self::NAME).about(Self::ABOUT);
+        Self::Options::build_args(cmd)
+    }
+    fn new(options: Self::Options) -> Self;
+
+    /// Executes the runner, providing some result to the CLI.
+    fn run(&self) -> CliRunResult;
+}
+
 #[derive(Debug)]
 pub enum CliRunResult {
     None,
@@ -82,5 +107,66 @@ impl Termination for CliRunResult {
                 ExitCode::from(0)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use clap::{Arg, ArgAction, ArgMatches, Command};
+
+    use super::*;
+
+    #[derive(Debug)]
+    struct TestRunnerOptions {
+        foo: bool,
+    }
+
+    #[derive(Debug)]
+    struct TestRunner {
+        options: TestRunnerOptions,
+    }
+
+    impl<'a> From<&'a ArgMatches> for TestRunnerOptions {
+        fn from(value: &'a ArgMatches) -> Self {
+            let foo = value.get_flag("foo");
+            Self { foo }
+        }
+    }
+
+    impl RunnerOptions for TestRunnerOptions {
+        fn build_args(cmd: Command) -> Command {
+            cmd.arg(Arg::new("foo").short('f').action(ArgAction::SetTrue).required(false))
+        }
+    }
+
+    impl Runner for TestRunner {
+        type Options = TestRunnerOptions;
+
+        const ABOUT: &'static str = "some description";
+        const NAME: &'static str = "test";
+
+        fn new(options: Self::Options) -> Self {
+            Self { options }
+        }
+
+        fn run(&self) -> CliRunResult {
+            CliRunResult::None
+        }
+    }
+
+    #[test]
+    fn check_cmd_validity() {
+        TestRunner::command().debug_assert();
+    }
+
+    #[test]
+    fn smoke_test_runner() {
+        let cmd = TestRunner::command();
+        let matches = cmd.get_matches_from("test -f".split(' '));
+        let opts = TestRunnerOptions::from(&matches);
+        let runner = TestRunner::new(opts);
+        assert!(runner.options.foo);
+        let result = runner.run();
+        assert!(matches!(result, CliRunResult::None));
     }
 }

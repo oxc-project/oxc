@@ -6,7 +6,10 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_type_synthesis::synthesize_program;
 
-use crate::CliRunResult;
+use crate::{
+    runner::{Runner, RunnerOptions},
+    CliRunResult,
+};
 
 const PRELUDE: &str = "
 type StringOrNumber = string | number;
@@ -56,32 +59,35 @@ impl<'a> From<&'a ArgMatches> for TypeCheckOptions {
         }
     }
 }
-
-pub fn type_check_command() -> Command {
-    Command::new("check")
-        .about(
-            "NOTE: Experimental / work in progress. Check source code for type errors using Ezno",
-        )
-        .arg(Arg::new("path").value_name("PATH").num_args(1).help("File to type check"))
-        .arg(
-            Arg::new("print_expression_mappings")
-                .required(false)
-                .help("Print types of expressions"),
-        )
-        .arg(Arg::new("print_called_functions").required(false).help("Print called functions"))
+impl RunnerOptions for TypeCheckOptions {
+    fn build_args(cmd: Command) -> Command {
+        cmd.arg(Arg::new("path").value_name("PATH").num_args(1).help("File to type check"))
+            .arg(
+                Arg::new("print_expression_mappings")
+                    .required(false)
+                    .help("Print types of expressions"),
+            )
+            .arg(Arg::new("print_called_functions").required(false).help("Print called functions"))
+    }
 }
 
 pub struct TypeCheckRunner {
     options: TypeCheckOptions,
 }
 
-impl TypeCheckRunner {
-    pub fn new(options: TypeCheckOptions) -> Self {
+impl Runner for TypeCheckRunner {
+    type Options = TypeCheckOptions;
+
+    const ABOUT: &'static str =
+        "NOTE: Experimental / work in progress. Check source code for type errors using Ezno";
+    const NAME: &'static str = "check";
+
+    fn new(options: TypeCheckOptions) -> Self {
         Self { options }
     }
 
     /// # Panics
-    pub fn run(&self) -> CliRunResult {
+    fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
 
         let path = Path::new(&self.options.path);

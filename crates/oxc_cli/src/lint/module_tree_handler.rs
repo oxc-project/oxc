@@ -14,16 +14,15 @@ use oxc_diagnostics::{
     thiserror::Error,
     Error, GraphicalReportHandler, Severity,
 };
-use oxc_linter::{FixResult, Fixer, LintContext, Linter, RuleCategory, RuleEnum, RULES};
+use oxc_linter::{FixResult, Fixer, LintContext, Linter};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
 use rayon::prelude::*;
-use rustc_hash::FxHashSet;
 
 use super::{
     error::{ErrorWithPath, Result},
-    AllowWarnDeny, LintOptions,
+    options::LintOptions,
 };
 use crate::CliRunResult;
 
@@ -34,8 +33,9 @@ struct LinterRuntimeData {
     tx_error: Sender<(PathBuf, Vec<Error>)>,
 }
 
-pub struct LintRunnerWithModuleTree {
-    options: LintOptions,
+pub struct ModuleTreeLintHandler {
+    options: Arc<LintOptions>,
+    linter: Arc<Linter>,
 }
 use dashmap::DashSet;
 
@@ -44,68 +44,13 @@ use dashmap::DashSet;
 #[diagnostic(help("{0:?} seems like a minified file"))]
 pub struct MinifiedFileError(pub PathBuf);
 
-impl LintRunnerWithModuleTree {
-    pub fn new(options: LintOptions) -> Self {
-        Self { options }
+impl ModuleTreeLintHandler {
+    pub(super) fn new(options: Arc<LintOptions>, linter: Arc<Linter>) -> Self {
+        Self { options, linter }
     }
 
-    pub fn print_rules() {
-        let mut stdout = BufWriter::new(io::stdout());
-        Linter::print_rules(&mut stdout);
-    }
-
-    fn derive_rules(options: &LintOptions) -> Vec<RuleEnum> {
-        let mut rules: FxHashSet<RuleEnum> = FxHashSet::default();
-
-        for (allow_warn_deny, name_or_category) in &options.rules {
-            let maybe_category = RuleCategory::from(name_or_category.as_str());
-            match allow_warn_deny {
-                AllowWarnDeny::Deny => {
-                    match maybe_category {
-                        Some(category) => rules.extend(
-                            RULES.iter().filter(|rule| rule.category() == category).cloned(),
-                        ),
-                        None => {
-                            if name_or_category == "all" {
-                                rules.extend(RULES.iter().cloned());
-                            } else {
-                                rules.extend(
-                                    RULES
-                                        .iter()
-                                        .filter(|rule| rule.name() == name_or_category)
-                                        .cloned(),
-                                );
-                            }
-                        }
-                    };
-                }
-                AllowWarnDeny::Allow => {
-                    match maybe_category {
-                        Some(category) => rules.retain(|rule| rule.category() != category),
-                        None => {
-                            if name_or_category == "all" {
-                                rules.clear();
-                            } else {
-                                rules.retain(|rule| rule.name() == name_or_category);
-                            }
-                        }
-                    };
-                }
-            }
-        }
-
-        let mut rules = rules.into_iter().collect::<Vec<_>>();
-        // for stable diagnostics output ordering
-        rules.sort_unstable_by_key(|rule| rule.name());
-        rules
-    }
-
-    pub fn run(&self) -> CliRunResult {
+    pub(super) fn run(&self) -> CliRunResult {
         let now = std::time::Instant::now();
-
-        let linter =
-            Linter::from_rules(Self::derive_rules(&self.options)).with_fix(self.options.fix);
-        let linter = Arc::new(linter);
 
         // Unless other panic happens, calling `Sender::send` can't fail, because we hold the
         // receiver until all senders are dropped. This allows us to safely unwrap all calls to send.
@@ -122,7 +67,7 @@ impl LintRunnerWithModuleTree {
         let result = process_paths(
             &self.options.paths,
             LinterRuntimeData {
-                linter: Arc::clone(&linter),
+                linter: Arc::clone(&self.linter),
                 visited: Arc::clone(&visited),
                 tx_error,
             },
@@ -136,7 +81,7 @@ impl LintRunnerWithModuleTree {
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
-            number_of_rules: linter.number_of_rules(),
+            number_of_rules: self.linter.number_of_rules(),
             number_of_files: visited.len(),
             number_of_diagnostics,
             number_of_warnings,
