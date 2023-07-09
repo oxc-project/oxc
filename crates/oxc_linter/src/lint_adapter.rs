@@ -363,7 +363,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 let path = self.path.clone();
                 resolve_neighbors_with(contexts, move |v| {
                     Box::new(std::iter::once(Vertex::PathCompareResult(
-                        path.components().filter(|comp| !matches!(comp, std::path::Component::Normal(_)))
+                        path.components().filter(|comp| matches!(comp, std::path::Component::Normal(_)))
                             .rev()
                             .zip(
                                 params["regex"]
