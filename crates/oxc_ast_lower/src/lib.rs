@@ -41,7 +41,7 @@ impl<'a> AstLower<'a> {
         includes: SymbolFlags,
         excludes: SymbolFlags,
     ) -> SymbolId {
-        self.semantic.declare_symbol(span, name, includes, excludes)
+        self.semantic.declare_symbol(span, name, includes, excludes, false /* this is so much leaked complexity omg */)
     }
 
     pub fn enter_identifier_reference(

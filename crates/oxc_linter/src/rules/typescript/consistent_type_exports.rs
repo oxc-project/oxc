@@ -72,12 +72,13 @@ fn check_export_named_declaration(
 ) {
     let symbol_table = ctx.semantic().symbols();
     let scopes = ctx.scopes();
+    println!("{:?}", symbol_table);
     for specifier in export_named_declaration.specifiers.iter() {
         if matches!(specifier.export_kind, ImportOrExportKind::Type) {
             continue;
         }
         // {export {foo} }
-        let Some(symbol_id) = scopes.get_binding(scope_id, specifier.local.name()) else {
+        let Some(symbol_id) = scopes.get_type_binding(scope_id, specifier.local.name()) else {
             continue;
         };
         // Symbol resolution should not be done in a rule it should be a global function...

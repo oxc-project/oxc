@@ -27,7 +27,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
             }
         };
         self.id.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes, false);
             if self.kind == VariableDeclarationKind::Var
                 && !builder.scope.get_flags(current_scope_id).is_var()
             {
@@ -41,7 +41,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
                 }
                 for scope_id in scope_ids {
                     if builder
-                        .check_redeclaration(scope_id, ident.span, &ident.name, excludes, true)
+                        .check_redeclaration(scope_id, ident.span, &ident.name, excludes, true, false)
                         .is_none()
                     {
                         builder
@@ -63,6 +63,7 @@ impl<'a> Binder for Class<'a> {
                 &ident.name,
                 SymbolFlags::Class,
                 SymbolFlags::ClassExcludes,
+                false /* Could be true idk tyeps are fun - does this redeclar */
             );
         }
     }
@@ -70,7 +71,7 @@ impl<'a> Binder for Class<'a> {
 
 impl<'a> Binder for TSTypeAliasDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        builder.declare_symbol(self.id.span, &self.id.name, SymbolFlags::Type, SymbolFlags::Value);
+        builder.declare_symbol(self.id.span, &self.id.name, SymbolFlags::Type, SymbolFlags::Value, true);
     }
 }
 
@@ -119,6 +120,7 @@ impl<'a> Binder for Function<'a> {
                     parent_scope_id,
                     includes,
                     excludes,
+                    false
                 );
             }
         }
@@ -157,7 +159,7 @@ impl<'a> Binder for FormalParameters<'a> {
         let is_signature = self.kind == FormalParameterKind::Signature;
         self.bound_names(&mut |ident| {
             if !is_signature {
-                builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+                builder.declare_symbol(ident.span, &ident.name, includes, excludes, false);
             }
         });
     }
@@ -180,6 +182,7 @@ impl<'a> Binder for CatchClause<'a> {
                         &ident.name,
                         SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
                         SymbolFlags::BlockScopedVariableExcludes,
+                        false,
                     );
                 });
             }
@@ -195,6 +198,7 @@ impl<'a> Binder for ModuleDeclaration<'a> {
                 &ident.name,
                 SymbolFlags::ImportBinding,
                 SymbolFlags::ImportBindingExcludes,
+                false,
             );
         });
     }
