@@ -68,6 +68,14 @@ impl<'a> Binder for Class<'a> {
     }
 }
 
+impl<'a> Binder for TSTypeAliasDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        println!("Binder for TSTypeAliasDeclaration");
+        builder.declare_symbol(self.span, &self.id.name, SymbolFlags::Type, SymbolFlags::Value);
+    }
+}
+
+
 // It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
 // unless the source text matched by this production is not strict mode code
 // and the duplicate entries are only bound by FunctionDeclarations.

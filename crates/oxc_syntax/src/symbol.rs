@@ -25,8 +25,11 @@ bitflags! {
         const Function                = 1 << 7;
         const ImportBinding           = 1 << 8; // Imported ESM binding
 
+        const Type                    = 1 << 9; // WIP: prolly worth copying TS but this structure seems sufficienlty different unsure what to do
+
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
         const Value = Self::Variable.bits() | Self::Class.bits();
+
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
         /// same name, or any other value that is not a variable, e.g. ValueModule or Class
@@ -42,6 +45,9 @@ bitflags! {
 }
 
 impl SymbolFlags {
+    pub fn is_type(&self) -> bool {
+        self.intersects(Self::Type)
+    }
     pub fn is_variable(&self) -> bool {
         self.intersects(Self::Variable)
     }

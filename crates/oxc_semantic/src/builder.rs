@@ -457,6 +457,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::CatchClause(clause) => {
                 clause.bind(self);
             }
+            AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
+                type_alias_declaration.bind(self);
+            }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }

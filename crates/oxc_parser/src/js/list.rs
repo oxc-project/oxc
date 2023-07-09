@@ -374,7 +374,7 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
 
         let local = p.parse_module_export_name()?;
         let exported = if p.eat(Kind::As) { p.parse_module_export_name()? } else { local.clone() };
-        let element = ExportSpecifier { span: p.end_span(specifier_span), local, exported };
+        let element = ExportSpecifier { span: p.end_span(specifier_span), local, exported, export_kind };
         self.elements.push(element);
         Ok(())
     }
