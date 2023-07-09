@@ -46,11 +46,14 @@ impl LinterPlugin {
             .filter(|f| {
                 std::path::Path::new(f.path().as_os_str().to_str().unwrap())
                     .extension()
-                    .map_or(false, |ext| ext.eq_ignore_ascii_case("ron"))
+                    .map_or(false, |ext| ext.eq_ignore_ascii_case("yml"))
             })
             .map(|f| fs::read_to_string(f.path()))
             .map(std::result::Result::unwrap)
-            .map(|rule| ron::from_str::<InputQuery>(rule.as_str()).unwrap())
+            .map(|rule| {
+                serde_yaml::from_str::<InputQuery>(rule.as_str())
+                    .expect(&format!("{rule}\n\nQuery above"))
+            })
             .collect::<Vec<_>>();
 
         let schema_file = std::include_str!("schema.graphql");
@@ -63,6 +66,7 @@ impl LinterPlugin {
         let inner = LintAdapter { semantic: Rc::clone(semantic), path: path.to_path_buf() };
         let adapter = Arc::from(&inner);
         for input_query in &self.rules {
+            println!("{:#?}", input_query.args);
             for data_item in execute_query(
                 &self.schema,
                 Arc::clone(&adapter),

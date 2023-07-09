@@ -1,0 +1,19 @@
+query: |
+  query {
+    File {
+      type_annotation {
+        type {
+          str @filter(op: "=", value: ["$Boolean"])
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  "Boolean": !String "Boolean"
+
+reason: Use boolean instead

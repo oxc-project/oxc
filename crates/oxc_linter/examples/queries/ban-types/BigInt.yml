@@ -1,0 +1,19 @@
+query: |
+  query {
+    File {
+      type_annotation {
+        type {
+          str @filter(op: "=", value: ["$BigInt"])
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  "BigInt": !String "BigInt"
+
+reason: Use bigint instead

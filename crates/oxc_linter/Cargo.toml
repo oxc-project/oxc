@@ -29,12 +29,12 @@ num-traits  = { workspace = true }
 rust-lapper = "1.1.0"
 
 trustfall = "0.5.0"
-ron = "0.8.0"
 regex.workspace = true
 path-absolutize = "3.1.0"
 url-search-params = "12.0.0"
 url.workspace = true
 path-calculate = "0.1.3"
+serde_yaml = "0.9.22"
 
 [dev-dependencies]
 oxc_allocator = { workspace = true }
