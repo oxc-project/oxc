@@ -6,7 +6,6 @@
 mod tester;
 
 mod ast_util;
-pub mod calculate;
 mod context;
 mod disable_directives;
 mod fixer;
@@ -16,11 +15,12 @@ mod plugin;
 pub mod rule;
 mod rules;
 
-use std::{env, fs, io::Write, path::PathBuf, rc::Rc};
+use std::{borrow::Cow, env, fs, io::Write, path::Path, rc::Rc};
 
 pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
+pub use path_calculate::Calculate;
 use plugin::LinterPlugin;
 use rustc_hash::FxHashMap;
 
@@ -91,7 +91,7 @@ impl Linter {
         Self::from_rules(rules)
     }
 
-    pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, path: PathBuf) -> Vec<Message<'a>> {
+    pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, path: Cow<'_, Path>) -> Vec<Message<'a>> {
         let mut ctx = LintContext::new(semantic, self.fix);
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
@@ -108,7 +108,7 @@ impl Linter {
         }
 
         if let Some(plugin) = &self.plugin {
-            plugin.run(&mut ctx, semantic, &path);
+            plugin.run(&mut ctx, semantic, path);
         }
 
         ctx.into_message()

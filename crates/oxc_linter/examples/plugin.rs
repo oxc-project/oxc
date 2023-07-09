@@ -3,10 +3,11 @@
 use std::{env, path::Path, rc::Rc, time::Instant};
 
 use oxc_allocator::Allocator;
-use oxc_linter::{calculate::Calculate, Linter};
+use oxc_linter::Linter;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use path_calculate::Calculate;
 
 // Instruction:
 // create a `test.js`,

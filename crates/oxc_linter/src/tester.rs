@@ -1,13 +1,17 @@
-use std::{path::PathBuf, rc::Rc};
+use std::{
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use oxc_allocator::Allocator;
 use oxc_diagnostics::miette::{GraphicalReportHandler, GraphicalTheme, NamedSource};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
+use path_calculate::Calculate;
 use serde_json::Value;
 
-use crate::{calculate::Calculate, rules::RULES, Linter};
+use crate::{rules::RULES, Linter};
 
 pub struct Tester {
     rule_name: &'static str,

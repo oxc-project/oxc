@@ -15,7 +15,7 @@ use oxc_diagnostics::{
     thiserror::Error,
     Error, GraphicalReportHandler, Severity,
 };
-use oxc_linter::{calculate::Calculate, FixResult, Fixer, Linter, RuleCategory, RuleEnum, RULES};
+use oxc_linter::{Calculate, FixResult, Fixer, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::{Parser, ParserReturn};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
