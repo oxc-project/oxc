@@ -104,22 +104,25 @@ fn has_error_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let mut current_node = node;
     loop {
         if let Some(parent_node) = ctx.nodes().parent_node(current_node.id()) {
-            if matches!(parent_node.kind(), AstKind::Program(_)) {
+            let parent_node_kind = parent_node.kind();
+            if matches!(parent_node_kind, AstKind::Program(_)) {
                 break;
             }
 
-            if parent_node.kind().is_function_like() {
+            if parent_node_kind.is_function_like() {
                 break;
             }
 
-            if let AstKind::TryStatement(try_stat) = parent_node.kind() {
-                if try_stat.block.span == node.kind().span()
-                    && try_stat.finalizer.is_some() {
+            if let AstKind::TryStatement(try_stat) = parent_node_kind {
+                let current_node_span = current_node.kind().span();
+                // try statement must have a `catch` or `finally`
+                if try_stat.block.span == current_node_span {
                     return true;
                 }
 
+                // return await in `catch clause` with `finally` would be passed
                 if let Some(catch_clause) = &try_stat.handler {
-                    if catch_clause.span == node.kind().span() && try_stat.finalizer.is_some() {
+                    if catch_clause.span == current_node_span && try_stat.finalizer.is_some() {
                         return true;
                     }
                 }
@@ -201,8 +204,8 @@ fn test() {
     ];
 
     let fail = vec![
-        // ("\nasync function foo() {\n\treturn await bar();\n}\n", None),
-        // ("\nasync function foo() {\n\treturn await(bar());\n}\n", None),
+        ("\nasync function foo() {\n\treturn await bar();\n}\n", None),
+        ("\nasync function foo() {\n\treturn await(bar());\n}\n", None),
         ("\nasync function foo() {\n\treturn (a, await bar());\n}\n", None),
         ("\nasync function foo() {\n\treturn (a, b, await bar());\n}\n", None),
         ("\nasync function foo() {\n\treturn (a && await bar());\n}\n", None),

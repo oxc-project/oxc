@@ -6,6 +6,24 @@ expression: no_return_await
   ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
    ╭─[no_return_await.tsx:2:1]
  2 │ async function foo() {
+ 3 │     return await bar();
+   ·            ─────
+ 4 │ }
+   ╰────
+  help: Remove redundant `await`.
+
+  ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
+   ╭─[no_return_await.tsx:2:1]
+ 2 │ async function foo() {
+ 3 │     return await(bar());
+   ·            ─────
+ 4 │ }
+   ╰────
+  help: Remove redundant `await`.
+
+  ⚠ eslint(no-return-await): Redundant use of `await` on a return value.
+   ╭─[no_return_await.tsx:2:1]
+ 2 │ async function foo() {
  3 │     return (a, await bar());
    ·                ─────
  4 │ }
