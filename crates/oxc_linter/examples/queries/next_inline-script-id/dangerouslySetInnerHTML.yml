@@ -1,0 +1,41 @@
+query: |
+  query {
+    File {
+      import {
+        from_path @filter(op: "=", value: ["$nextslashscript"])
+
+        default_import {
+          local_name @tag
+        }
+      }
+
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["%local_name"])
+          span_: span {
+            start @output
+            end @output
+          }
+          spread_attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+            span {
+              start # don't need
+            }
+          }
+          attribute @fold @transform(op: "count") @filter(op: ">", value: ["$zero"])  {
+            name @filter(op: "=", value: ["$dangerouslySetInnerHTML"])
+          }
+          attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+            name @filter(op: "=", value: ["$id"])
+          }
+        }
+      }
+    }
+  }
+
+args:
+  zero: 0
+  dangerouslySetInnerHTML: "dangerouslySetInnerHTML"
+  nextslashscript: "next/script"
+  id: "id"
+
+reason: "`next/script` components with inline content must specify an `id` attribute."

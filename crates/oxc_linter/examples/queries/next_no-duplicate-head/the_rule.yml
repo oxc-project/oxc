@@ -1,0 +1,44 @@
+query: |
+  query {
+    File {
+      import {
+        from_path @filter(op: "=", value: ["$nextslashdocument"])
+
+        default_import {
+          local_name @tag(name: "default_imported_class_name")
+        }
+      }
+
+      ast_node {
+        ... on ReturnStatementAST {
+          ancestor {
+            ... on ClassAST {
+              extended_class_name @filter(op: "=", value: ["%default_imported_class_name"])
+            }
+          }
+
+          expression {
+            ... on JSXElement {
+              child_element @fold @transform(op: "count") @filter(op: ">", value: ["$one"]) {
+                opening_element {
+                  name @filter(op: "=", value: ["$Head"]) @output
+                  # NOTE: Slight bug in that if we find 3 we report 3, not just the 2 error'ed ones
+                  span_: span {
+                    start @output
+                    end @output
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+args:
+  one: 1
+  nextslashdocument: "next/document"
+  Head: "Head"
+
+reason: "Do not include multiple instances of `<Head/>`."

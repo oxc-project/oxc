@@ -14,6 +14,6 @@ query: |
   }
 
 args:
-  "Boolean": "Boolean"
+  Boolean: "Boolean"
 
 reason: Use boolean instead

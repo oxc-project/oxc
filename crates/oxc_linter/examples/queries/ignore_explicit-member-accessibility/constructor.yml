@@ -1,9 +1,9 @@
 query: |
   query {
     File {
-      type_annotation {
-        type {
-          str @filter(op: "=", value: ["$String"])
+      class {
+        constructor {
+          accessibility @filter(op: "is_null")
           span_: span {
             start @output
             end @output
@@ -14,6 +14,5 @@ query: |
   }
 
 args:
-  String: "String"
 
-reason: Use string instead
+reason: Add access modifier.

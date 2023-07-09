@@ -1,0 +1,31 @@
+query: |
+  query {
+    File {
+      path_ends_with(regex: ["^pages$", "^_document\\..+"]) {
+        result @filter(op: "=", value: ["$true"])
+      }
+
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$style"])
+
+          attribute @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+            name @filter(op: "=", value: ["$jsx"])
+          }
+
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  true: true
+  zero: 0
+  style: "style"
+  jsx: "jsx"
+
+reason: "`styled-jsx` should not be used in `pages/_document.js"

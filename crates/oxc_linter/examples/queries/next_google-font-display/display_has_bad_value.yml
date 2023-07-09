@@ -1,0 +1,40 @@
+query: |
+  query {
+    File {
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$link"])
+
+          span_: span {
+            start @output
+            end @output
+          }
+
+          attribute {
+            name @filter(op: "=", value: ["$href"])
+            value_as_constant_string @filter(op: "has_prefix", value: ["$href_value_start"])
+
+            value_as_url {
+              search_parameter @fold @transform(op: "count") @filter(op: ">", value:["$zero"]) {
+                key @filter(op: "=", value: ["$display"])
+                value @filter(op: "one_of", value: ["$bad_display_values"])
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+args:
+  zero: 0
+  link: "link"
+  href: "href"
+  display: "display"
+  href_value_start: "https://fonts.googleapis.com/css"
+  bad_display_values: 
+    - "auto"
+    - "block"
+    - "fallback"
+
+reason: "{display_value} is not recommended."
