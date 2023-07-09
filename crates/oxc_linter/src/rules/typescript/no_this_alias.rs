@@ -7,26 +7,26 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Span, Atom};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.")]
-#[diagnostic(severity(error), help("Unexpected aliasing of 'this' to local variable."))]
+#[diagnostic(severity(error), help("Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well."))]
 struct NoThisAliasDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
     "typescript-eslint(no-this alias): Unexpected aliasing of members of 'this' to local variables."
 )]
-#[diagnostic(severity(error), help("Unexpected aliasing of members of 'this' to local variables."))]
+#[diagnostic(severity(error), help("Disabling destructuring of this is not a default, consider allowing destructuring"))]
 struct NoThisDestructureDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Clone)]
 pub struct NoThisAlias {
     allow_destructuring: bool,
-    allow_names: Vec<String>,
+    allow_names: Vec<Atom>,
 }
 
 impl Default for NoThisAlias {
@@ -64,8 +64,8 @@ impl Rule for NoThisAlias {
             .iter()
             .map(serde_json::Value::as_str)
             .filter(std::option::Option::is_some)
-            .map(|x| x.unwrap().to_string())
-            .collect::<Vec<String>>();
+            .map(|x| Atom::from(x.unwrap().to_string()))
+            .collect::<Vec<Atom>>();
 
         Self {
             allow_destructuring: obj
@@ -94,7 +94,7 @@ impl Rule for NoThisAlias {
                 }
 
                 if let BindingPatternKind::BindingIdentifier(identifier) = &decl.id.kind {
-                    if !self.allow_names.contains(&identifier.name.to_string()) {
+                    if !self.allow_names.contains(&identifier.name) {
                         ctx.diagnostic(NoThisAliasDiagnostic(identifier.span));
                     }
 
@@ -115,14 +115,14 @@ impl Rule for NoThisAlias {
                     }
                     AssignmentTarget::SimpleAssignmentTarget(pat) => match pat {
                         SimpleAssignmentTarget::AssignmentTargetIdentifier(id) => {
-                            if !self.allow_names.contains(&id.name.to_string()) {
+                            if !self.allow_names.contains(&id.name) {
                                 ctx.diagnostic(NoThisAliasDiagnostic(id.span));
                             }
                         }
                         _ => {
                             if let Some(expr) = pat.get_expression() {
                                 if let Some(id) = expr.get_identifier_reference() {
-                                    if !self.allow_names.contains(&id.name.to_string()) {
+                                    if !self.allow_names.contains(&id.name) {
                                         ctx.diagnostic(NoThisAliasDiagnostic(id.span));
                                     }
                                 }
