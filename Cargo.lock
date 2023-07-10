@@ -1370,6 +1370,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
+ "regex",
  "rust-lapper",
  "rustc-hash",
  "serde_json",

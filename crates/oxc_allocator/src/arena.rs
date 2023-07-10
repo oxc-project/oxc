@@ -128,6 +128,28 @@ impl<'alloc, T> IntoIterator for &'alloc Vec<'alloc, T> {
     }
 }
 
+impl<'alloc, T> ops::Index<usize> for Vec<'alloc, T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        self.0.index(index)
+    }
+}
+
+impl<'alloc, T> ops::Index<usize> for &'alloc Vec<'alloc, T> {
+    type Output = T;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        self.0.index(index)
+    }
+}
+
+impl<'alloc, T> ops::IndexMut<usize> for Vec<'alloc, T> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        self.0.index_mut(index)
+    }
+}
+
 impl<'alloc, T> Serialize for Vec<'alloc, T>
 where
     T: Serialize,

@@ -46,9 +46,8 @@ You can download the [pre-compiled binary](https://github.com/cargo-bins/cargo-b
 cargo binstall just -y
 ```
 
-* `just` is a handy way to save and run project-specific commands
-
-To initialize all the required tools, run
+[`just`](https://github.com/casey/just) is a handy way to save and run
+project-specific commands. To initialize all the required tools, run
 
 ```
 just init
