@@ -4,7 +4,10 @@ pub(super) fn lint_command(command: Command) -> Command {
     command
             .arg_required_else_help(true)
             .after_help(
-                "To allow or deny a rule, multiple -A <NAME> or -D <NAME>.
+                "# Rule Selection
+
+To allow or deny a rule, multiple -A <NAME> or -D <NAME>.
+
 For example: -D correctness -A no-debugger.
 
 The categories are:
@@ -12,7 +15,14 @@ The categories are:
   * nursery     - new lints that are still under development
   * all         - all the categories listed above
 
-The default category is -D correctness.")
+The default category is -D correctness.
+
+# Profile Rule Performance
+
+Setting the TIMING environment variable will display the execution time of each rule.
+
+TIMING=1 \"the lint command\"
+")
             .arg(
                 Arg::new("path")
                     .value_name("PATH")
