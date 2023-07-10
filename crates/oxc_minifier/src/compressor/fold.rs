@@ -4,11 +4,12 @@
 
 use std::{cmp::Ordering, mem, ops::Not};
 
+use num_bigint::BigInt;
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::hir_util::{
-    get_boolean_value, get_number_value, get_side_free_number_value, get_side_free_string_value,
-    IsLiteralValue, MayHaveSideEffects, NumberValue,
+    get_boolean_value, get_number_value, get_side_free_bigint_value, get_side_free_number_value,
+    get_side_free_string_value, is_exact_int64, IsLiteralValue, MayHaveSideEffects, NumberValue,
 };
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
@@ -35,8 +36,66 @@ impl Tri {
         }
     }
 
+    pub fn xor(self, other: Self) -> Self {
+        self.for_int(-self.value() * other.value())
+    }
+
+    pub fn for_int(self, int: i8) -> Self {
+        match int {
+            -1 => Self::False,
+            1 => Self::True,
+            _ => Self::Unknown,
+        }
+    }
+
     pub fn for_boolean(boolean: bool) -> Self {
         if boolean { Self::True } else { Self::False }
+    }
+
+    pub fn value(self) -> i8 {
+        match self {
+            Self::True => 1,
+            Self::False => -1,
+            Self::Unknown => 0,
+        }
+    }
+}
+
+/// ported from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1250)
+#[allow(clippy::cast_possible_truncation)]
+fn bigint_less_than_number(
+    bigint_value: &BigInt,
+    number_value: &NumberValue,
+    invert: Tri,
+    will_negative: bool,
+) -> Tri {
+    // if invert is false, then the number is on the right in tryAbstractRelationalComparison
+    // if it's true, then the number is on the left
+    match number_value {
+        NumberValue::NaN => Tri::for_boolean(will_negative),
+        NumberValue::PositiveInfinity => Tri::True.xor(invert),
+        NumberValue::NegativeInfinity => Tri::False.xor(invert),
+        NumberValue::Number(num) => {
+            if let Some(Ordering::Equal | Ordering::Greater) =
+                num.abs().partial_cmp(&2_f64.powi(53))
+            {
+                Tri::Unknown
+            } else {
+                let number_as_bigint = BigInt::from(*num as i64);
+
+                match bigint_value.cmp(&number_as_bigint) {
+                    Ordering::Less => Tri::True.xor(invert),
+                    Ordering::Greater => Tri::False.xor(invert),
+                    Ordering::Equal => {
+                        if is_exact_int64(*num) {
+                            Tri::False
+                        } else {
+                            Tri::for_boolean(num.is_sign_positive()).xor(invert)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -209,6 +268,15 @@ impl<'a> Compressor<'a> {
                 return Tri::True;
             }
 
+            if matches!(left, Ty::BigInt) || matches!(right, Ty::BigInt) {
+                let left_bigint = get_side_free_bigint_value(left_expr);
+                let right_bigint = get_side_free_bigint_value(right_expr);
+
+                if let Some(l_big) = left_bigint && let Some(r_big) = right_bigint {
+                    return Tri::for_boolean(l_big.eq(&r_big));
+                }
+            }
+
             return Tri::False;
         }
         Tri::Unknown
@@ -248,15 +316,33 @@ impl<'a> Compressor<'a> {
             }
         }
 
-        // try comparing as Numbers.
+        let left_bigint = get_side_free_bigint_value(left_expr);
+        let right_bigint = get_side_free_bigint_value(right_expr);
+
         let left_num = get_side_free_number_value(left_expr);
         let right_num = get_side_free_number_value(right_expr);
-        if let Some(left_num) = left_num && let Some(right_num) = right_num {
-            match (left_num, right_num) {
-                (NumberValue::NaN, _) | (_, NumberValue::NaN) => return Tri::for_boolean(will_negative),
-                (NumberValue::Number(left_num), NumberValue::Number(right_num)) => return Tri::for_boolean(left_num < right_num),
-                _ => {}
+
+        match (left_bigint, right_bigint, left_num, right_num) {
+            // Next, try to evaluate based on the value of the node. Try comparing as BigInts first.
+            (Some(l_big), Some(r_big), _, _) => {
+                return Tri::for_boolean(l_big < r_big);
             }
+            // try comparing as Numbers.
+            (_, _, Some(l_num), Some(r_num)) => match (l_num, r_num) {
+                (NumberValue::NaN, _) | (_, NumberValue::NaN) => {
+                    return Tri::for_boolean(will_negative);
+                }
+                (NumberValue::Number(l), NumberValue::Number(r)) => return Tri::for_boolean(l < r),
+                _ => {}
+            },
+            // Finally, try comparisons between BigInt and Number.
+            (Some(l_big), _, _, Some(r_num)) => {
+                return bigint_less_than_number(&l_big, &r_num, Tri::False, will_negative);
+            }
+            (_, Some(r_big), Some(l_num), _) => {
+                return bigint_less_than_number(&r_big, &l_num, Tri::True, will_negative);
+            }
+            _ => {}
         }
 
         Tri::Unknown

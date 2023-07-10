@@ -1,6 +1,6 @@
 //! <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeFoldConstantsTest.java>
 
-use crate::{test, test_same, test_without_compress_booleans};
+use crate::{test, test_same, test_without_compress_booleans as test_wcb};
 
 #[test]
 fn undefined_comparison1() {
@@ -154,6 +154,50 @@ fn test_string_string_comparison() {
 }
 
 #[test]
+fn test_bigint_number_comparison() {
+    test_wcb("1n < 2", "true");
+    test_wcb("1n > 2", "false");
+    test_wcb("1n == 1", "true");
+    test_wcb("1n == 2", "false");
+
+    // comparing with decimals is allowed
+    test_wcb("1n < 1.1", "true");
+    test_wcb("1n < 1.9", "true");
+    test_wcb("1n < 0.9", "false");
+    test_wcb("-1n < -1.1", "false");
+    test_wcb("-1n < -1.9", "false");
+    test_wcb("-1n < -0.9", "true");
+    test_wcb("1n > 1.1", "false");
+    test_wcb("1n > 0.9", "true");
+    test_wcb("-1n > -1.1", "true");
+    test_wcb("-1n > -0.9", "false");
+
+    // Don't fold unsafely large numbers because there might be floating-point error
+    let max_safe_int = 9007199254740991_i64;
+    let neg_max_safe_int = -9007199254740991_i64;
+    let max_safe_float = 9007199254740991_f64;
+    let neg_max_safe_float = -9007199254740991_f64;
+    test_wcb(&format!("0n > {max_safe_int}"), "false");
+    test_wcb(&format!("0n < {max_safe_int}"), "true");
+    test_wcb(&format!("0n > {neg_max_safe_int}"), "true");
+    test_wcb(&format!("0n < {neg_max_safe_int}"), "false");
+    test_wcb(&format!("0n > {max_safe_float}"), "false");
+    test_wcb(&format!("0n < {max_safe_float}"), "true");
+    test_wcb(&format!("0n > {neg_max_safe_float}"), "true");
+    test_wcb(&format!("0n < {neg_max_safe_float}"), "false");
+
+    // comparing with Infinity is allowed
+    test_wcb("1n < Infinity", "true");
+    test_wcb("1n > Infinity", "false");
+    test_wcb("1n < -Infinity", "false");
+    test_wcb("1n > -Infinity", "true");
+
+    // null is interpreted as 0 when comparing with bigint
+    test_wcb("1n < null", "false");
+    test_wcb("1n > null", "true");
+}
+
+#[test]
 fn js_typeof() {
     test("x = typeof 1", "x='number'");
     test("x = typeof 'foo'", "x='string'");
@@ -215,7 +259,7 @@ fn unary_ops() {
 fn unary_with_big_int() {
     test("-(1n)", "-1n");
     test("- -1n", "1n");
-    test_without_compress_booleans("!1n", "false");
+    test_wcb("!1n", "false");
     test("~0n", "-1n");
 }
 
@@ -252,8 +296,8 @@ fn test_fold_logical_op() {
     test("a = b ? x && true : c", "a=b?x&&!0:c");
 
     // folded, but not here.
-    test_without_compress_booleans("a = x || false ? b : c", "a=x||false?b:c");
-    test_without_compress_booleans("a = x && true ? b : c", "a=x&&true?b:c");
+    test_wcb("a = x || false ? b : c", "a=x||false?b:c");
+    test_wcb("a = x && true ? b : c", "a=x&&true?b:c");
 
     test("x = foo() || true || bar()", "x=foo()||!0");
     test("x = foo() || true && bar()", "x=foo()||bar()");
@@ -291,8 +335,8 @@ fn test_fold_logical_op() {
     // An example would be if foo() is 1 (truthy) and bar() is 0 (falsey):
     // (1 && true) || 0 == true
     // 1 || 0 == 1, but true =/= 1
-    test_without_compress_booleans("x=foo()&&true||bar()", "x=foo()&&true||bar()");
-    test_without_compress_booleans("foo()&&true||bar()", "foo()&&true||bar()");
+    test_wcb("x=foo()&&true||bar()", "x=foo()&&true||bar()");
+    test_wcb("foo()&&true||bar()", "foo()&&true||bar()");
 }
 
 #[test]
