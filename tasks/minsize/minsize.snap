@@ -1,25 +1,25 @@
 Original   -> Minified   -> Gzip       Brotli    
-72.14 kB   -> 24.36 kB   -> 8.73 kB    7.64 kB    react.development.js
+72.14 kB   -> 24.35 kB   -> 8.73 kB    7.64 kB    react.development.js
 
 173.90 kB  -> 61.88 kB   -> 19.57 kB   17.75 kB   moment.js
 
 287.63 kB  -> 93.06 kB   -> 32.33 kB   29.24 kB   jquery.js
 
-342.15 kB  -> 123.09 kB  -> 44.99 kB   39.67 kB   vue.js
+342.15 kB  -> 123.05 kB  -> 44.98 kB   39.66 kB   vue.js
 
 544.10 kB  -> 74.51 kB   -> 26.02 kB   23.15 kB   lodash.js
 
 555.77 kB  -> 274.89 kB  -> 91.40 kB   76.86 kB   d3.js
 
-977.19 kB  -> 456.43 kB  -> 123.71 kB  107.19 kB  bundle.min.js
+977.19 kB  -> 456.42 kB  -> 123.70 kB  107.22 kB  bundle.min.js
 
-1.25 MB    -> 677.73 kB  -> 166.57 kB  134.53 kB  three.js
+1.25 MB    -> 677.66 kB  -> 166.54 kB  134.53 kB  three.js
 
-2.14 MB    -> 743.85 kB  -> 181.82 kB  138.77 kB  victory.js
+2.14 MB    -> 743.81 kB  -> 181.81 kB  138.77 kB  victory.js
 
-3.20 MB    -> 1.03 MB    -> 332.92 kB  268.96 kB  echarts.js
+3.20 MB    -> 1.03 MB    -> 332.69 kB  269.01 kB  echarts.js
 
-6.69 MB    -> 2.40 MB    -> 498.18 kB  390.19 kB  antd.js
+6.69 MB    -> 2.40 MB    -> 498.17 kB  390.18 kB  antd.js
 
-10.82 MB   -> 3.53 MB    -> 903.10 kB  693.09 kB  typescript.js
+10.82 MB   -> 3.53 MB    -> 902.84 kB  692.92 kB  typescript.js
 
