@@ -139,11 +139,9 @@ impl Rule for NoControlRegex {
 fn extract_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<RegExpFlags> {
     if args.len() > 1 &&
     let Argument::Expression(Expression::StringLiteral(flag_arg)) = &args[1] {
-        // TODO: how should we handle invalid flags?
         let mut flags = RegExpFlags::empty();
         for ch in flag_arg.value.chars() {
             let flag = RegExpFlags::try_from(ch).ok()?;
-            // TODO: should we check for duplicates?
             flags |= flag;
         }
         Some(flags)
@@ -185,8 +183,6 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
             flags: Some(reg.regex.flags),
             span: reg.span,
         }),
-
-        // FIXME: we need a more graceful way to handle NewExpr/CallExprs
 
         // new RegExp()
         AstKind::NewExpression(expr) => {
