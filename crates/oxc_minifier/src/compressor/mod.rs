@@ -228,10 +228,7 @@ impl<'a> Compressor<'a> {
         }
     }
 
-    fn compress_variable_declarator<'b>(
-        &mut self,
-        decl: &'b mut VariableDeclarator<'a>,
-    ) {
+    fn compress_variable_declarator<'b>(&mut self, decl: &'b mut VariableDeclarator<'a>) {
         if decl.kind.is_const() {
             return;
         }
