@@ -173,10 +173,10 @@ fn test_bigint_number_comparison() {
     test_wcb("-1n > -0.9", "false");
 
     // Don't fold unsafely large numbers because there might be floating-point error
-    let max_safe_int = 9007199254740991_i64;
-    let neg_max_safe_int = -9007199254740991_i64;
-    let max_safe_float = 9007199254740991_f64;
-    let neg_max_safe_float = -9007199254740991_f64;
+    let max_safe_int = 9_007_199_254_740_991_i64;
+    let neg_max_safe_int = -9_007_199_254_740_991_i64;
+    let max_safe_float = 9_007_199_254_740_991_f64;
+    let neg_max_safe_float = -9_007_199_254_740_991_f64;
     test_wcb(&format!("0n > {max_safe_int}"), "false");
     test_wcb(&format!("0n < {max_safe_int}"), "true");
     test_wcb(&format!("0n > {neg_max_safe_int}"), "true");
