@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 67
+expression: no_explicit_any
+---
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ const age: any = 'seventeen';
+   ·            ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ const ages: any[] = ['seventeen'];
+   ·             ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ const ages: Array<any> = ['seventeen'];
+   ·                   ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function greet(): any {}
+   ·                   ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function greet(): any[] {}
+   ·                   ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function greet(): Array<any> {}
+   ·                         ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function greet(): Array<Array<any>> {}
+   ·                               ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function greet(param: Array<any>): string {}
+   ·                             ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function greet(param: Array<any>): Array<any> {}
+   ·                             ───
+   ╰────
+
+  ⚠ typescript-eslint(no-explicit-any): Unexpected `any`. Specify a different type.
+   ╭─[no_explicit_any.tsx:1:1]
+ 1 │ function greet(param: Array<any>): Array<any> {}
+   ·                                          ───
+   ╰────
+
+
