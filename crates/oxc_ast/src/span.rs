@@ -239,6 +239,15 @@ impl<'a> GetSpan for ForStatementInit<'a> {
     }
 }
 
+impl<'a> GetSpan for ForStatementLeft<'a> {
+    fn span(&self) -> Span {
+        match self {
+            Self::VariableDeclaration(x) => x.span,
+            Self::AssignmentTarget(x) => x.span(),
+        }
+    }
+}
+
 impl<'a> GetSpan for SimpleAssignmentTarget<'a> {
     fn span(&self) -> Span {
         match self {
