@@ -32,7 +32,7 @@ args:
   href: "href"
   display: "display"
   href_value_start: "https://fonts.googleapis.com/css"
-  bad_display_values: 
+  bad_display_values:
     - "auto"
     - "block"
     - "fallback"
@@ -41,7 +41,8 @@ reason: "{display_value} is not recommended."
 
 tests:
   pass:
-    - code: |
+    - file_name: /index.ts
+      code: |
         import Head from "next/head";
 
         export default Test = () => {
@@ -63,7 +64,8 @@ tests:
             </Head>
           );
         };
-    - code: |
+    - file_name: /index.ts
+      code: |
         import Document, { Html, Head } from "next/document";
 
         class MyDocument extends Document {
@@ -82,7 +84,8 @@ tests:
         }
 
         export default MyDocument;
-    - code: |
+    - file_name: /index.ts
+      code: |
         import Document, { Html, Head } from "next/document";
 
         class MyDocument extends Document {
@@ -103,7 +106,8 @@ tests:
 
         export default MyDocument;
   fails:
-    - code: |
+    - file_name: /index.ts
+      code: |
         import Head from "next/head";
 
         export default Test = () => {
@@ -120,7 +124,8 @@ tests:
         start: 5
         end: 10
       error_msg: "Block is not recommended."
-    - code: |
+    - file_name: /index.ts
+      code: |
         import Head from "next/head";
 
         export default Test = () => {
@@ -137,7 +142,8 @@ tests:
         start: 5
         end: 10
       error_msg: "Auto is not recommended."
-    - code: |
+    - file_name: /index.ts
+      code: |
         import Head from "next/head";
 
         export default Test = () => {
