@@ -6,8 +6,8 @@ use oxc_semantic::ReferenceFlag;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 use crate::hir::{
-    ArrayExpressionElement, Expression, NumberLiteral, ObjectProperty, ObjectPropertyKind,
-    PropertyKey, SpreadElement, UnaryExpression,
+    ArrayExpressionElement, BinaryExpression, Expression, NumberLiteral, ObjectProperty,
+    ObjectPropertyKind, PropertyKey, SpreadElement, UnaryExpression,
 };
 
 /// Code ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/NodeUtil.java#LL836C6-L836C6)
@@ -122,6 +122,9 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
             Self::UnaryExpression(unary_expr) => {
                 unary_expr.check_for_state_change(check_for_new_objects)
             }
+            Self::BinaryExpression(binary_expr) => {
+                binary_expr.check_for_state_change(check_for_new_objects)
+            }
             Self::ObjectExpression(object_expr) => {
                 if check_for_new_objects {
                     return true;
@@ -152,6 +155,15 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for UnaryExpression<'a> {
             return self.argument.check_for_state_change(check_for_new_objects);
         }
         true
+    }
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for BinaryExpression<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        let left = self.left.check_for_state_change(check_for_new_objects);
+        let right = self.right.check_for_state_change(check_for_new_objects);
+
+        left || right
     }
 }
 
@@ -226,6 +238,10 @@ impl NumberValue {
             Self::NegativeInfinity => Self::PositiveInfinity,
             Self::NaN => Self::NaN,
         }
+    }
+
+    pub fn is_nan(&self) -> bool {
+        matches!(self, Self::NaN)
     }
 }
 
