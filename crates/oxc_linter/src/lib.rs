@@ -1,4 +1,4 @@
-#![allow(clippy::self_named_module_files)] // for rules.rs
+#![allow(clippy::self_named_module_files, unused_variables, clippy::wildcard_imports)] // for rules.rs
 #![allow(unused_variables)]
 #![feature(let_chains, const_trait_impl, const_slice_index)]
 

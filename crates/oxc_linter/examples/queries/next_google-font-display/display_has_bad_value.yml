@@ -105,7 +105,7 @@ tests:
         }
 
         export default MyDocument;
-  fails:
+  fail:
     - file_name: /index.ts
       code: |
         import Head from "next/head";

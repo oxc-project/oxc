@@ -22,6 +22,28 @@ pub struct InputQuery {
     pub query: String,
     pub args: BTreeMap<Arc<str>, TransparentValue>,
     pub reason: String,
+    #[serde(default)]
+    pub tests: QueryTests,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+pub struct QueryTests {
+    pub pass: Vec<SinglePassingTest>,
+    pub fail: Vec<SingleFailingTest>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SinglePassingTest {
+    file_name: String,
+    code: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SingleFailingTest {
+    file_name: String,
+    code: String,
+    span: oxc_span::Span,
+    error_msg: String,
 }
 
 // https://typescript-eslint.io/rules/prefer-function-type
