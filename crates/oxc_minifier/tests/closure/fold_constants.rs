@@ -154,6 +154,38 @@ fn test_string_string_comparison() {
 }
 
 #[test]
+fn test_number_string_comparison() {
+    test_wcb("1 < '2'", "true");
+    test_wcb("2 > '1'", "true");
+    test_wcb("123 > '34'", "true");
+    test_wcb("NaN >= 'NaN'", "false");
+    test_wcb("1 == '2'", "false");
+    test_wcb("1 != '1'", "false");
+    test_wcb("NaN == 'NaN'", "false");
+    test_wcb("1 === '1'", "false");
+    test_wcb("1 !== '1'", "true");
+    test_same("+x>''+y");
+    test_same("+x==''+y");
+    test_wcb("+x !== '' + y", "true");
+}
+
+#[test]
+fn test_string_number_comparison() {
+    test_wcb("'1' < 2", "true");
+    test_wcb("'2' > 1", "true");
+    test_wcb("'123' > 34", "true");
+    test_wcb("'NaN' < NaN", "false");
+    test_wcb("'1' == 2", "false");
+    test_wcb("'1' != 1", "false");
+    test_wcb("'NaN' == NaN", "false");
+    test_wcb("'1' === 1", "false");
+    test_wcb("'1' !== 1", "true");
+    test_same("''+x<+y");
+    test_same("''+x==+y");
+    test_wcb("'' + x === +y", "false");
+}
+
+#[test]
 fn test_bigint_number_comparison() {
     test_wcb("1n < 2", "true");
     test_wcb("1n > 2", "false");

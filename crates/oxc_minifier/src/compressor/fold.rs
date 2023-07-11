@@ -141,8 +141,29 @@ impl<'a> From<&Expression<'a>> for Ty {
                     }
                     Self::Number
                 }
+                UnaryOperator::UnaryPlus => Self::Number,
                 UnaryOperator::LogicalNot => Self::Boolean,
                 UnaryOperator::Typeof => Self::Str,
+                _ => Self::Undetermined,
+            },
+            Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
+                BinaryOperator::Addition => {
+                    let left_ty = Self::from(&binary_expr.left);
+                    let right_ty = Self::from(&binary_expr.right);
+
+                    if left_ty == Self::Str || right_ty == Self::Str {
+                        return Self::Str;
+                    }
+
+                    // There are some pretty weird cases for object types:
+                    //   {} + [] === "0"
+                    //   [] + {} === "[object Object]"
+                    if left_ty == Self::Object || right_ty == Self::Object {
+                        return Self::Undetermined;
+                    }
+
+                    Self::Undetermined
+                }
                 _ => Self::Undetermined,
             },
             _ => Self::Undetermined,
@@ -222,7 +243,7 @@ impl<'a> Compressor<'a> {
     }
 
     fn evaluate_comparison<'b>(
-        &self,
+        &mut self,
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
@@ -254,7 +275,7 @@ impl<'a> Compressor<'a> {
 
     /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
     fn try_abstract_equality_comparison<'b>(
-        &self,
+        &mut self,
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
     ) -> Tri {
@@ -268,6 +289,56 @@ impl<'a> Compressor<'a> {
                 return Tri::True;
             }
 
+            if matches!((left, right), (Ty::Number, Ty::Str)) || matches!(right, Ty::Boolean) {
+                let right_number = get_side_free_number_value(right_expr);
+
+                if let Some(r_num) = right_number &&
+                let NumberValue::Number(num) = r_num  {
+                    let raw = self.hir.new_str(num.to_string().as_str());
+
+                    let number_literal = self.hir.number_literal(
+                        right_expr.span(),
+                        num,
+                        raw,
+                        if num.fract() == 0.0 {
+                            NumberBase::Decimal
+                        } else {
+                            NumberBase::Float
+                        }
+                    );
+                    let number_literal_expr = self.hir.literal_number_expression(number_literal);
+
+                    return self.try_abstract_equality_comparison(left_expr, &number_literal_expr);
+                }
+
+                return Tri::Unknown;
+            }
+
+            if matches!((left, right), (Ty::Str, Ty::Number)) || matches!(left, Ty::Boolean) {
+                let left_number = get_side_free_number_value(left_expr);
+
+                if let Some(l_num) = left_number &&
+                let NumberValue::Number(num) = l_num {
+                    let raw = self.hir.new_str(num.to_string().as_str());
+
+                    let number_literal = self.hir.number_literal(
+                        left_expr.span(),
+                        num,
+                        raw,
+                        if num.fract() == 0.0 {
+                            NumberBase::Decimal
+                        } else {
+                            NumberBase::Float
+                        }
+                    );
+                    let number_literal_expr = self.hir.literal_number_expression(number_literal);
+
+                    return self.try_abstract_equality_comparison(&number_literal_expr, right_expr);
+                }
+
+                return Tri::Unknown;
+            }
+
             if matches!(left, Ty::BigInt) || matches!(right, Ty::BigInt) {
                 let left_bigint = get_side_free_bigint_value(left_expr);
                 let right_bigint = get_side_free_bigint_value(right_expr);
@@ -275,6 +346,14 @@ impl<'a> Compressor<'a> {
                 if let Some(l_big) = left_bigint && let Some(r_big) = right_bigint {
                     return Tri::for_boolean(l_big.eq(&r_big));
                 }
+            }
+
+            if matches!(left, Ty::Str | Ty::Number) && matches!(right, Ty::Object) {
+                return Tri::Unknown;
+            }
+
+            if matches!(left, Ty::Object) && matches!(right, Ty::Str | Ty::Number) {
+                return Tri::Unknown;
             }
 
             return Tri::False;
@@ -362,6 +441,20 @@ impl<'a> Compressor<'a> {
                 return Tri::False;
             }
             return match left {
+                Ty::Number => {
+                    let left_number = get_side_free_number_value(left_expr);
+                    let right_number = get_side_free_number_value(right_expr);
+
+                    if let Some(l_num) = left_number && let Some(r_num) = right_number {
+                        if l_num.is_nan() || r_num.is_nan() {
+                            return Tri::False;
+                        }
+
+                        return Tri::for_boolean(l_num == r_num);
+                    }
+
+                    Tri::Unknown
+                }
                 Ty::Str => {
                     let left_string = get_side_free_string_value(left_expr);
                     let right_string = get_side_free_string_value(right_expr);
