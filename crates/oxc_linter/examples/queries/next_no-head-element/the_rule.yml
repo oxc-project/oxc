@@ -3,29 +3,7 @@ query: |
     File {
       import {
         from_path @filter(op: "=", value: ["$nextslashhead"])
-        default_import {
-          local_name @tag(name: "nextslashhead_defaultimport_name")
-        }
-      }
-      import {
-        from_path @filter(op: "=", value: ["$nextslashscript"])
-        default_import {
-          local_name @tag(name: "nextslashscript_defaultimport_name")
-        }
-      }
-
-      jsx_element {
-        opening_element {
-          name @filter(op: "=", value: ["%nextslashhead_defaultimport_name"])
-        }
-
-        child_element @recurse(depth: 10) {
-          opening_element {
-            name @filter(op: "=", value: ["%nextslashscript_defaultimport_name"])
-          }
-        }
-
-        span_: span {
+        span_: entire_span {
           start @output
           end @output
         }
@@ -39,7 +17,7 @@ query: |
 
 args:
   nextslashhead: "next/head"
-  nextslashscript: "next/script"
   false: false
 
-reason: "`next/script` should not be used in `next/head` component. Move `<Script />` outside of `<Head>` instead."
+# TODO: ${document} should be filled in
+reason: "Do not use `<head>` element. Use `<Head />` from `next/head` instead."
