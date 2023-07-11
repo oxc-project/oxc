@@ -54,8 +54,10 @@ fn is_in_tail_call_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
     if let Some(parent) = ctx.nodes().parent_node(node.id()) {
         let parent_kind = parent.kind();
         match parent_kind {
-            AstKind::ArrowExpression(_) => {
-                return true;
+            AstKind::ArrowExpression(arrow_expr) => {
+                // async () => { await b(); })
+                // `epxression` property is false
+                return arrow_expr.expression;
             }
             AstKind::ReturnStatement(_) => {
                 return !has_error_handler(node, ctx);
@@ -92,8 +94,9 @@ fn is_in_tail_call_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
             },
             // last statement in `func_body`
             AstKind::FunctionBody(func_body) => {
-                if let Some(func_body_stat_last) = func_body.statements.last() {
-                    return func_body_stat_last.span() == node.kind().span();
+                if let Some(func_body_stat_last) = func_body.statements.last()
+                    && func_body_stat_last.span() == node.kind().span() {
+                    return is_in_tail_call_position(parent, ctx);
                 }
             },
             _ => {
@@ -144,6 +147,7 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        ("\nasync () => { await b(); }", None),
         ("\nasync function foo() {\n\tawait bar(); return;\n}\n", None),
         ("\nasync function foo() {\n\tconst x = await bar(); return x;\n}\n", None),
         ("\nasync () => { return bar(); }\n", None),
