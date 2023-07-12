@@ -151,6 +151,10 @@ Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 * [Crafting Interpreters](https://craftinginterpreters.com)
 * [Create an issue and insert your inspirational learning resources here]
 
+## Maintainers
+
+* Project Lead: [Boshen](https://github.com/boshen)
+
 ## Credits
 
 This project was incubated with the assistance of these exceptional mentors and their projects:
