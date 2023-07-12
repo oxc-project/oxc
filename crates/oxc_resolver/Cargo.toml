@@ -9,3 +9,9 @@ homepage.workspace    = true
 keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
+
+[dependencies]
+normalize-path = "0.2.1"
+
+[dev-dependencies]
+static_assertions = { workspace = true }

@@ -4,11 +4,14 @@ use std::path::Path;
 
 use oxc_resolver::{ResolveResult, Resolver};
 
+/// Test the resolve function
+///
 /// # Errors
+/// * ResolveResult
+///
 /// # Panics
+/// * request is empty
 pub fn resolve<P: AsRef<Path>>(path: P, request: &str) -> ResolveResult {
-    let path = path.as_ref();
     assert!(!request.is_empty());
-    let resolver = Resolver::new();
-    resolver.resolve(path, request)
+    Resolver::new().resolve(path.as_ref(), request)
 }
