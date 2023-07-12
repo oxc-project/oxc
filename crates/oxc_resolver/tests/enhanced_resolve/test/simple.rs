@@ -9,11 +9,16 @@ fn test() {
     // mimic `enhanced-resolve/test/simple.test.js`
     let dirname = env::current_dir().unwrap().join("tests/enhanced_resolve/test/");
 
-    let paths = vec![(dirname.clone(), "../lib/index", "direct")];
+    let paths = vec![
+        (dirname.clone(), "../lib/index", "direct"),
+        (dirname.clone(), "..", "as directory"),
+        (dirname.join("../../").canonicalize().unwrap(), "./enhanced_resolve", "as module"),
+    ];
 
     for (path, request, comment) in paths {
-        let resolved = resolve(path, request).map(|path| path.canonicalize().expect("file exists"));
+        let resolved =
+            resolve(&path, request).map(|path| path.canonicalize().expect("file exists"));
         let expected = Ok(dirname.join("../lib/index.js").canonicalize().expect("file exists"));
-        assert_eq!(resolved, expected, "{comment}");
+        assert_eq!(resolved, expected, "{comment} {path:?} {request}");
     }
 }

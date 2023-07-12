@@ -16,7 +16,10 @@ fn criterion_benchmark(c: &mut Criterion) {
     let cwd = env::current_dir().unwrap().join("enhanced_resolve");
     let resolver = Resolver::new();
     c.bench_with_input(BenchmarkId::new("index", ""), &cwd, |b, cwd| {
-        b.iter(|| resolver.resolve(cwd, "lib/index"));
+        b.iter(|| {
+            _ = resolver.resolve(cwd, "lib/index");
+            _ = resolver.resolve(cwd, "./");
+        });
     });
 }
 
