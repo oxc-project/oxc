@@ -8,13 +8,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 
-use crate::{
-    context::LintContext,
-    fixer::Fix,
-    jest_ast_util::{parse_jest_fn_call, JestFnKind, ParsedJestFnCall},
-    rule::Rule,
-    AstNode,
-};
+use crate::{context::LintContext, rule::Rule, AstNode, jest_ast_util::{ParsedGeneralJestFnCall, JestGeneralFnKind, parse_general_jest_fn_call}, fixer::Fix};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(jest/no-test-prefixes): Use {0:?} instead.")]
@@ -50,11 +44,16 @@ declare_oxc_lint!(
     nursery
 );
 
-fn get_preferred_node_names(jest_fn_call: &ParsedJestFnCall) -> Atom {
-    let ParsedJestFnCall { members, raw, .. } = jest_fn_call;
+fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
 
-    let preferred_modifier = if raw.starts_with('f') { "only" } else { "skip" };
-    let member_names = members.iter().map(Borrow::borrow).collect::<Vec<&str>>().join(".");
+    let ParsedGeneralJestFnCall { members, raw, .. } = jest_fn_call;
+
+    let preferred_modifier = if raw.starts_with('f') {
+        "only"
+    } else {
+        "skip"
+    };
+    let member_names = members.iter().map(|member| Borrow::borrow(&member.name)).collect::<Vec<&str>>().join(".");
     let name_slice = &raw[1..];
 
     if member_names.is_empty() {
@@ -67,10 +66,11 @@ fn get_preferred_node_names(jest_fn_call: &ParsedJestFnCall) -> Atom {
 impl Rule for NoTestPrefixes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Some(jest_fn_call) = parse_jest_fn_call(call_expr, ctx) {
-                let ParsedJestFnCall { kind, raw, .. } = &jest_fn_call;
-
-                if !matches!(kind, JestFnKind::Describe | JestFnKind::Test) {
+            if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx)
+             && let ParsedGeneralJestFnCall { kind, raw, .. } = &jest_fn_call
+             && let Some(kind) = kind.to_general()
+             {
+                if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
                     return;
                 }
 

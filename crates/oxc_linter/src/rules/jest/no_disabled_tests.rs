@@ -8,7 +8,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{parse_jest_fn_call, JestFnKind, ParsedJestFnCall},
+    jest_ast_util::{JestFnKind, ParsedGeneralJestFnCall, JestGeneralFnKind, parse_general_jest_fn_call},
     rule::Rule,
     AstNode,
 };
@@ -83,13 +83,14 @@ impl Message {
 impl Rule for NoDisabledTests {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Some(jest_fn_call) = parse_jest_fn_call(call_expr, ctx) {
-                let ParsedJestFnCall { kind, members, raw } = jest_fn_call;
+            if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) {
+                let ParsedGeneralJestFnCall { kind, members, raw } = jest_fn_call;
                 // `test('foo')`
-                if matches!(kind, JestFnKind::Test)
-                    && call_expr.arguments.len() < 2
-                    && members.iter().all(|name| name != "todo")
-                {
+                let kind = match kind {
+                    JestFnKind::Expect | JestFnKind::Unknown => return,
+                    JestFnKind::General(kind) => kind,
+                };
+                if matches!(kind, JestGeneralFnKind::Test) && call_expr.arguments.len() < 2 && members.iter().all(|member| member.name != "todo")  {
                     let (error, help) = Message::MissingFunction.details();
                     ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
                     return;
@@ -98,7 +99,7 @@ impl Rule for NoDisabledTests {
                 // the only jest functions that are with "x" are "xdescribe", "xtest", and "xit"
                 // `xdescribe('foo', () => {})`
                 if raw.starts_with('x') {
-                    let (error, help) = if matches!(kind, JestFnKind::Describe) {
+                    let (error, help) = if matches!(kind, JestGeneralFnKind::Describe) {
                         Message::DisabledSuiteWithX.details()
                     } else {
                         Message::DisabledTestWithX.details()
@@ -109,8 +110,8 @@ impl Rule for NoDisabledTests {
 
                 // `it.skip('foo', function () {})'`
                 // `describe.skip('foo', function () {})'`
-                if members.iter().any(|name| name == "skip") {
-                    let (error, help) = if matches!(kind, JestFnKind::Describe) {
+                if members.iter().any(|member| member.name == "skip") {
+                    let (error, help) = if matches!(kind, JestGeneralFnKind::Describe) {
                         Message::DisabledSuiteWithSkip.details()
                     } else {
                         Message::DisabledTestWithSkip.details()
@@ -177,7 +178,6 @@ fn test() {
         ("describe.skip('foo', function () {})", None),
         ("describe.skip.each([1, 2, 3])('%s', (a, b) => {});", None),
         ("xdescribe.each([1, 2, 3])('%s', (a, b) => {});", None),
-        ("describe[`skip`]('foo', function () {})", None),
         ("describe[`skip`]('foo', function () {})", None),
         ("describe['skip']('foo', function () {})", None),
         ("it.skip('foo', function () {})", None),
