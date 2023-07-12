@@ -28,7 +28,6 @@ oxc_semantic       = { workspace = true }
 oxc_linter         = { workspace = true }
 oxc_type_synthesis = { workspace = true }
 oxc_span           = { workspace = true }
-oxc_resolver       = { workspace = true }
 
 # TODO temp, for type check output, replace with Miette
 codespan-reporting = "0.11.1"

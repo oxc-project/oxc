@@ -1,10 +1,9 @@
 use std::{
-    ffi::OsStr,
     fs,
     io::{self, BufWriter, Write},
     path::{Path, PathBuf},
     rc::Rc,
-    sync::{Arc, OnceLock},
+    sync::Arc,
 };
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
@@ -17,9 +16,8 @@ use oxc_diagnostics::{
 };
 use oxc_linter::{FixResult, Fixer, LintContext, Linter, RuleCategory, RuleEnum, RULES};
 use oxc_parser::{Parser, ParserReturn};
-use oxc_resolver::{ResolveResult, Resolver};
 use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
-use oxc_span::{SourceType, VALID_EXTENSIONS};
+use oxc_span::SourceType;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 
@@ -116,7 +114,7 @@ impl LintRunnerWithModuleTree {
         // we can ignore the result because nothing bad happens if the resolver is already set
         // TODO: make sure this is still true once we allow options to be set
         // during runtime (config file, args, etc.)
-        let _ = RESOLVER.set(Resolver::default());
+        // let _ = RESOLVER.set(Resolver::default());
 
         let visited = Arc::new(DashSet::new());
 
@@ -247,7 +245,7 @@ fn run_for_dir(path: &Path, runtime_data: &LinterRuntimeData) -> Result<()> {
     })
 }
 
-static RESOLVER: OnceLock<Resolver> = OnceLock::new();
+// static RESOLVER: OnceLock<Resolver> = OnceLock::new();
 
 fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) -> Result<()> {
     let LinterRuntimeData { linter, visited, tx_error } = &runtime_data;
@@ -295,35 +293,35 @@ fn run_for_file(path: &Path, runtime_data: &LinterRuntimeData) -> Result<()> {
     };
 
     // this is ok to unwrap because we know that the resolver is initialized, otherwise this function wouldn't be called
-    let resolver = RESOLVER.get().unwrap();
+    // let resolver = RESOLVER.get().unwrap();
 
-    let resolve_path = path.parent().expect("Absolute file path always has a parent");
+    // let resolve_path = path.parent().expect("Absolute file path always has a parent");
 
-    let imported_modules = semantic.module_record().module_requests.keys();
+    // let imported_modules = semantic.module_record().module_requests.keys();
 
-    imported_modules
-        .par_bridge()
-        .filter(|name| name.starts_with('.'))
-        .filter_map(|name| {
-            resolver.resolve(resolve_path, name).map_or_else(
-                |_| {
-                    eprintln!("Couldn't resolve '{name}' in '{}'.", resolve_path.display());
-                    None
-                },
-                Some,
-            )
-        })
-        .filter_map(|resolved| match resolved {
-            ResolveResult::Resource(r) => Some(r.path),
-            ResolveResult::Ignored => None,
-        })
-        .filter(|path| {
-            path.extension()
-                .and_then(OsStr::to_str)
-                .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext))
-        })
-        .filter(|path| !visited.contains(path))
-        .try_for_each(|path| run_for_file(&path, runtime_data))?;
+    // imported_modules
+    // .par_bridge()
+    // .filter(|name| name.starts_with('.'))
+    // .filter_map(|name| {
+    // resolver.resolve(resolve_path, name).map_or_else(
+    // |_| {
+    // eprintln!("Couldn't resolve '{name}' in '{}'.", resolve_path.display());
+    // None
+    // },
+    // Some,
+    // )
+    // })
+    // .filter_map(|resolved| match resolved {
+    // ResolveResult::Resource(r) => Some(r.path),
+    // ResolveResult::Ignored => None,
+    // })
+    // .filter(|path| {
+    // path.extension()
+    // .and_then(OsStr::to_str)
+    // .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext))
+    // })
+    // .filter(|path| !visited.contains(path))
+    // .try_for_each(|path| run_for_file(&path, runtime_data))?;
 
     let lint_ctx = LintContext::new(&Rc::new(semantic));
     let result = linter.run(lint_ctx);

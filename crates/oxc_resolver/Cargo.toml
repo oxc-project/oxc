@@ -9,8 +9,3 @@ homepage.workspace    = true
 keywords.workspace    = true
 license.workspace     = true
 repository.workspace  = true
-
-[dependencies]
-oxc_span = { workspace = true }
-
-nodejs-resolver = { workspace = true }

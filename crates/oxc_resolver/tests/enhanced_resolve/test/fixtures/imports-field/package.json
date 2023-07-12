@@ -1,0 +1,17 @@
+{
+  "name": "imports-field",
+  "version": "1.0.0",
+  "exports": "./a.js",
+  "imports": {
+    "#imports-field": "./b.js",
+    "#b": "../b.js",
+    "#ccc/": "c/",
+    "#c": "c",
+    "#a/": "a/"
+  },
+  "other": {
+    "imports": {
+      "#b": "./a.js"
+    }
+  }
+}
