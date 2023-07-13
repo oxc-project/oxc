@@ -1,5 +1,9 @@
-#![allow(clippy::self_named_module_files, unused_variables, clippy::wildcard_imports)] // for rules.rs
-#![allow(unused_variables)]
+#![allow(
+    clippy::self_named_module_files,
+    unused_variables,
+    clippy::wildcard_imports,
+    clippy::option_if_let_else // Broken for std::iter::empty/std::iter::once on two different branches see: https://github.com/rust-lang/rust-clippy/issues/11059
+)]
 #![feature(let_chains, const_trait_impl, const_slice_index)]
 
 #[cfg(test)]
