@@ -153,7 +153,7 @@ impl LintRunnerWithModuleTree {
         let mut buf_writer = BufWriter::new(io::stdout());
         let handler = GraphicalReportHandler::new();
 
-        for (path, diagnostics) in rx_error.iter() {
+        for (path, diagnostics) in rx_error {
             number_of_diagnostics += diagnostics.len();
 
             let mut output = String::new();

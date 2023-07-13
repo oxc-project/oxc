@@ -226,9 +226,7 @@ impl Printer {
 
     fn print_block<T: Gen>(&mut self, items: &[T], separator: Separator, ctx: Context) {
         self.print(b'{');
-        if !items.is_empty() {}
         self.print_sequence(items, separator, ctx);
-        if !items.is_empty() {}
         self.print(b'}');
     }
 

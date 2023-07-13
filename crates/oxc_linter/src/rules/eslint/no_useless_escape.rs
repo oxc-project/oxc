@@ -273,7 +273,7 @@ fn test() {
         "var foo = /\\^bar/",
         "var foo = /[\\^bar]/",
         "var foo = /\\(bar\\)/",
-        r#"var foo = /[[\]]/"#,
+        r"var foo = /[[\]]/",
         "var foo = /[[]\\./",
         "var foo = /[\\]\\]]/",
         "var foo = /\\[abc]/",
@@ -287,9 +287,9 @@ fn test() {
         "var foo = /[\\0]/",
         "var foo = 'foo \\  bar'",
         "var foo = 'foo \\  bar'",
-        r#"/]/"#,
-        r#"/\]/"#,
-        r#"/\]/u"#,
+        r"/]/",
+        r"/\]/",
+        r"/\]/u",
         "var foo = /foo\\]/",
         "var foo = /[[]\\]/",
         "var foo = /\\[foo\\.bar\\]/",
@@ -353,7 +353,7 @@ fn test() {
         "`template literal with mixed linebreaks \r\r\n\n\\and useless escape`",
         "`template literal with mixed linebreaks in line continuations \\\n\\\r\\\r\n\\and useless escape`",
         "`\\a```",
-        r#"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;"#,
+        r"var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;",
     ];
 
     Tester::new_without_config(NoUselessEscape::NAME, pass, fail).test_and_snapshot();

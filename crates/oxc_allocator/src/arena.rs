@@ -159,7 +159,7 @@ where
         S: Serializer,
     {
         let mut seq = s.serialize_seq(Some(self.0.len()))?;
-        for e in self.0.iter() {
+        for e in &self.0 {
             seq.serialize_element(e)?;
         }
         seq.end()
@@ -168,7 +168,7 @@ where
 
 impl<'alloc, T: Hash> Hash for Vec<'alloc, T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        for e in self.0.iter() {
+        for e in &self.0 {
             e.hash(state);
         }
     }

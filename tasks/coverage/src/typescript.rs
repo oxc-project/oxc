@@ -142,7 +142,7 @@ impl TypeScriptTestMeta {
                 if let Some(file_name) = current_file_name.take() {
                     test_unit_data.push(TestUnitData {
                         name: file_name,
-                        content: current_file_content.drain(..).collect(),
+                        content: std::mem::take(&mut current_file_content),
                     });
                 }
                 current_file_name = Some(meta_value.to_string());
@@ -163,7 +163,7 @@ impl TypeScriptTestMeta {
 
         test_unit_data.push(TestUnitData {
             name: file_name,
-            content: current_file_content.drain(..).collect(),
+            content: std::mem::take(&mut current_file_content),
         });
 
         let options = CompilerOptions::new(&current_file_options);
