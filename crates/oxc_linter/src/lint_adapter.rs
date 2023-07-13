@@ -1,8 +1,11 @@
 #![allow(clippy::too_many_lines)]
 #![allow(clippy::unimplemented)]
-use std::{collections::BTreeMap, path::PathBuf, rc::Rc, sync::Arc};
+use std::{collections::BTreeMap, convert::Into, path::PathBuf, rc::Rc, sync::Arc};
 
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{
+    ast::{TSAccessibility, *},
+    AstKind,
+};
 use oxc_semantic::{AstNode, AstNodeId, Semantic};
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
@@ -156,8 +159,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
             }),
             ("JSXAttribute", "value_as_constant_string") => resolve_property_with(contexts, |v| {
                 let attr = v.as_jsx_attribute().unwrap();
-                jsx_attribute_to_constant_string(attr)
-                    .map_or_else(|| FieldValue::Null, std::convert::Into::into)
+                jsx_attribute_to_constant_string(attr).map_or_else(|| FieldValue::Null, Into::into)
             }),
             ("ImportAST" | "Import", "from_path") => resolve_property_with(contexts, |v| {
                 let Vertex::Import(import, ..) = &v else {unreachable!()};
@@ -204,9 +206,9 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                     FieldValue::Null,
                     |access| {
                         match access {
-                            oxc_ast::ast::TSAccessibility::Private => "private",
-                            oxc_ast::ast::TSAccessibility::Protected => "protected",
-                            oxc_ast::ast::TSAccessibility::Public => "public",
+                            TSAccessibility::Private => "private",
+                            TSAccessibility::Protected => "protected",
+                            TSAccessibility::Public => "public",
                         }
                         .into()
                     },
@@ -217,9 +219,9 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                     FieldValue::Null,
                     |access| {
                         match access {
-                            oxc_ast::ast::TSAccessibility::Private => "private",
-                            oxc_ast::ast::TSAccessibility::Protected => "protected",
-                            oxc_ast::ast::TSAccessibility::Public => "public",
+                            TSAccessibility::Private => "private",
+                            TSAccessibility::Protected => "protected",
+                            TSAccessibility::Public => "public",
                         }
                         .into()
                     },
@@ -258,8 +260,9 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
             }
             // expression case
             (_, "as_constant_string") => resolve_property_with(contexts, |v| match v {
-                Vertex::Expression(expr) => expr_to_maybe_const_string(expr)
-                    .map_or_else(|| FieldValue::Null, std::convert::Into::into),
+                Vertex::Expression(expr) => {
+                    expr_to_maybe_const_string(expr).map_or_else(|| FieldValue::Null, Into::into)
+                }
                 _ => FieldValue::Null,
             }),
             ("PathCompareResult", "result") => {
