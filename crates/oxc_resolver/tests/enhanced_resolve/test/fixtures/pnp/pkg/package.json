@@ -1,0 +1,7 @@
+{
+  "main": "main.js",
+  "browser": {
+    "./package-alias/index.js": "./package-alias/browser.js",
+    "module": "pkg/dir/index"
+  }
+}

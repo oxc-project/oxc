@@ -1,26 +1,29 @@
-use std::ops::Deref;
+//! # Oxc Resolver
+//!
+//! Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve).
+//
+use std::path::{Path, PathBuf};
+#[derive(Debug, Eq, PartialEq)]
+pub struct ResolveError;
 
-use nodejs_resolver::{EnforceExtension, Options, Resolver as NodeJSResolver};
-pub use nodejs_resolver::{ResolveResult, Resource};
-use oxc_span::VALID_EXTENSIONS;
+pub type ResolveResult = Result<PathBuf, ResolveError>;
 
-#[derive(Debug)]
-pub struct Resolver(NodeJSResolver);
+pub struct Resolver;
 
-impl Default for Resolver {
-    fn default() -> Self {
-        Self(NodeJSResolver::new(Options {
-            enforce_extension: EnforceExtension::Enabled,
-            extensions: VALID_EXTENSIONS.into_iter().map(|ext| String::from(".") + ext).collect(),
-            ..Default::default()
-        }))
+impl Resolver {
+    pub fn new() -> Self {
+        Self
     }
-}
 
-impl Deref for Resolver {
-    type Target = NodeJSResolver;
+    /// # Errors
+    pub fn resolve<P: AsRef<Path>>(&self, path: P, request: &str) -> ResolveResult {
+        self.resolve_impl(path.as_ref(), request)
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+    #[allow(clippy::unused_self)]
+    fn resolve_impl(&self, _path: &Path, _request: &str) -> ResolveResult {
+        unreachable!()
+        // let path = path.join(request).canonicalize().unwrap();
+        // Ok(path)
     }
 }
