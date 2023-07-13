@@ -1,4 +1,10 @@
-use std::{borrow::Cow, env, fs, path::Path, rc::Rc, sync::Arc};
+use std::{
+    borrow::Cow,
+    env, fs,
+    path::{Path, PathBuf},
+    rc::Rc,
+    sync::Arc,
+};
 
 use oxc_diagnostics::miette::{miette, LabeledSpan};
 use oxc_semantic::Semantic;
@@ -62,8 +68,13 @@ impl LinterPlugin {
         Self { rules, schema }
     }
 
-    pub fn run(&self, ctx: &mut LintContext, semantic: &Rc<Semantic<'_>>, path: Cow<'_, Path>) {
-        let inner = LintAdapter { semantic: Rc::clone(semantic), path: path.to_path_buf() };
+    pub fn run<P: Into<PathBuf>>(
+        &self,
+        ctx: &mut LintContext,
+        semantic: &Rc<Semantic<'_>>,
+        path: P,
+    ) {
+        let inner = LintAdapter { semantic: Rc::clone(semantic), path: path.into() };
         let adapter = Arc::from(&inner);
         for input_query in &self.rules {
             for data_item in execute_query(

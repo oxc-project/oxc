@@ -15,7 +15,7 @@ mod plugin;
 pub mod rule;
 mod rules;
 
-use std::{borrow::Cow, env, fs, io::Write, path::Path, rc::Rc};
+use std::{env, fs, io::Write, path::PathBuf, rc::Rc};
 
 pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
@@ -91,7 +91,11 @@ impl Linter {
         Self::from_rules(rules)
     }
 
-    pub fn run<'a>(&self, semantic: &Rc<Semantic<'a>>, path: Cow<'_, Path>) -> Vec<Message<'a>> {
+    pub fn run<'a, P: Into<PathBuf>>(
+        &self,
+        semantic: &Rc<Semantic<'a>>,
+        path: P,
+    ) -> Vec<Message<'a>> {
         let mut ctx = LintContext::new(semantic, self.fix);
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
