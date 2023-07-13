@@ -1,10 +1,4 @@
-use std::{
-    borrow::Cow,
-    env, fs,
-    path::{Path, PathBuf},
-    rc::Rc,
-    sync::Arc,
-};
+use std::{env, fs, path::PathBuf, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::miette::{miette, LabeledSpan};
 use oxc_semantic::Semantic;
