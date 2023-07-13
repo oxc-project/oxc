@@ -690,10 +690,10 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                         let ObjectPropertyKind::ObjectProperty(prop) = property else {return false};
                         match &prop.key {
                             oxc_ast::ast::PropertyKey::Identifier(ident) => {
-                                ident.name.as_str() == key_wanted.as_ref()
+                                ident.name == key_wanted.as_ref()
                             }
                             oxc_ast::ast::PropertyKey::PrivateIdentifier(priv_ident) => unimplemented!("getting a private property on an object is unimplemented as of yet"),
-                            oxc_ast::ast::PropertyKey::Expression(expr) => expr_to_maybe_const_string(expr).map_or_else(|| false, |key| key.as_str() == key_wanted.as_ref())
+                            oxc_ast::ast::PropertyKey::Expression(expr) => expr_to_maybe_const_string(expr).map_or_else(|| false, |key| &key == key_wanted.as_ref())
                         }
                     }).map(|x| {
                         let ObjectPropertyKind::ObjectProperty(prop) = &x else {unreachable!()};
@@ -859,7 +859,7 @@ impl ToStringJSX for JSXIdentifier {
 
 impl ToStringJSX for JSXNamespacedName {
     fn to_string_jsx(&self) -> String {
-        format!("{}:{}", &self.namespace.name.as_str(), &self.property.name.as_str())
+        format!("{}:{}", &self.namespace.name, &self.property.name)
     }
 }
 
