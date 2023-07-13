@@ -15,3 +15,8 @@ normalize-path = "0.2.1"
 
 [dev-dependencies]
 static_assertions = { workspace = true }
+criterion = { workspace = true }
+
+[[bench]]
+name = "resolver"
+harness = false

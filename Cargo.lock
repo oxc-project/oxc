@@ -1397,6 +1397,7 @@ dependencies = [
 name = "oxc_resolver"
 version = "0.0.0"
 dependencies = [
+ "criterion",
  "normalize-path",
  "static_assertions",
 ]
