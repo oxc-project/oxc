@@ -12,7 +12,7 @@ fn test() {
     let paths = vec![(dirname.clone(), "../lib/index", "direct")];
 
     for (path, request, comment) in paths {
-        let resolved = resolve(path, request);
+        let resolved = resolve(path, request).map(|path| path.canonicalize().expect("file exists"));
         let expected = Ok(dirname.join("../lib/index.js").canonicalize().expect("file exists"));
         assert_eq!(resolved, expected, "{comment}");
     }
