@@ -230,6 +230,30 @@ fn test_bigint_number_comparison() {
 }
 
 #[test]
+fn test_bigint_string_comparison() {
+    test_wcb("1n < '2'", "true");
+    test_wcb("2n > '1'", "true");
+    test_wcb("123n > '34'", "true");
+    test_wcb("1n == '1'", "true");
+    test_wcb("1n == '2'", "false");
+    test_wcb("1n != '1'", "false");
+    test_wcb("1n === '1'", "false");
+    test_wcb("1n !== '1'", "true");
+}
+
+#[test]
+fn test_string_bigint_comparison() {
+    test_wcb("'1' < 2n", "true");
+    test_wcb("'2' > 1n", "true");
+    test_wcb("'123' > 34n", "true");
+    test_wcb("'1' == 1n", "true");
+    test_wcb("'1' == 2n", "false");
+    test_wcb("'1' != 1n", "false");
+    test_wcb("'1' === 1n", "false");
+    test_wcb("'1' !== 1n", "true");
+}
+
+#[test]
 fn js_typeof() {
     test("x = typeof 1", "x='number'");
     test("x = typeof 'foo'", "x='string'");
