@@ -6,6 +6,7 @@
 
 mod error;
 mod file_system;
+mod options;
 mod package_json;
 mod path;
 mod request;
@@ -15,22 +16,29 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use file_system::FileSystem;
-use package_json::PackageJson;
-
-pub use crate::error::{JSONError, ResolveError};
-use crate::{path::PathUtil, request::Request};
+pub use crate::{
+    error::{JSONError, ResolveError},
+    options::ResolveOptions,
+};
+use crate::{file_system::FileSystem, package_json::PackageJson, path::PathUtil, request::Request};
 
 pub type ResolveResult = Result<PathBuf, ResolveError>;
 type ResolveState = Result<Option<PathBuf>, ResolveError>;
 
 pub struct Resolver {
+    options: ResolveOptions,
     fs: FileSystem,
 }
 
+impl Default for Resolver {
+    fn default() -> Self {
+        Self::new(ResolveOptions::default())
+    }
+}
+
 impl Resolver {
-    pub fn new() -> Self {
-        Self { fs: FileSystem::default() }
+    pub fn new(options: ResolveOptions) -> Self {
+        Self { options: options.sanitize(), fs: FileSystem::default() }
     }
 
     /// Resolve `request` at `path`
@@ -39,53 +47,80 @@ impl Resolver {
     ///
     /// * Will return `Err` for [ResolveError]
     pub fn resolve<P: AsRef<Path>>(&self, path: P, request: &str) -> ResolveResult {
-        self.resolve_impl(path.as_ref(), request)
+        self.require(path.as_ref(), request)
     }
 
-    fn resolve_impl(&self, path: &Path, request: &str) -> ResolveResult {
+    fn require(&self, path: &Path, request: &str) -> ResolveResult {
         let request = Request::try_from(request).map_err(ResolveError::RequestError)?;
         match request {
+            // 1. If X is a core module,
+            //    a. return the core module
+            //    b. STOP
+            // 2. If X begins with '/'
+            //    a. set Y to be the file system root
+            // 4. If X begins with '#'
+            //    a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
+            Request::Absolute(_) => {
+                unreachable!()
+            }
+            // 3. If X begins with './' or '/' or '../'
             Request::Relative(relative_path) => {
                 let path = path.normalize_with(relative_path);
-                if let Some(path) = self.load_as_file(&path)? {
-                    return Ok(path);
+                // a. LOAD_AS_FILE(Y + X)
+                if !relative_path.ends_with('/') {
+                    if let Some(path) = self.load_as_file(&path)? {
+                        return Ok(path);
+                    }
                 }
+                // b. LOAD_AS_DIRECTORY(Y + X)
                 if let Some(path) = self.load_as_directory(&path)? {
                     return Ok(path);
                 }
+                // c. THROW "not found"
                 Err(ResolveError::NotFound)
             }
-            Request::Absolute(_) => {
-                unreachable!()
+            Request::Module(module_path) => {
+                // 5. LOAD_PACKAGE_SELF(X, dirname(Y))
+                // 6. LOAD_NODE_MODULES(X, dirname(Y))
+                if let Some(path) = self.load_node_modules(path, module_path)? {
+                    return Ok(path);
+                }
+
+                // 7. THROW "not found"
+                Err(ResolveError::NotFound)
             }
         }
     }
 
-    #[allow(clippy::unused_self, clippy::unnecessary_wraps)]
+    #[allow(clippy::unnecessary_wraps)]
     fn load_as_file(&self, path: &Path) -> ResolveState {
         // 1. If X is a file, load X as its file extension format. STOP
         if self.fs.is_file(path) {
             return Ok(Some(path.to_path_buf()));
         }
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
-        let path_js = path.with_extension("js");
-        if self.fs.is_file(&path_js) {
-            return Ok(Some(path_js));
-        }
         // 3. If X.json is a file, parse X.json to a JavaScript Object. STOP
         // 4. If X.node is a file, load X.node as binary addon. STOP
+        for extension in &self.options.extensions {
+            let path_with_extension = path.with_extension(extension);
+            if self.fs.is_file(&path_with_extension) {
+                return Ok(Some(path_with_extension));
+            }
+        }
         Ok(None)
     }
 
     #[allow(clippy::unused_self, clippy::unnecessary_wraps)]
     fn load_index(&self, path: &Path) -> ResolveState {
         // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
-        let index_js_path = path.with_file_name("index.js");
-        if self.fs.is_file(&index_js_path) {
-            return Ok(Some(index_js_path));
-        }
         // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
         // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
+        for extension in &self.options.extensions {
+            let index_path = path.join("index").with_extension(extension);
+            if self.fs.is_file(&index_path) {
+                return Ok(Some(index_path));
+            }
+        }
         Ok(None)
     }
 
@@ -116,5 +151,29 @@ impl Resolver {
         }
         // 2. LOAD_INDEX(X)
         self.load_index(path)
+    }
+
+    fn load_node_modules(&self, start: &Path, module_path: &str) -> ResolveState {
+        const NODE_MODULES: &str = "node_modules";
+        // 1. let DIRS = NODE_MODULES_PATHS(START)
+        let dirs = start
+            .ancestors()
+            .filter(|path| path.file_name().is_some_and(|name| name != NODE_MODULES));
+        // 2. for each DIR in DIRS:
+        for dir in dirs {
+            // a. LOAD_PACKAGE_EXPORTS(X, DIR)
+            // b. LOAD_AS_FILE(DIR/X)
+            let node_module_path = dir.join(NODE_MODULES).join(module_path);
+            if !module_path.ends_with('/') {
+                if let Some(path) = self.load_as_file(&node_module_path)? {
+                    return Ok(Some(path));
+                }
+            }
+            // c. LOAD_AS_DIRECTORY(DIR/X)
+            if let Some(path) = self.load_as_directory(&node_module_path)? {
+                return Ok(Some(path));
+            }
+        }
+        Ok(None)
     }
 }

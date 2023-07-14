@@ -14,11 +14,25 @@ use oxc_resolver::Resolver;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let cwd = env::current_dir().unwrap().join("tests/enhanced_resolve/");
-    let resolver = Resolver::new();
-    c.bench_with_input(BenchmarkId::new("index", ""), &cwd, |b, cwd| {
+    let resolver = Resolver::default();
+
+    let data = [
+        (cwd.clone(), "./"),
+        (cwd.clone(), "./lib/index"),
+        (cwd.join("./test/fixtures/extensions"), "./foo"),
+        (cwd.join("test/fixtures/extensions/module"), "module"),
+    ];
+
+    // Check path is valid
+    for (path, request) in &data {
+        assert!(resolver.resolve(path, request).is_ok(), "{path:?} {request}");
+    }
+
+    c.bench_with_input(BenchmarkId::new("resolve", ""), &data, |b, data| {
         b.iter(|| {
-            assert!(resolver.resolve(cwd, "./lib/index").is_ok());
-            assert!(resolver.resolve(cwd, "./").is_ok());
+            for (path, request) in data {
+                _ = resolver.resolve(path, request);
+            }
         });
     });
 }
