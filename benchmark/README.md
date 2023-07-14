@@ -63,7 +63,7 @@ Summary
    76.50 ± 8.32 times faster than 'eslint'
 ```
 
-## 5800H 8-cores
+## AMD 5800H 8-cores
 
 ```
 Benchmark 1: oxc
