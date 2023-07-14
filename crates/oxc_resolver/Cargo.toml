@@ -11,13 +11,14 @@ license.workspace     = true
 repository.workspace  = true
 
 [dependencies]
-serde = { workspace = true, features = ["derive"] }
+dashmap    = { workspace = true }
+serde      = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 
 [dev-dependencies]
 static_assertions = { workspace = true }
-criterion = { workspace = true }
+criterion         = { workspace = true }
 
 [[bench]]
-name = "resolver"
+name    = "resolver"
 harness = false

@@ -5,7 +5,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - 'crates/oxc_resolver/'
+      - './crates/oxc_resolver/**'
       - '.github/workflows/benchmark_resolver.yml'
 
 concurrency:
@@ -20,7 +20,7 @@ jobs:
     name: Run benchmark on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
+      - name: Checkout Main Branch
         uses: actions/checkout@v3
         with:
           ref: main # Checkout main first because the cache is warm
@@ -46,7 +46,7 @@ jobs:
       - name: Run Bench on Main Branch
         run: cargo bench --bench resolver -- --save-baseline main
 
-      - name: Checkout Main Branch
+      - name: Checkout PR Branch
         uses: actions/checkout@v3
         with:
           clean: false
