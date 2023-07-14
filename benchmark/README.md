@@ -62,3 +62,21 @@ Summary
   'oxc' ran
    76.50 ± 8.32 times faster than 'eslint'
 ```
+
+## AMD 5800H 8-cores
+
+```
+Benchmark 1: oxc
+  Time (mean ± σ):       6.6 ms ±   1.6 ms    [User: 3.4 ms, System: 6.1 ms]
+  Range (min … max):     3.6 ms …  22.1 ms    379 runs
+
+Benchmark 2: eslint
+  Time (mean ± σ):     565.9 ms ±   6.0 ms    [User: 616.3 ms, System: 65.1 ms]
+  Range (min … max):   559.7 ms … 579.9 ms    10 runs
+
+  Warning: Ignoring non-zero exit code.
+
+Summary
+  oxc ran
+   85.72 ± 20.35 times faster than eslint
+```
