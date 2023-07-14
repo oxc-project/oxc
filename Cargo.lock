@@ -1400,6 +1400,8 @@ version = "0.0.0"
 dependencies = [
  "criterion",
  "normalize-path",
+ "serde",
+ "serde_json",
  "static_assertions",
 ]
 

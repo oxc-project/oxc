@@ -1,4 +1,5 @@
 mod enhanced_resolve;
+mod error_handling;
 
 use std::path::Path;
 
