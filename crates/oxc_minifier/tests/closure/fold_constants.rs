@@ -121,6 +121,118 @@ fn test_undefined_comparison3() {
 }
 
 #[test]
+fn test_null_comparison1() {
+    test_wcb("null == undefined", "true");
+    test_wcb("null == null", "true");
+    test_wcb("null == void 0", "true");
+
+    test_wcb("null == 0", "false");
+    test_wcb("null == 1", "false");
+    test_wcb("null == 0n", "false");
+    test_wcb("null == 1n", "false");
+    test_wcb("null == 'hi'", "false");
+    test_wcb("null == true", "false");
+    test_wcb("null == false", "false");
+
+    test_wcb("null === undefined", "false");
+    test_wcb("null === null", "true");
+    test_wcb("null === void 0", "false");
+    test_same("null===x");
+
+    test_same("null==this");
+    test_same("null==x");
+
+    test_wcb("null != undefined", "false");
+    test_wcb("null != null", "false");
+    test_wcb("null != void 0", "false");
+
+    test_wcb("null != 0", "true");
+    test_wcb("null != 1", "true");
+    test_wcb("null != 0n", "true");
+    test_wcb("null != 1n", "true");
+    test_wcb("null != 'hi'", "true");
+    test_wcb("null != true", "true");
+    test_wcb("null != false", "true");
+
+    test_wcb("null !== undefined", "true");
+    test_wcb("null !== void 0", "true");
+    test_wcb("null !== null", "false");
+
+    test_same("null!=this");
+    test_same("null!=x");
+
+    test_wcb("null < null", "false");
+    test_wcb("null > null", "false");
+    test_wcb("null >= null", "true");
+    test_wcb("null <= null", "true");
+
+    test_wcb("0 < null", "false");
+    test_wcb("0 > null", "false");
+    test_wcb("0 >= null", "true");
+    test_wcb("0n < null", "false");
+    test_wcb("0n > null", "false");
+    test_wcb("0n >= null", "true");
+    test_wcb("true > null", "true");
+    test_wcb("'hi' < null", "false");
+    test_wcb("'hi' >= null", "false");
+    test_wcb("null <= null", "true");
+
+    test_wcb("null < 0", "false");
+    test_wcb("null < 0n", "false");
+    test_wcb("null > true", "false");
+    test_wcb("null < 'hi'", "false");
+    test_wcb("null >= 'hi'", "false");
+    test_wcb("null <= null", "true");
+
+    test_wcb("null == null", "true");
+    test_wcb("0 == null", "false");
+    test_wcb("1 == null", "false");
+    test_wcb("'hi' == null", "false");
+    test_wcb("true == null", "false");
+    test_wcb("false == null", "false");
+    test_wcb("null === null", "true");
+    test_wcb("void 0 === null", "false");
+
+    test_wcb("null == NaN", "false");
+    test_wcb("NaN == null", "false");
+    test_wcb("null == Infinity", "false");
+    test_wcb("Infinity == null", "false");
+    test_wcb("null == -Infinity", "false");
+    test_wcb("-Infinity == null", "false");
+    test_wcb("({}) == null", "false");
+    test_wcb("null == ({})", "false");
+    test_wcb("([]) == null", "false");
+    test_wcb("null == ([])", "false");
+    test_wcb("(/a/g) == null", "false");
+    test_wcb("null == (/a/g)", "false");
+    test_wcb("(function(){}) == null", "false");
+    test_wcb("null == (function(){})", "false");
+
+    test_wcb("null != NaN", "true");
+    test_wcb("NaN != null", "true");
+    test_wcb("null != Infinity", "true");
+    test_wcb("Infinity != null", "true");
+    test_wcb("null != -Infinity", "true");
+    test_wcb("-Infinity != null", "true");
+    test_wcb("({}) != null", "true");
+    test_wcb("null != ({})", "true");
+    test_wcb("([]) != null", "true");
+    test_wcb("null != ([])", "true");
+    test_wcb("(/a/g) != null", "true");
+    test_wcb("null != (/a/g)", "true");
+    test_wcb("(function(){}) != null", "true");
+    test_wcb("null != (function(){})", "true");
+
+    test_same("({a:f()})==null");
+    test_same("null=={a:f()}");
+    test_same("[f()]==null");
+    test_same("null==[f()]");
+
+    test_same("this==null");
+    test_same("x==null");
+}
+
+#[test]
 fn test_string_string_comparison() {
     test("'a' < 'b'", "!0");
     test("'a' <= 'b'", "!0");
