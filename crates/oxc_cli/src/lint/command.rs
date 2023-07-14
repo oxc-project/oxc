@@ -1,6 +1,6 @@
 use clap::{builder::ValueParser, Arg, ArgAction, Command};
 
-pub fn lint_command(command: Command) -> Command {
+pub(super) fn lint_command(command: Command) -> Command {
     command
             .arg_required_else_help(true)
             .after_help(

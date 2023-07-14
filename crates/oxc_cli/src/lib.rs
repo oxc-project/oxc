@@ -1,15 +1,15 @@
 // mod git;
 mod lint;
-mod result;
+mod runner;
 mod type_check;
 mod walk;
 
 use clap::{Arg, Command};
 
 pub use crate::{
-    lint::{lint_command, LintOptions, LintRunner, LintRunnerWithModuleTree},
-    result::CliRunResult,
-    type_check::{type_check_command, TypeCheckOptions, TypeCheckRunner},
+    lint::{LintOptions, LintRunner},
+    runner::{CliRunResult, Runner, RunnerOptions},
+    type_check::{TypeCheckOptions, TypeCheckRunner},
     walk::Walk,
 };
 
@@ -21,8 +21,8 @@ pub fn command() -> Command {
         .about("The JavaScript Oxidation Compiler")
         .subcommand_required(true)
         .arg_required_else_help(true)
-        .subcommand(lint_command(Command::new("lint").about("Lint this repository.")))
-        .subcommand(type_check_command())
+        .subcommand(LintRunner::command())
+        .subcommand(TypeCheckRunner::command())
         .arg(
             Arg::new("threads")
                 .long("threads")

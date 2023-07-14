@@ -9,10 +9,10 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 use clap::{Arg, Command};
-use oxc_cli::{lint_command, CliRunResult, LintOptions, LintRunner};
+use oxc_cli::{CliRunResult, LintOptions, LintRunner, Runner, RunnerOptions};
 
 pub fn command() -> Command {
-    lint_command(
+    LintOptions::build_args(
         Command::new("oxlint")
             .bin_name("oxlint")
             .version("alpha")
@@ -36,11 +36,6 @@ fn main() -> CliRunResult {
     }
 
     let options = LintOptions::from(&matches);
-
-    if options.list_rules {
-        LintRunner::print_rules();
-        return CliRunResult::None;
-    }
 
     LintRunner::new(options).run()
 }
