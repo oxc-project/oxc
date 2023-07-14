@@ -1,7 +1,11 @@
 target/
 **/*.rs.bk
 
-node_modules/
+/node_modules/
+/website/node_modules/
+/crates/oxc_napi/node_modules/
+/benchmark/node_modules/
+
 npm/cli-*
 
 # From napi build

@@ -5,8 +5,12 @@ pub enum RequestError {
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Request<'a> {
+    /// `/path`
     Absolute(&'a str),
+    /// `./path`, `../path`
     Relative(&'a str),
+    /// `path`
+    Module(&'a str),
 }
 
 impl<'a> TryFrom<&'a str> for Request<'a> {
@@ -24,6 +28,7 @@ impl<'a> Request<'a> {
         match chars.next() {
             Some('/') => Ok(Self::Absolute(request)),
             Some('.') => Ok(Self::Relative(request)),
+            Some(_) => Ok(Self::Module(request)),
             _ => Err(RequestError::Empty),
         }
     }
@@ -42,24 +47,28 @@ mod tests {
     #[test]
     fn test_empty() {
         let request = "";
-        let parsed = Request::parse(request);
-        let expected = RequestError::Empty;
-        assert_eq!(parsed, Err(expected));
+        assert_eq!(Request::parse(request), Err(RequestError::Empty));
     }
 
     #[test]
     fn test_absolute() {
         let request = "/test";
-        let parsed = Request::parse(request);
-        let expected = Request::Absolute(request);
-        assert_eq!(parsed, Ok(expected));
+        assert_eq!(Request::parse(request), Ok(Request::Absolute(request)));
     }
 
     #[test]
     fn test_parse_relative() {
-        let request = "./test";
-        let parsed = Request::parse(request);
-        let expected = Request::Relative(request);
-        assert_eq!(parsed, Ok(expected));
+        let requests = ["./test", "../test", "../../test"];
+        for request in requests {
+            assert_eq!(Request::parse(request), Ok(Request::Relative(request)));
+        }
+    }
+
+    #[test]
+    fn test_module() {
+        let requests = ["module"];
+        for request in requests {
+            assert_eq!(Request::parse(request), Ok(Request::Module(request)));
+        }
     }
 }

@@ -5,7 +5,7 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths:
-      - './crates/oxc_resolver/**'
+      - 'crates/oxc_resolver/**'
       - '.github/workflows/benchmark_resolver.yml'
 
 concurrency:

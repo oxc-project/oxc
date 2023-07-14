@@ -2,23 +2,24 @@
 
 use std::env;
 
-use crate::resolve;
+use oxc_resolver::Resolver;
 
 #[test]
 fn test() {
     // mimic `enhanced-resolve/test/simple.test.js`
     let dirname = env::current_dir().unwrap().join("tests/enhanced_resolve/test/");
 
-    let paths = vec![
+    let data = [
         (dirname.clone(), "../lib/index", "direct"),
         (dirname.clone(), "..", "as directory"),
         (dirname.join("../../").canonicalize().unwrap(), "./enhanced_resolve", "as module"),
     ];
 
-    for (path, request, comment) in paths {
-        let resolved =
-            resolve(&path, request).map(|path| path.canonicalize().expect("file exists"));
-        let expected = Ok(dirname.join("../lib/index.js").canonicalize().expect("file exists"));
-        assert_eq!(resolved, expected, "{comment} {path:?} {request}");
+    let resolver = Resolver::default();
+
+    for (path, request, comment) in data {
+        let resolved_path = resolver.resolve(&path, request).map(|p| p.canonicalize().unwrap());
+        let expected = dirname.join("../lib/index.js").canonicalize().unwrap();
+        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }
