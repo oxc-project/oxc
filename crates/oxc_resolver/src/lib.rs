@@ -5,6 +5,7 @@
 //! Algorithm from <https://nodejs.org/api/modules.html#all-together>.
 
 mod error;
+mod file_system;
 mod package_json;
 mod path;
 mod request;
@@ -14,6 +15,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use file_system::FileSystem;
 use package_json::PackageJson;
 
 pub use crate::error::{JSONError, ResolveError};
@@ -22,11 +24,13 @@ use crate::{path::PathUtil, request::Request};
 pub type ResolveResult = Result<PathBuf, ResolveError>;
 type ResolveState = Result<Option<PathBuf>, ResolveError>;
 
-pub struct Resolver;
+pub struct Resolver {
+    fs: FileSystem,
+}
 
 impl Resolver {
     pub fn new() -> Self {
-        Self
+        Self { fs: FileSystem::default() }
     }
 
     /// Resolve `request` at `path`
@@ -60,12 +64,12 @@ impl Resolver {
     #[allow(clippy::unused_self, clippy::unnecessary_wraps)]
     fn load_as_file(&self, path: &Path) -> ResolveState {
         // 1. If X is a file, load X as its file extension format. STOP
-        if path.is_file() {
+        if self.fs.is_file(path) {
             return Ok(Some(path.to_path_buf()));
         }
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
         let path_js = path.with_extension("js");
-        if path_js.is_file() {
+        if self.fs.is_file(&path_js) {
             return Ok(Some(path_js));
         }
         // 3. If X.json is a file, parse X.json to a JavaScript Object. STOP
@@ -76,8 +80,9 @@ impl Resolver {
     #[allow(clippy::unused_self, clippy::unnecessary_wraps)]
     fn load_index(&self, path: &Path) -> ResolveState {
         // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
-        if path.with_file_name("index.js").is_file() {
-            return Ok(Some(path.with_file_name("index.js")));
+        let index_js_path = path.with_file_name("index.js");
+        if self.fs.is_file(&index_js_path) {
+            return Ok(Some(index_js_path));
         }
         // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
         // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
@@ -87,7 +92,7 @@ impl Resolver {
     fn load_as_directory(&self, path: &Path) -> ResolveState {
         // 1. If X/package.json is a file,
         let package_json_path = path.join("package.json");
-        if package_json_path.is_file() {
+        if self.fs.is_file(&package_json_path) {
             // a. Parse X/package.json, and look for "main" field.
             let package_json_string = fs::read_to_string(&package_json_path).unwrap();
             let package_json = PackageJson::try_from(package_json_string.as_str())
