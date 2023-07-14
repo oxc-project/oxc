@@ -13,12 +13,12 @@ use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_resolver::Resolver;
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let cwd = env::current_dir().unwrap().join("enhanced_resolve");
+    let cwd = env::current_dir().unwrap().join("tests/enhanced_resolve/");
     let resolver = Resolver::new();
     c.bench_with_input(BenchmarkId::new("index", ""), &cwd, |b, cwd| {
         b.iter(|| {
-            _ = resolver.resolve(cwd, "lib/index");
-            _ = resolver.resolve(cwd, "./");
+            assert!(resolver.resolve(cwd, "./lib/index").is_ok());
+            assert!(resolver.resolve(cwd, "./").is_ok());
         });
     });
 }
