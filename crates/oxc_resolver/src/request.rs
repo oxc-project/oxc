@@ -27,12 +27,6 @@ impl<'a> Request<'a> {
             _ => Err(RequestError::Empty),
         }
     }
-
-    pub fn as_str(&self) -> &str {
-        match self {
-            Self::Absolute(s) | Self::Relative(s) => s,
-        }
-    }
 }
 
 #[cfg(test)]

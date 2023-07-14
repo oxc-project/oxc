@@ -11,7 +11,6 @@ license.workspace     = true
 repository.workspace  = true
 
 [dependencies]
-normalize-path = "0.2.1"
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 

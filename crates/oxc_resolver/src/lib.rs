@@ -17,7 +17,7 @@ use std::{
 use package_json::PackageJson;
 
 pub use crate::error::{JSONError, ResolveError};
-use crate::{path::ResolvePath, request::Request};
+use crate::{path::PathUtil, request::Request};
 
 pub type ResolveResult = Result<PathBuf, ResolveError>;
 type ResolveState = Result<Option<PathBuf>, ResolveError>;
@@ -40,11 +40,9 @@ impl Resolver {
 
     fn resolve_impl(&self, path: &Path, request: &str) -> ResolveResult {
         let request = Request::try_from(request).map_err(ResolveError::RequestError)?;
-        let path = ResolvePath::from(path);
-
         match request {
-            Request::Relative(_) => {
-                let path = path.join(&request);
+            Request::Relative(relative_path) => {
+                let path = path.normalize_with(relative_path);
                 if let Some(path) = self.load_as_file(&path)? {
                     return Ok(path);
                 }
@@ -97,7 +95,7 @@ impl Resolver {
             // b. If "main" is a falsy value, GOTO 2.
             if let Some(main_field) = &package_json.main {
                 // c. let M = X + (json main field)
-                let main_field_path = path.join(main_field);
+                let main_field_path = path.normalize_with(main_field);
                 // d. LOAD_AS_FILE(M)
                 if let Some(path) = self.load_as_file(&main_field_path)? {
                     return Ok(Some(path));
