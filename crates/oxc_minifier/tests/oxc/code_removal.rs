@@ -32,4 +32,9 @@ fn console_removal() {
         "function f(){return}",
         options,
     );
+
+    // console isn't removed when drop_console is `false`. This is also the
+    // default value.
+    let options = MinifierOptions { mangle: false, ..MinifierOptions::default() };
+    test_with_options("console.log('hi')", "console.log('hi')", options);
 }
