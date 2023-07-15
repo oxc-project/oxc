@@ -54,7 +54,7 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 - [ ] plugins.test.js
 - [ ] pnp.test.js
 - [ ] pr-53.test.js
-- [ ] resolve.test.js
+- [x] resolve.test.js (partially done)
 - [ ] restrictions.test.js
 - [ ] roots.test.js
 - [ ] scoped-packages.test.js
