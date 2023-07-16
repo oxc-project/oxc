@@ -21,6 +21,7 @@ fn undefined_return() {
 #[test]
 fn useless_constructor() {
     test("class Foo { constructor() { } }", "class Foo{}");
+    test("class Foo extends Bar { constructor() { super() } }", "class Foo extends Bar{}");
     test("class Foo { constructor(...args) { super(...args) } }", "class Foo{}");
     test("let Foo = class Foo { constructor() { } }", "let Foo=class Foo{}");
     test("let Foo = class Foo { constructor(...args) { super(...args) } }", "let Foo=class Foo{}");

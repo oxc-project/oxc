@@ -121,6 +121,11 @@ impl<'a> Compressor<'a> {
                 return false;
             }
 
+            // handle `constructor() { super() }`
+            if params.items.is_empty() && params.rest.is_none() && expr.arguments.is_empty() {
+                return true;
+            }
+            
             // handle `constructor(...args) { super(...args) }`
             // if constructor params is (...rest),
             if params.items.is_empty() &&
