@@ -1,5 +1,4 @@
 mod enhanced_resolve;
-mod error_handling;
 
 use std::{env, sync::Arc, thread};
 

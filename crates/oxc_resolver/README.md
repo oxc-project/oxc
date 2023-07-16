@@ -48,7 +48,7 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 - [ ] getPaths.test.js
 - [ ] identifier.test.js
 - [ ] importsField.test.js
-- [ ] incorrect-description-file.test.js
+- [x] incorrect-description-file.test.js (need to add ctx.fileDependencies)
 - [ ] missing.test.js
 - [ ] path.test.js
 - [ ] plugins.test.js
