@@ -169,13 +169,16 @@ impl Resolver {
         Ok(None)
     }
 
-    #[allow(clippy::unused_self, clippy::unnecessary_wraps)]
-    fn load_index(&self, path: &Path) -> ResolveState {
+    #[allow(clippy::unnecessary_wraps)]
+    fn load_index(&self, path: &Path, package_json: Option<&PackageJson>) -> ResolveState {
         // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
         // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
         // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
         for extension in &self.options.extensions {
-            let index_path = path.join("index").with_extension(extension);
+            let mut index_path = path.join("index").with_extension(extension);
+            if let Some(resolved_path) = package_json.and_then(|p| p.resolve(&index_path)) {
+                index_path = resolved_path;
+            }
             if self.fs.is_file(&index_path) {
                 return Ok(Some(index_path));
             }
@@ -189,7 +192,7 @@ impl Resolver {
         if self.fs.is_file(&package_json_path) {
             // a. Parse X/package.json, and look for "main" field.
             let package_json_string = fs::read_to_string(&package_json_path).unwrap();
-            let package_json = PackageJson::try_from(package_json_string.as_str())
+            let package_json = PackageJson::parse(package_json_path.clone(), &package_json_string)
                 .map_err(|error| ResolveError::from_serde_json_error(package_json_path, &error))?;
             // b. If "main" is a falsy value, GOTO 2.
             if let Some(main_field) = &package_json.main {
@@ -200,19 +203,22 @@ impl Resolver {
                     return Ok(Some(path));
                 }
                 // e. LOAD_INDEX(M)
-                if let Some(path) = self.load_index(&main_field_path)? {
+                if let Some(path) = self.load_index(&main_field_path, Some(&package_json))? {
                     return Ok(Some(path));
                 }
                 // f. LOAD_INDEX(X) DEPRECATED
+                // g. THROW "not found"
+                return Err(ResolveError::NotFound);
             }
-            // g. THROW "not found"
-            return Err(ResolveError::NotFound);
+            // 2. LOAD_INDEX(X)
+            self.load_index(path, Some(&package_json))
+        } else {
+            // 2. LOAD_INDEX(X)
+            self.load_index(path, None)
         }
-        // 2. LOAD_INDEX(X)
-        self.load_index(path)
     }
 
-    fn load_node_modules(&self, start: &Path, module_path: &str) -> ResolveState {
+    fn load_node_modules(&self, start: &Path, request_str: &str) -> ResolveState {
         const NODE_MODULES: &str = "node_modules";
         // 1. let DIRS = NODE_MODULES_PATHS(START)
         let dirs = start
@@ -220,10 +226,11 @@ impl Resolver {
             .filter(|path| path.file_name().is_some_and(|name| name != NODE_MODULES));
         // 2. for each DIR in DIRS:
         for dir in dirs {
+            let node_module_path = dir.join(NODE_MODULES);
             // a. LOAD_PACKAGE_EXPORTS(X, DIR)
             // b. LOAD_AS_FILE(DIR/X)
-            let node_module_path = dir.join(NODE_MODULES).join(module_path);
-            if !module_path.ends_with('/') {
+            let node_module_path = node_module_path.join(request_str);
+            if !request_str.ends_with('/') {
                 if let Some(path) = self.load_as_file(&node_module_path)? {
                     return Ok(Some(path));
                 }
