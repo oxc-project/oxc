@@ -2,10 +2,10 @@
 
 use std::env;
 
-use oxc_resolver::Resolver;
+use oxc_resolver::{ResolveError, Resolver};
 
 #[test]
-fn test() {
+fn test() -> Result<(), ResolveError> {
     // mimic `enhanced-resolve/test/simple.test.js`
     let dirname = env::current_dir().unwrap().join("tests/enhanced_resolve/test/");
 
@@ -18,8 +18,11 @@ fn test() {
     let resolver = Resolver::default();
 
     for (path, request, comment) in data {
-        let resolved_path = resolver.resolve(&path, request).map(|p| p.canonicalize().unwrap());
+        let resolution = resolver.resolve(&path, request)?;
+        let resolved_path = resolution.path().canonicalize().unwrap();
         let expected = dirname.join("../lib/index.js").canonicalize().unwrap();
-        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
+        assert_eq!(resolved_path, expected, "{comment} {path:?} {request}");
     }
+
+    Ok(())
 }
