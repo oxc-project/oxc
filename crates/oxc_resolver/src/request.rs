@@ -16,7 +16,7 @@ pub enum RequestPath<'a> {
     Absolute(&'a str),
     /// `./path`, `../path`
     Relative(&'a str),
-    /// `path`
+    /// `path`, `@scope/path`
     Module(&'a str),
 }
 

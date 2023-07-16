@@ -1,5 +1,11 @@
 #[derive(Debug, Clone)]
 pub struct ResolveOptions {
+    /// A list of alias fields in description files.
+    /// Specify a field, such as `browser`, to be parsed according to [this specification](https://github.com/defunctzombie/package-browser-field-spec).
+    ///
+    /// Default `[]`
+    pub alias_fields: Vec<String>,
+
     /// An object which maps extension to extension aliases
     ///
     /// Default `{}`
@@ -24,6 +30,7 @@ pub struct ResolveOptions {
 impl Default for ResolveOptions {
     fn default() -> Self {
         Self {
+            alias_fields: vec![],
             extension_alias: vec![],
             enforce_extension: false,
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
