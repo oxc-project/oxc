@@ -17,3 +17,11 @@ fn undefined_return() {
     test("function f(){return void foo();}", "function f(){return void foo()}");
     test("function f(){if(a()){return undefined;}}", "function f(){if(a())return}");
 }
+
+#[test]
+fn useless_constructor() {
+    test("class Foo { constructor() { } }", "class Foo{}");
+    test("class Foo { constructor(...args) { super(...args) } }", "class Foo{}");
+    test("let Foo = class Foo { constructor() { } }", "let Foo=class Foo{}");
+    test("let Foo = class Foo { constructor(...args) { super(...args) } }", "let Foo=class Foo{}");
+}

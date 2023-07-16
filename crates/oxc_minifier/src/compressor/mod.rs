@@ -1,5 +1,6 @@
 #![allow(clippy::unused_self)]
 
+mod drop;
 mod fold;
 
 use oxc_allocator::{Allocator, Vec};
@@ -93,6 +94,53 @@ impl<'a> Compressor<'a> {
                 self.compress_block(stmt);
             }
         }
+    }
+
+    fn drop_class_element<'b>(&mut self, elem: &'b ClassElement<'a>) -> bool {
+        match elem {
+            ClassElement::MethodDefinition(method) => match method.kind {
+                MethodDefinitionKind::Constructor => self.drop_useless_constructor(method),
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
+    fn drop_useless_constructor<'b>(&mut self, ctor: &'b MethodDefinition<'a>) -> bool {
+        let Some(body) = &ctor.value.body else { return false };
+        let params = &ctor.value.params;
+
+        // handle `constructor () {}`
+        if body.is_empty() && params.is_empty() {
+            // todo: do we care about directives?
+            return true;
+        } else if body.statements.len() == 1 {
+            // todo: do we care about directives?
+            let Statement::ExpressionStatement(stmt) = &body.statements[0] else { return false };
+            let Expression::CallExpression(expr) = &stmt.expression else { return false };
+            if !matches!(expr.callee, Expression::Super(_)) {
+                return false;
+            }
+
+            // handle `constructor(...args) { super(...args) }`
+            // if constructor params is (...rest),
+            if params.items.is_empty() &&
+            let Some(rest) = &params.rest &&
+            let BindingPattern::BindingIdentifier(args_spread_ident) = &rest.argument &&
+            // and super args are not just a spread, but a spread of ...rest,
+            expr.arguments.len() == 1 &&
+            let Argument::SpreadElement(spread) = &expr.arguments[0] &&
+            let Expression::Identifier(super_spread_ident) = &spread.argument &&
+            super_spread_ident.name == args_spread_ident.name
+            {
+                return true
+            }
+
+            // todo(don): handle `constructor(a, b, c) { super(a, b, c) }
+            return false;
+        }
+
+        false
     }
 
     /// Drop `drop_debugger` statement.
@@ -279,6 +327,28 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
         self.compress_while(stmt);
         self.visit_statement_match(stmt);
     }
+
+    fn visit_class_body(&mut self, body: &'b mut ClassBody<'a>) {
+        let body = &mut body.body;
+        body.retain(|elem| !self.drop_class_element(elem));
+        for elem in body.iter_mut() {
+            self.visit_class_element(elem);
+        }
+    }
+
+    // fn visit_method_definition(&mut self, def: &'b mut MethodDefinition<'a>) {
+    //     if def.kind == MethodDefinitionKind::Constructor {
+    //         self.drop_useless_constructor(ctor)
+    //     } else {
+    //         // constructors cannot have decorators
+    //         for decorator in def.decorators.iter_mut() {
+    //             self.visit_decorator(decorator);
+    //         }
+    //     }
+
+    //     self.visit_property_key(&mut def.key);
+    //     self.visit_function(&mut def.value);
+    // }
 
     fn visit_return_statement(&mut self, stmt: &'b mut ReturnStatement<'a>) {
         if let Some(arg) = &mut stmt.argument {
