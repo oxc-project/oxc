@@ -11,8 +11,12 @@ use oxc_minifier::{CompressOptions, Minifier, MinifierOptions, PrinterOptions};
 use oxc_span::SourceType;
 
 pub(crate) fn test(source_text: &str, expected: &str) {
-    let source_type = SourceType::default();
     let options = MinifierOptions { mangle: false, ..MinifierOptions::default() };
+    test_with_options(source_text, expected, options);
+}
+
+pub(crate) fn test_with_options(source_text: &str, expected: &str, options: MinifierOptions) {
+    let source_type = SourceType::default();
     let minified = Minifier::new(source_text, source_type, options).build();
     assert_eq!(expected, minified, "for source {source_text}");
 }

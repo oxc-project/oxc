@@ -1,15 +1,15 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/extensions.test.js>
 
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
-use oxc_resolver::{ResolveOptions, Resolver};
+use oxc_resolver::{ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
-    env::current_dir().unwrap().join("tests/enhanced_resolve/test/fixtures/extensions")
+    super::fixture().join("extensions")
 }
 
 #[test]
-fn extensions() {
+fn extensions() -> Result<(), ResolveError> {
     let fixture = fixture();
 
     let options = ResolveOptions {
@@ -36,17 +36,20 @@ fn extensions() {
     ];
 
     for (comment, request, expected_path) in pass {
-        let resolved_path = resolver.resolve(&fixture, request).map(|p| p.canonicalize().unwrap());
+        let resolution = resolver.resolve(&fixture, request)?;
+        let path = resolution.path().canonicalize().unwrap();
         let expected = fixture.join(expected_path).canonicalize().unwrap();
-        assert_eq!(resolved_path, Ok(expected), "{comment} {request} {expected_path}");
+        assert_eq!(path, expected, "{comment} {request} {expected_path}");
     }
 
     let fail = [("not resolve to file when request has a trailing slash (relative)", "./foo.js/")];
 
     for (comment, request) in fail {
-        let resolved_path = resolver.resolve(&fixture, request);
-        assert!(resolved_path.is_err(), "{comment} {request} {resolved_path:?}");
+        let resolution = resolver.resolve(&fixture, request);
+        assert!(resolution.is_err(), "{comment} {request} {resolution:?}");
     }
+
+    Ok(())
 }
 
 #[test]
@@ -71,8 +74,9 @@ fn respect_enforce_extension() {
     let fixture = fixture();
 
     let options = ResolveOptions {
-        extensions: vec![".ts".into(), String::new(), ".js".into()],
         enforce_extension: false,
+        extensions: vec![".ts".into(), String::new(), ".js".into()],
+        ..ResolveOptions::default()
     };
 
     let resolver = Resolver::new(options);

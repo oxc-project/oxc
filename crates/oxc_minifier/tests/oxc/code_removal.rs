@@ -1,4 +1,4 @@
-use crate::test;
+use crate::{test, test_with_options, CompressOptions, MinifierOptions};
 
 #[test]
 fn undefined_assignment() {
@@ -25,4 +25,25 @@ fn useless_constructor() {
     test("class Foo { constructor(...args) { super(...args) } }", "class Foo{}");
     test("let Foo = class Foo { constructor() { } }", "let Foo=class Foo{}");
     test("let Foo = class Foo { constructor(...args) { super(...args) } }", "let Foo=class Foo{}");
+}
+
+#[test]
+fn console_removal() {
+    let options = MinifierOptions {
+        mangle: false,
+        compress: CompressOptions { drop_console: true, ..CompressOptions::default() },
+        ..MinifierOptions::default()
+    };
+    test_with_options("console.log('hi')", "", options);
+    test_with_options("let x = console.error('oops')", "let x", options);
+    test_with_options(
+        "function f() { return console.warn('problem') }",
+        "function f(){return}",
+        options,
+    );
+
+    // console isn't removed when drop_console is `false`. This is also the
+    // default value.
+    let options = MinifierOptions { mangle: false, ..MinifierOptions::default() };
+    test_with_options("console.log('hi')", "console.log('hi')", options);
 }
