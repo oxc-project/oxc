@@ -3,7 +3,7 @@
 use oxc_resolver::{ResolveError, Resolver};
 
 #[test]
-fn test() -> Result<(), ResolveError> {
+fn resolve() -> Result<(), ResolveError> {
     let f = super::fixture();
     let resolver = Resolver::default();
 

@@ -12,6 +12,7 @@ mod path;
 mod request;
 
 use std::{
+    ffi::OsStr,
     fs,
     path::{Path, PathBuf},
 };
@@ -85,7 +86,7 @@ impl Resolver {
         path: P,
         request: &str,
     ) -> Result<Resolution, ResolveError> {
-        let request = Request::parse(request).map_err(ResolveError::RequestError)?;
+        let request = Request::parse(request).map_err(ResolveError::Request)?;
         let path = self.require(path.as_ref(), &request)?;
         Ok(Resolution {
             path,
@@ -147,6 +148,11 @@ impl Resolver {
 
     #[allow(clippy::unnecessary_wraps)]
     fn load_as_file(&self, path: &Path) -> ResolveState {
+        // enhanced-resolve feature: extension_alias
+        if let Some(path) = self.load_extension_alias(path)? {
+            return Ok(Some(path));
+        }
+
         // 1. If X is a file, load X as its file extension format. STOP
         if self.fs.is_file(path) {
             return Ok(Some(path.to_path_buf()));
@@ -228,5 +234,29 @@ impl Resolver {
             }
         }
         Ok(None)
+    }
+
+    /// Given an extension alias map `{".js": [".ts", "js"]}`,
+    /// load the mapping instead of the provided extension
+    ///
+    /// This is an enhanced-resolve feature
+    ///
+    /// # Errors
+    ///
+    /// * [ResolveError::ExtensionAlias]: When all of the aliased extensions are not found
+    fn load_extension_alias(&self, path: &Path) -> ResolveState {
+        let Some(path_extension) = path.extension() else { return Ok(None) };
+        let Some((_, extensions)) =
+            self.options.extension_alias.iter().find(|(ext, _)| OsStr::new(ext) == path_extension)
+        else {
+            return Ok(None);
+        };
+        for extension in extensions {
+            let path_with_extension = path.with_extension(extension);
+            if self.fs.is_file(&path_with_extension) {
+                return Ok(Some(path_with_extension));
+            }
+        }
+        Err(ResolveError::ExtensionAlias)
     }
 }

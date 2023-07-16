@@ -1,3 +1,4 @@
+mod extension_alias;
 mod extensions;
 mod resolve;
 mod simple;
