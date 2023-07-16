@@ -153,6 +153,6 @@ fn test_parameter() {
     class S { constructor(a=undefined) {use(a);} }
     class C extends S { constructor() { super(); } }
     let c = new C(1);",
-        "class S{constructor(a=void 0){use(a)}}class C extends S{constructor(){super()}}let c = new C(1)"
+        "class S{constructor(a=void 0){use(a)}}class C extends S{constructor(){super()}}let c = new C(1)",
     );
 }
