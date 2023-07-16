@@ -4,30 +4,72 @@ expression: eq_eq_eq
 ---
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eq_eq_eq.tsx:1:1]
+ 1 │ typeof foo == 'undefined'
+   · ─────────────────────────
+   ╰────
+  help: Prefer === operator
+
+  ⚠ eslint(eqeqeq): Expected !== and instead saw !=
+   ╭─[eq_eq_eq.tsx:1:1]
+ 1 │ 'hello' != 'world'
+   · ──────────────────
+   ╰────
+  help: Prefer !== operator
+
+  ⚠ eslint(eqeqeq): Expected === and instead saw ==
+   ╭─[eq_eq_eq.tsx:1:1]
+ 1 │ 0 == 0
+   · ──────
+   ╰────
+  help: Prefer === operator
+
+  ⚠ eslint(eqeqeq): Expected === and instead saw ==
+   ╭─[eq_eq_eq.tsx:1:1]
+ 1 │ true == true
+   · ────────────
+   ╰────
+  help: Prefer === operator
+
+  ⚠ eslint(eqeqeq): Expected === and instead saw ==
+   ╭─[eq_eq_eq.tsx:1:1]
+ 1 │ foo == null
+   · ───────────
+   ╰────
+  help: Prefer === operator
+
+  ⚠ eslint(eqeqeq): Expected === and instead saw ==
+   ╭─[eq_eq_eq.tsx:1:1]
  1 │ a == b
    · ──────
    ╰────
-  help: Prefer strict === operator
+  help: Prefer === operator
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eq_eq_eq.tsx:1:1]
  1 │ foo == true
    · ───────────
    ╰────
-  help: Prefer strict === operator
+  help: Prefer === operator
 
   ⚠ eslint(eqeqeq): Expected !== and instead saw !=
    ╭─[eq_eq_eq.tsx:1:1]
  1 │ bananas != 1
    · ────────────
    ╰────
-  help: Prefer strict !== operator
+  help: Prefer !== operator
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eq_eq_eq.tsx:1:1]
  1 │ value == undefined
    · ──────────────────
    ╰────
-  help: Prefer strict === operator
+  help: Prefer === operator
+
+  ⚠ eslint(eqeqeq): Expected === and instead saw ==
+   ╭─[eq_eq_eq.tsx:1:1]
+ 1 │ null == null
+   · ────────────
+   ╰────
+  help: Prefer === operator
 
 

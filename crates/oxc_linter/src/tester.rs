@@ -103,6 +103,23 @@ impl Tester {
         false
     }
 
+    fn run_with_fix<'a>(
+        &mut self,
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        config: Option<Value>,
+    ) -> Option<Cow<'a, str>> {
+        let name = self.rule_name.replace('-', "_");
+        let path = PathBuf::from(name).with_extension("tsx");
+        let result = self.run_rules(allocator, &path, source_text, config, true);
+        if result.is_empty() {
+            return None;
+        }
+
+        let fix_result = Fixer::new(source_text, result).fix();
+        Some(fix_result.fixed_code)
+    }
+
     fn run_rules<'a>(
         &mut self,
         allocator: &'a Allocator,
@@ -128,22 +145,5 @@ impl Tester {
         let rule = rule.read_json(config);
         let lint_context = LintContext::new(&Rc::new(semantic_ret.semantic));
         Linter::from_rules(vec![rule]).with_fix(is_fix).run(lint_context)
-    }
-
-    fn run_with_fix<'a>(
-        &mut self,
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        config: Option<Value>,
-    ) -> Option<Cow<'a, str>> {
-        let name = self.rule_name.replace('-', "_");
-        let path = PathBuf::from(name).with_extension("tsx");
-        let result = self.run_rules(allocator, &path, source_text, config, true);
-        if result.is_empty() {
-            return None;
-        }
-
-        let fix_result = Fixer::new(source_text, result).fix();
-        Some(fix_result.fixed_code)
     }
 }
