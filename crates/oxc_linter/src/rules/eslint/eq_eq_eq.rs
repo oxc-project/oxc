@@ -85,6 +85,7 @@ impl Rule for EqEqEq {
                 .map(CompareType::from)
                 .unwrap_or_default(),
             null_type: obj2
+                .and_then(|v| v.get("null"))
                 .and_then(serde_json::Value::as_str)
                 .map(NullType::from)
                 .unwrap_or_default(),
@@ -102,7 +103,7 @@ impl Rule for EqEqEq {
                 let operator = binary_expr.operator.as_str();
                 // There are some uncontrolled cases to auto fix.
                 // In ESlint, `null >= null` will be auto fixed to `null > null` which is also wrong.
-                // So I just report it
+                // So I just report it.
                 ctx.diagnostic(EqEqEqDiagnostic(
                     operator,
                     &operator[0..operator.len() - 1],
@@ -203,15 +204,17 @@ fn test() {
         ("true == true", Some(json!(["smart"]))),
         ("foo == null", Some(json!(["smart"]))),
         ("foo === null", None),
-        // Always use === or !== 
-        ("null === null", Some(json!(["always", "always"]))),
+        // Always use === or !== with `null`
+        ("null === null", Some(json!(["always", {"null": "always"}]))),
         // Never use === or !== with `null`
-        ("null == null", Some(json!(["always", "never"]))),
+        ("null == null", Some(json!(["always", {"null": "never"}]))),
         // Do not apply this rule to `null`.
-        ("null == null", Some(json!(["smart", "ignore"]))),
+        ("null == null", Some(json!(["smart", {"null": "ignore"}]))),
     ];
 
     let fail = vec![
+        // ESLint will perform like below case
+        ("null >= 1", Some(json!(["always", {"null": "never"}]))),
         ("typeof foo == 'undefined'", None),
         ("'hello' != 'world'", None),
         ("0 == 0", None),
@@ -221,7 +224,7 @@ fn test() {
         ("foo == true", None),
         ("bananas != 1", None),
         ("value == undefined", None),
-        ("null == null", Some(json!(["always", "always"]))),
+        ("null == null", Some(json!(["always", {"null": "always"}]))),
     ];
 
     let fix = vec![
