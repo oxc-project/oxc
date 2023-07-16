@@ -50,8 +50,8 @@ fn extension_alias() -> Result<(), ResolveError> {
 }
 
 #[test]
-// should not apply extension alias to extensions or mainFiles field
 fn not_apply_to_extension_nor_main_files() -> Result<(), ResolveError> {
+    // should not apply extension alias to extensions or mainFiles field
     let options = ResolveOptions {
         extensions: vec![".js".into()],
         main_files: vec!["index.js".into()],
