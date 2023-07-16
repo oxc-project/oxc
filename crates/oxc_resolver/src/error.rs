@@ -5,8 +5,9 @@ use crate::request::RequestError;
 #[derive(Debug, Eq, PartialEq)]
 pub enum ResolveError {
     NotFound,
-    RequestError(RequestError),
-    JSONError(JSONError),
+    Request(RequestError),
+    ExtensionAlias,
+    JSON(JSONError),
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -19,7 +20,7 @@ pub struct JSONError {
 
 impl ResolveError {
     pub(crate) fn from_serde_json_error(path: PathBuf, error: &serde_json::Error) -> Self {
-        Self::JSONError(JSONError {
+        Self::JSON(JSONError {
             path,
             message: error.to_string(),
             line: error.line(),

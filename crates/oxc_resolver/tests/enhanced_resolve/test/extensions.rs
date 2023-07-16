@@ -74,8 +74,9 @@ fn respect_enforce_extension() {
     let fixture = fixture();
 
     let options = ResolveOptions {
-        extensions: vec![".ts".into(), String::new(), ".js".into()],
         enforce_extension: false,
+        extensions: vec![".ts".into(), String::new(), ".js".into()],
+        ..ResolveOptions::default()
     };
 
     let resolver = Resolver::new(options);

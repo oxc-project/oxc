@@ -6,7 +6,7 @@
 |------|------------------|-----------------------------| --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 |      | alias            | []                          | A list of module alias configurations or an object which maps key to value                                                                                |
 |      | aliasFields      | []                          | A list of alias fields in description files                                                                                                               |
-|      | extensionAlias   | {}                          | An object which maps extension to extension aliases                                                                                                       |
+|  ✅  | extensionAlias   | {}                          | An object which maps extension to extension aliases                                                                                                       |
 |      | cachePredicate   | function() { return true }; | A function which decides whether a request should be cached or not. An object is passed to the function with `path` and `request` properties.             |
 |      | cacheWithContext | true                        | If unsafe cache is enabled, includes `request.context` in the cache key                                                                                   |
 |      | conditionNames   | []                          | A list of exports field condition names                                                                                                                   |
@@ -40,7 +40,7 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 - [ ] browserField.test.js
 - [ ] dependencies.test.js
 - [ ] exportsField.test.js
-- [ ] extension-alias.test.js
+- [x] extension-alias.test.js
 - [x] extensions.test.js
 - [ ] fallback.test.js
 - ~[ ] forEachBail.test.js~
