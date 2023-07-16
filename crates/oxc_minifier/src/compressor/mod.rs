@@ -1,6 +1,7 @@
 #![allow(clippy::unused_self)]
 
 mod fold;
+mod util;
 
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
@@ -16,30 +17,47 @@ use oxc_syntax::{
 #[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Copy)]
 pub struct CompressOptions {
-    /// Various optimizations for boolean context, for example `!!a ? b : c` → `a ? b : c`
-    /// Default true
+    /// Various optimizations for boolean context, for example `!!a ? b : c` → `a ? b : c`.
+    ///
+    /// Default `true`
     pub booleans: bool,
 
-    /// Remove `debugger;` statements
-    /// Default true
+    /// Remove `debugger;` statements.
+    ///
+    /// Default `true`
     pub drop_debugger: bool,
 
-    /// Join consecutive var statements
-    /// Default true
+    /// Remove `console.*` statements.
+    ///
+    /// Default `false`
+    pub drop_console: bool,
+
+    /// Join consecutive var statements.
+    ///
+    /// Default `true`
     pub join_vars: bool,
 
     /// Optimizations for do, while and for loops when we can statically determine the condition
-    /// Default: true
+    ///
+    /// Default `true`
     pub loops: bool,
 
     /// Transforms `typeof foo == "undefined" into `foo === void 0`
-    /// Default true
+    ///
+    /// Default `true`
     pub typeofs: bool,
 }
 
 impl Default for CompressOptions {
     fn default() -> Self {
-        Self { booleans: true, drop_debugger: true, join_vars: true, loops: true, typeofs: true }
+        Self {
+            booleans: true,
+            drop_debugger: true,
+            drop_console: false,
+            join_vars: true,
+            loops: true,
+            typeofs: true,
+        }
     }
 }
 
@@ -99,6 +117,22 @@ impl<'a> Compressor<'a> {
     /// Enabled by `compress.drop_debugger`
     fn drop_debugger<'b>(&mut self, stmt: &'b Statement<'a>) -> bool {
         matches!(stmt, Statement::DebuggerStatement(_)) && self.options.drop_debugger
+    }
+
+    /// Drop `console.*` expressions.
+    /// Enabled by `compress.drop_console
+    fn drop_console<'b>(&mut self, stmt: &'b Statement<'a>) -> bool {
+        self.options.drop_console
+            && matches!(stmt, Statement::ExpressionStatement(expr) if util::is_console(&expr.expression))
+    }
+
+    fn compress_console<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
+        if self.options.drop_console && util::is_console(expr) {
+            *expr = self.create_void_0();
+            true
+        } else {
+            false
+        }
     }
 
     /// Join consecutive var statements
@@ -265,7 +299,7 @@ impl<'a> Compressor<'a> {
 
 impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_statements(&mut self, stmts: &'b mut Vec<'a, Statement<'a>>) {
-        stmts.retain(|stmt| !self.drop_debugger(stmt));
+        stmts.retain(|stmt| !(self.drop_debugger(stmt) || self.drop_console(stmt)));
 
         self.join_vars(stmts);
 
@@ -290,13 +324,14 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
 
     fn visit_variable_declaration(&mut self, decl: &'b mut VariableDeclaration<'a>) {
         for declarator in decl.declarations.iter_mut() {
-            self.compress_variable_declarator(declarator);
             self.visit_variable_declarator(declarator);
+            self.compress_variable_declarator(declarator);
         }
     }
 
     fn visit_expression(&mut self, expr: &'b mut Expression<'a>) {
         self.visit_expression_match(expr);
+        self.compress_console(expr);
         self.fold_expression(expr);
         if !self.compress_undefined(expr) {
             self.compress_boolean(expr);
