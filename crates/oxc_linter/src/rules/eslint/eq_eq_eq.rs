@@ -18,40 +18,6 @@ use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 struct EqEqEqDiagnostic(&'static str, &'static str, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
-enum CompareType {
-    #[default]
-    Always,
-    Smart,
-}
-
-impl CompareType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "smart" => Self::Smart,
-            _ => Self::Always,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
-enum NullType {
-    #[default]
-    Always,
-    Never,
-    Ignore,
-}
-
-impl NullType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            "never" => Self::Never,
-            _ => Self::Ignore,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone)]
 pub struct EqEqEq {
     compare_type: CompareType,
     null_type: NullType,
@@ -147,6 +113,40 @@ impl Rule for EqEqEq {
             );
         } else {
             ctx.diagnostic(EqEqEqDiagnostic(operator, preferred_operator, binary_expr.span));
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+enum CompareType {
+    #[default]
+    Always,
+    Smart,
+}
+
+impl CompareType {
+    pub fn from(raw: &str) -> Self {
+        match raw {
+            "smart" => Self::Smart,
+            _ => Self::Always,
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+enum NullType {
+    #[default]
+    Always,
+    Never,
+    Ignore,
+}
+
+impl NullType {
+    pub fn from(raw: &str) -> Self {
+        match raw {
+            "always" => Self::Always,
+            "never" => Self::Never,
+            _ => Self::Ignore,
         }
     }
 }
