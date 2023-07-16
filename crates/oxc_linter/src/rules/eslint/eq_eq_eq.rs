@@ -151,7 +151,6 @@ impl Rule for EqEqEq {
 }
 
 fn to_strict_eq_operator_str(operator: BinaryOperator) -> (&'static str, &'static str) {
-    dbg!(operator);
     match operator {
         BinaryOperator::Equality => ("===", " === "),
         BinaryOperator::Inequality => ("!==", " !== "),
