@@ -10,43 +10,38 @@ fn fixture() -> PathBuf {
 
 #[test]
 fn extensions() -> Result<(), ResolveError> {
-    let fixture = fixture();
+    let f = fixture();
 
-    let options = ResolveOptions {
+    let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".ts".into(), ".js".into()],
         ..ResolveOptions::default()
-    };
+    });
 
-    let resolver = Resolver::new(options);
-
+    #[rustfmt::skip]
     let pass = [
         ("should resolve according to order of provided extensions", "./foo", "foo.ts"),
-        (
-            "should resolve according to order of provided extensions (dir index)",
-            "./dir",
-            "dir/index.ts",
-        ),
+        ("should resolve according to order of provided extensions (dir index)", "./dir", "dir/index.ts"),
         ("should resolve according to main field in module root", ".", "index.js"),
         ("should resolve single file module before directory", "module", "node_modules/module.js"),
-        (
-            "should resolve trailing slash directory before single file",
-            "module/",
-            "node_modules/module/index.ts",
-        ),
+        ("should resolve trailing slash directory before single file", "module/", "node_modules/module/index.ts"),
     ];
 
     for (comment, request, expected_path) in pass {
-        let resolution = resolver.resolve(&fixture, request)?;
+        let resolution = resolver.resolve(&f, request)?;
         let path = resolution.path().canonicalize().unwrap();
-        let expected = fixture.join(expected_path).canonicalize().unwrap();
+        let expected = f.join(expected_path).canonicalize().unwrap();
         assert_eq!(path, expected, "{comment} {request} {expected_path}");
     }
 
-    let fail = [("not resolve to file when request has a trailing slash (relative)", "./foo.js/")];
+    #[rustfmt::skip]
+    let fail = [
+        ("not resolve to file when request has a trailing slash (relative)", "./foo.js/", f.join("foo.js"))
+    ];
 
-    for (comment, request) in fail {
-        let resolution = resolver.resolve(&fixture, request);
-        assert!(resolution.is_err(), "{comment} {request} {resolution:?}");
+    for (comment, request, expected_error) in fail {
+        let resolution = resolver.resolve(&f, request);
+        let error = ResolveError::NotFound(expected_error.into_boxed_path());
+        assert_eq!(resolution, Err(error), "{comment} {request} {resolution:?}");
     }
 
     Ok(())

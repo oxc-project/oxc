@@ -5,6 +5,7 @@ use oxc_resolver::{ResolveError, Resolver};
 #[test]
 fn resolve() -> Result<(), ResolveError> {
     let f = super::fixture();
+
     let resolver = Resolver::default();
 
     let main1_js_path = f.join("main1.js").to_string_lossy().to_string();
