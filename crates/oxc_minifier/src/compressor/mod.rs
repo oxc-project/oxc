@@ -1,6 +1,5 @@
 #![allow(clippy::unused_self)]
 
-mod drop;
 mod fold;
 
 use oxc_allocator::{Allocator, Vec};
