@@ -1,3 +1,4 @@
+mod browser_field;
 mod extension_alias;
 mod extensions;
 mod incorrect_description_file;

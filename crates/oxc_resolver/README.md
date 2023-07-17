@@ -3,6 +3,7 @@
 ## TODO
 
 - [ ] use `thiserror` for better error messages
+- [ ] copy API documentation from webpack https://webpack.js.org/configuration/resolve/#resolve
 
 #### Resolver Options
 
@@ -41,7 +42,7 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 - [ ] CachedInputFileSystem.test.js
 - [ ] SyncAsyncFileSystemDecorator.test.js
 - [ ] alias.test.js
-- [ ] browserField.test.js
+- [x] browserField.test.js (reading the browser field is currently static - not read from the `browserField` option)
 - [ ] dependencies.test.js
 - [ ] exportsField.test.js
 - [x] extension-alias.test.js

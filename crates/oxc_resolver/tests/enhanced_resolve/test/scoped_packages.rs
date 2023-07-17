@@ -12,10 +12,10 @@ fn fixture() -> PathBuf {
 fn scoped_packages() -> Result<(), ResolveError> {
     let f = fixture();
 
-    let options =
-        ResolveOptions { alias_fields: vec!["browser".into()], ..ResolveOptions::default() };
-
-    let resolver = Resolver::new(options);
+    let resolver = Resolver::new(ResolveOptions {
+        alias_fields: vec!["browser".into()],
+        ..ResolveOptions::default()
+    });
 
     #[rustfmt::skip]
     let pass = [

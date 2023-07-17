@@ -1,16 +1,16 @@
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RequestError {
     Empty,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Request<'a> {
     pub path: RequestPath<'a>,
     pub query: Option<&'a str>,
     pub fragment: Option<&'a str>,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RequestPath<'a> {
     /// `/path`
     Absolute(&'a str),

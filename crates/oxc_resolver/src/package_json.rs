@@ -5,52 +5,88 @@ use std::{
 
 use serde::Deserialize;
 
-use crate::path::PathUtil;
+use crate::{path::PathUtil, ResolveError};
 
+// TODO: allocate everything into an arena or SoA
 #[derive(Debug, Deserialize)]
-pub struct PackageJson<'a> {
+pub struct PackageJson {
     #[serde(skip)]
     pub path: PathBuf,
-    pub main: Option<&'a str>,
-    pub browser: Option<BrowserField<'a>>,
+    pub main: Option<String>,
+    pub browser: Option<BrowserField>,
 }
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
-pub enum BrowserField<'a> {
-    String(&'a str),
-    Map(HashMap<&'a str, &'a str>),
+pub enum BrowserField {
+    String(String),
+    Map(HashMap<String, serde_json::Value>),
 }
 
-impl<'a> PackageJson<'a> {
-    pub fn parse(path: PathBuf, json: &'a str) -> Result<PackageJson<'a>, serde_json::Error> {
-        let mut package_json: PackageJson = serde_json::from_str(json)?;
+impl PackageJson {
+    pub fn parse(path: PathBuf, json: &str) -> Result<Self, serde_json::Error> {
+        let mut package_json: Self = serde_json::from_str(json)?;
         package_json.path = path;
         Ok(package_json)
     }
 
-    pub fn resolve(&self, path: &Path) -> Option<PathBuf> {
-        // TODO: return ResolveError if the provided `alias_fields` is not `browser` for future
-        // proof
-        let browser_field = self.browser.as_ref()?;
-        match browser_field {
-            BrowserField::Map(map) => {
+    /// Resolve the request string for this package.json by looking at the `browser` field.
+    ///
+    /// # Errors
+    ///
+    /// * Returns [ResolveError::Ignored] for `"path": false` in `browser` field.
+    pub fn resolve_request(
+        &self,
+        path: &Path,
+        request_str: &str,
+        extensions: &[String],
+    ) -> Result<Option<&str>, ResolveError> {
+        // TODO: return ResolveError if the provided `alias_fields` is not `browser` for future proof
+        match self.browser.as_ref() {
+            Some(BrowserField::Map(map)) => {
                 for (key, value) in map {
-                    let resolved_path = self.resolve_browser_field(key, value, path);
-                    if resolved_path.is_some() {
-                        return resolved_path;
+                    if let Some(resolved_str) =
+                        self.resolve_browser_field(path, key, value, request_str, extensions)?
+                    {
+                        return Ok(Some(resolved_str));
                     }
                 }
-                None
+                Ok(None)
             }
             // TODO: implement <https://github.com/defunctzombie/package-browser-field-spec#alternate-main---basic>
-            BrowserField::String(_) => None,
+            _ => Ok(None),
         }
     }
 
-    fn resolve_browser_field(&self, key: &str, value: &str, path: &Path) -> Option<PathBuf> {
+    // TODO: refactor this mess
+    fn resolve_browser_field<'a>(
+        &'a self,
+        start: &Path,
+        key: &str,
+        value: &'a serde_json::Value,
+        request_str: &str,
+        extensions: &[String],
+    ) -> Result<Option<&str>, ResolveError> {
         let directory = self.path.parent().unwrap(); // `unwrap`: this is a path to package.json, parent is its containing directory
-        // TODO: cache this join
-        (directory.join(key).normalize() == path).then(|| directory.join(value).normalize())
+        let right = directory.join(key).normalize();
+        let left = start.join(request_str).normalize();
+        if key == request_str
+            || extensions
+                .iter()
+                .any(|ext| Path::new(request_str).with_extension(ext) == Path::new(key))
+            || right == left
+            || extensions.iter().any(|ext| left.with_extension(ext) == right)
+        {
+            if let serde_json::Value::String(value) = value {
+                return Ok(Some(value.as_str()));
+            }
+
+            // key match without string value, i.e. `"path": false` for ignore
+            let directory = self.path.parent().unwrap(); // `unwrap`: this is a path to package.json, parent is its containing directory
+            let path_key = directory.join(key).normalize();
+            return Err(ResolveError::Ignored(path_key.into_boxed_path()));
+        }
+
+        Ok(None)
     }
 }

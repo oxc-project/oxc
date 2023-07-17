@@ -10,7 +10,9 @@ fn fixture() -> PathBuf {
 
 #[test]
 fn extension_alias() -> Result<(), ResolveError> {
-    let options = ResolveOptions {
+    let f = fixture();
+
+    let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".js".into()],
         main_files: vec!["index.js".into()],
         extension_alias: vec![
@@ -18,9 +20,7 @@ fn extension_alias() -> Result<(), ResolveError> {
             (".mjs".into(), vec![".mts".into()]),
         ],
         ..ResolveOptions::default()
-    };
-    let resolver = Resolver::new(options);
-    let f = fixture();
+    });
 
     #[rustfmt::skip]
     let pass = [
