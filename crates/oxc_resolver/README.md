@@ -20,7 +20,7 @@
 |      | exportsFields    | ["exports"]                 | A list of exports fields in description files                                                                                                             |
 |  ✅  | extensions       | [".js", ".json", ".node"]   | A list of extensions which should be tried for files                                                                                                      |
 |      | fallback         | []                          | Same as `alias`, but only used if default resolving fails                                                                                                 |
-|      | fileSystem       |                             | The file system which should be used                                                                                                                      |
+|  ✅  | fileSystem       |                             | The file system which should be used                                                                                                                      |
 |      | fullySpecified   | false                       | Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests) |
 |      | mainFields       | ["main"]                    | A list of main fields in description files                                                                                                                |
 |  ✅  | mainFiles        | ["index"]                   | A list of main files in directories                                                                                                                       |

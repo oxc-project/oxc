@@ -18,6 +18,7 @@ serde_json = { workspace = true }
 [dev-dependencies]
 static_assertions = { workspace = true }
 criterion         = { workspace = true }
+vfs = "0.9.0"
 
 [[bench]]
 name    = "resolver"
