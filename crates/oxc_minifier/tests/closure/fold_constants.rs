@@ -233,6 +233,45 @@ fn test_null_comparison1() {
 }
 
 #[test]
+fn test_boolean_boolean_comparison() {
+    test_same("!x==!y");
+    test_same("!x<!y");
+    test_same("!x!==!y");
+
+    test_same("!x==!x"); // foldable
+    test_same("!x<!x"); // foldable
+    test_same("!x!==!x"); // foldable
+}
+
+#[test]
+fn test_boolean_number_comparison() {
+    test_same("!x==+y");
+    test_same("!x<=+y");
+    test_wcb("!x !== +y", "true");
+}
+
+#[test]
+fn test_number_boolean_comparison() {
+    test_same("+x==!y");
+    test_same("+x<=!y");
+    test_wcb("+x === !y", "false");
+}
+
+#[test]
+fn test_boolean_string_comparison() {
+    test_same("!x==''+y");
+    test_same("!x<=''+y");
+    test_wcb("!x !== '' + y", "true");
+}
+
+#[test]
+fn test_string_boolean_comparison() {
+    test_same("''+x==!y");
+    test_same("''+x<=!y");
+    test_wcb("'' + x === !y", "false");
+}
+
+#[test]
 fn test_string_string_comparison() {
     test("'a' < 'b'", "!0");
     test("'a' <= 'b'", "!0");
