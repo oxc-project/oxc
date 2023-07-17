@@ -1,7 +1,9 @@
 mod enhanced_resolve;
+mod memory_fs;
 
 use std::{env, sync::Arc, thread};
 
+pub(crate) use memory_fs::MemoryFS;
 use oxc_resolver::Resolver;
 
 #[test]

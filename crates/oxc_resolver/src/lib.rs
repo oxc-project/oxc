@@ -6,12 +6,14 @@
 //! * Algorithm adapted from [Node.js Module Resolution Algorithm](https://nodejs.org/api/modules.html#all-together) and [cjs loader](https://github.com/nodejs/node/blob/main/lib/internal/modules/cjs/loader.js)
 //! * Some code adapted from [parcel-resolver](https://github.com/parcel-bundler/parcel/blob/v2/packages/utils/node-resolver-rs)
 
+mod cache;
 mod error;
 mod file_system;
 mod options;
 mod package_json;
 mod path;
 mod request;
+mod resolution;
 
 use std::{
     ffi::OsStr,
@@ -19,11 +21,13 @@ use std::{
 };
 
 pub use crate::{
+    cache::Cache,
     error::{JSONError, ResolveError},
+    file_system::{FileMetadata, FileSystem, FileSystemOs},
     options::ResolveOptions,
+    resolution::Resolution,
 };
 use crate::{
-    file_system::FileSystem,
     path::PathUtil,
     request::{Request, RequestPath},
 };
@@ -31,49 +35,27 @@ use crate::{
 pub type ResolveResult = Result<Resolution, ResolveError>;
 type ResolveState = Result<Option<PathBuf>, ResolveError>;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Resolution {
-    path: PathBuf,
+/// Resolver with the current operating system as the file system
+pub type Resolver = ResolverGeneric<FileSystemOs>;
 
-    /// path query `?query`, contains `?`.
-    query: Option<String>,
-
-    /// path fragment `#query`, contains `#`.
-    fragment: Option<String>,
-}
-
-impl Resolution {
-    pub fn path(&self) -> &Path {
-        &self.path
-    }
-
-    pub fn into_path_buf(self) -> PathBuf {
-        self.path
-    }
-
-    pub fn query(&self) -> Option<&str> {
-        self.query.as_deref()
-    }
-
-    pub fn fragment(&self) -> Option<&str> {
-        self.fragment.as_deref()
-    }
-}
-
-pub struct Resolver {
+pub struct ResolverGeneric<Fs> {
     options: ResolveOptions,
-    fs: FileSystem,
+    cache: Cache<Fs>,
 }
 
-impl Default for Resolver {
+impl<Fs: FileSystem> Default for ResolverGeneric<Fs> {
     fn default() -> Self {
         Self::new(ResolveOptions::default())
     }
 }
 
-impl Resolver {
+impl<Fs: FileSystem> ResolverGeneric<Fs> {
     pub fn new(options: ResolveOptions) -> Self {
-        Self { options: options.sanitize(), fs: FileSystem::default() }
+        Self { options: options.sanitize(), cache: Cache::default() }
+    }
+
+    pub fn new_with_file_system(options: ResolveOptions, file_system: Fs) -> Self {
+        Self { cache: Cache::new(file_system), ..Self::new(options) }
     }
 
     /// Resolve `request` at `path`
@@ -160,7 +142,7 @@ impl Resolver {
         }
 
         // 1. If X is a file, load X as its file extension format. STOP
-        if self.fs.is_file(path) {
+        if self.cache.is_file(path) {
             return Ok(Some(path.to_path_buf()));
         }
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
@@ -168,7 +150,7 @@ impl Resolver {
         // 4. If X.node is a file, load X.node as binary addon. STOP
         for extension in &self.options.extensions {
             let path_with_extension = path.with_extension(extension);
-            if self.fs.is_file(&path_with_extension) {
+            if self.cache.is_file(&path_with_extension) {
                 return Ok(Some(path_with_extension));
             }
         }
@@ -182,7 +164,7 @@ impl Resolver {
         // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
         for extension in &self.options.extensions {
             let index_path = path.join("index").with_extension(extension);
-            if self.fs.is_file(&index_path) {
+            if self.cache.is_file(&index_path) {
                 return Ok(Some(index_path));
             }
         }
@@ -192,9 +174,9 @@ impl Resolver {
     fn load_as_directory(&self, path: &Path) -> ResolveState {
         // 1. If X/package.json is a file,
         let package_json_path = path.join("package.json");
-        if self.fs.is_file(&package_json_path) {
+        if self.cache.is_file(&package_json_path) {
             // a. Parse X/package.json, and look for "main" field.
-            let package_json = self.fs.read_package_json(&package_json_path)?;
+            let package_json = self.cache.read_package_json(&package_json_path)?;
             // b. If "main" is a falsy value, GOTO 2.
             if let Some(main_field) = &package_json.main {
                 // c. let M = X + (json main field)
@@ -251,8 +233,8 @@ impl Resolver {
     fn load_package_self(&self, path: &Path, request_str: &str) -> ResolveState {
         for dir in path.ancestors() {
             let package_json_path = dir.join("package.json");
-            if self.fs.is_file(&package_json_path) {
-                let package_json = self.fs.read_package_json(&package_json_path)?;
+            if self.cache.is_file(&package_json_path) {
+                let package_json = self.cache.read_package_json(&package_json_path)?;
                 if let Some(request_str) =
                     package_json.resolve_request(path, request_str, &self.options.extensions)?
                 {
@@ -282,7 +264,7 @@ impl Resolver {
         };
         for extension in extensions {
             let path_with_extension = path.with_extension(extension);
-            if self.fs.is_file(&path_with_extension) {
+            if self.cache.is_file(&path_with_extension) {
                 return Ok(Some(path_with_extension));
             }
         }

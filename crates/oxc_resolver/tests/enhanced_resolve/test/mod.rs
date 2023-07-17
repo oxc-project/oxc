@@ -1,3 +1,4 @@
+mod alias;
 mod browser_field;
 mod extension_alias;
 mod extensions;
