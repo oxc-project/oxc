@@ -26,6 +26,9 @@ pub enum ResolveError {
     /// All of the aliased extension are not found
     ExtensionAlias,
 
+    /// All of the aliases are not found
+    Alias(String),
+
     /// JSON parse error
     JSON(JSONError),
 }

@@ -9,7 +9,7 @@
 
 | Done | Field            | Default                     | Description                                                                                                                                               |
 |------|------------------|-----------------------------| --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|      | alias            | []                          | A list of module alias configurations or an object which maps key to value                                                                                |
+|  ✅  | alias            | []                          | A list of module alias configurations or an object which maps key to value                                                                                |
 |  ✅  | aliasFields      | []                          | A list of alias fields in description files                                                                                                               |
 |  ✅  | extensionAlias   | {}                          | An object which maps extension to extension aliases                                                                                                       |
 |      | cachePredicate   | function() { return true }; | A function which decides whether a request should be cached or not. An object is passed to the function with `path` and `request` properties.             |
@@ -24,7 +24,7 @@
 |      | fullySpecified   | false                       | Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests) |
 |      | mainFields       | ["main"]                    | A list of main fields in description files                                                                                                                |
 |  ✅  | mainFiles        | ["index"]                   | A list of main files in directories                                                                                                                       |
-|      | modules          | ["node_modules"]            | A list of directories to resolve modules from, can be absolute path or folder name                                                                        |
+|  ✅  | modules          | ["node_modules"]            | A list of directories to resolve modules from, can be absolute path or folder name                                                                        |
 |      | plugins          | []                          | A list of additional resolve plugins which should be applied                                                                                              |
 |      | resolver         | undefined                   | A prepared Resolver to which the plugins are attached                                                                                                     |
 |      | resolveToContext | false                       | Resolve to a context instead of a file                                                                                                                    |
@@ -41,7 +41,7 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 
 - [ ] CachedInputFileSystem.test.js
 - [ ] SyncAsyncFileSystemDecorator.test.js
-- [ ] alias.test.js
+- [x] alias.test.js (partially done)
 - [x] browserField.test.js (reading the browser field is currently static - not read from the `browserField` option)
 - [ ] dependencies.test.js
 - [ ] exportsField.test.js
