@@ -75,6 +75,8 @@ impl Linter {
     }
 
     pub(crate) fn only_use_query_rule(mut self, rule_name: &str) -> Self {
+        self.rules.clear();
+
         let mut plugin = self.plugin.take().unwrap();
         plugin.rules = plugin
             .rules
