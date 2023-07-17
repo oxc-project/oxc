@@ -4,7 +4,7 @@ query: |
   query {
     File {
       class {
-        property {
+        setter {
           accessibility @filter(op: "is_null")
           span_: span {
             start @output
@@ -18,3 +18,13 @@ query: |
 args:
 
 reason: Add access modifier.
+
+tests:
+  pass:
+    - file_path: /index.ts
+      code: |
+        class A { public set C(_: any) {} }
+  fail:
+    - file_path: /index.ts
+      code: |
+        class A { set C(_: any) {} }

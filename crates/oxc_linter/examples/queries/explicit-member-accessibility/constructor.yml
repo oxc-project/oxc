@@ -17,3 +17,13 @@ query: |
 args:
 
 reason: Add access modifier.
+
+tests:
+  pass:
+    - file_path: /index.ts
+      code: |
+        class A { public constructor() {} }
+  fail:
+    - file_path: /index.ts
+      code: |
+        class A { constructor() {} }

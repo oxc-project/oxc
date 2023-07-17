@@ -19,3 +19,13 @@ args:
   Symbol: "Symbol"
 
 reason: Use symbol instead
+
+tests:
+  pass:
+    - file_path: /index.ts
+      code: |
+        declare const a: symbol;
+  fail:
+    - file_path: /index.ts
+      code: |
+        declare const a: Symbol;

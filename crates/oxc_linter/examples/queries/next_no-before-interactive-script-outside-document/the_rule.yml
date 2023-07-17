@@ -3,12 +3,12 @@ name: "next:no-before-interactive-script-outside-document:rule"
 query: |
   query {
     File {
-      path_starts_with(regex: ["^src$", "^app$"]) {
+      path_starts_with(regex: ["^app$"]) {
         result @filter(op: "=", value: ["$false"])
       }
 
-      path_starts_with(regex: ["^src$"]) {
-        result @filter(op: "=", value: ["$true"])
+      path_starts_with(regex: ["^src$", "^app$"]) {
+        result @filter(op: "=", value: ["$false"])
       }
 
       import {
@@ -42,7 +42,201 @@ args:
   nextslashscript: "next/script"
   strategy: "strategy"
   beforeInteractive: "beforeInteractive"
-  true: true
   false: false
 
 reason: "`next/script`'s `beforeInteractive` strategy should not be used outside of `pages/_document.js`"
+
+tests:
+  pass:
+    - file_path: /pages/_document.js
+      code: |
+        import Document, { Html, Main, NextScript } from 'next/document'
+        import Script from 'next/script'
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                  <meta charSet="utf-8" />
+                </Head>
+                <body>
+                  <Main />
+                  <NextScript />
+                  <Script
+                    id="scriptBeforeInteractive"
+                    src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.16/lodash.min.js?a=scriptBeforeInteractive"
+                    strategy="beforeInteractive"
+                  ></Script>
+                </body>
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument
+    - file_path: /pages/_document.tsx
+      code: |
+        import Document, { Html, Main, NextScript } from 'next/document'
+        import ScriptComponent from 'next/script'
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                  <meta charSet="utf-8" />
+                </Head>
+                <body>
+                  <Main />
+                  <NextScript />
+                  <ScriptComponent
+                    id="scriptBeforeInteractive"
+                    src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.17/lodash.min.js?a=scriptBeforeInteractive"
+                    strategy="beforeInteractive"
+                  ></ScriptComponent>
+                </body>
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument
+    - file_path: /pages/_document.tsx
+      code: |
+        import Document, { Html, Main, NextScript } from 'next/document'
+        import ScriptComponent from 'next/script'
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                  <meta charSet="utf-8" />
+                </Head>
+                <body>
+                  <Main />
+                  <NextScript />
+                  <ScriptComponent
+                    id="scriptBeforeInteractive"
+                    src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.18/lodash.min.js?a=scriptBeforeInteractive"
+                  ></ScriptComponent>
+                </body>
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument
+    - file_path: /app/deep/root/layout.tsx
+      code: |
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+            <Script
+              id="scriptBeforeInteractive"
+              src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.19/lodash.min.js?a=scriptBeforeInteractive"
+              strategy="beforeInteractive"
+            ></Script>
+          );
+        }
+    - file_path: /app/deep/page.tsx
+      code: |
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+            <Script
+              id="scriptBeforeInteractive"
+              src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js?a=scriptBeforeInteractive"
+              strategy="beforeInteractive"
+            ></Script>
+          );
+        }
+    - file_path: /app/deep/randomFile.tsx
+      code: |
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+            <Script
+              id="scriptBeforeInteractive"
+              src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js?a=scriptBeforeInteractive"
+              strategy="beforeInteractive"
+            ></Script>
+          );
+        }
+    - file_path: /src/app/deep/randomFile.tsx
+      code: |
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+            <Script
+              id="scriptBeforeInteractive"
+              src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.22/lodash.min.js?a=scriptBeforeInteractive"
+              strategy="beforeInteractive"
+            ></Script>
+          );
+        }
+    - file_path: /src/app/layout.tsx
+      code: |
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+            <html lang="en">
+              <body className={inter.className}>{children}</body>
+              <Script
+                src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.23/lodash.min.js?a=scriptBeforeInteractive"
+                strategy='beforeInteractive'
+              />
+            </html>
+          );
+        }
+    - file_path: /app/layout.tsx
+      code: |
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+            <html lang="en">
+              <body className={inter.className}>{children}</body>
+              <Script
+                src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.24/lodash.min.js?a=scriptBeforeInteractive"
+                strategy='beforeInteractive'
+              />
+            </html>
+          );
+        }
+
+  fail:
+    - file_path: /pages/index.js
+      code: |
+        import Head from "next/head";
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+            <Script
+              id="scriptBeforeInteractive"
+              src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.25/lodash.min.js?a=scriptBeforeInteractive"
+              strategy="beforeInteractive"
+            ></Script>
+          );
+        }
+    - file_path: /components/outside-known-dirs.js
+      code: |
+        import Head from "next/head";
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+            <Script
+              id="scriptBeforeInteractive"
+              src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.20/lodash.min.js?a=scriptBeforeInteractive"
+              strategy="beforeInteractive"
+            ></Script>
+          );
+        }

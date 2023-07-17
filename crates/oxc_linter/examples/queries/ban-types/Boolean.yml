@@ -19,3 +19,13 @@ args:
   Boolean: "Boolean"
 
 reason: Use boolean instead
+
+tests:
+  pass:
+    - file_path: /index.ts
+      code: |
+        const a: boolean = false;
+  fail:
+    - file_path: /index.ts
+      code: |
+        const a: Boolean = false;

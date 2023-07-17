@@ -18,3 +18,13 @@ query: |
 args:
 
 reason: Add access modifier.
+
+tests:
+  pass:
+    - file_path: /index.ts
+      code: |
+        class A { public B() {} }
+  fail:
+    - file_path: /index.ts
+      code: |
+        class A { B() {} }

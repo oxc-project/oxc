@@ -19,3 +19,13 @@ args:
   Number: "Number"
 
 reason: Use number instead
+
+tests:
+  pass:
+    - file_path: /index.ts
+      code: |
+        const a: number = 1;
+  fail:
+    - file_path: /index.ts
+      code: |
+        const a: Number = 1;

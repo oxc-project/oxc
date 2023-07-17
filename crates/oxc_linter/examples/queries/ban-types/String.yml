@@ -19,3 +19,13 @@ args:
   String: "String"
 
 reason: Use string instead
+
+tests:
+  pass:
+    - file_path: /index.ts
+      code: |
+        const a: string = '';
+  fail:
+    - file_path: /index.ts
+      code: |
+        const a: String = '';

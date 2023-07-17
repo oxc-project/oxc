@@ -19,3 +19,21 @@ args:
   module: "module"
 
 reason: "Do not assign to the variable `module`."
+
+tests:
+  pass:
+    - file_path: /index.tsx
+      code: |
+        let myModule = {};
+
+        export default function MyComponent() {
+          return <></>
+        }
+  fail:
+    - file_path: /index.tsx
+      code: |
+        let module = {};
+
+        export default function MyComponent() {
+          return <></>
+        }

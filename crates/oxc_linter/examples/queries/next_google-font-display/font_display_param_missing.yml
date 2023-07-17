@@ -35,3 +35,85 @@ args:
   href_value_start: "https://fonts.googleapis.com/css"
 
 reason: "A font-display parameter is missing (adding `&display=optional` is recommended)"
+
+tests:
+  pass:
+    - file_path: /index.tsx
+      code: |
+        import Head from "next/head";
+
+        export default Test = () => {
+          return (
+            <Head>
+              <link href={test} rel="test" />
+              <link
+                href={process.env.NEXT_PUBLIC_CANONICAL_URL}
+                rel="canonical"
+              />
+              <link
+                href={new URL("../public/favicon.ico", import.meta.url).toString()}
+                rel="icon"
+              />
+              <link
+                href="https://fonts.googleapis.com/css2?family=Krona+One&display=optional"
+                rel="stylesheet"
+              />
+            </Head>
+          );
+        };
+    - file_path: /index.tsx
+      code: |
+        import Document, { Html, Head } from "next/document";
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                  <link
+                    href="https://fonts.googleapis.com/css?family=Krona+One&display=swap"
+                    rel="stylesheet"
+                  />
+                </Head>
+              </Html>
+            );
+          }
+        }
+
+        export default MyDocument;
+    - file_path: /index.tsx
+      code: |
+        import Document, { Html, Head } from "next/document";
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                  <link
+                    href="https://fonts.googleapis.com/css?family=Krona+One&display=swap"
+                    rel="stylesheet"
+                    crossOrigin=""
+                  />
+                </Head>
+              </Html>
+            );
+          }
+        }
+
+        export default MyDocument;
+  fail:
+    - file_path: /index.tsx
+      code: |
+        import Head from "next/head";
+
+        export default Test = () => {
+        return (
+          <Head>
+            <link
+              href="https://fonts.googleapis.com/css2?family=Krona+One"
+              rel="stylesheet"
+            />
+          </Head>
+        );
+        };

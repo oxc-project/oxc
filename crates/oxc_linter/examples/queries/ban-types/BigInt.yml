@@ -19,3 +19,13 @@ args:
   BigInt: "BigInt"
 
 reason: Use bigint instead
+
+tests:
+  pass:
+    - file_path: /index.ts
+      code: |
+        const a: bigint = 10n;
+  fail:
+    - file_path: /index.ts
+      code: |
+        const a: BigInt = 10n;
