@@ -27,7 +27,7 @@ struct MultipleSpanInfo {
 }
 
 pub struct LinterPlugin {
-    rules: Vec<InputQuery>,
+    pub(super) rules: Vec<InputQuery>,
     schema: Schema,
 }
 
@@ -128,5 +128,69 @@ impl LinterPlugin {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::{env, path::Path, rc::Rc};
+
+    use oxc_allocator::Allocator;
+    use oxc_diagnostics::Report;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+    use path_calculate::Calculate;
+
+    use super::LinterPlugin;
+    use crate::{lint_adapter::SingleTest, Linter};
+
+    #[test]
+    fn test_queries() {
+        env::set_var("OXC_PLUGIN", "./examples/queries");
+        let plugin = LinterPlugin::new();
+        for rule in plugin.rules {
+            for test in &rule.tests.pass {
+                let messages = run_test(test, &rule.name);
+                assert!(messages.is_empty(), "Semantic errors: {:?}\n\n\n{}", messages, test.code);
+            }
+
+            for test in &rule.tests.fail {
+                let messages = run_test(test, &rule.name);
+                assert!(!messages.is_empty(), "Expected semantic errors: {:?}", test.code);
+            }
+
+            println!(
+                "{} passed {} tests successfully.\n",
+                rule.name,
+                rule.tests.pass.len() + rule.tests.fail.len()
+            );
+        }
+    }
+
+    fn run_test(test: &SingleTest, rule_name: &str) -> Vec<Report> {
+        let file_path = &test.file_path;
+        let source_text = &test.code;
+
+        let path = Path::new(file_path);
+        let allocator = Allocator::default();
+        let source_type = SourceType::from_path(file_path).unwrap();
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+
+        // Handle parser errors
+        assert!(ret.errors.is_empty(), "Parser errors: {:?} Code:\n\n{:?}", ret.errors, test.code);
+
+        let program = allocator.alloc(ret.program);
+        let semantic_ret = SemanticBuilder::new(source_text, source_type)
+            .with_trivias(&ret.trivias)
+            .build(program);
+
+        // let mut errors: Vec<oxc_diagnostics::Error> = vec![];
+        let linter = Linter::new().with_fix(false).only_use_query_rule(rule_name);
+
+        let messages =
+            linter.run(&Rc::new(semantic_ret.semantic), path.related_to(Path::new(".")).unwrap());
+
+        messages.into_iter().map(|m| m.error).collect::<Vec<_>>()
     }
 }

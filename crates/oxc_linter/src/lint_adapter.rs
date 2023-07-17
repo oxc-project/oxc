@@ -22,6 +22,7 @@ use url::Url;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct InputQuery {
+    pub name: String,
     pub query: String,
     pub args: BTreeMap<Arc<str>, TransparentValue>,
     pub reason: String,
@@ -31,22 +32,14 @@ pub struct InputQuery {
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct QueryTests {
-    pub pass: Vec<SinglePassingTest>,
-    pub fail: Vec<SingleFailingTest>,
+    pub pass: Vec<SingleTest>,
+    pub fail: Vec<SingleTest>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
-pub struct SinglePassingTest {
-    file_name: String,
-    code: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct SingleFailingTest {
-    file_name: String,
-    code: String,
-    span: oxc_span::Span,
-    error_msg: String,
+pub struct SingleTest {
+    pub file_path: String,
+    pub code: String,
 }
 
 // https://typescript-eslint.io/rules/prefer-function-type

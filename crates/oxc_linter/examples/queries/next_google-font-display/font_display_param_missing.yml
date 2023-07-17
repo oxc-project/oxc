@@ -1,3 +1,5 @@
+name: "next:google-font-display:font-display-param-missing"
+
 query: |
   query {
     File {

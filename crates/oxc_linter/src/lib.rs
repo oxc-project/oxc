@@ -74,6 +74,18 @@ impl Linter {
         self
     }
 
+    pub(crate) fn only_use_query_rule(mut self, rule_name: &str) -> Self {
+        let mut plugin = self.plugin.take().unwrap();
+        plugin.rules = plugin
+            .rules
+            .iter()
+            .filter(|x| x.name == rule_name)
+            .map(std::borrow::ToOwned::to_owned)
+            .collect::<Vec<_>>();
+        self.plugin.replace(plugin);
+        self
+    }
+
     pub fn from_json_str(s: &str) -> Self {
         let rules = serde_json::from_str(s)
             .ok()

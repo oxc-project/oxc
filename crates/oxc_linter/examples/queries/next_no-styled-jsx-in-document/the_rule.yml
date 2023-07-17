@@ -1,3 +1,5 @@
+name: "next:no-styled-jsx-in-document:rule"
+
 query: |
   query {
     File {

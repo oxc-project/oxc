@@ -1,3 +1,5 @@
+name: "next:no-duplicate-head:rule"
+
 query: |
   query {
     File {

@@ -1,3 +1,5 @@
+name: "next:google-font-preconnect:rule"
+
 query: |
   query {
     File {

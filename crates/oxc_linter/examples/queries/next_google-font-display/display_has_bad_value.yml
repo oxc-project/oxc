@@ -1,3 +1,4 @@
+name: "next:google-font-display:display_has_bad_value"
 query: |
   query {
     File {
@@ -41,7 +42,7 @@ reason: "{display_value} is not recommended."
 
 tests:
   pass:
-    - file_name: /index.ts
+    - file_path: /index.tsx
       code: |
         import Head from "next/head";
 
@@ -64,7 +65,7 @@ tests:
             </Head>
           );
         };
-    - file_name: /index.ts
+    - file_path: /index.tsx
       code: |
         import Document, { Html, Head } from "next/document";
 
@@ -84,7 +85,7 @@ tests:
         }
 
         export default MyDocument;
-    - file_name: /index.ts
+    - file_path: /index.tsx
       code: |
         import Document, { Html, Head } from "next/document";
 
@@ -106,7 +107,7 @@ tests:
 
         export default MyDocument;
   fail:
-    - file_name: /index.ts
+    - file_path: /index.tsx
       code: |
         import Head from "next/head";
 
@@ -120,11 +121,7 @@ tests:
             </Head>
           );
         };
-      span:
-        start: 5
-        end: 10
-      error_msg: "Block is not recommended."
-    - file_name: /index.ts
+    - file_path: /index.tsx
       code: |
         import Head from "next/head";
 
@@ -138,11 +135,7 @@ tests:
           </Head>
         );
         };
-      span:
-        start: 5
-        end: 10
-      error_msg: "Auto is not recommended."
-    - file_name: /index.ts
+    - file_path: /index.tsx
       code: |
         import Head from "next/head";
 
@@ -156,7 +149,3 @@ tests:
           </Head>
         );
         };
-      span:
-        start: 5
-        end: 10
-      error_msg: "Fallback is not recommended."

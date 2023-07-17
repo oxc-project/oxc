@@ -1,3 +1,5 @@
+name: "tseslint:explicit-member-accessibility:getter"
+
 query: |
   query {
     File {

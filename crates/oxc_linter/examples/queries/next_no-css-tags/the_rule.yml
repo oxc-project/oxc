@@ -1,3 +1,5 @@
+name: "next:no-css-tags:rule"
+
 query: |
   query {
     File {

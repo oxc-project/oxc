@@ -1,3 +1,5 @@
+name: "next:inline-script-id:dangerouslySetInnerHTML"
+
 query: |
   query {
     File {

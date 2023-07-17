@@ -1,3 +1,5 @@
+name: "next:script-for-ga:src_with_dangeroushtml"
+
 query: |
   query {
     File {

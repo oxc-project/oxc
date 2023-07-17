@@ -1,3 +1,5 @@
+name: "next:no-head-import-in-document:rule"
+
 query: |
   query {
     File {

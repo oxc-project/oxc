@@ -1,3 +1,5 @@
+name: "next:no-img-element:rule"
+
 query: |
   query {
     File {

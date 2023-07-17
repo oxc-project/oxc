@@ -1,3 +1,5 @@
+name: "tseslint:ban-types:Number"
+
 query: |
   query {
     File {

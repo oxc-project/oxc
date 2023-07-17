@@ -1,3 +1,5 @@
+name: "next:no-head-element:rule"
+
 query: |
   query {
     File {

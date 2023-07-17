@@ -1,3 +1,5 @@
+name: "tseslint:ban-types:Symbol"
+
 query: |
   query {
     File {

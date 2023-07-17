@@ -1,3 +1,5 @@
+name: "next:no-document-import-in-page:rule"
+
 query: |
   query {
     File {

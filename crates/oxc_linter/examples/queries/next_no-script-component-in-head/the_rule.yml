@@ -1,3 +1,5 @@
+name: "next:no-script-component-in-head:rule"
+
 query: |
   query {
     File {

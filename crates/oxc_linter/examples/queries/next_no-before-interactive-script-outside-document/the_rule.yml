@@ -1,3 +1,5 @@
+name: "next:no-before-interactive-script-outside-document:rule"
+
 query: |
   query {
     File {

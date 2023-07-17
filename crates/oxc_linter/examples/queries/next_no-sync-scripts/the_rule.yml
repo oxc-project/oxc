@@ -1,3 +1,5 @@
+name: "next:no-sync-scripts:rule"
+
 query: |
   query {
     File {
@@ -26,7 +28,7 @@ args:
   script: "script"
   zero: 0
   src: "src"
-  async_or_defer: 
+  async_or_defer:
     - "async"
     - "defer"
 

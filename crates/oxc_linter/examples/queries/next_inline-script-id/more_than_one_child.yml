@@ -1,3 +1,5 @@
+name: "next:inline-script-id:more_than_one_child"
+
 query: |
   query {
     File {

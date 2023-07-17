@@ -1,3 +1,5 @@
+name: "tseslint:ban-types:Boolean"
+
 query: |
   query {
     File {

@@ -1,3 +1,5 @@
+name: "next:no-title-in-document-head:rule"
+
 query: |
   query {
     File {
