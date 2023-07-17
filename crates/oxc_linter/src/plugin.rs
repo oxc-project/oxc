@@ -150,21 +150,36 @@ mod test {
         env::set_var("OXC_PLUGIN", "./examples/queries");
         let plugin = LinterPlugin::new();
         for rule in plugin.rules {
-            for test in &rule.tests.pass {
+            for (i, test) in rule.tests.pass.iter().enumerate() {
                 let messages = run_test(test, &rule.name);
-                assert!(messages.is_empty(), "Semantic errors: {:?}\n\n\n{}", messages, test.code);
+                assert!(
+                    messages.is_empty(),
+                    "{}'s test {} is failing when it should pass. Errors: {:?}Code:\n\n{}\n\n",
+                    rule.name,
+                    i + 1,
+                    messages,
+                    test.code
+                );
             }
 
-            for test in &rule.tests.fail {
+            for (i, test) in rule.tests.fail.iter().enumerate() {
                 let messages = run_test(test, &rule.name);
-                assert!(!messages.is_empty(), "Expected semantic errors: {:?}", test.code);
+                assert!(
+                    !messages.is_empty(),
+                    "{}'s test {} is passing when it should fail. \n\nCode:\n\n{}\n\n",
+                    rule.name,
+                    i + 1,
+                    test.code
+                );
             }
 
-            println!(
-                "{} passed {} tests successfully.\n",
-                rule.name,
-                rule.tests.pass.len() + rule.tests.fail.len()
-            );
+            if rule.tests.pass.len() + rule.tests.fail.len() > 0 {
+                println!(
+                    "{} passed {} tests successfully.\n",
+                    rule.name,
+                    rule.tests.pass.len() + rule.tests.fail.len()
+                );
+            }
         }
     }
 
@@ -189,7 +204,7 @@ mod test {
         let linter = Linter::new().with_fix(false).only_use_query_rule(rule_name);
 
         let messages =
-            linter.run(&Rc::new(semantic_ret.semantic), path.related_to(Path::new(".")).unwrap());
+            linter.run(&Rc::new(semantic_ret.semantic), path.related_to(Path::new("/")).unwrap());
 
         messages.into_iter().map(|m| m.error).collect::<Vec<_>>()
     }
