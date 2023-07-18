@@ -44,15 +44,7 @@ fn resolve() -> Result<(), ResolveError> {
 
     for (comment, path, request, expected) in data {
         let resolution = resolver.resolve(&path, request)?;
-        let mut file_name = resolution.path().file_name().unwrap().to_string_lossy().to_string();
-        if let Some(query) = resolution.query() {
-            file_name.push_str(query);
-        }
-        if let Some(fragment) = resolution.fragment() {
-            file_name.push_str(fragment);
-        }
-        let resolved_path = resolution.path().with_file_name(file_name);
-        assert_eq!(resolved_path, expected, "{comment} {path:?} {request}");
+        assert_eq!(resolution.full_path(), expected, "{comment} {path:?} {request}");
     }
 
     Ok(())

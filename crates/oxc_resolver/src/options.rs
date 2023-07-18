@@ -1,5 +1,17 @@
 #[derive(Debug, Clone)]
+pub enum AliasValue {
+    /// The path value
+    Path(String),
+
+    /// The `false` value
+    Ignore,
+}
+
+#[derive(Debug, Clone)]
 pub struct ResolveOptions {
+    /// A list of module alias configurations or an object which maps key to value
+    pub alias: Vec<(String, Vec<AliasValue>)>,
+
     /// A list of alias fields in description files.
     /// Specify a field, such as `browser`, to be parsed according to [this specification](https://github.com/defunctzombie/package-browser-field-spec).
     ///
@@ -25,16 +37,23 @@ pub struct ResolveOptions {
     ///
     /// Default `["index"]`
     pub main_files: Vec<String>,
+
+    /// A list of directories to resolve modules from, can be absolute path or folder name
+    ///
+    /// Default `["node_modules"]`
+    pub modules: Vec<String>,
 }
 
 impl Default for ResolveOptions {
     fn default() -> Self {
         Self {
+            alias: vec![],
             alias_fields: vec![],
             extension_alias: vec![],
             enforce_extension: false,
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             main_files: vec!["index".into()],
+            modules: vec!["node_modules".into()],
         }
     }
 }
