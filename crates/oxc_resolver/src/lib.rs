@@ -170,7 +170,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn load_index(&self, path: &Path) -> ResolveState {
         for main_field in &self.options.main_files {
             let main_path = path.join(main_field);
-            if !self.options.enforce_extension && self.cache.is_file(&main_path) {
+            if self.options.enforce_extension == Some(false) && self.cache.is_file(&main_path) {
                 return Ok(Some(main_path));
             }
             // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP

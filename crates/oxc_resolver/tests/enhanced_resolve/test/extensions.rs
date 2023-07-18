@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use oxc_resolver::{ResolveError, ResolveOptions, Resolver};
+use oxc_resolver::{Resolution, ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("extensions")
@@ -48,32 +48,31 @@ fn extensions() -> Result<(), ResolveError> {
 }
 
 #[test]
-#[ignore = "need to match missingDependencies returned from the resolve function"]
+// should default enforceExtension to true when extensions includes an empty string
 fn default_enforce_extension() {
-    // should default enforceExtension to true when extensions includes an empty string
-    let fixture = fixture();
+    let f = fixture();
 
-    let options = ResolveOptions {
+    let resolved = Resolver::new(ResolveOptions {
         extensions: vec![".ts".into(), String::new(), ".js".into()],
         ..ResolveOptions::default()
-    };
+    })
+    .resolve(&f, "./foo");
 
-    let resolver = Resolver::new(options);
-    let _resolved = resolver.resolve(fixture, "./foo");
+    assert_eq!(resolved, Err(ResolveError::NotFound(f.join("foo").into_boxed_path())));
+    // TODO: need to match missingDependencies returned from the resolve function
 }
 
 #[test]
-#[ignore = "need to match missingDependencies returned from the resolve function"]
+// should respect enforceExtension when extensions includes an empty string
 fn respect_enforce_extension() {
-    // should respect enforceExtension when extensions includes an empty string
-    let fixture = fixture();
+    let f = fixture();
 
-    let options = ResolveOptions {
-        enforce_extension: false,
+    let resolved = Resolver::new(ResolveOptions {
+        enforce_extension: Some(false),
         extensions: vec![".ts".into(), String::new(), ".js".into()],
         ..ResolveOptions::default()
-    };
-
-    let resolver = Resolver::new(options);
-    let _resolved = resolver.resolve(fixture, "./foo");
+    })
+    .resolve(&f, "./foo");
+    assert_eq!(resolved.map(Resolution::into_path_buf), Ok(f.join("foo.ts")));
+    // TODO: need to match missingDependencies returned from the resolve function
 }
