@@ -25,8 +25,12 @@ pub struct ResolveOptions {
 
     /// Enforce that a extension from extensions must be used.
     ///
-    /// Default `false`
-    pub enforce_extension: bool,
+    /// Default to `true` when [ResolveOptions::extensions] contains an empty string.
+    /// Use `Some(false)` to disable the behavior.
+    /// See <https://github.com/webpack/enhanced-resolve/pull/285>
+    ///
+    /// Default None, which is the same as `Some(false)` when the above empty rule is not applied.
+    pub enforce_extension: Option<bool>,
 
     /// An object which maps extension to extension aliases.
     ///
@@ -55,7 +59,7 @@ impl Default for ResolveOptions {
             alias: vec![],
             alias_fields: vec![],
             description_files: vec!["package.json".into()],
-            enforce_extension: false,
+            enforce_extension: None,
             extension_alias: vec![],
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             main_files: vec!["index".into()],
@@ -66,6 +70,15 @@ impl Default for ResolveOptions {
 
 impl ResolveOptions {
     pub(crate) fn sanitize(mut self) -> Self {
+        if self.enforce_extension.is_none() {
+            self.enforce_extension = Some(false);
+            // Set `enforceExtension` to `true` when [ResolveOptions::extensions] contains an empty string.
+            // See <https://github.com/webpack/enhanced-resolve/pull/285>
+            if self.extensions.iter().any(String::is_empty) {
+                self.enforce_extension = Some(true);
+                self.extensions.retain(String::is_empty);
+            }
+        }
         self.extensions = Self::remove_leading_dots(self.extensions);
         self.extension_alias = self
             .extension_alias
