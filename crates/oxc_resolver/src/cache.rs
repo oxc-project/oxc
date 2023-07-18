@@ -5,11 +5,16 @@ use rustc_hash::FxHasher;
 
 use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 
+pub type PackageJsonCache = DashMap<
+    Box<Path>,
+    Result<Option<Arc<PackageJson>>, ResolveError>,
+    BuildHasherDefault<FxHasher>,
+>;
+
 pub struct Cache<Fs> {
     fs: Fs,
     cache: DashMap<Box<Path>, Option<FileMetadata>, BuildHasherDefault<FxHasher>>,
-    package_json_cache:
-        DashMap<Box<Path>, Result<Arc<PackageJson>, ResolveError>, BuildHasherDefault<FxHasher>>,
+    package_json_cache: PackageJsonCache,
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
@@ -43,18 +48,16 @@ impl<Fs: FileSystem> Cache<Fs> {
     /// # Errors
     ///
     /// * [ResolveError::JSONError]
-    ///
-    /// # Panics
-    ///
-    /// * Failed to read the file (TODO: remove this)
-    pub fn read_package_json(&self, path: &Path) -> Result<Arc<PackageJson>, ResolveError> {
+    pub fn read_package_json(&self, path: &Path) -> Result<Option<Arc<PackageJson>>, ResolveError> {
         if let Some(result) = self.package_json_cache.get(path) {
             return result.value().clone();
         }
-        // TODO: handle file read error
-        let package_json_string = self.fs.read_to_string(path).unwrap();
+        let Ok(package_json_string) = self.fs.read_to_string(path) else {
+            self.package_json_cache.insert(path.to_path_buf().into_boxed_path(), Ok(None));
+            return Ok(None);
+        };
         let result = PackageJson::parse(path.to_path_buf(), &package_json_string)
-            .map(Arc::new)
+            .map(|package_json| Some(Arc::new(package_json)))
             .map_err(|error| ResolveError::from_serde_json_error(path.to_path_buf(), &error));
         self.package_json_cache.insert(path.to_path_buf().into_boxed_path(), result.clone());
         result
