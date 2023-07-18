@@ -190,9 +190,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 1. If X/package.json is a file,
         for description_file in &self.options.description_files {
             let package_json_path = path.join(description_file);
-            if self.cache.is_file(&package_json_path) {
-                // a. Parse X/package.json, and look for "main" field.
-                let package_json = self.cache.read_package_json(&package_json_path)?;
+            // a. Parse X/package.json, and look for "main" field.
+            if let Some(package_json) = self.cache.read_package_json(&package_json_path)? {
                 // b. If "main" is a falsy value, GOTO 2.
                 if let Some(main_field) = &package_json.main {
                     // c. let M = X + (json main field)
@@ -249,8 +248,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn load_package_self(&self, path: &Path, request_str: &str) -> ResolveState {
         for dir in path.ancestors() {
             let package_json_path = dir.join("package.json");
-            if self.cache.is_file(&package_json_path) {
-                let package_json = self.cache.read_package_json(&package_json_path)?;
+            if let Some(package_json) = self.cache.read_package_json(&package_json_path)? {
                 if let Some(request_str) =
                     package_json.resolve_request(path, request_str, &self.options.extensions)?
                 {
