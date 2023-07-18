@@ -188,25 +188,27 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     fn load_as_directory(&self, path: &Path) -> ResolveState {
         // 1. If X/package.json is a file,
-        let package_json_path = path.join("package.json");
-        if self.cache.is_file(&package_json_path) {
-            // a. Parse X/package.json, and look for "main" field.
-            let package_json = self.cache.read_package_json(&package_json_path)?;
-            // b. If "main" is a falsy value, GOTO 2.
-            if let Some(main_field) = &package_json.main {
-                // c. let M = X + (json main field)
-                let main_field_path = path.normalize_with(main_field);
-                // d. LOAD_AS_FILE(M)
-                if let Some(path) = self.load_as_file(&main_field_path)? {
-                    return Ok(Some(path));
+        for description_file in &self.options.description_files {
+            let package_json_path = path.join(description_file);
+            if self.cache.is_file(&package_json_path) {
+                // a. Parse X/package.json, and look for "main" field.
+                let package_json = self.cache.read_package_json(&package_json_path)?;
+                // b. If "main" is a falsy value, GOTO 2.
+                if let Some(main_field) = &package_json.main {
+                    // c. let M = X + (json main field)
+                    let main_field_path = path.normalize_with(main_field);
+                    // d. LOAD_AS_FILE(M)
+                    if let Some(path) = self.load_as_file(&main_field_path)? {
+                        return Ok(Some(path));
+                    }
+                    // e. LOAD_INDEX(M)
+                    if let Some(path) = self.load_index(&main_field_path)? {
+                        return Ok(Some(path));
+                    }
+                    // f. LOAD_INDEX(X) DEPRECATED
+                    // g. THROW "not found"
+                    return Err(ResolveError::NotFound(main_field_path.into_boxed_path()));
                 }
-                // e. LOAD_INDEX(M)
-                if let Some(path) = self.load_index(&main_field_path)? {
-                    return Ok(Some(path));
-                }
-                // f. LOAD_INDEX(X) DEPRECATED
-                // g. THROW "not found"
-                return Err(ResolveError::NotFound(main_field_path.into_boxed_path()));
             }
         }
         // 2. LOAD_INDEX(X)

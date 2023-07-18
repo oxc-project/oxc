@@ -1,3 +1,4 @@
+mod description_file;
 mod enhanced_resolve;
 mod memory_fs;
 

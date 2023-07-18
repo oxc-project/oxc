@@ -15,7 +15,7 @@
 |      | cachePredicate   | function() { return true }; | A function which decides whether a request should be cached or not. An object is passed to the function with `path` and `request` properties.             |
 |      | cacheWithContext | true                        | If unsafe cache is enabled, includes `request.context` in the cache key                                                                                   |
 |      | conditionNames   | []                          | A list of exports field condition names                                                                                                                   |
-|      | descriptionFiles | ["package.json"]            | A list of description files to read from                                                                                                                  |
+|  ✅  | descriptionFiles | ["package.json"]            | A list of description files to read from                                                                                                                  |
 |      | enforceExtension | false                       | Enforce that a extension from extensions must be used                                                                                                     |
 |      | exportsFields    | ["exports"]                 | A list of exports fields in description files                                                                                                             |
 |  ✅  | extensions       | [".js", ".json", ".node"]   | A list of extensions which should be tried for files                                                                                                      |
