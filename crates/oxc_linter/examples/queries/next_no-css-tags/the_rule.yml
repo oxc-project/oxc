@@ -35,3 +35,78 @@ args:
   http_regex: "^https?"
 
 reason: "Do not include stylesheets manually."
+
+tests:
+  pass:
+    - file_path: /index.tsx
+      code: |
+        import {Head} from 'next/document';
+
+        export class Blah extends Head {
+          render() {
+            return (
+              <div>
+                <h1>Hello title</h1>
+              </div>
+            );
+          }
+        }
+    - file_path: /index.tsx
+      code: |
+        import {Head} from 'next/document';
+        export class Blah extends Head {
+          render() {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet" />
+              </div>
+            );
+          }
+        }
+    - file_path: /index.tsx
+      code: |
+        import {Head} from 'next/document';
+        export class Blah extends Head {
+          render(props) {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <link {...props} />
+              </div>
+            );
+          }
+        }
+    - file_path: /index.tsx
+      code: |
+        import {Head} from 'next/document';
+        export class Blah extends Head {
+          render(props) {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <link rel="stylesheet" {...props} />
+              </div>
+            );
+          }
+        }
+  fail:
+    - file_path: /index.tsx
+      code: |
+        import {Head} from 'next/document';
+
+        export class Blah extends Head {
+          render() {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <link href="/_next/static/css/styles.css" rel="stylesheet" />
+              </div>
+            );
+          }
+        }
+    - file_path: /index.tsx
+      code: |
+        <div>
+          <link href="/_next/static/css/styles.css" rel="stylesheet" />
+        </div>

@@ -3,23 +3,105 @@ name: "next:no-head-element:rule"
 query: |
   query {
     File {
-      import {
-        from_path @filter(op: "=", value: ["$nextslashhead"])
-        span_: entire_span {
-          start @output
-          end @output
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$head"])
+          span_: span {
+            start @output
+            end @output
+          }
         }
       }
 
-      path_ends_with(regex: ["^pages$", "^_document\\..+"]) {
-        result @filter(op: "=", value: ["$false"])
+      path_part @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+        is_last @filter(op: "=", value: ["$false"])
+        name @filter(op: "has_suffix", value: ["$app"])
       }
     }
   }
 
 args:
-  nextslashhead: "next/head"
+  app: "app"
+  zero: 0
+  head: "head"
   false: false
 
-# TODO: ${document} should be filled in
 reason: "Do not use `<head>` element. Use `<Head />` from `next/head` instead."
+
+tests:
+  pass:
+    - file_path: /pages/index.js
+      code: |
+        import Head from 'next/head';
+
+        export class MyComponent {
+          render() {
+            return (
+              <div>
+                <Head>
+                  <title>My page title</title>
+                </Head>
+              </div>
+            );
+          }
+        }
+    - file_path: /pages/index.tsx
+      code: |
+        import Head from 'next/head';
+
+        export class MyComponent {
+          render() {
+            return (
+              <div>
+                <Head>
+                  <title>My page title</title>
+                </Head>
+              </div>
+            );
+          }
+        }
+    - file_path: /app/layout.js
+      code: |
+        export default function Layout({ children }) {
+          return (
+            <html>
+              <head>
+                <title>layout</title>
+              </head>
+              <body>{children}</body>
+            </html>
+          );
+        }
+
+  fail:
+    - file_path: /pages/index.js
+      code: |
+        export class MyComponent {
+          render() {
+            return (
+              <div>
+                <head>
+                  <title>My page title</title>
+                </head>
+              </div>
+            );
+          }
+        }
+    - file_path: /pages/index.tsx
+      code: |
+        import Head from 'next/head';
+
+        export class MyComponent {
+          render() {
+            return (
+              <div>
+                <head>
+                  <title>My page title</title>
+                </head>
+                <Head>
+                  <title>My page title</title>
+                </Head>
+              </div>
+            );
+          }
+        }

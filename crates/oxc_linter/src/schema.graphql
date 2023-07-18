@@ -1,7 +1,7 @@
 # TODO: Project Specific Lints
 #
 # 1. Anything that implements ASTNode must be suffixed by AST
-  # 2. Make sure {VariableDeclaration}AST because it's suffixed by AST implements VariableDeclaration
+# 2. Make sure {VariableDeclaration}AST because it's suffixed by AST implements VariableDeclaration
 
 schema {
   query: RootSchemaQuery
@@ -52,9 +52,8 @@ type RootSchemaQuery {
 }
 
 type File {
-  path_starts_with(regex: [String!]!): PathCompareResult!
-  path_ends_with(regex: [String!]!): PathCompareResult!
-  path_part(regex: String!): PathCompareResult!
+  last_path_part: PathPart!
+  path_part: [PathPart!]!
 
   class: [ClassAST!]!
   type_annotation: [TypeAnnotationAST!]!
@@ -66,8 +65,13 @@ type File {
   ast_node: [ASTNode!]!
 }
 
-type PathCompareResult {
-  result: Boolean!
+type PathPart {
+  name: String!
+  is_first: Boolean!
+  is_last: Boolean!
+
+  next: PathPart
+  prev: PathPart
 }
 
 type SpecificImport {

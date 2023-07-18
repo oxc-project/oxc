@@ -1,6 +1,12 @@
 #![allow(clippy::too_many_lines)]
 #![allow(clippy::unimplemented)]
-use std::{collections::BTreeMap, convert::Into, path::PathBuf, rc::Rc, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    convert::Into,
+    path::{Component, Path},
+    rc::Rc,
+    sync::Arc,
+};
 
 use oxc_ast::{
     ast::{TSAccessibility, *},
@@ -8,7 +14,6 @@ use oxc_ast::{
 };
 use oxc_semantic::{AstNode, AstNodeId, Semantic};
 use oxc_span::{GetSpan, Span};
-use regex::Regex;
 use serde::Deserialize;
 use trustfall::{
     provider::{
@@ -67,7 +72,7 @@ pub enum Vertex<'a> {
     AssignmentType(&'a BindingPatternKind<'a>),
     Url(Rc<Url>),
     File,
-    PathCompareResult(bool),
+    PathPart(usize),
     SearchParameter(SearchParameter),
     // ASTNode
     AstNode(AstNode<'a>),
@@ -102,9 +107,29 @@ pub struct ClassProperty<'a> {
     is_abstract: bool,
 }
 
+#[non_exhaustive]
 pub struct LintAdapter<'a> {
     pub semantic: Rc<Semantic<'a>>,
-    pub path: PathBuf,
+    pub path_components: Vec<Option<String>>,
+}
+
+impl<'a> LintAdapter<'a> {
+    pub fn new(semantic: Rc<Semantic<'a>>, path: &Path) -> Self {
+        Self {
+            semantic,
+            path_components: path
+                .components()
+                .skip_while(|comp| !matches!(comp, std::path::Component::Normal(_)))
+                .filter_map(|f| {
+                    if let Component::Normal(str) = f {
+                        Some(str.to_str().map(std::string::ToString::to_string))
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+        }
+    }
 }
 
 impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
@@ -258,8 +283,21 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 }
                 _ => FieldValue::Null,
             }),
-            ("PathCompareResult", "result") => {
-                resolve_property_with(contexts, |v| (*v.as_path_compare_result().unwrap()).into())
+            ("PathPart", "name") => resolve_property_with(contexts, |v| {
+                if let Some(str) = &self.path_components[*v.as_path_part().unwrap()] {
+                    str.into()
+                } else {
+                    FieldValue::Null
+                }
+            }),
+            ("PathPart", "is_first") => {
+                resolve_property_with(contexts, |v| (*v.as_path_part().unwrap() == 0).into())
+            }
+            ("PathPart", "is_last") => {
+                let len = self.path_components.len();
+                resolve_property_with(contexts, move |v| {
+                    (*v.as_path_part().unwrap() == len - 1).into()
+                })
             }
             ("SearchParameter", "key") => resolve_property_with(contexts, |v| {
                 v.as_search_parameter().unwrap().key.clone().into()
@@ -321,93 +359,31 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                 }))
             }),
             ("File", "path_part") => {
-                let params = parameters.clone();
-                let path = self.path.clone();
+                let len = self.path_components.len();
+                resolve_neighbors_with(contexts, move |v| Box::new((0..len).map(Vertex::PathPart)))
+            }
+            ("File", "last_path_part") => {
+                let len = self.path_components.len();
                 resolve_neighbors_with(contexts, move |v| {
-                    let matcher =
-                        Regex::new(params["regex"].as_str().expect(
-                            "for File.path_includes to have a regex parameter of type string",
-                        ))
-                        .expect("for File.path_includes to have a valid regex passed to it");
-                    Box::new(std::iter::once(Vertex::PathCompareResult(
-                        path.components()
-                            .skip_while(|comp| !matches!(comp, std::path::Component::Normal(_)))
-                            .any(|x| match x {
-                                std::path::Component::ParentDir
-                                | std::path::Component::CurDir
-                                | std::path::Component::RootDir
-                                | std::path::Component::Prefix(_) => unreachable!(),
-                                std::path::Component::Normal(file_or_directory) => {
-                                    file_or_directory
-                                        .to_str()
-                                        .map_or_else(|| false, |str| matcher.is_match(str))
-                                }
-                            }),
-                    )))
+                    Box::new(std::iter::once(Vertex::PathPart(len - 1)))
                 })
             }
-            ("File", "path_starts_with") => {
-                let params = parameters.clone();
-                let path = self.path.clone();
-                resolve_neighbors_with(contexts, move |v| {
-                    Box::new(std::iter::once(Vertex::PathCompareResult(
-                        path.components().skip_while(|comp| !matches!(comp, std::path::Component::Normal(_)))
-                            .zip(
-                                params["regex"]
-                                    .as_slice()
-                                    .expect("to have slice of values")
-                                    .iter()
-                                    .map(|x| x.as_str().unwrap()),
-                            )
-                            .all(|x| match x.0 {
-                                std::path::Component::ParentDir | std::path::Component::CurDir | std::path::Component::RootDir | std::path::Component::Prefix(_) => unreachable!(),
-                                std::path::Component::Normal(file_or_directory) => {
-                                    file_or_directory.to_str().map_or_else(
-                                        || false,
-                                        |str| {
-                                            Regex::new(x.1).expect(&format!(
-                                                "The following is invalid regex put into File.path_starts_with: {}",
-                                                x.1
-                                            )).is_match(str)
-                                        },
-                                    )
-                                },
-                            }),
-                    )))
-                })
-            }
-            ("File", "path_ends_with") => {
-                let params = parameters.clone();
-                let path = self.path.clone();
-                resolve_neighbors_with(contexts, move |v| {
-                    Box::new(std::iter::once(Vertex::PathCompareResult(
-                        path.components().filter(|comp| matches!(comp, std::path::Component::Normal(_)))
-                            .rev()
-                            .zip(
-                                params["regex"]
-                                    .as_slice()
-                                    .expect("to have slice of values")
-                                    .iter()
-                                    .rev()
-                                    .map(|x| x.as_str().unwrap()),
-                            )
-                            .all(|x| match x.0 {
-                                std::path::Component::ParentDir | std::path::Component::CurDir | std::path::Component::RootDir | std::path::Component::Prefix(_) => unreachable!(),
-                                std::path::Component::Normal(file_or_directory) => {
-                                    file_or_directory.to_str().map_or_else(
-                                        || false,
-                                        |str| {
-                                            Regex::new(x.1).expect(&format!(
-                                                "The following is invalid regex put into File.path_ends_with: {}",
-                                                x.1
-                                            )).is_match(str)
-                                        },
-                                    )
-                                }
-                            }),
-                    )))
-                })
-            }
+            ("PathPart", "next") => resolve_neighbors_with(contexts, |v| {
+                let i = *v.as_path_part().unwrap();
+                if i + 1 < self.path_components.len() {
+                    Box::new(std::iter::once(Vertex::PathPart(i + 1)))
+                } else {
+                    Box::new(std::iter::empty())
+                }
+            }),
+            ("PathPart", "prev") => resolve_neighbors_with(contexts, |v| {
+                let i = *v.as_path_part().unwrap();
+                if i > 0 {
+                    Box::new(std::iter::once(Vertex::PathPart(i - 1)))
+                } else {
+                    Box::new(std::iter::empty())
+                }
+            }),
             ("TypeAnnotationAST" | "TypeAnnotation", "type") => {
                 resolve_neighbors_with(contexts, |v| {
                     let Vertex::TypeAnnotation(ta, ..) = &v else {unreachable!()};
@@ -628,7 +604,7 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                     std::iter::once(match attr_value {
                         JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
                             oxc_ast::ast::JSXExpression::Expression(expr) => {
-                                Some(Vertex::Expression(expr))
+                                Some(materialize_expression(expr))
                             }
                             oxc_ast::ast::JSXExpression::EmptyExpression(_) => None,
                         },
@@ -763,9 +739,9 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
                     Vertex::Type(typed) => typed.span(),
                     Vertex::Url(_)
                     | Vertex::SearchParameter(..)
-                    | Vertex::PathCompareResult(_)
                     | Vertex::Class(..)
                     | Vertex::Span(_)
+                    | Vertex::PathPart { .. }
                     | Vertex::File => unreachable!(),
                     Vertex::ClassMethod(it) => it.method.span,
                     Vertex::ClassProperty(it) => it.property.span,

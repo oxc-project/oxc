@@ -3,14 +3,6 @@ name: "next:no-before-interactive-script-outside-document:rule"
 query: |
   query {
     File {
-      path_starts_with(regex: ["^app$"]) {
-        result @filter(op: "=", value: ["$false"])
-      }
-
-      path_starts_with(regex: ["^src$", "^app$"]) {
-        result @filter(op: "=", value: ["$false"])
-      }
-
       import {
         from_path @filter(op: "=", value: ["$nextslashscript"])
         default_import {
@@ -32,8 +24,29 @@ query: |
         }
       }
 
-      path_ends_with(regex: ["^pages$", "^_document\\..+"]) {
-        result @filter(op: "=", value: ["$false"])
+      #### #### #### IGNORE ./src/app or ./app #### #### ####
+
+      # ./app
+      path_part @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+        is_first @filter(op: "=", value: ["$true"])
+        name @filter(op: "=", value: ["$app"])
+      }
+
+      # ./src/app
+      path_part @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+        is_first @filter(op: "=", value: ["$true"])
+        name @filter(op: "=", value: ["$src"])
+        next {
+          name @filter(op: "=", value: ["$app"])
+        }
+      }
+      #### #### #### ALLOW ONLY pages/_document.* #### #### ####
+
+      path_part @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+        name @filter(op: "=", value: ["$pages"])
+        next {
+          name @filter(op: "has_prefix", value: ["$underscore_document"])
+        }
       }
     }
   }
@@ -42,7 +55,12 @@ args:
   nextslashscript: "next/script"
   strategy: "strategy"
   beforeInteractive: "beforeInteractive"
-  false: false
+  src: "src"
+  app: "app"
+  pages: "pages"
+  underscore_document: "_document"
+  zero: 0
+  true: true
 
 reason: "`next/script`'s `beforeInteractive` strategy should not be used outside of `pages/_document.js`"
 

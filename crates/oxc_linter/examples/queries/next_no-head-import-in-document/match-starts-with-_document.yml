@@ -1,0 +1,126 @@
+name: "next:no-head-import-in-document:match-starts-with-_document"
+
+query: |
+  query {
+    File {
+      import {
+        from_path @filter(op: "=", value: ["$nextslashhead"])
+        span_: entire_span {
+          start @output
+          end @output
+        }
+      }
+
+      last_path_part {
+        name @filter(op: "has_prefix", value: ["$underscore_document"])
+        prev {
+          name @filter(op: "=", value: ["$pages"])
+        }
+      }
+    }
+  }
+
+args:
+  nextslashhead: "next/head"
+  underscore_document: "_document"
+  pages: "pages"
+
+# TODO: replace ${document} with the file name
+reason: "`next/head` should not be imported in `pages${document}`. Use `<Head />` from `next/document` instead."
+
+tests:
+  pass:
+    - file_path: /pages/_document.tsx
+      code: |
+        import Document, { Html, Head, Main, NextScript } from 'next/document'
+
+        class MyDocument extends Document {
+          static async getInitialProps(ctx) {
+            //...
+          }
+
+          render() {
+            return (
+              <Html>
+                <Head>
+                </Head>
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument
+    - file_path: /pages/index.tsx
+      code: |
+        import Head from "next/head";
+
+        export default function IndexPage() {
+          return (
+            <Head>
+              <title>My page title</title>
+              <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+            </Head>
+          );
+        }
+    - file_path: /pages/_document/index.js
+      code: |
+        import Document, { Html, Main, NextScript } from 'next/document'
+        import Head from 'next/head'
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head />
+                <body>
+                  <Main />
+                  <NextScript />
+                </body>
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument
+    - file_path: /pages/_document/index.tsx
+      code: |
+        import Document, { Html, Main, NextScript } from 'next/document'
+        import Head from 'next/head'
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head />
+                <body>
+                  <Main />
+                  <NextScript />
+                </body>
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument
+
+  fail:
+    - file_path: /pages/_document.js
+      code: |
+        import Document, { Html, Main, NextScript } from 'next/document'
+        import Head from 'next/head'
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head />
+                <body>
+                  <Main />
+                  <NextScript />
+                </body>
+              </Html>
+            )
+          }
+        }
+
+        export default MyDocument

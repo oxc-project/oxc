@@ -32,16 +32,39 @@ query: |
           end @output
         }
       }
-
-      path_ends_with(regex: ["^pages$", "^_document\\..+"]) {
-        result @filter(op: "=", value: ["$false"])
-      }
     }
   }
 
 args:
   nextslashhead: "next/head"
   nextslashscript: "next/script"
-  false: false
 
 reason: "`next/script` should not be used in `next/head` component. Move `<Script />` outside of `<Head>` instead."
+
+tests:
+  pass:
+    - file_path: /index.tsx
+      code: |
+        import Script from "next/script";
+        const Head = ({children}) => children
+
+        export default function Index() {
+          return (
+            <Head>
+              <Script></Script>
+            </Head>
+          );
+        }
+  fail:
+    - file_path: /index.tsx
+      code: |
+        import Head from "next/head";
+        import Script from "next/script";
+
+        export default function Index() {
+          return (
+              <Head>
+                <Script></Script>
+              </Head>
+          );
+        }

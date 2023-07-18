@@ -68,7 +68,7 @@ impl LinterPlugin {
         semantic: &Rc<Semantic<'_>>,
         path: P,
     ) {
-        let inner = LintAdapter { semantic: Rc::clone(semantic), path: path.into() };
+        let inner = LintAdapter::new(Rc::clone(semantic), &path.into());
         let adapter = Arc::from(&inner);
         for input_query in &self.rules {
             for data_item in execute_query(
@@ -154,10 +154,11 @@ mod test {
                 let messages = run_test(test, &rule.name);
                 assert!(
                     messages.is_empty(),
-                    "{}'s test {} is failing when it should pass. Errors: {:?}Code:\n\n{}\n\n",
+                    "{}'s test {} is failing when it should pass.\nErrors: {:#?}\nPath: {}\nCode:\n\n{}\n\n",
                     rule.name,
                     i + 1,
                     messages,
+                    test.file_path,
                     test.code
                 );
             }
@@ -166,9 +167,10 @@ mod test {
                 let messages = run_test(test, &rule.name);
                 assert!(
                     !messages.is_empty(),
-                    "{}'s test {} is passing when it should fail. \n\nCode:\n\n{}\n\n",
+                    "{}'s test {} is passing when it should fail.\nPath: {}\nCode:\n\n{}\n\n",
                     rule.name,
                     i + 1,
+                    test.file_path,
                     test.code
                 );
             }

@@ -30,3 +30,49 @@ args:
   nextslashdocument: "next/document"
 
 reason: "Do not use `<title>` element with `<Head />` component from `next/document`. Titles should defined at the page-level using `<Head />` from `next/head` instead."
+
+tests:
+  pass:
+    - file_path: /index.tsx
+      code: |
+        import Head from "next/head";
+
+        class Test {
+          render() {
+            return (
+              <Head>
+                <title>My page title</title>
+              </Head>
+            );
+          }
+        }
+    - file_path: /index.tsx
+      code: |
+        import Document, { Html, Head } from "next/document";
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                </Head>
+              </Html>
+            );
+          }
+        }
+
+        export default MyDocument;
+  fail:
+    - file_path: /index.tsx
+      code: |
+        import { Head } from "next/document";
+
+        class Test {
+          render() {
+            return (
+              <Head>
+                <title>My page title</title>
+              </Head>
+            );
+          }
+        }

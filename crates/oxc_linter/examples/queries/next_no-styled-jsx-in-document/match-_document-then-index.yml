@@ -1,0 +1,137 @@
+name: "next:no-styled-jsx-in-document:match-_document-then-index"
+
+query: |
+  query {
+    File {
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$style"])
+
+          attribute @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+            name @filter(op: "=", value: ["$jsx"])
+          }
+
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+
+      last_path_part {
+        name @filter(op: "has_prefix", value: ["$index"]) # TODO: this shouldn't be has_prefix, it really should be = to the file name, and ignore the extension
+        prev {
+          name @filter(op: "=", value: ["$underscore_document"])
+          prev {
+            name @filter(op: "=", value: ["$pages"])
+          }
+        }
+      }
+    }
+  }
+
+args:
+  zero: 0
+  style: "style"
+  jsx: "jsx"
+  pages: "pages"
+  underscore_document: "_document"
+  index: "index"
+
+reason: "`styled-jsx` should not be used in `pages/_document.js"
+
+tests:
+  pass:
+    - file_path: /pages/_document.js
+      code: |
+        import Document, { Html, Head, Main, NextScript } from 'next/document'
+
+        export class MyDocument extends Document {
+          static async getInitialProps(ctx) {
+            const initialProps = await Document.getInitialProps(ctx)
+            return { ...initialProps }
+          }
+
+          render() {
+            return (
+              <Html>
+                <Head />
+                <body>
+                  <Main />
+                  <NextScript />
+                </body>
+              </Html>
+            )
+          }
+        }
+    - file_path: /pages/_document.js
+      code: |
+        import Document, { Html, Head, Main, NextScript } from 'next/document'
+
+        export class MyDocument extends Document {
+          static async getInitialProps(ctx) {
+            const initialProps = await Document.getInitialProps(ctx)
+            return { ...initialProps }
+          }
+
+          render() {
+            return (
+              <Html>
+                <Head />
+                <style>{"\
+                  body{\
+                    color:red;\
+                  }\
+                "}</style>
+                <style {...{nonce: '123' }}></style>
+                <body>
+                  <Main />
+                  <NextScript />
+                </body>
+              </Html>
+            )
+          }
+        }
+    - file_path: /pages/index.js
+      code: |
+        export default function Page() {
+          return (
+            <>
+              <p>Hello world</p>
+              <style jsx>{`
+                p {
+                  color: orange;
+                }
+              `}</style>
+            </>
+          )
+        }
+
+  fail:
+    - file_path: /pages/_document/index.js
+      code: |
+        import Document, { Html, Head, Main, NextScript } from 'next/document'
+
+        export class MyDocument extends Document {
+          static async getInitialProps(ctx) {
+            const initialProps = await Document.getInitialProps(ctx)
+            return { ...initialProps }
+          }
+
+          render() {
+            return (
+              <Html>
+                <Head />
+                <style jsx>{"\
+                body{\
+                  color:red;\
+                }\
+                "}</style>
+                <body>
+                  <Main />
+                  <NextScript />
+                </body>
+              </Html>
+            )
+          }
+        }

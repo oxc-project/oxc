@@ -11,14 +11,117 @@ query: |
         }
       }
 
-      path_ends_with(regex: ["^pages$", "^_document\\..+"]) {
-        result @filter(op: "=", value: ["$false"])
+      path_part @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
+        name @filter(op: "=", value: ["$pages"])
+        next {
+          name @filter(op: "has_prefix", value: ["$underscore_document"])
+        }
       }
     }
   }
 
 args:
   nextslashdocument: "next/document"
-  false: false
+  pages: "pages"
+  underscore_document: "_document"
+  zero: 0
 
 reason: "`<Document />` from `next/document` should not be imported outside of `pages/_document.js`."
+
+tests:
+  pass:
+    - file_path: /pages/_document.js
+      code: |
+        import Document from "next/document"
+
+        export default class MyDocument1 extends Document {
+          render() {
+            return (
+              <Html>
+              </Html>
+            );
+          }
+        }
+    - file_path: /pages/_document.js
+      code: |
+        import Document from "next/document"
+
+        export default class MyDocument2 extends Document {
+          render() {
+            return (
+              <Html>
+              </Html>
+            );
+          }
+        }
+    - file_path: /pages/_document.tsx
+      code: |
+        import NextDocument from "next/document"
+
+        export default class MyDocument3 extends NextDocument {
+          render() {
+            return (
+              <Html>
+              </Html>
+            );
+          }
+        }
+    - file_path: /pages/_document.page.tsx
+      code: |
+        import Document from "next/document"
+
+        export default class MyDocument4 extends Document {
+          render() {
+            return (
+              <Html>
+              </Html>
+            );
+          }
+        }
+    - file_path: /pages/_document/index.js
+      code: |
+        import NDocument1 from "next/document"
+
+        export default class Document extends NDocument1 {
+          render() {
+            return (
+              <Html>
+              </Html>
+            );
+          }
+        }
+    - file_path: /pages/_document/index.tsx
+      code: |
+        import NDocument2 from "next/document"
+
+        export default class Document extends NDocument2 {
+          render() {
+            return (
+              <Html>
+              </Html>
+            );
+          }
+        }
+    - file_path: /pagesapp/src/pages/_document.js
+      code: |
+        import Document from "next/document"
+
+        export default class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+              </Html>
+            );
+          }
+        }
+  fail:
+    - file_path: /components/test.js
+      code: |
+        import Document from "next/document"
+
+        export const Test = () => <p>Test</p>
+    - file_path: /pages/test.js
+      code: |
+        import Document from "next/document"
+
+        export const Test = () => <p>Test</p>
