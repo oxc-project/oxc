@@ -1,18 +1,24 @@
-use std::{path::Path, sync::Arc};
+use std::{hash::BuildHasherDefault, path::Path, sync::Arc};
 
 use dashmap::DashMap;
+use rustc_hash::FxHasher;
 
 use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 
 pub struct Cache<Fs> {
     fs: Fs,
-    cache: DashMap<Box<Path>, Option<FileMetadata>>,
-    package_json_cache: DashMap<Box<Path>, Result<Arc<PackageJson>, ResolveError>>,
+    cache: DashMap<Box<Path>, Option<FileMetadata>, BuildHasherDefault<FxHasher>>,
+    package_json_cache:
+        DashMap<Box<Path>, Result<Arc<PackageJson>, ResolveError>, BuildHasherDefault<FxHasher>>,
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
     fn default() -> Self {
-        Self { fs: Fs::default(), cache: DashMap::new(), package_json_cache: DashMap::new() }
+        Self {
+            fs: Fs::default(),
+            cache: DashMap::default(),
+            package_json_cache: DashMap::default(),
+        }
     }
 }
 
