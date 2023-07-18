@@ -18,27 +18,32 @@ pub struct ResolveOptions {
     /// Default `[]`
     pub alias_fields: Vec<String>,
 
-    /// An object which maps extension to extension aliases
+    /// A list of description files to read (there was once a `bower.json`).
     ///
-    /// Default `{}`
-    pub extension_alias: Vec<(String, Vec<String>)>,
+    /// Default `["package.json"]`
+    pub description_files: Vec<String>,
 
-    /// Enforce that a extension from extensions must be used
+    /// Enforce that a extension from extensions must be used.
     ///
     /// Default `false`
     pub enforce_extension: bool,
 
-    /// A list of extensions which should be tried for
+    /// An object which maps extension to extension aliases.
+    ///
+    /// Default `{}`
+    pub extension_alias: Vec<(String, Vec<String>)>,
+
+    /// A list of extensions which should be tried for.
     ///
     /// Default `[".js", ".json", ".node"]`
     pub extensions: Vec<String>,
 
-    /// A list of main files in directories
+    /// A list of main files in directories.
     ///
     /// Default `["index"]`
     pub main_files: Vec<String>,
 
-    /// A list of directories to resolve modules from, can be absolute path or folder name
+    /// A list of directories to resolve modules from, can be absolute path or folder name.
     ///
     /// Default `["node_modules"]`
     pub modules: Vec<String>,
@@ -49,8 +54,9 @@ impl Default for ResolveOptions {
         Self {
             alias: vec![],
             alias_fields: vec![],
-            extension_alias: vec![],
+            description_files: vec!["package.json".into()],
             enforce_extension: false,
+            extension_alias: vec![],
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
