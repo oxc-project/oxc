@@ -44,15 +44,12 @@ impl Rule for NoVarRequires {
             } 
 
             if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-                match parent_node.kind() {
-                    AstKind::Argument(_) => {
-                        if let Some(parent_node) = ctx.nodes().parent_node(parent_node.id()) {
-                            if is_target_node(&parent_node.kind()) {
-                                ctx.diagnostic(NoVarRequiresDiagnostic(expr.span));
-                            }
+                if let AstKind::Argument(_) = parent_node.kind() {
+                    if let Some(parent_node) = ctx.nodes().parent_node(parent_node.id()) {
+                        if is_target_node(&parent_node.kind()) {
+                            ctx.diagnostic(NoVarRequiresDiagnostic(expr.span));
                         }
                     }
-                    _ => {}
                 }
 
                 if is_target_node(&parent_node.kind()) {
@@ -63,18 +60,13 @@ impl Rule for NoVarRequires {
     }
 }
 
-fn is_target_node<'a>(node_kind: &AstKind<'a>) -> bool {
-    match node_kind {
-        AstKind::CallExpression(_)
+fn is_target_node(node_kind: &AstKind<'_>) -> bool {
+    matches!(node_kind, AstKind::CallExpression(_)
         | AstKind::MemberExpression(_)
         | AstKind::NewExpression(_)
         | AstKind::TSAsExpression(_)
         | AstKind::TSTypeAssertion(_)
-        | AstKind::VariableDeclarator(_) => {
-            return true;
-        }
-        _ => return false
-    }
+        | AstKind::VariableDeclarator(_))
 }
 
 #[test]
