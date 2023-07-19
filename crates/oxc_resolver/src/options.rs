@@ -1,3 +1,5 @@
+pub type Alias = Vec<(String, Vec<AliasValue>)>;
+
 #[derive(Debug, Clone)]
 pub enum AliasValue {
     /// The path value
@@ -10,7 +12,7 @@ pub enum AliasValue {
 #[derive(Debug, Clone)]
 pub struct ResolveOptions {
     /// A list of module alias configurations or an object which maps key to value
-    pub alias: Vec<(String, Vec<AliasValue>)>,
+    pub alias: Alias,
 
     /// A list of alias fields in description files.
     /// Specify a field, such as `browser`, to be parsed according to [this specification](https://github.com/defunctzombie/package-browser-field-spec).
@@ -42,6 +44,11 @@ pub struct ResolveOptions {
     /// Default `[".js", ".json", ".node"]`
     pub extensions: Vec<String>,
 
+    /// Same as [ResolveOptions::alias], Redirect module requests when normal resolving fails. .
+    ///
+    /// Default `[]`
+    pub fallback: Alias,
+
     /// A list of main files in directories.
     ///
     /// Default `["index"]`
@@ -62,6 +69,7 @@ impl Default for ResolveOptions {
             enforce_extension: None,
             extension_alias: vec![],
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
+            fallback: vec![],
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
         }

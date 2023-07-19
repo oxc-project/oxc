@@ -2,6 +2,7 @@ mod alias;
 mod browser_field;
 mod extension_alias;
 mod extensions;
+mod fallback;
 mod incorrect_description_file;
 mod resolve;
 mod scoped_packages;
