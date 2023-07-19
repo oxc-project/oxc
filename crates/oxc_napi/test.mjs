@@ -6,7 +6,7 @@ console.log(`Testing on ${process.platform}-${process.arch}`)
 function test(ret) {
   console.log(ret.program);
   console.log(ret.errors);
-  assert(ret.program.body.length == 1);
+  assert(JSON.parse(ret.program).body.length == 1);
   assert(ret.errors.length == 0);
 }
 
