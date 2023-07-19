@@ -1,3 +1,0 @@
-#!/bin/tcsh
-
-gmake check
