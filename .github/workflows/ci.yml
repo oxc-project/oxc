@@ -170,13 +170,9 @@ jobs:
       - name: Set directory permission
         run: chmod +rwx ./vscode
       - name: Build oxlint
-        run: cargo build -p oxc_cli --bin oxlint --target-dir './vscode'
-      - name: Set oxlint binary permission
-        run: chmod +rwx ./vscode/oxlint
-      - name: cd directory
-        run: cd ./vscode
+        run: cargo build -p oxc_cli --bin oxlint
       - name: Run oxlint on vscode
-        run: ./oxlint -- 
+        run: ./target/debug/oxlint ./vscode/ 
 
   doc:
     name: Doc
