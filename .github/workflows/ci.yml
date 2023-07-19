@@ -166,7 +166,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: microsoft/vscode
-          path: ./vscdoe
+          path: ./vscode
       - name: Set directory permission
         run: chmod +rwx ./vscode
       - name: cd directory
