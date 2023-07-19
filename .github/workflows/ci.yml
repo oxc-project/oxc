@@ -166,9 +166,8 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: microsoft/vscode
-          path: '../'
       - name: cd directory
-        run: cd ../vscode
+        run: cd ./vscode
       - name: Run oxlint on vscode
         run: cargo lint -- -D warnings
 
