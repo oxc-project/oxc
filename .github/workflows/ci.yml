@@ -172,7 +172,7 @@ jobs:
       - name: Build oxlint
         run: cargo build -p oxc_cli --bin oxlint
       - name: Run oxlint on vscode
-        run: ./target/debug/oxlint ./vscode/ --quiey --ignore-path ./vscode/.eslintignore
+        run: ./target/debug/oxlint --quiet --ignore-path ./vscode/.eslintignore ./vscode/ 
 
   doc:
     name: Doc
