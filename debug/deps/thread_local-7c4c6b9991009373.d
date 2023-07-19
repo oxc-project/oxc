@@ -1,0 +1,10 @@
+/Users/leonardyeung/Documents/oxc/target/debug/../../debug/deps/thread_local-7c4c6b9991009373.rmeta: /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/lib.rs /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/cached.rs /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/thread_id.rs /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/unreachable.rs
+
+/Users/leonardyeung/Documents/oxc/target/debug/../../debug/deps/libthread_local-7c4c6b9991009373.rlib: /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/lib.rs /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/cached.rs /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/thread_id.rs /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/unreachable.rs
+
+/Users/leonardyeung/Documents/oxc/target/debug/../../debug/deps/thread_local-7c4c6b9991009373.d: /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/lib.rs /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/cached.rs /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/thread_id.rs /Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/unreachable.rs
+
+/Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/lib.rs:
+/Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/cached.rs:
+/Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/thread_id.rs:
+/Users/leonardyeung/.cargo/registry/src/index.crates.io-6f17d22bba15001f/thread_local-1.1.7/src/unreachable.rs:

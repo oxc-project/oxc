@@ -1,0 +1,5 @@
+cargo:rerun-if-changed=build.rs
+cargo:rustc-cfg=feature="specialize"
+cargo:rustc-cfg=feature="stdsimd"
+cargo:rustc-cfg=feature="runtime-rng"
+cargo:rustc-cfg=feature="folded_multiply"

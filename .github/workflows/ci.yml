@@ -169,8 +169,10 @@ jobs:
           path: ./vscode
       - name: Set directory permission
         run: chmod +rwx ./vscode
-      - name: Build oxlint with optimization
-        run: cargo build -p oxc_cli --bin oxlint --release --target-dir './vscode'
+      - name: Build oxlint
+        run: cargo build -p oxc_cli --bin oxlint --target-dir './vscode'
+      - name: Set oxlint binary permission
+        run: chmod +rwx ./vscode/oxlint
       - name: cd directory
         run: cd ./vscode
       - name: Run oxlint on vscode
