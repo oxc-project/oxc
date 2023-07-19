@@ -150,6 +150,28 @@ jobs:
       - name: Run Clippy
         run: cargo lint -- -D warnings
 
+
+  ecosystemTest:
+    needs: lint
+    name: Lint with vscode repository
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+        with:
+          clippy: true
+      - name: Clone vscode
+        uses: actions/checkout@master
+        with:
+          repository: microsoft/vscode
+          path: '../'
+      - name: cd directory
+        run: cd ../vscode
+      - name: Run oxlint on vscode
+        run: cargo lint -- -D warnings
+
   doc:
     name: Doc
     runs-on: ubuntu-latest
