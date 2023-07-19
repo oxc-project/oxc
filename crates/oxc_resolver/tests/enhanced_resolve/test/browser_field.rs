@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use oxc_resolver::{ResolveError, ResolveOptions, Resolver};
+use oxc_resolver::{Resolution, ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("browser-module")
@@ -12,12 +12,10 @@ fn fixture() -> PathBuf {
 fn ignore() {
     let f = fixture();
 
-    let options = ResolveOptions {
+    let resolver = Resolver::new(ResolveOptions {
         alias_fields: vec!["browser".into(), "innerBrowser1".into(), "innerBrowser2".into()],
         ..ResolveOptions::default()
-    };
-
-    let resolver = Resolver::new(options);
+    });
 
     #[rustfmt::skip]
     let data = [
@@ -35,13 +33,13 @@ fn ignore() {
 }
 
 #[test]
-fn replace_file() -> Result<(), ResolveError> {
+fn replace_file() {
     let f = fixture();
 
-    let options =
-        ResolveOptions { alias_fields: vec!["browser".into()], ..ResolveOptions::default() };
-
-    let resolver = Resolver::new(options);
+    let resolver = Resolver::new(ResolveOptions {
+        alias_fields: vec!["browser".into()],
+        ..ResolveOptions::default()
+    });
 
     #[rustfmt::skip]
     let data = [
@@ -61,10 +59,7 @@ fn replace_file() -> Result<(), ResolveError> {
     ];
 
     for (comment, path, request, expected) in data {
-        let resolution = resolver.resolve(&path, request)?;
-        let resolved_path = resolution.path();
-        assert_eq!(resolved_path, expected, "{comment} {path:?} {request}");
+        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
-
-    Ok(())
 }

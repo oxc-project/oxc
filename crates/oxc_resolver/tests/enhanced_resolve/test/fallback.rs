@@ -1,14 +1,14 @@
 //! https://github.com/webpack/enhanced-resolve/blob/main/test/fallback.test.js
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use oxc_resolver::{AliasValue, ResolveError, ResolveOptions, ResolverGeneric};
+use oxc_resolver::{AliasValue, Resolution, ResolveError, ResolveOptions, ResolverGeneric};
 
 use crate::MemoryFS;
 
 #[test]
 #[cfg(not(target_os = "windows"))] // MemoryFS's path separator is always `/` so the test will not pass in windows.
-fn fallback() -> Result<(), ResolveError> {
+fn fallback() {
     let f = Path::new("/");
 
     let file_system = MemoryFS::new(&[
@@ -74,8 +74,8 @@ fn fallback() -> Result<(), ResolveError> {
     ];
 
     for (comment, request, expected) in pass {
-        let resolution = resolver.resolve(f, request)?;
-        assert_eq!(resolution.full_path(), Path::new(expected), "{comment} {request}");
+        let resolved_path = resolver.resolve(f, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(PathBuf::from(expected)), "{comment} {request}");
     }
 
     #[rustfmt::skip]
@@ -87,6 +87,4 @@ fn fallback() -> Result<(), ResolveError> {
         let resolution = resolver.resolve(f, request);
         assert_eq!(resolution, Err(expected), "{comment} {request}");
     }
-
-    Ok(())
 }
