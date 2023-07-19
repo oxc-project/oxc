@@ -19,7 +19,7 @@
 |  ✅  | enforceExtension | false                       | Enforce that a extension from extensions must be used                                                                                                     |
 |      | exportsFields    | ["exports"]                 | A list of exports fields in description files                                                                                                             |
 |  ✅  | extensions       | [".js", ".json", ".node"]   | A list of extensions which should be tried for files                                                                                                      |
-|      | fallback         | []                          | Same as `alias`, but only used if default resolving fails                                                                                                 |
+|  ✅  | fallback         | []                          | Same as `alias`, but only used if default resolving fails                                                                                                 |
 |  ✅  | fileSystem       |                             | The file system which should be used                                                                                                                      |
 |      | fullySpecified   | false                       | Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests) |
 |      | mainFields       | ["main"]                    | A list of main fields in description files                                                                                                                |
@@ -41,13 +41,13 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 
 - [ ] CachedInputFileSystem.test.js
 - [ ] SyncAsyncFileSystemDecorator.test.js
-- [x] alias.test.js (partially done)
+- [x] alias.test.js (need to fix a todo)
 - [x] browserField.test.js (reading the browser field is currently static - not read from the `browserField` option)
 - [ ] dependencies.test.js
 - [ ] exportsField.test.js
 - [x] extension-alias.test.js
 - [x] extensions.test.js
-- [ ] fallback.test.js
+- [x] fallback.test.js (need to fix a todo)
 - ~[ ] forEachBail.test.js~
 - [ ] fullSpecified.test.js
 - [ ] getPaths.test.js

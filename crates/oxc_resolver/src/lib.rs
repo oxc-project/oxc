@@ -25,7 +25,7 @@ pub use crate::{
     cache::Cache,
     error::{JSONError, ResolveError},
     file_system::{FileMetadata, FileSystem, FileSystemOs},
-    options::{AliasValue, ResolveOptions},
+    options::{Alias, AliasValue, ResolveOptions},
     resolution::Resolution,
 };
 use crate::{
@@ -71,10 +71,23 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     ) -> Result<Resolution, ResolveError> {
         let path = path.as_ref();
         let request = Request::parse(request_str).map_err(ResolveError::Request)?;
-        let path = if let Some(path) = self.load_alias(path, request.path.as_str())? {
+        let path = if let Some(path) =
+            self.load_alias(path, request.path.as_str(), &self.options.alias)?
+        {
             path
         } else {
-            self.require(path, &request)?
+            let result = self.require(path, &request);
+            if result.as_ref().is_err_and(ResolveError::is_not_found) {
+                if let Some(path) =
+                    self.load_alias(path, request.path.as_str(), &self.options.fallback)?
+                {
+                    path
+                } else {
+                    result?
+                }
+            } else {
+                result?
+            }
         };
         Ok(Resolution {
             path,
@@ -261,8 +274,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_alias(&self, path: &Path, request_str: &str) -> ResolveState {
-        for (alias, requests) in &self.options.alias {
+    fn load_alias(&self, path: &Path, request_str: &str, alias: &Alias) -> ResolveState {
+        for (alias, requests) in alias {
             let exact_match = alias.strip_prefix(request_str).is_some_and(|c| c == "$");
             if request_str.starts_with(alias) || exact_match {
                 for request in requests {
