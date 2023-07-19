@@ -166,6 +166,9 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: microsoft/vscode
+          path: ./vscdoe
+      - name: Set directory permission
+        run: chmod +rwx ./vscode
       - name: cd directory
         run: cd ./vscode
       - name: Run oxlint on vscode
