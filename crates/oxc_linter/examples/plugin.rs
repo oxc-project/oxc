@@ -41,7 +41,6 @@ fn main() {
 
     if !errors.is_empty() {
         print_errors(&source_text, errors);
-        println!("elapsed: {:?}", start.elapsed());
         return;
     }
 
