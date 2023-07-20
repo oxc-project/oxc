@@ -9,7 +9,7 @@ fn fixture() -> PathBuf {
 }
 
 #[test]
-fn extensions() -> Result<(), ResolveError> {
+fn extensions() {
     let f = fixture();
 
     let resolver = Resolver::new(ResolveOptions {
@@ -27,10 +27,9 @@ fn extensions() -> Result<(), ResolveError> {
     ];
 
     for (comment, request, expected_path) in pass {
-        let resolution = resolver.resolve(&f, request)?;
-        let path = resolution.path().canonicalize().unwrap();
-        let expected = f.join(expected_path).canonicalize().unwrap();
-        assert_eq!(path, expected, "{comment} {request} {expected_path}");
+        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        let expected = f.join(expected_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {request} {expected_path}");
     }
 
     #[rustfmt::skip]
@@ -43,8 +42,6 @@ fn extensions() -> Result<(), ResolveError> {
         let error = ResolveError::NotFound(expected_error.into_boxed_path());
         assert_eq!(resolution, Err(error), "{comment} {request} {resolution:?}");
     }
-
-    Ok(())
 }
 
 #[test]

@@ -1,9 +1,9 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/resolve.test.js>
 
-use oxc_resolver::{ResolveError, Resolver};
+use oxc_resolver::{Resolution, Resolver};
 
 #[test]
-fn resolve() -> Result<(), ResolveError> {
+fn resolve() {
     let f = super::fixture();
 
     let resolver = Resolver::default();
@@ -43,11 +43,9 @@ fn resolve() -> Result<(), ResolveError> {
     ];
 
     for (comment, path, request, expected) in data {
-        let resolution = resolver.resolve(&path, request)?;
-        assert_eq!(resolution.full_path(), expected, "{comment} {path:?} {request}");
+        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
-
-    Ok(())
 }
 
 #[test]
@@ -60,7 +58,7 @@ fn prefer_relative_resolve() {}
 
 #[test]
 #[ignore = "add resolveToContext option"]
-fn resolve_context() -> Result<(), ResolveError> {
+fn resolve_context() {
     let f = super::fixture();
     let resolver = Resolver::default();
 
@@ -73,10 +71,7 @@ fn resolve_context() -> Result<(), ResolveError> {
     ];
 
     for (comment, path, request, expected) in data {
-        let resolution = resolver.resolve(&path, request)?;
-        let resolved_path = resolution.path();
-        assert_eq!(resolved_path, expected, "{comment} {path:?} {request}");
+        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
-
-    Ok(())
 }

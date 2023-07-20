@@ -2,14 +2,14 @@
 
 use std::path::PathBuf;
 
-use oxc_resolver::{ResolveError, ResolveOptions, Resolver};
+use oxc_resolver::{Resolution, ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("extension-alias")
 }
 
 #[test]
-fn extension_alias() -> Result<(), ResolveError> {
+fn extension_alias() {
     let f = fixture();
 
     let resolver = Resolver::new(ResolveOptions {
@@ -31,9 +31,8 @@ fn extension_alias() -> Result<(), ResolveError> {
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolution = resolver.resolve(&path, request)?;
-        let resolved_path = resolution.path();
-        assert_eq!(resolved_path, expected, "{comment} {path:?} {request}");
+        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 
     #[rustfmt::skip]
@@ -45,12 +44,10 @@ fn extension_alias() -> Result<(), ResolveError> {
         let resolution = resolver.resolve(&path, request);
         assert_eq!(resolution, Err(ResolveError::ExtensionAlias), "{comment} {path:?} {request}");
     }
-
-    Ok(())
 }
 
 #[test]
-fn not_apply_to_extension_nor_main_files() -> Result<(), ResolveError> {
+fn not_apply_to_extension_nor_main_files() {
     // should not apply extension alias to extensions or mainFiles field
     let options = ResolveOptions {
         extensions: vec![".js".into()],
@@ -63,15 +60,13 @@ fn not_apply_to_extension_nor_main_files() -> Result<(), ResolveError> {
 
     #[rustfmt::skip]
     let pass = [
-        ("directory", f.clone(), "./dir2", f.join("dir2/index.js")),
-        ("file", f.clone(), "./dir2/index", f.join("dir2/index.js")),
+        ("directory", f.clone(), "./dir2", "dir2/index.js"),
+        ("file", f.clone(), "./dir2/index", "dir2/index.js"),
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolution = resolver.resolve(&path, request)?;
-        let resolved_path = resolution.path();
-        assert_eq!(resolved_path, expected, "{comment} {path:?} {request}");
+        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let expected = f.join(expected);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
-
-    Ok(())
 }
