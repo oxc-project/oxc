@@ -150,7 +150,6 @@ jobs:
       - name: Run Clippy
         run: cargo lint -- -D warnings
 
-
   ecosystemTest:
     needs: lint
     name: Lint with vscode repository
@@ -168,7 +167,7 @@ jobs:
       - name: Build oxlint
         run: cargo build -p oxc_cli --bin oxlint --release
       - name: Run oxlint on vscode
-        run: ./target/oxlint --quiet --ignore-path ./vscode/.eslintignore ./vscode/ 
+        run: ./target/release/oxlint --quiet --ignore-path ./vscode/.eslintignore ./vscode/ 
 
   doc:
     name: Doc
