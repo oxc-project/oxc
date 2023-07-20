@@ -24,7 +24,6 @@ use std::{env, fs, io::Write, path::PathBuf, rc::Rc};
 pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
 use oxc_semantic::Semantic;
-pub use path_calculate::Calculate;
 use plugin::LinterPlugin;
 use rustc_hash::FxHashMap;
 
