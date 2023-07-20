@@ -2,73 +2,73 @@
 source: crates/oxc_linter/src/tester.rs
 expression: no_var_requires
 ---
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ var foo = require('foo');
    ·           ──────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ const foo = require('foo');
    ·             ──────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ let foo = require('foo');
    ·           ──────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ let foo = trick(require('foo'));
    ·                 ──────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ var foo = require?.('foo');
    ·           ────────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ const foo = require?.('foo');
    ·             ────────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ let foo = require?.('foo');
    ·           ────────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ let foo = trick(require?.('foo'));
    ·                 ────────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ let foo = trick?.(require('foo'));
    ·                   ──────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ const foo = require('./foo.json') as Foo;
    ·             ─────────────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ const foo: Foo = require('./foo.json').default;
    ·                  ─────────────────────
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:1:1]
  1 │ 
  2 │             const configValidator = new Validator(require('./a.json'));
@@ -76,7 +76,7 @@ expression: no_var_requires
  3 │             configValidator.addSchema(require('./a.json'));
    ╰────
 
-  × typescript-eslint(no-var-requires): Require statement not part of import statement.
+  × typescript-eslint(no-var-requires): use ES6 style imports or import foo = require("foo") imports.
    ╭─[no_var_requires.tsx:2:1]
  2 │             const configValidator = new Validator(require('./a.json'));
  3 │             configValidator.addSchema(require('./a.json'));

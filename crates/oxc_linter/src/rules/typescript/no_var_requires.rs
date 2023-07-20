@@ -10,7 +10,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "typescript-eslint(no-var-requires): Require statement not part of import statement."
+    "typescript-eslint(no-var-requires): use ES6 style imports or import foo = require(\"foo\") imports."
 )]
 #[diagnostic(severity(error))]
 struct NoVarRequiresDiagnostic(#[label] pub Span);
@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// 
     /// In other words, the use of forms such as var foo = require("foo") are banned. Instead use ES6 style imports or import foo = require("foo") imports.
     /// 
-    /// ```javascript
+    /// ```typescript
     /// var foo = require('foo');
     /// const foo = require('foo');
     /// let foo = require('foo');
@@ -38,6 +38,9 @@ declare_oxc_lint!(
 
 impl Rule for NoVarRequires {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if !ctx.source_type().is_typescript() {
+            return;
+        }
         if let AstKind::CallExpression(expr) = node.kind() && expr.is_require_call() {
             if ctx.scopes().get_bindings(node.scope_id()).contains_key("require") {
                 return;
@@ -95,7 +98,10 @@ fn test() {
         "let foo = trick(require?.('foo'));",
         "let foo = trick?.(require('foo'));",
         "const foo = require('./foo.json') as Foo;",
+
+        // Because of TypeScript disallows angle bracket type assertions in .tsx files, comment out this below case all tests parsing as tsx.
         // "const foo = <Foo>require('./foo.json');",
+
         "const foo: Foo = require('./foo.json').default;",
         r#"
             const configValidator = new Validator(require('./a.json'));
