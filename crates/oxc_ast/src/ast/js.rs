@@ -343,9 +343,9 @@ impl<'a> PropertyKey<'a> {
             Self::PrivateIdentifier(_) => None,
             Self::Expression(expr) => match expr {
                 Expression::StringLiteral(lit) => Some(lit.value.clone()),
-                Expression::RegExpLiteral(lit) => Some(Atom::from(format!("{0}", lit.regex))),
-                Expression::NumberLiteral(lit) => Some(Atom::from(lit.raw)),
-                Expression::BigintLiteral(lit) => Some(Atom::from(format!("{0}", lit.value))),
+                Expression::RegExpLiteral(lit) => Some(Atom::from(lit.regex.to_string())),
+                Expression::NumberLiteral(lit) => Some(Atom::from(lit.value.to_string())),
+                Expression::BigintLiteral(lit) => Some(Atom::from(lit.value.to_string())),
                 Expression::NullLiteral(_) => Some("null".into()),
                 Expression::TemplateLiteral(lit) => {
                     lit.expressions.is_empty().then(|| lit.quasi()).flatten().cloned()
