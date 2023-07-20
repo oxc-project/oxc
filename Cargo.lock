@@ -1480,10 +1480,8 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
- "path-absolutize",
  "path-calculate",
  "phf",
- "regex",
  "rust-lapper",
  "rustc-hash",
  "serde",
@@ -1491,7 +1489,6 @@ dependencies = [
  "serde_yaml",
  "trustfall",
  "url",
- "url-search-params",
 ]
 
 [[package]]
@@ -2585,12 +2582,6 @@ dependencies = [
  "idna",
  "percent-encoding",
 ]
-
-[[package]]
-name = "url-search-params"
-version = "12.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a4b5120022ae7548d0005c9e99f9a695a33bcd732deffb578f7e85516dbb7a6"
 
 [[package]]
 name = "utf8parse"
