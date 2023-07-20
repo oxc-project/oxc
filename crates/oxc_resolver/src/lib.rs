@@ -96,13 +96,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         })
     }
 
+    /// require(X) from module at path Y
+    /// X: request
+    /// Y: path
     fn require(&self, path: &Path, request: &Request) -> Result<PathBuf, ResolveError> {
-        // X: request
-        // Y: path
-        // require(X) from module at path Y
-        let mut path = path;
-        let request_str;
-
         match request.path {
             // 1. If X is a core module,
             //    a. return the core module
@@ -110,47 +107,20 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             // 2. If X begins with '/'
             //    a. set Y to be the file system root
             RequestPath::Absolute(absolute_path) => {
-                path = Path::new("/");
-                request_str = absolute_path;
-                if !self.options.roots.is_empty() {
-                    for root in &self.options.roots {
-                        if let Ok(path) =
-                            self.require_relative(root, absolute_path.trim_start_matches('/'))
-                        {
-                            return Ok(path);
-                        }
+                if !self.options.prefer_relative && self.options.prefer_absolute {
+                    if let Ok(path) = self.require_path(path, absolute_path) {
+                        return Ok(path);
                     }
-                    return Err(ResolveError::NotFound(
-                        Path::new(absolute_path).to_path_buf().into_boxed_path(),
-                    ));
                 }
+                self.load_roots(path, absolute_path)
             }
             // 3. If X begins with './' or '/' or '../'
-            RequestPath::Relative(relative_path) => {
-                return self.require_relative(path, relative_path);
-            }
+            RequestPath::Relative(relative_path) => self.require_relative(path, relative_path),
             // 4. If X begins with '#'
-            RequestPath::Hash(hash_path) => {
-                request_str = hash_path;
-            }
+            RequestPath::Hash(hash_path) => self.require_path(path, hash_path),
             //    a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
-            RequestPath::Module(module_path) => {
-                request_str = module_path;
-            }
+            RequestPath::Module(module_path) => self.require_path(path, module_path),
         }
-        // 5. LOAD_PACKAGE_SELF(X, dirname(Y))
-        if let Some(path) = self.load_package_self(path, request_str)? {
-            return Ok(path);
-        }
-        // 6. LOAD_NODE_MODULES(X, dirname(Y))
-        if let Some(path) = self.load_node_modules(path, request_str)? {
-            return Ok(path);
-        }
-        if let Some(path) = self.load_as_file(&path.join(request_str))? {
-            return Ok(path);
-        }
-        // 7. THROW "not found"
-        Err(ResolveError::NotFound(path.to_path_buf().into_boxed_path()))
     }
 
     // 3. If X begins with './' or '/' or '../'
@@ -171,6 +141,22 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
         // c. THROW "not found"
         Err(ResolveError::NotFound(path.into_boxed_path()))
+    }
+
+    fn require_path(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
+        // 5. LOAD_PACKAGE_SELF(X, dirname(Y))
+        if let Some(path) = self.load_package_self(path, request_str)? {
+            return Ok(path);
+        }
+        // 6. LOAD_NODE_MODULES(X, dirname(Y))
+        if let Some(path) = self.load_node_modules(path, request_str)? {
+            return Ok(path);
+        }
+        if let Some(path) = self.load_as_file(&path.join(request_str))? {
+            return Ok(path);
+        }
+        // 7. THROW "not found"
+        Err(ResolveError::NotFound(path.to_path_buf().into_boxed_path()))
     }
 
     #[allow(clippy::unnecessary_wraps)]
@@ -344,5 +330,18 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
         }
         Err(ResolveError::ExtensionAlias)
+    }
+
+    fn load_roots(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
+        debug_assert!(request_str.starts_with('/'));
+        if self.options.roots.is_empty() {
+            return self.require_path(Path::new("/"), request_str);
+        }
+        for root in &self.options.roots {
+            if let Ok(path) = self.require_relative(root, request_str.trim_start_matches('/')) {
+                return Ok(path);
+            }
+        }
+        Err(ResolveError::NotFound(path.to_path_buf().into_boxed_path()))
     }
 }

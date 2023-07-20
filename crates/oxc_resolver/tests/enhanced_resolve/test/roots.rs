@@ -45,5 +45,24 @@ fn roots() {
 fn resolve_to_context() {}
 
 #[test]
-#[ignore = "resolver_prefer_absolute"]
-fn resolver_prefer_absolute() {}
+fn prefer_absolute() {
+    let f = super::fixture();
+
+    let resolver = Resolver::new(ResolveOptions {
+        extensions: vec![".js".into()],
+        alias: vec![("foo".into(), vec![AliasValue::Path("/fixtures".into())])],
+        roots: vec![env::current_dir().unwrap().join("tests/enhanced_resolve/test"), f.clone()],
+        prefer_absolute: true,
+        ..ResolveOptions::default()
+    });
+
+    #[rustfmt::skip]
+    let pass = [
+        ("should resolve an absolute path (prefer absolute)", f.join("b.js").to_string_lossy().to_string(), f.join("b.js")),
+    ];
+
+    for (comment, request, expected) in pass {
+        let resolved_path = resolver.resolve(&f, &request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {request}");
+    }
+}
