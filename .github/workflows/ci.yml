@@ -165,8 +165,6 @@ jobs:
         with:
           repository: microsoft/vscode
           path: ./vscode
-      - name: Set directory permission
-        run: chmod +rwx ./vscode
       - name: Build oxlint
         run: cargo build -p oxc_cli --bin oxlint
       - name: Run oxlint on vscode
