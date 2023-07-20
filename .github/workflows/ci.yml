@@ -151,7 +151,7 @@ jobs:
         run: cargo lint -- -D warnings
 
   ecosystemTest:
-    needs: lint
+    needs: cache
     name: Testing Linter with VSCode Repository
     runs-on: ubuntu-latest
     
