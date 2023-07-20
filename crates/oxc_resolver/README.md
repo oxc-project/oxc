@@ -51,7 +51,7 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 - ~[ ] forEachBail.test.js~
 - [ ] fullSpecified.test.js
 - [ ] getPaths.test.js
-- [ ] identifier.test.js
+- [x] identifier.test.js (see unit test in `crates/oxc_resolver/src/request.rs`)
 - [ ] importsField.test.js
 - [x] incorrect-description-file.test.js (need to add ctx.fileDependencies)
 - [ ] missing.test.js

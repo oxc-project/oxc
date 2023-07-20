@@ -63,19 +63,19 @@ impl<'a> Request<'a> {
         let mut fragment_start: Option<usize> = None;
 
         for (i, c) in request.as_bytes().iter().enumerate().skip(skip) {
-            match *c {
-                b'?' => query_start = Some(i),
-                b'#' => fragment_start = Some(i),
-                _ => {}
+            if *c == b'?' {
+                query_start = Some(i);
+            }
+            if *c == b'#' {
+                fragment_start = Some(i);
+                break;
             }
         }
 
         match (query_start, fragment_start) {
-            (Some(i), Some(j)) if i < j => {
+            (Some(i), Some(j)) => {
+                debug_assert!(i < j);
                 (&request[..i], Some(&request[i..j]), Some(&request[j..]))
-            }
-            (Some(i), Some(j)) if i > j => {
-                (&request[..j], Some(&request[i..]), Some(&request[j..i]))
             }
             (Some(i), None) => (&request[..i], Some(&request[i..]), None),
             (None, Some(j)) => (&request[..j], None, Some(&request[j..])),
@@ -112,7 +112,7 @@ mod tests {
 
     #[test]
     fn relative() -> Result<(), RequestError> {
-        let requests = ["./test", "../test?#", "../../test?#"];
+        let requests = ["./test", "../test", "../../test"];
         for request in requests {
             let mut r = request.to_string();
             r.push_str("?#");
@@ -163,8 +163,8 @@ mod tests {
             ("a?#fragment", Some("?"), Some("#fragment")),
             ("a?query#", Some("?query"), Some("#")),
             ("a?query#fragment", Some("?query"), Some("#fragment")),
-            ("a#fragment?", Some("?"), Some("#fragment")),
-            ("a#fragment?query", Some("?query"), Some("#fragment")),
+            ("a#fragment?", None, Some("#fragment?")),
+            ("a#fragment?query", None, Some("#fragment?query")),
         ];
 
         for (request_str, query, fragment) in data {
@@ -172,6 +172,54 @@ mod tests {
             assert_eq!(request.path.as_str(), "a", "{request_str}");
             assert_eq!(request.query, query, "{request_str}");
             assert_eq!(request.fragment, fragment, "{request_str}");
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    // https://github.com/webpack/enhanced-resolve/blob/main/test/identifier.test.js
+    fn enhanced_resolve_edge_cases() -> Result<(), RequestError> {
+        let data = [
+            ("path/#", "path/", "", "#"),
+            ("path/as/?", "path/as/", "?", ""),
+            ("path/#/?", "path/", "", "#/?"),
+            ("path/#repo#hash", "path/", "", "#repo#hash"),
+            ("path/#r#hash", "path/", "", "#r#hash"),
+            ("path/#repo/#repo2#hash", "path/", "", "#repo/#repo2#hash"),
+            ("path/#r/#r#hash", "path/", "", "#r/#r#hash"),
+            ("path/#/not/a/hash?not-a-query", "path/", "", "#/not/a/hash?not-a-query"),
+        ];
+
+        for (request_str, path, query, fragment) in data {
+            let request = Request::parse(request_str)?;
+            assert_eq!(request.path.as_str(), path, "{request_str}");
+            assert_eq!(request.query.unwrap_or(""), query, "{request_str}");
+            assert_eq!(request.fragment.unwrap_or(""), fragment, "{request_str}");
+        }
+
+        Ok(())
+    }
+
+    // https://github.com/webpack/enhanced-resolve/blob/main/test/identifier.test.js
+    #[test]
+    fn enhanced_resolve_windows_like() -> Result<(), RequestError> {
+        let data = [
+            ("path\\#", "path\\", "", "#"),
+            ("path\\as\\?", "path\\as\\", "?", ""),
+            ("path\\#\\?", "path\\", "", "#\\?"),
+            ("path\\#repo#hash", "path\\", "", "#repo#hash"),
+            ("path\\#r#hash", "path\\", "", "#r#hash"),
+            ("path\\#repo\\#repo2#hash", "path\\", "", "#repo\\#repo2#hash"),
+            ("path\\#r\\#r#hash", "path\\", "", "#r\\#r#hash"),
+            ("path\\#/not/a/hash?not-a-query", "path\\", "", "#/not/a/hash?not-a-query"),
+        ];
+
+        for (request_str, path, query, fragment) in data {
+            let request = Request::parse(request_str)?;
+            assert_eq!(request.path.as_str(), path, "{request_str}");
+            assert_eq!(request.query.unwrap_or(""), query, "{request_str}");
+            assert_eq!(request.fragment.unwrap_or(""), fragment, "{request_str}");
         }
 
         Ok(())
