@@ -7,20 +7,28 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span, Atom};
+use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(no-this alias): Unexpected aliasing of 'this' to local variable.")]
-#[diagnostic(severity(error), help("Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well."))]
+#[error("typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.")]
+#[diagnostic(
+    severity(warning),
+    help(
+        "Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well."
+    )
+)]
 struct NoThisAliasDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error(
-    "typescript-eslint(no-this alias): Unexpected aliasing of members of 'this' to local variables."
+    "typescript-eslint(no-this-alias): Unexpected aliasing of members of 'this' to local variables."
 )]
-#[diagnostic(severity(error), help("Disabling destructuring of this is not a default, consider allowing destructuring"))]
+#[diagnostic(
+    severity(warning),
+    help("Disabling destructuring of this is not a default, consider allowing destructuring")
+)]
 struct NoThisDestructureDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Clone)]
@@ -191,12 +199,12 @@ fn test() {
             constructor() {
               const inConstructor = this;
               const asThis: this = this;
-          
+
               const asString = 'this';
               const asArray = [this];
               const asArrayString = ['this'];
             }
-          
+
             public act(scope: this = this) {
               const inMemberFunction = this;
               const { act1 } = this;
