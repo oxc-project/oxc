@@ -179,8 +179,8 @@ impl GetMethod for TSSignature<'_> {
 impl GetMethod for ModuleDeclaration<'_> {
   fn get_method(&self) -> Option<Method> {
       match self {
-        ModuleDeclaration::ExportDefaultDeclaration(defalut_decl) => {
-          let decl_kind = &defalut_decl.declaration;
+        ModuleDeclaration::ExportDefaultDeclaration(default_decl) => {
+          let decl_kind = &default_decl.declaration;
 
           match decl_kind {
             ExportDefaultDeclarationKind::FunctionDeclaration(func_decl) => {
@@ -359,6 +359,7 @@ impl Rule for AdjacentOverloadSignatures {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;
