@@ -28,7 +28,7 @@
 |      | plugins          | []                          | A list of additional resolve plugins which should be applied                                                                                              |
 |      | resolver         | undefined                   | A prepared Resolver to which the plugins are attached                                                                                                     |
 |      | resolveToContext | false                       | Resolve to a context instead of a file                                                                                                                    |
-|      | preferRelative   | false                       | Prefer to resolve module requests as relative request and fallback to resolving as module                                                                 |
+|  ✅  | preferRelative   | false                       | Prefer to resolve module requests as relative request and fallback to resolving as module                                                                 |
 |      | preferAbsolute   | false                       | Prefer to resolve server-relative urls as absolute paths before falling back to resolve in roots                                                          |
 |      | restrictions     | []                          | A list of resolve restrictions                                                                                                                            |
 |  ✅  | roots            | []                          | A list of root paths                                                                                                                                      |

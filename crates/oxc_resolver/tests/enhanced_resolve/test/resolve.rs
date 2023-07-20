@@ -1,6 +1,6 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/resolve.test.js>
 
-use oxc_resolver::{Resolution, Resolver};
+use oxc_resolver::{Resolution, ResolveOptions, Resolver};
 
 #[test]
 fn resolve() {
@@ -11,7 +11,7 @@ fn resolve() {
     let main1_js_path = f.join("main1.js").to_string_lossy().to_string();
 
     #[rustfmt::skip]
-    let data = [
+    let pass = [
         ("absolute path", f.clone(), main1_js_path.as_str(), f.join("main1.js")),
         ("file with .js", f.clone(), "./main1.js", f.join("main1.js")),
         ("file without extension", f.clone(), "./main1", f.join("main1.js")),
@@ -42,7 +42,7 @@ fn resolve() {
         // ("handle fragment escaping", f.clone(), "./no\0#fragment/\0#/\0##fragment", f.join("no\0#fragment/\0#\0#.js#fragment")),
     ];
 
-    for (comment, path, request, expected) in data {
+    for (comment, path, request, expected) in pass {
         let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
@@ -53,8 +53,23 @@ fn resolve() {
 fn issue238_resolve() {}
 
 #[test]
-#[ignore = "preferRelativeResolve"]
-fn prefer_relative_resolve() {}
+fn prefer_relative() {
+    let f = super::fixture();
+
+    let resolver =
+        Resolver::new(ResolveOptions { prefer_relative: true, ..ResolveOptions::default() });
+
+    #[rustfmt::skip]
+    let pass = [
+        ("should correctly resolve with preferRelative 1", "main1.js", f.join("main1.js")),
+        ("should correctly resolve with preferRelative 2", "m1/a.js", f.join("node_modules/m1/a.js")),
+    ];
+
+    for (comment, request, expected) in pass {
+        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {request}");
+    }
+}
 
 #[test]
 #[ignore = "add resolveToContext option"]

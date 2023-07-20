@@ -61,6 +61,11 @@ pub struct ResolveOptions {
     /// Default `["node_modules"]`
     pub modules: Vec<String>,
 
+    /// prefer to resolve module requests as relative requests instead of using modules from node_modules directories
+    ///
+    /// Default `false`
+    pub prefer_relative: bool,
+
     /// A list of directories where requests of server-relative URLs (starting with '/') are resolved.
     /// On non-Windows systems these requests are resolved as an absolute path first.
     ///
@@ -80,6 +85,7 @@ impl Default for ResolveOptions {
             fallback: vec![],
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
+            prefer_relative: false,
             roots: vec![],
         }
     }
