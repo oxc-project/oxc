@@ -112,25 +112,22 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             RequestPath::Absolute(absolute_path) => {
                 path = Path::new("/");
                 request_str = absolute_path;
+                if !self.options.roots.is_empty() {
+                    for root in &self.options.roots {
+                        if let Ok(path) =
+                            self.require_relative(root, absolute_path.trim_start_matches('/'))
+                        {
+                            return Ok(path);
+                        }
+                    }
+                    return Err(ResolveError::NotFound(
+                        Path::new(absolute_path).to_path_buf().into_boxed_path(),
+                    ));
+                }
             }
             // 3. If X begins with './' or '/' or '../'
             RequestPath::Relative(relative_path) => {
-                if let Some(path) = self.load_package_self(path, relative_path)? {
-                    return Ok(path);
-                }
-                let path = path.normalize_with(relative_path);
-                // a. LOAD_AS_FILE(Y + X)
-                if !relative_path.ends_with('/') {
-                    if let Some(path) = self.load_as_file(&path)? {
-                        return Ok(path);
-                    }
-                }
-                // b. LOAD_AS_DIRECTORY(Y + X)
-                if let Some(path) = self.load_as_directory(&path)? {
-                    return Ok(path);
-                }
-                // c. THROW "not found"
-                return Err(ResolveError::NotFound(path.into_boxed_path()));
+                return self.require_relative(path, relative_path);
             }
             // 4. If X begins with '#'
             RequestPath::Hash(hash_path) => {
@@ -154,6 +151,26 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
         // 7. THROW "not found"
         Err(ResolveError::NotFound(path.to_path_buf().into_boxed_path()))
+    }
+
+    // 3. If X begins with './' or '/' or '../'
+    fn require_relative(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
+        if let Some(path) = self.load_package_self(path, request_str)? {
+            return Ok(path);
+        }
+        let path = path.normalize_with(request_str);
+        // a. LOAD_AS_FILE(Y + X)
+        if !request_str.ends_with('/') {
+            if let Some(path) = self.load_as_file(&path)? {
+                return Ok(path);
+            }
+        }
+        // b. LOAD_AS_DIRECTORY(Y + X)
+        if let Some(path) = self.load_as_directory(&path)? {
+            return Ok(path);
+        }
+        // c. THROW "not found"
+        Err(ResolveError::NotFound(path.into_boxed_path()))
     }
 
     #[allow(clippy::unnecessary_wraps)]

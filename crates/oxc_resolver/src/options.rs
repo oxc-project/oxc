@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 pub type Alias = Vec<(String, Vec<AliasValue>)>;
 
 #[derive(Debug, Clone)]
@@ -58,6 +60,12 @@ pub struct ResolveOptions {
     ///
     /// Default `["node_modules"]`
     pub modules: Vec<String>,
+
+    /// A list of directories where requests of server-relative URLs (starting with '/') are resolved.
+    /// On non-Windows systems these requests are resolved as an absolute path first.
+    ///
+    /// Default `[]`
+    pub roots: Vec<PathBuf>,
 }
 
 impl Default for ResolveOptions {
@@ -72,6 +80,7 @@ impl Default for ResolveOptions {
             fallback: vec![],
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
+            roots: vec![],
         }
     }
 }

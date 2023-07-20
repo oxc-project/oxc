@@ -5,6 +5,7 @@ mod extensions;
 mod fallback;
 mod incorrect_description_file;
 mod resolve;
+mod roots;
 mod scoped_packages;
 mod simple;
 
