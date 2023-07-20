@@ -31,7 +31,7 @@
 |      | preferRelative   | false                       | Prefer to resolve module requests as relative request and fallback to resolving as module                                                                 |
 |      | preferAbsolute   | false                       | Prefer to resolve server-relative urls as absolute paths before falling back to resolve in roots                                                          |
 |      | restrictions     | []                          | A list of resolve restrictions                                                                                                                            |
-|      | roots            | []                          | A list of root paths                                                                                                                                      |
+|  ✅  | roots            | []                          | A list of root paths                                                                                                                                      |
 |      | symlinks         | true                        | Whether to resolve symlinks to their symlinked location                                                                                                   |
 |      | unsafeCache      | false                       | Use this cache object to unsafely cache the successful requests
 
@@ -59,9 +59,9 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 - [ ] plugins.test.js
 - [ ] pnp.test.js
 - [ ] pr-53.test.js
-- [x] resolve.test.js (partially done)
+- [x] resolve.test.js (need to add resolveToContext)
 - [ ] restrictions.test.js
-- [ ] roots.test.js
+- [x] roots.test.js (need to add resolveToContext, resolverPreferAbsolute)
 - [x] scoped-packages.test.js
 - [x] simple.test.js
 - [ ] symlink.test.js
