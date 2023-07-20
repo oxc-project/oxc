@@ -81,7 +81,7 @@ impl<'a> AstNode<'a> {
 /// Untyped AST nodes flattened into an vec
 #[derive(Debug, Default)]
 pub struct AstNodes<'a> {
-    pub nodes: IndexVec<AstNodeId, AstNode<'a>>,
+    nodes: IndexVec<AstNodeId, AstNode<'a>>,
     parent_ids: IndexVec<AstNodeId, Option<AstNodeId>>,
 }
 
