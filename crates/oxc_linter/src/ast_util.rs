@@ -2,7 +2,7 @@ use std::hash::{Hash, Hasher};
 
 use oxc_ast::AstKind;
 use oxc_semantic::AstNode;
-use oxc_span::GetSpan;
+use oxc_span::{Atom, GetSpan};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHasher;
 
@@ -242,4 +242,26 @@ pub fn outermost_paren<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
     }
 
     node
+}
+
+pub fn get_name_from_property_key(key: &PropertyKey<'_>) -> Option<Atom> {
+    match key {
+        PropertyKey::Identifier(ident) => Some(ident.name.clone()),
+        PropertyKey::PrivateIdentifier(ident) => {
+            let name = ident.name.clone();
+
+            Some(Atom::from(format!("#{name}")))
+        }
+        PropertyKey::Expression(expr) => match expr {
+            Expression::StringLiteral(lit) => Some(lit.value.clone()),
+            Expression::RegExpLiteral(lit) => Some(Atom::from(lit.regex.to_string())),
+            Expression::NumberLiteral(lit) => Some(Atom::from(lit.value.to_string())),
+            Expression::BigintLiteral(lit) => Some(Atom::from(lit.value.to_string())),
+            Expression::NullLiteral(_) => Some("null".into()),
+            Expression::TemplateLiteral(lit) => {
+                lit.expressions.is_empty().then(|| lit.quasi()).flatten().cloned()
+            }
+            _ => None,
+        },
+    }
 }
