@@ -202,7 +202,6 @@ mod test {
             .with_trivias(&ret.trivias)
             .build(program);
 
-        // let mut errors: Vec<oxc_diagnostics::Error> = vec![];
         let linter = Linter::new().with_fix(false).only_use_query_rule(rule_name);
 
         let messages =

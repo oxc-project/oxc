@@ -15,7 +15,6 @@ use path_calculate::Calculate;
 // or `OXC_PLUGIN=./crates/oxc_linter/examples/queries cargo watch -x "run -p oxc_linter --example plugin"`
 
 fn main() {
-    let start = Instant::now();
     let name = env::args().nth(1).unwrap_or_else(|| "test.js".to_string());
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path).unwrap_or_else(|_| panic!("{name} not found"));
@@ -33,7 +32,6 @@ fn main() {
     let semantic_ret =
         SemanticBuilder::new(&source_text, source_type).with_trivias(&ret.trivias).build(program);
 
-    // let mut errors: Vec<oxc_diagnostics::Error> = vec![];
     let linter = Linter::new();
     let messages =
         linter.run(&Rc::new(semantic_ret.semantic), path.related_to(Path::new(".")).unwrap());
