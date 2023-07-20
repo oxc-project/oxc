@@ -166,7 +166,7 @@ jobs:
           repository: microsoft/vscode
           path: ./vscode
       - name: Build oxlint
-        run: cargo build -p oxc_cli --bin oxlint
+        run: cargo build -p oxc_cli --bin oxlint --release
       - name: Run oxlint on vscode
         run: ./target/debug/oxlint --quiet --ignore-path ./vscode/.eslintignore ./vscode/ 
 
