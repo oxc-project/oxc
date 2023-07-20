@@ -3,7 +3,10 @@ source: crates/oxc_linter/src/tester.rs
 expression: adjacent_overload_signatures
 ---
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:4:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         function foo(s: string);
+ 3 │         function foo(n: number);
+   ·                  ───
  4 │         type bar = number;
  5 │         function foo(sn: string | number) {}
    ·                  ───
@@ -11,7 +14,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:4:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         function foo(s: string);
+ 3 │         function foo(n: number);
+   ·                  ───
  4 │         let a = 1;
  5 │         function foo(sn: string | number) {}
    ·                  ───
@@ -19,49 +25,77 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:4:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ export function foo(s: string);
+ 2 │       export function foo(n: number);
+   ·                       ───
+ 3 │       export function bar(): void {}
  4 │       export function baz(): void {}
  5 │       export function foo(sn: string | number) {}
    ·                       ───
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:4:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ export function foo(s: string);
+ 2 │       export function foo(n: number);
+   ·                       ───
+ 3 │       export type bar = number;
  4 │       export type baz = number | string;
  5 │       export function foo(sn: string | number) {}
    ·                       ───
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:4:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ function foo(s: string);
+ 2 │       function foo(n: number);
+   ·                ───
+ 3 │       function bar(): void {}
  4 │       function baz(): void {}
  5 │       function foo(sn: string | number) {}
    ·                ───
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:4:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ function foo(s: string);
+ 2 │       function foo(n: number);
+   ·                ───
+ 3 │       type bar = number;
  4 │       type baz = number | string;
  5 │       function foo(sn: string | number) {}
    ·                ───
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:4:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ declare function foo(s: string);
+ 2 │       declare function foo(n: number);
+   ·                        ───
+ 3 │       declare function bar(): void;
  4 │       declare function baz(): void;
  5 │       declare function foo(sn: string | number);
    ·                        ───
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:4:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ declare function foo(s: string);
+ 2 │       declare function foo(n: number);
+   ·                        ───
+ 3 │       const a = '';
  4 │       const b = '';
  5 │       declare function foo(sn: string | number);
    ·                        ───
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         export function foo(s: string): void;
+ 3 │         export function foo(n: number): void;
+   ·                         ───
+ 4 │         export function bar(): void;
  5 │         export function baz(): void;
  6 │         export function foo(sn: string | number): void;
    ·                         ───
@@ -69,7 +103,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "baz" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:6:1]
+   ╭─[adjacent_overload_signatures.tsx:4:1]
+ 4 │         export function foo(sn: string | number): void;
+ 5 │         function baz(s: string): void;
+   ·                  ───
  6 │         export function bar(): void;
  7 │         function baz(n: number): void;
    ·                  ───
@@ -77,7 +114,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         export function foo(s: string): void;
+ 3 │         export function foo(n: number): void;
+   ·                         ───
+ 4 │         export function bar(): void;
  5 │         export function baz(): void;
  6 │         export function foo(sn: string | number): void;
    ·                         ───
@@ -85,7 +126,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "baz" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:6:1]
+   ╭─[adjacent_overload_signatures.tsx:4:1]
+ 4 │         export function foo(sn: string | number): void;
+ 5 │         function baz(s: string): void;
+   ·                  ───
  6 │         export function bar(): void;
  7 │         function baz(n: number): void;
    ·                  ───
@@ -93,7 +137,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         foo(s: string): void;
+ 3 │         foo(n: number): void;
+   ·         ───
+ 4 │         bar(): void;
  5 │         baz(): void;
  6 │         foo(sn: string | number): void;
    ·         ───
@@ -101,7 +149,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         foo(s: string): void;
+ 3 │         ['foo'](n: number): void;
+   ·          ─────
+ 4 │         bar(): void;
  5 │         baz(): void;
  6 │         foo(sn: string | number): void;
    ·         ───
@@ -109,7 +161,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:3:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ type Foo = {
+ 2 │         foo(s: string): void;
+   ·         ───
  3 │         name: string;
  4 │         foo(n: number): void;
    ·         ───
@@ -117,7 +172,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "call" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:3:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ interface Foo {
+ 2 │         (s: string): void;
+   ·         ──────────────────
  3 │         foo(n: number): void;
  4 │         (n: number): void;
    ·         ──────────────────
@@ -125,7 +183,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         foo(s: string): void;
+ 3 │         foo(n: number): void;
+   ·         ───
+ 4 │         bar(): void;
  5 │         baz(): void;
  6 │         foo(sn: string | number): void;
    ·         ───
@@ -133,7 +195,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         foo(s: string): void;
+ 3 │         ['foo'](n: number): void;
+   ·          ─────
+ 4 │         bar(): void;
  5 │         baz(): void;
  6 │         foo(sn: string | number): void;
    ·         ───
@@ -141,7 +207,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         foo(s: string): void;
+ 3 │         'foo'(n: number): void;
+   ·         ─────
+ 4 │         bar(): void;
  5 │         baz(): void;
  6 │         foo(sn: string | number): void;
    ·         ───
@@ -149,7 +219,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:3:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ interface Foo {
+ 2 │         foo(s: string): void;
+   ·         ───
  3 │         name: string;
  4 │         foo(n: number): void;
    ·         ───
@@ -157,7 +230,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "baz" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:6:1]
+   ╭─[adjacent_overload_signatures.tsx:4:1]
+ 4 │           baz(s: string): void;
+ 5 │           baz(n: number): void;
+   ·           ───
  6 │           foo(): void;
  7 │           baz(sn: string | number): void;
    ·           ───
@@ -165,7 +241,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "new" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         new (s: string);
+ 3 │         new (n: number);
+   ·         ───
+ 4 │         foo(): void;
  5 │         bar(): void;
  6 │         new (sn: string | number);
    ·         ───
@@ -173,7 +253,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "new" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:3:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ interface Foo {
+ 2 │         new (s: string);
+   ·         ───
  3 │         foo(): void;
  4 │         new (n: number);
    ·         ───
@@ -181,6 +264,12 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "new" signatures should be adjacent.
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ interface Foo {
+ 2 │         new (s: string);
+   ·         ───
+ 3 │         foo(): void;
+   ╰────
    ╭─[adjacent_overload_signatures.tsx:5:1]
  5 │         bar(): void;
  6 │         new (sn: string | number);
@@ -189,7 +278,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "constructor" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         constructor(s: string);
+ 3 │         constructor(n: number);
+   ·         ───────────
+ 4 │         bar(): void {}
  5 │         baz(): void {}
  6 │         constructor(sn: string | number) {}
    ·         ───────────
@@ -197,7 +290,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         foo(s: string): void;
+ 3 │         foo(n: number): void;
+   ·         ───
+ 4 │         bar(): void {}
  5 │         baz(): void {}
  6 │         foo(sn: string | number): void {}
    ·         ───
@@ -205,7 +302,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:5:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         foo(s: string): void;
+ 3 │         ['foo'](n: number): void;
+   ·         ──────
+ 4 │         bar(): void {}
  5 │         baz(): void {}
  6 │         foo(sn: string | number): void {}
    ·         ───
@@ -213,7 +314,11 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:6:1]
+   ╭─[adjacent_overload_signatures.tsx:3:1]
+ 3 │         "foo"(s: string): void;
+ 4 │         foo(n: number): void;
+   ·         ───
+ 5 │         bar(): void {}
  6 │         baz(): void {}
  7 │         foo(sn: string | number): void {}
    ·         ───
@@ -221,7 +326,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "constructor" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:3:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ class Foo {
+ 2 │         constructor(s: string);
+   ·         ───────────
  3 │         name: string;
  4 │         constructor(n: number);
    ·         ───────────
@@ -229,7 +337,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:3:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ class Foo {
+ 2 │         foo(s: string): void;
+   ·         ───
  3 │         name: string;
  4 │         foo(n: number): void;
    ·         ───
@@ -237,7 +348,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "static foo" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:3:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ class Foo {
+ 2 │         static foo(s: string): void;
+   ·         ──────────
  3 │         name: string;
  4 │         static foo(n: number): void;
    ·         ──────────
@@ -245,7 +359,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "#private" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:3:1]
+   ╭─[adjacent_overload_signatures.tsx:1:1]
+ 1 │ class Test {
+ 2 │         #private(): void;
+   ·         ────────
  3 │         '#private'(): void;
  4 │         #private(arg: number): void {}
    ·         ────────
@@ -253,7 +370,10 @@ expression: adjacent_overload_signatures
    ╰────
 
   ⚠ typescript-eslint(adjacent-overload-signatures): All "#private" signatures should be adjacent.
-   ╭─[adjacent_overload_signatures.tsx:4:1]
+   ╭─[adjacent_overload_signatures.tsx:2:1]
+ 2 │         #private(): void;
+ 3 │         '#private'(): void;
+   ·         ──────────
  4 │         #private(arg: number): void {}
  5 │         '#private'(arg: number): void {}
    ·         ──────────

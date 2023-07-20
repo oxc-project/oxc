@@ -12,7 +12,7 @@ use crate::{context::LintContext, rule::Rule, AstNode, ast_util::get_name_from_p
 #[error("typescript-eslint(adjacent-overload-signatures): All {0:?} signatures should be adjacent.")]
 #[diagnostic(severity(warning))]
 struct AdjacentOverloadSignaturesDiagnostic(
-  Atom, #[label] pub Span
+  Atom, #[label] pub Option<Span>, #[label] pub Span
 );
 
 #[derive(Debug, Default, Clone)]
@@ -281,14 +281,22 @@ fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
         } else {
           method.name.clone()
         };
+
+        let last_same_method = seen_methods
+              .iter()
+              .rev()
+              .find(|m| m.is_same_method(Some(method)));
   
         ctx.diagnostic(
-          AdjacentOverloadSignaturesDiagnostic(name, method.span)
+          AdjacentOverloadSignaturesDiagnostic(
+            name, 
+            last_same_method.map(|m| m.span), 
+            method.span
+          )
         );
-      } else if index.is_none() {
+      } else {
         seen_methods.push(method);
       }
-  
       last_method = Some(method);
     } else {
       last_method = None;
