@@ -8,6 +8,7 @@ mod resolve;
 mod roots;
 mod scoped_packages;
 mod simple;
+mod symlink;
 
 use std::{env, path::PathBuf};
 

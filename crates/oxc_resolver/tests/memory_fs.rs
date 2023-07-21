@@ -1,4 +1,7 @@
-use std::{io, path::Path};
+use std::{
+    io,
+    path::{Path, PathBuf},
+};
 
 use oxc_resolver::{FileMetadata, FileSystem};
 
@@ -48,7 +51,7 @@ impl FileSystem for MemoryFS {
         Ok(buffer)
     }
 
-    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
         use vfs::FileSystem;
         let metadata = self
             .fs
@@ -56,5 +59,9 @@ impl FileSystem for MemoryFS {
             .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?;
         let is_file = metadata.file_type == vfs::VfsFileType::File;
         Ok(FileMetadata::new(is_file))
+    }
+
+    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
+        Ok(path.as_ref().to_path_buf())
     }
 }

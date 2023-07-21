@@ -1,4 +1,8 @@
-use std::{hash::BuildHasherDefault, path::Path, sync::Arc};
+use std::{
+    hash::BuildHasherDefault,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use dashmap::DashMap;
 use rustc_hash::FxHasher;
@@ -36,13 +40,17 @@ impl<Fs: FileSystem> Cache<Fs> {
         if let Some(result) = self.cache.get(path) {
             return *result;
         }
-        let file_metadata = self.fs.symlink_metadata(path).ok();
+        let file_metadata = self.fs.metadata(path).ok();
         self.cache.insert(path.to_path_buf().into_boxed_path(), file_metadata);
         file_metadata
     }
 
     pub fn is_file(&self, path: &Path) -> bool {
         self.metadata_cached(path).is_some_and(|m| m.is_file)
+    }
+
+    pub fn canonicalize(&self, path: PathBuf) -> PathBuf {
+        self.fs.canonicalize(&path).unwrap_or(path)
     }
 
     /// # Errors

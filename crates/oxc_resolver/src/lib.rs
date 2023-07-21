@@ -89,6 +89,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 result?
             }
         };
+        let path = self.load_symlink(path);
         Ok(Resolution {
             path,
             query: request.query.map(ToString::to_string),
@@ -180,6 +181,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
         }
         Ok(None)
+    }
+
+    fn load_symlink(&self, path: PathBuf) -> PathBuf {
+        if self.options.symlinks { self.cache.canonicalize(path) } else { path }
     }
 
     #[allow(clippy::unnecessary_wraps)]

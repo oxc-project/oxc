@@ -1490,6 +1490,7 @@ version = "0.0.0"
 dependencies = [
  "criterion",
  "dashmap",
+ "dunce",
  "jemallocator",
  "mimalloc",
  "nodejs-resolver",
