@@ -16,4 +16,4 @@ miette    = { workspace = true }
 unicode-width = "0.1.10"
 owo-colors    = { version = "3.5.0" }
 textwrap      = { version = "0.16.0" }
-is-terminal   = { version = "0.4.7" }
+is-terminal   = { version = "0.4.9" }

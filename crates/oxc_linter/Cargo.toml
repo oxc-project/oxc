@@ -33,4 +33,4 @@ rust-lapper = "1.1.0"
 oxc_parser = { workspace = true }
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 
-insta = { version = "1.28.0", features = ["glob"] }
+insta = { version = "1.31.0", features = ["glob"] }
