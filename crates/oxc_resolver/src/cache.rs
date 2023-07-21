@@ -36,7 +36,7 @@ impl<Fs: FileSystem> Cache<Fs> {
         if let Some(result) = self.cache.get(path) {
             return *result;
         }
-        let file_metadata = self.fs.metadata(path).ok();
+        let file_metadata = self.fs.symlink_metadata(path).ok();
         self.cache.insert(path.to_path_buf().into_boxed_path(), file_metadata);
         file_metadata
     }
