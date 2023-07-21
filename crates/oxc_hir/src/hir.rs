@@ -122,6 +122,11 @@ impl<'a> Expression<'a> {
         matches!(self, Self::Identifier(ident) if ident.name == "undefined")
     }
 
+    /// Determines whether the given expr is a `NaN` literal
+    pub fn is_nan(&self) -> bool {
+        matches!(self, Self::Identifier(ident) if ident.name == "NaN")
+    }
+
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
         if let Self::UnaryExpression(expr) = self

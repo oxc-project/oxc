@@ -405,6 +405,43 @@ fn test_string_bigint_comparison() {
 }
 
 #[test]
+fn test_nan_comparison() {
+    test_wcb("NaN < 1", "false");
+    test_wcb("NaN <= 1", "false");
+    test_wcb("NaN > 1", "false");
+    test_wcb("NaN >= 1", "false");
+    test_wcb("NaN < 1n", "false");
+    test_wcb("NaN <= 1n", "false");
+    test_wcb("NaN > 1n", "false");
+    test_wcb("NaN >= 1n", "false");
+
+    test_wcb("NaN < NaN", "false");
+    test_wcb("NaN >= NaN", "false");
+    test_wcb("NaN == NaN", "false");
+    test_wcb("NaN === NaN", "false");
+
+    test_wcb("NaN < null", "false");
+    test_wcb("null >= NaN", "false");
+    test_wcb("NaN == null", "false");
+    test_wcb("null != NaN", "true");
+    test_wcb("null === NaN", "false");
+
+    test_wcb("NaN < undefined", "false");
+    test_wcb("undefined >= NaN", "false");
+    test_wcb("NaN == undefined", "false");
+    test_wcb("undefined != NaN", "true");
+    test_wcb("undefined === NaN", "false");
+
+    test_same("NaN<x");
+    test_same("x>=NaN");
+    test_same("NaN==x");
+    test_same("x!=NaN");
+    test_wcb("NaN === x", "false");
+    test_wcb("x !== NaN", "true");
+    test_same("NaN==foo()");
+}
+
+#[test]
 fn js_typeof() {
     test("x = typeof 1", "x='number'");
     test("x = typeof 'foo'", "x='string'");
