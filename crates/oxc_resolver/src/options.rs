@@ -76,6 +76,13 @@ pub struct ResolveOptions {
     ///
     /// Default `[]`
     pub roots: Vec<PathBuf>,
+
+    /// Whether to resolve symlinks to their symlinked location.
+    /// When enabled, symlinked resources are resolved to their real path, not their symlinked location.
+    /// Note that this may cause module resolution to fail when using tools that symlink packages (like npm link).
+    ///
+    /// Default `true`
+    pub symlinks: bool,
 }
 
 impl Default for ResolveOptions {
@@ -93,6 +100,7 @@ impl Default for ResolveOptions {
             prefer_relative: false,
             prefer_absolute: false,
             roots: vec![],
+            symlinks: true,
         }
     }
 }

@@ -1,11 +1,18 @@
-use std::{fs, io, path::Path};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 pub trait FileSystem: Default + Send + Sync {
+    /// See [std::fs::read_to_string]
+    ///
     /// # Errors
     ///
     /// * Any [io::Error]
     fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<String>;
 
+    /// See [std::fs::metadata]
+    ///
     /// # Errors
     ///
     /// This function will return an error in the following situations, but is not
@@ -13,7 +20,18 @@ pub trait FileSystem: Default + Send + Sync {
     ///
     /// * The user lacks permissions to perform `metadata` call on `path`.
     /// * `path` does not exist.
-    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
+    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
+
+    /// See [std::fs::canonicalize]
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations, but is not
+    /// limited to just these cases:
+    ///
+    /// * `path` does not exist.
+    /// * A non-final component in path is not a directory.
+    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf>;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -36,7 +54,11 @@ impl FileSystem for FileSystemOs {
         fs::read_to_string(path)
     }
 
-    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
-        fs::symlink_metadata(path).map(|metadata| FileMetadata { is_file: metadata.is_file() })
+    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+        fs::metadata(path).map(|metadata| FileMetadata { is_file: metadata.is_file() })
+    }
+
+    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
+        dunce::canonicalize(path)
     }
 }
