@@ -48,7 +48,7 @@ impl FileSystem for MemoryFS {
         Ok(buffer)
     }
 
-    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
         use vfs::FileSystem;
         let metadata = self
             .fs

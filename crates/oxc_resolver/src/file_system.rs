@@ -8,8 +8,12 @@ pub trait FileSystem: Default + Send + Sync {
 
     /// # Errors
     ///
-    /// * Any [io::Error]
-    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
+    /// This function will return an error in the following situations, but is not
+    /// limited to just these cases:
+    ///
+    /// * The user lacks permissions to perform `metadata` call on `path`.
+    /// * `path` does not exist.
+    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -32,7 +36,7 @@ impl FileSystem for FileSystemOs {
         fs::read_to_string(path)
     }
 
-    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
-        fs::metadata(path).map(|metadata| FileMetadata { is_file: metadata.is_file() })
+    fn symlink_metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+        fs::symlink_metadata(path).map(|metadata| FileMetadata { is_file: metadata.is_file() })
     }
 }
