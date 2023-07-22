@@ -132,15 +132,15 @@ impl<'a> LintAdapter<'a> {
     }
 }
 
-impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
-    type Vertex = Vertex<'a>;
+impl<'a, 'b: 'a> Adapter<'a> for &'a LintAdapter<'b> {
+    type Vertex = Vertex<'b>;
 
     fn resolve_starting_vertices(
         &self,
         edge_name: &Arc<str>,
         _parameters: &EdgeParameters,
         _resolve_info: &ResolveInfo,
-    ) -> VertexIterator<'b, Self::Vertex> {
+    ) -> VertexIterator<'a, Self::Vertex> {
         match edge_name.as_ref() {
             "File" => Box::new(std::iter::once(Vertex::File)),
             _ => unimplemented!("unexpected starting edge: {edge_name}"),
@@ -149,11 +149,11 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
 
     fn resolve_property(
         &self,
-        contexts: ContextIterator<'b, Self::Vertex>,
+        contexts: ContextIterator<'a, Self::Vertex>,
         type_name: &Arc<str>,
         property_name: &Arc<str>,
         _resolve_info: &ResolveInfo,
-    ) -> ContextOutcomeIterator<'b, Self::Vertex, FieldValue> {
+    ) -> ContextOutcomeIterator<'a, Self::Vertex, FieldValue> {
         match (type_name.as_ref(), property_name.as_ref()) {
             ("Span", "start") => {
                 resolve_property_with(contexts, |v| v.as_span().unwrap().start.into())
@@ -311,12 +311,12 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
 
     fn resolve_neighbors(
         &self,
-        contexts: ContextIterator<'b, Self::Vertex>,
+        contexts: ContextIterator<'a, Self::Vertex>,
         type_name: &Arc<str>,
         edge_name: &Arc<str>,
         parameters: &EdgeParameters,
         _resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'b, Self::Vertex, VertexIterator<'b, Self::Vertex>> {
+    ) -> ContextOutcomeIterator<'a, Self::Vertex, VertexIterator<'a, Self::Vertex>> {
         match (type_name.as_ref(), edge_name.as_ref()) {
             ("File", "ast_node") => resolve_neighbors_with(contexts, |_| {
                 Box::new(self.semantic.nodes().iter().map(|node| materialize_ast_node(*node)))
@@ -777,11 +777,11 @@ impl<'b, 'a: 'b> Adapter<'b> for &'b LintAdapter<'a> {
 
     fn resolve_coercion(
         &self,
-        contexts: ContextIterator<'b, Self::Vertex>,
+        contexts: ContextIterator<'a, Self::Vertex>,
         _type_name: &Arc<str>,
         coerce_to_type: &Arc<str>,
         _resolve_info: &ResolveInfo,
-    ) -> ContextOutcomeIterator<'b, Self::Vertex, bool> {
+    ) -> ContextOutcomeIterator<'a, Self::Vertex, bool> {
         match coerce_to_type.as_ref() {
             "SimpleExtend" => resolve_coercion_with(
                 contexts,

@@ -1,6 +1,7 @@
 use std::{env, fs, path::PathBuf, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::miette::{miette, LabeledSpan};
+use oxc_query::Adapter;
 use oxc_semantic::Semantic;
 use trustfall::{execute_query, Schema, TryIntoStruct};
 
@@ -68,7 +69,8 @@ impl LinterPlugin {
         semantic: &Rc<Semantic<'_>>,
         path: P,
     ) {
-        let inner = LintAdapter::new(Rc::clone(semantic), &path.into());
+        // let inner = LintAdapter::new(Rc::clone(semantic), &path.into());
+        let inner = Adapter { path_components: vec![], semantic: Rc::clone(semantic) };
         let adapter = Arc::from(&inner);
         for input_query in &self.rules {
             for data_item in execute_query(

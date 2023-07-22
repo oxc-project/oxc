@@ -1,0 +1,443 @@
+# TODO: Project Specific Lints
+#
+# 1. Anything that implements ASTNode must be suffixed by AST
+# 2. Make sure {VariableDeclaration}AST because it's suffixed by AST implements VariableDeclaration
+
+schema {
+  query: RootSchemaQuery
+}
+directive @filter(
+  """
+  Name of the filter operation to perform.
+  """
+  op: String!
+  """
+  List of string operands for the operator.
+  """
+  value: [String!]
+) on FIELD | INLINE_FRAGMENT
+directive @tag(
+  """
+  Name to apply to the given property field.
+  """
+  name: String
+) on FIELD
+directive @output(
+  """
+  What to designate the output field generated from this property field.
+  """
+  name: String
+) on FIELD
+directive @optional on FIELD
+directive @recurse(
+  """
+  Recurse up to this many times on this edge. A depth of 1 produces the current
+  vertex and its immediate neighbors along the given edge.
+  """
+  depth: Int!
+) on FIELD
+directive @fold on FIELD
+directive @transform(
+  """
+  Name of the transformation operation to perform.
+  """
+  op: String!
+) on FIELD
+
+"""
+All the possible data types where querying can begin in this API.
+"""
+type RootSchemaQuery {
+  File: [File!]!
+}
+
+type File {
+  last_path_part: PathPart!
+  path_part: [PathPart!]!
+
+  class: [ClassAST!]!
+  type_annotation: [TypeAnnotationAST!]!
+  interface: [InterfaceAST!]!
+  jsx_element: [JSXElementAST!]!
+  import: [ImportAST!]!
+  variable_declaration: [VariableDeclarationAST!]!
+
+  ast_node: [ASTNode!]!
+}
+
+type PathPart {
+  name: String!
+  is_first: Boolean!
+  is_last: Boolean!
+
+  next: PathPart
+  prev: PathPart
+}
+
+type SpecificImport {
+  """
+  Name in original file
+  """
+  original_name: String!
+  """
+  Aliased name, in "import {X as Y} from 'source'", this would be Y, but in "import {A} from 'source'" this owuld be A
+  """
+  local_name: String!
+  span: Span!
+}
+
+type DefaultImport {
+  local_name: String!
+  span: Span!
+}
+
+interface Import {
+  from_path: String!
+  entire_span: Span!
+
+  """
+  Only gives specific imports, not default imports or (import *)'s
+  """
+  specific_import: [SpecificImport!]!
+
+  default_import: [DefaultImport!]!
+}
+
+interface AssignmentType implements HasSpan {
+  """
+  if the left side has exactly one name. No destructuring.
+  ie: const apple = 1; let orange = 'a'; var blue;
+  """
+  assignment_to_variable_name: String
+  span: Span!
+}
+
+"""
+A single VariableDeclarator. (const/let/var)!
+If you have multiple variables assigned at once with commas,
+this will fire once per assignment.
+"""
+interface VariableDeclaration {
+  left: AssignmentType!
+  assignment_span: Span!
+}
+
+type SearchParameter {
+  key: String!
+  value: String!
+}
+
+type URL {
+  search_parameter: [SearchParameter!]!
+}
+
+interface JSXAttribute {
+  name: String!
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie <Fruit blueberry="blue" />, <Fruit blueberry={"blue"} />, and <Fruit blueberry={`blue`} />
+  """
+  value_as_constant_string: String
+
+  """
+  If the value is an expression
+  ie: <Fruit blueberry={"blue"} /> or <Fruit blueberry={{color: "blue"}} />
+  """
+  value_as_expression: Expression
+
+  """
+  If the value is an expression
+  ie: <Fruit blueberry={"blue"} /> or <Fruit blueberry={{color: "blue"}} />
+  """
+  value_as_jsx_element: JSXElement
+
+  """
+  If value_as_constant_string is not null, then this will try to parse that to a url
+  """
+  value_as_url: URL
+
+  span: Span!
+}
+
+type JSXSpreadAttribute {
+  span: Span!
+}
+
+type JSXOpeningElement {
+  """
+  Smallest equivalent, removes spaces
+  """
+  name: String!
+  """
+  non-spread attributes
+  """
+  attribute: [JSXAttribute!]!
+  spread_attribute: [JSXSpreadAttribute!]!
+
+  attribute_count: Int!
+
+  span: Span!
+}
+
+"""
+interface A extends B.C {}
+B.C is always more than one identifier.
+"""
+type MemberExtend implements InterfaceExtend {
+  str: String!
+  span: Span!
+}
+
+"""
+interface A extends B {}
+B is always just one identifier.
+"""
+type SimpleExtend implements InterfaceExtend {
+  str: String!
+  span: Span!
+}
+
+interface InterfaceExtend {
+  """
+  Null if not decidabled such as
+  """
+  str: String
+  span: Span!
+}
+
+interface Interface {
+  extend: [InterfaceExtend!]!
+  name_span: Span!
+  entire_span: Span!
+}
+
+type ClassProperty {
+  is_abstract: Boolean!
+  """
+  public | private | protected
+  """
+  accessibility: String
+  span: Span!
+}
+
+type ClassMethod {
+  is_abstract: Boolean!
+  """
+  public | private | protected
+  """
+  accessibility: String
+  span: Span!
+}
+
+interface Class {
+  is_abstract: Boolean!
+
+  constructor: [ClassMethod!]!
+  method: [ClassMethod!]!
+  getter: [ClassMethod!]!
+  setter: [ClassMethod!]!
+  property: [ClassProperty!]!
+  # TODO: some way to fall back from name_span to entire_class span
+  """
+  Doesn't exist on anonymous classes
+  """
+  name_span: Span
+  entire_class_span: Span!
+}
+
+interface Type_ {
+  str: String!
+  span: Span!
+}
+
+interface TypeAnnotation implements HasSpan {
+  type_: Type_!
+  span: Span!
+}
+
+type Span {
+  start: Int!
+  end: Int!
+}
+
+type JSXSpreadChild {
+  span: Span!
+}
+
+type JSXExpressionContainer {
+  span: Span!
+}
+
+type JSXFragment {
+  span: Span!
+}
+
+type JSXText {
+  text: String!
+  span: Span!
+}
+
+# Expression
+
+interface JSXElement implements Expression & HasSpan {
+  opening_element: JSXOpeningElement!
+  """
+  There are many types of children,
+  however this will only yield JSXElement children
+  """
+  child_element: [JSXElement!]!
+  child_text: [JSXText!]!
+  child_fragment: [JSXFragment!]!
+  child_expression_container: [JSXExpressionContainer!]!
+  child_spread: [JSXSpreadChild!]!
+  child_count: Int!
+  # Expression
+  as_constant_string: String
+  # HasSpan
+  span: Span!
+}
+
+type ObjectLiteral implements Expression & HasSpan {
+  value(key: String!): [Expression!]!
+
+  # Expression
+  as_constant_string: String
+  # HasSpan
+  span: Span!
+}
+
+interface Expression implements HasSpan {
+  """
+  Only non-null if the string can be trivially coerced to a constant string
+  ie: const a = "apple"; const b = `blueberry`
+  """
+  as_constant_string: String
+
+  # HasSpan
+  span: Span!
+}
+
+# ASTNode
+
+"""
+A single VariableDeclarator. (const/let/var)!
+If you have multiple variables assigned at once with commas,
+this will fire once per assignment.
+"""
+type VariableDeclarationAST implements VariableDeclaration {
+  left: AssignmentType!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  assignment_span: Span!
+}
+
+type TypeAnnotationAST implements TypeAnnotation & ASTNode & HasSpan {
+  type_: Type_!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+type InterfaceAST implements Interface & ASTNode & HasSpan {
+  extend: [InterfaceExtend!]!
+  name_span: Span!
+  entire_span: Span!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+type ImportAST implements Import & ASTNode & HasSpan {
+  from_path: String!
+  entire_span: Span!
+
+  """
+  Only gives specific imports, not default imports or (import *)'s
+  """
+  specific_import: [SpecificImport!]!
+
+  default_import: [DefaultImport!]!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+type JSXElementAST implements JSXElement & Expression & ASTNode & HasSpan {
+  opening_element: JSXOpeningElement!
+  """
+  There are many types of children,
+  however this will only yield JSXElement children
+  """
+  child_element: [JSXElement!]!
+  child_text: [JSXText!]!
+  child_fragment: [JSXFragment!]!
+  child_expression_container: [JSXExpressionContainer!]!
+  child_spread: [JSXSpreadChild!]!
+  child_count: Int!
+  # Expression
+  as_constant_string: String
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+type ClassAST implements ASTNode & Class & HasSpan {
+  is_abstract: Boolean!
+
+  """
+  if the extended expression is an identifier, this will give you the name
+  """
+  extended_class_name: String
+
+  constructor: [ClassMethod!]!
+  method: [ClassMethod!]!
+  getter: [ClassMethod!]!
+  setter: [ClassMethod!]!
+  property: [ClassProperty!]!
+  # TODO: some way to fall back from name_span to entire_class span
+  """
+  Doesn't exist on anonymous classes
+  """
+  name_span: Span
+  entire_class_span: Span!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+type ReturnStatementAST implements ASTNode & HasSpan {
+  expression: Expression
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+# MAKE SURE TO KEEP ANCESTOR&CHILD IN SYNC
+interface ASTNode implements HasSpan {
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  span: Span!
+}
+
+interface HasSpan {
+  span: Span!
+}

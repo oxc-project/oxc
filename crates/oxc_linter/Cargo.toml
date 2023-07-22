@@ -18,6 +18,7 @@ oxc_macros      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_formatter   = { workspace = true }
+oxc_query       = { workspace = true }
 
 lazy_static = { workspace = true }                        # used in oxc_macros
 serde       = { workspace = true, features = ["derive"] }

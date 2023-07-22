@@ -1477,6 +1477,7 @@ dependencies = [
  "oxc_formatter",
  "oxc_macros",
  "oxc_parser",
+ "oxc_query",
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
@@ -1567,6 +1568,21 @@ dependencies = [
  "oxc_syntax",
  "rustc-hash",
  "serde_json",
+]
+
+[[package]]
+name = "oxc_query"
+version = "0.0.6"
+dependencies = [
+ "oxc_ast",
+ "oxc_semantic",
+ "oxc_span",
+ "path-calculate",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "trustfall",
+ "url",
 ]
 
 [[package]]
