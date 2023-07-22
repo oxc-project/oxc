@@ -24,7 +24,7 @@ vfs               = "0.9.0"              # for testing with in memory file syste
 nodejs-resolver   = "0.0.88"             # for benchmark
 
 [target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
-jemallocator = { workspace = true }
+tikv-jemallocator = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 mimalloc = { workspace = true }

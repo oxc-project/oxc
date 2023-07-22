@@ -29,7 +29,7 @@ walkdir   = { workspace = true }
 pico-args = { workspace = true }
 
 [target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
-jemallocator = { workspace = true }
+tikv-jemallocator = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dev-dependencies]
 mimalloc = { workspace = true }

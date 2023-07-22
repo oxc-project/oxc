@@ -843,26 +843,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af150ab688ff2122fcef229be89cb50dd66af9e01a4ff320cc137eecc9bacc38"
 
 [[package]]
-name = "jemalloc-sys"
-version = "0.5.3+5.3.0-patched"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f9bd5d616ea7ed58b571b2e209a65759664d7fb021a0819d7a790afc67e47ca1"
-dependencies = [
- "cc",
- "libc",
-]
-
-[[package]]
-name = "jemallocator"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16c2514137880c52b0b4822b563fadd38257c1f380858addb74a400889696ea6"
-dependencies = [
- "jemalloc-sys",
- "libc",
-]
-
-[[package]]
 name = "js-sys"
 version = "0.3.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1268,7 +1248,6 @@ name = "oxc_benchmark"
 version = "0.0.0"
 dependencies = [
  "criterion",
- "jemallocator",
  "mimalloc",
  "oxc_allocator",
  "oxc_minifier",
@@ -1277,6 +1256,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
+ "tikv-jemallocator",
 ]
 
 [[package]]
@@ -1288,7 +1268,6 @@ dependencies = [
  "crossbeam-channel",
  "dashmap",
  "ignore",
- "jemallocator",
  "miette",
  "mimalloc",
  "oxc_allocator",
@@ -1301,6 +1280,7 @@ dependencies = [
  "oxc_type_synthesis",
  "rayon",
  "rustc-hash",
+ "tikv-jemallocator",
 ]
 
 [[package]]
@@ -1422,7 +1402,6 @@ name = "oxc_minifier"
 version = "0.0.7"
 dependencies = [
  "bitflags 2.3.3",
- "jemallocator",
  "mimalloc",
  "num-bigint",
  "num-traits",
@@ -1436,6 +1415,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
+ "tikv-jemallocator",
  "walkdir",
 ]
 
@@ -1491,13 +1471,13 @@ dependencies = [
  "criterion",
  "dashmap",
  "dunce",
- "jemallocator",
  "mimalloc",
  "nodejs-resolver",
  "rustc-hash",
  "serde",
  "serde_json",
  "static_assertions",
+ "tikv-jemallocator",
  "vfs",
 ]
 
@@ -2279,6 +2259,26 @@ checksum = "3fdd6f064ccff2d6567adcb3873ca630700f00b5ad3f060c25b5dcfd9a4ce152"
 dependencies = [
  "cfg-if",
  "once_cell",
+]
+
+[[package]]
+name = "tikv-jemalloc-sys"
+version = "0.5.3+5.3.0-patched"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a678df20055b43e57ef8cddde41cdfda9a3c1a060b67f4c5836dfb1d78543ba8"
+dependencies = [
+ "cc",
+ "libc",
+]
+
+[[package]]
+name = "tikv-jemallocator"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20612db8a13a6c06d57ec83953694185a367e16945f66565e8028d2c0bd76979"
+dependencies = [
+ "libc",
+ "tikv-jemalloc-sys",
 ]
 
 [[package]]

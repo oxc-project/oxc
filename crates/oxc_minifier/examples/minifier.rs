@@ -6,7 +6,7 @@ use pico_args::Arguments;
 
 #[cfg(not(target_env = "msvc"))]
 #[global_allocator]
-static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 #[cfg(target_os = "windows")]
 #[global_allocator]
