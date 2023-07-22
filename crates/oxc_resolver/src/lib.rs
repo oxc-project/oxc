@@ -89,7 +89,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 result?
             }
         };
-        let path = self.load_symlink(path);
+        let path = self.load_symlink(&path).unwrap_or(path);
         Ok(Resolution {
             path,
             query: request.query.map(ToString::to_string),
@@ -183,8 +183,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_symlink(&self, path: PathBuf) -> PathBuf {
-        if self.options.symlinks { self.cache.canonicalize(path) } else { path }
+    fn load_symlink(&self, path: &Path) -> Option<PathBuf> {
+        if self.options.symlinks { self.cache.canonicalize(path) } else { None }
     }
 
     #[allow(clippy::unnecessary_wraps)]

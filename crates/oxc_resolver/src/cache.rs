@@ -1,13 +1,19 @@
 use std::{
     hash::BuildHasherDefault,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, OnceLock},
 };
 
 use dashmap::DashMap;
 use rustc_hash::FxHasher;
 
 use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
+
+#[derive(Debug, Clone, Default)]
+pub struct PathData {
+    meta: OnceLock<Option<FileMetadata>>,
+    symlink: OnceLock<Option<PathBuf>>,
+}
 
 pub type PackageJsonCache = DashMap<
     Box<Path>,
@@ -17,7 +23,7 @@ pub type PackageJsonCache = DashMap<
 
 pub struct Cache<Fs> {
     fs: Fs,
-    cache: DashMap<Box<Path>, Option<FileMetadata>, BuildHasherDefault<FxHasher>>,
+    cache: DashMap<PathBuf, PathData, BuildHasherDefault<FxHasher>>,
     package_json_cache: PackageJsonCache,
 }
 
@@ -37,20 +43,25 @@ impl<Fs: FileSystem> Cache<Fs> {
     }
 
     fn metadata_cached(&self, path: &Path) -> Option<FileMetadata> {
-        if let Some(result) = self.cache.get(path) {
-            return *result;
-        }
-        let file_metadata = self.fs.metadata(path).ok();
-        self.cache.insert(path.to_path_buf().into_boxed_path(), file_metadata);
-        file_metadata
+        *self
+            .cache
+            .entry(path.to_path_buf())
+            .or_default()
+            .meta
+            .get_or_init(|| self.fs.metadata(path).ok())
     }
 
     pub fn is_file(&self, path: &Path) -> bool {
         self.metadata_cached(path).is_some_and(|m| m.is_file)
     }
 
-    pub fn canonicalize(&self, path: PathBuf) -> PathBuf {
-        self.fs.canonicalize(&path).unwrap_or(path)
+    pub fn canonicalize(&self, path: &Path) -> Option<PathBuf> {
+        self.cache
+            .entry(path.to_path_buf())
+            .or_default()
+            .symlink
+            .get_or_init(|| self.fs.canonicalize(path).ok())
+            .clone()
     }
 
     /// # Errors
