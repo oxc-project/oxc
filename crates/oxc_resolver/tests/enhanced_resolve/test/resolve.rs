@@ -1,16 +1,17 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/resolve.test.js>
 
-use oxc_resolver::{ResolveError, Resolver};
+use oxc_resolver::{Resolution, ResolveOptions, Resolver};
 
 #[test]
-fn resolve() -> Result<(), ResolveError> {
+fn resolve() {
     let f = super::fixture();
+
     let resolver = Resolver::default();
 
     let main1_js_path = f.join("main1.js").to_string_lossy().to_string();
 
     #[rustfmt::skip]
-    let data = [
+    let pass = [
         ("absolute path", f.clone(), main1_js_path.as_str(), f.join("main1.js")),
         ("file with .js", f.clone(), "./main1.js", f.join("main1.js")),
         ("file without extension", f.clone(), "./main1", f.join("main1.js")),
@@ -24,11 +25,11 @@ fn resolve() -> Result<(), ResolveError> {
         ("from nested directory to not overwritten file in module", f.join("multiple_modules"), "m1/b.js", f.join("node_modules/m1/b.js")),
         ("file with query", f.clone(), "./main1.js?query", f.join("main1.js?query")),
         ("file with fragment", f.clone(), "./main1.js#fragment", f.join("main1.js#fragment")),
-        ("file with fragment and query", f.clone(), "./main1.js#fragment?query", f.join("main1.js?query#fragment")),
+        ("file with fragment and query", f.clone(), "./main1.js#fragment?query", f.join("main1.js#fragment?query")),
         ("file with query and fragment", f.clone(), "./main1.js?#fragment", f.join("main1.js?#fragment")),
         ("file in module with query", f.clone(), "m1/a?query", f.join("node_modules/m1/a.js?query")),
         ("file in module with fragment", f.clone(), "m1/a#fragment", f.join("node_modules/m1/a.js#fragment")),
-        ("file in module with fragment and query", f.clone(), "m1/a#fragment?query", f.join("node_modules/m1/a.js?query#fragment")),
+        ("file in module with fragment and query", f.clone(), "m1/a#fragment?query", f.join("node_modules/m1/a.js#fragment?query")),
         ("file in module with query and fragment", f.clone(), "m1/a?#fragment", f.join("node_modules/m1/a.js?#fragment")),
         ("file in module with query and fragment", f.clone(), "m1/a?#fragment", f.join("node_modules/m1/a.js?#fragment")),
         ("differ between directory and file, resolve file", f.clone(), "./dirOrFile", f.join("dirOrFile.js")),
@@ -41,20 +42,10 @@ fn resolve() -> Result<(), ResolveError> {
         // ("handle fragment escaping", f.clone(), "./no\0#fragment/\0#/\0##fragment", f.join("no\0#fragment/\0#\0#.js#fragment")),
     ];
 
-    for (comment, path, request, expected) in data {
-        let resolution = resolver.resolve(&path, request)?;
-        let mut file_name = resolution.path().file_name().unwrap().to_string_lossy().to_string();
-        if let Some(query) = resolution.query() {
-            file_name.push_str(query);
-        }
-        if let Some(fragment) = resolution.fragment() {
-            file_name.push_str(fragment);
-        }
-        let resolved_path = resolution.path().with_file_name(file_name);
-        assert_eq!(resolved_path, expected, "{comment} {path:?} {request}");
+    for (comment, path, request, expected) in pass {
+        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
-
-    Ok(())
 }
 
 #[test]
@@ -62,12 +53,27 @@ fn resolve() -> Result<(), ResolveError> {
 fn issue238_resolve() {}
 
 #[test]
-#[ignore = "preferRelativeResolve"]
-fn prefer_relative_resolve() {}
+fn prefer_relative() {
+    let f = super::fixture();
+
+    let resolver =
+        Resolver::new(ResolveOptions { prefer_relative: true, ..ResolveOptions::default() });
+
+    #[rustfmt::skip]
+    let pass = [
+        ("should correctly resolve with preferRelative 1", "main1.js", f.join("main1.js")),
+        ("should correctly resolve with preferRelative 2", "m1/a.js", f.join("node_modules/m1/a.js")),
+    ];
+
+    for (comment, request, expected) in pass {
+        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {request}");
+    }
+}
 
 #[test]
 #[ignore = "add resolveToContext option"]
-fn resolve_context() -> Result<(), ResolveError> {
+fn resolve_context() {
     let f = super::fixture();
     let resolver = Resolver::default();
 
@@ -80,10 +86,7 @@ fn resolve_context() -> Result<(), ResolveError> {
     ];
 
     for (comment, path, request, expected) in data {
-        let resolution = resolver.resolve(&path, request)?;
-        let resolved_path = resolution.path();
-        assert_eq!(resolved_path, expected, "{comment} {path:?} {request}");
+        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
-
-    Ok(())
 }

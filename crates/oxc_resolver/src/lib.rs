@@ -1,29 +1,34 @@
 //! # Oxc Resolver
 //!
-//! Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve).
+//! ## References:
 //!
-//! Algorithm from <https://nodejs.org/api/modules.html#all-together>.
+//! * Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve)
+//! * Algorithm adapted from [Node.js Module Resolution Algorithm](https://nodejs.org/api/modules.html#all-together) and [cjs loader](https://github.com/nodejs/node/blob/main/lib/internal/modules/cjs/loader.js)
+//! * Some code adapted from [parcel-resolver](https://github.com/parcel-bundler/parcel/blob/v2/packages/utils/node-resolver-rs)
 
+mod cache;
 mod error;
 mod file_system;
 mod options;
 mod package_json;
 mod path;
 mod request;
+mod resolution;
 
 use std::{
+    borrow::Cow,
     ffi::OsStr,
-    fs,
     path::{Path, PathBuf},
 };
 
 pub use crate::{
+    cache::Cache,
     error::{JSONError, ResolveError},
-    options::ResolveOptions,
+    file_system::{FileMetadata, FileSystem, FileSystemOs},
+    options::{Alias, AliasValue, ResolveOptions},
+    resolution::Resolution,
 };
 use crate::{
-    file_system::FileSystem,
-    package_json::PackageJson,
     path::PathUtil,
     request::{Request, RequestPath},
 };
@@ -31,63 +36,60 @@ use crate::{
 pub type ResolveResult = Result<Resolution, ResolveError>;
 type ResolveState = Result<Option<PathBuf>, ResolveError>;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub struct Resolution {
-    path: PathBuf,
+/// Resolver with the current operating system as the file system
+pub type Resolver = ResolverGeneric<FileSystemOs>;
 
-    /// path query `?query`, contains `?`.
-    query: Option<String>,
-
-    /// path fragment `#query`, contains `#`.
-    fragment: Option<String>,
-}
-
-impl Resolution {
-    pub fn path(&self) -> &Path {
-        &self.path
-    }
-
-    pub fn into_path_buf(self) -> PathBuf {
-        self.path
-    }
-
-    pub fn query(&self) -> Option<&str> {
-        self.query.as_deref()
-    }
-
-    pub fn fragment(&self) -> Option<&str> {
-        self.fragment.as_deref()
-    }
-}
-
-pub struct Resolver {
+pub struct ResolverGeneric<Fs> {
     options: ResolveOptions,
-    fs: FileSystem,
+    cache: Cache<Fs>,
 }
 
-impl Default for Resolver {
+impl<Fs: FileSystem> Default for ResolverGeneric<Fs> {
     fn default() -> Self {
         Self::new(ResolveOptions::default())
     }
 }
 
-impl Resolver {
+impl<Fs: FileSystem> ResolverGeneric<Fs> {
     pub fn new(options: ResolveOptions) -> Self {
-        Self { options: options.sanitize(), fs: FileSystem::default() }
+        Self { options: options.sanitize(), cache: Cache::default() }
+    }
+
+    pub fn new_with_file_system(options: ResolveOptions, file_system: Fs) -> Self {
+        Self { cache: Cache::new(file_system), ..Self::new(options) }
     }
 
     /// Resolve `request` at `path`
     ///
     /// # Errors
     ///
-    /// * Will return `Err` for [ResolveError]
+    /// * See [ResolveError]
     pub fn resolve<P: AsRef<Path>>(
         &self,
         path: P,
-        request: &str,
+        request_str: &str,
     ) -> Result<Resolution, ResolveError> {
-        let request = Request::parse(request).map_err(ResolveError::Request)?;
-        let path = self.require(path.as_ref(), &request)?;
+        let path = path.as_ref();
+        let request = Request::parse(request_str).map_err(ResolveError::Request)?;
+        let path = if let Some(path) =
+            self.load_alias(path, request.path.as_str(), &self.options.alias)?
+        {
+            path
+        } else {
+            let result = self.require(path, &request);
+            if result.as_ref().is_err_and(ResolveError::is_not_found) {
+                if let Some(path) =
+                    self.load_alias(path, request.path.as_str(), &self.options.fallback)?
+                {
+                    path
+                } else {
+                    result?
+                }
+            } else {
+                result?
+            }
+        };
+        let path = self.load_symlink(&path).unwrap_or(path);
         Ok(Resolution {
             path,
             query: request.query.map(ToString::to_string),
@@ -95,13 +97,10 @@ impl Resolver {
         })
     }
 
+    /// require(X) from module at path Y
+    /// X: request
+    /// Y: path
     fn require(&self, path: &Path, request: &Request) -> Result<PathBuf, ResolveError> {
-        // X: request
-        // Y: path
-        // require(X) from module at path Y
-        let mut path = path;
-        let request_str;
-
         match request.path {
             // 1. If X is a core module,
             //    a. return the core module
@@ -109,32 +108,47 @@ impl Resolver {
             // 2. If X begins with '/'
             //    a. set Y to be the file system root
             RequestPath::Absolute(absolute_path) => {
-                path = Path::new("/");
-                request_str = absolute_path;
-            }
-            // 3. If X begins with './' or '/' or '../'
-            RequestPath::Relative(relative_path) => {
-                let path = path.normalize_with(relative_path);
-                // a. LOAD_AS_FILE(Y + X)
-                if !relative_path.ends_with('/') {
-                    if let Some(path) = self.load_as_file(&path)? {
+                if !self.options.prefer_relative && self.options.prefer_absolute {
+                    if let Ok(path) = self.require_path(path, absolute_path) {
                         return Ok(path);
                     }
                 }
-                // b. LOAD_AS_DIRECTORY(Y + X)
-                if let Some(path) = self.load_as_directory(&path)? {
-                    return Ok(path);
-                }
-                // c. THROW "not found"
-                return Err(ResolveError::NotFound);
+                self.load_roots(path, absolute_path)
             }
+            // 3. If X begins with './' or '/' or '../'
+            RequestPath::Relative(relative_path) => self.require_relative(path, relative_path),
             // 4. If X begins with '#'
+            RequestPath::Hash(hash_path) => self.require_path(path, hash_path),
             //    a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
-            RequestPath::Module(module_path) => {
-                request_str = module_path;
+            RequestPath::Module(module_path) => self.require_path(path, module_path),
+        }
+    }
+
+    // 3. If X begins with './' or '/' or '../'
+    fn require_relative(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
+        if let Some(path) = self.load_package_self(path, request_str)? {
+            return Ok(path);
+        }
+        let path = path.normalize_with(request_str);
+        // a. LOAD_AS_FILE(Y + X)
+        if !request_str.ends_with('/') {
+            if let Some(path) = self.load_as_file(&path)? {
+                return Ok(path);
             }
         }
+        // b. LOAD_AS_DIRECTORY(Y + X)
+        if let Some(path) = self.load_as_directory(&path)? {
+            return Ok(path);
+        }
+        // c. THROW "not found"
+        Err(ResolveError::NotFound(path.into_boxed_path()))
+    }
+
+    fn require_path(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
         // 5. LOAD_PACKAGE_SELF(X, dirname(Y))
+        if let Some(path) = self.load_package_self(path, request_str)? {
+            return Ok(path);
+        }
         // 6. LOAD_NODE_MODULES(X, dirname(Y))
         if let Some(path) = self.load_node_modules(path, request_str)? {
             return Ok(path);
@@ -143,7 +157,7 @@ impl Resolver {
             return Ok(path);
         }
         // 7. THROW "not found"
-        Err(ResolveError::NotFound)
+        Err(ResolveError::NotFound(path.to_path_buf().into_boxed_path()))
     }
 
     #[allow(clippy::unnecessary_wraps)]
@@ -154,7 +168,7 @@ impl Resolver {
         }
 
         // 1. If X is a file, load X as its file extension format. STOP
-        if self.fs.is_file(path) {
+        if self.cache.is_file(path) {
             return Ok(Some(path.to_path_buf()));
         }
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
@@ -162,74 +176,79 @@ impl Resolver {
         // 4. If X.node is a file, load X.node as binary addon. STOP
         for extension in &self.options.extensions {
             let path_with_extension = path.with_extension(extension);
-            if self.fs.is_file(&path_with_extension) {
+            if self.cache.is_file(&path_with_extension) {
                 return Ok(Some(path_with_extension));
             }
         }
         Ok(None)
     }
 
+    fn load_symlink(&self, path: &Path) -> Option<PathBuf> {
+        if self.options.symlinks { self.cache.canonicalize(path) } else { None }
+    }
+
     #[allow(clippy::unnecessary_wraps)]
-    fn load_index(&self, path: &Path, package_json: Option<&PackageJson>) -> ResolveState {
-        // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
-        // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
-        // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
-        for extension in &self.options.extensions {
-            let mut index_path = path.join("index").with_extension(extension);
-            if let Some(resolved_path) = package_json.and_then(|p| p.resolve(&index_path)) {
-                index_path = resolved_path;
+    fn load_index(&self, path: &Path) -> ResolveState {
+        for main_field in &self.options.main_files {
+            let main_path = path.join(main_field);
+            if self.options.enforce_extension == Some(false) && self.cache.is_file(&main_path) {
+                return Ok(Some(main_path));
             }
-            if self.fs.is_file(&index_path) {
-                return Ok(Some(index_path));
+            // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
+            // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
+            // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
+            for extension in &self.options.extensions {
+                let main_path_with_extension = main_path.with_extension(extension);
+                if self.cache.is_file(&main_path_with_extension) {
+                    return Ok(Some(main_path_with_extension));
+                }
             }
         }
         Ok(None)
     }
 
     fn load_as_directory(&self, path: &Path) -> ResolveState {
+        // TODO: Only package.json is supported, so warn about having other values
+        // Checking for empty files is needed for omitting checks on package.json
         // 1. If X/package.json is a file,
-        let package_json_path = path.join("package.json");
-        if self.fs.is_file(&package_json_path) {
+        if !self.options.description_files.is_empty() {
             // a. Parse X/package.json, and look for "main" field.
-            let package_json_string = fs::read_to_string(&package_json_path).unwrap();
-            let package_json = PackageJson::parse(package_json_path.clone(), &package_json_string)
-                .map_err(|error| ResolveError::from_serde_json_error(package_json_path, &error))?;
-            // b. If "main" is a falsy value, GOTO 2.
-            if let Some(main_field) = &package_json.main {
-                // c. let M = X + (json main field)
-                let main_field_path = path.normalize_with(main_field);
-                // d. LOAD_AS_FILE(M)
-                if let Some(path) = self.load_as_file(&main_field_path)? {
-                    return Ok(Some(path));
+            if let Some(package_json) = self.cache.get_package_json(path)? {
+                // b. If "main" is a falsy value, GOTO 2.
+                if let Some(main_field) = &package_json.main {
+                    // c. let M = X + (json main field)
+                    let main_field_path = path.normalize_with(main_field);
+                    // d. LOAD_AS_FILE(M)
+                    if let Some(path) = self.load_as_file(&main_field_path)? {
+                        return Ok(Some(path));
+                    }
+                    // e. LOAD_INDEX(M)
+                    if let Some(path) = self.load_index(&main_field_path)? {
+                        return Ok(Some(path));
+                    }
+                    // f. LOAD_INDEX(X) DEPRECATED
+                    // g. THROW "not found"
+                    return Err(ResolveError::NotFound(main_field_path.into_boxed_path()));
                 }
-                // e. LOAD_INDEX(M)
-                if let Some(path) = self.load_index(&main_field_path, Some(&package_json))? {
-                    return Ok(Some(path));
-                }
-                // f. LOAD_INDEX(X) DEPRECATED
-                // g. THROW "not found"
-                return Err(ResolveError::NotFound);
             }
-            // 2. LOAD_INDEX(X)
-            self.load_index(path, Some(&package_json))
-        } else {
-            // 2. LOAD_INDEX(X)
-            self.load_index(path, None)
         }
+        // 2. LOAD_INDEX(X)
+        self.load_index(path)
     }
 
     fn load_node_modules(&self, start: &Path, request_str: &str) -> ResolveState {
-        const NODE_MODULES: &str = "node_modules";
         // 1. let DIRS = NODE_MODULES_PATHS(START)
-        let dirs = start
-            .ancestors()
-            .filter(|path| path.file_name().is_some_and(|name| name != NODE_MODULES));
+        let dirs = self.node_module_paths(start);
         // 2. for each DIR in DIRS:
-        for dir in dirs {
-            let node_module_path = dir.join(NODE_MODULES);
+        for node_module_path in dirs {
+            let node_module_path = node_module_path.join(request_str);
+            for main_file in &self.options.main_files {
+                if let Some(path) = self.load_package_self(&node_module_path, main_file)? {
+                    return Ok(Some(path));
+                }
+            }
             // a. LOAD_PACKAGE_EXPORTS(X, DIR)
             // b. LOAD_AS_FILE(DIR/X)
-            let node_module_path = node_module_path.join(request_str);
             if !request_str.ends_with('/') {
                 if let Some(path) = self.load_as_file(&node_module_path)? {
                     return Ok(Some(path));
@@ -238,6 +257,59 @@ impl Resolver {
             // c. LOAD_AS_DIRECTORY(DIR/X)
             if let Some(path) = self.load_as_directory(&node_module_path)? {
                 return Ok(Some(path));
+            }
+        }
+        Ok(None)
+    }
+
+    fn node_module_paths<'a>(&'a self, path: &'a Path) -> impl Iterator<Item = PathBuf> + 'a {
+        path.ancestors()
+            .flat_map(|path| self.options.modules.iter().map(|module| path.join(module)))
+    }
+
+    /// # Panics
+    ///
+    /// * Parent of package.json is None
+    fn load_package_self(&self, path: &Path, request_str: &str) -> ResolveState {
+        if let Some(package_json) = self.cache.find_package_json(path)? {
+            if let Some(request_str) =
+                package_json.resolve_request(path, request_str, &self.options.extensions)?
+            {
+                let request = Request::parse(request_str).map_err(ResolveError::Request)?;
+                debug_assert!(package_json.path.file_name().is_some_and(|x| x == "package.json"));
+                // TODO: Do we need to pass query and fragment?
+                return self.require(package_json.path.parent().unwrap(), &request).map(Some);
+            }
+        }
+        Ok(None)
+    }
+
+    fn load_alias(&self, path: &Path, request_str: &str, alias: &Alias) -> ResolveState {
+        for (alias, requests) in alias {
+            let exact_match = alias.strip_prefix(request_str).is_some_and(|c| c == "$");
+            if request_str.starts_with(alias) || exact_match {
+                for request in requests {
+                    match request {
+                        AliasValue::Path(new_request) => {
+                            let new_request = if exact_match {
+                                Cow::Borrowed(new_request)
+                            } else {
+                                Cow::Owned(request_str.replacen(alias, new_request, 1))
+                            };
+                            let new_request =
+                                Request::parse(&new_request).map_err(ResolveError::Request)?;
+                            match self.require(path, &new_request) {
+                                Err(ResolveError::NotFound(_)) => { /* noop */ }
+                                Ok(path) => return Ok(Some(path)),
+                                Err(err) => return Err(err),
+                            }
+                        }
+                        AliasValue::Ignore => {
+                            return Err(ResolveError::Ignored(path.join(alias).into_boxed_path()));
+                        }
+                    }
+                }
+                return Err(ResolveError::Alias(alias.clone()));
             }
         }
         Ok(None)
@@ -260,10 +332,23 @@ impl Resolver {
         };
         for extension in extensions {
             let path_with_extension = path.with_extension(extension);
-            if self.fs.is_file(&path_with_extension) {
+            if self.cache.is_file(&path_with_extension) {
                 return Ok(Some(path_with_extension));
             }
         }
         Err(ResolveError::ExtensionAlias)
+    }
+
+    fn load_roots(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
+        debug_assert!(request_str.starts_with('/'));
+        if self.options.roots.is_empty() {
+            return self.require_path(Path::new("/"), request_str);
+        }
+        for root in &self.options.roots {
+            if let Ok(path) = self.require_relative(root, request_str.trim_start_matches('/')) {
+                return Ok(path);
+            }
+        }
+        Err(ResolveError::NotFound(path.to_path_buf().into_boxed_path()))
     }
 }

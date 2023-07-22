@@ -6,7 +6,7 @@ use miette::NamedSource;
 use napi_derive::napi;
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
-use oxc_parser::Parser;
+use oxc_parser::{Parser, ParserReturn};
 use oxc_span::SourceType;
 
 /// Babel Parser Options
@@ -22,18 +22,15 @@ pub struct ParserOptions {
 
 #[napi(object)]
 pub struct ParseResult {
-    pub program: serde_json::Value,
+    pub program: String,
     pub errors: Vec<String>,
 }
 
-/// # Panics
-/// * File extension is invalid
-/// * Serde JSON serialization
-#[allow(clippy::needless_pass_by_value)]
-#[napi]
-pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseResult {
-    let options = options.unwrap_or_default();
-
+fn parse<'a>(
+    allocator: &'a Allocator,
+    source_text: &'a str,
+    options: &ParserOptions,
+) -> ParserReturn<'a> {
     let source_type = options
         .source_filename
         .as_ref()
@@ -44,10 +41,36 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
         Some("module") => source_type.with_module(true),
         _ => source_type,
     };
+    Parser::new(allocator, source_text, source_type).parse()
+}
+
+/// Parse without returning anything.
+/// This is for benchmark purposes such as measuring napi communication overhead.
+///
+/// # Panics
+///
+/// * File extension is invalid
+/// * Serde JSON serialization
+#[allow(clippy::needless_pass_by_value)]
+#[napi]
+pub fn parse_without_return(source_text: String, options: Option<ParserOptions>) {
+    let options = options.unwrap_or_default();
+    let allocator = Allocator::default();
+    parse(&allocator, &source_text, &options);
+}
+
+/// # Panics
+///
+/// * File extension is invalid
+/// * Serde JSON serialization
+#[allow(clippy::needless_pass_by_value)]
+#[napi]
+pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseResult {
+    let options = options.unwrap_or_default();
 
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, &source_text, source_type).parse();
-    let program = serde_json::to_value(&ret.program).unwrap();
+    let ret = parse(&allocator, &source_text, &options);
+    let program = serde_json::to_string(&ret.program).unwrap();
 
     let errors = if ret.errors.is_empty() {
         vec![]
@@ -60,10 +83,12 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
             .map(|error| format!("{error:?}"))
             .collect()
     };
+
     ParseResult { program, errors }
 }
 
 /// # Panics
+///
 /// * Tokio crashes
 #[allow(clippy::needless_pass_by_value)]
 #[napi]

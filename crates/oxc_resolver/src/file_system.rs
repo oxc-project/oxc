@@ -1,35 +1,64 @@
 use std::{
-    fs,
+    fs, io,
     path::{Path, PathBuf},
 };
 
-use dashmap::DashMap;
+pub trait FileSystem: Default + Send + Sync {
+    /// See [std::fs::read_to_string]
+    ///
+    /// # Errors
+    ///
+    /// * Any [io::Error]
+    fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<String>;
+
+    /// See [std::fs::metadata]
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations, but is not
+    /// limited to just these cases:
+    ///
+    /// * The user lacks permissions to perform `metadata` call on `path`.
+    /// * `path` does not exist.
+    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata>;
+
+    /// See [std::fs::canonicalize]
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following situations, but is not
+    /// limited to just these cases:
+    ///
+    /// * `path` does not exist.
+    /// * A non-final component in path is not a directory.
+    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf>;
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct FileMetadata {
-    is_file: bool,
+    pub(crate) is_file: bool,
 }
 
-/// [File System](https://doc.rust-lang.org/stable/std/fs/) with caching
+impl FileMetadata {
+    pub fn new(is_file: bool) -> Self {
+        Self { is_file }
+    }
+}
+
+/// Operating System
 #[derive(Default)]
-pub struct FileSystem {
-    cache: DashMap<PathBuf, Option<FileMetadata>>,
-}
+pub struct FileSystemOs;
 
-impl FileSystem {
-    /// <https://doc.rust-lang.org/stable/std/fs/fn.metadata.html>
-    pub fn metadata<P: AsRef<Path>>(&self, path: P) -> Option<FileMetadata> {
-        let path = path.as_ref();
-        if let Some(result) = self.cache.get(path) {
-            return *result;
-        }
-        let file_metadata =
-            fs::metadata(path).ok().map(|metadata| FileMetadata { is_file: metadata.is_file() });
-        self.cache.insert(path.to_path_buf(), file_metadata);
-        file_metadata
+impl FileSystem for FileSystemOs {
+    fn read_to_string<P: AsRef<Path>>(&self, path: P) -> io::Result<String> {
+        fs::read_to_string(path)
     }
 
-    pub fn is_file<P: AsRef<Path>>(&self, path: P) -> bool {
-        self.metadata(path).is_some_and(|m| m.is_file)
+    fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
+        fs::metadata(path).map(|metadata| FileMetadata { is_file: metadata.is_file() })
+    }
+
+    fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
+        dunce::canonicalize(path)
     }
 }

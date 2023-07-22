@@ -16,7 +16,6 @@ concurrency:
 jobs:
   check:
     name: Check version
-    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ env.version }}
@@ -40,7 +39,7 @@ jobs:
 
   build:
     needs: check
-    if: github.event.workflow_run.conclusion == 'success' && needs.check.outputs.version_changed == 'true'
+    if: needs.check.outputs.version_changed == 'true'
     env:
       version: ${{ needs.check.outputs.version }}
     outputs:

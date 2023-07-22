@@ -14,10 +14,20 @@ repository.workspace  = true
 dashmap    = { workspace = true }
 serde      = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+rustc-hash = { workspace = true }
+dunce      = "1.0.4"
 
 [dev-dependencies]
 static_assertions = { workspace = true }
 criterion         = { workspace = true }
+vfs               = "0.9.0"              # for testing with in memory file system
+nodejs-resolver   = "0.0.88"             # for benchmark
+
+[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
+jemallocator = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dev-dependencies]
+mimalloc = { workspace = true }
 
 [[bench]]
 name    = "resolver"

@@ -56,6 +56,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::require_yield,
     eslint::use_isnan,
     eslint::valid_typeof,
+    typescript::adjacent_overload_signatures,
     typescript::isolated_declaration,
     typescript::no_empty_interface,
     typescript::no_extra_non_null_assertion,
@@ -63,6 +64,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unnecessary_type_constraint,
     typescript::no_misused_new,
     typescript::no_this_alias,
+    typescript::no_var_requires,
     jest::no_disabled_tests,
     jest::no_test_prefixes,
 }

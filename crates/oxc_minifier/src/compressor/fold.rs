@@ -483,6 +483,13 @@ impl<'a> Compressor<'a> {
                 _ => Tri::Unknown,
             };
         }
+
+        // Then, try to evaluate based on the value of the expression.
+        // There's only one special case:
+        // Any strict equality comparison against NaN returns false.
+        if left_expr.is_nan() || right_expr.is_nan() {
+            return Tri::False;
+        }
         Tri::Unknown
     }
 

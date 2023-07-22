@@ -45,6 +45,7 @@ The Oxidation Compiler is creating a suite of high-performance tools for the Jav
 * Formatter ([prettier][prettier])
 * Transpiler ([babel][babel])
 * [Minifier](./crates/oxc_minifier) ([terser][terser]) - [Prototype](https://github.com/Boshen/oxc/tree/main/crates/oxc_minifier)
+* [Resolver](./crates/oxc_resolver) ([enhanced-resolve](enhanced-resolve))
 * Type Checker - See [ezno][ezno], available via `npx oxidation-compiler@latest check path`
 
 [docs-ast]: https://docs.rs/oxc/latest/oxc/ast/index.html
@@ -57,6 +58,7 @@ The Oxidation Compiler is creating a suite of high-performance tools for the Jav
 [prettier]: https://github.com/prettier/prettier
 [ezno]: https://github.com/kaleidawave/ezno
 [terser]: https://terser.org
+[enhanced-resolve]: https://github.com/webpack/enhanced-resolve
 
 ## Philosophy
 

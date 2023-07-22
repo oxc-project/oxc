@@ -2,20 +2,20 @@
 
 use std::path::PathBuf;
 
-use oxc_resolver::{ResolveError, ResolveOptions, Resolver};
+use oxc_resolver::{Resolution, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("scoped")
 }
 
 #[test]
-fn scoped_packages() -> Result<(), ResolveError> {
+fn scoped_packages() {
     let f = fixture();
 
-    let options =
-        ResolveOptions { alias_fields: vec!["browser".into()], ..ResolveOptions::default() };
-
-    let resolver = Resolver::new(options);
+    let resolver = Resolver::new(ResolveOptions {
+        alias_fields: vec!["browser".into()],
+        ..ResolveOptions::default()
+    });
 
     #[rustfmt::skip]
     let pass = [
@@ -25,10 +25,7 @@ fn scoped_packages() -> Result<(), ResolveError> {
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolution = resolver.resolve(&f, request)?;
-        let resolved_path = resolution.path();
-        assert_eq!(resolved_path, expected, "{comment} {path:?} {request}");
+        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
-
-    Ok(())
 }

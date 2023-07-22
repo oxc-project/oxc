@@ -233,6 +233,45 @@ fn test_null_comparison1() {
 }
 
 #[test]
+fn test_boolean_boolean_comparison() {
+    test_same("!x==!y");
+    test_same("!x<!y");
+    test_same("!x!==!y");
+
+    test_same("!x==!x"); // foldable
+    test_same("!x<!x"); // foldable
+    test_same("!x!==!x"); // foldable
+}
+
+#[test]
+fn test_boolean_number_comparison() {
+    test_same("!x==+y");
+    test_same("!x<=+y");
+    test_wcb("!x !== +y", "true");
+}
+
+#[test]
+fn test_number_boolean_comparison() {
+    test_same("+x==!y");
+    test_same("+x<=!y");
+    test_wcb("+x === !y", "false");
+}
+
+#[test]
+fn test_boolean_string_comparison() {
+    test_same("!x==''+y");
+    test_same("!x<=''+y");
+    test_wcb("!x !== '' + y", "true");
+}
+
+#[test]
+fn test_string_boolean_comparison() {
+    test_same("''+x==!y");
+    test_same("''+x<=!y");
+    test_wcb("'' + x === !y", "false");
+}
+
+#[test]
 fn test_string_string_comparison() {
     test("'a' < 'b'", "!0");
     test("'a' <= 'b'", "!0");
@@ -363,6 +402,43 @@ fn test_string_bigint_comparison() {
     test_wcb("'1' != 1n", "false");
     test_wcb("'1' === 1n", "false");
     test_wcb("'1' !== 1n", "true");
+}
+
+#[test]
+fn test_nan_comparison() {
+    test_wcb("NaN < 1", "false");
+    test_wcb("NaN <= 1", "false");
+    test_wcb("NaN > 1", "false");
+    test_wcb("NaN >= 1", "false");
+    test_wcb("NaN < 1n", "false");
+    test_wcb("NaN <= 1n", "false");
+    test_wcb("NaN > 1n", "false");
+    test_wcb("NaN >= 1n", "false");
+
+    test_wcb("NaN < NaN", "false");
+    test_wcb("NaN >= NaN", "false");
+    test_wcb("NaN == NaN", "false");
+    test_wcb("NaN === NaN", "false");
+
+    test_wcb("NaN < null", "false");
+    test_wcb("null >= NaN", "false");
+    test_wcb("NaN == null", "false");
+    test_wcb("null != NaN", "true");
+    test_wcb("null === NaN", "false");
+
+    test_wcb("NaN < undefined", "false");
+    test_wcb("undefined >= NaN", "false");
+    test_wcb("NaN == undefined", "false");
+    test_wcb("undefined != NaN", "true");
+    test_wcb("undefined === NaN", "false");
+
+    test_same("NaN<x");
+    test_same("x>=NaN");
+    test_same("NaN==x");
+    test_same("x!=NaN");
+    test_wcb("NaN === x", "false");
+    test_wcb("x !== NaN", "true");
+    test_same("NaN==foo()");
 }
 
 #[test]
