@@ -250,7 +250,7 @@ interface Type {
   span: Span!
 }
 
-type TypeAnnotation implements HasSpan {
+interface TypeAnnotation implements HasSpan {
   type: Type!
   span: Span!
 }
