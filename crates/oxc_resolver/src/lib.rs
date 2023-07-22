@@ -208,11 +208,12 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_as_directory(&self, path: &Path) -> ResolveState {
+        // TODO: Only package.json is supported, so warn about having other values
+        // Checking for empty files is needed for omitting checks on package.json
         // 1. If X/package.json is a file,
-        for description_file in &self.options.description_files {
-            let package_json_path = path.join(description_file);
+        if !self.options.description_files.is_empty() {
             // a. Parse X/package.json, and look for "main" field.
-            if let Some(package_json) = self.cache.read_package_json(&package_json_path)? {
+            if let Some(package_json) = self.cache.get_package_json(path)? {
                 // b. If "main" is a falsy value, GOTO 2.
                 if let Some(main_field) = &package_json.main {
                     // c. let M = X + (json main field)
@@ -266,17 +267,18 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             .flat_map(|path| self.options.modules.iter().map(|module| path.join(module)))
     }
 
+    /// # Panics
+    ///
+    /// * Parent of package.json is None
     fn load_package_self(&self, path: &Path, request_str: &str) -> ResolveState {
-        for dir in path.ancestors() {
-            let package_json_path = dir.join("package.json");
-            if let Some(package_json) = self.cache.read_package_json(&package_json_path)? {
-                if let Some(request_str) =
-                    package_json.resolve_request(path, request_str, &self.options.extensions)?
-                {
-                    let request = Request::parse(request_str).map_err(ResolveError::Request)?;
-                    // TODO: Do we need to pass query and fragment?
-                    return self.require(dir, &request).map(Some);
-                }
+        if let Some(package_json) = self.cache.find_package_json(path)? {
+            if let Some(request_str) =
+                package_json.resolve_request(path, request_str, &self.options.extensions)?
+            {
+                let request = Request::parse(request_str).map_err(ResolveError::Request)?;
+                debug_assert!(package_json.path.file_name().is_some_and(|x| x == "package.json"));
+                // TODO: Do we need to pass query and fragment?
+                return self.require(package_json.path.parent().unwrap(), &request).map(Some);
             }
         }
         Ok(None)

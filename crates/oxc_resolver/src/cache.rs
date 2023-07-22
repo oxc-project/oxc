@@ -9,31 +9,14 @@ use rustc_hash::FxHasher;
 
 use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 
-#[derive(Debug, Clone, Default)]
-pub struct PathData {
-    meta: OnceLock<Option<FileMetadata>>,
-    symlink: OnceLock<Option<PathBuf>>,
-}
-
-pub type PackageJsonCache = DashMap<
-    Box<Path>,
-    Result<Option<Arc<PackageJson>>, ResolveError>,
-    BuildHasherDefault<FxHasher>,
->;
-
 pub struct Cache<Fs> {
     fs: Fs,
-    cache: DashMap<PathBuf, PathData, BuildHasherDefault<FxHasher>>,
-    package_json_cache: PackageJsonCache,
+    cache: DashMap<PathBuf, Arc<CacheValue>, BuildHasherDefault<FxHasher>>,
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
     fn default() -> Self {
-        Self {
-            fs: Fs::default(),
-            cache: DashMap::default(),
-            package_json_cache: DashMap::default(),
-        }
+        Self { fs: Fs::default(), cache: DashMap::default() }
     }
 }
 
@@ -42,43 +25,94 @@ impl<Fs: FileSystem> Cache<Fs> {
         Self { fs, ..Self::default() }
     }
 
-    fn metadata_cached(&self, path: &Path) -> Option<FileMetadata> {
-        *self
-            .cache
-            .entry(path.to_path_buf())
-            .or_default()
-            .meta
-            .get_or_init(|| self.fs.metadata(path).ok())
-    }
-
     pub fn is_file(&self, path: &Path) -> bool {
-        self.metadata_cached(path).is_some_and(|m| m.is_file)
+        self.cache_value(path).meta(&self.fs).is_some_and(|m| m.is_file)
     }
 
     pub fn canonicalize(&self, path: &Path) -> Option<PathBuf> {
-        self.cache
-            .entry(path.to_path_buf())
-            .or_default()
-            .symlink
-            .get_or_init(|| self.fs.canonicalize(path).ok())
-            .clone()
+        self.cache_value(path).symlink(&self.fs)
     }
 
+    /// Get package.json of the given path.
+    ///
     /// # Errors
     ///
     /// * [ResolveError::JSONError]
-    pub fn read_package_json(&self, path: &Path) -> Result<Option<Arc<PackageJson>>, ResolveError> {
-        if let Some(result) = self.package_json_cache.get(path) {
-            return result.value().clone();
+    pub fn get_package_json(&self, path: &Path) -> Result<Option<Arc<PackageJson>>, ResolveError> {
+        self.cache_value(path).package_json(&self.fs).transpose()
+    }
+
+    /// Find package.json of a path by traversing parent directories.
+    ///
+    /// # Errors
+    ///
+    /// * [ResolveError::JSONError]
+    pub fn find_package_json(&self, path: &Path) -> Result<Option<Arc<PackageJson>>, ResolveError> {
+        let mut cache_value = Some(self.cache_value(path));
+        while let Some(cv) = cache_value {
+            if let Some(package_json) = cv.package_json(&self.fs).transpose()? {
+                return Ok(Some(Arc::clone(&package_json)));
+            }
+            cache_value = cv.parent.clone();
         }
-        let Ok(package_json_string) = self.fs.read_to_string(path) else {
-            self.package_json_cache.insert(path.to_path_buf().into_boxed_path(), Ok(None));
-            return Ok(None);
-        };
-        let result = PackageJson::parse(path.to_path_buf(), &package_json_string)
-            .map(|package_json| Some(Arc::new(package_json)))
-            .map_err(|error| ResolveError::from_serde_json_error(path.to_path_buf(), &error));
-        self.package_json_cache.insert(path.to_path_buf().into_boxed_path(), result.clone());
-        result
+        Ok(None)
+    }
+
+    fn cache_value(&self, path: &Path) -> Arc<CacheValue> {
+        if let Some(cache_entry) = self.cache.get(path) {
+            return Arc::clone(cache_entry.value());
+        }
+        let parent = path.parent().map(|p| self.cache_value(p));
+        let data = Arc::new(CacheValue::new(path.to_path_buf(), parent));
+        self.cache.insert(path.to_path_buf(), Arc::clone(&data));
+        data
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CacheValue {
+    path: PathBuf,
+    parent: Option<Arc<CacheValue>>,
+    meta: OnceLock<Option<FileMetadata>>,
+    symlink: OnceLock<Option<PathBuf>>,
+    package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
+}
+
+impl CacheValue {
+    fn new(path: PathBuf, parent: Option<Arc<Self>>) -> Self {
+        Self {
+            path,
+            parent,
+            meta: OnceLock::new(),
+            symlink: OnceLock::new(),
+            package_json: OnceLock::new(),
+        }
+    }
+
+    fn meta<Fs: FileSystem>(&self, fs: &Fs) -> Option<FileMetadata> {
+        *self.meta.get_or_init(|| fs.metadata(&self.path).ok())
+    }
+
+    fn symlink<Fs: FileSystem>(&self, fs: &Fs) -> Option<PathBuf> {
+        self.symlink.get_or_init(|| fs.canonicalize(&self.path).ok()).clone()
+    }
+
+    fn package_json<Fs: FileSystem>(
+        &self,
+        fs: &Fs,
+    ) -> Option<Result<Arc<PackageJson>, ResolveError>> {
+        // Change to `get_or_try_init` once it is stable
+        self.package_json
+            .get_or_init(|| {
+                let package_json_path = self.path.join("package.json");
+                fs.read_to_string(&package_json_path).ok().map(|package_json_string| {
+                    PackageJson::parse(package_json_path.clone(), &package_json_string)
+                        .map(Arc::new)
+                        .map_err(|error| {
+                            ResolveError::from_serde_json_error(package_json_path, &error)
+                        })
+                })
+            })
+            .clone()
     }
 }
