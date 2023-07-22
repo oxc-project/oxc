@@ -91,7 +91,7 @@ type DefaultImport {
   span: Span!
 }
 
-type Import {
+interface Import {
   from_path: String!
   entire_span: Span!
 
@@ -117,7 +117,7 @@ A single VariableDeclarator. (const/let/var)!
 If you have multiple variables assigned at once with commas,
 this will fire once per assignment.
 """
-type VariableDeclaration {
+interface VariableDeclaration {
   left: AssignmentType!
   assignment_span: Span!
 }
@@ -205,7 +205,7 @@ interface InterfaceExtend {
   span: Span!
 }
 
-type Interface {
+interface Interface {
   extend: [InterfaceExtend!]!
   name_span: Span!
   entire_span: Span!
