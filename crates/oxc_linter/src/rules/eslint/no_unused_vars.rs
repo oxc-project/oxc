@@ -3,6 +3,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{Atom, Span};
 use regex::Regex;
 use serde_json::Value;
@@ -389,7 +390,11 @@ impl Rule for NoUnusedVars {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    // fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+        let declared_at = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+        let references = ctx.symbols().get_resolved_references(symbol_id);
+    }
 }
 
 #[cfg(test)]
@@ -425,8 +430,6 @@ mod tests {
             Self::from_configuration(value)
         }
     }
-
-    // implement f
 
     #[test]
     fn test_options_default() {

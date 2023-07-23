@@ -103,6 +103,20 @@ impl<'a> Semantic<'a> {
         self.symbols.get_scope_id(symbol_id)
     }
 
+    /// Find the declaration node of a symbol
+    pub fn symbol_declaration(&self, symbol_id: SymbolId) -> &AstNode<'a> {
+        self.nodes.get_node(self.symbols.get_declaration(symbol_id))
+    }
+
+    pub fn symbol_references(
+        &'a self,
+        symbol_id: SymbolId,
+    ) -> impl Iterator<Item = &'a Reference> + '_ {
+        self.symbols.resolved_references[symbol_id]
+            .iter()
+            .map(|id| self.symbols.get_reference(*id))
+    }
+
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         self.scopes().root_unresolved_references().contains_key(&ident.name)
     }
