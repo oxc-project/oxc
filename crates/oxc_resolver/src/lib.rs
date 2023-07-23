@@ -165,7 +165,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Err(ResolveError::NotFound(path.to_path_buf().into_boxed_path()))
     }
 
-    #[allow(clippy::unnecessary_wraps)]
     fn load_as_file(&self, path: &Path) -> ResolveState {
         // enhanced-resolve feature: extension_alias
         if let Some(path) = self.load_extension_alias(path)? {
@@ -173,16 +172,16 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
 
         // 1. If X is a file, load X as its file extension format. STOP
-        if self.cache.is_file(path) {
-            return Ok(Some(path.to_path_buf()));
+        if let Some(path) = self.load_alias_or_file(path)? {
+            return Ok(Some(path));
         }
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
         // 3. If X.json is a file, parse X.json to a JavaScript Object. STOP
         // 4. If X.node is a file, load X.node as binary addon. STOP
         for extension in &self.options.extensions {
             let path_with_extension = path.with_extension(extension);
-            if self.cache.is_file(&path_with_extension) {
-                return Ok(Some(path_with_extension));
+            if let Some(path) = self.load_alias_or_file(&path_with_extension)? {
+                return Ok(Some(path));
             }
         }
         Ok(None)
@@ -192,28 +191,35 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if self.options.symlinks { self.cache.canonicalize(path) } else { None }
     }
 
-    #[allow(clippy::unnecessary_wraps)]
-    fn load_index(&self, path: &Path, package_json: Option<&PackageJson>) -> ResolveState {
+    fn load_index(&self, path: &Path) -> ResolveState {
         for main_field in &self.options.main_files {
-            if let Some(package_json) = package_json {
-                if let Some(path) = self.load_browser_field(path, main_field, package_json)? {
+            let main_path = path.join(main_field);
+            if self.options.enforce_extension == Some(false) {
+                if let Some(path) = self.load_alias_or_file(&main_path)? {
                     return Ok(Some(path));
                 }
-            }
-
-            let main_path = path.join(main_field);
-            if self.options.enforce_extension == Some(false) && self.cache.is_file(&main_path) {
-                return Ok(Some(main_path));
             }
             // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
             // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
             // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
             for extension in &self.options.extensions {
                 let main_path_with_extension = main_path.with_extension(extension);
-                if self.cache.is_file(&main_path_with_extension) {
-                    return Ok(Some(main_path_with_extension));
+                if let Some(path) = self.load_alias_or_file(&main_path_with_extension)? {
+                    return Ok(Some(path));
                 }
             }
+        }
+        Ok(None)
+    }
+
+    fn load_alias_or_file(&self, path: &Path) -> ResolveState {
+        if let Some(package_json) = self.cache.find_package_json(path)? {
+            if let Some(path) = self.load_browser_field(path, None, &package_json)? {
+                return Ok(Some(path));
+            }
+        }
+        if self.cache.is_file(path) {
+            return Ok(Some(path.to_path_buf()));
         }
         Ok(None)
     }
@@ -234,9 +240,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         return Ok(Some(path));
                     }
                     // e. LOAD_INDEX(M)
-                    if let Some(path) =
-                        self.load_index(&main_field_path, Some(package_json.as_ref()))?
-                    {
+                    if let Some(path) = self.load_index(&main_field_path)? {
                         return Ok(Some(path));
                     }
                     // f. LOAD_INDEX(X) DEPRECATED
@@ -244,13 +248,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     return Err(ResolveError::NotFound(main_field_path.into_boxed_path()));
                 }
 
-                if let Some(path) = self.load_index(path, Some(package_json.as_ref()))? {
+                if let Some(path) = self.load_index(path)? {
                     return Ok(Some(path));
                 }
             }
         }
         // 2. LOAD_INDEX(X)
-        self.load_index(path, None)
+        self.load_index(path)
     }
 
     fn load_node_modules(&self, start: &Path, request: &str) -> ResolveState {
@@ -304,7 +308,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// * Parent of package.json is None
     fn load_package_self(&self, path: &Path, request: &str) -> ResolveState {
         if let Some(package_json) = self.cache.find_package_json(path)? {
-            if let Some(path) = self.load_browser_field(path, request, &package_json)? {
+            if let Some(path) = self.load_browser_field(path, Some(request), &package_json)? {
                 return Ok(Some(path));
             }
         }
@@ -314,10 +318,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn load_browser_field(
         &self,
         path: &Path,
-        request: &str,
+        request: Option<&str>,
         package_json: &PackageJson,
     ) -> ResolveState {
-        if let Some(request) = package_json.resolve(path, request, &self.options.extensions)? {
+        if let Some(request) = package_json.resolve(path, request)? {
             let request = Request::parse(request).map_err(ResolveError::Request)?;
             debug_assert!(package_json.path.file_name().is_some_and(|x| x == "package.json"));
             // TODO: Do we need to pass query and fragment?
