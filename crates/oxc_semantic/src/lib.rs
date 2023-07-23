@@ -128,15 +128,14 @@ mod tests {
     use oxc_span::{Atom, SourceType};
 
     use super::*;
-    // use crate::{Semantic, SemanticBuilder};
 
+    /// Create a [`Semantic`] from source code, assuming there are no syntax/semantic errors.
     fn get_semantic<'s, 'a: 's>(
         allocator: &'a Allocator,
         source: &'s str,
         source_type: SourceType,
     ) -> Semantic<'s> {
-        // let allocator = Allocator::default();
-        let parse = oxc_parser::Parser::new(&allocator, source, source_type).parse();
+        let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
         assert!(parse.errors.is_empty());
         let program = allocator.alloc(parse.program);
         let semantic = SemanticBuilder::new(source, source_type).build(program);
@@ -168,8 +167,8 @@ mod tests {
             kind => panic!("Expected VariableDeclarator for 'let', got {kind:?}"),
         }
 
-        let references: Vec<_> = semantic.symbol_references(top_level_a).collect();
-        assert_eq!(references.len(), 1);
+        let references = semantic.symbol_references(top_level_a);
+        assert_eq!(references.count(), 1);
     }
 
     #[test]
