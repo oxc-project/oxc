@@ -1494,6 +1494,7 @@ dependencies = [
  "jemallocator",
  "mimalloc",
  "nodejs-resolver",
+ "rayon",
  "rustc-hash",
  "serde",
  "serde_json",

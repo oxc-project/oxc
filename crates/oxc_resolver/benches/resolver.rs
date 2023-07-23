@@ -19,6 +19,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 use std::{env, path::PathBuf};
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use rayon::prelude::*;
 
 fn data() -> Vec<(PathBuf, &'static str)> {
     let cwd = env::current_dir().unwrap().join("tests/enhanced_resolve/");
@@ -69,14 +70,14 @@ fn oxc_resolver() -> oxc_resolver::Resolver {
 fn resolver_benchmark(c: &mut Criterion) {
     let data = data();
 
-    // Check path is valid, re-initlize so it they don't use cache
+    // Check path is valid, re-initialize so they don't use cache
     for (path, request) in &data {
         assert!(nodejs_resolver().resolve(path, request).is_ok(), "{path:?} {request}");
         assert!(oxc_resolver().resolve(path, request).is_ok(), "{path:?} {request}");
     }
 
     // Bench nodejs_resolver with cache
-    c.bench_with_input(BenchmarkId::new("nodejs_resolver", ""), &data, |b, data| {
+    c.bench_with_input(BenchmarkId::new("single-thread", "nodejs-resolver"), &data, |b, data| {
         let nodejs_resolver = nodejs_resolver();
         b.iter(|| {
             for (path, request) in data {
@@ -86,12 +87,30 @@ fn resolver_benchmark(c: &mut Criterion) {
     });
 
     // Bench oxc_resolver with cache
-    c.bench_with_input(BenchmarkId::new("oxc_resolver", ""), &data, |b, data| {
+    c.bench_with_input(BenchmarkId::new("single-thread", "oxc-resolver"), &data, |b, data| {
         let oxc_resolver = oxc_resolver();
         b.iter(|| {
             for (path, request) in data {
                 _ = oxc_resolver.resolve(path, request);
             }
+        });
+    });
+
+    c.bench_with_input(BenchmarkId::new("multi-thread", "nodejs-resolver"), &data, |b, data| {
+        let nodejs_resolver = nodejs_resolver();
+        b.iter(|| {
+            data.par_iter().for_each(|(path, request)| {
+                _ = nodejs_resolver.resolve(path, request);
+            });
+        });
+    });
+
+    c.bench_with_input(BenchmarkId::new("multi-thread", "oxc-resolver"), &data, |b, data| {
+        let oxc_resolver = oxc_resolver();
+        b.iter(|| {
+            data.par_iter().for_each(|(path, request)| {
+                _ = oxc_resolver.resolve(path, request);
+            });
         });
     });
 }
