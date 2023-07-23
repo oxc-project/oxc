@@ -29,6 +29,7 @@ pub use crate::{
     resolution::Resolution,
 };
 use crate::{
+    package_json::PackageJson,
     path::PathUtil,
     request::{Request, RequestPath},
 };
@@ -145,12 +146,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn require_path(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
+        let dirname = self.cache.dirname(path);
         // 5. LOAD_PACKAGE_SELF(X, dirname(Y))
-        if let Some(path) = self.load_package_self(path, request_str)? {
+        if let Some(path) = self.load_package_self(&dirname, request_str)? {
             return Ok(path);
         }
         // 6. LOAD_NODE_MODULES(X, dirname(Y))
-        if let Some(path) = self.load_node_modules(path, request_str)? {
+        if let Some(path) = self.load_node_modules(&dirname, request_str)? {
             return Ok(path);
         }
         if let Some(path) = self.load_as_file(&path.join(request_str))? {
@@ -188,8 +190,14 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     #[allow(clippy::unnecessary_wraps)]
-    fn load_index(&self, path: &Path) -> ResolveState {
+    fn load_index(&self, path: &Path, package_json: Option<&PackageJson>) -> ResolveState {
         for main_field in &self.options.main_files {
+            if let Some(package_json) = package_json {
+                if let Some(path) = self.load_browser_field(path, main_field, package_json)? {
+                    return Ok(Some(path));
+                }
+            }
+
             let main_path = path.join(main_field);
             if self.options.enforce_extension == Some(false) && self.cache.is_file(&main_path) {
                 return Ok(Some(main_path));
@@ -223,17 +231,23 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         return Ok(Some(path));
                     }
                     // e. LOAD_INDEX(M)
-                    if let Some(path) = self.load_index(&main_field_path)? {
+                    if let Some(path) =
+                        self.load_index(&main_field_path, Some(package_json.as_ref()))?
+                    {
                         return Ok(Some(path));
                     }
                     // f. LOAD_INDEX(X) DEPRECATED
                     // g. THROW "not found"
                     return Err(ResolveError::NotFound(main_field_path.into_boxed_path()));
                 }
+
+                if let Some(path) = self.load_index(path, Some(package_json.as_ref()))? {
+                    return Ok(Some(path));
+                }
             }
         }
         // 2. LOAD_INDEX(X)
-        self.load_index(path)
+        self.load_index(path, None)
     }
 
     fn load_node_modules(&self, start: &Path, request_str: &str) -> ResolveState {
@@ -241,21 +255,20 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let dirs = self.node_module_paths(start);
         // 2. for each DIR in DIRS:
         for node_module_path in dirs {
-            let node_module_path = node_module_path.join(request_str);
-            for main_file in &self.options.main_files {
-                if let Some(path) = self.load_package_self(&node_module_path, main_file)? {
-                    return Ok(Some(path));
-                }
-            }
             // a. LOAD_PACKAGE_EXPORTS(X, DIR)
+            if let Some(path) = self.load_package_exports(&node_module_path, request_str)? {
+                return Ok(Some(path));
+            }
+
+            let node_module_file = node_module_path.join(request_str);
             // b. LOAD_AS_FILE(DIR/X)
             if !request_str.ends_with('/') {
-                if let Some(path) = self.load_as_file(&node_module_path)? {
+                if let Some(path) = self.load_as_file(&node_module_file)? {
                     return Ok(Some(path));
                 }
             }
             // c. LOAD_AS_DIRECTORY(DIR/X)
-            if let Some(path) = self.load_as_directory(&node_module_path)? {
+            if let Some(path) = self.load_as_directory(&node_module_file)? {
                 return Ok(Some(path));
             }
         }
@@ -267,19 +280,45 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             .flat_map(|path| self.options.modules.iter().map(|module| path.join(module)))
     }
 
+    #[allow(clippy::unnecessary_wraps, clippy::unused_self)]
+    fn load_package_exports(&self, _path: &Path, _request_str: &str) -> ResolveState {
+        // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
+        //    may have a @scope/ prefix and the subpath begins with a slash (`/`).
+        // 2. If X does not match this pattern or DIR/NAME/package.json is not a file,
+        //    return.
+        // 3. Parse DIR/NAME/package.json, and look for "exports" field.
+        // 4. If "exports" is null or undefined, return.
+        // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(DIR/NAME), "." + SUBPATH,
+        //    `package.json` "exports", ["node", "require"]) defined in the ESM resolver.
+        // 6. RESOLVE_ESM_MATCH(MATCH)
+        Ok(None)
+    }
+
     /// # Panics
     ///
     /// * Parent of package.json is None
     fn load_package_self(&self, path: &Path, request_str: &str) -> ResolveState {
         if let Some(package_json) = self.cache.find_package_json(path)? {
-            if let Some(request_str) =
-                package_json.resolve_request(path, request_str, &self.options.extensions)?
-            {
-                let request = Request::parse(request_str).map_err(ResolveError::Request)?;
-                debug_assert!(package_json.path.file_name().is_some_and(|x| x == "package.json"));
-                // TODO: Do we need to pass query and fragment?
-                return self.require(package_json.path.parent().unwrap(), &request).map(Some);
+            if let Some(path) = self.load_browser_field(path, request_str, &package_json)? {
+                return Ok(Some(path));
             }
+        }
+        Ok(None)
+    }
+
+    fn load_browser_field(
+        &self,
+        path: &Path,
+        request_str: &str,
+        package_json: &PackageJson,
+    ) -> ResolveState {
+        if let Some(request_str) =
+            package_json.resolve(path, request_str, &self.options.extensions)?
+        {
+            let request = Request::parse(request_str).map_err(ResolveError::Request)?;
+            debug_assert!(package_json.path.file_name().is_some_and(|x| x == "package.json"));
+            // TODO: Do we need to pass query and fragment?
+            return self.require(package_json.path.parent().unwrap(), &request).map(Some);
         }
         Ok(None)
     }

@@ -29,6 +29,10 @@ impl<Fs: FileSystem> Cache<Fs> {
         self.cache_value(path).meta(&self.fs).is_some_and(|m| m.is_file)
     }
 
+    pub fn dirname(&self, path: &Path) -> PathBuf {
+        (if self.is_file(path) { path.parent().unwrap() } else { path }).to_path_buf()
+    }
+
     pub fn canonicalize(&self, path: &Path) -> Option<PathBuf> {
         self.cache_value(path).symlink(&self.fs)
     }
