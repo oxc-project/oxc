@@ -71,10 +71,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     pub fn resolve<P: AsRef<Path>>(
         &self,
         path: P,
-        request_str: &str,
+        request: &str,
     ) -> Result<Resolution, ResolveError> {
         let path = path.as_ref();
-        let request = Request::parse(request_str).map_err(ResolveError::Request)?;
+        let request = Request::parse(request).map_err(ResolveError::Request)?;
         let path = if let Some(path) =
             self.load_alias(path, request.path.as_str(), &self.options.alias)?
         {
@@ -129,13 +129,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     // 3. If X begins with './' or '/' or '../'
-    fn require_relative(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
-        if let Some(path) = self.load_package_self(path, request_str)? {
+    fn require_relative(&self, path: &Path, request: &str) -> Result<PathBuf, ResolveError> {
+        if let Some(path) = self.load_package_self(path, request)? {
             return Ok(path);
         }
-        let path = path.normalize_with(request_str);
+        let path = path.normalize_with(request);
         // a. LOAD_AS_FILE(Y + X)
-        if !request_str.ends_with('/') {
+        if !request.ends_with('/') {
             if let Some(path) = self.load_as_file(&path)? {
                 return Ok(path);
             }
@@ -148,17 +148,17 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Err(ResolveError::NotFound(path.into_boxed_path()))
     }
 
-    fn require_path(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
+    fn require_path(&self, path: &Path, request: &str) -> Result<PathBuf, ResolveError> {
         let dirname = self.cache.dirname(path);
         // 5. LOAD_PACKAGE_SELF(X, dirname(Y))
-        if let Some(path) = self.load_package_self(&dirname, request_str)? {
+        if let Some(path) = self.load_package_self(&dirname, request)? {
             return Ok(path);
         }
         // 6. LOAD_NODE_MODULES(X, dirname(Y))
-        if let Some(path) = self.load_node_modules(&dirname, request_str)? {
+        if let Some(path) = self.load_node_modules(&dirname, request)? {
             return Ok(path);
         }
-        if let Some(path) = self.load_as_file(&path.join(request_str))? {
+        if let Some(path) = self.load_as_file(&path.join(request))? {
             return Ok(path);
         }
         // 7. THROW "not found"
@@ -253,19 +253,19 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         self.load_index(path, None)
     }
 
-    fn load_node_modules(&self, start: &Path, request_str: &str) -> ResolveState {
+    fn load_node_modules(&self, start: &Path, request: &str) -> ResolveState {
         // 1. let DIRS = NODE_MODULES_PATHS(START)
         let dirs = self.node_module_paths(start);
         // 2. for each DIR in DIRS:
         for node_module_path in dirs {
             // a. LOAD_PACKAGE_EXPORTS(X, DIR)
-            if let Some(path) = self.load_package_exports(&node_module_path, request_str)? {
+            if let Some(path) = self.load_package_exports(&node_module_path, request)? {
                 return Ok(Some(path));
             }
 
-            let node_module_file = node_module_path.join(request_str);
+            let node_module_file = node_module_path.join(request);
             // b. LOAD_AS_FILE(DIR/X)
-            if !request_str.ends_with('/') {
+            if !request.ends_with('/') {
                 if let Some(path) = self.load_as_file(&node_module_file)? {
                     return Ok(Some(path));
                 }
@@ -286,7 +286,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     #[allow(clippy::unnecessary_wraps, clippy::unused_self)]
-    fn load_package_exports(&self, _path: &Path, _request_str: &str) -> ResolveState {
+    fn load_package_exports(&self, _path: &Path, _request: &str) -> ResolveState {
         // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
         //    may have a @scope/ prefix and the subpath begins with a slash (`/`).
         // 2. If X does not match this pattern or DIR/NAME/package.json is not a file,
@@ -302,9 +302,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// # Panics
     ///
     /// * Parent of package.json is None
-    fn load_package_self(&self, path: &Path, request_str: &str) -> ResolveState {
+    fn load_package_self(&self, path: &Path, request: &str) -> ResolveState {
         if let Some(package_json) = self.cache.find_package_json(path)? {
-            if let Some(path) = self.load_browser_field(path, request_str, &package_json)? {
+            if let Some(path) = self.load_browser_field(path, request, &package_json)? {
                 return Ok(Some(path));
             }
         }
@@ -314,13 +314,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn load_browser_field(
         &self,
         path: &Path,
-        request_str: &str,
+        request: &str,
         package_json: &PackageJson,
     ) -> ResolveState {
-        if let Some(request_str) =
-            package_json.resolve(path, request_str, &self.options.extensions)?
-        {
-            let request = Request::parse(request_str).map_err(ResolveError::Request)?;
+        if let Some(request) = package_json.resolve(path, request, &self.options.extensions)? {
+            let request = Request::parse(request).map_err(ResolveError::Request)?;
             debug_assert!(package_json.path.file_name().is_some_and(|x| x == "package.json"));
             // TODO: Do we need to pass query and fragment?
             return self.require(package_json.path.parent().unwrap(), &request).map(Some);
@@ -328,17 +326,17 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_alias(&self, path: &Path, request_str: &str, alias: &Alias) -> ResolveState {
+    fn load_alias(&self, path: &Path, request: &str, alias: &Alias) -> ResolveState {
         for (alias, requests) in alias {
-            let exact_match = alias.strip_prefix(request_str).is_some_and(|c| c == "$");
-            if request_str.starts_with(alias) || exact_match {
-                for request in requests {
-                    match request {
+            let exact_match = alias.strip_prefix(request).is_some_and(|c| c == "$");
+            if request.starts_with(alias) || exact_match {
+                for r in requests {
+                    match r {
                         AliasValue::Path(new_request) => {
                             let new_request = if exact_match {
                                 Cow::Borrowed(new_request)
                             } else {
-                                Cow::Owned(request_str.replacen(alias, new_request, 1))
+                                Cow::Owned(request.replacen(alias, new_request, 1))
                             };
                             let new_request =
                                 Request::parse(&new_request).map_err(ResolveError::Request)?;
@@ -383,13 +381,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Err(ResolveError::ExtensionAlias)
     }
 
-    fn load_roots(&self, path: &Path, request_str: &str) -> Result<PathBuf, ResolveError> {
-        debug_assert!(request_str.starts_with('/'));
+    fn load_roots(&self, path: &Path, request: &str) -> Result<PathBuf, ResolveError> {
+        debug_assert!(request.starts_with('/'));
         if self.options.roots.is_empty() {
-            return self.require_path(Path::new("/"), request_str);
+            return self.require_path(Path::new("/"), request);
         }
         for root in &self.options.roots {
-            if let Ok(path) = self.require_relative(root, request_str.trim_start_matches('/')) {
+            if let Ok(path) = self.require_relative(root, request.trim_start_matches('/')) {
                 return Ok(path);
             }
         }

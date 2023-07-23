@@ -38,7 +38,7 @@ impl PackageJson {
     pub fn resolve(
         &self,
         path: &Path,
-        request_str: &str,
+        request: &str,
         extensions: &[String],
     ) -> Result<Option<&str>, ResolveError> {
         // TODO: return ResolveError if the provided `alias_fields` is not `browser` for future proof
@@ -46,7 +46,7 @@ impl PackageJson {
             Some(BrowserField::Map(map)) => {
                 for (key, value) in map {
                     if let Some(resolved_str) =
-                        self.resolve_browser_field(path, key, value, request_str, extensions)?
+                        self.resolve_browser_field(path, key, value, request, extensions)?
                     {
                         return Ok(Some(resolved_str));
                     }
@@ -64,16 +64,14 @@ impl PackageJson {
         start: &Path,
         key: &str,
         value: &'a serde_json::Value,
-        request_str: &str,
+        request: &str,
         extensions: &[String],
     ) -> Result<Option<&str>, ResolveError> {
         let directory = self.path.parent().unwrap(); // `unwrap`: this is a path to package.json, parent is its containing directory
         let right = directory.join(key).normalize();
-        let left = start.join(request_str).normalize();
-        if key == request_str
-            || extensions
-                .iter()
-                .any(|ext| Path::new(request_str).with_extension(ext) == Path::new(key))
+        let left = start.join(request).normalize();
+        if key == request
+            || extensions.iter().any(|ext| Path::new(request).with_extension(ext) == Path::new(key))
             || right == left
             || extensions.iter().any(|ext| left.with_extension(ext) == right)
         {
