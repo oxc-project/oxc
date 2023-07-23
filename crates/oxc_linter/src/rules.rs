@@ -51,6 +51,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unsafe_negation,
     eslint::no_unsafe_optional_chaining,
     eslint::no_unused_labels,
+    eslint::no_unused_vars,
     eslint::no_useless_catch,
     eslint::no_useless_escape,
     eslint::require_yield,
