@@ -20,12 +20,27 @@ pub struct PackageJson {
 #[serde(untagged)]
 pub enum BrowserField {
     String(String),
-    Map(HashMap<String, serde_json::Value>),
+    Map(HashMap<PathBuf, serde_json::Value>),
 }
 
 impl PackageJson {
     pub fn parse(path: PathBuf, json: &str) -> Result<Self, serde_json::Error> {
         let mut package_json: Self = serde_json::from_str(json)?;
+
+        // Normalize all relative paths to make browser_field a constant value lookup
+        // TODO: fix BrowserField::String
+        if let Some(BrowserField::Map(map)) = &mut package_json.browser {
+            let relative_paths =
+                map.keys().filter(|path| path.starts_with(".")).cloned().collect::<Vec<_>>();
+            let dir = path.parent().unwrap();
+            for relative_path in relative_paths {
+                if let Some(value) = map.remove(&relative_path) {
+                    let normalized_path = dir.normalize_with(relative_path);
+                    map.insert(normalized_path, value);
+                }
+            }
+        }
+
         package_json.path = path;
         Ok(package_json)
     }
@@ -38,53 +53,34 @@ impl PackageJson {
     pub fn resolve(
         &self,
         path: &Path,
-        request: &str,
-        extensions: &[String],
+        request: Option<&str>,
     ) -> Result<Option<&str>, ResolveError> {
         // TODO: return ResolveError if the provided `alias_fields` is not `browser` for future proof
         match self.browser.as_ref() {
-            Some(BrowserField::Map(map)) => {
-                for (key, value) in map {
-                    if let Some(resolved_str) =
-                        self.resolve_browser_field(path, key, value, request, extensions)?
-                    {
-                        return Ok(Some(resolved_str));
-                    }
-                }
-                Ok(None)
+            Some(BrowserField::Map(field_data)) => {
+                // look up by full path if request is empty
+                request
+                    .map_or_else(
+                        || field_data.get(path),
+                        |request| field_data.get(Path::new(request)),
+                    )
+                    .map_or_else(|| Ok(None), |value| Self::alias_value(path, value))
             }
             // TODO: implement <https://github.com/defunctzombie/package-browser-field-spec#alternate-main---basic>
             _ => Ok(None),
         }
     }
 
-    // TODO: refactor this mess
-    fn resolve_browser_field<'a>(
-        &'a self,
-        start: &Path,
-        key: &str,
+    fn alias_value<'a>(
+        key: &Path,
         value: &'a serde_json::Value,
-        request: &str,
-        extensions: &[String],
-    ) -> Result<Option<&str>, ResolveError> {
-        let directory = self.path.parent().unwrap(); // `unwrap`: this is a path to package.json, parent is its containing directory
-        let right = directory.join(key).normalize();
-        let left = start.join(request).normalize();
-        if key == request
-            || extensions.iter().any(|ext| Path::new(request).with_extension(ext) == Path::new(key))
-            || right == left
-            || extensions.iter().any(|ext| left.with_extension(ext) == right)
-        {
-            if let serde_json::Value::String(value) = value {
-                return Ok(Some(value.as_str()));
+    ) -> Result<Option<&'a str>, ResolveError> {
+        match value {
+            serde_json::Value::String(value) => Ok(Some(value.as_str())),
+            serde_json::Value::Bool(b) if !b => {
+                Err(ResolveError::Ignored(key.to_path_buf().into_boxed_path()))
             }
-
-            // key match without string value, i.e. `"path": false` for ignore
-            let directory = self.path.parent().unwrap(); // `unwrap`: this is a path to package.json, parent is its containing directory
-            let path_key = directory.join(key).normalize();
-            return Err(ResolveError::Ignored(path_key.into_boxed_path()));
+            _ => Ok(None),
         }
-
-        Ok(None)
     }
 }
