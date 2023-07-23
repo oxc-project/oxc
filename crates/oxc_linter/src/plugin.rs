@@ -1,30 +1,50 @@
-use std::{env, fs, path::PathBuf, rc::Rc, sync::Arc};
+use std::{collections::BTreeMap, env, fs, path::PathBuf, rc::Rc, sync::Arc};
 
 use oxc_diagnostics::miette::{miette, LabeledSpan};
 use oxc_query::Adapter;
 use oxc_semantic::Semantic;
-use trustfall::{execute_query, Schema, TryIntoStruct};
+use serde::Deserialize;
+use trustfall::{execute_query, Schema, TransparentValue, TryIntoStruct};
 
-use crate::{
-    context::LintContext,
-    lint_adapter::{InputQuery, LintAdapter},
-};
+use crate::context::LintContext;
 
 enum SpanInfo {
     SingleSpanInfo(SingleSpanInfo),
     MultipleSpanInfo(MultipleSpanInfo),
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 struct SingleSpanInfo {
     span_start: u64,
     span_end: u64,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 struct MultipleSpanInfo {
     span_start: Box<[u64]>,
     span_end: Box<[u64]>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct InputQuery {
+    pub name: String,
+    pub query: String,
+    pub args: BTreeMap<Arc<str>, TransparentValue>,
+    pub reason: String,
+    #[serde(default)]
+    pub tests: QueryTests,
+}
+
+#[derive(Debug, Clone, Deserialize, Default)]
+pub(crate) struct QueryTests {
+    pub pass: Vec<SingleTest>,
+    pub fail: Vec<SingleTest>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct SingleTest {
+    pub file_path: String,
+    pub code: String,
 }
 
 pub struct LinterPlugin {
@@ -69,8 +89,21 @@ impl LinterPlugin {
         semantic: &Rc<Semantic<'_>>,
         path: P,
     ) {
-        // let inner = LintAdapter::new(Rc::clone(semantic), &path.into());
-        let inner = Adapter { path_components: vec![], semantic: Rc::clone(semantic) };
+        let inner = Adapter {
+            path_components: path
+                .into()
+                .components()
+                .skip_while(|comp| !matches!(comp, std::path::Component::Normal(_)))
+                .filter_map(|f| {
+                    if let std::path::Component::Normal(str) = f {
+                        Some(str.to_str().map(std::string::ToString::to_string))
+                    } else {
+                        None
+                    }
+                })
+                .collect(),
+            semantic: Rc::clone(semantic),
+        };
         let adapter = Arc::from(&inner);
         for input_query in &self.rules {
             for data_item in execute_query(
@@ -144,8 +177,8 @@ mod test {
     use oxc_span::SourceType;
     use path_calculate::Calculate;
 
-    use super::LinterPlugin;
-    use crate::{lint_adapter::SingleTest, Linter};
+    use super::{LinterPlugin, SingleTest};
+    use crate::Linter;
 
     #[test]
     fn test_queries() {

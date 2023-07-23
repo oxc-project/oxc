@@ -602,6 +602,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "enum-as-inner"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ffccbb6966c05b32ef8fbac435df276c4ae4d3dc55a8cd0eb9745e6c12f546a"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.18",
+]
+
+[[package]]
 name = "enum-variants-strings"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -777,6 +789,12 @@ name = "hashbrown"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
+
+[[package]]
+name = "heck"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hermit-abi"
@@ -1574,7 +1592,10 @@ dependencies = [
 name = "oxc_query"
 version = "0.0.6"
 dependencies = [
+ "enum-as-inner",
+ "oxc_allocator",
  "oxc_ast",
+ "oxc_parser",
  "oxc_semantic",
  "oxc_span",
  "path-calculate",
@@ -2461,9 +2482,9 @@ dependencies = [
 
 [[package]]
 name = "trustfall"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56e2dc42bee0d4fdccac9fbfac90f08250e6d2d7adffbb7898b485c810142ee6"
+checksum = "d85d9aa80e5cfdb9e6559d0b91fa4a02103d419a305c63ba34a4347cf773628a"
 dependencies = [
  "anyhow",
  "trustfall_core",
@@ -2472,16 +2493,16 @@ dependencies = [
 
 [[package]]
 name = "trustfall_core"
-version = "0.5.0"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b01865eb4f584ed240aa1f80820dbe6c25c9933cae87986a90786eea43386f9b"
+checksum = "ea2bf2ead3c6aabf0ca76e0be620d8c347994dd61f6f35db2c4f2981e9ffb6b2"
 dependencies = [
  "async-graphql-parser",
  "async-graphql-value",
  "chrono",
  "itertools",
- "lazy_static",
  "maplit",
+ "once_cell",
  "regex",
  "ron",
  "serde",

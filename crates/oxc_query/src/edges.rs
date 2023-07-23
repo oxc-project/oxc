@@ -8,7 +8,7 @@ use crate::Adapter;
 pub(super) fn resolve_astnode_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -22,11 +22,44 @@ pub(super) fn resolve_astnode_edge<'a, 'b: 'a>(
     }
 }
 
+fn ancestors<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    trustfall::provider::resolve_neighbors_with(contexts, |v| {
+        Box::new(
+            Box::new(adapter.semantic.nodes().ancestors(v.ast_node_id()))
+                .map(|ancestor| *adapter.semantic.nodes().get_node(ancestor))
+                .map(std::convert::Into::into),
+        )
+    })
+}
+
+fn parents<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    trustfall::provider::resolve_neighbors_with(contexts, |v| {
+        #[allow(clippy::option_if_let_else)]
+        if let Some(parent) = adapter.semantic.nodes().parent_node(v.ast_node_id()) {
+            Box::new(std::iter::once((*parent).into()))
+        } else {
+            Box::new(std::iter::empty())
+        }
+    })
+}
+
+fn get_span<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    trustfall::provider::resolve_neighbors_with(contexts, |v| {
+        Box::new(std::iter::once(Vertex::Span(v.span())))
+    })
+}
+
 mod astnode {
-    use oxc_span::GetSpan;
     use trustfall::provider::{
-        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
-        VertexIterator,
+        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
     use super::super::vertex::Vertex;
@@ -37,13 +70,7 @@ mod astnode {
         _resolve_info: &ResolveEdgeInfo,
         adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        resolve_neighbors_with(contexts, |v| {
-            Box::new(
-                Box::new(adapter.semantic.nodes().ancestors(v.as_a_s_t_node().unwrap().id()))
-                    .map(|ancestor| *adapter.semantic.nodes().get_node(ancestor))
-                    .map(std::convert::Into::into),
-            )
-        })
+        super::ancestors(contexts, adapter)
     }
 
     pub(super) fn parent<'a, 'b: 'a>(
@@ -51,32 +78,21 @@ mod astnode {
         _resolve_info: &ResolveEdgeInfo,
         adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        resolve_neighbors_with(contexts, |v| {
-            #[allow(clippy::option_if_let_else)]
-            if let Some(parent) =
-                adapter.semantic.nodes().parent_node(v.as_a_s_t_node().unwrap().id())
-            {
-                Box::new(std::iter::once((*parent).into()))
-            } else {
-                Box::new(std::iter::empty())
-            }
-        })
+        super::parents(contexts, adapter)
     }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        resolve_neighbors_with(contexts, |v| {
-            Box::new(std::iter::once(Vertex::Span(v.as_a_s_t_node().unwrap().kind().span())))
-        })
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_assignment_type_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -90,10 +106,8 @@ pub(super) fn resolve_assignment_type_edge<'a, 'b: 'a>(
 }
 
 mod assignment_type {
-    use oxc_span::GetSpan;
     use trustfall::provider::{
-        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
-        VertexIterator,
+        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
     use super::super::vertex::Vertex;
@@ -102,16 +116,14 @@ mod assignment_type {
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        resolve_neighbors_with(contexts, |v| {
-            Box::new(std::iter::once(Vertex::Span(v.as_assignment_type().unwrap().span())))
-        })
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_class_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -238,17 +250,18 @@ mod class {
 pub(super) fn resolve_class_ast_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "ancestor" => class_ast::ancestor(contexts, resolve_info),
+        "ancestor" => class_ast::ancestor(contexts, resolve_info, adapter),
         "constructor" => class_ast::constructor(contexts, resolve_info),
         "entire_class_span" => class_ast::entire_class_span(contexts, resolve_info),
         "getter" => class_ast::getter(contexts, resolve_info),
         "method" => class_ast::method(contexts, resolve_info),
         "name_span" => class_ast::name_span(contexts, resolve_info),
-        "parent" => class_ast::parent(contexts, resolve_info),
+        "parent" => class_ast::parent(contexts, resolve_info, adapter),
         "property" => class_ast::property(contexts, resolve_info),
         "setter" => class_ast::setter(contexts, resolve_info),
         "span" => class_ast::span(contexts, resolve_info),
@@ -264,82 +277,85 @@ mod class_ast {
     };
 
     use super::super::vertex::Vertex;
+    use crate::Adapter;
 
     pub(super) fn ancestor<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'ancestor' for type 'ClassAST'")
+        super::ancestors(contexts, adapter)
     }
 
     pub(super) fn constructor<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'constructor' for type 'ClassAST'")
+        super::class::constructor(contexts, resolve_info)
     }
 
     pub(super) fn entire_class_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'entire_class_span' for type 'ClassAST'")
+        super::class::entire_class_span(contexts, resolve_info)
     }
 
     pub(super) fn getter<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'getter' for type 'ClassAST'")
+        super::class::getter(contexts, resolve_info)
     }
 
     pub(super) fn method<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'method' for type 'ClassAST'")
+        super::class::method(contexts, resolve_info)
     }
 
     pub(super) fn name_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'name_span' for type 'ClassAST'")
+        super::class::name_span(contexts, resolve_info)
     }
 
     pub(super) fn parent<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'parent' for type 'ClassAST'")
+        super::parents(contexts, adapter)
     }
 
     pub(super) fn property<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'property' for type 'ClassAST'")
+        super::class::property(contexts, resolve_info)
     }
 
     pub(super) fn setter<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'setter' for type 'ClassAST'")
+        super::class::setter(contexts, resolve_info)
     }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'ClassAST'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_class_method_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -361,14 +377,14 @@ mod class_method {
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'ClassMethod'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_class_property_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -392,14 +408,14 @@ mod class_property {
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'ClassProperty'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_default_import_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -423,14 +439,14 @@ mod default_import {
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'DefaultImport'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_expression_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -452,26 +468,27 @@ mod expression {
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'Expression'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_file_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "ast_node" => file::ast_node(contexts, resolve_info),
-        "class" => file::class(contexts, resolve_info),
-        "import" => file::import(contexts, resolve_info),
-        "interface" => file::interface(contexts, resolve_info),
-        "jsx_element" => file::jsx_element(contexts, resolve_info),
-        "last_path_part" => file::last_path_part(contexts, resolve_info),
-        "path_part" => file::path_part(contexts, resolve_info),
-        "type_annotation" => file::type_annotation(contexts, resolve_info),
-        "variable_declaration" => file::variable_declaration(contexts, resolve_info),
+        "ast_node" => file::ast_node(contexts, resolve_info, adapter),
+        "class" => file::class(contexts, resolve_info, adapter),
+        "import" => file::import(contexts, resolve_info, adapter),
+        "interface" => file::interface(contexts, resolve_info, adapter),
+        "jsx_element" => file::jsx_element(contexts, resolve_info, adapter),
+        "last_path_part" => file::last_path_part(contexts, resolve_info, adapter),
+        "path_part" => file::path_part(contexts, resolve_info, adapter),
+        "type_annotation" => file::type_annotation(contexts, resolve_info, adapter),
+        "variable_declaration" => file::variable_declaration(contexts, resolve_info, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'File'")
         }
@@ -479,80 +496,129 @@ pub(super) fn resolve_file_edge<'a, 'b: 'a>(
 }
 
 mod file {
+    use oxc_ast::{ast::ModuleDeclaration, AstKind};
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
+    use crate::Adapter;
 
     pub(super) fn ast_node<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'ast_node' for type 'File'")
+        resolve_neighbors_with(contexts, |_| {
+            Box::new(adapter.semantic.nodes().iter().map(|node| (*node).into()))
+        })
     }
 
     pub(super) fn class<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'class' for type 'File'")
+        resolve_neighbors_with(contexts, |_| {
+            Box::new(adapter.semantic.nodes().iter().filter_map(|x| {
+                let AstKind::Class(_) = x.kind() else {return None};
+                Some((*x).into())
+            }))
+        })
     }
 
     pub(super) fn import<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'import' for type 'File'")
+        resolve_neighbors_with(contexts, |_| {
+            Box::new(adapter.semantic.nodes().iter().filter_map(|x| {
+                let AstKind::ModuleDeclaration(element) = x.kind() else {return None};
+                let ModuleDeclaration::ImportDeclaration(_) = element else {return None};
+                Some((*x).into())
+            }))
+        })
     }
 
     pub(super) fn interface<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'interface' for type 'File'")
+        resolve_neighbors_with(contexts, |_| {
+            Box::new(adapter.semantic.nodes().iter().filter_map(|x| {
+                let AstKind::TSInterfaceDeclaration(_) = x.kind() else {return None};
+                Some((*x).into())
+            }))
+        })
     }
 
     pub(super) fn jsx_element<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'jsx_element' for type 'File'")
+        resolve_neighbors_with(contexts, |_| {
+            Box::new(adapter.semantic.nodes().iter().filter_map(|x| {
+                let AstKind::JSXElement(_) = x.kind() else {return None};
+                Some((*x).into())
+            }))
+        })
     }
 
     pub(super) fn last_path_part<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'last_path_part' for type 'File'")
+        let len = adapter.path_components.len();
+        resolve_neighbors_with(contexts, move |_| {
+            Box::new(std::iter::once(Vertex::PathPart(len - 1)))
+        })
     }
 
     pub(super) fn path_part<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'path_part' for type 'File'")
+        let len = adapter.path_components.len();
+        resolve_neighbors_with(contexts, move |_| Box::new((0..len).map(Vertex::PathPart)))
     }
 
     pub(super) fn type_annotation<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'type_annotation' for type 'File'")
+        resolve_neighbors_with(contexts, |_| {
+            Box::new(adapter.semantic.nodes().iter().filter_map(|x| {
+                let AstKind::TSTypeAnnotation(_) = x.kind() else {return None};
+                Some((*x).into())
+            }))
+        })
     }
 
     pub(super) fn variable_declaration<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'variable_declaration' for type 'File'")
+        resolve_neighbors_with(contexts, |_| {
+            Box::new(adapter.semantic.nodes().iter().filter_map(|x| {
+                let AstKind::VariableDeclarator(_) = x.kind() else {return None};
+                Some((*x).into())
+            }))
+        })
     }
 }
 
 pub(super) fn resolve_has_span_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -574,14 +640,14 @@ mod has_span {
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'HasSpan'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_import_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -595,8 +661,10 @@ pub(super) fn resolve_import_edge<'a, 'b: 'a>(
 }
 
 mod import {
+    use oxc_ast::ast::ImportDeclarationSpecifier;
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
@@ -605,35 +673,58 @@ mod import {
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'default_import' for type 'Import'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::Import(data) = &v else {unreachable!()};
+            Box::new(data.import.specifiers.iter().filter_map(|the_specifier| {
+                if let ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) = the_specifier
+                {
+                    Some(Vertex::DefaultImport(specifier))
+                } else {
+                    None
+                }
+            }))
+        })
     }
 
     pub(super) fn entire_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'entire_span' for type 'Import'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::Import(import) = &v else {unreachable!()};
+            Box::new(std::iter::once(Vertex::Span(import.import.span)))
+        })
     }
 
     pub(super) fn specific_import<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'specific_import' for type 'Import'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::Import(import) = &v else {unreachable!()};
+            Box::new(import.import.specifiers.iter().filter_map(|the_specifier| {
+                if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = the_specifier {
+                    Some(Vertex::SpecificImport(specifier))
+                } else {
+                    None
+                }
+            }))
+        })
     }
 }
 
 pub(super) fn resolve_import_ast_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "ancestor" => import_ast::ancestor(contexts, resolve_info),
+        "ancestor" => import_ast::ancestor(contexts, resolve_info, adapter),
         "default_import" => import_ast::default_import(contexts, resolve_info),
         "entire_span" => import_ast::entire_span(contexts, resolve_info),
-        "parent" => import_ast::parent(contexts, resolve_info),
+        "parent" => import_ast::parent(contexts, resolve_info, adapter),
         "span" => import_ast::span(contexts, resolve_info),
         "specific_import" => import_ast::specific_import(contexts, resolve_info),
         _ => {
@@ -648,54 +739,57 @@ mod import_ast {
     };
 
     use super::super::vertex::Vertex;
+    use crate::Adapter;
 
     pub(super) fn ancestor<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'ancestor' for type 'ImportAST'")
+        super::ancestors(contexts, adapter)
     }
 
     pub(super) fn default_import<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'default_import' for type 'ImportAST'")
+        super::import::default_import(contexts, resolve_info)
     }
 
     pub(super) fn entire_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'entire_span' for type 'ImportAST'")
+        super::import::entire_span(contexts, resolve_info)
     }
 
     pub(super) fn parent<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'parent' for type 'ImportAST'")
+        super::parents(contexts, adapter)
     }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'ImportAST'")
+        super::get_span(contexts)
     }
 
     pub(super) fn specific_import<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'specific_import' for type 'ImportAST'")
+        super::import::specific_import(contexts, resolve_info)
     }
 }
 
 pub(super) fn resolve_interface_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -709,46 +803,74 @@ pub(super) fn resolve_interface_edge<'a, 'b: 'a>(
 }
 
 mod interface {
+    use std::rc::Rc;
+
+    use oxc_ast::ast::Expression;
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
+    use crate::vertex::InterfaceExtendVertex;
 
     pub(super) fn entire_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'entire_span' for type 'Interface'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::Interface(data) = &v else {unreachable!()};
+            Box::new(std::iter::once(Vertex::Span(data.interface.span)))
+        })
     }
 
     pub(super) fn extend<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'extend' for type 'Interface'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::Interface(data) = &v else {unreachable!()};
+            #[allow(clippy::option_if_let_else)]
+            if let Some(extends) = &data.interface.extends {
+                Box::new(extends.iter().map(|extend| match &extend.expression {
+                        Expression::Identifier(ident) => {
+                            Vertex::InterfaceExtend(Rc::new(InterfaceExtendVertex::Identifier(ident)))
+                        }
+                        Expression::MemberExpression(membexpr) => {
+                            Vertex::InterfaceExtend(Rc::new(InterfaceExtendVertex::MemberExpression(membexpr)))
+                        }
+                        _ => unreachable!("Only ever possible to have an interface extend an identifier or memberexpr. see TS:2499"),
+                    }))
+            } else {
+                Box::new(std::iter::empty())
+            }
+        })
     }
 
     pub(super) fn name_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'name_span' for type 'Interface'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::Interface(data) = &v else {unreachable!()};
+            Box::new(std::iter::once(Vertex::Span(data.interface.id.span)))
+        })
     }
 }
 
 pub(super) fn resolve_interface_ast_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "ancestor" => interface_ast::ancestor(contexts, resolve_info),
+        "ancestor" => interface_ast::ancestor(contexts, resolve_info, adapter),
         "entire_span" => interface_ast::entire_span(contexts, resolve_info),
         "extend" => interface_ast::extend(contexts, resolve_info),
         "name_span" => interface_ast::name_span(contexts, resolve_info),
-        "parent" => interface_ast::parent(contexts, resolve_info),
+        "parent" => interface_ast::parent(contexts, resolve_info, adapter),
         "span" => interface_ast::span(contexts, resolve_info),
         _ => {
             unreachable!(
@@ -764,54 +886,57 @@ mod interface_ast {
     };
 
     use super::super::vertex::Vertex;
+    use crate::Adapter;
 
     pub(super) fn ancestor<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'ancestor' for type 'InterfaceAST'")
+        super::ancestors(contexts, adapter)
     }
 
     pub(super) fn entire_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'entire_span' for type 'InterfaceAST'")
+        super::interface::entire_span(contexts, resolve_info)
     }
 
     pub(super) fn extend<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'extend' for type 'InterfaceAST'")
+        super::interface::extend(contexts, resolve_info)
     }
 
     pub(super) fn name_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'name_span' for type 'InterfaceAST'")
+        super::interface::name_span(contexts, resolve_info)
     }
 
     pub(super) fn parent<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'parent' for type 'InterfaceAST'")
+        super::parents(contexts, adapter)
     }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'InterfaceAST'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_interface_extend_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -829,26 +954,25 @@ mod interface_extend {
         ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'InterfaceExtend'")
+        get_span(contexts)
     }
 }
 
 pub(super) fn resolve_jsxattribute_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => jsxattribute::span(contexts, resolve_info),
         "value_as_expression" => jsxattribute::value_as_expression(contexts, resolve_info),
-        "value_as_jsx_element" => jsxattribute::value_as_jsx_element(contexts, resolve_info),
         "value_as_url" => jsxattribute::value_as_url(contexts, resolve_info),
         _ => {
             unreachable!(
@@ -859,45 +983,62 @@ pub(super) fn resolve_jsxattribute_edge<'a, 'b: 'a>(
 }
 
 mod jsxattribute {
+    use oxc_ast::ast::JSXAttributeValue;
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'JSXAttribute'")
+        get_span(contexts)
     }
 
     pub(super) fn value_as_expression<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'value_as_expression' for type 'JSXAttribute'")
-    }
-
-    pub(super) fn value_as_jsx_element<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'value_as_jsx_element' for type 'JSXAttribute'")
+        resolve_neighbors_with(contexts, |v| {
+            let attr = v.as_jsx_attribute().unwrap();
+            let Some(attr_value) = &attr.value else {return Box::new(std::iter::empty())};
+            Box::new(
+                std::iter::once(match attr_value {
+                    JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
+                        oxc_ast::ast::JSXExpression::Expression(expr) => Some(Vertex::from(expr)),
+                        oxc_ast::ast::JSXExpression::EmptyExpression(_) => None,
+                    },
+                    JSXAttributeValue::Fragment(_)
+                    | JSXAttributeValue::StringLiteral(_)
+                    | JSXAttributeValue::Element(_) => None,
+                })
+                .flatten(),
+            )
+        })
     }
 
     pub(super) fn value_as_url<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'value_as_url' for type 'JSXAttribute'")
+        resolve_neighbors_with(contexts, |v| {
+            #[allow(clippy::option_if_let_else)]
+            if let Some(url) = Vertex::make_url(v.as_jsx_attribute().unwrap()) {
+                Box::new(std::iter::once(url))
+            } else {
+                Box::new(std::iter::empty())
+            }
+        })
     }
 }
 
 pub(super) fn resolve_jsxelement_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -917,70 +1058,96 @@ pub(super) fn resolve_jsxelement_edge<'a, 'b: 'a>(
 }
 
 mod jsxelement {
+    use oxc_ast::ast::JSXChild;
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
+    use crate::vertex::JSXElementVertex;
+
+    macro_rules! child_edge_iter {
+        ($contexts: ident, $vertex_type: ident, $jsx_child_type: ident) => {
+            resolve_neighbors_with($contexts, |v| {
+                let Vertex::JSXElement(data) = &v else {unreachable!()};
+                Box::new(data.element.children.iter().filter_map(|child| {
+                    let JSXChild::$jsx_child_type(element) = &child else {return None};
+                    Some(Vertex::$vertex_type(element))
+                }))
+            })
+        };
+    }
 
     pub(super) fn child_element<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_element' for type 'JSXElement'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::JSXElement(data) = &v else {unreachable!()};
+            Box::new(data.element.children.iter().filter_map(|child| {
+                let JSXChild::Element(element) = &child else {return None};
+                Some(Vertex::JSXElement(JSXElementVertex { element, ast_node: None }.into()))
+            }))
+        })
     }
 
     pub(super) fn child_expression_container<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_expression_container' for type 'JSXElement'")
+        child_edge_iter!(contexts, JSXExpressionContainer, ExpressionContainer)
     }
 
     pub(super) fn child_fragment<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_fragment' for type 'JSXElement'")
+        child_edge_iter!(contexts, JSXFragment, Fragment)
     }
 
     pub(super) fn child_spread<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_spread' for type 'JSXElement'")
+        child_edge_iter!(contexts, JSXSpreadChild, Spread)
     }
 
     pub(super) fn child_text<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_text' for type 'JSXElement'")
+        child_edge_iter!(contexts, JSXText, Text)
     }
 
     pub(super) fn opening_element<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'opening_element' for type 'JSXElement'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::JSXElement(data) = &v else {unreachable!()};
+
+            Box::new(std::iter::once(Vertex::JSXOpeningElement(&data.element.opening_element)))
+        })
     }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'JSXElement'")
+        get_span(contexts)
     }
 }
 
 pub(super) fn resolve_jsxelement_ast_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "ancestor" => jsxelement_ast::ancestor(contexts, resolve_info),
+        "ancestor" => jsxelement_ast::ancestor(contexts, resolve_info, adapter),
         "child_element" => jsxelement_ast::child_element(contexts, resolve_info),
         "child_expression_container" => {
             jsxelement_ast::child_expression_container(contexts, resolve_info)
@@ -989,7 +1156,7 @@ pub(super) fn resolve_jsxelement_ast_edge<'a, 'b: 'a>(
         "child_spread" => jsxelement_ast::child_spread(contexts, resolve_info),
         "child_text" => jsxelement_ast::child_text(contexts, resolve_info),
         "opening_element" => jsxelement_ast::opening_element(contexts, resolve_info),
-        "parent" => jsxelement_ast::parent(contexts, resolve_info),
+        "parent" => jsxelement_ast::parent(contexts, resolve_info, adapter),
         "span" => jsxelement_ast::span(contexts, resolve_info),
         _ => {
             unreachable!(
@@ -1005,75 +1172,78 @@ mod jsxelement_ast {
     };
 
     use super::super::vertex::Vertex;
+    use crate::Adapter;
 
     pub(super) fn ancestor<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'ancestor' for type 'JSXElementAST'")
+        super::ancestors(contexts, adapter)
     }
 
     pub(super) fn child_element<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_element' for type 'JSXElementAST'")
+        super::jsxelement::child_element(contexts, resolve_info)
     }
 
     pub(super) fn child_expression_container<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_expression_container' for type 'JSXElementAST'")
+        super::jsxelement::child_expression_container(contexts, resolve_info)
     }
 
     pub(super) fn child_fragment<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_fragment' for type 'JSXElementAST'")
+        super::jsxelement::child_fragment(contexts, resolve_info)
     }
 
     pub(super) fn child_spread<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_spread' for type 'JSXElementAST'")
+        super::jsxelement::child_spread(contexts, resolve_info)
     }
 
     pub(super) fn child_text<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'child_text' for type 'JSXElementAST'")
+        super::jsxelement::child_text(contexts, resolve_info)
     }
 
     pub(super) fn opening_element<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'opening_element' for type 'JSXElementAST'")
+        super::jsxelement::opening_element(contexts, resolve_info)
     }
 
     pub(super) fn parent<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'parent' for type 'JSXElementAST'")
+        super::parents(contexts, adapter)
     }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'JSXElementAST'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_jsxexpression_container_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1091,20 +1261,20 @@ mod jsxexpression_container {
         ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'JSXExpressionContainer'")
+        get_span(contexts)
     }
 }
 
 pub(super) fn resolve_jsxfragment_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1120,20 +1290,20 @@ mod jsxfragment {
         ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'JSXFragment'")
+        get_span(contexts)
     }
 }
 
 pub(super) fn resolve_jsxopening_element_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1149,38 +1319,64 @@ pub(super) fn resolve_jsxopening_element_edge<'a, 'b: 'a>(
 }
 
 mod jsxopening_element {
+    use oxc_ast::ast::JSXAttributeItem;
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn attribute<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'attribute' for type 'JSXOpeningElement'")
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_jsx_opening_element()
+                    .expect("to have a jsx opening element")
+                    .attributes
+                    .iter()
+                    .filter_map(|attr| match attr {
+                        JSXAttributeItem::Attribute(attr) => Some(Vertex::JSXAttribute(attr)),
+                        JSXAttributeItem::SpreadAttribute(_) => None,
+                    }),
+            )
+        })
     }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'JSXOpeningElement'")
+        get_span(contexts)
     }
 
     pub(super) fn spread_attribute<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'spread_attribute' for type 'JSXOpeningElement'")
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_jsx_opening_element()
+                    .expect("to have a jsx opening element")
+                    .attributes
+                    .iter()
+                    .filter_map(|attr| match attr {
+                        JSXAttributeItem::Attribute(_) => None,
+                        JSXAttributeItem::SpreadAttribute(spread_attr) => {
+                            Some(Vertex::JSXSpreadAttribute(spread_attr))
+                        }
+                    }),
+            )
+        })
     }
 }
 
 pub(super) fn resolve_jsxspread_attribute_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1198,20 +1394,20 @@ mod jsxspread_attribute {
         ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'JSXSpreadAttribute'")
+        get_span(contexts)
     }
 }
 
 pub(super) fn resolve_jsxspread_child_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1229,20 +1425,20 @@ mod jsxspread_child {
         ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'JSXSpreadChild'")
+        get_span(contexts)
     }
 }
 
 pub(super) fn resolve_jsxtext_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1258,20 +1454,20 @@ mod jsxtext {
         ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'JSXText'")
+        get_span(contexts)
     }
 }
 
 pub(super) fn resolve_member_extend_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1289,13 +1485,13 @@ mod member_extend {
         ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'MemberExtend'")
+        get_span(contexts)
     }
 }
 
@@ -1324,17 +1520,22 @@ pub(super) fn resolve_object_literal_edge<'a, 'b: 'a>(
 }
 
 mod object_literal {
+    use std::rc::Rc;
+
+    use oxc_ast::ast::ObjectPropertyKind;
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
+    use crate::util::expr_to_maybe_const_string;
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'ObjectLiteral'")
+        get_span(contexts)
     }
 
     pub(super) fn value<'a, 'b: 'a>(
@@ -1342,18 +1543,47 @@ mod object_literal {
         key: &str,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'value' for type 'ObjectLiteral'")
+        let k = Rc::new(key.to_owned());
+        resolve_neighbors_with(contexts, move |v| {
+            let key = Rc::clone(&k);
+            let obj = v.as_object_literal().expect("to have an objectliteral");
+
+            Box::new(
+                obj.properties
+                    .iter()
+                    .filter(move |property| {
+                        let ObjectPropertyKind::ObjectProperty(prop) = property else {return false};
+                        match &prop.key {
+                            oxc_ast::ast::PropertyKey::Identifier(ident) => {
+                                ident.name == key.as_str()
+                            }
+                            oxc_ast::ast::PropertyKey::PrivateIdentifier(_) => unimplemented!(
+                                "getting a private property on an object is unimplemented as of yet"
+                            ),
+                            oxc_ast::ast::PropertyKey::Expression(expr) => {
+                                expr_to_maybe_const_string(expr)
+                                    .map_or(false, |key_from_iter| key_from_iter == key.as_str())
+                            }
+                        }
+                    })
+                    .map(|x| {
+                        let ObjectPropertyKind::ObjectProperty(prop) = &x else {unreachable!()};
+                        (&prop.value).into()
+                    }),
+            )
+        })
     }
 }
 
 pub(super) fn resolve_path_part_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "next" => path_part::next(contexts, resolve_info),
+        "next" => path_part::next(contexts, resolve_info, adapter),
         "prev" => path_part::prev(contexts, resolve_info),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'PathPart'")
@@ -1363,36 +1593,54 @@ pub(super) fn resolve_path_part_edge<'a, 'b: 'a>(
 
 mod path_part {
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
+    use crate::Adapter;
 
     pub(super) fn next<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'next' for type 'PathPart'")
+        resolve_neighbors_with(contexts, |v| {
+            let i = *v.as_path_part().unwrap();
+            if i + 1 < adapter.path_components.len() {
+                Box::new(std::iter::once(Vertex::PathPart(i + 1)))
+            } else {
+                Box::new(std::iter::empty())
+            }
+        })
     }
 
     pub(super) fn prev<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'prev' for type 'PathPart'")
+        resolve_neighbors_with(contexts, |v| {
+            let i = *v.as_path_part().unwrap();
+            if i > 0 {
+                Box::new(std::iter::once(Vertex::PathPart(i - 1)))
+            } else {
+                Box::new(std::iter::empty())
+            }
+        })
     }
 }
 
 pub(super) fn resolve_return_statement_ast_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "ancestor" => return_statement_ast::ancestor(contexts, resolve_info),
+        "ancestor" => return_statement_ast::ancestor(contexts, resolve_info, adapter),
         "expression" => return_statement_ast::expression(contexts, resolve_info),
-        "parent" => return_statement_ast::parent(contexts, resolve_info),
+        "parent" => return_statement_ast::parent(contexts, resolve_info, adapter),
         "span" => return_statement_ast::span(contexts, resolve_info),
         _ => {
             unreachable!(
@@ -1404,44 +1652,55 @@ pub(super) fn resolve_return_statement_ast_edge<'a, 'b: 'a>(
 
 mod return_statement_ast {
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
+    use crate::Adapter;
 
     pub(super) fn ancestor<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'ancestor' for type 'ReturnStatementAST'")
+        super::ancestors(contexts, adapter)
     }
 
     pub(super) fn expression<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'expression' for type 'ReturnStatementAST'")
+        resolve_neighbors_with(contexts, |v| {
+            #[allow(clippy::option_if_let_else)]
+            if let Some(expr) = &v.as_return_statement_ast().unwrap().return_statement.argument {
+                Box::new(std::iter::once(expr.into()))
+            } else {
+                Box::new(std::iter::empty())
+            }
+        })
     }
 
     pub(super) fn parent<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'parent' for type 'ReturnStatementAST'")
+        super::parents(contexts, adapter)
     }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'ReturnStatementAST'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_simple_extend_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1459,20 +1718,20 @@ mod simple_extend {
         ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'SimpleExtend'")
+        get_span(contexts)
     }
 }
 
 pub(super) fn resolve_specific_import_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1490,25 +1749,25 @@ mod specific_import {
         ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'SpecificImport'")
+        get_span(contexts)
     }
 }
 
 pub(super) fn resolve_type_annotation_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => type_annotation::span(contexts, resolve_info),
-        "type_" => type_annotation::type_(contexts, resolve_info),
+        "type" => type_annotation::type_(contexts, resolve_info),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'TypeAnnotation'"
@@ -1519,37 +1778,42 @@ pub(super) fn resolve_type_annotation_edge<'a, 'b: 'a>(
 
 mod type_annotation {
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
-    use super::super::vertex::Vertex;
+    use super::{super::vertex::Vertex, get_span};
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'TypeAnnotation'")
+        get_span(contexts)
     }
 
     pub(super) fn type_<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'type_' for type 'TypeAnnotation'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::TypeAnnotation(data) = &v else {unreachable!()};
+            Box::new(std::iter::once(Vertex::Type(&data.type_annotation.type_annotation)))
+        })
     }
 }
 
 pub(super) fn resolve_type_annotation_ast_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "ancestor" => type_annotation_ast::ancestor(contexts, resolve_info),
-        "parent" => type_annotation_ast::parent(contexts, resolve_info),
+        "ancestor" => type_annotation_ast::ancestor(contexts, resolve_info, adapter),
+        "parent" => type_annotation_ast::parent(contexts, resolve_info, adapter),
         "span" => type_annotation_ast::span(contexts, resolve_info),
-        "type_" => type_annotation_ast::type_(contexts, resolve_info),
+        "type" => type_annotation_ast::type_(contexts, resolve_info),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'TypeAnnotationAST'"
@@ -1564,40 +1828,43 @@ mod type_annotation_ast {
     };
 
     use super::super::vertex::Vertex;
+    use crate::Adapter;
 
     pub(super) fn ancestor<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'ancestor' for type 'TypeAnnotationAST'")
+        super::ancestors(contexts, adapter)
     }
 
     pub(super) fn parent<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'parent' for type 'TypeAnnotationAST'")
+        super::parents(contexts, adapter)
     }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'TypeAnnotationAST'")
+        super::get_span(contexts)
     }
 
     pub(super) fn type_<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'type_' for type 'TypeAnnotationAST'")
+        super::type_annotation::type_(contexts, resolve_info)
     }
 }
 
 pub(super) fn resolve_type_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1619,14 +1886,14 @@ mod type_ {
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'span' for type 'Type_'")
+        super::get_span(contexts)
     }
 }
 
 pub(super) fn resolve_url_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
@@ -1639,27 +1906,46 @@ pub(super) fn resolve_url_edge<'a, 'b: 'a>(
 
 mod url {
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
+    use crate::vertex::SearchParameterVertex;
 
     pub(super) fn search_parameter<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'search_parameter' for type 'URL'")
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_url()
+                    .unwrap()
+                    .query_pairs()
+                    .map(|(key, value)| {
+                        Vertex::SearchParameter(
+                            SearchParameterVertex {
+                                key: key.to_string(),
+                                value: value.to_string(),
+                            }
+                            .into(),
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .into_iter(),
+            )
+        })
     }
 }
 
 pub(super) fn resolve_variable_declaration_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "assignment_span" => variable_declaration::assignment_span(contexts, resolve_info),
+        "entire_span" => variable_declaration::entire_span(contexts, resolve_info),
         "left" => variable_declaration::left(contexts, resolve_info),
         _ => {
             unreachable!(
@@ -1671,37 +1957,47 @@ pub(super) fn resolve_variable_declaration_edge<'a, 'b: 'a>(
 
 mod variable_declaration {
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
 
-    pub(super) fn assignment_span<'a, 'b: 'a>(
+    pub(super) fn entire_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'assignment_span' for type 'VariableDeclaration'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::VariableDeclaration(data) = &v else {unreachable!()};
+            Box::new(std::iter::once(Vertex::Span(data.variable_declaration.span)))
+        })
     }
 
     pub(super) fn left<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'left' for type 'VariableDeclaration'")
+        resolve_neighbors_with(contexts, |v| {
+            let Vertex::VariableDeclaration(data) = &v else {unreachable!()};
+            return Box::new(std::iter::once(Vertex::AssignmentType(
+                &data.variable_declaration.id.kind,
+            )));
+        })
     }
 }
 
 pub(super) fn resolve_variable_declaration_ast_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
-    parameters: &EdgeParameters,
+    _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "ancestor" => variable_declaration_ast::ancestor(contexts, resolve_info),
-        "assignment_span" => variable_declaration_ast::assignment_span(contexts, resolve_info),
+        "ancestor" => variable_declaration_ast::ancestor(contexts, resolve_info, adapter),
+        "entire_span" => variable_declaration_ast::entire_span(contexts, resolve_info),
         "left" => variable_declaration_ast::left(contexts, resolve_info),
-        "parent" => variable_declaration_ast::parent(contexts, resolve_info),
+        "parent" => variable_declaration_ast::parent(contexts, resolve_info, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'VariableDeclarationAST'"
@@ -1716,32 +2012,35 @@ mod variable_declaration_ast {
     };
 
     use super::super::vertex::Vertex;
+    use crate::Adapter;
 
     pub(super) fn ancestor<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'ancestor' for type 'VariableDeclarationAST'")
+        super::ancestors(contexts, adapter)
     }
 
-    pub(super) fn assignment_span<'a, 'b: 'a>(
+    pub(super) fn entire_span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'assignment_span' for type 'VariableDeclarationAST'")
+        super::variable_declaration::entire_span(contexts, resolve_info)
     }
 
     pub(super) fn left<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
+        resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'left' for type 'VariableDeclarationAST'")
+        super::variable_declaration::left(contexts, resolve_info)
     }
 
     pub(super) fn parent<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
+        adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        todo!("implement edge 'parent' for type 'VariableDeclarationAST'")
+        super::parents(contexts, adapter)
     }
 }

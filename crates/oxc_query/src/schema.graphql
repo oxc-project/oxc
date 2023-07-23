@@ -119,7 +119,7 @@ this will fire once per assignment.
 """
 interface VariableDeclaration {
   left: AssignmentType!
-  assignment_span: Span!
+  entire_span: Span!
 }
 
 type SearchParameter {
@@ -144,12 +144,6 @@ interface JSXAttribute {
   ie: <Fruit blueberry={"blue"} /> or <Fruit blueberry={{color: "blue"}} />
   """
   value_as_expression: Expression
-
-  """
-  If the value is an expression
-  ie: <Fruit blueberry={"blue"} /> or <Fruit blueberry={{color: "blue"}} />
-  """
-  value_as_jsx_element: JSXElement
 
   """
   If value_as_constant_string is not null, then this will try to parse that to a url
@@ -232,6 +226,11 @@ type ClassMethod {
 interface Class {
   is_abstract: Boolean!
 
+  """
+  if the extended expression is an identifier, this will give you the name
+  """
+  extended_class_name: String
+
   constructor: [ClassMethod!]!
   method: [ClassMethod!]!
   getter: [ClassMethod!]!
@@ -245,13 +244,13 @@ interface Class {
   entire_class_span: Span!
 }
 
-interface Type_ {
+interface Type {
   str: String!
   span: Span!
 }
 
 interface TypeAnnotation implements HasSpan {
-  type_: Type_!
+  type: Type!
   span: Span!
 }
 
@@ -330,11 +329,11 @@ type VariableDeclarationAST implements VariableDeclaration {
   parent: ASTNode
   ancestor: [ASTNode!]!
   # HasSpan
-  assignment_span: Span!
+  entire_span: Span!
 }
 
 type TypeAnnotationAST implements TypeAnnotation & ASTNode & HasSpan {
-  type_: Type_!
+  type: Type!
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!

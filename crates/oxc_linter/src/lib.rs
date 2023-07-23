@@ -14,7 +14,6 @@ mod context;
 mod disable_directives;
 mod fixer;
 mod globals;
-mod lint_adapter;
 mod plugin;
 pub mod rule;
 mod rules;
