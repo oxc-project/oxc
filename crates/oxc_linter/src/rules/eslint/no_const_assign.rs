@@ -41,8 +41,7 @@ impl Rule for NoConstAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
         if symbol_table.get_flag(symbol_id).is_const_variable() {
-            for reference_id in symbol_table.get_resolved_references(symbol_id) {
-                let reference = symbol_table.get_reference(*reference_id);
+            for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(NoConstAssignDiagnostic(
                         symbol_table.get_name(symbol_id).clone(),

@@ -43,8 +43,7 @@ impl Rule for NoExAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
         if symbol_table.get_flag(symbol_id).is_catch_variable() {
-            for reference_id in symbol_table.get_resolved_references(symbol_id) {
-                let reference = symbol_table.get_reference(*reference_id);
+            for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(NoExAssignDiagnostic(
                         reference.span(),
