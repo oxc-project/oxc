@@ -268,8 +268,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 }
             }
             // c. LOAD_AS_DIRECTORY(DIR/X)
-            if let Some(path) = self.load_as_directory(&node_module_file)? {
-                return Ok(Some(path));
+            if self.cache.is_dir(&node_module_file) {
+                if let Some(path) = self.load_as_directory(&node_module_file)? {
+                    return Ok(Some(path));
+                }
             }
         }
         Ok(None)

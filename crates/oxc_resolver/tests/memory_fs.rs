@@ -58,7 +58,8 @@ impl FileSystem for MemoryFS {
             .metadata(path.as_ref().to_string_lossy().as_ref())
             .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?;
         let is_file = metadata.file_type == vfs::VfsFileType::File;
-        Ok(FileMetadata::new(is_file))
+        let is_dir = metadata.file_type == vfs::VfsFileType::Directory;
+        Ok(FileMetadata::new(is_file, is_dir))
     }
 
     fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {

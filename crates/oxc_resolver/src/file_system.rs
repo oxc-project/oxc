@@ -37,11 +37,18 @@ pub trait FileSystem: Default + Send + Sync {
 #[derive(Debug, Clone, Copy)]
 pub struct FileMetadata {
     pub(crate) is_file: bool,
+    pub(crate) is_dir: bool,
 }
 
 impl FileMetadata {
-    pub fn new(is_file: bool) -> Self {
-        Self { is_file }
+    pub fn new(is_file: bool, is_dir: bool) -> Self {
+        Self { is_file, is_dir }
+    }
+}
+
+impl From<fs::Metadata> for FileMetadata {
+    fn from(metadata: fs::Metadata) -> Self {
+        Self::new(metadata.is_file(), metadata.is_dir())
     }
 }
 
@@ -55,7 +62,7 @@ impl FileSystem for FileSystemOs {
     }
 
     fn metadata<P: AsRef<Path>>(&self, path: P) -> io::Result<FileMetadata> {
-        fs::metadata(path).map(|metadata| FileMetadata { is_file: metadata.is_file() })
+        fs::metadata(path).map(FileMetadata::from)
     }
 
     fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
