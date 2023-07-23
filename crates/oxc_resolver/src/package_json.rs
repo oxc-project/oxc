@@ -35,7 +35,7 @@ impl PackageJson {
     /// # Errors
     ///
     /// * Returns [ResolveError::Ignored] for `"path": false` in `browser` field.
-    pub fn resolve_request(
+    pub fn resolve(
         &self,
         path: &Path,
         request_str: &str,
