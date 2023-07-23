@@ -8,8 +8,7 @@ static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-// See: `https://rust-lang.github.io/rfcs/2360-bench-black-box.html`
-use std::{hint::black_box, time::Duration};
+use std::time::Duration;
 
 use criterion::{BenchmarkId, Criterion, Throughput};
 use oxc_allocator::Allocator;
@@ -43,8 +42,7 @@ pub fn main() -> Result<(), String> {
     // Check files
     for file in &files {
         let allocator = Allocator::default();
-        let ret =
-            Parser::new(&allocator, black_box(&file.source_text), SourceType::default()).parse();
+        let ret = Parser::new(&allocator, &file.source_text, SourceType::default()).parse();
         if !ret.errors.is_empty() {
             println!("{} failed", &file.file_name);
             for error in &ret.errors {
@@ -70,14 +68,13 @@ fn bench_parser(criterion: &mut Criterion, files: &[&TestFile]) {
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
             |b, source_text| {
-                b.iter(|| {
+                b.iter_with_large_drop(|| {
                     // Include the allocator drop time to make time measurement consistent.
                     // Otherwise the allocator will allocate huge memory chunks (by power of two) from the
                     // system allocator, which makes time measurement unequal during long runs.
                     let allocator = Allocator::default();
-                    let _drop =
-                        Parser::new(&allocator, black_box(source_text), SourceType::default())
-                            .parse();
+                    _ = Parser::new(&allocator, source_text, SourceType::default()).parse();
+                    allocator
                 });
             },
         );
@@ -95,10 +92,7 @@ fn bench_minifier(criterion: &mut Criterion, files: &[&TestFile]) {
             |b, source_text| {
                 let source_type = SourceType::from_path(&file.file_name).unwrap();
                 let options = MinifierOptions::default();
-                b.iter(|| {
-                    let _minified =
-                        Minifier::new(black_box(source_text), source_type, options).build();
-                });
+                b.iter_with_large_drop(|| Minifier::new(source_text, source_type, options).build());
             },
         );
     }
@@ -115,12 +109,10 @@ fn bench_semantic(criterion: &mut Criterion, files: &[&TestFile]) {
             |b, source_text| {
                 let source_type = SourceType::from_path(&file.file_name).unwrap();
                 let allocator = Allocator::default();
-                let ret =
-                    Parser::new(&allocator, black_box(source_text), SourceType::default()).parse();
+                let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
                 let program = allocator.alloc(ret.program);
-                b.iter(|| {
-                    let _semantic =
-                        SemanticBuilder::new(source_text, source_type).build(black_box(program));
+                b.iter_with_large_drop(|| {
+                    SemanticBuilder::new(source_text, source_type).build(program)
                 });
             },
         );
