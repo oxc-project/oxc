@@ -26,9 +26,16 @@ impl<Fs: FileSystem> Cache<Fs> {
     }
 
     pub fn is_file(&self, path: &Path) -> bool {
-        self.cache_value(path).meta(&self.fs).is_some_and(|m| m.is_file)
+        self.cache_value(path).is_file(&self.fs)
     }
 
+    pub fn is_dir(&self, path: &Path) -> bool {
+        self.cache_value(path).is_dir(&self.fs)
+    }
+
+    /// # Panics
+    ///
+    /// * Path is file but does not have a parent
     pub fn dirname(&self, path: &Path) -> PathBuf {
         (if self.is_file(path) { path.parent().unwrap() } else { path }).to_path_buf()
     }
@@ -95,6 +102,14 @@ impl CacheValue {
 
     fn meta<Fs: FileSystem>(&self, fs: &Fs) -> Option<FileMetadata> {
         *self.meta.get_or_init(|| fs.metadata(&self.path).ok())
+    }
+
+    fn is_file<Fs: FileSystem>(&self, fs: &Fs) -> bool {
+        self.meta(fs).is_some_and(|meta| meta.is_file)
+    }
+
+    fn is_dir<Fs: FileSystem>(&self, fs: &Fs) -> bool {
+        self.meta(fs).is_some_and(|meta| meta.is_dir)
     }
 
     fn symlink<Fs: FileSystem>(&self, fs: &Fs) -> Option<PathBuf> {
