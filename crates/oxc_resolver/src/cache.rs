@@ -11,7 +11,7 @@ use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 
 pub struct Cache<Fs> {
     fs: Fs,
-    cache: DashMap<PathBuf, Arc<CacheValue>, BuildHasherDefault<FxHasher>>,
+    cache: DashMap<Box<Path>, Arc<CacheValue>, BuildHasherDefault<FxHasher>>,
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
@@ -41,7 +41,7 @@ impl<Fs: FileSystem> Cache<Fs> {
     }
 
     pub fn canonicalize(&self, path: &Path) -> Option<PathBuf> {
-        self.cache_value(path).symlink(&self.fs)
+        self.cache_value(path).symlink(&self.fs).map(Path::into_path_buf)
     }
 
     /// Get package.json of the given path.
@@ -74,23 +74,23 @@ impl<Fs: FileSystem> Cache<Fs> {
             return Arc::clone(cache_entry.value());
         }
         let parent = path.parent().map(|p| self.cache_value(p));
-        let data = Arc::new(CacheValue::new(path.to_path_buf(), parent));
-        self.cache.insert(path.to_path_buf(), Arc::clone(&data));
+        let data = Arc::new(CacheValue::new(path.to_path_buf().into_boxed_path(), parent));
+        self.cache.insert(path.to_path_buf().into_boxed_path(), Arc::clone(&data));
         data
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct CacheValue {
-    path: PathBuf,
+    path: Box<Path>,
     parent: Option<Arc<CacheValue>>,
     meta: OnceLock<Option<FileMetadata>>,
-    symlink: OnceLock<Option<PathBuf>>,
+    symlink: OnceLock<Option<Box<Path>>>,
     package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
 }
 
 impl CacheValue {
-    fn new(path: PathBuf, parent: Option<Arc<Self>>) -> Self {
+    fn new(path: Box<Path>, parent: Option<Arc<Self>>) -> Self {
         Self {
             path,
             parent,
@@ -112,8 +112,10 @@ impl CacheValue {
         self.meta(fs).is_some_and(|meta| meta.is_dir)
     }
 
-    fn symlink<Fs: FileSystem>(&self, fs: &Fs) -> Option<PathBuf> {
-        self.symlink.get_or_init(|| fs.canonicalize(&self.path).ok()).clone()
+    fn symlink<Fs: FileSystem>(&self, fs: &Fs) -> Option<Box<Path>> {
+        self.symlink
+            .get_or_init(|| fs.canonicalize(&self.path).map(PathBuf::into_boxed_path).ok())
+            .clone()
     }
 
     fn package_json<Fs: FileSystem>(
