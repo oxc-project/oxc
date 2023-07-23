@@ -5,6 +5,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
 use regex::Regex;
+use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -22,6 +23,7 @@ pub enum VarsOption {
     /// global variables to be unused.
     Local,
 }
+
 impl TryFrom<&String> for VarsOption {
     type Error = String;
 
@@ -29,17 +31,18 @@ impl TryFrom<&String> for VarsOption {
         match value.as_str() {
             "all" => Ok(Self::All),
             "local" => Ok(Self::Local),
-            _ => Err(format!("Expected 'all' or 'local', got {}", value)),
+            _ => Err(format!("Expected 'all' or 'local', got {value}")),
         }
     }
 }
-impl TryFrom<&serde_json::Value> for VarsOption {
+
+impl TryFrom<&Value> for VarsOption {
     type Error = String;
 
-    fn try_from(value: &serde_json::Value) -> Result<Self, Self::Error> {
+    fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
-            serde_json::Value::String(s) => Self::try_from(s),
-            _ => Err(format!("Expected a string, got {}", value)),
+            Value::String(s) => Self::try_from(s),
+            _ => Err(format!("Expected a string, got {value}")),
         }
     }
 }
@@ -56,18 +59,19 @@ pub enum ArgsOption {
     /// Do not check arguments
     None,
 }
-impl TryFrom<&serde_json::Value> for ArgsOption {
+
+impl TryFrom<&Value> for ArgsOption {
     type Error = String;
 
-    fn try_from(value: &serde_json::Value) -> Result<Self, Self::Error> {
+    fn try_from(value: &Value) -> Result<Self, Self::Error> {
         match value {
-            serde_json::Value::String(s) => match s.as_str() {
+            Value::String(s) => match s.as_str() {
                 "after-used" => Ok(Self::AfterUsed),
                 "all" => Ok(Self::All),
                 "none" => Ok(Self::None),
-                _ => Err(format!("Expected 'after-used', 'all', or 'none', got '{:}", s)),
+                _ => Err(format!("Expected 'after-used', 'all', or 'none', got '{s}")),
             },
-            _ => Err(format!("Expected a string, got {}", value)),
+            _ => Err(format!("Expected a string, got {value}")),
         }
     }
 }
@@ -284,18 +288,29 @@ declare_oxc_lint!(
     correctness
 );
 
+/// Parses a potential pattern into a [`Regex`] that accepts unicode characters.
+fn parse_unicode_rule(value: Option<&Value>, name: &str) -> Option<Regex> {
+    // fn parse_unicode_rule(config: &serde_json::map::Map<String, &Value>, name: &str) -> Option<Regex>
+    value
+        .and_then(Value::as_str)
+        .map(|pattern| regex::RegexBuilder::new(pattern).unicode(true).build())
+        .transpose()
+        .map_err(|err| panic!("Invalid '{}' option for no-unused-vars: {}", name, err))
+        .unwrap()
+}
+
 impl Rule for NoUnusedVars {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: Value) -> Self {
         let Some(config) = value.get(0) else { return Self::default() };
         match config {
-            serde_json::Value::String(vars) => {
+            Value::String(vars) => {
                 let vars: VarsOption = vars
                     .try_into()
                     .map_err(|err| format!("Invalid 'vars' option for no-unused-vars: {:}", err))
                     .unwrap();
                 Self { vars, ..Default::default() }
             }
-            serde_json::Value::Object(config) => {
+            Value::Object(config) => {
                 let vars = config
                     .get("vars")
                     .map(|vars| {
@@ -310,10 +325,7 @@ impl Rule for NoUnusedVars {
                     .unwrap_or_default();
 
                 let vars_ignore_pattern: Option<Regex> =
-                    config.get("varsIgnorePattern").map(|pattern| {
-                        let pattern = pattern.as_str().unwrap();
-                        Regex::new(pattern).unwrap()
-                    });
+                    parse_unicode_rule(config.get("varsIgnorePattern"), "varsIgnorePattern");
 
                 let args: ArgsOption = config
                     .get("args")
@@ -329,16 +341,13 @@ impl Rule for NoUnusedVars {
                     .unwrap_or_default();
 
                 let args_ignore_pattern: Option<Regex> =
-                    config.get("argsIgnorePattern").map(|pattern| {
-                        let pattern = pattern.as_str().unwrap();
-                        Regex::new(pattern).unwrap()
-                    });
+                    parse_unicode_rule(config.get("argsIgnorePattern"), "argsIgnorePattern");
 
                 let caught_errors: bool = config
                     .get("caughtErrors")
                     .map(|caught_errors| {
                         match caught_errors {
-                            serde_json::Value::String(s) => match s.as_str() {
+                            Value::String(s) => match s.as_str() {
                                 "all" => true,
                                 "none" => false,
                                 _ => panic!("Invalid 'caughtErrors' option for no-unused-vars: Expected 'all' or 'none', got {}", s),
@@ -347,22 +356,19 @@ impl Rule for NoUnusedVars {
                             }
                         }).unwrap_or_default();
 
-                let caught_errors_ignore_pattern =
-                    config.get("caughtErrorsIgnorePattern").map(|pattern| {
-                        let pattern = pattern.as_str().unwrap();
-                        Regex::new(pattern).unwrap()
-                    });
+                let caught_errors_ignore_pattern = parse_unicode_rule(
+                    config.get("caughtErrorsIgnorePattern"),
+                    "caughtErrorsIgnorePattern",
+                );
 
-                let destructured_array_ignore_pattern =
-                    config.get("destructuredArrayIgnorePattern").map(|pattern| {
-                        let pattern = pattern.as_str().unwrap();
-                        Regex::new(pattern).unwrap()
-                    });
+                let destructured_array_ignore_pattern: Option<Regex> = parse_unicode_rule(
+                    config.get("destructuredArrayIgnorePattern"),
+                    "destructuredArrayIgnorePattern",
+                );
 
                 let ignore_rest_siblings: bool = config
                     .get("ignoreRestSiblings")
-                    .map(serde_json::Value::as_bool)
-                    .unwrap_or(Some(false))
+                    .map_or(Some(false), Value::as_bool)
                     .unwrap_or(false);
 
                 Self {
@@ -376,10 +382,9 @@ impl Rule for NoUnusedVars {
                     ignore_rest_siblings,
                 }
             }
-            serde_json::Value::Null => Self::default(),
+            Value::Null => Self::default(),
             _ => panic!(
-                "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {}",
-                config
+                "Invalid 'vars' option for no-unused-vars: Expected a string or an object, got {config}"
             ),
         }
     }
@@ -389,9 +394,10 @@ impl Rule for NoUnusedVars {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::{json, Value};
+
     use super::*;
     use crate::tester::Tester;
-    use serde_json::{json, Value};
 
     // test-only trait implementations to make testing easier
     impl PartialEq for VarsOption {
@@ -457,8 +463,9 @@ mod tests {
                 "destructuredArrayIgnorePattern": "^_",
                 "ignoreRestSiblings": true
             }
-        ]).into();
-        
+        ])
+        .into();
+
         assert_eq!(rule.vars, VarsOption::Local);
         assert_eq!(rule.vars_ignore_pattern.unwrap().as_str(), "^_");
         assert_eq!(rule.args, ArgsOption::AfterUsed);
@@ -471,7 +478,6 @@ mod tests {
 
     #[test]
     fn test() {
-
         let pass = vec![
             ("var foo = 5;\n\nlabel: while (true) {\n  console.log(foo);\n  break label;\n}", None),
             ("var foo = 5;\n\nwhile (true) {\n  console.log(foo);\n  break;\n}", None),
