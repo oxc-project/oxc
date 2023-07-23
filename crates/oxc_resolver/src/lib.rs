@@ -1,5 +1,7 @@
 //! # Oxc Resolver
 //!
+//! Node.js Module Resolution.
+//!
 //! ## References:
 //!
 //! * Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve)
@@ -21,25 +23,26 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub use crate::{
-    cache::Cache,
-    error::{JSONError, ResolveError},
-    file_system::{FileMetadata, FileSystem, FileSystemOs},
-    options::{Alias, AliasValue, ResolveOptions},
-    resolution::Resolution,
-};
 use crate::{
+    cache::Cache,
+    file_system::FileSystemOs,
     package_json::PackageJson,
     path::PathUtil,
     request::{Request, RequestPath},
 };
+pub use crate::{
+    error::{JSONError, ResolveError},
+    file_system::{FileMetadata, FileSystem},
+    options::{Alias, AliasValue, ResolveOptions},
+    resolution::Resolution,
+};
 
-pub type ResolveResult = Result<Resolution, ResolveError>;
 type ResolveState = Result<Option<PathBuf>, ResolveError>;
 
 /// Resolver with the current operating system as the file system
 pub type Resolver = ResolverGeneric<FileSystemOs>;
 
+/// Generic implementation of the resolver, backed by a cached file system.
 pub struct ResolverGeneric<Fs> {
     options: ResolveOptions,
     cache: Cache<Fs>,

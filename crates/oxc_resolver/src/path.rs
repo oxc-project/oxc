@@ -2,7 +2,7 @@
 //!
 //! Code adapted from the following libraries
 //! * [path-absolutize](https://docs.rs/path-absolutize)
-//! * [normalize_path](<https://docs.rs/normalize-path)
+//! * [normalize_path](https://docs.rs/normalize-path)
 use std::path::{Component, Path, PathBuf};
 
 /// Extension trait to add path normalization to std's [`Path`].
