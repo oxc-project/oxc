@@ -11,9 +11,15 @@ pub enum AliasValue {
     Ignore,
 }
 
+/// Module Resolution Options
+///
+/// Options are directly ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve#resolver-options).
+///
+/// See [webpack resolve](https://webpack.js.org/configuration/resolve/) for information and examples
 #[derive(Debug, Clone)]
 pub struct ResolveOptions {
-    /// A list of module alias configurations or an object which maps key to value
+    /// Create aliases to import or require certain modules more easily.
+    /// A trailing $ can also be added to the given object's keys to signify an exact match.
     pub alias: Alias,
 
     /// A list of alias fields in description files.
@@ -22,12 +28,14 @@ pub struct ResolveOptions {
     /// Default `[]`
     pub alias_fields: Vec<String>,
 
-    /// A list of description files to read (there was once a `bower.json`).
+    /// The JSON files to use for descriptions. (There was once a `bower.json`.)
     ///
     /// Default `["package.json"]`
     pub description_files: Vec<String>,
 
-    /// Enforce that a extension from extensions must be used.
+    /// If true, it will not allow extension-less files.
+    /// So by default `require('./foo')` works if `./foo` has a `.js` extension,
+    /// but with this enabled only `require('./foo.js')` will work.
     ///
     /// Default to `true` when [ResolveOptions::extensions] contains an empty string.
     /// Use `Some(false)` to disable the behavior.
@@ -41,17 +49,19 @@ pub struct ResolveOptions {
     /// Default `{}`
     pub extension_alias: Vec<(String, Vec<String>)>,
 
-    /// A list of extensions which should be tried for.
+    /// Attempt to resolve these extensions in order.
+    /// If multiple files share the same name but have different extensions,
+    /// will resolve the one with the extension listed first in the array and skip the rest.
     ///
     /// Default `[".js", ".json", ".node"]`
     pub extensions: Vec<String>,
 
-    /// Same as [ResolveOptions::alias], Redirect module requests when normal resolving fails. .
+    /// Redirect module requests when normal resolving fails.
     ///
     /// Default `[]`
     pub fallback: Alias,
 
-    /// A list of main files in directories.
+    /// The filename to be used while resolving directories.
     ///
     /// Default `["index"]`
     pub main_files: Vec<String>,
@@ -61,7 +71,7 @@ pub struct ResolveOptions {
     /// Default `["node_modules"]`
     pub modules: Vec<String>,
 
-    /// prefer to resolve module requests as relative requests instead of using modules from node_modules directories.
+    /// Prefer to resolve module requests as relative requests instead of using modules from node_modules directories.
     ///
     /// Default `false`
     pub prefer_relative: bool,

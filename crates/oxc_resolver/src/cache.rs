@@ -48,7 +48,7 @@ impl<Fs: FileSystem> Cache<Fs> {
     ///
     /// # Errors
     ///
-    /// * [ResolveError::JSONError]
+    /// * [ResolveError::JSON]
     pub fn get_package_json(&self, path: &Path) -> Result<Option<Arc<PackageJson>>, ResolveError> {
         self.cache_value(path).package_json(&self.fs).transpose()
     }
@@ -57,7 +57,7 @@ impl<Fs: FileSystem> Cache<Fs> {
     ///
     /// # Errors
     ///
-    /// * [ResolveError::JSONError]
+    /// * [ResolveError::JSON]
     pub fn find_package_json(&self, path: &Path) -> Result<Option<Arc<PackageJson>>, ResolveError> {
         let mut cache_value = Some(self.cache_value(path));
         while let Some(cv) = cache_value {

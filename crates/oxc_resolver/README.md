@@ -3,7 +3,6 @@
 ## TODO
 
 - [ ] use `thiserror` for better error messages
-- [ ] copy API documentation from webpack https://webpack.js.org/configuration/resolve/#resolve
 
 #### Resolver Options
 
@@ -38,9 +37,10 @@
 ## Test
 
 Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve).
+Crossed out test files are irrelevant.
 
-- [ ] CachedInputFileSystem.test.js
-- [ ] SyncAsyncFileSystemDecorator.test.js
+- [x] ~CachedInputFileSystem.test.js~
+- [x] ~SyncAsyncFileSystemDecorator.test.js~
 - [x] alias.test.js (need to fix a todo)
 - [x] browserField.test.js (reading the browser field is currently static - not read from the `browserField` option)
 - [ ] dependencies.test.js
@@ -48,7 +48,7 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 - [x] extension-alias.test.js
 - [x] extensions.test.js
 - [x] fallback.test.js (need to fix a todo)
-- ~[ ] forEachBail.test.js~
+- [x] ~forEachBail.test.js~
 - [ ] fullSpecified.test.js
 - [ ] getPaths.test.js
 - [x] identifier.test.js (see unit test in `crates/oxc_resolver/src/request.rs`)
@@ -58,12 +58,12 @@ Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve
 - [ ] path.test.js
 - [ ] plugins.test.js
 - [ ] pnp.test.js
-- [ ] pr-53.test.js
+- [x] ~pr-53.test.js~
 - [x] resolve.test.js (need to add resolveToContext)
 - [ ] restrictions.test.js
 - [x] roots.test.js (need to add resolveToContext)
 - [x] scoped-packages.test.js
 - [x] simple.test.js
 - [x] symlink.test.js
-- [ ] unsafe-cache.test.js
-- [ ] yield.test.js
+- [x] ~unsafe-cache.test.js~
+- [x] ~yield.test.js~
