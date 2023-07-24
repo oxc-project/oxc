@@ -164,7 +164,7 @@ mod class {
     macro_rules! class_fn_edge_implem {
         ($contexts:ident, $x:ident) => {
             resolve_neighbors_with($contexts, |v| {
-                Box::new(v.as_class().unwrap().class.body.body.iter().filter_map(|class_el| {
+                Box::new(v.as_class().expect(&format!("to have a class vertex, instead have: {:#?}", v)).class.body.body.iter().filter_map(|class_el| {
                         if let ClassElement::MethodDefinition(method) = class_el
                             && matches!(method.kind, MethodDefinitionKind::$x)
                         {
@@ -193,7 +193,12 @@ mod class {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            Box::new(std::iter::once(Vertex::Span(v.as_class().unwrap().class.span)))
+            Box::new(std::iter::once(Vertex::Span(
+                v.as_class()
+                    .expect(&format!("to have a class vertex, instead have: {:#?}", v))
+                    .class
+                    .span,
+            )))
         })
     }
 
@@ -217,7 +222,12 @@ mod class {
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
             #[allow(clippy::option_if_let_else)]
-            if let Some(id) = &v.as_class().unwrap().class.id {
+            if let Some(id) = &v
+                .as_class()
+                .expect(&format!("to have a class vertex, instead have: {:#?}", v))
+                .class
+                .id
+            {
                 Box::new(std::iter::once(Vertex::Span(id.span)))
             } else {
                 Box::new(std::iter::empty())
@@ -230,21 +240,29 @@ mod class {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            Box::new(v.as_class().unwrap().class.body.body.iter().filter_map(|class_el| {
-                if let ClassElement::PropertyDefinition(property) = class_el {
-                    Some(Vertex::ClassProperty(Rc::new(ClassPropertyVertex {
-                        property,
-                        is_abstract: false,
-                    })))
-                } else if let ClassElement::TSAbstractPropertyDefinition(def) = class_el {
-                    Some(Vertex::ClassProperty(Rc::new(ClassPropertyVertex {
-                        property: &def.property_definition,
-                        is_abstract: true,
-                    })))
-                } else {
-                    None
-                }
-            }))
+            Box::new(
+                v.as_class()
+                    .expect(&format!("to have a class vertex, instead have: {:#?}", v))
+                    .class
+                    .body
+                    .body
+                    .iter()
+                    .filter_map(|class_el| {
+                        if let ClassElement::PropertyDefinition(property) = class_el {
+                            Some(Vertex::ClassProperty(Rc::new(ClassPropertyVertex {
+                                property,
+                                is_abstract: false,
+                            })))
+                        } else if let ClassElement::TSAbstractPropertyDefinition(def) = class_el {
+                            Some(Vertex::ClassProperty(Rc::new(ClassPropertyVertex {
+                                property: &def.property_definition,
+                                is_abstract: true,
+                            })))
+                        } else {
+                            None
+                        }
+                    }),
+            )
         })
     }
 
@@ -1045,7 +1063,9 @@ mod jsxattribute {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let attr = v.as_jsx_attribute().unwrap();
+            let attr = v
+                .as_jsx_attribute()
+                .expect(&format!("to have a jsxattribute vertex, instead have: {:#?}", v));
             let Some(attr_value) = &attr.value else { return Box::new(std::iter::empty()) };
             Box::new(
                 std::iter::once(match attr_value {
@@ -1068,7 +1088,10 @@ mod jsxattribute {
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
             #[allow(clippy::option_if_let_else)]
-            if let Some(url) = Vertex::make_url(v.as_jsx_attribute().unwrap()) {
+            if let Some(url) = Vertex::make_url(
+                v.as_jsx_attribute()
+                    .expect(&format!("to have a jsxattribute vertex, instead have: {:#?}", v)),
+            ) {
                 Box::new(std::iter::once(url))
             } else {
                 Box::new(std::iter::empty())
@@ -1656,7 +1679,9 @@ mod path_part {
         adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let i = *v.as_path_part().unwrap();
+            let i = *v
+                .as_path_part()
+                .expect(&format!("to have a pathpart vertex, instead have: {:#?}", v));
             if i + 1 < adapter.path_components.len() {
                 Box::new(std::iter::once(Vertex::PathPart(i + 1)))
             } else {
@@ -1670,7 +1695,9 @@ mod path_part {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let i = *v.as_path_part().unwrap();
+            let i = *v
+                .as_path_part()
+                .expect(&format!("to have a pathpart vertex, instead have: {:#?}", v));
             if i > 0 {
                 Box::new(std::iter::once(Vertex::PathPart(i - 1)))
             } else {
@@ -1723,7 +1750,12 @@ mod return_statement_ast {
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
             #[allow(clippy::option_if_let_else)]
-            if let Some(expr) = &v.as_return_statement_ast().unwrap().return_statement.argument {
+            if let Some(expr) = &v
+                .as_return_statement_ast()
+                .expect(&format!("to have an returnstatementast vertex, instead have: {:#?}", v))
+                .return_statement
+                .argument
+            {
                 Box::new(std::iter::once(expr.into()))
             } else {
                 Box::new(std::iter::empty())
@@ -1974,7 +2006,7 @@ mod url {
         resolve_neighbors_with(contexts, |v| {
             Box::new(
                 v.as_url()
-                    .unwrap()
+                    .expect(&format!("to have a url vertex, instead have: {:#?}", v))
                     .query_pairs()
                     .map(|(key, value)| {
                         Vertex::SearchParameter(
