@@ -92,7 +92,16 @@ impl SymbolTable {
         self.references[reference_id].symbol_id().is_none()
     }
 
-    pub fn get_resolved_references(&self, symbol_id: SymbolId) -> &Vec<ReferenceId> {
+    pub fn get_resolved_reference_ids(&self, symbol_id: SymbolId) -> &Vec<ReferenceId> {
         &self.resolved_references[symbol_id]
+    }
+
+    pub fn get_resolved_references(
+        &self,
+        symbol_id: SymbolId,
+    ) -> impl Iterator<Item = &Reference> + '_ {
+        self.resolved_references[symbol_id]
+            .iter()
+            .map(|reference_id| &self.references[*reference_id])
     }
 }
