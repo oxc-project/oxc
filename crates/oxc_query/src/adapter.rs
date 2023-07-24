@@ -25,8 +25,12 @@ pub struct Adapter<'a> {
 
 const SCHEMA_TEXT: &str = include_str!("./schema.graphql");
 
-#[allow(clippy::missing_panics_doc)]
+/// Returns the schema from a OnceLock
+///
+/// # Panics
+/// If the schema parse returns an error, which will not happen unless the schema get's corrupted.
 pub fn schema() -> &'static Schema {
+    // internal note: this might not parser correctly due to making an incorrect schema during development
     SCHEMA.get_or_init(|| Schema::parse(SCHEMA_TEXT).expect("not a valid schema"))
 }
 
