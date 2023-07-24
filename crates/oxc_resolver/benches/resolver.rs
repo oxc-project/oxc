@@ -40,13 +40,16 @@ fn data() -> Vec<(PathBuf, &'static str)> {
         // scoped
         (cwd.join("test/fixtures/scoped"), "@scope/pack1"),
         (cwd.join("test/fixtures/scoped"), "@scope/pack2/lib"),
+        // alias
+        (cwd.clone(), "/absolute/path"),
     ]
 }
 
 fn nodejs_resolver() -> nodejs_resolver::Resolver {
-    use nodejs_resolver::{Options, Resolver};
+    use nodejs_resolver::{AliasMap, Options, Resolver};
     Resolver::new(Options {
         browser_field: true,
+        alias: vec![("/absolute/path".into(), vec![AliasMap::Target("./".into())])],
         extension_alias: vec![
             (".js".into(), vec![".ts".into(), ".js".into()]),
             (".mjs".into(), vec![".mts".into()]),
@@ -56,8 +59,9 @@ fn nodejs_resolver() -> nodejs_resolver::Resolver {
 }
 
 fn oxc_resolver() -> oxc_resolver::Resolver {
-    use oxc_resolver::{ResolveOptions, Resolver};
+    use oxc_resolver::{AliasValue, ResolveOptions, Resolver};
     Resolver::new(ResolveOptions {
+        alias: vec![("/absolute/path".into(), vec![AliasValue::Path("./".into())])],
         alias_fields: vec!["browser".into()],
         extension_alias: vec![
             (".js".into(), vec![".ts".into(), ".js".into()]),
