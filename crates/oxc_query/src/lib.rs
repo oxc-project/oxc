@@ -8,7 +8,6 @@ mod util;
 mod vertex;
 
 pub use adapter::{schema, Adapter};
-pub use vertex::Vertex;
 
 // TODO: Uncomment on next release of trustfall
 #[cfg(test)]
