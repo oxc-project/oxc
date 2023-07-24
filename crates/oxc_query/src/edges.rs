@@ -684,15 +684,22 @@ mod import {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::Import(data) = &v else { unreachable!() };
-            Box::new(data.import.specifiers.iter().filter_map(|the_specifier| {
-                if let ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) = the_specifier
-                {
-                    Some(Vertex::DefaultImport(specifier))
-                } else {
-                    None
-                }
-            }))
+            Box::new(
+                v.as_import()
+                    .expect(&format!("to have an import vertex, instead have: {:#?}", v))
+                    .import
+                    .specifiers
+                    .iter()
+                    .filter_map(|the_specifier| {
+                        if let ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) =
+                            the_specifier
+                        {
+                            Some(Vertex::DefaultImport(specifier))
+                        } else {
+                            None
+                        }
+                    }),
+            )
         })
     }
 
@@ -701,8 +708,12 @@ mod import {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::Import(import) = &v else { unreachable!() };
-            Box::new(std::iter::once(Vertex::Span(import.import.span)))
+            Box::new(std::iter::once(Vertex::Span(
+                v.as_import()
+                    .expect(&format!("to have an import vertex, instead have: {:#?}", v))
+                    .import
+                    .span,
+            )))
         })
     }
 
@@ -711,14 +722,22 @@ mod import {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::Import(import) = &v else { unreachable!() };
-            Box::new(import.import.specifiers.iter().filter_map(|the_specifier| {
-                if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = the_specifier {
-                    Some(Vertex::SpecificImport(specifier))
-                } else {
-                    None
-                }
-            }))
+            Box::new(
+                v.as_import()
+                    .expect(&format!("to have an import vertex, instead have: {:#?}", v))
+                    .import
+                    .specifiers
+                    .iter()
+                    .filter_map(|the_specifier| {
+                        if let ImportDeclarationSpecifier::ImportSpecifier(specifier) =
+                            the_specifier
+                        {
+                            Some(Vertex::SpecificImport(specifier))
+                        } else {
+                            None
+                        }
+                    }),
+            )
         })
     }
 }
@@ -829,8 +848,12 @@ mod interface {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::Interface(data) = &v else { unreachable!() };
-            Box::new(std::iter::once(Vertex::Span(data.interface.span)))
+            Box::new(std::iter::once(Vertex::Span(
+                v.as_interface()
+                    .expect(&format!("to have an interface vertex, instead have: {:#?}", v))
+                    .interface
+                    .span,
+            )))
         })
     }
 
@@ -839,9 +862,13 @@ mod interface {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::Interface(data) = &v else { unreachable!() };
             #[allow(clippy::option_if_let_else)]
-            if let Some(extends) = &data.interface.extends {
+            if let Some(extends) = &v
+                .as_interface()
+                .expect(&format!("to have an interface vertex, instead have: {:#?}", v))
+                .interface
+                .extends
+            {
                 Box::new(extends.iter().map(|extend| match &extend.expression {
                         Expression::Identifier(ident) => {
                             Vertex::InterfaceExtend(Rc::new(InterfaceExtendVertex::Identifier(ident)))
@@ -862,8 +889,13 @@ mod interface {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::Interface(data) = &v else { unreachable!() };
-            Box::new(std::iter::once(Vertex::Span(data.interface.id.span)))
+            Box::new(std::iter::once(Vertex::Span(
+                v.as_interface()
+                    .expect(&format!("to have an interface vertex, instead have: {:#?}", v))
+                    .interface
+                    .id
+                    .span,
+            )))
         })
     }
 }
@@ -1080,11 +1112,17 @@ mod jsxelement {
     macro_rules! child_edge_iter {
         ($contexts: ident, $vertex_type: ident, $jsx_child_type: ident) => {
             resolve_neighbors_with($contexts, |v| {
-                let Vertex::JSXElement(data) = &v else { unreachable!() };
-                Box::new(data.element.children.iter().filter_map(|child| {
-                    let JSXChild::$jsx_child_type(element) = &child else { return None };
-                    Some(Vertex::$vertex_type(element))
-                }))
+                Box::new(
+                    v.as_jsx_element()
+                        .expect(&format!("to have an JSXElement vertex, instead have: {:#?}", v))
+                        .element
+                        .children
+                        .iter()
+                        .filter_map(|child| {
+                            let JSXChild::$jsx_child_type(element) = &child else { return None };
+                            Some(Vertex::$vertex_type(element))
+                        }),
+                )
             })
         };
     }
@@ -1094,11 +1132,19 @@ mod jsxelement {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::JSXElement(data) = &v else { unreachable!() };
-            Box::new(data.element.children.iter().filter_map(|child| {
-                let JSXChild::Element(element) = &child else { return None };
-                Some(Vertex::JSXElement(JSXElementVertex { element, ast_node: None }.into()))
-            }))
+            Box::new(
+                v.as_jsx_element()
+                    .expect(&format!("to have an JSXElement vertex, instead have: {:#?}", v))
+                    .element
+                    .children
+                    .iter()
+                    .filter_map(|child| {
+                        let JSXChild::Element(element) = &child else { return None };
+                        Some(Vertex::JSXElement(
+                            JSXElementVertex { element, ast_node: None }.into(),
+                        ))
+                    }),
+            )
         })
     }
 
@@ -1135,9 +1181,12 @@ mod jsxelement {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::JSXElement(data) = &v else { unreachable!() };
-
-            Box::new(std::iter::once(Vertex::JSXOpeningElement(&data.element.opening_element)))
+            Box::new(std::iter::once(Vertex::JSXOpeningElement(
+                &v.as_jsx_element()
+                    .expect(&format!("to have an JSXElement vertex, instead have: {:#?}", v))
+                    .element
+                    .opening_element,
+            )))
         })
     }
 
@@ -1808,8 +1857,12 @@ mod type_annotation {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::TypeAnnotation(data) = &v else { unreachable!() };
-            Box::new(std::iter::once(Vertex::Type(&data.type_annotation.type_annotation)))
+            Box::new(std::iter::once(Vertex::Type(
+                &v.as_type_annotation()
+                    .expect(&format!("to have an typeannotation vertex, instead have: {:#?}", v))
+                    .type_annotation
+                    .type_annotation,
+            )))
         })
     }
 }
@@ -1980,8 +2033,12 @@ mod variable_declaration {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::VariableDeclaration(data) = &v else { unreachable!() };
-            Box::new(std::iter::once(Vertex::Span(data.variable_declaration.span)))
+            Box::new(std::iter::once(Vertex::Span(
+                v.as_variable_declaration()
+                    .expect(&format!("to have an typeannotation vertex, instead have: {:#?}", v))
+                    .variable_declaration
+                    .span,
+            )))
         })
     }
 
@@ -1990,9 +2047,12 @@ mod variable_declaration {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let Vertex::VariableDeclaration(data) = &v else { unreachable!() };
             return Box::new(std::iter::once(Vertex::AssignmentType(
-                &data.variable_declaration.id.kind,
+                &v.as_variable_declaration()
+                    .expect(&format!("to have an typeannotation vertex, instead have: {:#?}", v))
+                    .variable_declaration
+                    .id
+                    .kind,
             )));
         })
     }

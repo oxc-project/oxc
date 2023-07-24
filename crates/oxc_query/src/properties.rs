@@ -188,8 +188,13 @@ pub(super) fn resolve_import_property<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "from_path" => resolve_property_with(contexts, |v| {
-            let Vertex::Import(data) = &v else { unreachable!() };
-            data.import.source.value.to_string().into()
+            v.as_import()
+                .expect(&format!("to have an import vertex, instead have: {:#?}", v))
+                .import
+                .source
+                .value
+                .to_string()
+                .into()
         }),
         _ => {
             unreachable!("attempted to read unexpected property '{property_name}' on type 'Import'")
@@ -258,8 +263,12 @@ pub(super) fn resolve_jsxelement_property<'a, 'b: 'a>(
             v.as_constant_string().map_or(FieldValue::Null, Into::into)
         }),
         "child_count" => resolve_property_with(contexts, |v| {
-            let Vertex::JSXElement(data) = &v else { unreachable!() };
-            (data.element.children.len() as u64).into()
+            (v.as_jsx_element()
+                .expect(&format!("to have an jsxelement vertex, instead have: {:#?}", v))
+                .element
+                .children
+                .len() as u64)
+                .into()
         }),
         _ => {
             unreachable!(
