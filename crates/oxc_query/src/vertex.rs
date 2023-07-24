@@ -197,10 +197,7 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::VariableDeclarator(variable_declaration) => Self::VariableDeclaration(
                 VariableDeclarationVertex { ast_node: Some(ast_node), variable_declaration }.into(),
             ),
-            AstKind::ModuleDeclaration(md)
-                if matches!(md, ModuleDeclaration::ImportDeclaration(_)) =>
-            {
-                let ModuleDeclaration::ImportDeclaration(import) = md else { unreachable!() };
+            AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import)) => {
                 Self::Import(ImportVertex { ast_node: Some(ast_node), import }.into())
             }
             AstKind::Class(class) => {
