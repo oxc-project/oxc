@@ -1751,6 +1751,8 @@ pub(super) fn resolve_return_statement_ast_edge<'a, 'b: 'a>(
 }
 
 mod return_statement_ast {
+    use std::convert::Into;
+
     use trustfall::provider::{
         resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
         VertexIterator,
@@ -1772,19 +1774,15 @@ mod return_statement_ast {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            #[allow(clippy::option_if_let_else)]
-            if let Some(expr) = &v
+            let neighbors = v
                 .as_return_statement_ast()
-                .unwrap_or_else(|| {
-                    panic!("expected to have a returnstatementast vertex, instead have: {v:#?}")
-                })
+                .unwrap()
                 .return_statement
                 .argument
-            {
-                Box::new(std::iter::once(expr.into()))
-            } else {
-                Box::new(std::iter::empty())
-            }
+                .as_ref()
+                .map(Into::into)
+                .into_iter();
+            Box::new(neighbors)
         })
     }
 
