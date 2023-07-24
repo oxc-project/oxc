@@ -212,7 +212,7 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
     fn from(expr: &'a Expression<'a>) -> Self {
         // FIXME: We just get rid of all parentheses here, but we shouldn't do that...
 
-        // NOTE: When string literal / template lietal is added, add to as_constant_string
+        // NOTE: When string literal / template literal is added, add to as_constant_string
         match &expr.get_inner_expression() {
             Expression::ObjectExpression(objexpr) => Vertex::ObjectLiteral(objexpr),
             Expression::JSXElement(element) => {
