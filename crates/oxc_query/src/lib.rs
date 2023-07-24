@@ -1,4 +1,3 @@
-#![feature(let_chains)]
 #![allow(clippy::redundant_pub_crate)]
 mod adapter;
 mod edges;
