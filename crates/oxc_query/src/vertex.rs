@@ -284,6 +284,20 @@ pub enum InterfaceExtendVertex<'a> {
     MemberExpression(&'a MemberExpression<'a>),
 }
 
+impl<'a> From<&'a Expression<'a>> for InterfaceExtendVertex<'a> {
+    fn from(expr: &'a Expression<'a>) -> Self {
+        match &expr {
+            Expression::Identifier(ident) => InterfaceExtendVertex::Identifier(ident),
+            Expression::MemberExpression(membexpr) => {
+                InterfaceExtendVertex::MemberExpression(membexpr)
+            }
+            _ => unreachable!(
+                "Only ever possible to have an interface extend an identifier or memberexpr. see TS:2499"
+            ),
+        }
+    }
+}
+
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct JSXElementVertex<'a> {

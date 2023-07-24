@@ -222,17 +222,18 @@ mod class {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            #[allow(clippy::option_if_let_else)]
-            if let Some(id) = &v
-                .as_class()
-                .unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}"))
-                .class
-                .id
-            {
-                Box::new(std::iter::once(Vertex::Span(id.span)))
-            } else {
-                Box::new(std::iter::empty())
-            }
+            Box::new(
+                v.as_class()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a class vertex, instead have: {v:#?}")
+                    })
+                    .class
+                    .id
+                    .as_ref()
+                    .map(|id| id.span)
+                    .map(Vertex::Span)
+                    .into_iter(),
+            )
         })
     }
 
@@ -860,7 +861,6 @@ pub(super) fn resolve_interface_edge<'a, 'b: 'a>(
 mod interface {
     use std::rc::Rc;
 
-    use oxc_ast::ast::Expression;
     use trustfall::provider::{
         resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
         VertexIterator,
@@ -890,27 +890,19 @@ mod interface {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            #[allow(clippy::option_if_let_else)]
-            if let Some(extends) = &v
-                .as_interface()
-                .unwrap_or_else(|| {
-                    panic!("expected to have an interface vertex, instead have: {v:#?}")
-                })
-                .interface
-                .extends
-            {
-                Box::new(extends.iter().map(|extend| match &extend.expression {
-                        Expression::Identifier(ident) => {
-                            Vertex::InterfaceExtend(Rc::new(InterfaceExtendVertex::Identifier(ident)))
-                        }
-                        Expression::MemberExpression(membexpr) => {
-                            Vertex::InterfaceExtend(Rc::new(InterfaceExtendVertex::MemberExpression(membexpr)))
-                        }
-                        _ => unreachable!("Only ever possible to have an interface extend an identifier or memberexpr. see TS:2499"),
-                    }))
-            } else {
-                Box::new(std::iter::empty())
-            }
+            Box::new(
+                v.as_interface()
+                    .and_then(|data| data.interface.extends.as_ref())
+                    .map(|extends| {
+                        extends
+                            .iter()
+                            .map(|extend| InterfaceExtendVertex::from(&extend.expression))
+                            .map(Rc::new)
+                            .map(Vertex::InterfaceExtend)
+                    })
+                    .into_iter()
+                    .flatten(),
+            )
         })
     }
 
@@ -1101,14 +1093,7 @@ mod jsxattribute {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            #[allow(clippy::option_if_let_else)]
-            if let Some(url) = Vertex::make_url(v.as_jsx_attribute().unwrap_or_else(|| {
-                panic!("expected to have a jsxattribute vertex, instead have: {v:#?}")
-            })) {
-                Box::new(std::iter::once(url))
-            } else {
-                Box::new(std::iter::empty())
-            }
+            Box::new(v.as_jsx_attribute().as_ref().and_then(|v| Vertex::make_url(v)).into_iter())
         })
     }
 }
