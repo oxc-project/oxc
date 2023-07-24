@@ -170,7 +170,7 @@ impl Typename for Vertex<'_> {
             Vertex::SearchParameter(_) => "SearchParameter",
             Vertex::Span(_) => "Span",
             Vertex::SpecificImport(_) => "SpecificImport",
-            Vertex::TypeAnnotation(_) => "TypeAnnotation",
+            Vertex::TypeAnnotation(tn) => tn.typename(),
             Vertex::Type(_) => "Type",
             Vertex::URL(_) => "URL",
             Vertex::VariableDeclaration(_) => "VariableDeclaration",
