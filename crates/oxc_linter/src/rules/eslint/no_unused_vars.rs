@@ -1,3 +1,10 @@
+use oxc_ast::{
+    ast::{
+        AssignmentPattern, BindingIdentifier, BindingPatternKind, FormalParameter,
+        ModuleDeclaration, VariableDeclarator,
+    },
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -10,10 +17,14 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
+// const ARGUMENTS_STR: Atom = Atom::from("arguments");
+const DECLARED_STR: &'static Atom = &Atom::new_inline("declared");
+const EMPTY_STR: &'static Atom = &Atom::new_inline("");
+
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-unused-vars): Unused variables are not allowed")]
 #[diagnostic(severity(warning), help("{0} is {1} but never used{2}"))]
-struct NoUnusedVarsDiagnostic(pub Atom, pub Atom, pub Atom, #[label] pub Span);
+struct NoUnusedVarsDiagnostic(pub Atom, pub &'static Atom, pub Atom, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub enum VarsOption {
@@ -300,6 +311,50 @@ fn parse_unicode_rule(value: Option<&Value>, name: &str) -> Option<Regex> {
         .unwrap()
 }
 
+impl NoUnusedVars {
+    fn check_unused_module_declaration<'a>(
+        &self,
+        module: &'a ModuleDeclaration<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        if module.is_export() {
+            // skip exported variables
+        }
+        todo!()
+    }
+
+    fn check_unused_variable_declarator<'a>(
+        &self,
+        decl: &'a VariableDeclarator<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        let Some(identifier) = decl.id.kind.identifier() else { return };
+        if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(identifier.name.as_str()) {
+            return
+        }
+
+        ctx.diagnostic(NoUnusedVarsDiagnostic(
+            identifier.name.clone(),
+            DECLARED_STR,
+            "".into(),
+            decl.span,
+        ))
+    }
+
+    fn check_unused_arguments<'a>(&self, arg: &'a FormalParameter, ctx: &LintContext<'a>) {
+        let Some(identifier) = arg.pattern.kind.identifier() else { return };
+        // match arg.pattern.kind {
+        //     BindingPatternKind::BindingIdentifier(oxc_allocator::Box(BindingIdentifier { ref name, .. }))
+        //     | BindingPatternKind::AssignmentPattern(oxc_allocator::Box(AssignmentPattern { ref left: name, .. }))
+        //     => {
+        //         todo!()
+        //     },
+        //     _ => todo!()
+        // }
+        todo!()
+    }
+}
+
 impl Rule for NoUnusedVars {
     fn from_configuration(value: Value) -> Self {
         let Some(config) = value.get(0) else { return Self::default() };
@@ -392,8 +447,44 @@ impl Rule for NoUnusedVars {
 
     // fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let declared_at = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
-        let references = ctx.symbols().get_resolved_references(symbol_id);
+        // Find all references that count as a usage
+        let references: Vec<_> = ctx
+            .symbols()
+            .get_resolved_references(symbol_id)
+            .iter()
+            .map(|id| ctx.symbols().get_reference(*id))
+            .filter(|reference| !reference.is_write())
+            .collect();
+
+        let name = ctx.symbols().get_name(symbol_id);
+        let _name_str: &str = name.as_str();
+
+        // Symbol is used, rule doesn't apply
+        if references.len() > 0 {
+            return;
+        }
+
+        let declaration = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+        let parent_kind = ctx.nodes().parent_kind(declaration.id());
+
+        match declaration.kind() {
+            AstKind::ModuleDeclaration(decl) => self.check_unused_module_declaration(decl, ctx),
+            AstKind::VariableDeclarator(decl) => {
+                self.check_unused_variable_declarator(decl, ctx)
+                // match decl.id.kind {
+                //     BindingPatternKind::ObjectPattern()
+                //     // BindingPatternKind::
+                // }
+                // if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(decl.id.name.as_str()) {
+                //     return
+                // }
+                // decl.kind
+            }
+            AstKind::FormalParameter(param) => {
+                todo!()
+            }
+            _ => todo!(),
+        }
     }
 }
 
@@ -477,6 +568,14 @@ mod tests {
         assert_eq!(rule.caught_errors_ignore_pattern.unwrap().as_str(), "^_");
         assert_eq!(rule.destructured_array_ignore_pattern.unwrap().as_str(), "^_");
         assert!(rule.ignore_rest_siblings);
+    }
+
+    #[test]
+    fn test_var_simple() {
+        let pass = vec![("let a = 1; console.log(a);", None)];
+        let fail = vec![("let a", None), ("let a = 1;", None), ("let a = 1; a = 2;", None)];
+
+        Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
 
     #[test]
