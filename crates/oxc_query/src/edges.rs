@@ -1607,31 +1607,20 @@ mod object_literal {
             let key = Rc::clone(&k);
             let obj = v.as_object_literal().expect("to have an objectliteral");
 
-            Box::new(
-                obj.properties
-                    .iter()
-                    .filter(move |property| {
-                        let ObjectPropertyKind::ObjectProperty(prop) = property else {
-                            return false;
-                        };
-                        match &prop.key {
-                            oxc_ast::ast::PropertyKey::Identifier(ident) => {
-                                ident.name == key.as_str()
-                            }
-                            oxc_ast::ast::PropertyKey::PrivateIdentifier(_) => {
-                                unreachable!("private identifiers don't exist in objects")
-                            }
-                            oxc_ast::ast::PropertyKey::Expression(expr) => {
-                                expr_to_maybe_const_string(expr)
-                                    .map_or(false, |key_from_iter| key_from_iter == key.as_str())
-                            }
-                        }
-                    })
-                    .map(|x| {
-                        let ObjectPropertyKind::ObjectProperty(prop) = &x else { unreachable!() };
-                        (&prop.value).into()
-                    }),
-            )
+            Box::new(obj.properties.iter().filter_map(move |property| {
+                let ObjectPropertyKind::ObjectProperty(prop) = property else { return None };
+
+                let has_right_key_name = match &prop.key {
+                    oxc_ast::ast::PropertyKey::Identifier(ident) => ident.name == key.as_str(),
+                    oxc_ast::ast::PropertyKey::PrivateIdentifier(_) => {
+                        unreachable!("private identifiers don't exist in objects")
+                    }
+                    oxc_ast::ast::PropertyKey::Expression(expr) => expr_to_maybe_const_string(expr)
+                        .map_or(false, |key_from_iter| key_from_iter == key.as_str()),
+                };
+
+                if has_right_key_name { Some(Vertex::from(&prop.value)) } else { None }
+            }))
         })
     }
 }
