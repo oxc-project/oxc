@@ -24,7 +24,7 @@ use std::{
 };
 
 use crate::{
-    cache::Cache,
+    cache::{Cache, CacheValue},
     file_system::FileSystemOs,
     package_json::PackageJson,
     path::PathUtil,
@@ -130,18 +130,20 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     // 3. If X begins with './' or '/' or '../'
     fn require_relative(&self, path: &Path, request: &str) -> Result<PathBuf, ResolveError> {
-        if let Some(path) = self.load_package_self(path, request)? {
+        let cache_value = self.cache.cache_value(path);
+        if let Some(path) = self.load_package_self(&cache_value, request)? {
             return Ok(path);
         }
         let path = path.normalize_with(request);
+        let cache_value = self.cache.cache_value(&path);
         // a. LOAD_AS_FILE(Y + X)
         if !request.ends_with('/') {
-            if let Some(path) = self.load_as_file(&path)? {
+            if let Some(path) = self.load_as_file(&cache_value)? {
                 return Ok(path);
             }
         }
         // b. LOAD_AS_DIRECTORY(Y + X)
-        if let Some(path) = self.load_as_directory(&path)? {
+        if let Some(path) = self.load_as_directory(&cache_value)? {
             return Ok(path);
         }
         // c. THROW "not found"
@@ -158,29 +160,32 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if let Some(path) = self.load_node_modules(&dirname, request)? {
             return Ok(path);
         }
-        if let Some(path) = self.load_as_file(&path.join(request))? {
+        let cache_value = self.cache.cache_value(&path.join(request));
+        if let Some(path) = self.load_as_file(&cache_value)? {
             return Ok(path);
         }
         // 7. THROW "not found"
         Err(ResolveError::NotFound(path.to_path_buf().into_boxed_path()))
     }
 
-    fn load_as_file(&self, path: &Path) -> ResolveState {
+    fn load_as_file(&self, cache_value: &CacheValue) -> ResolveState {
         // enhanced-resolve feature: extension_alias
-        if let Some(path) = self.load_extension_alias(path)? {
+        if let Some(path) = self.load_extension_alias(cache_value)? {
             return Ok(Some(path));
         }
 
         // 1. If X is a file, load X as its file extension format. STOP
-        if let Some(path) = self.load_alias_or_file(path)? {
+        // let cache_value = self.cache.cache_value(&path);
+        if let Some(path) = self.load_alias_or_file(cache_value)? {
             return Ok(Some(path));
         }
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
         // 3. If X.json is a file, parse X.json to a JavaScript Object. STOP
         // 4. If X.node is a file, load X.node as binary addon. STOP
         for extension in &self.options.extensions {
-            let path_with_extension = path.with_extension(extension);
-            if let Some(path) = self.load_alias_or_file(&path_with_extension)? {
+            let path_with_extension = cache_value.as_path().with_extension(extension);
+            let cache_value = self.cache.cache_value(&path_with_extension);
+            if let Some(path) = self.load_alias_or_file(&cache_value)? {
                 return Ok(Some(path));
             }
         }
@@ -195,7 +200,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         for main_field in &self.options.main_files {
             let main_path = path.join(main_field);
             if self.options.enforce_extension == Some(false) {
-                if let Some(path) = self.load_alias_or_file(&main_path)? {
+                let cache_value = self.cache.cache_value(&main_path);
+                if let Some(path) = self.load_alias_or_file(&cache_value)? {
                     return Ok(Some(path));
                 }
             }
@@ -204,7 +210,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
             for extension in &self.options.extensions {
                 let main_path_with_extension = main_path.with_extension(extension);
-                if let Some(path) = self.load_alias_or_file(&main_path_with_extension)? {
+                let cache_value = self.cache.cache_value(&main_path_with_extension);
+                if let Some(path) = self.load_alias_or_file(&cache_value)? {
                     return Ok(Some(path));
                 }
             }
@@ -212,31 +219,33 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_alias_or_file(&self, path: &Path) -> ResolveState {
-        if let Some(package_json) = self.cache.find_package_json(path)? {
+    fn load_alias_or_file(&self, cache_value: &CacheValue) -> ResolveState {
+        if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
+            let path = cache_value.as_path();
             if let Some(path) = self.load_browser_field(path, None, &package_json)? {
                 return Ok(Some(path));
             }
         }
-        if self.cache.is_file(path) {
-            return Ok(Some(path.to_path_buf()));
+        if cache_value.is_file(&self.cache.fs) {
+            return Ok(Some(cache_value.to_path_buf()));
         }
         Ok(None)
     }
 
-    fn load_as_directory(&self, path: &Path) -> ResolveState {
+    fn load_as_directory(&self, cache_value: &CacheValue) -> ResolveState {
         // TODO: Only package.json is supported, so warn about having other values
         // Checking for empty files is needed for omitting checks on package.json
         // 1. If X/package.json is a file,
         if !self.options.description_files.is_empty() {
             // a. Parse X/package.json, and look for "main" field.
-            if let Some(package_json) = self.cache.get_package_json(path)? {
+            if let Some(package_json) = cache_value.package_json(&self.cache.fs).transpose()? {
                 // b. If "main" is a falsy value, GOTO 2.
                 if let Some(main_field) = &package_json.main {
                     // c. let M = X + (json main field)
-                    let main_field_path = path.normalize_with(main_field);
+                    let main_field_path = cache_value.as_path().normalize_with(main_field);
                     // d. LOAD_AS_FILE(M)
-                    if let Some(path) = self.load_as_file(&main_field_path)? {
+                    let cache_value = self.cache.cache_value(&main_field_path);
+                    if let Some(path) = self.load_as_file(&cache_value)? {
                         return Ok(Some(path));
                     }
                     // e. LOAD_INDEX(M)
@@ -248,18 +257,18 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     return Err(ResolveError::NotFound(main_field_path.into_boxed_path()));
                 }
 
-                if let Some(path) = self.load_index(path)? {
+                if let Some(path) = self.load_index(cache_value.as_path())? {
                     return Ok(Some(path));
                 }
             }
         }
         // 2. LOAD_INDEX(X)
-        self.load_index(path)
+        self.load_index(cache_value.as_path())
     }
 
-    fn load_node_modules(&self, start: &Path, request: &str) -> ResolveState {
+    fn load_node_modules(&self, cache_value: &CacheValue, request: &str) -> ResolveState {
         // 1. let DIRS = NODE_MODULES_PATHS(START)
-        let dirs = self.node_module_paths(start);
+        let dirs = self.node_module_paths(cache_value.as_path());
         // 2. for each DIR in DIRS:
         for node_module_path in dirs {
             // a. LOAD_PACKAGE_EXPORTS(X, DIR)
@@ -268,15 +277,16 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
 
             let node_module_file = node_module_path.join(request);
+            let cache_value = self.cache.cache_value(&node_module_file);
             // b. LOAD_AS_FILE(DIR/X)
             if !request.ends_with('/') {
-                if let Some(path) = self.load_as_file(&node_module_file)? {
+                if let Some(path) = self.load_as_file(&cache_value)? {
                     return Ok(Some(path));
                 }
             }
             // c. LOAD_AS_DIRECTORY(DIR/X)
-            if self.cache.is_dir(&node_module_file) {
-                if let Some(path) = self.load_as_directory(&node_module_file)? {
+            if cache_value.is_dir(&self.cache.fs) {
+                if let Some(path) = self.load_as_directory(&cache_value)? {
                     return Ok(Some(path));
                 }
             }
@@ -306,9 +316,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// # Panics
     ///
     /// * Parent of package.json is None
-    fn load_package_self(&self, path: &Path, request: &str) -> ResolveState {
-        if let Some(package_json) = self.cache.find_package_json(path)? {
-            if let Some(path) = self.load_browser_field(path, Some(request), &package_json)? {
+    fn load_package_self(&self, cache_value: &CacheValue, request: &str) -> ResolveState {
+        if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
+            if let Some(path) =
+                self.load_browser_field(cache_value.as_path(), Some(request), &package_json)?
+            {
                 return Ok(Some(path));
             }
         }
@@ -369,16 +381,17 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// # Errors
     ///
     /// * [ResolveError::ExtensionAlias]: When all of the aliased extensions are not found
-    fn load_extension_alias(&self, path: &Path) -> ResolveState {
-        let Some(path_extension) = path.extension() else { return Ok(None) };
+    fn load_extension_alias(&self, cache_value: &CacheValue) -> ResolveState {
+        let Some(path_extension) = cache_value.as_path().extension() else { return Ok(None) };
         let Some((_, extensions)) =
             self.options.extension_alias.iter().find(|(ext, _)| OsStr::new(ext) == path_extension)
         else {
             return Ok(None);
         };
         for extension in extensions {
-            let path_with_extension = path.with_extension(extension);
-            if self.cache.is_file(&path_with_extension) {
+            let path_with_extension = cache_value.as_path().with_extension(extension);
+            let cache_value = self.cache.cache_value(&path_with_extension);
+            if cache_value.is_file(&self.cache.fs) {
                 return Ok(Some(path_with_extension));
             }
         }
