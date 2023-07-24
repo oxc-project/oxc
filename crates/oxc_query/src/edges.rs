@@ -604,7 +604,6 @@ mod file {
         _resolve_info: &ResolveEdgeInfo,
         adapter: &'a Adapter<'b>,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        println!("path_parts: {:#?}", adapter.path_components);
         let len = adapter.path_components.len();
         resolve_neighbors_with(contexts, move |_| {
             Box::new(std::iter::once(Vertex::PathPart(len - 1)))
