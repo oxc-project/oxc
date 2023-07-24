@@ -17,6 +17,7 @@ use super::vertex::Vertex;
 
 static SCHEMA: OnceLock<Schema> = OnceLock::new();
 
+#[non_exhaustive]
 pub struct Adapter<'a> {
     pub semantic: Rc<Semantic<'a>>,
     pub path_components: Vec<Option<String>>,

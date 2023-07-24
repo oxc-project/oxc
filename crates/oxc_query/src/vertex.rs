@@ -19,6 +19,7 @@ use url::Url;
 
 use crate::util::{expr_to_maybe_const_string, jsx_attribute_to_constant_string};
 
+#[non_exhaustive]
 #[derive(Debug, Clone, EnumAsInner)]
 pub enum Vertex<'a> {
     ASTNode(AstNode<'a>),
@@ -223,6 +224,7 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
     }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ClassVertex<'a> {
     ast_node: Option<AstNode<'a>>,
@@ -235,18 +237,21 @@ impl<'a> Typename for ClassVertex<'a> {
     }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ClassMethodVertex<'a> {
     pub method: &'a MethodDefinition<'a>,
     pub is_abstract: bool,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ClassPropertyVertex<'a> {
     pub property: &'a PropertyDefinition<'a>,
     pub is_abstract: bool,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ImportVertex<'a> {
     ast_node: Option<AstNode<'a>>,
@@ -259,6 +264,7 @@ impl<'a> Typename for ImportVertex<'a> {
     }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct InterfaceVertex<'a> {
     ast_node: Option<AstNode<'a>>,
@@ -271,12 +277,14 @@ impl<'a> Typename for InterfaceVertex<'a> {
     }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub enum InterfaceExtendVertex<'a> {
     Identifier(&'a IdentifierReference),
     MemberExpression(&'a MemberExpression<'a>),
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct JSXElementVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
@@ -289,12 +297,14 @@ impl<'a> Typename for JSXElementVertex<'a> {
     }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct ReturnStatementVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub return_statement: &'a ReturnStatement<'a>,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct TypeAnnotationVertex<'a> {
     ast_node: Option<AstNode<'a>>,
@@ -307,12 +317,14 @@ impl<'a> Typename for TypeAnnotationVertex<'a> {
     }
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct SearchParameterVertex {
     pub key: String,
     pub value: String,
 }
 
+#[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct VariableDeclarationVertex<'a> {
     ast_node: Option<AstNode<'a>>,
