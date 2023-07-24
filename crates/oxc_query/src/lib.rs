@@ -8,7 +8,6 @@ mod vertex;
 
 pub use adapter::{schema, Adapter};
 
-// TODO: Uncomment on next release of trustfall
 #[cfg(test)]
 mod test {
     use std::{collections::BTreeMap, rc::Rc, sync::Arc};
@@ -217,21 +216,4 @@ query {
             results
         );
     }
-
-    // #[test]
-    // fn test_invariants() {
-    // let file_path = "/apple/orange.tsx";
-    // let source_text = "const apple = 1;";
-
-    // let allocator = Allocator::default();
-    // let source_type = SourceType::from_path(file_path).unwrap();
-    // let ret = Parser::new(&allocator, source_text, source_type).parse();
-    // let program = allocator.alloc(ret.program);
-    // let semantic_ret = SemanticBuilder::new(source_text, source_type)
-    //     .with_trivias(&ret.trivias)
-    //     .build(program);
-
-    // let adapter = Adapter { path_components: vec![], semantic: Rc::new(semantic_ret.semantic) };
-    //     check_adapter_invariants(schema(), &adapter);
-    // }
 }
