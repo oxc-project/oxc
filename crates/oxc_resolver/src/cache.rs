@@ -28,24 +28,19 @@ impl<Fs: FileSystem> Cache<Fs> {
     /// # Panics
     ///
     /// * Path is file but does not have a parent
-    pub fn dirname(&self, path: &Path) -> Arc<CacheValue> {
-        let cache_value = self.cache_value(path);
+    pub fn dirname(&self, cache_value: &Arc<CacheValue>) -> Arc<CacheValue> {
         Arc::clone(if cache_value.is_file(&self.fs) {
             cache_value.parent.as_ref().unwrap()
         } else {
-            &cache_value
+            cache_value
         })
     }
 
-    pub fn canonicalize(&self, path: &Path) -> Option<PathBuf> {
-        self.cache_value(path).symlink(&self.fs).map(Path::into_path_buf)
-    }
-
-    pub fn cache_value(&self, path: &Path) -> Arc<CacheValue> {
+    pub fn value(&self, path: &Path) -> Arc<CacheValue> {
         if let Some(cache_entry) = self.cache.get(path) {
             return Arc::clone(cache_entry.value());
         }
-        let parent = path.parent().map(|p| self.cache_value(p));
+        let parent = path.parent().map(|p| self.value(p));
         let data = Arc::new(CacheValue::new(path.to_path_buf().into_boxed_path(), parent));
         self.cache.insert(path.to_path_buf().into_boxed_path(), Arc::clone(&data));
         data
@@ -57,7 +52,7 @@ pub struct CacheValue {
     path: Box<Path>,
     parent: Option<Arc<CacheValue>>,
     meta: OnceLock<Option<FileMetadata>>,
-    symlink: OnceLock<Option<Box<Path>>>,
+    symlink: OnceLock<Option<PathBuf>>,
     package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
 }
 
@@ -72,7 +67,7 @@ impl CacheValue {
         }
     }
 
-    pub fn as_path(&self) -> &Path {
+    pub fn path(&self) -> &Path {
         &self.path
     }
 
@@ -92,10 +87,8 @@ impl CacheValue {
         self.meta(fs).is_some_and(|meta| meta.is_dir)
     }
 
-    fn symlink<Fs: FileSystem>(&self, fs: &Fs) -> Option<Box<Path>> {
-        self.symlink
-            .get_or_init(|| fs.canonicalize(&self.path).map(PathBuf::into_boxed_path).ok())
-            .clone()
+    pub fn symlink<Fs: FileSystem>(&self, fs: &Fs) -> Option<PathBuf> {
+        self.symlink.get_or_init(|| fs.canonicalize(&self.path).ok()).clone()
     }
 
     /// Find package.json of a path by traversing parent directories.
