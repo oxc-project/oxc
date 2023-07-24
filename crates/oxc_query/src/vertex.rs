@@ -128,9 +128,11 @@ impl<'a> Vertex<'a> {
     }
 
     pub fn make_url(attr: &'a JSXAttribute<'a>) -> Option<Self> {
-        let Some(maybe_url) = jsx_attribute_to_constant_string(attr) else { return None };
-        let Ok(parsed_url) = Url::parse(&maybe_url) else { return None };
-        return Some(Vertex::Url(Rc::new(parsed_url)));
+        jsx_attribute_to_constant_string(attr)
+            .as_deref()
+            .and_then(|v| Url::parse(v).ok())
+            .map(Rc::new)
+            .map(Vertex::Url)
     }
 
     pub fn as_constant_string(&self) -> Option<String> {

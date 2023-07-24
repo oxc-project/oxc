@@ -1072,18 +1072,21 @@ mod jsxattribute {
             let attr = v.as_jsx_attribute().unwrap_or_else(|| {
                 panic!("expected to have a jsxattribute vertex, instead have: {v:#?}")
             });
-            let Some(attr_value) = &attr.value else { return Box::new(std::iter::empty()) };
             Box::new(
-                std::iter::once(match attr_value {
-                    JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
-                        oxc_ast::ast::JSXExpression::Expression(expr) => Some(Vertex::from(expr)),
-                        oxc_ast::ast::JSXExpression::EmptyExpression(_) => None,
-                    },
-                    JSXAttributeValue::Fragment(_)
-                    | JSXAttributeValue::StringLiteral(_)
-                    | JSXAttributeValue::Element(_) => None,
-                })
-                .flatten(),
+                attr.value
+                    .as_ref()
+                    .and_then(|attr_value| match attr_value {
+                        JSXAttributeValue::ExpressionContainer(expr) => match &expr.expression {
+                            oxc_ast::ast::JSXExpression::Expression(expr) => {
+                                Some(Vertex::from(expr))
+                            }
+                            oxc_ast::ast::JSXExpression::EmptyExpression(_) => None,
+                        },
+                        JSXAttributeValue::Fragment(_)
+                        | JSXAttributeValue::StringLiteral(_)
+                        | JSXAttributeValue::Element(_) => None,
+                    })
+                    .into_iter(),
             )
         })
     }

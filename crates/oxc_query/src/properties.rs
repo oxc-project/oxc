@@ -85,15 +85,16 @@ pub(super) fn resolve_class_property<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "extended_class_name" => resolve_property_with(contexts, |v| {
-            let Some(Expression::Identifier(ref ident)) = v
-                .as_class()
+            v.as_class()
                 .unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}"))
                 .class
                 .super_class
-            else {
-                return FieldValue::Null;
-            };
-            ident.name.to_string().into()
+                .as_ref()
+                .and_then(|expr| match expr {
+                    Expression::Identifier(ident) => Some(ident.name.to_string().into()),
+                    _ => None,
+                })
+                .unwrap_or(FieldValue::Null)
         }),
         "is_abstract" => resolve_property_with(contexts, |v| {
             v.as_class()
