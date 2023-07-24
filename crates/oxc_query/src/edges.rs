@@ -1441,7 +1441,9 @@ mod jsxopening_element {
         resolve_neighbors_with(contexts, |v| {
             Box::new(
                 v.as_jsx_opening_element()
-                    .expect("to have a jsx opening element")
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a jsxopeningelement vertex, instead have: {v:#?}")
+                    })
                     .attributes
                     .iter()
                     .filter_map(|attr| match attr {
@@ -1466,7 +1468,9 @@ mod jsxopening_element {
         resolve_neighbors_with(contexts, |v| {
             Box::new(
                 v.as_jsx_opening_element()
-                    .expect("to have a jsx opening element")
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a jsxopeningelement vertex, instead have: {v:#?}")
+                    })
                     .attributes
                     .iter()
                     .filter_map(|attr| match attr {
