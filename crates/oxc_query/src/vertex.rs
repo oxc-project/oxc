@@ -267,7 +267,7 @@ pub struct InterfaceVertex<'a> {
 
 impl<'a> Typename for InterfaceVertex<'a> {
     fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() { "InteraceAST" } else { "Interface" }
+        if self.ast_node.is_some() { "InterfaceAST" } else { "Interface" }
     }
 }
 
