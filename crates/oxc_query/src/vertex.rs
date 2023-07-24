@@ -87,7 +87,7 @@ impl<'a> Vertex<'a> {
             | Self::PathPart(_)
             | Self::SearchParameter(_)
             | Self::Span(_) => {
-                unreachable!()
+                unreachable!("Tried to get the span from a {self:#?}")
             }
         }
     }
