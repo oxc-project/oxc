@@ -4,7 +4,7 @@
 
 use std::{env, path::PathBuf};
 
-use oxc_resolver::{ResolveOptions, Resolver};
+use oxc_resolver::{AliasValue, ResolveOptions, Resolver};
 
 fn main() {
     let path = env::args().nth(1).expect("require path");
@@ -14,7 +14,10 @@ fn main() {
     println!("path: {path:?}");
     println!("request: {request}");
 
-    let options = ResolveOptions::default();
+    let options = ResolveOptions {
+        alias: vec![("/asdf".into(), vec![AliasValue::Path("./test.js".into())])],
+        ..ResolveOptions::default()
+    };
     let resolved_path = Resolver::new(options).resolve(path, &request);
 
     println!("Result: {resolved_path:?}");

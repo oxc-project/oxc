@@ -40,13 +40,16 @@ fn data() -> Vec<(PathBuf, &'static str)> {
         // scoped
         (cwd.join("test/fixtures/scoped"), "@scope/pack1"),
         (cwd.join("test/fixtures/scoped"), "@scope/pack2/lib"),
+        // alias
+        (cwd.clone(), "/absolute/path"),
     ]
 }
 
 fn nodejs_resolver() -> nodejs_resolver::Resolver {
-    use nodejs_resolver::{Options, Resolver};
+    use nodejs_resolver::{AliasMap, Options, Resolver};
     Resolver::new(Options {
         browser_field: true,
+        alias: vec![("/absolute/path".into(), vec![AliasMap::Target("./".into())])],
         extension_alias: vec![
             (".js".into(), vec![".ts".into(), ".js".into()]),
             (".mjs".into(), vec![".mts".into()]),
@@ -56,8 +59,9 @@ fn nodejs_resolver() -> nodejs_resolver::Resolver {
 }
 
 fn oxc_resolver() -> oxc_resolver::Resolver {
-    use oxc_resolver::{ResolveOptions, Resolver};
+    use oxc_resolver::{AliasValue, ResolveOptions, Resolver};
     Resolver::new(ResolveOptions {
+        alias: vec![("/absolute/path".into(), vec![AliasValue::Path("./".into())])],
         alias_fields: vec!["browser".into()],
         extension_alias: vec![
             (".js".into(), vec![".ts".into(), ".js".into()]),
@@ -70,10 +74,19 @@ fn oxc_resolver() -> oxc_resolver::Resolver {
 fn resolver_benchmark(c: &mut Criterion) {
     let data = data();
 
-    // Check path is valid, re-initialize so they don't use cache
+    // Check path is valid by comparing the outputs, re-initialize so they don't use cache
     for (path, request) in &data {
-        assert!(nodejs_resolver().resolve(path, request).is_ok(), "{path:?} {request}");
-        assert!(oxc_resolver().resolve(path, request).is_ok(), "{path:?} {request}");
+        let nodejs_resolver_path = if let Ok(nodejs_resolver::ResolveResult::Resource(resource)) =
+            nodejs_resolver().resolve(path, request)
+        {
+            Some(resource.path)
+        } else {
+            None
+        };
+        let oxc_path = oxc_resolver()
+            .resolve(path, request)
+            .map_or(None, |oxc_path| Some(oxc_path.into_path_buf()));
+        assert_eq!(nodejs_resolver_path, oxc_path, "{path:?} {request}");
     }
 
     // Bench nodejs_resolver with cache
