@@ -3,7 +3,9 @@ use std::convert::Into;
 use oxc_ast::ast::{BindingPatternKind, Expression, MemberExpression};
 use oxc_span::GetSpan;
 use trustfall::{
-    provider::{resolve_property_with, ContextIterator, ContextOutcomeIterator, ResolveInfo},
+    provider::{
+        field_property, resolve_property_with, ContextIterator, ContextOutcomeIterator, ResolveInfo,
+    },
     FieldValue,
 };
 
@@ -123,14 +125,9 @@ pub(super) fn resolve_class_method_property<'a, 'b: 'a>(
                 .map(accessibility_to_string)
                 .map_or(FieldValue::Null, Into::into)
         }),
-        "is_abstract" => resolve_property_with(contexts, |v| {
-            v.as_class_method()
-                .unwrap_or_else(|| {
-                    panic!("expected to have a classmethod vertex, instead have: {v:#?}")
-                })
-                .is_abstract
-                .into()
-        }),
+        "is_abstract" => {
+            resolve_property_with(contexts, field_property!(as_class_method, is_abstract))
+        }
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'ClassMethod'"
@@ -155,14 +152,9 @@ pub(super) fn resolve_class_property_property<'a, 'b: 'a>(
                 .map(accessibility_to_string)
                 .map_or(FieldValue::Null, Into::into)
         }),
-        "is_abstract" => resolve_property_with(contexts, |v| {
-            v.as_class_property()
-                .unwrap_or_else(|| {
-                    panic!("expected to have a classproperty vertex, instead have: {v:#?}")
-                })
-                .is_abstract
-                .into()
-        }),
+        "is_abstract" => {
+            resolve_property_with(contexts, field_property!(as_class_method, is_abstract))
+        }
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'ClassProperty'"
@@ -304,16 +296,10 @@ pub(super) fn resolve_jsxelement_property<'a, 'b: 'a>(
         "as_constant_string" => resolve_property_with(contexts, |v| {
             v.as_constant_string().map_or(FieldValue::Null, Into::into)
         }),
-        "child_count" => resolve_property_with(contexts, |v| {
-            (v.as_jsx_element()
-                .unwrap_or_else(|| {
-                    panic!("expected to have a jsxelement vertex, instead have: {v:#?}")
-                })
-                .element
-                .children
-                .len() as u64)
-                .into()
-        }),
+        "child_count" => resolve_property_with(
+            contexts,
+            field_property!(as_jsx_element, element, { (element.children.len() as u64).into() }),
+        ),
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'JSXElement'"
