@@ -151,6 +151,75 @@ query {
         );
     }
 
+    #[test]
+    fn test_parent_query() {
+        let code = "interface MyGreatInterface { myGreatProperty: number }";
+
+        let allocator = Allocator::default();
+        let source_type =
+            SourceType::default().with_module(true).with_jsx(true).with_typescript(true);
+        let ret = Parser::new(&allocator, code, source_type).parse();
+        let program = allocator.alloc(ret.program);
+        let semantic_ret =
+            SemanticBuilder::new(code, source_type).with_trivias(&ret.trivias).build(program);
+
+        let adapter = Adapter {
+            path_components: vec![Some("index".to_string())],
+            semantic: Rc::new(semantic_ret.semantic),
+        };
+
+        let args: BTreeMap<Arc<str>, FieldValue> = BTreeMap::new();
+
+        let adapter = Arc::from(&adapter);
+
+        #[allow(clippy::items_after_statements)]
+        #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
+        struct Output {
+            type_: String,
+            tn1: String,
+            tn2: String,
+        }
+
+        let mut results: Vec<Output> = execute_query(
+            schema(),
+            adapter,
+            r#"
+query {
+    File {
+        ast_node {
+            ... on TypeAnnotationAST {
+                type {
+                    type_: str @output
+                }
+                parent {
+                    tn1: __typename @output
+                    parent {
+                        tn2: __typename @output
+                    }
+                }
+            }
+        }
+    }
+}
+        "#,
+            args,
+        )
+        .expect("to successfully execute the query")
+        .map(|row| row.try_into_struct().expect("shape mismatch"))
+        .collect::<Vec<_>>();
+
+        results.sort_unstable();
+
+        assert_eq!(
+            vec![Output {
+                type_: "number".to_owned(),
+                tn1: "ASTNode".to_owned(),
+                tn2: "InterfaceAST".to_owned()
+            }],
+            results
+        );
+    }
+
     // #[test]
     // fn test_invariants() {
     // let file_path = "/apple/orange.tsx";

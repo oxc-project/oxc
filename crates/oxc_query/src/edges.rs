@@ -45,16 +45,15 @@ fn parents<'a, 'b: 'a>(
     adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     trustfall::provider::resolve_neighbors_with(contexts, |v| {
-        #[allow(clippy::option_if_let_else)]
-        if let Some(parent) = adapter
-            .semantic
-            .nodes()
-            .parent_node(v.ast_node_id().expect("for vertex to have an ast_node"))
-        {
-            Box::new(std::iter::once((*parent).into()))
-        } else {
-            Box::new(std::iter::empty())
-        }
+        Box::new(
+            adapter
+                .semantic
+                .nodes()
+                .parent_node(v.ast_node_id().expect("for vertex to have an ast_node"))
+                .as_ref()
+                .map(|ast_node| Vertex::from(**ast_node))
+                .into_iter(),
+        )
     })
 }
 
