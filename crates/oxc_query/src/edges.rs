@@ -163,19 +163,37 @@ mod class {
     macro_rules! class_fn_edge_implem {
         ($contexts:ident, $x:ident) => {
             resolve_neighbors_with($contexts, |v| {
-                Box::new(v.as_class().unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}")).class.body.body.iter().filter_map(|class_el| {
-                        if let ClassElement::MethodDefinition(method) = class_el
-                            && matches!(method.kind, MethodDefinitionKind::$x)
-                        {
-                            Some(Vertex::ClassMethod(ClassMethodVertex{ method, is_abstract: false }.into()))
-                        } else if let ClassElement::TSAbstractMethodDefinition(def) = class_el
-                            && matches!(def.method_definition.kind, MethodDefinitionKind::$x)
-                        {
-                            Some(Vertex::ClassMethod(Rc::new(ClassMethodVertex{ method: &def.method_definition, is_abstract: true })))
-                        } else {
-                            None
-                        }
-                    }))
+                Box::new(
+                    v.as_class()
+                        .unwrap_or_else(|| {
+                            panic!("expected to have a class vertex, instead have: {v:#?}")
+                        })
+                        .class
+                        .body
+                        .body
+                        .iter()
+                        .filter_map(|class_el| match class_el {
+                            ClassElement::MethodDefinition(method)
+                                if matches!(method.kind, MethodDefinitionKind::$x) =>
+                            {
+                                Some(Vertex::ClassMethod(
+                                    ClassMethodVertex { method, is_abstract: false }.into(),
+                                ))
+                            }
+                            ClassElement::TSAbstractMethodDefinition(def)
+                                if matches!(
+                                    def.method_definition.kind,
+                                    MethodDefinitionKind::$x
+                                ) =>
+                            {
+                                Some(Vertex::ClassMethod(Rc::new(ClassMethodVertex {
+                                    method: &def.method_definition,
+                                    is_abstract: true,
+                                })))
+                            }
+                            _ => None,
+                        }),
+                )
             })
         };
     }
