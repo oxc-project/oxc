@@ -578,7 +578,7 @@ pub(super) fn resolve_type_property<'a, 'b: 'a>(
             adapter.semantic.source_text()[span.start as usize..span.end as usize].into()
         }),
         _ => {
-            unreachable!("attempted to read unexpected property '{property_name}' on type 'Type_'")
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'Type'")
         }
     }
 }
