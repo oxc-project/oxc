@@ -1,11 +1,12 @@
 use std::{
     hash::BuildHasherDefault,
     path::{Path, PathBuf},
-    sync::{Arc, OnceLock},
+    sync::OnceLock,
 };
 
 use dashmap::DashMap;
 use rustc_hash::FxHasher;
+use triomphe::Arc;
 
 use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 

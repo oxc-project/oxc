@@ -21,8 +21,9 @@ use std::{
     borrow::Cow,
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::Arc,
 };
+
+use triomphe::Arc;
 
 use crate::{
     cache::{Cache, CacheValue},

@@ -16,6 +16,7 @@ serde      = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 rustc-hash = { workspace = true }
 dunce      = "1.0.4"
+triomphe   = "0.1.9"
 
 [dev-dependencies]
 static_assertions = { workspace = true }
