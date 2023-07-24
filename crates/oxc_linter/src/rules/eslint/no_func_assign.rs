@@ -39,8 +39,7 @@ impl Rule for NoFuncAssign {
         let symbol_table = ctx.semantic().symbols();
         let decl = symbol_table.get_declaration(symbol_id);
         if let AstKind::Function(_) = ctx.nodes().kind(decl) {
-            for reference_id in symbol_table.get_resolved_references(symbol_id) {
-                let reference = symbol_table.get_reference(*reference_id);
+            for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(NoFuncAssignDiagnostic(
                         symbol_table.get_name(symbol_id).clone(),
