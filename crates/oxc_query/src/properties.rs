@@ -24,7 +24,7 @@ fn interface_extend_implem<'a, 'b: 'a>(
         match v
             .as_interface_extend()
             .unwrap_or_else(|| {
-                panic!("expected to have an interfaceextend vertex, instead have: {:#?}", v)
+                panic!("expected to have an interfaceextend vertex, instead have: {v:#?}")
             })
             .as_ref()
         {
@@ -85,7 +85,7 @@ pub(super) fn resolve_class_property<'a, 'b: 'a>(
         "extended_class_name" => resolve_property_with(contexts, |v| {
             let Some(Expression::Identifier(ref ident)) = v
                 .as_class()
-                .unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {:#?}", v))
+                .unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}"))
                 .class
                 .super_class
             else {
@@ -95,9 +95,7 @@ pub(super) fn resolve_class_property<'a, 'b: 'a>(
         }),
         "is_abstract" => resolve_property_with(contexts, |v| {
             v.as_class()
-                .unwrap_or_else(|| {
-                    panic!("expected to have a class vertex, instead have: {:#?}", v)
-                })
+                .unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}"))
                 .class
                 .modifiers
                 .contains(oxc_ast::ast::ModifierKind::Abstract)
@@ -118,7 +116,7 @@ pub(super) fn resolve_class_method_property<'a, 'b: 'a>(
         "accessibility" => resolve_property_with(contexts, |v| {
             v.as_class_method()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a classmethod vertex, instead have: {:#?}", v)
+                    panic!("expected to have a classmethod vertex, instead have: {v:#?}")
                 })
                 .method
                 .accessibility
@@ -128,7 +126,7 @@ pub(super) fn resolve_class_method_property<'a, 'b: 'a>(
         "is_abstract" => resolve_property_with(contexts, |v| {
             v.as_class_method()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a classmethod vertex, instead have: {:#?}", v)
+                    panic!("expected to have a classmethod vertex, instead have: {v:#?}")
                 })
                 .is_abstract
                 .into()
@@ -150,7 +148,7 @@ pub(super) fn resolve_class_property_property<'a, 'b: 'a>(
         "accessibility" => resolve_property_with(contexts, |v| {
             v.as_class_property()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a classproperty vertex, instead have: {:#?}", v)
+                    panic!("expected to have a classproperty vertex, instead have: {v:#?}")
                 })
                 .property
                 .accessibility
@@ -160,7 +158,7 @@ pub(super) fn resolve_class_property_property<'a, 'b: 'a>(
         "is_abstract" => resolve_property_with(contexts, |v| {
             v.as_class_property()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a classproperty vertex, instead have: {:#?}", v)
+                    panic!("expected to have a classproperty vertex, instead have: {v:#?}")
                 })
                 .is_abstract
                 .into()
@@ -182,7 +180,7 @@ pub(super) fn resolve_default_import_property<'a, 'b: 'a>(
         "local_name" => resolve_property_with(contexts, |v| {
             v.as_default_import()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a defaultimport vertex, instead have: {:#?}", v)
+                    panic!("expected to have a defaultimport vertex, instead have: {v:#?}")
                 })
                 .local
                 .name
@@ -223,7 +221,7 @@ pub(super) fn resolve_import_property<'a, 'b: 'a>(
         "from_path" => resolve_property_with(contexts, |v| {
             v.as_import()
                 .unwrap_or_else(|| {
-                    panic!("expected to have an import vertex, instead have: {:#?}", v)
+                    panic!("expected to have an import vertex, instead have: {v:#?}")
                 })
                 .import
                 .source
@@ -277,7 +275,7 @@ pub(super) fn resolve_jsxattribute_property<'a, 'b: 'a>(
             jsx_attribute_name_to_string(
                 &v.as_jsx_attribute()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a jsxattribute vertex, instead have: {:#?}", v)
+                        panic!("expected to have a jsxattribute vertex, instead have: {v:#?}")
                     })
                     .name,
             )
@@ -285,7 +283,7 @@ pub(super) fn resolve_jsxattribute_property<'a, 'b: 'a>(
         }),
         "value_as_constant_string" => resolve_property_with(contexts, |v| {
             let attr = v.as_jsx_attribute().unwrap_or_else(|| {
-                panic!("expected to have a jsxattribute vertex, instead have: {:#?}", v)
+                panic!("expected to have a jsxattribute vertex, instead have: {v:#?}")
             });
             jsx_attribute_to_constant_string(attr).map_or_else(|| FieldValue::Null, Into::into)
         }),
@@ -309,7 +307,7 @@ pub(super) fn resolve_jsxelement_property<'a, 'b: 'a>(
         "child_count" => resolve_property_with(contexts, |v| {
             (v.as_jsx_element()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a jsxelement vertex, instead have: {:#?}", v)
+                    panic!("expected to have a jsxelement vertex, instead have: {v:#?}")
                 })
                 .element
                 .children
@@ -349,13 +347,13 @@ pub(super) fn resolve_jsxopening_element_property<'a, 'b: 'a>(
     match property_name {
         "attribute_count" => resolve_property_with(contexts, |v| {
             let jsx = v.as_jsx_opening_element().unwrap_or_else(|| {
-                panic!("expected to have a jsxopeningelement vertex, instead have: {:#?}", v)
+                panic!("expected to have a jsxopeningelement vertex, instead have: {v:#?}")
             });
             (jsx.attributes.len() as u64).into()
         }),
         "name" => resolve_property_with(contexts, |v| {
             let jsx = v.as_jsx_opening_element().unwrap_or_else(|| {
-                panic!("expected to have a jsxopeningelement vertex, instead have: {:#?}", v)
+                panic!("expected to have a jsxopeningelement vertex, instead have: {v:#?}")
             });
 
             jsx_element_name_to_string(&jsx.name).into()
@@ -377,7 +375,7 @@ pub(super) fn resolve_jsxtext_property<'a, 'b: 'a>(
         "text" => resolve_property_with(contexts, |v| {
             v.as_jsx_text()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a jsxtext vertex, instead have: {:#?}", v)
+                    panic!("expected to have a jsxtext vertex, instead have: {v:#?}")
                 })
                 .value
                 .to_string()
@@ -432,7 +430,7 @@ pub(super) fn resolve_path_part_property<'a, 'b: 'a>(
     match property_name {
         "is_first" => resolve_property_with(contexts, |v| {
             (*v.as_path_part().unwrap_or_else(|| {
-                panic!("expected to have a pathpart vertex, instead have: {:#?}", v)
+                panic!("expected to have a pathpart vertex, instead have: {v:#?}")
             }) == 0)
                 .into()
         }),
@@ -440,14 +438,14 @@ pub(super) fn resolve_path_part_property<'a, 'b: 'a>(
             let len = adapter.path_components.len();
             resolve_property_with(contexts, move |v| {
                 (*v.as_path_part().unwrap_or_else(|| {
-                    panic!("expected to have a pathpart vertex, instead have: {:#?}", v)
+                    panic!("expected to have a pathpart vertex, instead have: {v:#?}")
                 }) == len - 1)
                     .into()
             })
         }
         "name" => resolve_property_with(contexts, |v| {
             adapter.path_components[*v.as_path_part().unwrap_or_else(|| {
-                panic!("expected to have a pathpart vertex, instead have: {:#?}", v)
+                panic!("expected to have a pathpart vertex, instead have: {v:#?}")
             })]
             .as_ref()
             .map_or(FieldValue::Null, Into::into)
@@ -469,7 +467,7 @@ pub(super) fn resolve_search_parameter_property<'a, 'b: 'a>(
         "key" => resolve_property_with(contexts, |v| {
             v.as_search_parameter()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a searchparameter vertex, instead have: {:#?}", v)
+                    panic!("expected to have a searchparameter vertex, instead have: {v:#?}")
                 })
                 .key
                 .clone()
@@ -478,7 +476,7 @@ pub(super) fn resolve_search_parameter_property<'a, 'b: 'a>(
         "value" => resolve_property_with(contexts, |v| {
             v.as_search_parameter()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a searchparameter vertex, instead have: {:#?}", v)
+                    panic!("expected to have a searchparameter vertex, instead have: {v:#?}")
                 })
                 .value
                 .clone()
@@ -515,13 +513,13 @@ pub(super) fn resolve_span_property<'a, 'b: 'a>(
     match property_name {
         "end" => resolve_property_with(contexts, |v| {
             v.as_span()
-                .unwrap_or_else(|| panic!("expected to have a span vertex, instead have: {:#?}", v))
+                .unwrap_or_else(|| panic!("expected to have a span vertex, instead have: {v:#?}"))
                 .end
                 .into()
         }),
         "start" => resolve_property_with(contexts, |v| {
             v.as_span()
-                .unwrap_or_else(|| panic!("expected to have a span vertex, instead have: {:#?}", v))
+                .unwrap_or_else(|| panic!("expected to have a span vertex, instead have: {v:#?}"))
                 .start
                 .into()
         }),
@@ -540,7 +538,7 @@ pub(super) fn resolve_specific_import_property<'a, 'b: 'a>(
         "local_name" => resolve_property_with(contexts, |v| {
             v.as_specific_import()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a specificimport vertex, instead have: {:#?}", v)
+                    panic!("expected to have a specificimport vertex, instead have: {v:#?}")
                 })
                 .local
                 .name
@@ -550,7 +548,7 @@ pub(super) fn resolve_specific_import_property<'a, 'b: 'a>(
         "original_name" => resolve_property_with(contexts, |v| {
             v.as_specific_import()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a specificimport vertex, instead have: {:#?}", v)
+                    panic!("expected to have a specificimport vertex, instead have: {v:#?}")
                 })
                 .imported
                 .name()
@@ -575,7 +573,7 @@ pub(super) fn resolve_type_property<'a, 'b: 'a>(
         "str" => resolve_property_with(contexts, |v| {
             let span = v
                 .as_type()
-                .unwrap_or_else(|| panic!("expected to have a type vertex, instead have: {:#?}", v))
+                .unwrap_or_else(|| panic!("expected to have a type vertex, instead have: {v:#?}"))
                 .span();
             adapter.semantic.source_text()[span.start as usize..span.end as usize].into()
         }),

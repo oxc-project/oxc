@@ -164,7 +164,7 @@ mod class {
     macro_rules! class_fn_edge_implem {
         ($contexts:ident, $x:ident) => {
             resolve_neighbors_with($contexts, |v| {
-                Box::new(v.as_class().unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {:#?}", v)).class.body.body.iter().filter_map(|class_el| {
+                Box::new(v.as_class().unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}")).class.body.body.iter().filter_map(|class_el| {
                         if let ClassElement::MethodDefinition(method) = class_el
                             && matches!(method.kind, MethodDefinitionKind::$x)
                         {
@@ -196,7 +196,7 @@ mod class {
             Box::new(std::iter::once(Vertex::Span(
                 v.as_class()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a class vertex, instead have: {:#?}", v)
+                        panic!("expected to have a class vertex, instead have: {v:#?}")
                     })
                     .class
                     .span,
@@ -226,9 +226,7 @@ mod class {
             #[allow(clippy::option_if_let_else)]
             if let Some(id) = &v
                 .as_class()
-                .unwrap_or_else(|| {
-                    panic!("expected to have a class vertex, instead have: {:#?}", v)
-                })
+                .unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}"))
                 .class
                 .id
             {
@@ -247,7 +245,7 @@ mod class {
             Box::new(
                 v.as_class()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a class vertex, instead have: {:#?}", v)
+                        panic!("expected to have a class vertex, instead have: {v:#?}")
                     })
                     .class
                     .body
@@ -711,7 +709,7 @@ mod import {
             Box::new(
                 v.as_import()
                     .unwrap_or_else(|| {
-                        panic!("expected to have an import vertex, instead have: {:#?}", v)
+                        panic!("expected to have an import vertex, instead have: {v:#?}")
                     })
                     .import
                     .specifiers
@@ -737,7 +735,7 @@ mod import {
             Box::new(std::iter::once(Vertex::Span(
                 v.as_import()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a import vertex, instead have: {:#?}", v)
+                        panic!("expected to have a import vertex, instead have: {v:#?}")
                     })
                     .import
                     .span,
@@ -753,7 +751,7 @@ mod import {
             Box::new(
                 v.as_import()
                     .unwrap_or_else(|| {
-                        panic!("expected to have an import vertex, instead have: {:#?}", v)
+                        panic!("expected to have an import vertex, instead have: {v:#?}")
                     })
                     .import
                     .specifiers
@@ -881,7 +879,7 @@ mod interface {
             Box::new(std::iter::once(Vertex::Span(
                 v.as_interface()
                     .unwrap_or_else(|| {
-                        panic!("expected to have an interface vertex, instead have: {:#?}", v)
+                        panic!("expected to have an interface vertex, instead have: {v:#?}")
                     })
                     .interface
                     .span,
@@ -898,7 +896,7 @@ mod interface {
             if let Some(extends) = &v
                 .as_interface()
                 .unwrap_or_else(|| {
-                    panic!("expected to have an interface vertex, instead have: {:#?}", v)
+                    panic!("expected to have an interface vertex, instead have: {v:#?}")
                 })
                 .interface
                 .extends
@@ -926,7 +924,7 @@ mod interface {
             Box::new(std::iter::once(Vertex::Span(
                 v.as_interface()
                     .unwrap_or_else(|| {
-                        panic!("expected to have an interface vertex, instead have: {:#?}", v)
+                        panic!("expected to have an interface vertex, instead have: {v:#?}")
                     })
                     .interface
                     .id
@@ -1082,7 +1080,7 @@ mod jsxattribute {
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
             let attr = v.as_jsx_attribute().unwrap_or_else(|| {
-                panic!("expected to have a jsxattribute vertex, instead have: {:#?}", v)
+                panic!("expected to have a jsxattribute vertex, instead have: {v:#?}")
             });
             let Some(attr_value) = &attr.value else { return Box::new(std::iter::empty()) };
             Box::new(
@@ -1107,7 +1105,7 @@ mod jsxattribute {
         resolve_neighbors_with(contexts, |v| {
             #[allow(clippy::option_if_let_else)]
             if let Some(url) = Vertex::make_url(v.as_jsx_attribute().unwrap_or_else(|| {
-                panic!("expected to have a jsxattribute vertex, instead have: {:#?}", v)
+                panic!("expected to have a jsxattribute vertex, instead have: {v:#?}")
             })) {
                 Box::new(std::iter::once(url))
             } else {
@@ -1155,7 +1153,7 @@ mod jsxelement {
                 Box::new(
                     v.as_jsx_element()
                         .unwrap_or_else(|| {
-                            panic!("expected to have a JSXElement vertex, instead have: {:#?}", v)
+                            panic!("expected to have a JSXElement vertex, instead have: {v:#?}")
                         })
                         .element
                         .children
@@ -1177,7 +1175,7 @@ mod jsxelement {
             Box::new(
                 v.as_jsx_element()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a JSXElement vertex, instead have: {:#?}", v)
+                        panic!("expected to have a JSXElement vertex, instead have: {v:#?}")
                     })
                     .element
                     .children
@@ -1228,7 +1226,7 @@ mod jsxelement {
             Box::new(std::iter::once(Vertex::JSXOpeningElement(
                 &v.as_jsx_element()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a JSXElement vertex, instead have: {:#?}", v)
+                        panic!("expected to have a JSXElement vertex, instead have: {v:#?}")
                     })
                     .element
                     .opening_element,
@@ -1652,7 +1650,7 @@ mod object_literal {
         resolve_neighbors_with(contexts, move |v| {
             let key = Rc::clone(&k);
             let obj = v.as_object_literal().unwrap_or_else(|| {
-                panic!("expected to have an objectliteral vertex, instead have: {:#?}", v)
+                panic!("expected to have an objectliteral vertex, instead have: {v:#?}")
             });
 
             Box::new(obj.properties.iter().filter_map(move |property| {
@@ -1705,7 +1703,7 @@ mod path_part {
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
             let i = *v.as_path_part().unwrap_or_else(|| {
-                panic!("expected to have a pathpart vertex, instead have: {:#?}", v)
+                panic!("expected to have a pathpart vertex, instead have: {v:#?}")
             });
             if i + 1 < adapter.path_components.len() {
                 Box::new(std::iter::once(Vertex::PathPart(i + 1)))
@@ -1721,7 +1719,7 @@ mod path_part {
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
             let i = *v.as_path_part().unwrap_or_else(|| {
-                panic!("expected to have a pathpart vertex, instead have: {:#?}", v)
+                panic!("expected to have a pathpart vertex, instead have: {v:#?}")
             });
             if i > 0 {
                 Box::new(std::iter::once(Vertex::PathPart(i - 1)))
@@ -1778,7 +1776,7 @@ mod return_statement_ast {
             if let Some(expr) = &v
                 .as_return_statement_ast()
                 .unwrap_or_else(|| {
-                    panic!("expected to have a returnstatementast vertex, instead have: {:#?}", v)
+                    panic!("expected to have a returnstatementast vertex, instead have: {v:#?}")
                 })
                 .return_statement
                 .argument
@@ -1908,7 +1906,7 @@ mod type_annotation {
             Box::new(std::iter::once(Vertex::Type(
                 &v.as_type_annotation()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a typeannotation vertex, instead have: {:#?}", v)
+                        panic!("expected to have a typeannotation vertex, instead have: {v:#?}")
                     })
                     .type_annotation
                     .type_annotation,
@@ -2036,7 +2034,7 @@ mod url {
             Box::new(
                 v.as_url()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a url vertex, instead have: {:#?}", v)
+                        panic!("expected to have a url vertex, instead have: {v:#?}")
                     })
                     .query_pairs()
                     .map(|(key, value)| {
@@ -2088,7 +2086,7 @@ mod variable_declaration {
             Box::new(std::iter::once(Vertex::Span(
                 v.as_variable_declaration()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a typeannotation vertex, instead have: {:#?}", v)
+                        panic!("expected to have a typeannotation vertex, instead have: {v:#?}")
                     })
                     .variable_declaration
                     .span,
@@ -2104,7 +2102,7 @@ mod variable_declaration {
             return Box::new(std::iter::once(Vertex::AssignmentType(
                 &v.as_variable_declaration()
                     .unwrap_or_else(|| {
-                        panic!("expected to have a typeannotation vertex, instead have: {:#?}", v)
+                        panic!("expected to have a typeannotation vertex, instead have: {v:#?}")
                     })
                     .variable_declaration
                     .id
