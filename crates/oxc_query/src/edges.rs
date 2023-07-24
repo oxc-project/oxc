@@ -251,20 +251,20 @@ mod class {
                     .body
                     .body
                     .iter()
-                    .filter_map(|class_el| {
-                        if let ClassElement::PropertyDefinition(property) = class_el {
+                    .filter_map(|class_el| match class_el {
+                        ClassElement::PropertyDefinition(property) => {
                             Some(Vertex::ClassProperty(Rc::new(ClassPropertyVertex {
                                 property,
                                 is_abstract: false,
                             })))
-                        } else if let ClassElement::TSAbstractPropertyDefinition(def) = class_el {
+                        }
+                        ClassElement::TSAbstractPropertyDefinition(def) => {
                             Some(Vertex::ClassProperty(Rc::new(ClassPropertyVertex {
                                 property: &def.property_definition,
                                 is_abstract: true,
                             })))
-                        } else {
-                            None
                         }
+                        _ => None,
                     }),
             )
         })
