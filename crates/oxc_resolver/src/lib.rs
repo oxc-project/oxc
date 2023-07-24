@@ -188,7 +188,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if let Some(path) = self.load_extension_alias(cache_value)? {
             return Ok(Some(path));
         }
-
         // 1. If X is a file, load X as its file extension format. STOP
         // let cache_value = self.cache.cache_value(&path);
         if let Some(path) = self.load_alias_or_file(cache_value)? {
@@ -197,8 +196,20 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
         // 3. If X.json is a file, parse X.json to a JavaScript Object. STOP
         // 4. If X.node is a file, load X.node as binary addon. STOP
-        for extension in &self.options.extensions {
-            let path_with_extension = cache_value.path().with_extension(extension);
+        if let Some(path) = self.load_extensions(cache_value, &self.options.extensions)? {
+            return Ok(Some(path));
+        }
+        Ok(None)
+    }
+
+    fn load_extensions(
+        &self,
+        cache_value: &Arc<CacheValue>,
+        extensions: &[String],
+    ) -> ResolveState {
+        let mut path_with_extension = cache_value.path().to_path_buf();
+        for extension in extensions {
+            path_with_extension.set_extension(extension);
             let cache_value = self.cache.value(&path_with_extension);
             if let Some(path) = self.load_alias_or_file(&cache_value)? {
                 return Ok(Some(path));
@@ -212,10 +223,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_index(&self, cache_value: &Arc<CacheValue>) -> ResolveState {
-        for main_field in &self.options.main_files {
-            let main_path = cache_value.path().join(main_field);
+        for main_file in &self.options.main_files {
+            let main_path = cache_value.path().join(main_file);
+            let cache_value = self.cache.value(&main_path);
             if self.options.enforce_extension == Some(false) {
-                let cache_value = self.cache.value(&main_path);
                 if let Some(path) = self.load_alias_or_file(&cache_value)? {
                     return Ok(Some(path));
                 }
@@ -223,12 +234,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
             // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
             // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
-            for extension in &self.options.extensions {
-                let main_path_with_extension = main_path.with_extension(extension);
-                let cache_value = self.cache.value(&main_path_with_extension);
-                if let Some(path) = self.load_alias_or_file(&cache_value)? {
-                    return Ok(Some(path));
-                }
+            if let Some(path) = self.load_extensions(&cache_value, &self.options.extensions)? {
+                return Ok(Some(path));
             }
         }
         Ok(None)
@@ -411,12 +418,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         else {
             return Ok(None);
         };
-        for extension in extensions {
-            let path_with_extension = cache_value.path().with_extension(extension);
-            let cache_value = self.cache.value(&path_with_extension);
-            if cache_value.is_file(&self.cache.fs) {
-                return Ok(Some(cache_value));
-            }
+        if let Some(path) = self.load_extensions(cache_value, extensions)? {
+            return Ok(Some(path));
         }
         Err(ResolveError::ExtensionAlias)
     }
