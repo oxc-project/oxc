@@ -47,7 +47,7 @@ pub enum Vertex<'a> {
     SpecificImport(&'a ImportSpecifier),
     TypeAnnotation(Rc<TypeAnnotationVertex<'a>>),
     Type(&'a TSType<'a>),
-    URL(Rc<Url>),
+    Url(Rc<Url>),
     VariableDeclaration(Rc<VariableDeclarationVertex<'a>>),
     ReturnStatementAST(Rc<ReturnStatementVertex<'a>>),
 }
@@ -83,7 +83,7 @@ impl<'a> Vertex<'a> {
             Self::VariableDeclaration(data) => data.variable_declaration.span,
             Self::ReturnStatementAST(data) => data.return_statement.span,
             Self::File
-            | Self::URL(_)
+            | Self::Url(_)
             | Self::PathPart(_)
             | Self::SearchParameter(_)
             | Self::Span(_) => {
@@ -117,7 +117,7 @@ impl<'a> Vertex<'a> {
             | Vertex::JSXSpreadAttribute(_)
             | Vertex::JSXOpeningElement(_)
             | Vertex::PathPart(_)
-            | Vertex::URL(_)
+            | Vertex::Url(_)
             | Vertex::Type(_)
             | Vertex::SpecificImport(_)
             | Vertex::Span(_)
@@ -129,7 +129,7 @@ impl<'a> Vertex<'a> {
     pub fn make_url(attr: &'a JSXAttribute<'a>) -> Option<Self> {
         let Some(maybe_url) = jsx_attribute_to_constant_string(attr) else { return None };
         let Ok(parsed_url) = Url::parse(&maybe_url) else { return None };
-        return Some(Vertex::URL(Rc::new(parsed_url)));
+        return Some(Vertex::Url(Rc::new(parsed_url)));
     }
 
     pub fn as_constant_string(&self) -> Option<String> {
@@ -172,7 +172,7 @@ impl Typename for Vertex<'_> {
             Vertex::SpecificImport(_) => "SpecificImport",
             Vertex::TypeAnnotation(tn) => tn.typename(),
             Vertex::Type(_) => "Type",
-            Vertex::URL(_) => "URL",
+            Vertex::Url(_) => "URL",
             Vertex::VariableDeclaration(_) => "VariableDeclaration",
             Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
         }
