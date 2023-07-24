@@ -227,21 +227,6 @@ pub(super) fn resolve_import_property<'a, 'b: 'a>(
     }
 }
 
-pub(super) fn resolve_import_ast_property<'a, 'b: 'a>(
-    contexts: ContextIterator<'a, Vertex<'b>>,
-    property_name: &str,
-    resolve_info: &ResolveInfo,
-) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
-    match property_name {
-        "from_path" => resolve_import_property(contexts, property_name, resolve_info),
-        _ => {
-            unreachable!(
-                "attempted to read unexpected property '{property_name}' on type 'ImportAST'"
-            )
-        }
-    }
-}
-
 pub(super) fn resolve_interface_extend_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
@@ -303,23 +288,6 @@ pub(super) fn resolve_jsxelement_property<'a, 'b: 'a>(
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'JSXElement'"
-            )
-        }
-    }
-}
-
-pub(super) fn resolve_jsxelement_ast_property<'a, 'b: 'a>(
-    contexts: ContextIterator<'a, Vertex<'b>>,
-    property_name: &str,
-    resolve_info: &ResolveInfo,
-) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
-    match property_name {
-        "child_count" | "as_constant_string" => {
-            resolve_jsxelement_property(contexts, property_name, resolve_info)
-        }
-        _ => {
-            unreachable!(
-                "attempted to read unexpected property '{property_name}' on type 'JSXElementAST'"
             )
         }
     }

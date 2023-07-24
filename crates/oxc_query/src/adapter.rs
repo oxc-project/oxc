@@ -91,12 +91,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "Import" => super::properties::resolve_import_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-            ),
-            "ImportAST" => super::properties::resolve_import_ast_property(
+            "ImportAST" | "Import" => super::properties::resolve_import_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
@@ -111,12 +106,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "JSXElement" => super::properties::resolve_jsxelement_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-            ),
-            "JSXElementAST" => super::properties::resolve_jsxelement_ast_property(
+            "JSXElementAST" | "JSXElement" => super::properties::resolve_jsxelement_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
