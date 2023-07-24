@@ -7,7 +7,8 @@ use oxc_semantic::Semantic;
 use trustfall::{
     provider::{
         resolve_coercion_using_schema, resolve_property_with, ContextIterator,
-        ContextOutcomeIterator, EdgeParameters, ResolveEdgeInfo, ResolveInfo, VertexIterator,
+        ContextOutcomeIterator, EdgeParameters, ResolveEdgeInfo, ResolveInfo, Typename,
+        VertexIterator,
     },
     FieldValue, Schema,
 };
@@ -56,7 +57,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
         resolve_info: &ResolveInfo,
     ) -> ContextOutcomeIterator<'a, Self::Vertex, FieldValue> {
         if property_name.as_ref() == "__typename" {
-            return resolve_property_with(contexts, |v| v.make_type_name().into());
+            return resolve_property_with(contexts, |v| v.typename().into());
         }
         match type_name.as_ref() {
             "AssignmentType" => super::properties::resolve_assignment_type_property(

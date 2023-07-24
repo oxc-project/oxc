@@ -14,6 +14,7 @@ use oxc_ast::{
 };
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{GetSpan, Span};
+use trustfall::provider::Typename;
 use url::Url;
 
 use crate::util::{expr_to_maybe_const_string, jsx_attribute_to_constant_string};
@@ -52,43 +53,6 @@ pub enum Vertex<'a> {
 }
 
 impl<'a> Vertex<'a> {
-    pub fn make_type_name(&self) -> &'static str {
-        match self {
-            Vertex::ASTNode(_) => "ASTNode",
-            Vertex::AssignmentType(_) => "AssignmentType",
-            Vertex::Class(class) => class.type_name(),
-            Vertex::ClassMethod(_) => "ClassMethod",
-            Vertex::ClassProperty(_) => "ClassProperty",
-            Vertex::DefaultImport(_) => "DefaultImport",
-            Vertex::Expression(_) => "Expression",
-            Vertex::File => "File",
-            Vertex::Import(import) => import.type_name(),
-            Vertex::Interface(iface) => iface.type_name(),
-            Vertex::InterfaceExtend(iex) => match **iex {
-                InterfaceExtendVertex::Identifier(_) => "SimpleExtend",
-                InterfaceExtendVertex::MemberExpression(_) => "MemberExtend",
-            },
-            Vertex::JSXAttribute(_) => "JSXAttribute",
-            Vertex::JSXElement(jsx) => jsx.type_name(),
-            Vertex::JSXExpressionContainer(_) => "JSXExpressionContainer",
-            Vertex::JSXFragment(_) => "JSXFragment",
-            Vertex::JSXOpeningElement(_) => "JSXOpeningElement",
-            Vertex::JSXSpreadAttribute(_) => "JSXSpreadAttribute",
-            Vertex::JSXSpreadChild(_) => "JSXSpreadChild",
-            Vertex::JSXText(_) => "JSXText",
-            Vertex::ObjectLiteral(_) => "ObjectLiteral",
-            Vertex::PathPart(_) => "PathPart",
-            Vertex::SearchParameter(_) => "SearchParameter",
-            Vertex::Span(_) => "Span",
-            Vertex::SpecificImport(_) => "SpecificImport",
-            Vertex::TypeAnnotation(_) => "TypeAnnotation",
-            Vertex::Type(_) => "Type",
-            Vertex::URL(_) => "URL",
-            Vertex::VariableDeclaration(_) => "VariableDeclaration",
-            Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
-        }
-    }
-
     pub fn span(&self) -> Span {
         match &self {
             Self::AssignmentType(data) => data.span(),
@@ -176,9 +140,42 @@ impl<'a> Vertex<'a> {
     }
 }
 
-impl trustfall::provider::Typename for Vertex<'_> {
+impl Typename for Vertex<'_> {
     fn typename(&self) -> &'static str {
-        self.make_type_name()
+        match self {
+            Vertex::ASTNode(_) => "ASTNode",
+            Vertex::AssignmentType(_) => "AssignmentType",
+            Vertex::Class(class) => class.typename(),
+            Vertex::ClassMethod(_) => "ClassMethod",
+            Vertex::ClassProperty(_) => "ClassProperty",
+            Vertex::DefaultImport(_) => "DefaultImport",
+            Vertex::Expression(_) => "Expression",
+            Vertex::File => "File",
+            Vertex::Import(import) => import.typename(),
+            Vertex::Interface(iface) => iface.typename(),
+            Vertex::InterfaceExtend(iex) => match **iex {
+                InterfaceExtendVertex::Identifier(_) => "SimpleExtend",
+                InterfaceExtendVertex::MemberExpression(_) => "MemberExtend",
+            },
+            Vertex::JSXAttribute(_) => "JSXAttribute",
+            Vertex::JSXElement(jsx) => jsx.typename(),
+            Vertex::JSXExpressionContainer(_) => "JSXExpressionContainer",
+            Vertex::JSXFragment(_) => "JSXFragment",
+            Vertex::JSXOpeningElement(_) => "JSXOpeningElement",
+            Vertex::JSXSpreadAttribute(_) => "JSXSpreadAttribute",
+            Vertex::JSXSpreadChild(_) => "JSXSpreadChild",
+            Vertex::JSXText(_) => "JSXText",
+            Vertex::ObjectLiteral(_) => "ObjectLiteral",
+            Vertex::PathPart(_) => "PathPart",
+            Vertex::SearchParameter(_) => "SearchParameter",
+            Vertex::Span(_) => "Span",
+            Vertex::SpecificImport(_) => "SpecificImport",
+            Vertex::TypeAnnotation(_) => "TypeAnnotation",
+            Vertex::Type(_) => "Type",
+            Vertex::URL(_) => "URL",
+            Vertex::VariableDeclaration(_) => "VariableDeclaration",
+            Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
+        }
     }
 }
 
@@ -229,18 +226,14 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
     }
 }
 
-pub trait TypeName {
-    fn type_name(&self) -> &'static str;
-}
-
 #[derive(Debug, Clone)]
 pub struct ClassVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub class: &'a Class<'a>,
 }
 
-impl<'a> TypeName for ClassVertex<'a> {
-    fn type_name(&self) -> &'static str {
+impl<'a> Typename for ClassVertex<'a> {
+    fn typename(&self) -> &'static str {
         if self.ast_node.is_some() { "ClassAST" } else { "Class" }
     }
 }
@@ -263,8 +256,8 @@ pub struct ImportVertex<'a> {
     pub import: &'a ImportDeclaration<'a>,
 }
 
-impl<'a> TypeName for ImportVertex<'a> {
-    fn type_name(&self) -> &'static str {
+impl<'a> Typename for ImportVertex<'a> {
+    fn typename(&self) -> &'static str {
         if self.ast_node.is_some() { "ImportAST" } else { "Import" }
     }
 }
@@ -275,8 +268,8 @@ pub struct InterfaceVertex<'a> {
     pub interface: &'a TSInterfaceDeclaration<'a>,
 }
 
-impl<'a> TypeName for InterfaceVertex<'a> {
-    fn type_name(&self) -> &'static str {
+impl<'a> Typename for InterfaceVertex<'a> {
+    fn typename(&self) -> &'static str {
         if self.ast_node.is_some() { "InteraceAST" } else { "Interface" }
     }
 }
@@ -293,8 +286,8 @@ pub struct JSXElementVertex<'a> {
     pub element: &'a JSXElement<'a>,
 }
 
-impl<'a> TypeName for JSXElementVertex<'a> {
-    fn type_name(&self) -> &'static str {
+impl<'a> Typename for JSXElementVertex<'a> {
+    fn typename(&self) -> &'static str {
         if self.ast_node.is_some() { "JSXElementAST" } else { "JSXElement" }
     }
 }
@@ -311,8 +304,8 @@ pub struct TypeAnnotationVertex<'a> {
     pub type_annotation: &'a TSTypeAnnotation<'a>,
 }
 
-impl<'a> TypeName for TypeAnnotationVertex<'a> {
-    fn type_name(&self) -> &'static str {
+impl<'a> Typename for TypeAnnotationVertex<'a> {
+    fn typename(&self) -> &'static str {
         if self.ast_node.is_some() { "TypeAnnotationAST" } else { "TypeAnnotation" }
     }
 }
