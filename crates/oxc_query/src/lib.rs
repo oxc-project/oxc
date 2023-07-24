@@ -44,6 +44,7 @@ mod test {
 
         let adapter = Arc::from(&adapter);
 
+        #[allow(clippy::items_after_statements)]
         #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
         struct Output {
             name: String,
@@ -97,6 +98,7 @@ query {
 
         let adapter = Arc::from(&adapter);
 
+        #[allow(clippy::items_after_statements)]
         #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
         struct Output {
             assignment_to_variable_name: String,
