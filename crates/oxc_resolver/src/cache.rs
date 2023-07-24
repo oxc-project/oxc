@@ -59,7 +59,14 @@ impl<Fs: FileSystem> Cache<Fs> {
     ///
     /// * [ResolveError::JSON]
     pub fn find_package_json(&self, path: &Path) -> Result<Option<Arc<PackageJson>>, ResolveError> {
-        let mut cache_value = Some(self.cache_value(path));
+        let mut cache_value = self.cache_value(path);
+        // Go up a directory when querying a file, this avoids a file read from example.js/package.json
+        if cache_value.is_file(&self.fs) {
+            if let Some(cv) = &cache_value.parent {
+                cache_value = Arc::clone(cv);
+            }
+        }
+        let mut cache_value = Some(cache_value);
         while let Some(cv) = cache_value {
             if let Some(package_json) = cv.package_json(&self.fs).transpose()? {
                 return Ok(Some(Arc::clone(&package_json)));
