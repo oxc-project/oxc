@@ -447,16 +447,17 @@ impl Rule for NoUnusedVars {
 
     // fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+        let semantic = ctx.semantic();
+        let symbols = ctx.symbols();
+        let nodes = ctx.nodes();
+
         // Find all references that count as a usage
-        let references: Vec<_> = ctx
-            .symbols()
+        let references: Vec<_> = symbols
             .get_resolved_references(symbol_id)
-            .iter()
-            .map(|id| ctx.symbols().get_reference(*id))
             .filter(|reference| !reference.is_write())
             .collect();
 
-        let name = ctx.symbols().get_name(symbol_id);
+        let name = symbols.get_name(symbol_id);
         let _name_str: &str = name.as_str();
 
         // Symbol is used, rule doesn't apply
@@ -464,8 +465,10 @@ impl Rule for NoUnusedVars {
             return;
         }
 
-        let declaration = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
-        let parent_kind = ctx.nodes().parent_kind(declaration.id());
+        // let declaration =
+        // ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+        let declaration = semantic.symbol_declaration(symbol_id);
+        let parent_kind = nodes.parent_kind(declaration.id());
 
         match declaration.kind() {
             AstKind::ModuleDeclaration(decl) => self.check_unused_module_declaration(decl, ctx),
@@ -572,8 +575,23 @@ mod tests {
 
     #[test]
     fn test_var_simple() {
-        let pass = vec![("let a = 1; console.log(a);", None)];
-        let fail = vec![("let a", None), ("let a = 1;", None), ("let a = 1; a = 2;", None)];
+        let pass = vec![
+            ("let a = 1; console.log(a);", None),
+            ("let a = 1; let b = a + 1; console.log(b);", None),
+        ];
+        let fail = vec![("let a", None), ("let a = 1;", None), ("let a = 1; a += 2;", None)];
+
+        Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_var_simple_scoped() {
+        let pass =
+            vec![("let a = 1; function foo(b) { return a + b }; console.log(foo(1));", None)];
+        let fail = vec![(
+            "let a = 1; function foo(b) { let a = 1; return a + b }; console.log(foo(1));",
+            None,
+        )];
 
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
