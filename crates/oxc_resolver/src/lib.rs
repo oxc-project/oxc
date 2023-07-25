@@ -285,35 +285,40 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     fn load_node_modules(&self, cache_value: &CacheValue, request: &str) -> ResolveState {
         // 1. let DIRS = NODE_MODULES_PATHS(START)
-        let dirs = self.node_module_paths(cache_value.path());
+        // Use a buffer to reduce total memory allocation.
+        let mut node_module_path = cache_value.path().to_path_buf();
         // 2. for each DIR in DIRS:
-        for node_module_path in dirs {
-            // a. LOAD_PACKAGE_EXPORTS(X, DIR)
-            if let Some(path) = self.load_package_exports(&node_module_path, request)? {
-                return Ok(Some(path));
+        loop {
+            for module_name in &self.options.modules {
+                node_module_path.push(module_name);
+                // a. LOAD_PACKAGE_EXPORTS(X, DIR)
+                if let Some(path) = self.load_package_exports(&node_module_path, request)? {
+                    return Ok(Some(path));
+                }
+
+                // Using `join` because `request` can be `/` separated.
+                let node_module_file = node_module_path.join(request);
+                let cache_value = self.cache.value(&node_module_file);
+                // b. LOAD_AS_FILE(DIR/X)
+                if !request.ends_with('/') {
+                    if let Some(path) = self.load_as_file(&cache_value)? {
+                        return Ok(Some(path));
+                    }
+                }
+                // c. LOAD_AS_DIRECTORY(DIR/X)
+                if cache_value.is_dir(&self.cache.fs) {
+                    if let Some(path) = self.load_as_directory(&cache_value)? {
+                        return Ok(Some(path));
+                    }
+                }
+                node_module_path.pop();
             }
 
-            let node_module_file = node_module_path.join(request);
-            let cache_value = self.cache.value(&node_module_file);
-            // b. LOAD_AS_FILE(DIR/X)
-            if !request.ends_with('/') {
-                if let Some(path) = self.load_as_file(&cache_value)? {
-                    return Ok(Some(path));
-                }
-            }
-            // c. LOAD_AS_DIRECTORY(DIR/X)
-            if cache_value.is_dir(&self.cache.fs) {
-                if let Some(path) = self.load_as_directory(&cache_value)? {
-                    return Ok(Some(path));
-                }
+            if !node_module_path.pop() {
+                break;
             }
         }
         Ok(None)
-    }
-
-    fn node_module_paths<'a>(&'a self, path: &'a Path) -> impl Iterator<Item = PathBuf> + 'a {
-        path.ancestors()
-            .flat_map(|path| self.options.modules.iter().map(|module| path.join(module)))
     }
 
     #[allow(clippy::unnecessary_wraps, clippy::unused_self)]
