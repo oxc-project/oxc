@@ -1,25 +1,26 @@
 use std::{
-    borrow::Borrow,
     convert::AsRef,
-    hash::{BuildHasherDefault, Hash, Hasher},
+    hash::{Hash, Hasher},
     ops::Deref,
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
 
-use dashmap::DashSet;
+use dashmap::DashMap;
+use identity_hash::BuildIdentityHasher;
 use rustc_hash::FxHasher;
 
 use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
-    cache: DashSet<CacheValue, BuildHasherDefault<FxHasher>>,
+    // Using IdentityHasher to avoid double hashing in the `get` + `insert` case.
+    cache: DashMap<u64, CacheValue, BuildIdentityHasher<u64>>,
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
     fn default() -> Self {
-        Self { fs: Fs::default(), cache: DashSet::default() }
+        Self { fs: Fs::default(), cache: DashMap::default() }
     }
 }
 
@@ -40,18 +41,23 @@ impl<Fs: FileSystem> Cache<Fs> {
     }
 
     pub fn value(&self, path: &Path) -> CacheValue {
-        if let Some(cache_entry) = self.cache.get(path) {
-            return cache_entry.key().clone();
+        let hash = {
+            let mut hasher = FxHasher::default();
+            path.hash(&mut hasher);
+            hasher.finish()
+        };
+        if let Some(cache_entry) = self.cache.get(&hash) {
+            return cache_entry.value().clone();
         }
         let parent = path.parent().map(|p| self.value(p));
         let data =
             CacheValue(Arc::new(CacheValueImpl::new(path.to_path_buf().into_boxed_path(), parent)));
-        self.cache.insert(data.clone());
+        self.cache.insert(hash, data.clone());
         data
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone)]
 pub struct CacheValue(Arc<CacheValueImpl>);
 
 impl Deref for CacheValue {
@@ -68,12 +74,6 @@ impl AsRef<CacheValueImpl> for CacheValue {
     }
 }
 
-impl Borrow<Path> for CacheValue {
-    fn borrow(&self) -> &Path {
-        &self.path
-    }
-}
-
 #[derive(Debug)]
 pub struct CacheValueImpl {
     path: Box<Path>,
@@ -82,20 +82,6 @@ pub struct CacheValueImpl {
     symlink: OnceLock<Option<PathBuf>>,
     package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
 }
-
-impl Hash for CacheValueImpl {
-    fn hash<H: Hasher>(&self, h: &mut H) {
-        self.path.hash(h);
-    }
-}
-
-impl PartialEq for CacheValueImpl {
-    fn eq(&self, other: &Self) -> bool {
-        self.path == other.path
-    }
-}
-
-impl Eq for CacheValueImpl {}
 
 impl CacheValueImpl {
     fn new(path: Box<Path>, parent: Option<CacheValue>) -> Self {
