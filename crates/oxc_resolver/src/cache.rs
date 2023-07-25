@@ -1,6 +1,7 @@
 use std::{
     convert::AsRef,
     hash::{Hash, Hasher},
+    num::NonZeroUsize,
     ops::Deref,
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
@@ -9,6 +10,7 @@ use std::{
 use dashmap::DashMap;
 use identity_hash::BuildIdentityHasher;
 use rustc_hash::FxHasher;
+use sharded_slab::Slab;
 
 use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 
@@ -16,11 +18,20 @@ pub struct Cache<Fs> {
     pub(crate) fs: Fs,
     // Using IdentityHasher to avoid double hashing in the `get` + `insert` case.
     cache: DashMap<u64, CacheValue, BuildIdentityHasher<u64>>,
+    // Using Slab for compact storage in a multi-threaded environment,
+    // which also shrinks the size of CacheValue.
+    symlink: Slab<PathBuf>,
+    package_json: Slab<Result<Arc<PackageJson>, ResolveError>>,
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
     fn default() -> Self {
-        Self { fs: Fs::default(), cache: DashMap::default() }
+        Self {
+            fs: Fs::default(),
+            cache: DashMap::default(),
+            symlink: Slab::default(),
+            package_json: Slab::default(),
+        }
     }
 }
 
@@ -79,8 +90,8 @@ pub struct CacheValueImpl {
     path: Box<Path>,
     parent: Option<CacheValue>,
     meta: OnceLock<Option<FileMetadata>>,
-    symlink: OnceLock<Option<PathBuf>>,
-    package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
+    symlink: OnceLock<Option<NonZeroUsize>>,
+    package_json: OnceLock<Option<NonZeroUsize>>,
 }
 
 impl CacheValueImpl {
@@ -114,8 +125,14 @@ impl CacheValueImpl {
         self.meta(fs).is_some_and(|meta| meta.is_dir)
     }
 
-    pub fn symlink<Fs: FileSystem>(&self, fs: &Fs) -> Option<PathBuf> {
-        self.symlink.get_or_init(|| fs.canonicalize(&self.path).ok()).clone()
+    pub fn symlink<Fs: FileSystem>(&self, cache: &Cache<Fs>) -> Option<PathBuf> {
+        self.symlink
+            .get_or_init(|| {
+                let Some(path) = cache.fs.canonicalize(&self.path).ok() else { return None };
+                let index = cache.symlink.insert(path).expect("slab exceeded maximum items");
+                Some(unsafe { NonZeroUsize::new_unchecked(index + 1) })
+            })
+            .map(|index| cache.symlink.get(index.get() - 1).unwrap().clone())
     }
 
     /// Find package.json of a path by traversing parent directories.
@@ -125,18 +142,18 @@ impl CacheValueImpl {
     /// * [ResolveError::JSON]
     pub fn find_package_json<Fs: FileSystem>(
         &self,
-        fs: &Fs,
+        cache: &Cache<Fs>,
     ) -> Result<Option<Arc<PackageJson>>, ResolveError> {
         let mut cache_value = self;
         // Go up a directory when querying a file, this avoids a file read from example.js/package.json
-        if cache_value.is_file(fs) {
+        if cache_value.is_file(&cache.fs) {
             if let Some(cv) = &cache_value.parent {
                 cache_value = cv.as_ref();
             }
         }
         let mut cache_value = Some(cache_value);
         while let Some(cv) = cache_value {
-            if let Some(package_json) = cv.package_json(fs).transpose()? {
+            if let Some(package_json) = cv.package_json(cache).transpose()? {
                 return Ok(Some(Arc::clone(&package_json)));
             }
             cache_value = cv.parent.as_deref();
@@ -151,20 +168,28 @@ impl CacheValueImpl {
     /// * [ResolveError::JSON]
     pub fn package_json<Fs: FileSystem>(
         &self,
-        fs: &Fs,
+        cache: &Cache<Fs>,
     ) -> Option<Result<Arc<PackageJson>, ResolveError>> {
         // Change to `get_or_try_init` once it is stable
         self.package_json
             .get_or_init(|| {
                 let package_json_path = self.path.join("package.json");
-                fs.read_to_string(&package_json_path).ok().map(|package_json_string| {
-                    PackageJson::parse(package_json_path.clone(), &package_json_string)
+                let Some(package_json_str) = cache.fs.read_to_string(&package_json_path).ok()
+                else {
+                    return None;
+                };
+                let package_json_result =
+                    PackageJson::parse(package_json_path.clone(), &package_json_str)
                         .map(Arc::new)
                         .map_err(|error| {
                             ResolveError::from_serde_json_error(package_json_path, &error)
-                        })
-                })
+                        });
+                let index = cache
+                    .package_json
+                    .insert(package_json_result)
+                    .expect("slab exceeded maximum items");
+                Some(unsafe { NonZeroUsize::new_unchecked(index + 1) })
             })
-            .clone()
+            .map(|index| cache.package_json.get(index.get() - 1).unwrap().clone())
     }
 }

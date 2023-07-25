@@ -17,6 +17,7 @@ serde_json    = { workspace = true }
 rustc-hash    = { workspace = true }
 dunce         = "1.0.4"
 identity-hash = "0.1.0"
+sharded-slab  = "0.1.4"
 
 [dev-dependencies]
 static_assertions = { workspace = true }

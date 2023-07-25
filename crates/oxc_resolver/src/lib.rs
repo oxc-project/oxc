@@ -214,7 +214,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_symlink(&self, cache_value: &CacheValue) -> Option<PathBuf> {
-        if self.options.symlinks { cache_value.symlink(&self.cache.fs) } else { None }
+        if self.options.symlinks { cache_value.symlink(&self.cache) } else { None }
     }
 
     fn load_index(&self, cache_value: &CacheValue) -> ResolveState {
@@ -237,7 +237,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_alias_or_file(&self, cache_value: &CacheValue) -> ResolveState {
-        if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
+        if let Some(package_json) = cache_value.find_package_json(&self.cache)? {
             let path = cache_value.path();
             if let Some(path) = self.load_browser_field(path, None, &package_json)? {
                 return Ok(Some(path));
@@ -255,7 +255,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 1. If X/package.json is a file,
         if !self.options.description_files.is_empty() {
             // a. Parse X/package.json, and look for "main" field.
-            if let Some(package_json) = cache_value.package_json(&self.cache.fs).transpose()? {
+            if let Some(package_json) = cache_value.package_json(&self.cache).transpose()? {
                 // b. If "main" is a falsy value, GOTO 2.
                 if let Some(main_field) = &package_json.main {
                     // c. let M = X + (json main field)
@@ -334,7 +334,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     ///
     /// * Parent of package.json is None
     fn load_package_self(&self, cache_value: &CacheValue, request: &str) -> ResolveState {
-        if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
+        if let Some(package_json) = cache_value.find_package_json(&self.cache)? {
             if let Some(path) =
                 self.load_browser_field(cache_value.path(), Some(request), &package_json)?
             {
