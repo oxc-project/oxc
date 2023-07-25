@@ -11,9 +11,10 @@ mod fixer;
 mod globals;
 mod jest_ast_util;
 pub mod rule;
+mod rule_timer;
 mod rules;
 
-use std::{fs, io::Write, rc::Rc};
+use std::{self, fs, io::Write, rc::Rc};
 
 pub use fixer::{FixResult, Fixer, Message};
 pub(crate) use oxc_semantic::AstNode;
@@ -29,6 +30,7 @@ pub use crate::{
 pub struct Linter {
     rules: Vec<RuleEnum>,
     fix: bool,
+    print_execution_times: bool,
 }
 
 impl Linter {
@@ -42,7 +44,11 @@ impl Linter {
     }
 
     pub fn from_rules(rules: Vec<RuleEnum>) -> Self {
-        Self { rules, fix: false }
+        Self { rules, fix: false, print_execution_times: false }
+    }
+
+    pub fn rules(&self) -> &Vec<RuleEnum> {
+        &self.rules
     }
 
     pub fn has_fix(&self) -> bool {
@@ -56,6 +62,12 @@ impl Linter {
     #[must_use]
     pub fn with_fix(mut self, yes: bool) -> Self {
         self.fix = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_print_execution_times(mut self, yes: bool) -> Self {
+        self.print_execution_times = yes;
         self
     }
 
@@ -86,14 +98,14 @@ impl Linter {
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
-                rule.run(node, &ctx);
+                rule.run(node, &ctx, self.print_execution_times);
             }
         }
 
         for symbol in semantic.symbols().iter() {
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());
-                rule.run_on_symbol(symbol, &ctx);
+                rule.run_on_symbol(symbol, &ctx, self.print_execution_times);
             }
         }
 

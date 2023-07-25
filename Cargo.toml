@@ -46,9 +46,7 @@ criterion         = { version = "0.5.1", default-features = false }
 crossbeam-channel = { version = "0.5.8" }
 dashmap           = { version = "5.5.0" }
 flate2            = { version = "1.0.26" }
-glob              = { version = "0.3.1" }
 ignore            = { version = "0.4.20" }
-indextree         = { version = "4.6.0" }
 itertools         = { version = "0.11.0" }
 jemallocator      = { version = "0.5.0" }
 lazy_static       = { version = "1.4.0" }
