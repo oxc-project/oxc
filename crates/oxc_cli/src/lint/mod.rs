@@ -4,7 +4,7 @@ mod isolated_handler;
 mod module_tree_handler;
 mod options;
 
-use std::{io::BufWriter, sync::Arc};
+use std::{io::BufWriter, sync::Arc, time::Duration};
 
 use oxc_index::assert_impl_all;
 use oxc_linter::{Linter, RuleCategory, RuleEnum, RULES};
@@ -36,7 +36,9 @@ impl Runner for LintRunner {
     const NAME: &'static str = "lint";
 
     fn new(options: LintOptions) -> Self {
-        let linter = Linter::from_rules(Self::derive_rules(&options)).with_fix(options.fix);
+        let linter = Linter::from_rules(Self::derive_rules(&options))
+            .with_fix(options.fix)
+            .with_print_execution_times(options.print_execution_times);
         Self { options: Arc::new(options), linter: Arc::new(linter) }
     }
 
@@ -46,11 +48,17 @@ impl Runner for LintRunner {
             return CliRunResult::None;
         }
 
-        if Self::enable_module_tree() {
+        let result = if Self::enable_module_tree() {
             ModuleTreeLintHandler::new(Arc::clone(&self.options), Arc::clone(&self.linter)).run()
         } else {
             IsolatedLintHandler::new(Arc::clone(&self.options), Arc::clone(&self.linter)).run()
+        };
+
+        if self.options.print_execution_times {
+            self.print_execution_times();
         }
+
+        result
     }
 }
 
@@ -60,7 +68,7 @@ impl LintRunner {
         matches!(std::env::var("OXC_MODULE_TREE"), Ok(x) if x == "true" || x == "1")
     }
 
-    pub fn print_rules() {
+    fn print_rules() {
         let mut stdout = BufWriter::new(std::io::stdout());
         Linter::print_rules(&mut stdout);
     }
@@ -109,5 +117,26 @@ impl LintRunner {
         // for stable diagnostics output ordering
         rules.sort_unstable_by_key(|rule| rule.name());
         rules
+    }
+
+    fn print_execution_times(&self) {
+        let mut timings = self
+            .linter
+            .rules()
+            .iter()
+            .map(|rule| (rule.name(), rule.execute_time()))
+            .collect::<Vec<_>>();
+
+        timings.sort_by_key(|x| x.1);
+        let total = timings.iter().map(|x| x.1).sum::<Duration>().as_secs_f64();
+
+        println!("Rule timings in milliseconds:");
+        println!("Total: {:.3}ms", total * 1000.0);
+        println!("Time  |     % | Rule");
+        for (name, duration) in timings.iter().rev() {
+            let millis = duration.as_secs_f64() * 1000.0;
+            let relative = duration.as_secs_f64() / total * 100.0;
+            println!("{millis:.3} | {relative:>4.1}% | {name}");
+        }
     }
 }

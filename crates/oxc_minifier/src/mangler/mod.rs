@@ -226,7 +226,8 @@ impl<'a> ManglerBuilder<'a> {
             }
             let index = *slot;
             frequencies[index].slot = *slot;
-            frequencies[index].frequency += symbol_table.get_resolved_references(symbol_id).len();
+            frequencies[index].frequency +=
+                symbol_table.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
         }
         frequencies.sort_by_key(|x| (std::cmp::Reverse(x.frequency)));

@@ -180,7 +180,7 @@ pub fn get_array_method_name<'a>(
 
             AstKind::CallExpression(call) => {
                 let AstKind::Argument(current_node_arg) = current_node.kind() else {
-                  return None;
+                    return None;
                 };
 
                 let callee = call.callee.get_inner_expression();
@@ -205,7 +205,9 @@ pub fn get_array_method_name<'a>(
                 }
 
                 // "methods",
-                let Some(method) = callee.static_property_name() else { return None; };
+                let Some(method) = callee.static_property_name() else {
+                    return None;
+                };
                 if let Some(&array_method) = TARGET_METHODS.get_key(method) {
                     // Check that current node is parent's first argument
                     if call.arguments.len() == 1 && is_nth_argument(call, current_node_arg, 0) {

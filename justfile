@@ -11,7 +11,7 @@ alias c := coverage
 # You can download the pre-compiled binary from <https://github.com/cargo-bins/cargo-binstall#installation>
 # or install via `cargo install cargo-binstall`
 init:
-  cargo binstall cargo-nextest cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
+  cargo binstall cargo-nextest cargo-watch cargo-insta cargo-edit typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
 
 # When ready, run the same CI commands
 ready:
@@ -74,3 +74,7 @@ new-jest-rule name:
 # Sync all submodules with their own remote repos (this is for Boshen updating the submodules)
 sync:
   git submodule update --init --remote
+
+# Upgrade all Rust dependencies
+upgrade:
+  cargo upgrade --incompatible

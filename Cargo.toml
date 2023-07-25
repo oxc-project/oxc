@@ -39,17 +39,15 @@ oxc_tasks_common = { path = "tasks/common" }
 
 bitflags          = { version = "2.3.3" }
 bumpalo           = { version = "3.13.0" }
-clap              = { version = "4.3.17" }
+clap              = { version = "4.3.19" }
 compact_str       = { version = "0.7.1" }
 convert_case      = { version = "0.6.0" }
 criterion         = { version = "0.5.1", default-features = false }
 crossbeam-channel = { version = "0.5.8" }
 dashmap           = { version = "5.5.0" }
 flate2            = { version = "1.0.26" }
-glob              = { version = "0.3.1" }
 ignore            = { version = "0.4.20" }
-indextree         = { version = "4.6.0" }
-itertools         = { version = "0.10.5" }
+itertools         = { version = "0.11.0" }
 jemallocator      = { version = "0.5.0" }
 lazy_static       = { version = "1.4.0" }
 miette            = { version = "5.10.0" }
@@ -61,21 +59,21 @@ phf               = { version = "0.11" }
 pico-args         = { version = "0.5.0" }
 proc-macro2       = { version = "1.0.66" }
 project-root      = { version = "0.2.2" }
-quote             = { version = "1.0.31" }
+quote             = { version = "1.0.32" }
 rayon             = { version = "1.7.0" }
 regex             = { version = "1.9.1" }
 rustc-hash        = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js            = { version = "0.2.2" }
-serde             = { version = "1.0.173" }
+serde             = { version = "1.0.175" }
 serde_json        = { version = "1.0.103" }
-syn               = { version = "1.0.109" }
-thiserror         = { version = "1.0.43" }
+syn               = { version = "=1" }
+thiserror         = { version = "1.0.44" }
 tokio             = { version = "1" }
 unicode-id-start  = { version = "1.1.0" }
 ureq              = { version = "2.7.1", default-features = false, features = ["tls"] }
 url               = { version = "2.4.0" }
 walkdir           = { version = "2.3.3" }
-indexmap          = { version = "1.9.3" }
+indexmap          = { version = "2.0.0" }
 index_vec         = { version = "0.1.3" }
 static_assertions = { version = "1.1.0" }
 stacker           = { version = "0.1.15" }
