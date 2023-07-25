@@ -21,7 +21,6 @@ use std::{
     borrow::Cow,
     ffi::OsStr,
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
 use crate::{
@@ -38,7 +37,7 @@ pub use crate::{
     resolution::Resolution,
 };
 
-type ResolveState = Result<Option<Arc<CacheValue>>, ResolveError>;
+type ResolveState = Result<Option<CacheValue>, ResolveError>;
 
 /// Resolver with the current operating system as the file system
 pub type Resolver = ResolverGeneric<FileSystemOs>;
@@ -108,9 +107,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// Y: path
     fn require(
         &self,
-        cache_value: &Arc<CacheValue>,
+        cache_value: &CacheValue,
         request: &Request,
-    ) -> Result<Arc<CacheValue>, ResolveError> {
+    ) -> Result<CacheValue, ResolveError> {
         match request.path {
             // 1. If X is a core module,
             //    a. return the core module
@@ -139,9 +138,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     // 3. If X begins with './' or '/' or '../'
     fn require_relative(
         &self,
-        cache_value: &Arc<CacheValue>,
+        cache_value: &CacheValue,
         request: &str,
-    ) -> Result<Arc<CacheValue>, ResolveError> {
+    ) -> Result<CacheValue, ResolveError> {
         if let Some(path) = self.load_package_self(cache_value, request)? {
             return Ok(path);
         }
@@ -163,16 +162,16 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     fn require_path(
         &self,
-        cache_value: &Arc<CacheValue>,
+        cache_value: &CacheValue,
         request: &str,
-    ) -> Result<Arc<CacheValue>, ResolveError> {
+    ) -> Result<CacheValue, ResolveError> {
         let dirname = self.cache.dirname(cache_value);
         // 5. LOAD_PACKAGE_SELF(X, dirname(Y))
-        if let Some(path) = self.load_package_self(&dirname, request)? {
+        if let Some(path) = self.load_package_self(dirname, request)? {
             return Ok(path);
         }
         // 6. LOAD_NODE_MODULES(X, dirname(Y))
-        if let Some(path) = self.load_node_modules(&dirname, request)? {
+        if let Some(path) = self.load_node_modules(dirname, request)? {
             return Ok(path);
         }
         let cache_value = self.cache.value(&cache_value.path().join(request));
@@ -183,7 +182,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Err(ResolveError::NotFound(cache_value.to_path_buf().into_boxed_path()))
     }
 
-    fn load_as_file(&self, cache_value: &Arc<CacheValue>) -> ResolveState {
+    fn load_as_file(&self, cache_value: &CacheValue) -> ResolveState {
         // enhanced-resolve feature: extension_alias
         if let Some(path) = self.load_extension_alias(cache_value)? {
             return Ok(Some(path));
@@ -202,11 +201,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_extensions(
-        &self,
-        cache_value: &Arc<CacheValue>,
-        extensions: &[String],
-    ) -> ResolveState {
+    fn load_extensions(&self, cache_value: &CacheValue, extensions: &[String]) -> ResolveState {
         let mut path_with_extension = cache_value.path().to_path_buf();
         for extension in extensions {
             path_with_extension.set_extension(extension);
@@ -218,11 +213,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_symlink(&self, cache_value: &Arc<CacheValue>) -> Option<PathBuf> {
+    fn load_symlink(&self, cache_value: &CacheValue) -> Option<PathBuf> {
         if self.options.symlinks { cache_value.symlink(&self.cache.fs) } else { None }
     }
 
-    fn load_index(&self, cache_value: &Arc<CacheValue>) -> ResolveState {
+    fn load_index(&self, cache_value: &CacheValue) -> ResolveState {
         for main_file in &self.options.main_files {
             let main_path = cache_value.path().join(main_file);
             let cache_value = self.cache.value(&main_path);
@@ -241,7 +236,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_alias_or_file(&self, cache_value: &Arc<CacheValue>) -> ResolveState {
+    fn load_alias_or_file(&self, cache_value: &CacheValue) -> ResolveState {
         if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
             let path = cache_value.path();
             if let Some(path) = self.load_browser_field(path, None, &package_json)? {
@@ -249,12 +244,12 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
         }
         if cache_value.is_file(&self.cache.fs) {
-            return Ok(Some(Arc::clone(cache_value)));
+            return Ok(Some(cache_value.clone()));
         }
         Ok(None)
     }
 
-    fn load_as_directory(&self, cache_value: &Arc<CacheValue>) -> ResolveState {
+    fn load_as_directory(&self, cache_value: &CacheValue) -> ResolveState {
         // TODO: Only package.json is supported, so warn about having other values
         // Checking for empty files is needed for omitting checks on package.json
         // 1. If X/package.json is a file,
@@ -288,7 +283,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         self.load_index(cache_value)
     }
 
-    fn load_node_modules(&self, cache_value: &Arc<CacheValue>, request: &str) -> ResolveState {
+    fn load_node_modules(&self, cache_value: &CacheValue, request: &str) -> ResolveState {
         // 1. let DIRS = NODE_MODULES_PATHS(START)
         let dirs = self.node_module_paths(cache_value.path());
         // 2. for each DIR in DIRS:
@@ -338,7 +333,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// # Panics
     ///
     /// * Parent of package.json is None
-    fn load_package_self(&self, cache_value: &Arc<CacheValue>, request: &str) -> ResolveState {
+    fn load_package_self(&self, cache_value: &CacheValue, request: &str) -> ResolveState {
         if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
             if let Some(path) =
                 self.load_browser_field(cache_value.path(), Some(request), &package_json)?
@@ -365,12 +360,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    fn load_alias(
-        &self,
-        cache_value: &Arc<CacheValue>,
-        request: &str,
-        alias: &Alias,
-    ) -> ResolveState {
+    fn load_alias(&self, cache_value: &CacheValue, request: &str, alias: &Alias) -> ResolveState {
         for (alias, requests) in alias {
             let exact_match = alias.strip_prefix(request).is_some_and(|c| c == "$");
             if request.starts_with(alias) || exact_match {
@@ -411,7 +401,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     /// # Errors
     ///
     /// * [ResolveError::ExtensionAlias]: When all of the aliased extensions are not found
-    fn load_extension_alias(&self, cache_value: &Arc<CacheValue>) -> ResolveState {
+    fn load_extension_alias(&self, cache_value: &CacheValue) -> ResolveState {
         let Some(path_extension) = cache_value.path().extension() else { return Ok(None) };
         let Some((_, extensions)) =
             self.options.extension_alias.iter().find(|(ext, _)| OsStr::new(ext) == path_extension)
@@ -426,9 +416,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     fn load_roots(
         &self,
-        cache_value: &Arc<CacheValue>,
+        cache_value: &CacheValue,
         request: &str,
-    ) -> Result<Arc<CacheValue>, ResolveError> {
+    ) -> Result<CacheValue, ResolveError> {
         debug_assert!(request.starts_with('/'));
         if self.options.roots.is_empty() {
             let cache_value = self.cache.value(Path::new("/"));

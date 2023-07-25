@@ -1,22 +1,25 @@
 use std::{
-    hash::BuildHasherDefault,
+    borrow::Borrow,
+    convert::AsRef,
+    hash::{BuildHasherDefault, Hash, Hasher},
+    ops::Deref,
     path::{Path, PathBuf},
     sync::{Arc, OnceLock},
 };
 
-use dashmap::DashMap;
+use dashmap::DashSet;
 use rustc_hash::FxHasher;
 
 use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
-    cache: DashMap<Box<Path>, Arc<CacheValue>, BuildHasherDefault<FxHasher>>,
+    cache: DashSet<CacheValue, BuildHasherDefault<FxHasher>>,
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
     fn default() -> Self {
-        Self { fs: Fs::default(), cache: DashMap::default() }
+        Self { fs: Fs::default(), cache: DashSet::default() }
     }
 }
 
@@ -28,36 +31,74 @@ impl<Fs: FileSystem> Cache<Fs> {
     /// # Panics
     ///
     /// * Path is file but does not have a parent
-    pub fn dirname(&self, cache_value: &Arc<CacheValue>) -> Arc<CacheValue> {
-        Arc::clone(if cache_value.is_file(&self.fs) {
+    pub fn dirname<'a>(&self, cache_value: &'a CacheValue) -> &'a CacheValue {
+        if cache_value.is_file(&self.fs) {
             cache_value.parent.as_ref().unwrap()
         } else {
             cache_value
-        })
+        }
     }
 
-    pub fn value(&self, path: &Path) -> Arc<CacheValue> {
+    pub fn value(&self, path: &Path) -> CacheValue {
         if let Some(cache_entry) = self.cache.get(path) {
-            return Arc::clone(cache_entry.value());
+            return cache_entry.key().clone();
         }
         let parent = path.parent().map(|p| self.value(p));
-        let data = Arc::new(CacheValue::new(path.to_path_buf().into_boxed_path(), parent));
-        self.cache.insert(path.to_path_buf().into_boxed_path(), Arc::clone(&data));
+        let data =
+            CacheValue(Arc::new(CacheValueImpl::new(path.to_path_buf().into_boxed_path(), parent)));
+        self.cache.insert(data.clone());
         data
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct CacheValue {
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct CacheValue(Arc<CacheValueImpl>);
+
+impl Deref for CacheValue {
+    type Target = CacheValueImpl;
+
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref()
+    }
+}
+
+impl AsRef<CacheValueImpl> for CacheValue {
+    fn as_ref(&self) -> &CacheValueImpl {
+        self.0.as_ref()
+    }
+}
+
+impl Borrow<Path> for CacheValue {
+    fn borrow(&self) -> &Path {
+        &self.path
+    }
+}
+
+#[derive(Debug)]
+pub struct CacheValueImpl {
     path: Box<Path>,
-    parent: Option<Arc<CacheValue>>,
+    parent: Option<CacheValue>,
     meta: OnceLock<Option<FileMetadata>>,
     symlink: OnceLock<Option<PathBuf>>,
     package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
 }
 
-impl CacheValue {
-    fn new(path: Box<Path>, parent: Option<Arc<Self>>) -> Self {
+impl Hash for CacheValueImpl {
+    fn hash<H: Hasher>(&self, h: &mut H) {
+        self.path.hash(h);
+    }
+}
+
+impl PartialEq for CacheValueImpl {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path
+    }
+}
+
+impl Eq for CacheValueImpl {}
+
+impl CacheValueImpl {
+    fn new(path: Box<Path>, parent: Option<CacheValue>) -> Self {
         Self {
             path,
             parent,
