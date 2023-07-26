@@ -86,31 +86,31 @@ fn test() {
         (
             "switch(foo) { case 0: a(); /* no break */ case 1: b(); }",
             Some(serde_json::json!([{
-                "commentPattern": ""no" "break""
+                "commentPattern": "no break"
             }])),
         ),
         (
             "switch(foo) { case 0: a(); /* no break: need to execute b() */ case 1: b(); }",
             Some(serde_json::json!([{
-                "commentPattern": ""no" "break":\\"s"?\\"w"+"
+                "commentPattern": "no break:\\s?\\w+"
             }])),
         ),
         (
             "switch(foo) { case 0: a();\n// need to execute b(), so\n// falling through\n case 1: b(); }",
             Some(serde_json::json!([{
-                "commentPattern": ""falling" "through""
+                "commentPattern": "falling through"
             }])),
         ),
         (
             "switch(foo) { case 0: a(); /* break omitted */ default:  b(); /* comment */ }",
             Some(serde_json::json!([{
-                "commentPattern": ""break" "omitted""
+                "commentPattern": "break omitted"
             }])),
         ),
         (
             "switch(foo) { case 0: a(); /* caution: break is omitted intentionally */ case 1: b(); /* break omitted */ default: c(); }",
             Some(serde_json::json!([{
-                "commentPattern": ""break"[\\"s"\\"w"]+"omitted""
+                "commentPattern": "break[\\s\\w]+omitted"
             }])),
         ),
         (
@@ -151,19 +151,19 @@ fn test() {
         (
             "switch(foo) { case 0: a();\n/* no break */\ncase 1: b(); }",
             Some(serde_json::json!([{
-                "commentPattern": ""break" "omitted""
+                "commentPattern": "break omitted"
             }])),
         ),
         (
             "switch(foo) { case 0: a();\n/* no break */\n/* todo: fix readability */\ndefault: b() }",
             Some(serde_json::json!([{
-                "commentPattern": ""no" "break""
+                "commentPattern": "no break"
             }])),
         ),
         (
             "switch(foo) { case 0: { a();\n/* no break */\n/* todo: fix readability */ }\ndefault: b() }",
             Some(serde_json::json!([{
-                "commentPattern": ""no" "break""
+                "commentPattern": "no break"
             }])),
         ),
         ("switch(foo) { case 0: \n /* with comments */  \ncase 1: b(); }", None),
