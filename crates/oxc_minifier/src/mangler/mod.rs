@@ -1,3 +1,4 @@
+use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::Visit;
@@ -5,8 +6,6 @@ use oxc_index::{index_vec, IndexVec};
 use oxc_semantic::{Reference, ReferenceFlag, ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::{Atom, SourceType};
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
-
-use itertools::Itertools;
 
 type Slot = usize;
 
