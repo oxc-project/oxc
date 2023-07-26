@@ -1,0 +1,26 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_unused_vars
+---
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ var a=10
+   ·     ────
+   ╰────
+  help: a is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ function f() { var a = 1; return function(){ f(a *= 2); }; }
+   ·                    ─────
+   ╰────
+  help: a is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ function f() { var a = 1; return function(){ f(++a); }; }
+   ·                    ─────
+   ╰────
+  help: a is declared but never used
+
+
