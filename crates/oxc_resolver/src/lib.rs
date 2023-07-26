@@ -141,9 +141,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         cache_value: &CacheValue,
         request: &str,
     ) -> Result<CacheValue, ResolveError> {
-        if let Some(path) = self.load_package_self(cache_value, request)? {
-            return Ok(path);
-        }
         let path = cache_value.path().normalize_with(request);
         let cache_value = self.cache.value(&path);
         // a. LOAD_AS_FILE(Y + X)
@@ -321,32 +318,52 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
-    #[allow(clippy::unnecessary_wraps, clippy::unused_self)]
-    fn load_package_exports(&self, _path: &Path, _request: &str) -> ResolveState {
+    fn load_package_exports(&self, path: &Path, request: &str) -> ResolveState {
+        let cache_value = self.cache.value(&path.join(request));
         // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
         //    may have a @scope/ prefix and the subpath begins with a slash (`/`).
         // 2. If X does not match this pattern or DIR/NAME/package.json is not a file,
         //    return.
+        let Some(package_json) = cache_value.package_json(&self.cache.fs).transpose()? else {
+            return Ok(None);
+        };
         // 3. Parse DIR/NAME/package.json, and look for "exports" field.
         // 4. If "exports" is null or undefined, return.
+        // (checked in package_json.package_exports_resolve)
         // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(DIR/NAME), "." + SUBPATH,
         //    `package.json` "exports", ["node", "require"]) defined in the ESM resolver.
+        if let Some(path) = package_json.package_exports_resolve(".") {
+            let cache_value = self.cache.value(&path);
+            return Ok(Some(cache_value));
+        }
         // 6. RESOLVE_ESM_MATCH(MATCH)
         Ok(None)
     }
 
-    /// # Panics
-    ///
-    /// * Parent of package.json is None
     fn load_package_self(&self, cache_value: &CacheValue, request: &str) -> ResolveState {
-        if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
-            if let Some(path) =
-                self.load_browser_field(cache_value.path(), Some(request), &package_json)?
-            {
-                return Ok(Some(path));
+        // 1. Find the closest package scope SCOPE to DIR.
+        // 2. If no scope was found, return.
+        let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? else {
+            return Ok(None);
+        };
+        // 3. If the SCOPE/package.json "exports" is null or undefined, return.
+        // (checked in package_json.package_exports_resolve)
+        // 4. If the SCOPE/package.json "name" is not the first segment of X, return.
+        // TODO: get first segment of X
+        if package_json.name.as_ref().is_some_and(|name| name.starts_with(request)) {
+            // return Ok(None);
+            // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(SCOPE),
+            // "." + X.slice("name".length), `package.json` "exports", ["node", "require"])
+            // defined in the ESM resolver.
+            if let Some(path) = package_json.package_exports_resolve(request) {
+                let cache_value = self.cache.value(&path);
+                return Ok(Some(cache_value));
             }
         }
-        Ok(None)
+        // 6. RESOLVE_ESM_MATCH(MATCH)
+
+        // Try non-spec-compliant "browser" field since its another form of export
+        self.load_browser_field(cache_value.path(), Some(request), &package_json)
     }
 
     fn load_browser_field(
