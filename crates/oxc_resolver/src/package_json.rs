@@ -1,3 +1,6 @@
+//! package.json definitions
+//!
+//! Code related to export field are copied from [Parcel's resolver](https://github.com/parcel-bundler/parcel/blob/v2/packages/utils/node-resolver-rs/src/package_json.rs)
 use std::{
     hash::BuildHasherDefault,
     path::{Path, PathBuf},
@@ -47,12 +50,47 @@ pub enum BrowserField {
     Map(FxIndexMap<PathBuf, serde_json::Value>),
 }
 
+/// `matchObj` defined in `PACKAGE_IMPORTS_EXPORTS_RESOLVE`
+pub type MatchObject = FxIndexMap<ExportsKey, ExportsField>;
+
+/// Coped from Parcel's resolver
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum ExportsField {
     String(String),
     Array(Vec<ExportsField>),
-    Map(FxIndexMap<String, ExportsField>),
+    Map(MatchObject),
+}
+
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub enum ExportsKey {
+    Main,
+    Pattern(String),
+    CustomCondition(String),
+}
+
+impl From<&str> for ExportsKey {
+    fn from(key: &str) -> Self {
+        if key == "." {
+            Self::Main
+        } else if let Some(key) = key.strip_prefix("./") {
+            Self::Pattern(key.to_string())
+        } else if let Some(key) = key.strip_prefix('#') {
+            Self::Pattern(key.to_string())
+        } else {
+            Self::CustomCondition(key.to_string())
+        }
+    }
+}
+
+impl<'a, 'de: 'a> Deserialize<'de> for ExportsKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s: &'de str = Deserialize::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
 impl PackageJson {
@@ -114,23 +152,5 @@ impl PackageJson {
             }
             _ => Ok(None),
         }
-    }
-
-    /// [PACKAGE_EXPORTS_RESOLVE](https://nodejs.org/api/esm.html#resolution-algorithm-specification)
-    #[allow(clippy::single_match)]
-    pub fn package_exports_resolve(&self, request: &str) -> Option<PathBuf> {
-        let Some(exports) = &self.exports else {
-            return None;
-        };
-        match exports {
-            ExportsField::Map(map) => match map.get(request) {
-                Some(ExportsField::String(value)) => {
-                    return Some(self.path.parent().unwrap().join(value));
-                }
-                _ => {}
-            },
-            _ => {}
-        }
-        None
     }
 }

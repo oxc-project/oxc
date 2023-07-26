@@ -28,6 +28,12 @@ pub struct ResolveOptions {
     /// Default `[]`
     pub alias_fields: Vec<String>,
 
+    /// Condition names for exports field which defines entry points of a package.
+    /// The key order in the exports field is significant. During condition matching, earlier entries have higher priority and take precedence over later entries.
+    ///
+    /// Default `[]`
+    pub condition_names: Vec<String>,
+
     /// The JSON files to use for descriptions. (There was once a `bower.json`.)
     ///
     /// Default `["package.json"]`
@@ -100,6 +106,7 @@ impl Default for ResolveOptions {
         Self {
             alias: vec![],
             alias_fields: vec![],
+            condition_names: vec![],
             description_files: vec!["package.json".into()],
             enforce_extension: None,
             extension_alias: vec![],

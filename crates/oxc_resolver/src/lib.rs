@@ -26,7 +26,7 @@ use std::{
 use crate::{
     cache::{Cache, CacheValue},
     file_system::FileSystemOs,
-    package_json::PackageJson,
+    package_json::{ExportsField, ExportsKey, MatchObject, PackageJson},
     path::PathUtil,
     request::{Request, RequestPath},
 };
@@ -322,23 +322,38 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Ok(None)
     }
 
+    // Returns (module, subpath)
+    fn parse_package_specifier(request: &str) -> (&str, &str) {
+        if let Some((module, request)) = request.split_once('/') {
+            (module, request)
+        } else {
+            (request, "")
+        }
+    }
+
     fn load_package_exports(&self, path: &Path, request: &str) -> ResolveState {
-        let cache_value = self.cache.value(&path.join(request));
         // 1. Try to interpret X as a combination of NAME and SUBPATH where the name
         //    may have a @scope/ prefix and the subpath begins with a slash (`/`).
         // 2. If X does not match this pattern or DIR/NAME/package.json is not a file,
         //    return.
+        let (name, subpath) = Self::parse_package_specifier(request);
+        let cache_value = self.cache.value(&path.join(name));
         let Some(package_json) = cache_value.package_json(&self.cache.fs).transpose()? else {
             return Ok(None);
         };
         // 3. Parse DIR/NAME/package.json, and look for "exports" field.
         // 4. If "exports" is null or undefined, return.
-        // (checked in package_json.package_exports_resolve)
+        let Some(exports) = &package_json.exports else { return Ok(None) };
         // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(DIR/NAME), "." + SUBPATH,
         //    `package.json` "exports", ["node", "require"]) defined in the ESM resolver.
-        if let Some(path) = package_json.package_exports_resolve(".") {
-            let cache_value = self.cache.value(&path);
-            return Ok(Some(cache_value));
+        // Note: The subpath is not prepended with a dot on purpose
+        if let Some(path) = self.package_exports_resolve(
+            cache_value.path(),
+            subpath,
+            exports,
+            &self.options.condition_names,
+        )? {
+            return Ok(Some(path));
         }
         // 6. RESOLVE_ESM_MATCH(MATCH)
         Ok(None)
@@ -351,17 +366,24 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             return Ok(None);
         };
         // 3. If the SCOPE/package.json "exports" is null or undefined, return.
-        // (checked in package_json.package_exports_resolve)
-        // 4. If the SCOPE/package.json "name" is not the first segment of X, return.
-        // TODO: get first segment of X
-        if package_json.name.as_ref().is_some_and(|name| name.starts_with(request)) {
-            // return Ok(None);
-            // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(SCOPE),
-            // "." + X.slice("name".length), `package.json` "exports", ["node", "require"])
-            // defined in the ESM resolver.
-            if let Some(path) = package_json.package_exports_resolve(request) {
-                let cache_value = self.cache.value(&path);
-                return Ok(Some(cache_value));
+        if let Some(exports) = &package_json.exports {
+            // 4. If the SCOPE/package.json "name" is not the first segment of X, return.
+            if let Some(package_name) = &package_json.name {
+                if let Some(subpath) = package_name.strip_prefix(request) {
+                    // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(SCOPE),
+                    // "." + X.slice("name".length), `package.json` "exports", ["node", "require"])
+                    // defined in the ESM resolver.
+                    let path = package_json.path.parent().unwrap();
+                    // Note: The subpath is not prepended with a dot on purpose
+                    if let Some(path) = self.package_exports_resolve(
+                        path,
+                        subpath,
+                        exports,
+                        &self.options.condition_names,
+                    )? {
+                        return Ok(Some(path));
+                    }
+                }
             }
         }
         // 6. RESOLVE_ESM_MATCH(MATCH)
@@ -457,5 +479,168 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
         }
         Err(ResolveError::NotFound(cache_value.to_path_buf().into_boxed_path()))
+    }
+
+    /// PACKAGE_EXPORTS_RESOLVE(packageURL, subpath, exports, conditions)
+    ///
+    /// <https://nodejs.org/api/esm.html#resolution-algorithm-specification>
+    #[allow(clippy::single_match)]
+    fn package_exports_resolve(
+        &self,
+        package_url: &Path,
+        subpath: &str,
+        exports: &ExportsField,
+        conditions: &[String],
+    ) -> ResolveState {
+        // 1. If exports is an Object with both a key starting with "." and a key not starting with ".", throw an Invalid Package Configuration error.
+        // 2. If subpath is equal to ".", then
+        // Note: subpath is not prepended with a dot when passed in.
+        if subpath.is_empty() {
+            //   1. Let mainExport be undefined.
+            //   2. If exports is a String or Array, or an Object containing no keys starting with ".", then
+            //     1. Set mainExport to exports.
+            //   3. Otherwise if exports is an Object containing a "." property, then
+            //     1. Set mainExport to exports["."].
+            //   4. If mainExport is not undefined, then
+            //     1. Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, mainExport, null, false, conditions).
+            //     2. If resolved is not null or undefined, return resolved.
+            match exports {
+                ExportsField::Map(map) => match map.get(&ExportsKey::Main) {
+                    Some(ExportsField::String(value)) => {
+                        // TODO: PACKAGE_TARGET_RESOLVE
+                        let path = package_url.normalize_with(value);
+                        let path = self.cache.value(&path);
+                        return Ok(Some(path));
+                    }
+                    _ => {}
+                },
+                _ => {}
+            }
+        }
+        // 3. Otherwise, if exports is an Object and all keys of exports start with ".", then
+        if let ExportsField::Map(exports) = exports {
+            //   1. Let matchKey be the string "./" concatenated with subpath.
+            // let match_key =
+
+            //   2. Let resolved be the result of PACKAGE_IMPORTS_EXPORTS_RESOLVE( matchKey, exports, packageURL, false, conditions).
+            if let Some(path) =
+                self.package_imports_exports_resolve(subpath, exports, package_url, conditions)?
+            {
+                return Ok(Some(path));
+            }
+            //   3. If resolved is not null or undefined, return resolved.
+        }
+        // 4. Throw a Package Path Not Exported error.
+        Ok(None)
+    }
+
+    /// PACKAGE_IMPORTS_EXPORTS_RESOLVE(matchKey, matchObj, packageURL, isImports, conditions)
+    fn package_imports_exports_resolve(
+        &self,
+        match_key: &str,
+        match_obj: &MatchObject,
+        package_url: &Path,
+        conditions: &[String],
+    ) -> ResolveState {
+        // 1. If matchKey is a key of matchObj and does not contain "*", then
+        //   1. Let target be the value of matchObj[matchKey].
+        //   2. Return the result of PACKAGE_TARGET_RESOLVE(packageURL, target, null, isImports, conditions).
+        // 2. Let expansionKeys be the list of keys of matchObj containing only a single "*", sorted by the sorting function PATTERN_KEY_COMPARE which orders in descending order of specificity.
+        // 3. For each key expansionKey in expansionKeys, do
+        for (key, target) in match_obj {
+            if let ExportsKey::Pattern(key) = key {
+                //   1. Let patternBase be the substring of expansionKey up to but excluding the first "*" character.
+                //   2. If matchKey starts with but is not equal to patternBase, then
+                if let Some(pattern_match) = match_key.strip_prefix(key) {
+                    //     1. Let patternTrailer be the substring of expansionKey from the index after the first "*" character.
+                    //     2. If patternTrailer has zero length, or if matchKey ends with patternTrailer and the length of matchKey is greater than or equal to the length of expansionKey, then
+                    //       1. Let target be the value of matchObj[expansionKey].
+                    //       2. Let patternMatch be the substring of matchKey starting at the index of the length of patternBase up to the length of matchKey minus the length of patternTrailer.
+                    //       3. Return the result of PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, conditions).
+                    return self.package_target_resolve(
+                        package_url,
+                        target,
+                        pattern_match,
+                        conditions,
+                    );
+                }
+            }
+        }
+        // Return null.
+        Ok(None)
+    }
+
+    /// PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, conditions)
+    fn package_target_resolve(
+        &self,
+        package_url: &Path,
+        target: &ExportsField,
+        pattern_match: &str,
+        conditions: &[String],
+    ) -> ResolveState {
+        // 1. If target is a String, then
+        match target {
+            ExportsField::String(target) => {
+                //   1. If target does not start with "./", then
+                //     1. If isImports is false, or if target starts with "../" or "/", or if target is a valid URL, then
+                //       1. Throw an Invalid Package Target error.
+                //     2. If patternMatch is a String, then
+                //       1. Return PACKAGE_RESOLVE(target with every instance of "*" replaced by patternMatch, packageURL + "/").
+                //     3. Return PACKAGE_RESOLVE(target, packageURL + "/").
+                //   2. If target split on "/" or "\" contains any "", ".", "..", or "node_modules" segments after the first "." segment, case insensitive and including percent encoded variants, throw an Invalid Package Target error.
+                //   3. Let resolvedTarget be the URL resolution of the concatenation of packageURL and target.
+                //   4. Assert: resolvedTarget is contained in packageURL.
+                //   5. If patternMatch is null, then
+                //     1. Return resolvedTarget.
+                //   6. If patternMatch split on "/" or "\" contains any "", ".", "..", or "node_modules" segments, case insensitive and including percent encoded variants, throw an Invalid Module Specifier error.
+                //   7. Return the URL resolution of resolvedTarget with every instance of "*" replaced with patternMatch.
+                return Ok(Some(self.cache.value(&package_url.join(target).join(pattern_match))));
+            }
+            // 2. Otherwise, if target is a non-null Object, then
+            ExportsField::Map(target) => {
+                //   1. If exports contains any index property keys, as defined in ECMA-262 6.1.7 Array Index, throw an Invalid Package Configuration error.
+                //   2. For each property p of target, in object insertion order as,
+                for (key, target_value) in target {
+                    //     1. If p equals "default" or conditions contains an entry for p, then
+                    if matches!(key, ExportsKey::CustomCondition(condition) if conditions.contains(condition))
+                    {
+                        //       1. Let targetValue be the value of the p property in target.
+                        //       2. Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, targetValue, patternMatch, isImports, conditions).
+                        //       3. If resolved is equal to undefined, continue the loop.
+                        //       4. Return resolved.
+                        if let Some(path) = self.package_target_resolve(
+                            package_url,
+                            target_value,
+                            pattern_match,
+                            conditions,
+                        )? {
+                            return Ok(Some(path));
+                        }
+                    }
+                    //   3. Return undefined.
+                }
+            } // 3. Otherwise, if target is an Array, then
+            ExportsField::Array(targets) => {
+                //   1. If _target.length is zero, return null.
+                //   2. For each item targetValue in target, do
+                for target_value in targets {
+                    //     1. Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, targetValue, patternMatch, isImports, conditions), continuing the loop on any Invalid Package Target error.
+                    //     2. If resolved is undefined, continue the loop.
+                    if let Some(path) = self.package_target_resolve(
+                        package_url,
+                        target_value,
+                        pattern_match,
+                        conditions,
+                    )? {
+                        return Ok(Some(path));
+                    }
+                    //     3. Return resolved.
+                    //   3. Return or throw the last fallback resolution null return or error.
+                }
+            }
+        }
+        // 4. Otherwise, if target is null, return null.
+        // 5. Otherwise throw an Invalid Package Target error.
+        Ok(None)
     }
 }
