@@ -73,4 +73,11 @@ impl TriviasMap {
         let comment = Comment::new(span.end, CommentKind::MultiLine);
         self.comments.insert(span.start, comment);
     }
+
+    pub fn comments_spans(&self) -> Vec<(&Comment, Span)> {
+        self.comments()
+            .into_iter()
+            .map(|(start, comment)| (comment, Span::new(*start, comment.end)))
+            .collect()
+    }
 }
