@@ -106,21 +106,13 @@ fn is_mistype_short_circuit(node: &AstNode) -> bool {
 }
 
 fn is_mistype_option_fallback(node: &AstNode) -> bool {
-    match node.kind() {
-        AstKind::BinaryExpression(binary_expr) => {
-            if binary_expr.operator != BinaryOperator::BitwiseOR {
-                return false;
-            }
-
-            if let Expression::Identifier(_) = &binary_expr.left
-            && !is_numeric_expr(&binary_expr.right, true) {
-                return true
-            }
-
-            false
+    let AstKind::BinaryExpression(binary_expr) = node.kind() else { return false; };
+    if binary_expr.operator == BinaryOperator::BitwiseOR {
+        if let Expression::Identifier(_) = &binary_expr.left {
+            return !is_numeric_expr(&binary_expr.right, true);
         }
-        _ => false,
     }
+    false
 }
 
 fn is_numeric_expr(expr: &Expression, is_outer_most: bool) -> bool {

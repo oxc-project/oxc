@@ -41,7 +41,8 @@ impl Rule for NoVarRequires {
         if !ctx.source_type().is_typescript() {
             return;
         }
-        if let AstKind::CallExpression(expr) = node.kind() && expr.is_require_call() {
+        let AstKind::CallExpression(expr) = node.kind() else { return };
+        if expr.is_require_call() {
             if ctx.scopes().get_bindings(node.scope_id()).contains_key("require") {
                 return;
             }

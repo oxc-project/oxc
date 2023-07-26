@@ -114,11 +114,12 @@ impl Rule for NoDisabledTests {
                     };
                     ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
                 }
-            } else if let Expression::Identifier(ident) = &call_expr.callee 
-                && ident.name.as_str() == "pending" && ctx.semantic().is_reference_to_global_variable(ident) {
-                // `describe('foo', function () { pending() })` 
-                let (error, help) = Message::Pending.details();
-                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
+            } else if let Expression::Identifier(ident) = &call_expr.callee  {
+                if ident.name.as_str() == "pending" && ctx.semantic().is_reference_to_global_variable(ident) {
+                    // `describe('foo', function () { pending() })` 
+                    let (error, help) = Message::Pending.details();
+                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
+                }
             } 
         }
     }

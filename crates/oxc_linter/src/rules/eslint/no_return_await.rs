@@ -74,9 +74,10 @@ fn is_in_tail_call_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
                 }
             },
             AstKind::SequenceExpression(seq_expr) => {
-                if let Some(seq_expr_last) = seq_expr.expressions.last() 
-                    && seq_expr_last.span() == node.kind().span(){
+                if let Some(seq_expr_last) = seq_expr.expressions.last() {
+                    if seq_expr_last.span() == node.kind().span() {
                         return is_in_tail_call_position(parent, ctx);
+                    }
                 }
             },
             // `return (await b())`
@@ -94,9 +95,10 @@ fn is_in_tail_call_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
             },
             // last statement in `func_body`
             AstKind::FunctionBody(func_body) => {
-                if let Some(func_body_stat_last) = func_body.statements.last()
-                    && func_body_stat_last.span() == node.kind().span() {
-                    return is_in_tail_call_position(parent, ctx);
+                if let Some(func_body_stat_last) = func_body.statements.last() {
+                    if func_body_stat_last.span() == node.kind().span() {
+                        return is_in_tail_call_position(parent, ctx);
+                    }
                 }
             },
             _ => {

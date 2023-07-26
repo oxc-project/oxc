@@ -50,17 +50,17 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessCatch {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::TryStatement(try_stmt) = node.kind()
-          && let Some(catch_clause) = &try_stmt.handler
-          && let Some(BindingPatternKind::BindingIdentifier(binding_ident)) = catch_clause.param.as_ref().map(|pattern| &pattern.kind)
-          && let Some(Statement::ThrowStatement(throw_stmt)) = catch_clause.body.body.first()
-          && let Expression::Identifier(throw_ident) = &throw_stmt.argument
-          && binding_ident.name == throw_ident.name {
-              if try_stmt.finalizer.is_some() {
-                  ctx.diagnostic(NoUselessCatchFinalizerDiagnostic(catch_clause.span));
-              } else {
-                  ctx.diagnostic(NoUselessCatchDiagnostic(try_stmt.span));
-              }
+        let AstKind::TryStatement(try_stmt) = node.kind() else { return };
+        let Some(catch_clause) = &try_stmt.handler else { return };
+        let Some(BindingPatternKind::BindingIdentifier(binding_ident)) = catch_clause.param.as_ref().map(|pattern| &pattern.kind) else { return };
+        let Some(Statement::ThrowStatement(throw_stmt)) = catch_clause.body.body.first() else { return };
+        let Expression::Identifier(throw_ident) = &throw_stmt.argument else { return };
+        if binding_ident.name == throw_ident.name {
+            if try_stmt.finalizer.is_some() {
+                ctx.diagnostic(NoUselessCatchFinalizerDiagnostic(catch_clause.span));
+            } else {
+                ctx.diagnostic(NoUselessCatchDiagnostic(try_stmt.span));
+            }
         }
     }
 }

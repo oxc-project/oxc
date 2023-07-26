@@ -1,8 +1,6 @@
 //! AST Formatter with whitespace minification
 //! code adapted from [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_formatter/js_formatter.go)
 
-#![feature(let_chains)]
-
 mod gen;
 
 #[allow(clippy::wildcard_imports)]
