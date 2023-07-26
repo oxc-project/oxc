@@ -122,21 +122,20 @@ impl<'a> SkipMultilineComment<'a> {
     }
 
     pub fn simd(&mut self) -> &Self {
-        let (chunks, remainder) = self.remaining.as_chunks::<ELEMENTS>();
-
-        for chunk in chunks {
+        for chunk in self.remaining.chunks(ELEMENTS) {
+            if chunk.len() != ELEMENTS {
+                let remainder = chunk;
+                // Align the last chunk for avoiding the use of a scalar version
+                let mut chunk = [0; ELEMENTS];
+                let len = remainder.len();
+                chunk[..len].copy_from_slice(remainder);
+                self.check(&chunk, len);
+                break;
+            }
             self.check(chunk, chunk.len());
             if self.found {
                 return self;
             }
-        }
-
-        if !remainder.is_empty() {
-            // Align the last chunk for avoiding the use of a scalar version
-            let mut chunk = [0; ELEMENTS];
-            let len = remainder.len();
-            chunk[..len].copy_from_slice(remainder);
-            self.check(&chunk, len);
         }
 
         self
