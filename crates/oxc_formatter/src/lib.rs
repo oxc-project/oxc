@@ -32,6 +32,9 @@ pub struct Formatter {
 
     // states
     needs_semicolon: bool,
+
+    // Quote property with double quotes
+    quote_property_with_double_quotes: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -49,6 +52,7 @@ impl Formatter {
             code: Vec::with_capacity(source_len),
             indentation: 0,
             needs_semicolon: false,
+            quote_property_with_double_quotes: false,
         }
     }
 
