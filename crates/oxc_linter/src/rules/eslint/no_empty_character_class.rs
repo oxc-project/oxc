@@ -1,14 +1,18 @@
+// Ported from https://github.com/eslint/eslint/blob/main/lib/rules/no-empty-character-class.js
+use lazy_static::lazy_static;
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("")]
+#[error("eslint(no-empty-character-class): Empty class")]
 #[diagnostic(severity(warning), help(""))]
 struct NoEmptyCharacterClassDiagnostic(#[label] pub Span);
 
@@ -30,7 +34,27 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyCharacterClass {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        lazy_static! {
+            /*
+            * plain-English description of the following regexp:
+            * 0. `^` fix the match at the beginning of the string
+            * 1. `([^\\[]|\\.|\[([^\\\]]|\\.)+\])*`: regexp contents; 0 or more of the following
+            * 1.0. `[^\\[]`: any character that's not a `\` or a `[` (anything but escape sequences and character classes)
+            * 1.1. `\\.`: an escape sequence
+            * 1.2. `\[([^\\\]]|\\.)+\]`: a character class that isn't empty
+            * 2. `$`: fix the match at the end of the string
+            */
+            static ref NO_EMPTY_CLASS_REGEX_PATTERN: Regex =
+                Regex::new(r"^([^\\\[]|\\.|\[([^\\\]]|\\.)+\])*$").unwrap();
+        }
+
+        if let AstKind::RegExpLiteral(lit) = node.kind() {
+            if !NO_EMPTY_CLASS_REGEX_PATTERN.is_match(&lit.regex.pattern) {
+                ctx.diagnostic(NoEmptyCharacterClassDiagnostic(lit.span));
+            }
+        }
+    }
 }
 
 #[test]

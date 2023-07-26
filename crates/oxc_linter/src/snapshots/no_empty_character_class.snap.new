@@ -1,0 +1,62 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 80
+expression: no_empty_character_class
+---
+  ⚠ eslint(no-empty-character-class): Empty class
+   ╭─[no_empty_character_class.tsx:1:1]
+ 1 │ var foo = /^abc[]/;
+   ·           ────────
+   ╰────
+  help: 
+
+  ⚠ eslint(no-empty-character-class): Empty class
+   ╭─[no_empty_character_class.tsx:1:1]
+ 1 │ var foo = /foo[]bar/;
+   ·           ──────────
+   ╰────
+  help: 
+
+  ⚠ eslint(no-empty-character-class): Empty class
+   ╭─[no_empty_character_class.tsx:1:1]
+ 1 │ if (foo.match(/^abc[]/)) {}
+   ·               ────────
+   ╰────
+  help: 
+
+  ⚠ eslint(no-empty-character-class): Empty class
+   ╭─[no_empty_character_class.tsx:1:1]
+ 1 │ if (/^abc[]/.test(foo)) {}
+   ·     ────────
+   ╰────
+  help: 
+
+  ⚠ eslint(no-empty-character-class): Empty class
+   ╭─[no_empty_character_class.tsx:1:1]
+ 1 │ var foo = /[]]/;
+   ·           ─────
+   ╰────
+  help: 
+
+  ⚠ eslint(no-empty-character-class): Empty class
+   ╭─[no_empty_character_class.tsx:1:1]
+ 1 │ var foo = /\[[]/;
+   ·           ──────
+   ╰────
+  help: 
+
+  ⚠ eslint(no-empty-character-class): Empty class
+   ╭─[no_empty_character_class.tsx:1:1]
+ 1 │ var foo = /\[\[\]a-z[]/;
+   ·           ─────────────
+   ╰────
+  help: 
+
+  ⚠ eslint(no-empty-character-class): Empty class
+   ╭─[no_empty_character_class.tsx:1:1]
+ 1 │ var foo = /[]]/d;
+   ·           ──────
+   ╰────
+  help: 
+
+
