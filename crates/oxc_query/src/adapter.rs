@@ -34,6 +34,12 @@ pub fn schema() -> &'static Schema {
     SCHEMA.get_or_init(|| Schema::parse(SCHEMA_TEXT).expect("not a valid schema"))
 }
 
+impl<'a> Adapter<'a> {
+    pub fn new(semantic: Rc<Semantic<'a>>, path_components: Vec<Option<String>>) -> Self {
+        Self { semantic, path_components }
+    }
+}
+
 impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
     type Vertex = Vertex<'b>;
 
