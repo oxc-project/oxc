@@ -74,12 +74,23 @@ pub fn parse_jest_fn_call<'a>(
         let is_valid_jest_call = if members.is_empty() {
             VALID_JEST_FN_CALL_CHAINS.iter().any(|chain| chain[0] == name)
         } else if members.len() == 1 {
-            VALID_JEST_FN_CALL_CHAINS_2.iter().any(|chain| chain[0] == name && chain[1] == members[0])
+            VALID_JEST_FN_CALL_CHAINS_2
+                .iter()
+                .any(|chain| chain[0] == name && chain[1] == members[0])
         } else if members.len() == 2 {
-            VALID_JEST_FN_CALL_CHAINS_3.iter().any(|chain| chain[0] == name && chain[1] == members[0] && chain[2] == members[1])
+            VALID_JEST_FN_CALL_CHAINS_3
+                .iter()
+                .any(|chain| chain[0] == name && chain[1] == members[0] && chain[2] == members[1])
         } else if members.len() == 3 {
-            VALID_JEST_FN_CALL_CHAINS_4.iter().any(|chain| chain[0] == name && chain[1] == members[0] && chain[2] == members[1] && chain[3] == members[2])
-        } else { false };
+            VALID_JEST_FN_CALL_CHAINS_4.iter().any(|chain| {
+                chain[0] == name
+                    && chain[1] == members[0]
+                    && chain[2] == members[1]
+                    && chain[3] == members[2]
+            })
+        } else {
+            false
+        };
 
         if !is_valid_jest_call {
             return None;
