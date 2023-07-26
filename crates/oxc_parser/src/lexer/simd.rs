@@ -39,21 +39,22 @@ impl SkipWhitespace {
     }
 
     pub fn simd(&mut self, bytes: &[u8]) -> &Self {
-        let (chunks, remainder) = bytes.as_chunks::<ELEMENTS>();
+        let chunks = bytes.chunks(ELEMENTS);
 
         for chunk in chunks {
-            self.check_chunk(chunk);
-            if self.found {
-                return self;
+            if chunk.len() == ELEMENTS {
+                self.check_chunk(chunk);
+                if self.found {
+                    return self;
+                }
+            } else {
+                let remainder = chunk;
+                // Align the last chunk for avoiding the use of a scalar version
+                let mut chunk = [0; ELEMENTS];
+                let len = remainder.len();
+                chunk[..len].copy_from_slice(remainder);
+                self.check_chunk(&chunk);
             }
-        }
-
-        if !remainder.is_empty() {
-            // Align the last chunk for avoiding the use of a scalar version
-            let mut chunk = [0; ELEMENTS];
-            let len = remainder.len();
-            chunk[..len].copy_from_slice(remainder);
-            self.check_chunk(&chunk);
         }
 
         self
@@ -120,21 +121,20 @@ impl<'a> SkipMultilineComment<'a> {
     }
 
     pub fn simd(&mut self) -> &Self {
-        let (chunks, remainder) = self.remaining.as_chunks::<ELEMENTS>();
-
-        for chunk in chunks {
-            self.check(chunk, chunk.len());
-            if self.found {
-                return self;
+        for chunk in self.remaining.chunks(ELEMENTS) {
+            if chunk.len() == ELEMENTS {
+                self.check(chunk, chunk.len());
+                if self.found {
+                    return self;
+                }
+            } else {
+                let remainder = chunk;
+                // Align the last chunk for avoiding the use of a scalar version
+                let mut chunk = [0; ELEMENTS];
+                let len = remainder.len();
+                chunk[..len].copy_from_slice(remainder);
+                self.check(&chunk, len);
             }
-        }
-
-        if !remainder.is_empty() {
-            // Align the last chunk for avoiding the use of a scalar version
-            let mut chunk = [0; ELEMENTS];
-            let len = remainder.len();
-            chunk[..len].copy_from_slice(remainder);
-            self.check(&chunk, len);
         }
 
         self
