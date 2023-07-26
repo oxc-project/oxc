@@ -63,7 +63,6 @@
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
 #![cfg_attr(not(target_arch = "wasm32"), feature(portable_simd))]
 #![feature(slice_as_chunks)]
-
 mod context;
 mod cursor;
 mod list;

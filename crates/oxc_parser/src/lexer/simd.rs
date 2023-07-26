@@ -39,21 +39,23 @@ impl SkipWhitespace {
     }
 
     pub fn simd(&mut self, bytes: &[u8]) -> &Self {
-        let (chunks, remainder) = bytes.as_chunks::<ELEMENTS>();
+        let chunks = bytes.chunks(ELEMENTS);
 
         for chunk in chunks {
-            self.check_chunk(chunk);
-            if self.found {
-                return self;
+            if chunk.len() != ELEMENTS {
+                let remainder = chunk;
+                // Align the last chunk for avoiding the use of a scalar version
+                let mut chunk = [0; ELEMENTS];
+                let len = remainder.len();
+                chunk[..len].copy_from_slice(remainder);
+                self.check_chunk(&chunk);
+                break;
+            } else {
+                self.check_chunk(chunk);
+                if self.found {
+                    return self;
+                }
             }
-        }
-
-        if !remainder.is_empty() {
-            // Align the last chunk for avoiding the use of a scalar version
-            let mut chunk = [0; ELEMENTS];
-            let len = remainder.len();
-            chunk[..len].copy_from_slice(remainder);
-            self.check_chunk(&chunk);
         }
 
         self
