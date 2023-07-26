@@ -13,7 +13,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-empty-character-class): Empty class")]
-#[diagnostic(severity(warning), help(""))]
+#[diagnostic(severity(warning))]
 struct NoEmptyCharacterClassDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -21,13 +21,14 @@ pub struct NoEmptyCharacterClass;
 
 declare_oxc_lint!(
     /// ### What it does
-    ///
+    /// Disallow empty character classes in regular expressions
     ///
     /// ### Why is this bad?
-    ///
+    /// Because empty character classes in regular expressions do not match anything, they might be typing mistakes.
     ///
     /// ### Example
     /// ```javascript
+    /// var foo = /^abc[]/;
     /// ```
     NoEmptyCharacterClass,
     correctness
