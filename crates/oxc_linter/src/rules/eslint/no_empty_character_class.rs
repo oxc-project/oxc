@@ -12,8 +12,8 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-empty-character-class): Empty class")]
-#[diagnostic(severity(warning))]
+#[error("eslint(no-empty-character-class): Empty character class")]
+#[diagnostic(severity(warning), help("Try to remove empty character class `[]` in regexp literal"))]
 struct NoEmptyCharacterClassDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
