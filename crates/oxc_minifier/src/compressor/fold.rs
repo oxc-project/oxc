@@ -747,12 +747,8 @@ impl<'a> Compressor<'a> {
             let bits = NumberLiteral::ecmascript_to_int32(left_val);
 
             let result_val: f64 = match op {
-                BinaryOperator::ShiftLeft => {
-                    f64::from(bits << right_val_int)
-                }
-                BinaryOperator::ShiftRight => {
-                    f64::from(bits >> right_val_int)
-                }
+                BinaryOperator::ShiftLeft => f64::from(bits << right_val_int),
+                BinaryOperator::ShiftRight => f64::from(bits >> right_val_int),
                 BinaryOperator::ShiftRightZeroFill => {
                     // JavaScript always treats the result of >>> as unsigned.
                     // We must force Rust to do the same here.
@@ -760,17 +756,13 @@ impl<'a> Compressor<'a> {
                     let res = bits as u32 >> right_val_int as u32;
                     f64::from(res)
                 }
-                _ => unreachable!("Unknown binary operator {:?}", op)
+                _ => unreachable!("Unknown binary operator {:?}", op),
             };
 
             let value_raw = self.hir.new_str(result_val.to_string().as_str());
 
-            let number_literal = self.hir.number_literal(
-                span,
-                result_val,
-                value_raw,
-                NumberBase::Decimal,
-            );
+            let number_literal =
+                self.hir.number_literal(span, result_val, value_raw, NumberBase::Decimal);
 
             return Some(self.hir.literal_number_expression(number_literal));
         }
