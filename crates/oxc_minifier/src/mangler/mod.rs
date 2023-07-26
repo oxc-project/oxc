@@ -6,6 +6,8 @@ use oxc_semantic::{Reference, ReferenceFlag, ReferenceId, SemanticBuilder, Symbo
 use oxc_span::{Atom, SourceType};
 use oxc_syntax::{scope::ScopeFlags, symbol::SymbolFlags};
 
+use itertools::Itertools;
+
 type Slot = usize;
 
 pub struct Mangler {
@@ -184,10 +186,11 @@ impl<'a> ManglerBuilder<'a> {
 
         let mut freq_iter = frequencies.iter();
         // 2. "N number of vars are going to be assigned names of the same length"
-        for slice_of_same_len_strings in names.group_by_mut(|a, b| a.len() == b.len()) {
+        for (_, slice_of_same_len_strings_group) in &names.into_iter().group_by(|a| a.len()) {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
             //  so taking means take the N most frequent symbols remaining)
+            let slice_of_same_len_strings = slice_of_same_len_strings_group.collect_vec();
             let mut symbols_renamed_in_this_batch =
                 freq_iter.by_ref().take(slice_of_same_len_strings.len()).collect::<Vec<_>>();
 
