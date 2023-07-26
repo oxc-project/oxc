@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -53,8 +53,7 @@ impl Rule for NoArrayConstructor {
             _ => return,
         };
 
-        if let Expression::Identifier(ident) = callee
-            && ident.name == "Array"
+        if callee.is_specific_id("Array")
             && arguments.len() != 1
             && type_parameters.is_none()
             && !optional

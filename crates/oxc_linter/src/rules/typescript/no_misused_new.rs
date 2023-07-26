@@ -60,51 +60,54 @@ declare_oxc_lint!(
 impl Rule for NoMisusedNew {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-          AstKind::TSInterfaceDeclaration(interface_decl) => {
-            let decl_name = &interface_decl.id.name;
+            AstKind::TSInterfaceDeclaration(interface_decl) => {
+                let decl_name = &interface_decl.id.name;
 
-            for signature in &interface_decl.body.body {
-              if let TSSignature::TSConstructSignatureDeclaration(sig) = signature &&
-                 let Some(return_type) = &sig.return_type &&
-                 let TSType::TSTypeReference(type_ref) = &return_type.type_annotation &&
-                 let TSTypeName::IdentifierName(id) = &type_ref.type_name &&
-                 id.name == decl_name {
-
-                     ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(
-                      Span::new(sig.span.start, sig.span.start + 3)
-                    ));
-                 }
-               
-            }
-          }
-          AstKind::TSMethodSignature(method_sig) => {
-            if let PropertyKey::Identifier(id) = &method_sig.key {
-              if id.name == "constructor" {
-                ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(method_sig.key.span()));
-              }
-            }
-          }
-          AstKind::Class(cls) => {
-            if let Some(cls_id) = &cls.id {
-              let cls_name = &cls_id.name;
-
-              for element in &cls.body.body {
-                if let ClassElement::MethodDefinition(method) = element &&
-                   let PropertyKey::Identifier(id) = &method.key &&
-                   id.name == "new" &&
-                   method.value.body.is_none() &&
-                   let Some(return_type) = &method.value.return_type &&
-                   let TSType::TSTypeReference(type_ref) = &return_type.type_annotation &&
-                   let TSTypeName::IdentifierName(current_id) = &type_ref.type_name &&
-                   current_id.name == cls_name {
-
-                    ctx.diagnostic(NoMisusedNewClassDiagnostic(method.key.span()));
-                  
+                for signature in &interface_decl.body.body {
+                    if let TSSignature::TSConstructSignatureDeclaration(sig) = signature {
+                        if let Some(return_type) = &sig.return_type {
+                            if let TSType::TSTypeReference(type_ref) = &return_type.type_annotation {
+                                if let TSTypeName::IdentifierName(id) = &type_ref.type_name {
+                                    if id.name == decl_name {
+                                        ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(
+                                                Span::new(sig.span.start, sig.span.start + 3)
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
-          _ => {}
+            AstKind::TSMethodSignature(method_sig) => {
+                if let PropertyKey::Identifier(id) = &method_sig.key {
+                    if id.name == "constructor" {
+                        ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(method_sig.key.span()));
+                    }
+                }
+            }
+            AstKind::Class(cls) => {
+                if let Some(cls_id) = &cls.id {
+                    let cls_name = &cls_id.name;
+
+                    for element in &cls.body.body {
+                        if let ClassElement::MethodDefinition(method) = element {
+                            if method.key.is_specific_id("new") && method.value.body.is_none() {
+                                if let Some(return_type) = &method.value.return_type {
+                                    if let TSType::TSTypeReference(type_ref) = &return_type.type_annotation {
+                                        if let TSTypeName::IdentifierName(current_id) = &type_ref.type_name {
+                                            if current_id.name == cls_name {
+                                                ctx.diagnostic(NoMisusedNewClassDiagnostic(method.key.span()));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
         }
     }
 }

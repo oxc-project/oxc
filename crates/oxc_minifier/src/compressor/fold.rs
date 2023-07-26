@@ -292,19 +292,14 @@ impl<'a> Compressor<'a> {
             if matches!((left, right), (Ty::Number, Ty::Str)) || matches!(right, Ty::Boolean) {
                 let right_number = get_side_free_number_value(right_expr);
 
-                if let Some(r_num) = right_number &&
-                let NumberValue::Number(num) = r_num  {
+                if let Some(NumberValue::Number(num)) = right_number {
                     let raw = self.hir.new_str(num.to_string().as_str());
 
                     let number_literal = self.hir.number_literal(
                         right_expr.span(),
                         num,
                         raw,
-                        if num.fract() == 0.0 {
-                            NumberBase::Decimal
-                        } else {
-                            NumberBase::Float
-                        }
+                        if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
                     let number_literal_expr = self.hir.literal_number_expression(number_literal);
 
@@ -317,19 +312,14 @@ impl<'a> Compressor<'a> {
             if matches!((left, right), (Ty::Str, Ty::Number)) || matches!(left, Ty::Boolean) {
                 let left_number = get_side_free_number_value(left_expr);
 
-                if let Some(l_num) = left_number &&
-                let NumberValue::Number(num) = l_num {
+                if let Some(NumberValue::Number(num)) = left_number {
                     let raw = self.hir.new_str(num.to_string().as_str());
 
                     let number_literal = self.hir.number_literal(
                         left_expr.span(),
                         num,
                         raw,
-                        if num.fract() == 0.0 {
-                            NumberBase::Decimal
-                        } else {
-                            NumberBase::Float
-                        }
+                        if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
                     let number_literal_expr = self.hir.literal_number_expression(number_literal);
 
@@ -343,7 +333,7 @@ impl<'a> Compressor<'a> {
                 let left_bigint = get_side_free_bigint_value(left_expr);
                 let right_bigint = get_side_free_bigint_value(right_expr);
 
-                if let Some(l_big) = left_bigint && let Some(r_big) = right_bigint {
+                if let (Some(l_big), Some(r_big)) = (left_bigint, right_bigint) {
                     return Tri::for_boolean(l_big.eq(&r_big));
                 }
             }
@@ -375,23 +365,29 @@ impl<'a> Compressor<'a> {
         if left == Ty::Str && right == Ty::Str {
             let left_string = get_side_free_string_value(left_expr);
             let right_string = get_side_free_string_value(right_expr);
-            if let Some(left_string) = left_string && let Some(right_string) = right_string {
+            if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
                 // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
                 if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
                     return Tri::Unknown;
                 }
 
-                return Tri::for_boolean(left_string.cmp(&right_string) == Ordering::Less)
+                return Tri::for_boolean(left_string.cmp(&right_string) == Ordering::Less);
             }
 
-            if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) = (left_expr, right_expr)
-                && (left.operator, right.operator) == (UnaryOperator::Typeof, UnaryOperator::Typeof)
-                && let Expression::Identifier(left) = &left.argument
-                && let Expression::Identifier(right) = &right.argument
-                && left.name == right.name
+            if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
+                (left_expr, right_expr)
             {
-                // Special case: `typeof a < typeof a` is always false.
-                return Tri::False;
+                if (left.operator, right.operator) == (UnaryOperator::Typeof, UnaryOperator::Typeof)
+                {
+                    if let (Expression::Identifier(left), Expression::Identifier(right)) =
+                        (&left.argument, &right.argument)
+                    {
+                        if left.name == right.name {
+                            // Special case: `typeof a < typeof a` is always false.
+                            return Tri::False;
+                        }
+                    }
+                }
             }
         }
 
@@ -445,7 +441,7 @@ impl<'a> Compressor<'a> {
                     let left_number = get_side_free_number_value(left_expr);
                     let right_number = get_side_free_number_value(right_expr);
 
-                    if let Some(l_num) = left_number && let Some(r_num) = right_number {
+                    if let (Some(l_num), Some(r_num)) = (left_number, right_number) {
                         if l_num.is_nan() || r_num.is_nan() {
                             return Tri::False;
                         }
@@ -458,23 +454,30 @@ impl<'a> Compressor<'a> {
                 Ty::Str => {
                     let left_string = get_side_free_string_value(left_expr);
                     let right_string = get_side_free_string_value(right_expr);
-                    if let Some(left_string) = left_string && let Some(right_string) = right_string {
+                    if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
                         // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
                         if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
                             return Tri::Unknown;
                         }
 
-                        return Tri::for_boolean(left_string == right_string)
+                        return Tri::for_boolean(left_string == right_string);
                     }
 
-                    if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) = (left_expr, right_expr)
-                        && (left.operator, right.operator) == (UnaryOperator::Typeof, UnaryOperator::Typeof)
-                        && let Expression::Identifier(left) = &left.argument
-                        && let Expression::Identifier(right) = &right.argument
-                        && left.name == right.name
+                    if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
+                        (left_expr, right_expr)
                     {
-                        // Special case, typeof a == typeof a is always true.
-                        return Tri::True;
+                        if (left.operator, right.operator)
+                            == (UnaryOperator::Typeof, UnaryOperator::Typeof)
+                        {
+                            if let (Expression::Identifier(left), Expression::Identifier(right)) =
+                                (&left.argument, &right.argument)
+                            {
+                                if left.name == right.name {
+                                    // Special case, typeof a == typeof a is always true.
+                                    return Tri::True;
+                                }
+                            }
+                        }
                     }
 
                     Tri::Unknown
@@ -581,8 +584,9 @@ impl<'a> Compressor<'a> {
                         // +true -> 1
                         // +false -> 0
                         // +null -> 0
-                        if let Some(value) = get_number_value(&unary_expr.argument)
-                            && let NumberValue::Number(value) = value {
+                        if let Some(NumberValue::Number(value)) =
+                            get_number_value(&unary_expr.argument)
+                        {
                             let raw = self.hir.new_str(value.to_string().as_str());
                             let literal = self.hir.number_literal(
                                 unary_expr.span,
@@ -726,8 +730,9 @@ impl<'a> Compressor<'a> {
         let left_num = get_side_free_number_value(left);
         let right_num = get_side_free_number_value(right);
 
-        if let Some(NumberValue::Number(left_val)) = left_num &&
-           let Some(NumberValue::Number(right_val)) = right_num {
+        if let (Some(NumberValue::Number(left_val)), Some(NumberValue::Number(right_val))) =
+            (left_num, right_num)
+        {
             if left_val.fract() != 0.0 || right_val.fract() != 0.0 {
                 return None;
             }
@@ -810,22 +815,28 @@ impl<'a> Compressor<'a> {
             vec.push(right);
             let sequence_expr = self.hir.sequence_expression(logic_expr.span, vec);
             return Some(sequence_expr);
-        } else if let Expression::LogicalExpression(left_child) = &mut logic_expr.left && left_child.operator == logic_expr.operator {
-            let left_child_right_boolean = get_boolean_value(&left_child.right);
-            let left_child_op = left_child.operator;
-            if let Some(right_boolean) = left_child_right_boolean && !left_child.right.may_have_side_effects() {
-                // a || false || b => a || b
-                // a && true && b => a && b
-                if !right_boolean && left_child_op == LogicalOperator::Or  || right_boolean && left_child_op == LogicalOperator::And {
-                    let left = move_out(&mut left_child.left);
-                    let right = move_out(&mut logic_expr.right);
-                    let logic_expr = self.hir.logical_expression(
-                        logic_expr.span,
-                        left,
-                        left_child_op,
-                        right,
-                    );
-                    return Some(logic_expr)
+        } else if let Expression::LogicalExpression(left_child) = &mut logic_expr.left {
+            if left_child.operator == logic_expr.operator {
+                let left_child_right_boolean = get_boolean_value(&left_child.right);
+                let left_child_op = left_child.operator;
+                if let Some(right_boolean) = left_child_right_boolean {
+                    if !left_child.right.may_have_side_effects() {
+                        // a || false || b => a || b
+                        // a && true && b => a && b
+                        if !right_boolean && left_child_op == LogicalOperator::Or
+                            || right_boolean && left_child_op == LogicalOperator::And
+                        {
+                            let left = move_out(&mut left_child.left);
+                            let right = move_out(&mut logic_expr.right);
+                            let logic_expr = self.hir.logical_expression(
+                                logic_expr.span,
+                                left,
+                                left_child_op,
+                                right,
+                            );
+                            return Some(logic_expr);
+                        }
+                    }
                 }
             }
         }

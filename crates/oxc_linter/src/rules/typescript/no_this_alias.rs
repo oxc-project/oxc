@@ -87,11 +87,9 @@ impl Rule for NoThisAlias {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(decl) => {
-                if decl.init.is_none() {
-                    return;
-                }
+                let Some(init) = &decl.init else { return };
 
-                if let Some(init) = &decl.init && !rhs_is_this_reference(init) {
+                if !rhs_is_this_reference(init) {
                     return;
                 }
 

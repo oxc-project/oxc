@@ -75,8 +75,10 @@ impl Rule for NoInnerDeclarations {
         if let Some(parent_node) = parent {
             let parent_kind = parent_node.kind();
             if let AstKind::FunctionBody(_) = parent_kind {
-                if let Some(grandparent) = ctx.nodes().parent_node(parent_node.id()) && grandparent.kind().is_function_like() {
-                    return
+                if let Some(grandparent) = ctx.nodes().parent_node(parent_node.id()) {
+                    if grandparent.kind().is_function_like() {
+                        return
+                    }
                 }
             }
 

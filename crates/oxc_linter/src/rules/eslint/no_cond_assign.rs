@@ -69,8 +69,10 @@ impl Rule for NoCondAssign {
                 ctx.diagnostic(NoCondAssignDiagnostic(stmt.test.span()));
             }
             AstKind::ForStatement(stmt) => {
-                if let Some(expr) = &stmt.test && self.is_assignment_expression(expr) {
-                    ctx.diagnostic(NoCondAssignDiagnostic(expr.span()));
+                if let Some(expr) = &stmt.test {
+                    if self.is_assignment_expression(expr) {
+                        ctx.diagnostic(NoCondAssignDiagnostic(expr.span()));
+                    }
                 }
             }
             AstKind::ConditionalExpression(expr) if self.is_assignment_expression(expr.test.get_inner_expression()) => {

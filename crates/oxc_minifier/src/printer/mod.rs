@@ -156,12 +156,10 @@ impl Printer {
     }
 
     fn print_space_before_identifier(&mut self) {
-        let ch = self.peek_nth(0);
-
-        if let Some(ch) = ch && (
-            is_identifier_part(ch)
-            || self.prev_reg_exp_end == self.code.len()
-         ) {
+        if self
+            .peek_nth(0)
+            .is_some_and(|ch| is_identifier_part(ch) || self.prev_reg_exp_end == self.code.len())
+        {
             self.print(b' ');
         }
     }

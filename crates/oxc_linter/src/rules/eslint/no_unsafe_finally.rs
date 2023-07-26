@@ -82,9 +82,10 @@ impl Rule for NoUnsafeFinally {
 
             let parent_kind = ctx.nodes().parent_kind(node_id);
 
-            if let Some(AstKind::LabeledStatement(labeled_stmt)) = parent_kind
-                && label_name == Some(&labeled_stmt.label.name) {
-                label_inside = true;
+            if let Some(AstKind::LabeledStatement(labeled_stmt)) = parent_kind {
+                if label_name == Some(&labeled_stmt.label.name) {
+                    label_inside = true;
+                }
             }
 
             if let Some(AstKind::FinallyClause(_)) = parent_kind {

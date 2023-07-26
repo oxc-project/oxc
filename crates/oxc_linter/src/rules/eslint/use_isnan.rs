@@ -89,8 +89,10 @@ impl Rule for UseIsnan {
                 }
             }
             AstKind::SwitchCase(case) if self.enforce_for_switch_case => {
-                if let Some(test) = &case.test && is_nan_identifier(test) {
-                    ctx.diagnostic(UseIsnanDiagnostic::CaseNaN(test.span()));
+                if let Some(test) = &case.test {
+                    if is_nan_identifier(test) {
+                        ctx.diagnostic(UseIsnanDiagnostic::CaseNaN(test.span()));
+                    }
                 }
             }
             AstKind::SwitchStatement(switch) if self.enforce_for_switch_case => {
@@ -100,9 +102,14 @@ impl Rule for UseIsnan {
             }
             AstKind::CallExpression(call) if self.enforce_for_index_of => {
               // Match target array prototype methods whose only argument is NaN
-              if let Some(method) = is_target_callee(&call.callee)
-                && call.arguments.len() == 1 && let Some(Argument::Expression(expr)) = &call.arguments.first() && is_nan_identifier(expr) {
-                  ctx.diagnostic(UseIsnanDiagnostic::IndexOfNaN(method, expr.span()));
+              if let Some(method) = is_target_callee(&call.callee) {
+                  if call.arguments.len() == 1 {
+                      if let Some(Argument::Expression(expr)) = &call.arguments.first() {
+                          if is_nan_identifier(expr) {
+                              ctx.diagnostic(UseIsnanDiagnostic::IndexOfNaN(method, expr.span()));
+                          }
+                      }
+                  }
               }
             }
             _ => (),

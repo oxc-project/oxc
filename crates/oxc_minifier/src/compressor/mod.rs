@@ -145,13 +145,17 @@ impl<'a> Compressor<'a> {
         let mut capacity = 0usize;
         for window in stmts.windows(2) {
             let [prev, cur] = window else { unreachable!() };
-            if let Statement::Declaration(Declaration::VariableDeclaration(cur_decl)) = cur
-                && let Statement::Declaration(Declaration::VariableDeclaration(prev_decl)) = prev
-                && cur_decl.kind == prev_decl.kind {
-                if i - 1 != range.end  {
-                    range.start = i - 1;
+            if let (
+                Statement::Declaration(Declaration::VariableDeclaration(cur_decl)),
+                Statement::Declaration(Declaration::VariableDeclaration(prev_decl)),
+            ) = (cur, prev)
+            {
+                if cur_decl.kind == prev_decl.kind {
+                    if i - 1 != range.end {
+                        range.start = i - 1;
+                    }
+                    range.end = i + 1;
                 }
-                range.end = i + 1;
             }
             if (range.end != i || i == stmts.len() - 1) && range.start < range.end {
                 capacity += range.end - range.start - 1;
@@ -168,11 +172,16 @@ impl<'a> Compressor<'a> {
         // Reconstruct the stmts array by joining consecutive ranges
         let mut new_stmts = self.hir.new_vec_with_capacity(stmts.len() - capacity);
         for (i, stmt) in stmts.drain(..).enumerate() {
-            if i > 0
-                && ranges.iter().any(|range| range.contains(&(i-1)) && range.contains(&i))
-                && let Statement::Declaration(Declaration::VariableDeclaration(prev_decl)) = new_stmts.last_mut().unwrap()
-                && let Statement::Declaration(Declaration::VariableDeclaration(mut cur_decl)) = stmt {
-                prev_decl.declarations.append(&mut cur_decl.declarations);
+            if i > 0 && ranges.iter().any(|range| range.contains(&(i - 1)) && range.contains(&i)) {
+                if let Statement::Declaration(Declaration::VariableDeclaration(prev_decl)) =
+                    new_stmts.last_mut().unwrap()
+                {
+                    if let Statement::Declaration(Declaration::VariableDeclaration(mut cur_decl)) =
+                        stmt
+                    {
+                        prev_decl.declarations.append(&mut cur_decl.declarations);
+                    }
+                }
             } else {
                 new_stmts.push(stmt);
             }
@@ -182,8 +191,8 @@ impl<'a> Compressor<'a> {
 
     /// Transforms `while(expr)` to `for(;expr;)`
     fn compress_while<'b>(&mut self, stmt: &'b mut Statement<'a>) {
-        if let Statement::WhileStatement(while_stmt) = stmt
-            && self.options.loops {
+        let Statement::WhileStatement(while_stmt) = stmt else { return };
+        if self.options.loops {
             let dummy_test = self.hir.this_expression(SPAN);
             let test = std::mem::replace(&mut while_stmt.test, dummy_test);
             let body = while_stmt.body.take();
@@ -195,9 +204,10 @@ impl<'a> Compressor<'a> {
 
     /// Transforms `undefined` => `void 0`
     fn compress_undefined<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
-        if let Expression::Identifier(ident) = expr
-        && ident.name == "undefined"
-        && self.semantic.symbols().is_global_reference(ident.reference_id.clone().into_inner()) {
+        let Expression::Identifier(ident) = expr else { return false };
+        if ident.name == "undefined"
+            && self.semantic.symbols().is_global_reference(ident.reference_id.clone().into_inner())
+        {
             *expr = self.create_void_0();
             return true;
         }
@@ -207,9 +217,10 @@ impl<'a> Compressor<'a> {
     /// Transforms `Infinity` => `1/0`
     #[allow(unused)]
     fn compress_infinity<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
-        if let Expression::Identifier(ident) = expr
-        && ident.name == "Infinity"
-        && self.semantic.symbols().is_global_reference(ident.reference_id.clone().into_inner()) {
+        let Expression::Identifier(ident) = expr else { return false };
+        if ident.name == "Infinity"
+            && self.semantic.symbols().is_global_reference(ident.reference_id.clone().into_inner())
+        {
             *expr = self.create_one_div_zero();
             return true;
         }
@@ -219,8 +230,8 @@ impl<'a> Compressor<'a> {
     /// Transforms boolean expression `true` => `!0` `false` => `!1`
     /// Enabled by `compress.booleans`
     fn compress_boolean<'b>(&mut self, expr: &'b mut Expression<'a>) -> bool {
-        if let Expression::BooleanLiteral(lit) = expr
-        && self.options.booleans {
+        let Expression::BooleanLiteral(lit) = expr else { return false };
+        if self.options.booleans {
             let num = self.hir.number_literal(
                 SPAN,
                 if lit.value { 0.0 } else { 1.0 },
@@ -237,17 +248,19 @@ impl<'a> Compressor<'a> {
     /// Transforms `typeof foo == "undefined"` into `foo === void 0`
     /// Enabled by `compress.typeofs`
     fn compress_typeof_undefined<'b>(&mut self, expr: &'b mut BinaryExpression<'a>) {
-        if expr.operator.is_equality()
-            && self.options.typeofs
-            && let Expression::UnaryExpression(unary_expr) = &expr.left
-            && unary_expr.operator == UnaryOperator::Typeof
-            && let Expression::Identifier(ident) = &unary_expr.argument
-            && let Expression::StringLiteral(s) = &expr.right
-            && s.value == "undefined" {
-            let left = self.hir.identifier_reference_expression((*ident).clone());
-            let right = self.create_void_0();
-            let operator = BinaryOperator::StrictEquality;
-            *expr = BinaryExpression {span: SPAN, left, operator, right};
+        if expr.operator.is_equality() && self.options.typeofs {
+            if let Expression::UnaryExpression(unary_expr) = &expr.left {
+                if unary_expr.operator == UnaryOperator::Typeof {
+                    if let Expression::Identifier(ident) = &unary_expr.argument {
+                        if expr.right.is_specific_string_literal("undefined") {
+                            let left = self.hir.identifier_reference_expression((*ident).clone());
+                            let right = self.create_void_0();
+                            let operator = BinaryOperator::StrictEquality;
+                            *expr = BinaryExpression { span: SPAN, left, operator, right };
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -256,8 +269,7 @@ impl<'a> Compressor<'a> {
     /// `return undefined` -> `return`
     /// `return void 0` -> `return`
     fn compress_return_statement<'b>(&mut self, stmt: &'b mut ReturnStatement<'a>) {
-        if let Some(expr) = &stmt.argument
-            && (expr.is_undefined() || expr.is_void_0()) {
+        if stmt.argument.as_ref().is_some_and(|expr| expr.is_undefined() || expr.is_void_0()) {
             stmt.argument = None;
         }
     }
@@ -266,7 +278,7 @@ impl<'a> Compressor<'a> {
         if decl.kind.is_const() {
             return;
         }
-        if let Some(init) = &decl.init && (init.is_undefined() || init.is_void_0()) {
+        if decl.init.as_ref().is_some_and(|init| init.is_undefined() || init.is_void_0()) {
             decl.init = None;
         }
     }

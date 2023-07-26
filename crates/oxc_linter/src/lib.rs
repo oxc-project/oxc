@@ -1,5 +1,4 @@
 #![allow(clippy::self_named_module_files)] // for rules.rs
-#![feature(let_chains)]
 
 #[cfg(test)]
 mod tester;

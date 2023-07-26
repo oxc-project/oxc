@@ -43,10 +43,13 @@ pub fn parse_jest_fn_call<'a>(
     let resolved = resolve_to_jest_fn(call_expr, ctx)?;
 
     let chain = get_node_chain(callee);
-    if let Some(first) = chain.first() && let Some(last) = chain.last() {
+    if let (Some(first), Some(last)) = (chain.first(), chain.last()) {
         // if we're an `each()`, ensure we're the outer CallExpression (i.e `.each()()`)
         if last == "each"
-            && !matches!( callee, Expression::CallExpression(_) | Expression::TaggedTemplateExpression(_))
+            && !matches!(
+                callee,
+                Expression::CallExpression(_) | Expression::TaggedTemplateExpression(_)
+            )
         {
             return None;
         }

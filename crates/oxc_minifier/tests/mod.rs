@@ -1,4 +1,3 @@
-#![feature(let_chains)]
 #![allow(clippy::too_many_lines)]
 
 mod closure;
