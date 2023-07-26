@@ -117,9 +117,10 @@ A single VariableDeclarator. (const/let/var)!
 If you have multiple variables assigned at once with commas,
 this will fire once per assignment.
 """
-interface VariableDeclaration {
+interface VariableDeclaration implements HasSpan {
   left: AssignmentType!
-  entire_span: Span!
+  # HasSpan
+  span: Span!
 }
 
 type SearchParameter {
@@ -323,13 +324,13 @@ A single VariableDeclarator. (const/let/var)!
 If you have multiple variables assigned at once with commas,
 this will fire once per assignment.
 """
-type VariableDeclarationAST implements VariableDeclaration {
+type VariableDeclarationAST implements VariableDeclaration & ASTNode & HasSpan {
   left: AssignmentType!
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
   # HasSpan
-  entire_span: Span!
+  span: Span!
 }
 
 type TypeAnnotationAST implements TypeAnnotation & ASTNode & HasSpan {
