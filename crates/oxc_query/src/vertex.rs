@@ -176,7 +176,7 @@ impl Typename for Vertex<'_> {
             Vertex::TypeAnnotation(tn) => tn.typename(),
             Vertex::Type(_) => "Type",
             Vertex::Url(_) => "URL",
-            Vertex::VariableDeclaration(_) => "VariableDeclaration",
+            Vertex::VariableDeclaration(vd) => vd.typename(),
             Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
         }
     }
@@ -345,4 +345,10 @@ pub struct SearchParameterVertex {
 pub struct VariableDeclarationVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub variable_declaration: &'a VariableDeclarator<'a>,
+}
+
+impl<'a> Typename for VariableDeclarationVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() { "VariableDeclarationAST" } else { "VariableDeclaration" }
+    }
 }
