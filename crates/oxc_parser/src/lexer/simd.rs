@@ -47,14 +47,13 @@ impl SkipWhitespace {
                 if self.found {
                     return self;
                 }
-            }else{
-
-            let remainder = chunk;
-            // Align the last chunk for avoiding the use of a scalar version
-            let mut chunk = [0; ELEMENTS];
-            let len = remainder.len();
-            chunk[..len].copy_from_slice(remainder);
-            self.check_chunk(&chunk);
+            } else {
+                let remainder = chunk;
+                // Align the last chunk for avoiding the use of a scalar version
+                let mut chunk = [0; ELEMENTS];
+                let len = remainder.len();
+                chunk[..len].copy_from_slice(remainder);
+                self.check_chunk(&chunk);
             }
         }
 
@@ -128,13 +127,13 @@ impl<'a> SkipMultilineComment<'a> {
                 if self.found {
                     return self;
                 }
-            }else{
-            let remainder = chunk;
-            // Align the last chunk for avoiding the use of a scalar version
-            let mut chunk = [0; ELEMENTS];
-            let len = remainder.len();
-            chunk[..len].copy_from_slice(remainder);
-            self.check(&chunk, len);
+            } else {
+                let remainder = chunk;
+                // Align the last chunk for avoiding the use of a scalar version
+                let mut chunk = [0; ELEMENTS];
+                let len = remainder.len();
+                chunk[..len].copy_from_slice(remainder);
+                self.check(&chunk, len);
             }
         }
 
