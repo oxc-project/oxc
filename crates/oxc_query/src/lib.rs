@@ -103,7 +103,7 @@ query {
             span_asmt_type_end: u64,
             entire_span_start: u64,
             entire_span_end: u64,
-            __typename: String
+            __typename: String,
         }
 
         let mut results: Vec<Output> = execute_query(
