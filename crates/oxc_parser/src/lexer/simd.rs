@@ -42,19 +42,19 @@ impl SkipWhitespace {
         let chunks = bytes.chunks(ELEMENTS);
 
         for chunk in chunks {
-            if chunk.len() != ELEMENTS {
-                let remainder = chunk;
-                // Align the last chunk for avoiding the use of a scalar version
-                let mut chunk = [0; ELEMENTS];
-                let len = remainder.len();
-                chunk[..len].copy_from_slice(remainder);
-                self.check_chunk(&chunk);
-                break;
-            } else {
+            if chunk.len() == ELEMENTS {
                 self.check_chunk(chunk);
                 if self.found {
                     return self;
                 }
+            }else{
+
+            let remainder = chunk;
+            // Align the last chunk for avoiding the use of a scalar version
+            let mut chunk = [0; ELEMENTS];
+            let len = remainder.len();
+            chunk[..len].copy_from_slice(remainder);
+            self.check_chunk(&chunk);
             }
         }
 
@@ -123,18 +123,18 @@ impl<'a> SkipMultilineComment<'a> {
 
     pub fn simd(&mut self) -> &Self {
         for chunk in self.remaining.chunks(ELEMENTS) {
-            if chunk.len() != ELEMENTS {
-                let remainder = chunk;
-                // Align the last chunk for avoiding the use of a scalar version
-                let mut chunk = [0; ELEMENTS];
-                let len = remainder.len();
-                chunk[..len].copy_from_slice(remainder);
-                self.check(&chunk, len);
-                break;
-            }
-            self.check(chunk, chunk.len());
-            if self.found {
-                return self;
+            if chunk.len() == ELEMENTS {
+                self.check(chunk, chunk.len());
+                if self.found {
+                    return self;
+                }
+            }else{
+            let remainder = chunk;
+            // Align the last chunk for avoiding the use of a scalar version
+            let mut chunk = [0; ELEMENTS];
+            let len = remainder.len();
+            chunk[..len].copy_from_slice(remainder);
+            self.check(&chunk, len);
             }
         }
 
