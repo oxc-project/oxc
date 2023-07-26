@@ -1,18 +1,42 @@
 use std::{
-    collections::HashMap,
+    hash::BuildHasherDefault,
     path::{Path, PathBuf},
 };
 
+use indexmap::IndexMap;
+use rustc_hash::FxHasher;
 use serde::Deserialize;
 
 use crate::{path::PathUtil, ResolveError};
+
+type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 // TODO: allocate everything into an arena or SoA
 #[derive(Debug, Deserialize)]
 pub struct PackageJson {
     #[serde(skip)]
     pub path: PathBuf,
+
+    /// The "name" field defines your package's name.
+    /// The "name" field can be used in addition to the "exports" field to self-reference a package using its name.
+    ///
+    /// <https://nodejs.org/api/packages.html#name>
+    pub name: Option<String>,
+
+    /// The "main" field defines the entry point of a package when imported by name via a node_modules lookup. Its value is a path.
+    /// When a package has an "exports" field, this will take precedence over the "main" field when importing the package by name.
+    ///
+    /// <https://nodejs.org/api/packages.html#main>
     pub main: Option<String>,
+
+    /// The "exports" field allows defining the entry points of a package when imported by name loaded either via a node_modules lookup or a self-reference to its own name.
+    ///
+    /// <https://nodejs.org/api/packages.html#exports>
+    pub exports: Option<ExportsField>,
+
+    /// The browser field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
+    ///
+    /// <https://github.com/defunctzombie/package-browser-field-spec>
     pub browser: Option<BrowserField>,
 }
 
@@ -20,7 +44,15 @@ pub struct PackageJson {
 #[serde(untagged)]
 pub enum BrowserField {
     String(String),
-    Map(HashMap<PathBuf, serde_json::Value>),
+    Map(FxIndexMap<PathBuf, serde_json::Value>),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum ExportsField {
+    String(String),
+    Array(Vec<ExportsField>),
+    Map(FxIndexMap<String, ExportsField>),
 }
 
 impl PackageJson {
@@ -82,5 +114,23 @@ impl PackageJson {
             }
             _ => Ok(None),
         }
+    }
+
+    /// [PACKAGE_EXPORTS_RESOLVE](https://nodejs.org/api/esm.html#resolution-algorithm-specification)
+    #[allow(clippy::single_match)]
+    pub fn package_exports_resolve(&self, request: &str) -> Option<PathBuf> {
+        let Some(exports) = &self.exports else {
+            return None;
+        };
+        match exports {
+            ExportsField::Map(map) => match map.get(request) {
+                Some(ExportsField::String(value)) => {
+                    return Some(self.path.parent().unwrap().join(value));
+                }
+                _ => {}
+            },
+            _ => {}
+        }
+        None
     }
 }

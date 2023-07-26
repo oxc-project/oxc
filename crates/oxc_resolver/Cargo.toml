@@ -15,6 +15,7 @@ dashmap       = { workspace = true }
 serde         = { workspace = true, features = ["derive"] }
 serde_json    = { workspace = true }
 rustc-hash    = { workspace = true }
+indexmap      = { workspace = true, features = ["serde"] }
 dunce         = "1.0.4"
 identity-hash = "0.1.0"
 
