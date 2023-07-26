@@ -53,13 +53,14 @@ impl Rule for NoArrayConstructor {
             _ => return,
         };
 
-        if let Expression::Identifier(ident) = callee
-            && ident.name == "Array"
-            && arguments.len() != 1
-            && type_parameters.is_none()
-            && !optional
-        {
-            ctx.diagnostic(NoArrayConstructorDiagnostic(span));
+        if let Expression::Identifier(ident) = callee {
+            if ident.name == "Array"
+                && arguments.len() != 1
+                && type_parameters.is_none()
+                && !optional
+            {
+                ctx.diagnostic(NoArrayConstructorDiagnostic(span));
+            }
         }
     }
 }

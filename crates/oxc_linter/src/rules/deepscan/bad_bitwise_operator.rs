@@ -112,9 +112,10 @@ fn is_mistype_option_fallback(node: &AstNode) -> bool {
                 return false;
             }
 
-            if let Expression::Identifier(_) = &binary_expr.left
-            && !is_numeric_expr(&binary_expr.right, true) {
-                return true
+            if let Expression::Identifier(_) = &binary_expr.left {
+                if !is_numeric_expr(&binary_expr.right, true) {
+                    return true;
+                }
             }
 
             false

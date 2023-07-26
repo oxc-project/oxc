@@ -41,22 +41,24 @@ impl Rule for NoVarRequires {
         if !ctx.source_type().is_typescript() {
             return;
         }
-        if let AstKind::CallExpression(expr) = node.kind() && expr.is_require_call() {
-            if ctx.scopes().get_bindings(node.scope_id()).contains_key("require") {
-                return;
-            }
-
-            if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
-                if let AstKind::Argument(_) = parent_node.kind() {
-                    if let Some(parent_node) = ctx.nodes().parent_node(parent_node.id()) {
-                        if is_target_node(&parent_node.kind()) {
-                            ctx.diagnostic(NoVarRequiresDiagnostic(expr.span));
-                        }
-                    }
+        if let AstKind::CallExpression(expr) = node.kind() {
+            if expr.is_require_call() {
+                if ctx.scopes().get_bindings(node.scope_id()).contains_key("require") {
+                    return;
                 }
 
-                if is_target_node(&parent_node.kind()) {
-                    ctx.diagnostic(NoVarRequiresDiagnostic(expr.span));
+                if let Some(parent_node) = ctx.nodes().parent_node(node.id()) {
+                    if let AstKind::Argument(_) = parent_node.kind() {
+                        if let Some(parent_node) = ctx.nodes().parent_node(parent_node.id()) {
+                            if is_target_node(&parent_node.kind()) {
+                                ctx.diagnostic(NoVarRequiresDiagnostic(expr.span));
+                            }
+                        }
+                    }
+
+                    if is_target_node(&parent_node.kind()) {
+                        ctx.diagnostic(NoVarRequiresDiagnostic(expr.span));
+                    }
                 }
             }
         }

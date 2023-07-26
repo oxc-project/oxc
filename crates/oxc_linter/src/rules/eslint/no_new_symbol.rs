@@ -41,14 +41,16 @@ declare_oxc_lint!(
 
 impl Rule for NoNewSymbol {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::NewExpression(expr) = node.kind()
-            && let Expression::Identifier(ident) = &expr.callee
-            && ident.name == "Symbol"
-            && ctx.semantic().is_reference_to_global_variable(ident)
-        {
-            let start = expr.span.start;
-            let end = start + 3;
-            ctx.diagnostic(NoNewSymbolDiagnostic(Span::new(start, end)));
+        if let AstKind::NewExpression(expr) = node.kind() {
+            if let Expression::Identifier(ident) = &expr.callee {
+                if ident.name == "Symbol" {
+                    if ctx.semantic().is_reference_to_global_variable(ident) {
+                        let start = expr.span.start;
+                        let end = start + 3;
+                        ctx.diagnostic(NoNewSymbolDiagnostic(Span::new(start, end)));
+                    }
+                }
+            }
         }
     }
 }

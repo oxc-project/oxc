@@ -44,12 +44,23 @@ declare_oxc_lint!(
 
 impl Rule for UninvokedArrayCallback {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let new_expr = if let AstKind::NewExpression(new_expr) = node.kind()
-            && new_expr.callee.is_specific_id("Array")
-            && new_expr.arguments.len() == 1
-            && let Some(Argument::Expression(arg_expr)) = new_expr.arguments.iter().next()
-            && matches!(arg_expr, Expression::NumberLiteral(_))
-            { new_expr } else { return };
+        let new_expr = if let AstKind::NewExpression(new_expr) = node.kind() {
+            if new_expr.callee.is_specific_id("Array") && new_expr.arguments.len() == 1 {
+                if let Some(Argument::Expression(arg_expr)) = new_expr.arguments.iter().next() {
+                    if matches!(arg_expr, Expression::NumberLiteral(_)) {
+                        new_expr
+                    } else {
+                        return;
+                    }
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
+        } else {
+            return;
+        };
 
         let Some(member_expr_node) = ctx.nodes().parent_node(node.id()) else { return };
 
@@ -57,19 +68,26 @@ impl Rule for UninvokedArrayCallback {
             return
         };
 
-        if let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(member_expr_node.id())
-            && let Some(argument) = call_expr.arguments.iter().next()
-            && let Argument::Expression(arg_expr) = argument
-            && arg_expr.is_function() {
-            let property_span = match member_expr {
-                MemberExpression::ComputedMemberExpression(expr) => expr.expression.span(),
-                MemberExpression::StaticMemberExpression(expr) => expr.property.span,
-                MemberExpression::PrivateFieldExpression(expr) => expr.field.span,
-            };
-            ctx.diagnostic(UninvokedArrayCallbackDiagnostic(
-                property_span,
-                new_expr.span,
-            ));
+        if let Some(AstKind::CallExpression(call_expr)) =
+            ctx.nodes().parent_kind(member_expr_node.id())
+        {
+            if let Some(argument) = call_expr.arguments.iter().next() {
+                if let Argument::Expression(arg_expr) = argument {
+                    if arg_expr.is_function() {
+                        let property_span = match member_expr {
+                            MemberExpression::ComputedMemberExpression(expr) => {
+                                expr.expression.span()
+                            }
+                            MemberExpression::StaticMemberExpression(expr) => expr.property.span,
+                            MemberExpression::PrivateFieldExpression(expr) => expr.field.span,
+                        };
+                        ctx.diagnostic(UninvokedArrayCallbackDiagnostic(
+                            property_span,
+                            new_expr.span,
+                        ));
+                    }
+                }
+            }
         }
     }
 }

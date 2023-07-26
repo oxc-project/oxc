@@ -77,31 +77,35 @@ impl Rule for ValidTypeof {
             return;
         }
 
-        if let Expression::TemplateLiteral(template) = sibling && template.expressions.is_empty() {
-                if let Some(value) = template.quasi() && !VALID_TYPES.contains(value.as_str()) {
-                    ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
+        if let Expression::TemplateLiteral(template) = sibling {
+            if template.expressions.is_empty() {
+                if let Some(value) = template.quasi() {
+                    if !VALID_TYPES.contains(value.as_str()) {
+                        ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
+                    }
                 }
                 return;
             }
+        }
 
-        if let Expression::Identifier(ident) = sibling
-            && ident.name == "undefined"
-            && ctx.semantic().is_reference_to_global_variable(ident) {
-            ctx.diagnostic_with_fix(
-                if self.require_string_literals {
-                    ValidTypeofDiagnostic::NotString(
-                        Some("Use `\"undefined\"` instead of `undefined`."),
-                        sibling.span(),
-                    )
-                } else {
-                    ValidTypeofDiagnostic::InvalidValue(
-                        Some("Use `\"undefined\"` instead of `undefined`."),
-                        sibling.span(),
-                    )
-                },
-                || Fix::new("\"undefined\"", sibling.span()),
-            );
-            return;
+        if let Expression::Identifier(ident) = sibling {
+            if ident.name == "undefined" && ctx.semantic().is_reference_to_global_variable(ident) {
+                ctx.diagnostic_with_fix(
+                    if self.require_string_literals {
+                        ValidTypeofDiagnostic::NotString(
+                            Some("Use `\"undefined\"` instead of `undefined`."),
+                            sibling.span(),
+                        )
+                    } else {
+                        ValidTypeofDiagnostic::InvalidValue(
+                            Some("Use `\"undefined\"` instead of `undefined`."),
+                            sibling.span(),
+                        )
+                    },
+                    || Fix::new("\"undefined\"", sibling.span()),
+                );
+                return;
+            }
         }
 
         if self.require_string_literals

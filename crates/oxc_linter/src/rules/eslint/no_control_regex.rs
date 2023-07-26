@@ -137,14 +137,17 @@ impl Rule for NoControlRegex {
 }
 
 fn extract_flags<'a>(args: &'a oxc_allocator::Vec<'a, Argument<'a>>) -> Option<RegExpFlags> {
-    if args.len() > 1 &&
-    let Argument::Expression(Expression::StringLiteral(flag_arg)) = &args[1] {
-        let mut flags = RegExpFlags::empty();
-        for ch in flag_arg.value.chars() {
-            let flag = RegExpFlags::try_from(ch).ok()?;
-            flags |= flag;
+    if args.len() > 1 {
+        if let Argument::Expression(Expression::StringLiteral(flag_arg)) = &args[1] {
+            let mut flags = RegExpFlags::empty();
+            for ch in flag_arg.value.chars() {
+                let flag = RegExpFlags::try_from(ch).ok()?;
+                flags |= flag;
+            }
+            Some(flags)
+        } else {
+            None
         }
-        Some(flags)
     } else {
         None
     }
@@ -187,20 +190,33 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
         // new RegExp()
         AstKind::NewExpression(expr) => {
             // constructor is RegExp,
-            if let Expression::Identifier(ident) = &expr.callee &&
-            ident.name == "RegExp" &&
+            if let Expression::Identifier(ident) = &expr.callee {
+                if ident.name == "RegExp" &&
             // which is provided at least 1 parameter,
-            expr.arguments.len() > 0 &&
-            // where the first one is a string literal
-            // note: improvements required for strings used via identifier
-            // references
-            let Argument::Expression(Expression::StringLiteral(pattern)) = &expr.arguments[0]
-            {
-                // get pattern from arguments. Missing or non-string arguments
-                // will be runtime errors, but are not covered by this rule.
-                // Note that we're intentionally reporting the entire "new
-                // RegExp("pat") expression, not just "pat".
-                Some(RegexPatternData { pattern: &pattern.value, flags: extract_flags(&expr.arguments), span: kind.span() })
+            expr.arguments.len() > 0
+                {
+                    if
+                    // where the first one is a string literal
+                    // note: improvements required for strings used via identifier
+                    // references
+                    let Argument::Expression(Expression::StringLiteral(pattern)) =
+                        &expr.arguments[0]
+                    {
+                        // get pattern from arguments. Missing or non-string arguments
+                        // will be runtime errors, but are not covered by this rule.
+                        // Note that we're intentionally reporting the entire "new
+                        // RegExp("pat") expression, not just "pat".
+                        Some(RegexPatternData {
+                            pattern: &pattern.value,
+                            flags: extract_flags(&expr.arguments),
+                            span: kind.span(),
+                        })
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -209,20 +225,29 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
         // RegExp()
         AstKind::CallExpression(expr) => {
             // constructor is RegExp,
-            if let Expression::Identifier(ident) = &expr.callee &&
-            ident.name == "RegExp" &&
+            if let Expression::Identifier(ident) = &expr.callee {
+                if ident.name == "RegExp" &&
             // which is provided at least 1 parameter,
-            expr.arguments.len() > 0 &&
-            // where the first one is a string literal
-            // note: improvements required for strings used via identifier
-            // references
-            let Argument::Expression(Expression::StringLiteral(pattern)) = &expr.arguments[0]
-            {
-                // get pattern from arguments. Missing or non-string arguments
-                // will be runtime errors, but are not covered by this rule.
-                // Note that we're intentionally reporting the entire "new
-                // RegExp("pat") expression, not just "pat".
-                Some(RegexPatternData { pattern: &pattern.value, flags: extract_flags(&expr.arguments), span: kind.span() })
+            expr.arguments.len() > 0
+                {
+                    if let Argument::Expression(Expression::StringLiteral(pattern)) =
+                        &expr.arguments[0]
+                    {
+                        // get pattern from arguments. Missing or non-string arguments
+                        // will be runtime errors, but are not covered by this rule.
+                        // Note that we're intentionally reporting the entire "new
+                        // RegExp("pat") expression, not just "pat".
+                        Some(RegexPatternData {
+                            pattern: &pattern.value,
+                            flags: extract_flags(&expr.arguments),
+                            span: kind.span(),
+                        })
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
             } else {
                 None
             }

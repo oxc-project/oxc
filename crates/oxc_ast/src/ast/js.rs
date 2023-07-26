@@ -129,12 +129,14 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
-        if let Self::UnaryExpression(expr) = self
-            && expr.operator == UnaryOperator::Void
-            && let Self::NumberLiteral(lit) = &expr.argument
-            && lit.value == 0.0 {
-            return true
+        if let Self::UnaryExpression(expr) = self {
+            if let Self::NumberLiteral(lit) = &expr.argument {
+                if expr.operator == UnaryOperator::Void && lit.value == 0.0 {
+                    return true;
+                }
+            }
         }
+
         false
     }
 
@@ -568,11 +570,17 @@ impl<'a> CallExpression<'a> {
     }
 
     pub fn common_js_require(&self) -> Option<&StringLiteral> {
-        if let Expression::Identifier(ident) = &self.callee
-            && ident.name =="require"
-            && self.arguments.len() == 1
-            && let Argument::Expression(Expression::StringLiteral(str_literal)) = &self.arguments[0] {
-            Some(str_literal)
+        if let Expression::Identifier(ident) = &self.callee {
+            if let Argument::Expression(Expression::StringLiteral(str_literal)) = &self.arguments[0]
+            {
+                if ident.name == "require" && self.arguments.len() == 1 {
+                    Some(str_literal)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
         } else {
             None
         }

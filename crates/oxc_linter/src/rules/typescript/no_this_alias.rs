@@ -91,8 +91,10 @@ impl Rule for NoThisAlias {
                     return;
                 }
 
-                if let Some(init) = &decl.init && !rhs_is_this_reference(init) {
-                    return;
+                if let Some(init) = &decl.init {
+                    if !rhs_is_this_reference(init) {
+                        return;
+                    }
                 }
 
                 if self.allow_destructuring

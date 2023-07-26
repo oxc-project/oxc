@@ -37,13 +37,18 @@ declare_oxc_lint!(
 
 impl Rule for BadRemoveEventListener {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind()
-            && let Some(member) = call_expr.callee.get_member_expr()
-            && let Some(name) = member.static_property_name()
-            && name == "removeEventListener"
-            && let Some(Argument::Expression(expr)) = call_expr.arguments.get(1)
-            && expr.is_function() {
-            ctx.diagnostic(BadRemoveEventListenerDiagnostic(call_expr.span));
+        if let AstKind::CallExpression(call_expr) = node.kind() {
+            if let Some(member) = call_expr.callee.get_member_expr() {
+                if let Some(name) = member.static_property_name() {
+                    if name == "removeEventListener" {
+                        if let Some(Argument::Expression(expr)) = call_expr.arguments.get(1) {
+                            if expr.is_function() {
+                                ctx.diagnostic(BadRemoveEventListenerDiagnostic(call_expr.span));
+                            }
+                        }
+                    }
+                }
+            }
         };
     }
 }

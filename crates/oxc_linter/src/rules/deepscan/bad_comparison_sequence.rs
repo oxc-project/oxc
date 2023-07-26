@@ -45,11 +45,10 @@ declare_oxc_lint!(
 
 impl Rule for BadComparisonSequence {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::BinaryExpression(expr) = node.kind()
-            && is_bad_comparison(expr)
-            && has_no_bad_comparison_in_parents(node, ctx)
-        {
-            ctx.diagnostic(BadComparisonSequenceDiagnostic(expr.span));
+        if let AstKind::BinaryExpression(expr) = node.kind() {
+            if is_bad_comparison(expr) && has_no_bad_comparison_in_parents(node, ctx) {
+                ctx.diagnostic(BadComparisonSequenceDiagnostic(expr.span));
+            }
         }
     }
 }
@@ -70,26 +69,30 @@ fn has_no_bad_comparison_in_parents<'a, 'b>(
             return true;
         }
 
-        if let AstKind::BinaryExpression(expr) = kind && is_bad_comparison(expr) {
-            return false;
+        if let AstKind::BinaryExpression(expr) = kind {
+            if is_bad_comparison(expr) {
+                return false;
+            }
         }
     }
     false
 }
 
 fn is_bad_comparison(expr: &BinaryExpression) -> bool {
-    if expr.operator.is_equality()
-        && let Expression::BinaryExpression(left_expr) = &expr.left
-        && left_expr.operator.is_equality()
-    {
-        return true
+    if expr.operator.is_equality() {
+        if let Expression::BinaryExpression(left_expr) = &expr.left {
+            if left_expr.operator.is_equality() {
+                return true;
+            }
+        }
     }
 
-    if expr.operator.is_compare()
-        && let Expression::BinaryExpression(left_expr) = &expr.left
-        && left_expr.operator.is_compare()
-    {
-        return true
+    if expr.operator.is_compare() {
+        if let Expression::BinaryExpression(left_expr) = &expr.left {
+            if left_expr.operator.is_compare() {
+                return true;
+            }
+        }
     }
 
     false

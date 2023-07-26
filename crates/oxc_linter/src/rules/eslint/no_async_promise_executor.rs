@@ -52,18 +52,21 @@ declare_oxc_lint!(
 impl Rule for NoAsyncPromiseExecutor {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::NewExpression(new_expression) = node.kind() {
-            if let Expression::Identifier(ident) = &new_expression.callee && ident.name == "Promise" {
-                if let Some(Argument::Expression(expression)) = new_expression.arguments.first() {
-                    let mut span = match expression.get_inner_expression() {
-                        Expression::ArrowExpression(arrow) if arrow.r#async => arrow.span,
-                        Expression::FunctionExpression(func) if func.r#async => func.span,
+            if let Expression::Identifier(ident) = &new_expression.callee {
+                if ident.name == "Promise" {
+                    if let Some(Argument::Expression(expression)) = new_expression.arguments.first()
+                    {
+                        let mut span = match expression.get_inner_expression() {
+                            Expression::ArrowExpression(arrow) if arrow.r#async => arrow.span,
+                            Expression::FunctionExpression(func) if func.r#async => func.span,
 
-                        _ => return,
-                    };
+                            _ => return,
+                        };
 
-                    span.end = span.start + 5;
+                        span.end = span.start + 5;
 
-                    ctx.diagnostic(NoAsyncPromiseExecutorDiagnostic(span));
+                        ctx.diagnostic(NoAsyncPromiseExecutorDiagnostic(span));
+                    }
                 }
             }
         }

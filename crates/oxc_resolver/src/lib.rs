@@ -214,7 +214,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_symlink(&self, cache_value: &CacheValue) -> Option<PathBuf> {
-        if self.options.symlinks { cache_value.symlink(&self.cache.fs) } else { None }
+        if self.options.symlinks {
+            cache_value.symlink(&self.cache.fs)
+        } else {
+            None
+        }
     }
 
     fn load_index(&self, cache_value: &CacheValue) -> ResolveState {

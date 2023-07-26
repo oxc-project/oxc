@@ -601,7 +601,11 @@ impl<'a> Lexer<'a> {
     /// returns None for `SingleLineHTMLOpenComment` `<!--` in script mode
     fn read_left_angle(&mut self) -> Option<Kind> {
         if self.next_eq('<') {
-            if self.next_eq('=') { Some(Kind::ShiftLeftEq) } else { Some(Kind::ShiftLeft) }
+            if self.next_eq('=') {
+                Some(Kind::ShiftLeftEq)
+            } else {
+                Some(Kind::ShiftLeft)
+            }
         } else if self.next_eq('=') {
             Some(Kind::LtEq)
         } else if self.peek() == '!'
@@ -618,7 +622,11 @@ impl<'a> Lexer<'a> {
     fn read_right_angle(&mut self) -> Kind {
         if self.next_eq('>') {
             if self.next_eq('>') {
-                if self.next_eq('=') { Kind::ShiftRight3Eq } else { Kind::ShiftRight3 }
+                if self.next_eq('=') {
+                    Kind::ShiftRight3Eq
+                } else {
+                    Kind::ShiftRight3
+                }
             } else if self.next_eq('=') {
                 Kind::ShiftRightEq
             } else {
@@ -633,7 +641,11 @@ impl<'a> Lexer<'a> {
 
     fn read_equal(&mut self) -> Kind {
         if self.next_eq('=') {
-            if self.next_eq('=') { Kind::Eq3 } else { Kind::Eq2 }
+            if self.next_eq('=') {
+                Kind::Eq3
+            } else {
+                Kind::Eq2
+            }
         } else if self.next_eq('>') {
             Kind::Arrow
         } else {
@@ -643,7 +655,11 @@ impl<'a> Lexer<'a> {
 
     fn read_exclamation(&mut self) -> Kind {
         if self.next_eq('=') {
-            if self.next_eq('=') { Kind::Neq2 } else { Kind::Neq }
+            if self.next_eq('=') {
+                Kind::Neq2
+            } else {
+                Kind::Neq
+            }
         } else {
             Kind::Bang
         }
@@ -679,16 +695,28 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_caret(&mut self) -> Kind {
-        if self.next_eq('=') { Kind::CaretEq } else { Kind::Caret }
+        if self.next_eq('=') {
+            Kind::CaretEq
+        } else {
+            Kind::Caret
+        }
     }
 
     fn read_percent(&mut self) -> Kind {
-        if self.next_eq('=') { Kind::PercentEq } else { Kind::Percent }
+        if self.next_eq('=') {
+            Kind::PercentEq
+        } else {
+            Kind::Percent
+        }
     }
 
     fn read_star(&mut self) -> Kind {
         if self.next_eq('*') {
-            if self.next_eq('=') { Kind::Star2Eq } else { Kind::Star2 }
+            if self.next_eq('=') {
+                Kind::Star2Eq
+            } else {
+                Kind::Star2
+            }
         } else if self.next_eq('=') {
             Kind::StarEq
         } else {
@@ -698,7 +726,11 @@ impl<'a> Lexer<'a> {
 
     fn read_ampersand(&mut self) -> Kind {
         if self.next_eq('&') {
-            if self.next_eq('=') { Kind::Amp2Eq } else { Kind::Amp2 }
+            if self.next_eq('=') {
+                Kind::Amp2Eq
+            } else {
+                Kind::Amp2
+            }
         } else if self.next_eq('=') {
             Kind::AmpEq
         } else {
@@ -708,7 +740,11 @@ impl<'a> Lexer<'a> {
 
     fn read_pipe(&mut self) -> Kind {
         if self.next_eq('|') {
-            if self.next_eq('=') { Kind::Pipe2Eq } else { Kind::Pipe2 }
+            if self.next_eq('=') {
+                Kind::Pipe2Eq
+            } else {
+                Kind::Pipe2
+            }
         } else if self.next_eq('=') {
             Kind::PipeEq
         } else {
@@ -718,7 +754,11 @@ impl<'a> Lexer<'a> {
 
     fn read_question(&mut self) -> Kind {
         if self.next_eq('?') {
-            if self.next_eq('=') { Kind::Question2Eq } else { Kind::Question2 }
+            if self.next_eq('=') {
+                Kind::Question2Eq
+            } else {
+                Kind::Question2
+            }
         } else if self.peek() == '.' {
             // parse `?.1` as `?` `.1`
             if self.peek2().is_ascii_digit() {
@@ -733,7 +773,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_slash(&mut self) -> Kind {
-        if self.next_eq('=') { Kind::SlashEq } else { Kind::Slash }
+        if self.next_eq('=') {
+            Kind::SlashEq
+        } else {
+            Kind::Slash
+        }
     }
 
     fn private_identifier(&mut self, mut builder: AutoCow<'a>) -> Kind {

@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -86,11 +86,14 @@ impl Rule for NoDisabledTests {
             if let Some(jest_fn_call) = parse_jest_fn_call(call_expr, ctx) {
                 let ParsedJestFnCall { kind, members, raw } = jest_fn_call;
                 // `test('foo')`
-                if matches!(kind, JestFnKind::Test) && call_expr.arguments.len() < 2 && members.iter().all(|name| name != "todo")  {
+                if matches!(kind, JestFnKind::Test)
+                    && call_expr.arguments.len() < 2
+                    && members.iter().all(|name| name != "todo")
+                {
                     let (error, help) = Message::MissingFunction.details();
                     ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
-                    return
-                } 
+                    return;
+                }
 
                 // the only jest functions that are with "x" are "xdescribe", "xtest", and "xit"
                 // `xdescribe('foo', () => {})`
@@ -101,9 +104,9 @@ impl Rule for NoDisabledTests {
                         Message::DisabledTestWithX.details()
                     };
                     ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
-                    return
+                    return;
                 }
-                
+
                 // `it.skip('foo', function () {})'`
                 // `describe.skip('foo', function () {})'`
                 if members.iter().any(|name| name == "skip") {
@@ -114,12 +117,15 @@ impl Rule for NoDisabledTests {
                     };
                     ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
                 }
-            } else if let Expression::Identifier(ident) = &call_expr.callee 
-                && ident.name.as_str() == "pending" && ctx.semantic().is_reference_to_global_variable(ident) {
-                // `describe('foo', function () { pending() })` 
-                let (error, help) = Message::Pending.details();
-                ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
-            } 
+            } else if let Expression::Identifier(ident) = &call_expr.callee {
+                if ident.name.as_str() == "pending"
+                    && ctx.semantic().is_reference_to_global_variable(ident)
+                {
+                    // `describe('foo', function () { pending() })`
+                    let (error, help) = Message::Pending.details();
+                    ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
+                }
+            }
         }
     }
 }

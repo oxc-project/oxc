@@ -130,9 +130,10 @@ fn check_module_record(ctx: &SemanticBuilder<'_>) {
 
     // `export default x;`
     // `export { y as default };`
-    if let Some(span) = module_record.exported_bindings.get("default")
-        && let Some(default_span) = &module_record.export_default {
+    if let Some(span) = module_record.exported_bindings.get("default") {
+        if let Some(default_span) = &module_record.export_default {
             ctx.error(DuplicateExport("default".into(), *default_span, *span));
+        }
     }
 }
 
@@ -314,9 +315,10 @@ fn check_private_identifier<'a>(
             // ClassElement::MethodDefinition(def) => &def.key,
             // _ => return false,
             // };
-            if let Some(key) = def.property_key()
-                && let PropertyKey::PrivateIdentifier(prop_ident) = key {
-                return prop_ident.name == ident.name;
+            if let Some(key) = def.property_key() {
+                if let PropertyKey::PrivateIdentifier(prop_ident) = key {
+                    return prop_ident.name == ident.name;
+                }
             }
             false
         })
@@ -660,9 +662,10 @@ fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &Se
                 );
             }
             AstKind::LabeledStatement(labeled_statement) => {
-                if let Some(label) = &stmt.label
-                    && label.name == labeled_statement.label.name {
-                    break;
+                if let Some(label) = &stmt.label {
+                    if label.name == labeled_statement.label.name {
+                        break;
+                    }
                 }
             }
             kind if (kind.is_iteration_statement()
@@ -715,24 +718,25 @@ fn check_continue_statement<'a>(
                 );
             }
             AstKind::LabeledStatement(labeled_statement) => {
-                if let Some(label) = &stmt.label
-                    && label.name == labeled_statement.label.name {
-                    if matches!(
-                        labeled_statement.body,
-                        Statement::LabeledStatement(_)
-                        | Statement::DoWhileStatement(_)
-                        | Statement::WhileStatement(_)
-                        | Statement::ForStatement(_)
-                        | Statement::ForInStatement(_)
-                        | Statement::ForOfStatement(_)
-                    ) {
-                        break;
-                    }
-                    return ctx.error(InvalidLabelNonIteration(
+                if let Some(label) = &stmt.label {
+                    if label.name == labeled_statement.label.name {
+                        if matches!(
+                            labeled_statement.body,
+                            Statement::LabeledStatement(_)
+                                | Statement::DoWhileStatement(_)
+                                | Statement::WhileStatement(_)
+                                | Statement::ForStatement(_)
+                                | Statement::ForInStatement(_)
+                                | Statement::ForOfStatement(_)
+                        ) {
+                            break;
+                        }
+                        return ctx.error(InvalidLabelNonIteration(
                             "continue",
                             labeled_statement.label.span,
                             label.span,
-                    ));
+                        ));
+                    }
                 }
             }
             kind if kind.is_iteration_statement() && stmt.label.is_none() => break,
@@ -900,9 +904,10 @@ fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
             }
             AstKind::ObjectProperty(prop) => {
                 if prop.value.is_function() {
-                    if let Some(super_call_span) = super_call_span
-                    && super_call_span.start > prop.key.span().end {
-                        return ctx.error(UnexpectedSuperCall(super_call_span));
+                    if let Some(super_call_span) = super_call_span {
+                        if super_call_span.start > prop.key.span().end {
+                            return ctx.error(UnexpectedSuperCall(super_call_span));
+                        }
                     }
                     break;
                 }
@@ -954,9 +959,10 @@ fn check_formal_parameters<'a>(
     _node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    if let Some(rest) = &params.rest
-    && let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
-        ctx.error(ARestParameterCannotHaveAnInitializer(pat.span));
+    if let Some(rest) = &params.rest {
+        if let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
+            ctx.error(ARestParameterCannotHaveAnInitializer(pat.span));
+        }
     }
 
     if params.is_empty() {
@@ -977,9 +983,10 @@ fn check_formal_parameters<'a>(
 fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder<'_>) {
     // function foo([...x = []]) { }
     //                    ^^^^ A rest element cannot have an initializer
-    if let Some(rest) = &pattern.rest
-    && let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
-        ctx.error(ARestParameterCannotHaveAnInitializer(pat.span));
+    if let Some(rest) = &pattern.rest {
+        if let BindingPatternKind::AssignmentPattern(pat) = &rest.argument.kind {
+            ctx.error(ARestParameterCannotHaveAnInitializer(pat.span));
+        }
     }
 }
 
