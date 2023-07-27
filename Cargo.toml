@@ -4,14 +4,14 @@ members  = ["crates/*", "tasks/*"]
 
 [workspace.package]
 authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
+categories   = ["development-tools", "web-programming", "compilers"]
 description  = "Oxc is a JavaScript / TypeScript tooling suite."
 edition      = "2021"
-homepage     = "https://github.com/Boshen/oxc"
+homepage     = "https://github.com/web-infra-dev/oxc"
 keywords     = ["JavaScript", "TypeScript", "parser", "linter", "minifier"]
 license      = "MIT"
 repository   = "https://github.com/web-infra-dev/oxc"
 rust-version = "1.60"
-categories   = ["development-tools", "web-programming", "compilers"]
 
 [workspace.dependencies]
 # publish = true
