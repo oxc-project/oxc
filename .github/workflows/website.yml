@@ -5,10 +5,6 @@ on:
   schedule:
     - cron: "0 0 * * *" # 00:00 every day
 
-  push:
-    branches:
-      - main
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
