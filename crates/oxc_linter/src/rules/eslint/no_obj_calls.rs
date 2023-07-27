@@ -70,10 +70,8 @@ fn is_global_obj(str: &Atom) -> bool {
 }
 
 fn global_this_member(expr: &oxc_allocator::Box<'_, MemberExpression<'_>>) -> Option<Atom> {
-    if let Expression::Identifier(static_ident) = expr.object() &&
-    static_ident.name == GLOBAL_THIS &&
-    let Some(static_member) = expr.static_property_name() {
-        Some(static_member.into())
+    if expr.object().is_specific_id(GLOBAL_THIS) {
+        expr.static_property_name().map(std::convert::Into::into)
     } else {
         None
     }
@@ -131,18 +129,19 @@ impl Rule for NoObjCalls {
         match callee {
             Expression::Identifier(ident) => {
                 // handle new Math(), Math(), etc
-                if let Some(top_level_reference) = resolve_global_binding(ident, node.scope_id(), ctx) &&
-                is_global_obj(&top_level_reference) {
-                    ctx.diagnostic(NoObjCallsDiagnostic(ident.name.clone(), span));
+                if let Some(top_level_reference) = resolve_global_binding(ident, node.scope_id(), ctx) {
+                    if is_global_obj(&top_level_reference) {
+                        ctx.diagnostic(NoObjCallsDiagnostic(ident.name.clone(), span));
+                    }
                 }
             }
 
             Expression::MemberExpression(expr) => {
                 // handle new globalThis.Math(), globalThis.Math(), etc
-                if let Some(global_member) = global_this_member(expr) &&
-                is_global_obj(&global_member)
-                {
-                    ctx.diagnostic(NoObjCallsDiagnostic(global_member, span));
+                if let Some(global_member) = global_this_member(expr) {
+                    if is_global_obj(&global_member) {
+                        ctx.diagnostic(NoObjCallsDiagnostic(global_member, span));
+                    }
                 }
             }
             _ => {

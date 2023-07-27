@@ -76,6 +76,10 @@ impl<'a> AstNode<'a> {
         // All parts of a ClassDeclaration or a ClassExpression are strict mode code.
         flags.is_strict_mode() || self.flags.has_class()
     }
+
+    pub fn is_specific_id_reference(&self, name: &str) -> bool {
+        self.kind().is_specific_id_reference(name)
+    }
 }
 
 /// Untyped AST nodes flattened into an vec

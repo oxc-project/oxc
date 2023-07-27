@@ -55,20 +55,19 @@ impl Rule for NoDupeElseIf {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // if (a) {} else if (a) {}
         //                ^^ get this if statement
-        let if_stmt = if let AstKind::IfStatement(if_stmt) = node.kind()
-            && let Some(AstKind::IfStatement(parent_if_stmt)) = ctx.nodes().parent_kind(node.id())
-            && let Some(Statement::IfStatement(child_if_stmt)) = &parent_if_stmt.alternate
-            && child_if_stmt.span == if_stmt.span {
-            if_stmt
-        } else {
-            return
-        };
+        let AstKind::IfStatement(if_stmt) = node.kind() else { return };
+        let Some(AstKind::IfStatement(parent_if_stmt)) = ctx.nodes().parent_kind(node.id()) else { return };
+        let Some(Statement::IfStatement(child_if_stmt)) = &parent_if_stmt.alternate else { return };
+        if child_if_stmt.span != if_stmt.span {
+            return;
+        }
 
         let mut conditions_to_check = vec![&if_stmt.test];
 
-        if let Expression::LogicalExpression(expr) = &if_stmt.test
-            && expr.operator == LogicalOperator::And {
-            conditions_to_check.extend(split_by_and(&if_stmt.test));
+        if let Expression::LogicalExpression(expr) = &if_stmt.test {
+            if expr.operator == LogicalOperator::And {
+                conditions_to_check.extend(split_by_and(&if_stmt.test));
+            }
         }
 
         let mut list_to_check: Vec<Vec<Vec<_>>> = conditions_to_check

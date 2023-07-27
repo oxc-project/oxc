@@ -60,8 +60,12 @@ impl Rule for NoNonNullAssertedOptionalChain {
                 Expression::CallExpression(call) => {
                     if call.optional && !is_parent_member_or_call(node, ctx) {
                         Some(call.callee.span())
-                    } else if let Expression::MemberExpression(member) = &call.callee && member.optional() && !is_parent_member_or_call(node, ctx) {
-                        Some(member.object().span())
+                    } else if let Expression::MemberExpression(member) = &call.callee {
+                        if member.optional() && !is_parent_member_or_call(node, ctx) {
+                            Some(member.object().span())
+                        } else {
+                            None
+                        }
                     } else {
                         None
                     }

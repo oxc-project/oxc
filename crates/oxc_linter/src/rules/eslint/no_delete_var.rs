@@ -1,4 +1,4 @@
-use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
@@ -37,9 +37,10 @@ declare_oxc_lint!(
 
 impl Rule for NoDeleteVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::UnaryExpression(expr) = node.kind()
-            && expr.operator == UnaryOperator::Delete
-            && matches!(expr.argument, Expression::Identifier(_)) {
+        let AstKind::UnaryExpression(expr) = node.kind() else { return };
+        if expr.operator == UnaryOperator::Delete
+            && expr.argument.is_identifier_reference()
+        {
             ctx.diagnostic(NoDeleteVarDiagnostic(expr.span));
         }
     }

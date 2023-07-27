@@ -28,6 +28,7 @@ oxc_parser      = { version = "0.0.7", path = "crates/oxc_parser" }
 oxc_semantic    = { version = "0.0.7", path = "crates/oxc_semantic" }
 oxc_span        = { version = "0.0.7", path = "crates/oxc_span" }
 oxc_syntax      = { version = "0.0.7", path = "crates/oxc_syntax" }
+oxc_query       = { version = "0.0.7", path = "crates/oxc_query" }
 
 # publish = false
 oxc_macros         = { path = "crates/oxc_macros" }

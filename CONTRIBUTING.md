@@ -1,9 +1,13 @@
+# Contributor License Agreement
+
+Please note that you will be required to sign the [Contributor License Agreement](https://cla-assistant.io/web-infra-dev/oxc) before your pull request can be accepted.
+
 # Installation
 
 ## Clone Repo
 
 ```bash
-git clone --recurse-submodules git@github.com:Boshen/oxc.git
+git clone --recurse-submodules git@github.com:web-infra-dev/oxc.git
 ```
 
 The `--recurse-submodules` flag will install the following submodules:
@@ -33,11 +37,9 @@ rustup show
 
 ### Cargo Tools
 
-Additional Rust tools can be installed by `cargo install`. They are stored under `~/.cargo/bin`.
+Some additional Cargo tools are required for developing this project, they can be installed via [`cargo binstall`](https://github.com/cargo-bins/cargo-binstall). `cargo binstall` provides a low-complexity mechanism for installing rust binaries as an alternative to building from source via the slower `cargo install`.
 
-[`cargo binstall`](https://github.com/cargo-bins/cargo-binstall) provides a low-complexity mechanism for installing rust binaries as an alternative to building from source via the slower `cargo install`.
-
-You can download the [pre-compiled binary](https://github.com/cargo-bins/cargo-binstall#installation) or install via `cargo install cargo-binstall`
+You can download the [pre-compiled binary](https://github.com/cargo-bins/cargo-binstall#installation) and save it in `~/.cargo/bin` or install it by running `cargo install cargo-binstall`
 
 
 ## Required tools
@@ -46,8 +48,8 @@ You can download the [pre-compiled binary](https://github.com/cargo-bins/cargo-b
 cargo binstall just -y
 ```
 
-[`just`](https://github.com/casey/just) is a handy way to save and run
-project-specific commands. To initialize all the required tools, run
+[`just`](https://github.com/casey/just) is a handy way to save and run project-specific commands.
+To initialize all the required tools, run
 
 ```
 just init
@@ -57,4 +59,6 @@ just init
 
 Run `just` for the list of available commands.
 
-Checkout `just new-rule` if you need to start writing a new linter rule from ESLint.
+Run `just r` (alias for `just ready`) to make sure the whole project builds and runs correctly.
+
+Take a look at `just new-rule` if you need to start porting a new ESLint rule.

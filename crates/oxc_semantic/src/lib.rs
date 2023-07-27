@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 mod binder;
 mod builder;
 mod checker;
