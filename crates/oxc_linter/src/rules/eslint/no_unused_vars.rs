@@ -752,6 +752,7 @@ mod tests {
             ("var who = \"Paul\";\nmodule.exports = `Hello ${who}!`;", None),
             // ("export var foo = 123;", None),
             ("export function foo () {}", None),
+            // todo
             // ("let toUpper = (partial) => partial.toUpperCase; export {toUpper}", None),
             // ("export class foo {}", None),
             // ("class Foo{}; var x = new Foo(); x.foo()", None),
@@ -1263,16 +1264,16 @@ mod tests {
             //     ]
             // },
             //  */
-            // ("let x = 0; x++, 0;", None),
-            // ("let x = 0; 0, x++;", None),
-            // ("let x = 0; 0, (1, x++);", None),
-            // ("let x = 0; foo = (x++, 0);", None),
-            // ("let x = 0; foo = ((0, x++), 0);", None),
-            // ("let x = 0; x += 1, 0;", None),
-            // ("let x = 0; 0, x += 1;", None),
-            // ("let x = 0; 0, (1, x += 1);", None),
-            // ("let x = 0; foo = (x += 1, 0);", None),
-            // ("let x = 0; foo = ((0, x += 1), 0);", None),
+            ("let x = 0; x++, 0;", None),
+            ("let x = 0; 0, x++;", None),
+            ("let x = 0; 0, (1, x++);", None),
+            ("let x = 0; foo = (x++, 0);", None),
+            ("let x = 0; foo = ((0, x++), 0);", None),
+            ("let x = 0; x += 1, 0;", None),
+            ("let x = 0; 0, x += 1;", None),
+            ("let x = 0; 0, (1, x += 1);", None),
+            ("let x = 0; foo = (x += 1, 0);", None),
+            ("let x = 0; foo = ((0, x += 1), 0);", None),
             // /*
             //        {
             //        code: `let z = 0;

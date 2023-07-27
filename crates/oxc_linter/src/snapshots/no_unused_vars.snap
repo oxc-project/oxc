@@ -23,4 +23,74 @@ expression: no_unused_vars
    ╰────
   help: a is declared but never used
 
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; x++, 0;
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; 0, x++;
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; 0, (1, x++);
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; foo = (x++, 0);
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; foo = ((0, x++), 0);
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; x += 1, 0;
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; 0, x += 1;
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; 0, (1, x += 1);
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; foo = (x += 1, 0);
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ let x = 0; foo = ((0, x += 1), 0);
+   ·     ─────
+   ╰────
+  help: x is declared but never used
+
 
