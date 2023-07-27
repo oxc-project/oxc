@@ -1287,7 +1287,7 @@ impl<'a> BindingPatternKind<'a> {
         match self {
             BindingPatternKind::BindingIdentifier(id) => Some(id),
             BindingPatternKind::AssignmentPattern(pat) => pat.left.kind.identifier(),
-            _ => None
+            _ => None,
         }
     }
 }

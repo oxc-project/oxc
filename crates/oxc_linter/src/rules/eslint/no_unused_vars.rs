@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{SymbolId, Reference};
+use oxc_semantic::SymbolId;
 use oxc_span::{Atom, Span};
 use regex::Regex;
 use serde_json::Value;
@@ -416,8 +416,11 @@ impl NoUnusedVars {
     }
     fn check_unused_argument<'a>(&self, arg: &'a FormalParameter, ctx: &LintContext<'a>) {
         let Some(identifier) = arg.pattern.kind.identifier() else { return };
-        if let Some(pat) = &self.args_ignore_pattern && pat.is_match(identifier.name.as_str()) {
-            return
+        match &self.args_ignore_pattern {
+            Some(pat) => if pat.is_match(identifier.name.as_str()) {
+                return
+            },
+            None => {}
         }
 
         ctx.diagnostic(NoUnusedVarsDiagnostic(
