@@ -141,6 +141,19 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
+            pub fn run_once<'a>(&self, ctx: &LintContext<'a>, print_execution_times: bool) {
+                let start = print_execution_times.then(|| Instant::now());
+                match self {
+                    #(Self::#struct_names(rule) => {
+                        let diagnostics = rule.run_once(ctx);
+                        if let Some(start) = start {
+                            unsafe { #rule_timer.update(&start.elapsed()) };
+                        }
+                        diagnostics
+                    }),*
+                }
+            }
+
             pub fn execute_time(&self) -> Duration {
                 match self {
                     #(Self::#struct_names(_) => unsafe { #rule_timer.duration() }),*
