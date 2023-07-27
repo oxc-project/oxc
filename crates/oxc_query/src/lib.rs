@@ -145,7 +145,7 @@ query {
                 span_asmt_type_start: 6,
                 span_asmt_type_end: 11,
                 span_start: 6,
-                span_end: 15
+                span_end: 15,
                 __typename: "VariableDeclarationAST".to_owned()
             }],
             results
