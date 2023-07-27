@@ -6,14 +6,14 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span, GetSpan};
+use oxc_span::{Span, GetSpan, Atom};
 
 use crate::{context::LintContext, rule::Rule, AstNode, jest_ast_util::{parse_jest_fn_call, ParsedJestFnCall, JestFnKind}, fixer::Fix};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(jest/no-test-prefixes): Use {0:?} instead.")]
 #[diagnostic(severity(warning))]
-struct NoTestPrefixesDiagnostic<'a>(&'a str, #[label] pub Span);
+struct NoTestPrefixesDiagnostic(Atom, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoTestPrefixes;
@@ -44,7 +44,7 @@ declare_oxc_lint!(
     nursery
 );
 
-fn get_preferred_node_names(jest_fn_call: &ParsedJestFnCall) -> String {
+fn get_preferred_node_names(jest_fn_call: &ParsedJestFnCall) -> Atom {
 
     let ParsedJestFnCall { members, raw, .. } = jest_fn_call;
 
@@ -57,9 +57,9 @@ fn get_preferred_node_names(jest_fn_call: &ParsedJestFnCall) -> String {
     let name_slice = &raw[1..];
 
     if member_names.is_empty() {
-        format!("{name_slice}.{preferred_modifier}")
+        Atom::from(format!("{name_slice}.{preferred_modifier}"))
     } else {
-        format!("{name_slice}.{preferred_modifier}.{member_names}")
+        Atom::from(format!("{name_slice}.{preferred_modifier}.{member_names}"))
     }
 }
 
@@ -93,8 +93,8 @@ impl Rule for NoTestPrefixes {
                 let preferred_node_name_cloned = preferred_node_name.clone();
 
                 ctx.diagnostic_with_fix(
-                    NoTestPrefixesDiagnostic(Box::leak(preferred_node_name.into_boxed_str()), span),
-                    || Fix::new(preferred_node_name_cloned, span)
+                    NoTestPrefixesDiagnostic(preferred_node_name, span),
+                    || Fix::new(preferred_node_name_cloned.to_string(), span)
                 );
             }
         }
