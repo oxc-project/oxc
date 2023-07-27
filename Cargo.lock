@@ -1568,7 +1568,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_query"
-version = "0.0.7"
+version = "0.0.0"
 dependencies = [
  "enum-as-inner",
  "oxc_allocator",

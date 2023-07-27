@@ -1,11 +1,13 @@
 [package]
-name               = "oxc_wasm"
-version            = "0.0.0"
-publish            = false
-authors.workspace  = true
-edition.workspace  = true
-keywords.workspace = true
-license.workspace  = true
+name                   = "oxc_wasm"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+edition.workspace      = true
+keywords.workspace     = true
+license.workspace      = true
+rust-version.workspace = true
+categories.workspace   = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]
