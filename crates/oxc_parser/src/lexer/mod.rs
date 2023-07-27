@@ -8,8 +8,6 @@
 mod constants;
 mod kind;
 mod number;
-#[cfg(not(target_arch = "wasm32"))]
-mod simd;
 mod string_builder;
 mod token;
 mod trivia_builder;
@@ -28,8 +26,6 @@ use oxc_syntax::{
     },
     unicode_id_start::is_id_start_unicode,
 };
-#[cfg(not(target_arch = "wasm32"))]
-use simd::{SkipMultilineComment, SkipWhitespace};
 pub use token::{RegExp, Token, TokenValue};
 
 pub use self::kind::Kind;
@@ -329,9 +325,6 @@ impl<'a> Lexer<'a> {
         self.current.token.start = self.offset();
 
         loop {
-            #[cfg(not(target_arch = "wasm32"))]
-            self.skip_whitespace();
-
             let offset = self.offset();
             self.current.token.start = offset;
             let builder = AutoCow::new(self);
@@ -368,9 +361,7 @@ impl<'a> Lexer<'a> {
         // > the rough order of frequency for different token kinds is as follows:
         // identifiers/keywords, ‘.’, ‘=’, strings, decimal numbers, ‘:’, ‘+’, hex/octal numbers, and then everything else
         match c {
-            #[cfg(target_arch = "wasm32")]
             ' ' | '\t' => Kind::WhiteSpace,
-            #[cfg(target_arch = "wasm32")]
             '\r' | '\n' => {
                 self.current.token.is_on_new_line = true;
                 Kind::NewLine
@@ -460,36 +451,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    // Portable SIMD adds a bit to the binary and we're not really sure if it
-    // uses the WASM instructions yet so we use a linear implementation.
-    #[cfg(not(target_arch = "wasm32"))]
-    fn skip_whitespace(&mut self) {
-        let c = self.peek();
-        let any_newline = c == '\r' || c == '\n';
-        let any_white = c == ' ' || c == '\t' || any_newline;
-        // Fast path for single non-whitespace
-        if any_white {
-            self.current.chars.next();
-            if any_newline {
-                self.current.token.is_on_new_line = true;
-            }
-        } else {
-            return;
-        }
-
-        let remaining = self.remaining().as_bytes();
-        let mut state = SkipWhitespace::new(self.current.token.is_on_new_line);
-        state.simd(remaining);
-
-        // SAFETY: offset is computed to the boundary
-        self.current.chars =
-            unsafe { std::str::from_utf8_unchecked(&remaining[state.offset..]) }.chars();
-
-        if state.newline {
-            self.current.token.is_on_new_line = true;
-        }
-    }
-
     /// Section 12.4 Single Line Comment
     fn skip_single_line_comment(&mut self) -> Kind {
         while let Some(c) = self.current.chars.next().as_ref() {
@@ -503,32 +464,6 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.4 Multi Line Comment
-    #[cfg(not(target_arch = "wasm32"))]
-    fn skip_multi_line_comment(&mut self) -> Kind {
-        let remaining = self.remaining().as_bytes();
-        let newline = self.current.token.is_on_new_line;
-        let mut state = SkipMultilineComment::new(newline, remaining);
-        state.simd();
-
-        // SAFETY: offset is computed to the boundary
-        self.current.chars =
-            unsafe { std::str::from_utf8_unchecked(&remaining[state.offset..]) }.chars();
-
-        if state.newline && !newline {
-            self.current.token.is_on_new_line = true;
-        }
-
-        if !state.found {
-            self.error(diagnostics::UnterminatedMultiLineComment(self.unterminated_range()));
-            return Kind::Eof;
-        }
-
-        self.trivia_builder.add_multi_line_comment(self.current.token.start, self.offset());
-        Kind::MultiLineComment
-    }
-
-    /// Section 12.4 Multi Line Comment
-    #[cfg(target_arch = "wasm32")]
     fn skip_multi_line_comment(&mut self) -> Kind {
         while let Some(c) = self.current.chars.next() {
             if c == '*' && self.next_eq('/') {
