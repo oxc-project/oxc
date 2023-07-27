@@ -101,8 +101,8 @@ query {
             assignment_to_variable_name: String,
             span_asmt_type_start: u64,
             span_asmt_type_end: u64,
-            entire_span_start: u64,
-            entire_span_end: u64,
+            span_start: u64,
+            span_end: u64,
             __typename: String,
         }
 
@@ -123,7 +123,7 @@ query {
 
             __typename @output
 
-            entire_span_: entire_span {
+            span_: span {
                 start @output
                 end @output
             }
@@ -144,8 +144,8 @@ query {
                 assignment_to_variable_name: "apple".to_owned(),
                 span_asmt_type_start: 6,
                 span_asmt_type_end: 11,
-                entire_span_start: 6,
-                entire_span_end: 15,
+                span_start: 6,
+                span_end: 15,
                 __typename: "VariableDeclarationAST".to_owned()
             }],
             results
