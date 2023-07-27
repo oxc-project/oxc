@@ -1673,7 +1673,11 @@ mod object_literal {
                         .map_or(false, |key_from_iter| key_from_iter == key.as_str()),
                 };
 
-                if has_right_key_name { Some(Vertex::from(&prop.value)) } else { None }
+                if has_right_key_name {
+                    Some(Vertex::from(&prop.value))
+                } else {
+                    None
+                }
             }))
         })
     }

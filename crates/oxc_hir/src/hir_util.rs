@@ -350,8 +350,10 @@ pub fn get_bigint_value(expr: &Expression) -> Option<BigInt> {
             }
         }
         Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
-            UnaryOperator::LogicalNot => get_boolean_value(expr)
-                .map(|boolean| if boolean { BigInt::one() } else { BigInt::zero() }),
+            UnaryOperator::LogicalNot => {
+                get_boolean_value(expr)
+                    .map(|boolean| if boolean { BigInt::one() } else { BigInt::zero() })
+            }
             UnaryOperator::UnaryNegation => {
                 get_bigint_value(&unary_expr.argument).map(std::ops::Neg::neg)
             }
@@ -377,7 +379,11 @@ pub fn get_side_free_number_value(expr: &Expression) -> Option<NumberValue> {
     // and there are only a very few cases where we can compute a number value, but there could
     // also be side effects. e.g. `void doSomething()` has value NaN, regardless of the behavior
     // of `doSomething()`
-    if value.is_some() && expr.may_have_side_effects() { None } else { value }
+    if value.is_some() && expr.may_have_side_effects() {
+        None
+    } else {
+        value
+    }
 }
 
 /// port from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L121)
@@ -387,7 +393,11 @@ pub fn get_side_free_bigint_value(expr: &Expression) -> Option<BigInt> {
     // and there are only a very few cases where we can compute a bigint value, but there could
     // also be side effects. e.g. `void doSomething()` has value NaN, regardless of the behavior
     // of `doSomething()`
-    if value.is_some() && expr.may_have_side_effects() { None } else { value }
+    if value.is_some() && expr.may_have_side_effects() {
+        None
+    } else {
+        value
+    }
 }
 
 /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L109)
@@ -538,7 +548,11 @@ fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
                 UnaryOperator::LogicalNot => {
                     get_boolean_value(&unary_expr.argument).map(|boolean| {
                         // need reversed.
-                        if boolean { Cow::Borrowed("false") } else { Cow::Borrowed("true") }
+                        if boolean {
+                            Cow::Borrowed("false")
+                        } else {
+                            Cow::Borrowed("true")
+                        }
                     })
                 }
                 _ => None,

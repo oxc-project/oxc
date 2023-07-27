@@ -234,7 +234,11 @@ pub struct BooleanLiteral {
 
 impl BooleanLiteral {
     pub fn as_str(&self) -> &'static str {
-        if self.value { "true" } else { "false" }
+        if self.value {
+            "true"
+        } else {
+            "false"
+        }
     }
 }
 
@@ -283,7 +287,11 @@ impl<'a> NumberLiteral<'a> {
         let int32bit = pos_int % 2f64.powi(32);
 
         // step5
-        if int32bit >= 2f64.powi(31) { (int32bit - 2f64.powi(32)) as i32 } else { int32bit as i32 }
+        if int32bit >= 2f64.powi(31) {
+            (int32bit - 2f64.powi(32)) as i32
+        } else {
+            int32bit as i32
+        }
     }
 }
 
