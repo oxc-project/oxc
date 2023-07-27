@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 mod babel;
 mod formatter;
 mod minifier;

@@ -410,11 +410,12 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
             // only for ``
-            if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
-                Some(quasi.value.cooked.as_ref().map_or(false, |cooked| !cooked.is_empty()))
-            } else {
-                None
-            }
+            template_literal
+                .quasis
+                .get(0)
+                .filter(|quasi| quasi.tail)
+                .and_then(|quasi| quasi.value.cooked.as_ref())
+                .map(|cooked| !cooked.is_empty())
         }
         Expression::Identifier(ident) => {
             if expr.is_undefined() || ident.name == "NaN" {
@@ -502,11 +503,12 @@ fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
         Expression::TemplateLiteral(template_literal) => {
             // TODO: I don't know how to iterate children of TemplateLiteral in order,so only checkout string like `hi`.
             // Closure-compiler do more: [case TEMPLATELIT](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L241-L256).
-            if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
-                quasi.value.cooked.as_ref().map(|cooked| Cow::Borrowed(cooked.as_str()))
-            } else {
-                None
-            }
+            template_literal
+                .quasis
+                .get(0)
+                .filter(|quasi| quasi.tail)
+                .and_then(|quasi| quasi.value.cooked.as_ref())
+                .map(|cooked| Cow::Borrowed(cooked.as_str()))
         }
         Expression::Identifier(ident) => {
             let name = ident.name.as_str();

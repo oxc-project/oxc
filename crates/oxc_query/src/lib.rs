@@ -103,6 +103,7 @@ query {
             span_asmt_type_end: u64,
             span_start: u64,
             span_end: u64,
+            __typename: String,
         }
 
         let mut results: Vec<Output> = execute_query(
@@ -119,6 +120,8 @@ query {
                     end @output
                 }
             }
+
+            __typename @output
 
             span_: span {
                 start @output
@@ -143,6 +146,7 @@ query {
                 span_asmt_type_end: 11,
                 span_start: 6,
                 span_end: 15
+                __typename: "VariableDeclarationAST".to_owned()
             }],
             results
         );

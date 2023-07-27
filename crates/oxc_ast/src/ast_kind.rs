@@ -223,6 +223,13 @@ impl<'a> AstKind<'a> {
     pub fn is_jsx(self) -> bool {
         matches!(self, Self::JSXElement(_) | Self::JSXOpeningElement(_) | Self::JSXElementName(_))
     }
+
+    pub fn is_specific_id_reference(&self, name: &str) -> bool {
+        match self {
+            Self::IdentifierReference(ident) => ident.name == name,
+            _ => false,
+        }
+    }
 }
 
 impl<'a> GetSpan for AstKind<'a> {

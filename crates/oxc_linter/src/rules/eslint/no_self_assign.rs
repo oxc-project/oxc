@@ -64,11 +64,11 @@ impl Rule for NoSelfAssign {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::AssignmentExpression(assignment) = node.kind()
-          && matches!(
+        let AstKind::AssignmentExpression(assignment) = node.kind() else { return };
+        if matches!(
             assignment.operator,
             AssignmentOperator::Assign | AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
-          ) {
+        ) {
             self.each_self_assignment(&assignment.left, &assignment.right, ctx);
         }
     }
@@ -82,84 +82,86 @@ impl NoSelfAssign {
         ctx: &LintContext<'a>,
     ) {
         match left {
-        AssignmentTarget::SimpleAssignmentTarget(simple_assignment_target) => {
-            if let Expression::Identifier(id2) = right.without_parenthesized() {
-                let mut self_assign = false;
-                if let Some(Expression::Identifier(id1)) = simple_assignment_target.get_expression() && id1.name == id2.name {
-                    self_assign = true;
-                } else if let SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) = simple_assignment_target && id1.name == id2.name {
-                    self_assign = true;
-                }
+            AssignmentTarget::SimpleAssignmentTarget(simple_assignment_target) => {
+                if let Expression::Identifier(id2) = right.without_parenthesized() {
+                    let self_assign =
+                        matches!(simple_assignment_target.get_expression(), Some(Expression::Identifier(id1)) if id1.name == id2.name)
+                        || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
 
-                if self_assign {
-                    ctx.diagnostic(NoSelfAssignDiagnostic(
-                        right.span(),
-                    ));
+                    if self_assign {
+                        ctx.diagnostic(NoSelfAssignDiagnostic(
+                            right.span(),
+                        ));
+                    }
                 }
             }
-        },
 
             AssignmentTarget::AssignmentTargetPattern(
                 AssignmentTargetPattern::ArrayAssignmentTarget(array_pattern),
             ) => {
-            if let Expression::ArrayExpression(array_expr) = right.without_parenthesized() {
-                let end = std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
-                let mut i = 0;
-                while i < end {
-                    let left = array_pattern.elements[i].as_ref();
-                    let right = &array_expr.elements[i];
+                if let Expression::ArrayExpression(array_expr) = right.without_parenthesized() {
+                    let end = std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
+                    let mut i = 0;
+                    while i < end {
+                        let left = array_pattern.elements[i].as_ref();
+                        let right = &array_expr.elements[i];
 
-                    let left_target = match left {
-                        Some(AssignmentTargetMaybeDefault::AssignmentTarget(target)) => {
-                            Some(target)
+                        let left_target = match left {
+                            Some(AssignmentTargetMaybeDefault::AssignmentTarget(target)) => {
+                                Some(target)
+                            }
+                            _ => None,
+                        };
+
+
+                        if let Some(left_target) = left_target {
+                          if let ArrayExpressionElement::Expression(expr) = right {
+                                self.each_self_assignment(left_target, expr, ctx);
+                            }
                         }
-                        _ => None,
-                    };
 
+                        // After a spread element, those indices are unknown.
+                        if let ArrayExpressionElement::SpreadElement(_) = right {
+                            break;
+                        }
 
-                    if let Some(left_target) = left_target {
-                      if let ArrayExpressionElement::Expression(expr) = right {
-                            self.each_self_assignment(left_target, expr, ctx);
+                        i += 1;
+                    }
+                }
+            }
+
+            AssignmentTarget::AssignmentTargetPattern(
+                AssignmentTargetPattern::ObjectAssignmentTarget(object_pattern),
+            ) => {
+                if let Expression::ObjectExpression(object_expr) = right.get_inner_expression() {
+                    if !object_expr.properties.is_empty() {
+                        let mut start_j = 0;
+                        let mut i = object_expr.properties.len();
+                        while i >= 1 {
+                            if let ObjectPropertyKind::SpreadProperty(_) = object_expr.properties[i - 1] {
+                                start_j = i;
+                                break;
+                            }
+                            i -= 1;
+                        }
+
+                        let mut i = 0;
+                        while i < object_pattern.properties.len() {
+                            let mut j = start_j;
+                            while j < object_expr.properties.len() {
+                                let left = &object_pattern.properties[i];
+                                let right = &object_expr.properties[j];
+
+                                self.each_property_self_assignment(left, right, ctx);
+
+                                j += 1;
+                            }
+                            i += 1;
                         }
                     }
-
-                    // After a spread element, those indices are unknown.
-                    if let ArrayExpressionElement::SpreadElement(_) = right {
-                        break;
-                    }
-
-                    i += 1;
                 }
             }
         }
-            AssignmentTarget::AssignmentTargetPattern(
-                AssignmentTargetPattern::ObjectAssignmentTarget(object_pattern),
-            ) => if let Expression::ObjectExpression(object_expr) = right.get_inner_expression() && !object_expr.properties.is_empty() {
-                let mut start_j = 0;
-                let mut i = object_expr.properties.len();
-                while i >= 1 {
-                    if let ObjectPropertyKind::SpreadProperty(_) = object_expr.properties[i - 1] {
-                        start_j = i;
-                        break;
-                    }
-                    i -= 1;
-                }
-
-                let mut i = 0;
-                while i < object_pattern.properties.len() {
-                    let mut j = start_j;
-                    while j < object_expr.properties.len() {
-                        let left = &object_pattern.properties[i];
-                        let right = &object_expr.properties[j];
-
-                        self.each_property_self_assignment(left, right, ctx);
-
-                        j += 1;
-                    }
-                    i += 1;
-                }
-        },
-    }
 
         if let AssignmentTarget::SimpleAssignmentTarget(
             SimpleAssignmentTarget::MemberAssignmentTarget(member_target),
@@ -218,7 +220,8 @@ impl NoSelfAssign {
         if !self.props {
             return false;
         }
-        if let Some(name1) = member1.static_property_name() && name1 == member2.static_property_name().unwrap_or_default() {
+        let member1_static_property_name = member1.static_property_name();
+        if member1_static_property_name.is_some() && member1_static_property_name == member2.static_property_name() {
             return self.is_same_reference(member1.object(), member2.object());
         }
 
@@ -249,41 +252,45 @@ impl NoSelfAssign {
         ctx: &LintContext<'a>,
     ) {
         match left {
-        AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1) if id1.init.is_none() => {
-          if let ObjectPropertyKind::ObjectProperty(OBox(ObjectProperty {
-              method: false,
-              value: expr,
-              span,
-              key,
-              ..
-          })) = right && key.static_name().is_some_and(|name|name == id1.binding.name)
-              && let Expression::Identifier(id2) = expr.without_parenthesized() && id1.binding.name == id2.name {
-                  ctx.diagnostic(NoSelfAssignDiagnostic(*span));
-              }
-        }
-        AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
-            let left = match &property.binding {
-                AssignmentTargetMaybeDefault::AssignmentTarget(target) => target,
-                AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(_) => {
-                    return;
-                }
-            };
-            if let ObjectPropertyKind::ObjectProperty(OBox(ObjectProperty {
-                method: false,
-                value: expr,
-                key,
-                ..
-            })) = right
-            {
-                let property_name = property.name.static_name();
-                let key_name = key.static_name();
-                if property_name.is_some() && property_name == key_name {
-                    self.each_self_assignment(left, expr, ctx);
+            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1) if id1.init.is_none() => {
+                if let ObjectPropertyKind::ObjectProperty(OBox(ObjectProperty {
+                    method: false,
+                    value: expr,
+                    span,
+                    key,
+                    ..
+                })) = right {
+                    if key.static_name().is_some_and(|name| name == id1.binding.name) {
+                        if let Expression::Identifier(id2) = expr.without_parenthesized() {
+                            if id1.binding.name == id2.name {
+                                ctx.diagnostic(NoSelfAssignDiagnostic(*span));
+                            }
+                        }}
                 }
             }
+            AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
+                let left = match &property.binding {
+                    AssignmentTargetMaybeDefault::AssignmentTarget(target) => target,
+                    AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(_) => {
+                        return;
+                    }
+                };
+                if let ObjectPropertyKind::ObjectProperty(OBox(ObjectProperty {
+                    method: false,
+                    value: expr,
+                    key,
+                    ..
+                })) = right
+                {
+                    let property_name = property.name.static_name();
+                    let key_name = key.static_name();
+                    if property_name.is_some() && property_name == key_name {
+                        self.each_self_assignment(left, expr, ctx);
+                    }
+                }
+            }
+            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => {}
         }
-        AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => {}
-    }
     }
 }
 
