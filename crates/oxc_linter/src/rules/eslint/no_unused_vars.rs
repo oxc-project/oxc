@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         AssignmentPattern, BindingIdentifier, BindingPatternKind, FormalParameter,
-        ModuleDeclaration, VariableDeclarator,
+        ModuleDeclaration, VariableDeclarator, Function, ModifierKind,
     },
     AstKind,
 };
@@ -10,7 +10,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::{SymbolId, Reference};
 use oxc_span::{Atom, Span};
 use regex::Regex;
 use serde_json::Value;
@@ -319,19 +319,45 @@ impl NoUnusedVars {
     ) {
         if module.is_export() {
             // skip exported variables
+            return
         }
-        todo!()
+        if let ModuleDeclaration::ImportDeclaration(import) = module {
+            if import.specifiers.is_empty() {
+                // skip imports without specifiers
+                return
+            }
+            todo!()
+        }
     }
 
+    fn is_ignored_var(&self, name: &str) -> bool {
+        if let Some(pat) = &self.vars_ignore_pattern {
+            pat.is_match(name)
+        } else {
+            false
+        }
+    }
     fn check_unused_variable_declarator<'a>(
         &self,
         decl: &'a VariableDeclarator<'a>,
         ctx: &LintContext<'a>,
     ) {
         let Some(identifier) = decl.id.kind.identifier() else { return };
-        if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(identifier.name.as_str()) {
-            return
+
+        if self.is_ignored_var(identifier.name.as_str()) {
+            return    
         }
+        // if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(identifier.name.as_str()) {
+        //     return
+        // }
+        // match arg.pattern.kind {
+        //     BindingPatternKind::BindingIdentifier(oxc_allocator::Box(BindingIdentifier { ref name, .. }))
+        //     | BindingPatternKind::AssignmentPattern(oxc_allocator::Box(AssignmentPattern { ref left: name, .. }))
+        //     => {
+        //         todo!()
+        //     },
+        //     _ => todo!()
+        // }
 
         ctx.diagnostic(NoUnusedVarsDiagnostic(
             identifier.name.clone(),
@@ -341,18 +367,55 @@ impl NoUnusedVars {
         ))
     }
 
+    fn check_unused_function<'a>(&self, f: &'a Function, ctx: &LintContext<'a>) {
+        // skip exported functions
+        // if Self::is_exported(f, ctx) {
+        //     return
+        // }
+        // if f.modifiers.contains(ModifierKind::Export) {
+        //     return 
+        // }
+
+        // skip ignored functions
+        let Some(name) = f.id.as_ref().map(|binding| &binding.name) else { return };
+        if self.is_ignored_var(name.as_str()) {
+            return
+        }
+
+        ctx.diagnostic(NoUnusedVarsDiagnostic(
+            name.clone(),
+            DECLARED_STR,
+            "".into(),
+            f.span,
+        ))
+    }
+
     fn check_unused_arguments<'a>(&self, arg: &'a FormalParameter, ctx: &LintContext<'a>) {
         let Some(identifier) = arg.pattern.kind.identifier() else { return };
-        // match arg.pattern.kind {
-        //     BindingPatternKind::BindingIdentifier(oxc_allocator::Box(BindingIdentifier { ref name, .. }))
-        //     | BindingPatternKind::AssignmentPattern(oxc_allocator::Box(AssignmentPattern { ref left: name, .. }))
-        //     => {
-        //         todo!()
-        //     },
-        //     _ => todo!()
-        // }
-        todo!()
+        if let Some(pat) = &self.args_ignore_pattern && pat.is_match(identifier.name.as_str()) {
+            return
+        }
+
+        ctx.diagnostic(NoUnusedVarsDiagnostic(
+            identifier.name.clone(),
+            DECLARED_STR,
+            "".into(),
+            arg.span,
+        ))
     }
+
+    fn is_exported(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+        let Some(parent_kind) = ctx.nodes().parent_kind(node.id()) else { return false };
+        let AstKind::ModuleDeclaration(module) = parent_kind else { return false };
+        match module {
+            | ModuleDeclaration::ExportAllDeclaration(_)
+            | ModuleDeclaration::ExportNamedDeclaration(_)
+            | ModuleDeclaration::ExportDefaultDeclaration(_) => true,
+            // todo: should we include ts exports?
+            | _ => false
+        }
+    }
+
 }
 
 impl Rule for NoUnusedVars {
@@ -445,7 +508,6 @@ impl Rule for NoUnusedVars {
         }
     }
 
-    // fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let semantic = ctx.semantic();
         let symbols = ctx.symbols();
@@ -468,25 +530,25 @@ impl Rule for NoUnusedVars {
         // let declaration =
         // ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
         let declaration = semantic.symbol_declaration(symbol_id);
-        let parent_kind = nodes.parent_kind(declaration.id());
+        if Self::is_exported(declaration, ctx) {
+            return
+        }
+        // let parent_kind = nodes.parent_kind(declaration.id());
 
         match declaration.kind() {
             AstKind::ModuleDeclaration(decl) => self.check_unused_module_declaration(decl, ctx),
-            AstKind::VariableDeclarator(decl) => {
-                self.check_unused_variable_declarator(decl, ctx)
-                // match decl.id.kind {
-                //     BindingPatternKind::ObjectPattern()
-                //     // BindingPatternKind::
-                // }
-                // if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(decl.id.name.as_str()) {
-                //     return
-                // }
-                // decl.kind
-            }
-            AstKind::FormalParameter(param) => {
-                todo!()
-            }
-            _ => todo!(),
+            AstKind::VariableDeclarator(decl) => self.check_unused_variable_declarator(decl, ctx),
+            AstKind::Function(f) => self.check_unused_function(f, ctx),
+            // match decl.id.kind {
+            //     BindingPatternKind::ObjectPattern()
+            //     // BindingPatternKind::
+            // }
+            // if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(decl.id.name.as_str()) {
+            //     return
+            // }
+            // decl.kind
+            AstKind::FormalParameter(param) => self.check_unused_arguments(param, ctx),
+            s => todo!("handle decl kind {:?}", s),
         }
     }
 }
@@ -597,6 +659,19 @@ mod tests {
     }
 
     #[test]
+    fn test_function_simple() {
+        let pass = vec![
+            ("function foo() { return }; foo()", None),
+            ("export function foo() { return }", None),
+            ("export default function foo() { return }", None)
+        ];
+        let fail = vec![
+            ("function foo() { return }", None)
+        ];
+        Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
     fn test() {
         let pass = vec![
             ("var foo = 5;\n\nlabel: while (true) {\n  console.log(foo);\n  break label;\n}", None),
@@ -606,39 +681,44 @@ mod tests {
                 "var box = {a: 2};\n    for (var prop in box) {\n        box[prop] = parseInt(box[prop]);\n}",
                 None,
             ),
+            // todo
             // ("f({ set foo(a) { return; } });", None),
-            // ("a; var a;", Some(serde_json::json!(["all"]))),
-            // ("var a=10; alert(a);", Some(serde_json::json!(["all"]))),
-            // ("var a=10; (function() { alert(a); })();", Some(serde_json::json!(["all"]))),
-            // (
-            //     "var a=10; (function() { setTimeout(function() { alert(a); }, 0); })();",
-            //     Some(serde_json::json!(["all"])),
-            // ),
+            ("a; var a;", Some(serde_json::json!(["all"]))),
+            ("var a=10; alert(a);", Some(serde_json::json!(["all"]))),
+            ("var a=10; (function() { alert(a); })();", Some(serde_json::json!(["all"]))),
+            (
+                "var a=10; (function() { setTimeout(function() { alert(a); }, 0); })();",
+                Some(serde_json::json!(["all"])),
+            ),
             ("var a=10; d[a] = 0;", Some(serde_json::json!(["all"]))),
             ("(function() { var a=10; return a; })();", Some(serde_json::json!(["all"]))),
             ("(function g() {})()", Some(serde_json::json!(["all"]))),
             ("function f(a) {alert(a);}; f();", Some(serde_json::json!(["all"]))),
-            // (
-            //     "var c = 0; function f(a){ var b = a; return b; }; f(c);",
-            //     Some(serde_json::json!(["all"])),
-            // ),
+            (
+                "var c = 0; function f(a){ var b = a; return b; }; f(c);",
+                Some(serde_json::json!(["all"])),
+            ),
+            // todo
             // ("function a(x, y){ return y; }; a();", Some(serde_json::json!(["all"]))),
-            // (
-            //     "var arr1 = [1, 2]; var arr2 = [3, 4]; for (var i in arr1) { arr1[i] = 5; } for (var i in arr2) { arr2[i] = 10; }",
-            //     Some(serde_json::json!(["all"])),
-            // ),
+            (
+                "var arr1 = [1, 2]; var arr2 = [3, 4]; for (var i in arr1) { arr1[i] = 5; } for (var i in arr2) { arr2[i] = 10; }",
+                Some(serde_json::json!(["all"])),
+            ),
+            // todo
             // ("var a=10;", Some(serde_json::json!(["local"]))),
             ("var min = \"min\"; Math[min];", Some(serde_json::json!(["all"]))),
-            // ("Foo.bar = function(baz) { return baz; };", Some(serde_json::json!(["all"]))),
+            ("Foo.bar = function(baz) { return baz; };", Some(serde_json::json!(["all"]))),
             ("myFunc(function foo() {}.bind(this))", None),
-            // ("myFunc(function foo(){}.toString())", None),
+            ("myFunc(function foo(){}.toString())", None),
+            // todo
             // (
             //     "function foo(first, second) {\ndoStuff(function() {\nconsole.log(second);});}; foo()",
             //     None,
             // ),
-            // ("(function() { var doSomething = function doSomething() {}; doSomething() }())", None),
+            ("(function() { var doSomething = function doSomething() {}; doSomething() }())", None),
+            // todo
             // ("try {} catch(e) {}", None),
-            // ("/*global a */ a;", None),
+            ("/* global a */ a;", None),
             (
                 "var a=10; (function() { alert(a); })();",
                 Some(serde_json::json!([{ "vars": "all" }])),
@@ -671,7 +751,7 @@ mod tests {
             // (" ", None),
             ("var who = \"Paul\";\nmodule.exports = `Hello ${who}!`;", None),
             // ("export var foo = 123;", None),
-            // ("export function foo () {}", None),
+            ("export function foo () {}", None),
             // ("let toUpper = (partial) => partial.toUpperCase; export {toUpper}", None),
             // ("export class foo {}", None),
             // ("class Foo{}; var x = new Foo(); x.foo()", None),
@@ -680,7 +760,7 @@ mod tests {
             //     None,
             // ),
             ("function Foo(){}; var x = new Foo(); x.foo()", None),
-            // ("function foo() {var foo = 1; return foo}; foo();", None),
+            ("function foo() {var foo = 1; return foo}; foo();", None),
             // ("function foo(foo) {return foo}; foo(1);", None),
             // ("function foo() {function foo() {return 1;}; return foo()}; foo();", None),
             // ("function foo() {var foo = 1; return foo}; foo();", None),
