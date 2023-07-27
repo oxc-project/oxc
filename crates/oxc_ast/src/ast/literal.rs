@@ -22,7 +22,11 @@ pub struct BooleanLiteral {
 
 impl BooleanLiteral {
     pub fn as_str(&self) -> &'static str {
-        if self.value { "true" } else { "false" }
+        if self.value {
+            "true"
+        } else {
+            "false"
+        }
     }
 }
 

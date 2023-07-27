@@ -27,7 +27,11 @@ bitflags! {
 impl ScopeFlags {
     #[must_use]
     pub fn with_strict_mode(self, yes: bool) -> Self {
-        if yes { self | Self::StrictMode } else { self }
+        if yes {
+            self | Self::StrictMode
+        } else {
+            self
+        }
     }
 
     pub fn is_strict_mode(&self) -> bool {

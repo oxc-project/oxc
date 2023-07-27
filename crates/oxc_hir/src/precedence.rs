@@ -112,7 +112,11 @@ impl<'a> GetPrecedence for AwaitExpression<'a> {
 
 impl<'a> GetPrecedence for UpdateExpression<'a> {
     fn precedence(&self) -> Precedence {
-        if self.prefix { Precedence::Prefix } else { Precedence::Postfix }
+        if self.prefix {
+            Precedence::Prefix
+        } else {
+            Precedence::Postfix
+        }
     }
 }
 
@@ -124,7 +128,11 @@ impl<'a> GetPrecedence for CallExpression<'a> {
 
 impl<'a> GetPrecedence for NewExpression<'a> {
     fn precedence(&self) -> Precedence {
-        if self.arguments.is_empty() { Precedence::NewWithoutArgs } else { Precedence::Call }
+        if self.arguments.is_empty() {
+            Precedence::NewWithoutArgs
+        } else {
+            Precedence::Call
+        }
     }
 }
 
