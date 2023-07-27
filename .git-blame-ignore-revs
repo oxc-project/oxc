@@ -1,1 +1,14 @@
+# This file lists revisions of large-scale formatting/style changes so that
+# they can be excluded from git blame results.
+#
+# To set this file as the default ignore file for git blame, run:
+#   $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# chore(rustfmt): run `cargo fmt` (change in cargo fmt options)
 ad2835f11b28e28ecec635842c62b407d9149331
+
+# refactor: avoid unstable let_chains (#628)
+318d55806f6c50658ad9d88204da47de2e062280
+
+# chore(rustfmt): disable all unstable format options (#646)
+014b33f7ef0c2527b028de3007f3971fedb545bc
