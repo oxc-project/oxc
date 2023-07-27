@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         AssignmentPattern, BindingIdentifier, BindingPatternKind, FormalParameter,
-        ModuleDeclaration, VariableDeclarator, Function, ModifierKind,
+        ModuleDeclaration, VariableDeclarator, Function, ModifierKind, Class,
     },
     AstKind,
 };
@@ -390,6 +390,20 @@ impl NoUnusedVars {
         ))
     }
 
+    fn check_unused_class<'a>(&self, class: &'a Class, ctx: &LintContext<'a>) {
+        let Some(name) = class.id.as_ref().map(|binding| &binding.name) else { return };
+        if self.is_ignored_var(name.as_str()) {
+            return
+        }
+
+        ctx.diagnostic(NoUnusedVarsDiagnostic(
+            name.clone(),
+            DECLARED_STR,
+            "".into(),
+            class.span,
+        ))
+    }
+
     fn check_unused_arguments<'a>(&self, arg: &'a FormalParameter, ctx: &LintContext<'a>) {
         let Some(identifier) = arg.pattern.kind.identifier() else { return };
         if let Some(pat) = &self.args_ignore_pattern && pat.is_match(identifier.name.as_str()) {
@@ -539,6 +553,7 @@ impl Rule for NoUnusedVars {
             AstKind::ModuleDeclaration(decl) => self.check_unused_module_declaration(decl, ctx),
             AstKind::VariableDeclarator(decl) => self.check_unused_variable_declarator(decl, ctx),
             AstKind::Function(f) => self.check_unused_function(f, ctx),
+            AstKind::Class(class) => self.check_unused_class(class, ctx),
             // match decl.id.kind {
             //     BindingPatternKind::ObjectPattern()
             //     // BindingPatternKind::
@@ -663,12 +678,23 @@ mod tests {
         let pass = vec![
             ("function foo() { return }; foo()", None),
             ("export function foo() { return }", None),
-            ("export default function foo() { return }", None)
+            ("export default function foo() { return }", None),
         ];
         let fail = vec![
-            ("function foo() { return }", None)
+            ("function foo() { return }", None),
         ];
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_class_simple() {
+        let pass = vec![
+            ("class Foo {}; const f = new Foo(); console.log(f)"),
+            ("export class Foo {}"),
+            ("export default class Foo {}"),
+        ];
+        let fail = vec![("class Foo {}")];
+        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test()
     }
 
     #[test]
