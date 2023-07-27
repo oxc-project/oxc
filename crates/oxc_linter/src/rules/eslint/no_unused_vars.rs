@@ -1,8 +1,5 @@
 use oxc_ast::{
-    ast::{
-        AssignmentPattern, BindingIdentifier, BindingPatternKind, FormalParameter,
-        ModuleDeclaration, VariableDeclarator, Function, ModifierKind, Class,
-    },
+    ast::*,
     AstKind,
 };
 use oxc_diagnostics::{
@@ -404,7 +401,20 @@ impl NoUnusedVars {
         ))
     }
 
-    fn check_unused_arguments<'a>(&self, arg: &'a FormalParameter, ctx: &LintContext<'a>) {
+    fn check_unused_arguments<'a>(&self, args: &'a FormalParameters, ctx: &LintContext<'a>) {
+        match self.args {
+            ArgsOption::All => {
+                args.items.iter().for_each(|arg| self.check_unused_argument(arg, ctx))
+            },
+            ArgsOption::AfterUsed => {
+                todo!()
+            },
+            ArgsOption::None => {
+                // noop
+            }
+        }
+    }
+    fn check_unused_argument<'a>(&self, arg: &'a FormalParameter, ctx: &LintContext<'a>) {
         let Some(identifier) = arg.pattern.kind.identifier() else { return };
         if let Some(pat) = &self.args_ignore_pattern && pat.is_match(identifier.name.as_str()) {
             return
@@ -562,7 +572,12 @@ impl Rule for NoUnusedVars {
             //     return
             // }
             // decl.kind
-            AstKind::FormalParameter(param) => self.check_unused_arguments(param, ctx),
+            // AstKind::FormalParameters(params) => match self.args {
+            //     ArgsOption::All => params.items.iter().for_each(|param| {
+            //     self.check_unused_argument(param, ctx)
+            // }),
+            AstKind::FormalParameters(params) => self.check_unused_arguments(params, ctx),
+            AstKind::FormalParameter(param) => self.check_unused_argument(param, ctx),
             s => todo!("handle decl kind {:?}", s),
         }
     }
@@ -757,23 +772,23 @@ mod tests {
             //     "function g(bar, baz) { return baz; }; g();",
             //     Some(serde_json::json!([{ "vars": "all", "args": "after-used" }])),
             // ),
-            // (
-            //     "function g(bar, baz) { return bar; }; g();",
-            //     Some(serde_json::json!([{ "vars": "all", "args": "none" }])),
-            // ),
-            // (
-            //     "function g(bar, baz) { return 2; }; g();",
-            //     Some(serde_json::json!([{ "vars": "all", "args": "none" }])),
-            // ),
-            // (
-            //     "function g(bar, baz) { return bar + baz; }; g();",
-            //     Some(serde_json::json!([{ "vars": "local", "args": "all" }])),
-            // ),
-            // (
-            //     "var g = function(bar, baz) { return 2; }; g();",
-            //     Some(serde_json::json!([{ "vars": "all", "args": "none" }])),
-            // ),
-            // ("(function z() { z(); })();", None),
+            (
+                "function g(bar, baz) { return bar; }; g();",
+                Some(serde_json::json!([{ "vars": "all", "args": "none" }])),
+            ),
+            (
+                "function g(bar, baz) { return 2; }; g();",
+                Some(serde_json::json!([{ "vars": "all", "args": "none" }])),
+            ),
+            (
+                "function g(bar, baz) { return bar + baz; }; g();",
+                Some(serde_json::json!([{ "vars": "local", "args": "all" }])),
+            ),
+            (
+                "var g = function(bar, baz) { return 2; }; g();",
+                Some(serde_json::json!([{ "vars": "all", "args": "none" }])),
+            ),
+            ("(function z() { z(); })();", None),
             // (" ", None),
             ("var who = \"Paul\";\nmodule.exports = `Hello ${who}!`;", None),
             // ("export var foo = 123;", None),
@@ -827,10 +842,10 @@ mod tests {
             //     "var a; function foo() { var _b; } foo();",
             //     Some(serde_json::json!([{ "vars": "local", "varsIgnorePattern": "^_" }])),
             // ),
-            // (
-            //     "function foo(_a) { } foo();",
-            //     Some(serde_json::json!([{ "args": "all", "argsIgnorePattern": "^_" }])),
-            // ),
+            (
+                "function foo(_a) { } foo();",
+                Some(serde_json::json!([{ "args": "all", "argsIgnorePattern": "^_" }])),
+            ),
             // (
             //     "function foo(a, _b) { return a; } foo();",
             //     Some(serde_json::json!([{ "args": "after-used", "argsIgnorePattern": "^_" }])),
