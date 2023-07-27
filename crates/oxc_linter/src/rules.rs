@@ -31,6 +31,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_dupe_keys,
     eslint::no_duplicate_case,
     eslint::no_empty,
+    eslint::no_empty_character_class,
     eslint::no_empty_pattern,
     eslint::no_eval,
     eslint::no_ex_assign,
