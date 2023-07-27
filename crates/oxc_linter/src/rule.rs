@@ -10,9 +10,14 @@ pub trait Rule: Sized + Default + fmt::Debug {
         Self::default()
     }
 
+    /// Visit each AST Node
+    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
+
+    /// Visit each symbol
     fn run_on_symbol(&self, _symbol_id: SymbolId, _ctx: &LintContext<'_>) {}
 
-    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
+    /// Run only once. Useful for inspecting scopes and trivias etc.
+    fn run_once(&self, _ctx: &LintContext) {}
 }
 
 pub trait RuleMeta {
@@ -30,7 +35,7 @@ pub trait RuleMeta {
 pub enum RuleCategory {
     /// Code that is outright wrong or useless
     Correctness,
-    ///
+    /// Code that is most likely wrong or useless
     Suspicious,
     /// Pedantic
     Pedantic,
