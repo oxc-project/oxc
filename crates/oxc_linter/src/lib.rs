@@ -94,6 +94,12 @@ impl Linter {
     pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
         let semantic = Rc::clone(ctx.semantic());
         let mut ctx = ctx.with_fix(self.fix);
+
+        for rule in &self.rules {
+            ctx.with_rule_name(rule.name());
+            rule.run_once(&ctx, self.print_execution_times);
+        }
+
         for node in semantic.nodes().iter() {
             for rule in &self.rules {
                 ctx.with_rule_name(rule.name());

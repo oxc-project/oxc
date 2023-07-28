@@ -6,7 +6,7 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-unused-labels): Disallow unused labels")]
@@ -41,18 +41,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnusedLabels {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if matches!(node.kind(), AstKind::Program(_)) {
-            for id in ctx.semantic().unused_labels() {
-                let node = ctx.semantic().nodes().get_node(*id);
-                if let AstKind::LabeledStatement(stmt) = node.kind() {
-                    // TODO: Ignore fix where comments exist between label and statement
-                    // e.g. A: /* Comment */ function foo(){}
-                    ctx.diagnostic_with_fix(
-                        NoUnusedLabelsDiagnostic(stmt.label.name.clone(), stmt.label.span),
-                        || Fix::delete(stmt.label.span),
-                    );
-                }
+    fn run_once(&self, ctx: &LintContext) {
+        for id in ctx.semantic().unused_labels() {
+            let node = ctx.semantic().nodes().get_node(*id);
+            if let AstKind::LabeledStatement(stmt) = node.kind() {
+                // TODO: Ignore fix where comments exist between label and statement
+                // e.g. A: /* Comment */ function foo(){}
+                ctx.diagnostic_with_fix(
+                    NoUnusedLabelsDiagnostic(stmt.label.name.clone(), stmt.label.span),
+                    || Fix::delete(stmt.label.span),
+                );
             }
         }
     }

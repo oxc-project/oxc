@@ -1,7 +1,5 @@
 //! ECMAScript Minifier
 
-#![feature(let_chains)]
-
 mod compressor;
 mod mangler;
 mod printer;

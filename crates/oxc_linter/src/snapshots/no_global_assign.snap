@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_global_assign
+---
+  ⚠ eslint(no-global-assign): Read-only global 'String' should not be modified.
+   ╭─[no_global_assign.tsx:1:1]
+ 1 │ String = 'hello world';
+   · ───┬──
+   ·    ╰── Read-only global 'String' should not be modified.
+   ╰────
+
+  ⚠ eslint(no-global-assign): Read-only global 'String' should not be modified.
+   ╭─[no_global_assign.tsx:1:1]
+ 1 │ String++;
+   · ───┬──
+   ·    ╰── Read-only global 'String' should not be modified.
+   ╰────
+
+  ⚠ eslint(no-global-assign): Read-only global 'String' should not be modified.
+   ╭─[no_global_assign.tsx:1:1]
+ 1 │ ({Object = 0, String = 0} = {});
+   ·               ───┬──
+   ·                  ╰── Read-only global 'String' should not be modified.
+   ╰────
+
+  ⚠ eslint(no-global-assign): Read-only global 'Object' should not be modified.
+   ╭─[no_global_assign.tsx:1:1]
+ 1 │ ({Object = 0, String = 0} = {});
+   ·   ───┬──
+   ·      ╰── Read-only global 'Object' should not be modified.
+   ╰────
+
+  ⚠ eslint(no-global-assign): Read-only global 'Object' should not be modified.
+   ╭─[no_global_assign.tsx:1:1]
+ 1 │ function f() { Object = 1; }
+   ·                ───┬──
+   ·                   ╰── Read-only global 'Object' should not be modified.
+   ╰────
+
+  ⚠ eslint(no-global-assign): Read-only global 'Array' should not be modified.
+   ╭─[no_global_assign.tsx:1:1]
+ 1 │ Array = 1;
+   · ──┬──
+   ·   ╰── Read-only global 'Array' should not be modified.
+   ╰────
+
+

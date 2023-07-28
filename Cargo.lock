@@ -1288,7 +1288,7 @@ checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
 name = "oxc"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1306,7 +1306,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "bumpalo",
  "serde",
@@ -1315,7 +1315,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "bitflags 2.3.3",
  "num-bigint",
@@ -1332,7 +1332,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_lower"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1416,7 +1416,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "is-terminal",
  "miette",
@@ -1428,7 +1428,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_formatter"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "miette",
  "oxc_allocator",
@@ -1440,7 +1440,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_hir"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "bitflags 2.3.3",
  "num-bigint",
@@ -1457,7 +1457,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "index_vec",
  "static_assertions",
@@ -1501,7 +1501,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "bitflags 2.3.3",
  "itertools 0.11.0",
@@ -1552,7 +1552,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "bitflags 2.3.3",
  "miette",
@@ -1569,7 +1569,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_query"
-version = "0.0.7"
+version = "0.0.0"
 dependencies = [
  "enum-as-inner",
  "oxc_allocator",
@@ -1605,7 +1605,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "bitflags 2.3.3",
  "indexmap 2.0.0",
@@ -1622,7 +1622,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "compact_str",
  "miette",
@@ -1631,7 +1631,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.0.7"
+version = "0.1.0"
 dependencies = [
  "bitflags 2.3.3",
  "oxc_index",

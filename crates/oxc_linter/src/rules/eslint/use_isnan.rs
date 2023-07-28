@@ -80,7 +80,9 @@ declare_oxc_lint!(
 impl Rule for UseIsnan {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::BinaryExpression(expr) if expr.operator.is_compare() || expr.operator.is_equality() => {
+            AstKind::BinaryExpression(expr)
+                if expr.operator.is_compare() || expr.operator.is_equality() =>
+            {
                 if is_nan_identifier(&expr.left) {
                     ctx.diagnostic(UseIsnanDiagnostic::ComparisonWithNaN(expr.left.span()));
                 }
@@ -101,16 +103,16 @@ impl Rule for UseIsnan {
                 }
             }
             AstKind::CallExpression(call) if self.enforce_for_index_of => {
-              // Match target array prototype methods whose only argument is NaN
-              if let Some(method) = is_target_callee(&call.callee) {
-                  if call.arguments.len() == 1 {
-                      if let Some(Argument::Expression(expr)) = &call.arguments.first() {
-                          if is_nan_identifier(expr) {
-                              ctx.diagnostic(UseIsnanDiagnostic::IndexOfNaN(method, expr.span()));
-                          }
-                      }
-                  }
-              }
+                // Match target array prototype methods whose only argument is NaN
+                if let Some(method) = is_target_callee(&call.callee) {
+                    if call.arguments.len() == 1 {
+                        if let Some(Argument::Expression(expr)) = &call.arguments.first() {
+                            if is_nan_identifier(expr) {
+                                ctx.diagnostic(UseIsnanDiagnostic::IndexOfNaN(method, expr.span()));
+                            }
+                        }
+                    }
+                }
             }
             _ => (),
         }

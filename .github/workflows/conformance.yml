@@ -1,0 +1,53 @@
+name: Conformance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths-ignore:
+      - '**/*.md'
+      - 'npm/**'
+      - 'website/**'
+      - 'crates/oxc/**'
+      - 'crates/oxc_cli/**'
+      - 'crates/oxc_formatter/**'
+      - 'crates/oxc_linter/**'
+      - 'crates/oxc_napi/**'
+      - 'crates/oxc_query/**'
+      - 'crates/oxc_resolver/**'
+      - 'crates/oxc_type_synthesis/**'
+      - 'crates/oxc_wasm/**'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'npm/**'
+      - 'website/**'
+      - 'crates/oxc/**'
+      - 'crates/oxc_cli/**'
+      - 'crates/oxc_formatter/**'
+      - 'crates/oxc_linter/**'
+      - 'crates/oxc_napi/**'
+      - 'crates/oxc_query/**'
+      - 'crates/oxc_resolver/**'
+      - 'crates/oxc_type_synthesis/**'
+      - 'crates/oxc_wasm/**'
+
+jobs:
+  conformance:
+    name: Conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true # Pull submodules for `cargo coverage`
+
+      - name: Install Rust Toolchain
+        uses: ./.github/actions/rustup
+
+      - run: cargo coverage
+
+      - run: cargo minsize
+
+      - name: Check for snapshot diff
+        run: git diff --exit-code

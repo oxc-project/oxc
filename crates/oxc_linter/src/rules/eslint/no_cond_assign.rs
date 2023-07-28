@@ -75,7 +75,9 @@ impl Rule for NoCondAssign {
                     }
                 }
             }
-            AstKind::ConditionalExpression(expr) if self.is_assignment_expression(expr.test.get_inner_expression()) => {
+            AstKind::ConditionalExpression(expr)
+                if self.is_assignment_expression(expr.test.get_inner_expression()) =>
+            {
                 ctx.diagnostic(NoCondAssignDiagnostic(expr.test.span()));
             }
             AstKind::AssignmentExpression(_) if self.config == NoCondAssignConfig::Always => {
@@ -87,10 +89,12 @@ impl Rule for NoCondAssign {
                         | AstKind::ForStatement(ForStatement { test: Some(test), .. })
                         | AstKind::ConditionalExpression(ConditionalExpression { test, .. }) => {
                             ctx.diagnostic(NoCondAssignDiagnostic(test.span()));
-                            return
+                            return;
                         }
-                        AstKind::Function(_) | AstKind::ArrowExpression(_)| AstKind::Program(_) => break,
-                        _ => {},
+                        AstKind::Function(_)
+                        | AstKind::ArrowExpression(_)
+                        | AstKind::Program(_) => break,
+                        _ => {}
                     }
                 }
             }

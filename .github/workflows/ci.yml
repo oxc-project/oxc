@@ -82,26 +82,6 @@ jobs:
         with:
           files: .
 
-  check-dependencies:
-    name: Check Unused Dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            src:
-              - 'Cargo.lock'
-
-      - name: Install cargo-udeps
-        if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@cargo-udeps
-
-      - if: steps.filter.outputs.src == 'true'
-        run: cargo udeps
-
   deny:
     name: Cargo Deny
     runs-on: ubuntu-latest
@@ -220,20 +200,3 @@ jobs:
 
       - if: runner.os != 'Windows'
         run: cargo nextest run
-
-  conformance:
-    name: Conformance
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true # Pull submodules for `cargo coverage`
-
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
-
-      - run: cargo coverage
-      - run: cargo minsize
-
-      - name: Check for snapshot diff
-        run: git diff --exit-code

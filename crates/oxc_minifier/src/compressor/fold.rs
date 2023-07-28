@@ -49,7 +49,11 @@ impl Tri {
     }
 
     pub fn for_boolean(boolean: bool) -> Self {
-        if boolean { Self::True } else { Self::False }
+        if boolean {
+            Self::True
+        } else {
+            Self::False
+        }
     }
 
     pub fn value(self) -> i8 {
