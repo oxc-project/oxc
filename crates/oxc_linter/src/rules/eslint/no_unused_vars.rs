@@ -692,7 +692,7 @@ impl Rule for NoUnusedVars {
         // Find all references that count as a usage
         let references: Vec<_> = symbols
             .get_resolved_references(symbol_id)
-            .filter(|reference| !reference.is_write())
+            .filter(|reference| reference.is_read())
             .collect();
 
         let name = symbols.get_name(symbol_id);
@@ -985,11 +985,11 @@ mod tests {
             // ),
             ("function Foo(){}; var x = new Foo(); x.foo()", None),
             ("function foo() {var foo = 1; return foo}; foo();", None),
-            // ("function foo(foo) {return foo}; foo(1);", None),
-            // ("function foo() {function foo() {return 1;}; return foo()}; foo();", None),
-            // ("function foo() {var foo = 1; return foo}; foo();", None),
-            // ("function foo(foo) {return foo}; foo(1);", None),
-            // ("function foo() {function foo() {return 1;}; return foo()}; foo();", None),
+            ("function foo(foo) {return foo}; foo(1);", None),
+            ("function foo() {function foo() {return 1;}; return foo()}; foo();", None),
+            ("function foo() {var foo = 1; return foo}; foo();", None),
+            ("function foo(foo) {return foo}; foo(1);", None),
+            ("function foo() {function foo() {return 1;}; return foo()}; foo();", None),
             // ("const x = 1; const [y = x] = []; foo(y);", None),
             // ("const x = 1; const {y = x} = {}; foo(y);", None),
             // ("const x = 1; const {z: [y = x]} = {}; foo(y);", None),
@@ -1008,10 +1008,10 @@ mod tests {
             // ("var x = 1, y; [y = x] = []; foo(y);", None),
             // ("var x = 1, y; ({z: [y = x]} = {}); foo(y);", None),
             // ("var x = [], y; ({z: [y] = x} = {}); foo(y);", None),
-            // ("var x = 1; function foo(y = x) { bar(y); } foo();", None),
+            ("var x = 1; function foo(y = x) { bar(y); } foo();", None),
             // ("var x = 1; function foo({y = x} = {}) { bar(y); } foo();", None),
-            // ("var x = 1; function foo(y = function(z = x) { bar(z); }) { y(); } foo();", None),
-            // ("var x = 1; function foo(y = function() { bar(x); }) { y(); } foo();", None),
+            ("var x = 1; function foo(y = function(z = x) { bar(z); }) { y(); } foo();", None),
+            ("var x = 1; function foo(y = function() { bar(x); }) { y(); } foo();", None),
             // ("/*exported toaster*/ var toaster = 'great'", None),
             // ("/*exported toaster, poster*/ var toaster = 1; poster = 0;", None),
             // ("/*exported x*/ var { x } = y", None),
@@ -1020,6 +1020,7 @@ mod tests {
             // ("/*eslint use-every-a:1*/ !function(a) { return 1; }", None),
             // ("/*eslint use-every-a:1*/ !function() { var a; return 1 }", None),
             ("var _a;", Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "^_" }]))),
+            // todo
             // (
             //     "var a; function foo() { var _b; } foo();",
             //     Some(serde_json::json!([{ "vars": "local", "varsIgnorePattern": "^_" }])),
@@ -1028,10 +1029,10 @@ mod tests {
                 "function foo(_a) { } foo();",
                 Some(serde_json::json!([{ "args": "all", "argsIgnorePattern": "^_" }])),
             ),
-            // (
-            //     "function foo(a, _b) { return a; } foo();",
-            //     Some(serde_json::json!([{ "args": "after-used", "argsIgnorePattern": "^_" }])),
-            // ),
+            (
+                "function foo(a, _b) { return a; } foo();",
+                Some(serde_json::json!([{ "args": "after-used", "argsIgnorePattern": "^_" }])),
+            ),
             (
                 "var [ firstItemIgnored, secondItem ] = items;\nconsole.log(secondItem);",
                 Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "[iI]gnored" }])),
@@ -1063,6 +1064,7 @@ mod tests {
             // // ,
             // // ,
             // // ,
+            // FIXME(don): failing, this looks like a semantic analysis bug
             // ("(function(obj) { var name; for ( name in obj ) return; })({});", None),
             // ("(function(obj) { var name; for ( name in obj ) { return; } })({});", None),
             // ("(function(obj) { for ( var name in obj ) { return true } })({})", None),
@@ -1079,20 +1081,21 @@ mod tests {
             // ("(function(iter) { for ( let name of iter ) return true })({})", None),
             // ("(function(iter) { for ( const name of iter ) { return true } })({})", None),
             // ("(function(iter) { for ( const name of iter ) return true })({})", None),
+            // FIXME
             // ("let x = 0; foo = (0, x++);", None),
             // ("let x = 0; foo = (0, x += 1);", None),
             // ("let x = 0; foo = (0, x = x + 1);", None),
-            // (
-            //     "try{}catch(err){console.error(err);}",
-            //     Some(serde_json::json!([{ "caughtErrors": "all" }])),
-            // ),
-            // ("try{}catch(err){}", Some(serde_json::json!([{ "caughtErrors": "none" }]))),
-            // (
-            //     "try{}catch(ignoreErr){}",
-            //     Some(
-            //         serde_json::json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]),
-            //     ),
-            // ),
+            (
+                "try{}catch(err){console.error(err);}",
+                Some(serde_json::json!([{ "caughtErrors": "all" }])),
+            ),
+            ("try{}catch(err){}", Some(serde_json::json!([{ "caughtErrors": "none" }]))),
+            (
+                "try{}catch(ignoreErr){}",
+                Some(
+                    serde_json::json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]),
+                ),
+            ),
             // ("try{}catch(err){}", Some(serde_json::json!([{ "vars": "all", "args": "all" }]))),
             // (
             //     "const data = { type: 'coords', x: 1, y: 2 };\nconst { type, ...coords } = data;\n console.log(coords);",
@@ -1153,10 +1156,11 @@ mod tests {
             // ("/*eslint use-every-a:1*/ !function(b, a) { return 1 }", None),
             // ("var a = function () { a(); }; a();", None),
             // ("var a = function(){ return function () { a(); } }; a();", None),
-            // ("const a = () => { a(); }; a();", None),
-            // ("const a = () => () => { a(); }; a();", None),
-            // ("export * as ns from \"source\"", None),
+            ("const a = () => { a(); }; a();", None),
+            ("const a = () => () => { a(); }; a();", None),
+            ("export * as ns from \"source\"", None),
             // ("import.meta", None),
+            // FIXME
             // ("var a; a ||= 1;", None),
             // ("var a; a &&= 1;", None),
             // ("var a; a ??= 1;", None),
