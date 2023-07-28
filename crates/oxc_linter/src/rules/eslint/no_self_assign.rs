@@ -67,7 +67,10 @@ impl Rule for NoSelfAssign {
         let AstKind::AssignmentExpression(assignment) = node.kind() else { return };
         if matches!(
             assignment.operator,
-            AssignmentOperator::Assign | AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr | AssignmentOperator::LogicalNullish
+            AssignmentOperator::Assign
+                | AssignmentOperator::LogicalAnd
+                | AssignmentOperator::LogicalOr
+                | AssignmentOperator::LogicalNullish
         ) {
             self.each_self_assignment(&assignment.left, &assignment.right, ctx);
         }
@@ -84,14 +87,11 @@ impl NoSelfAssign {
         match left {
             AssignmentTarget::SimpleAssignmentTarget(simple_assignment_target) => {
                 if let Expression::Identifier(id2) = right.without_parenthesized() {
-                    let self_assign =
-                        matches!(simple_assignment_target.get_expression(), Some(Expression::Identifier(id1)) if id1.name == id2.name)
+                    let self_assign = matches!(simple_assignment_target.get_expression(), Some(Expression::Identifier(id1)) if id1.name == id2.name)
                         || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
 
                     if self_assign {
-                        ctx.diagnostic(NoSelfAssignDiagnostic(
-                            right.span(),
-                        ));
+                        ctx.diagnostic(NoSelfAssignDiagnostic(right.span()));
                     }
                 }
             }
@@ -100,7 +100,8 @@ impl NoSelfAssign {
                 AssignmentTargetPattern::ArrayAssignmentTarget(array_pattern),
             ) => {
                 if let Expression::ArrayExpression(array_expr) = right.without_parenthesized() {
-                    let end = std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
+                    let end =
+                        std::cmp::min(array_pattern.elements.len(), array_expr.elements.len());
                     let mut i = 0;
                     while i < end {
                         let left = array_pattern.elements[i].as_ref();
@@ -113,9 +114,8 @@ impl NoSelfAssign {
                             _ => None,
                         };
 
-
                         if let Some(left_target) = left_target {
-                          if let ArrayExpressionElement::Expression(expr) = right {
+                            if let ArrayExpressionElement::Expression(expr) = right {
                                 self.each_self_assignment(left_target, expr, ctx);
                             }
                         }
@@ -138,7 +138,9 @@ impl NoSelfAssign {
                         let mut start_j = 0;
                         let mut i = object_expr.properties.len();
                         while i >= 1 {
-                            if let ObjectPropertyKind::SpreadProperty(_) = object_expr.properties[i - 1] {
+                            if let ObjectPropertyKind::SpreadProperty(_) =
+                                object_expr.properties[i - 1]
+                            {
                                 start_j = i;
                                 break;
                             }
@@ -221,7 +223,9 @@ impl NoSelfAssign {
             return false;
         }
         let member1_static_property_name = member1.static_property_name();
-        if member1_static_property_name.is_some() && member1_static_property_name == member2.static_property_name() {
+        if member1_static_property_name.is_some()
+            && member1_static_property_name == member2.static_property_name()
+        {
             return self.is_same_reference(member1.object(), member2.object());
         }
 
@@ -252,20 +256,24 @@ impl NoSelfAssign {
         ctx: &LintContext<'a>,
     ) {
         match left {
-            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1) if id1.init.is_none() => {
+            AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1)
+                if id1.init.is_none() =>
+            {
                 if let ObjectPropertyKind::ObjectProperty(OBox(ObjectProperty {
                     method: false,
                     value: expr,
                     span,
                     key,
                     ..
-                })) = right {
+                })) = right
+                {
                     if key.static_name().is_some_and(|name| name == id1.binding.name) {
                         if let Expression::Identifier(id2) = expr.without_parenthesized() {
                             if id1.binding.name == id2.name {
                                 ctx.diagnostic(NoSelfAssignDiagnostic(*span));
                             }
-                        }}
+                        }
+                    }
                 }
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {

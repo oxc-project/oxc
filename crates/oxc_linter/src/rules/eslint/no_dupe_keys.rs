@@ -48,8 +48,13 @@ impl Rule for NoDupeKeys {
                 if let ObjectPropertyKind::ObjectProperty(prop) = prop {
                     if let Some(key_name) = prop.key.static_name().as_ref() {
                         let hash = calculate_hash(key_name);
-                        if let Some((prev_kind, prev_span)) = map.insert(hash, (prop.kind, prop.key.span())) {
-                            if prev_kind == PropertyKind::Init || prop.kind == PropertyKind::Init || prev_kind == prop.kind {
+                        if let Some((prev_kind, prev_span)) =
+                            map.insert(hash, (prop.kind, prop.key.span()))
+                        {
+                            if prev_kind == PropertyKind::Init
+                                || prop.kind == PropertyKind::Init
+                                || prev_kind == prop.kind
+                            {
                                 ctx.diagnostic(NoDupeKeysDiagnostic(prev_span, prop.key.span()));
                             }
                         }

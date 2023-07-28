@@ -87,9 +87,7 @@ impl Rule for ValidTypeof {
         }
 
         if let Expression::Identifier(ident) = sibling {
-            if ident.name == "undefined"
-                && ctx.semantic().is_reference_to_global_variable(ident)
-            {
+            if ident.name == "undefined" && ctx.semantic().is_reference_to_global_variable(ident) {
                 ctx.diagnostic_with_fix(
                     if self.require_string_literals {
                         ValidTypeofDiagnostic::NotString(

@@ -1,19 +1,19 @@
-use oxc_ast::{ast::{TSSignature, TSType, TSTypeName, PropertyKey, ClassElement}, AstKind};
+use oxc_ast::{
+    ast::{ClassElement, PropertyKey, TSSignature, TSType, TSTypeName},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span, GetSpan};
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.")]
-#[diagnostic(
-    severity(warning),
-    help("Consider removing this method from your interface.")
-)]
+#[diagnostic(severity(warning), help("Consider removing this method from your interface."))]
 struct NoMisusedNewInterfaceDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
@@ -34,19 +34,19 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// JavaScript classes may define a constructor method that runs 
-    /// when a class instance is newly created. 
+    /// JavaScript classes may define a constructor method that runs
+    /// when a class instance is newly created.
     /// TypeScript allows interfaces that describe a static class object to define
-    /// a new() method (though this is rarely used in real world code). 
-    /// Developers new to JavaScript classes and/or TypeScript interfaces may 
+    /// a new() method (though this is rarely used in real world code).
+    /// Developers new to JavaScript classes and/or TypeScript interfaces may
     /// sometimes confuse when to use constructor or new.
-    /// 
+    ///
     /// ### Example
     /// ```typescript
     // declare class C {
     //   new(): C;
     // }
-    
+
     // interface I {
     //   new (): I;
     //   constructor(): void;
@@ -55,7 +55,6 @@ declare_oxc_lint!(
     NoMisusedNew,
     correctness
 );
-
 
 impl Rule for NoMisusedNew {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -66,12 +65,14 @@ impl Rule for NoMisusedNew {
                 for signature in &interface_decl.body.body {
                     if let TSSignature::TSConstructSignatureDeclaration(sig) = signature {
                         if let Some(return_type) = &sig.return_type {
-                            if let TSType::TSTypeReference(type_ref) = &return_type.type_annotation {
+                            if let TSType::TSTypeReference(type_ref) = &return_type.type_annotation
+                            {
                                 if let TSTypeName::IdentifierName(id) = &type_ref.type_name {
                                     if id.name == decl_name {
-                                        ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(
-                                                Span::new(sig.span.start, sig.span.start + 3)
-                                        ));
+                                        ctx.diagnostic(NoMisusedNewInterfaceDiagnostic(Span::new(
+                                            sig.span.start,
+                                            sig.span.start + 3,
+                                        )));
                                     }
                                 }
                             }
@@ -94,10 +95,16 @@ impl Rule for NoMisusedNew {
                         if let ClassElement::MethodDefinition(method) = element {
                             if method.key.is_specific_id("new") && method.value.body.is_none() {
                                 if let Some(return_type) = &method.value.return_type {
-                                    if let TSType::TSTypeReference(type_ref) = &return_type.type_annotation {
-                                        if let TSTypeName::IdentifierName(current_id) = &type_ref.type_name {
+                                    if let TSType::TSTypeReference(type_ref) =
+                                        &return_type.type_annotation
+                                    {
+                                        if let TSTypeName::IdentifierName(current_id) =
+                                            &type_ref.type_name
+                                        {
                                             if current_id.name == cls_name {
-                                                ctx.diagnostic(NoMisusedNewClassDiagnostic(method.key.span()));
+                                                ctx.diagnostic(NoMisusedNewClassDiagnostic(
+                                                    method.key.span(),
+                                                ));
                                             }
                                         }
                                     }
@@ -129,16 +136,16 @@ fn test() {
         "type T = { new (): T };",
         "export default class { constructor(); }",
         "interface foo { new <T>(): bar<T>; }",
-        "interface foo { new <T>(): 'x'; }"
+        "interface foo { new <T>(): 'x'; }",
     ];
 
     let fail = vec![
-      "interface I { new (): I; constructor(): void;}",
-      "interface G { new <T>(): G<T>;}",
-      "type T = { constructor(): void;};",
-      "class C { new(): C;}",
-      "declare abstract class C { new(): C;}",
-      "interface I { constructor(): '';}"
+        "interface I { new (): I; constructor(): void;}",
+        "interface G { new <T>(): G<T>;}",
+        "type T = { constructor(): void;};",
+        "class C { new(): C;}",
+        "declare abstract class C { new(): C;}",
+        "interface I { constructor(): '';}",
     ];
 
     Tester::new_without_config(NoMisusedNew::NAME, pass, fail).test_and_snapshot();

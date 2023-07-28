@@ -88,32 +88,33 @@ fn resolve_global_binding<'a, 'b: 'a>(
         let scope = ctx.scopes();
         let nodes = ctx.nodes();
         let symbols = ctx.symbols();
-        scope.get_binding(scope_id, &ident.name).map_or_else(|| {
-            // panic!("No binding id found for {}, but this IdentifierReference
-            // is not a global", &ident.name);
-            None
-        }, |binding_id| {
-            let decl = nodes.get_node(symbols.get_declaration(binding_id));
-            let decl_scope = decl.scope_id();
-            match decl.kind() {
-                AstKind::VariableDeclarator(parent_decl) => {
-                    match &parent_decl.init {
-                        // handles "let a = JSON; let b = a; a();"
-                        Some(Expression::Identifier(parent_ident)) => {
-                            resolve_global_binding(parent_ident, decl_scope, ctx)
+        scope.get_binding(scope_id, &ident.name).map_or_else(
+            || {
+                // panic!("No binding id found for {}, but this IdentifierReference
+                // is not a global", &ident.name);
+                None
+            },
+            |binding_id| {
+                let decl = nodes.get_node(symbols.get_declaration(binding_id));
+                let decl_scope = decl.scope_id();
+                match decl.kind() {
+                    AstKind::VariableDeclarator(parent_decl) => {
+                        match &parent_decl.init {
+                            // handles "let a = JSON; let b = a; a();"
+                            Some(Expression::Identifier(parent_ident)) => {
+                                resolve_global_binding(parent_ident, decl_scope, ctx)
+                            }
+                            // handles "let a = globalThis.JSON; let b = a; a();"
+                            Some(Expression::MemberExpression(parent_expr)) => {
+                                global_this_member(parent_expr)
+                            }
+                            _ => None,
                         }
-                        // handles "let a = globalThis.JSON; let b = a; a();"
-                        Some(Expression::MemberExpression(parent_expr)) => {
-                            global_this_member(parent_expr)
-                        }
-                        _ => None,
                     }
+                    _ => None,
                 }
-                _ => {
-                    None
-                }
-            }
-        })
+            },
+        )
     }
 }
 
@@ -129,7 +130,9 @@ impl Rule for NoObjCalls {
         match callee {
             Expression::Identifier(ident) => {
                 // handle new Math(), Math(), etc
-                if let Some(top_level_reference) = resolve_global_binding(ident, node.scope_id(), ctx) {
+                if let Some(top_level_reference) =
+                    resolve_global_binding(ident, node.scope_id(), ctx)
+                {
                     if is_global_obj(&top_level_reference) {
                         ctx.diagnostic(NoObjCallsDiagnostic(ident.name.clone(), span));
                     }
@@ -163,11 +166,14 @@ fn test() {
         ("Math.PI * 2 * (r * r)", None),
         ("bar.Atomic(foo)", None),
         // reference test cases
-        ("let j = JSON;
+        (
+            "let j = JSON;
             function foo() {
                 let j = x => x;
                 return x();
-            }", None),
+            }",
+            None,
+        ),
     ];
 
     let fail = vec![
