@@ -5,154 +5,154 @@ expression: no_inner_declarations
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (test) { function doSomething() { } }
-   ·             ──────────────────────────
+   ·             ────────
    ╰────
   help: Move function declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (foo) var a; 
-   ·          ──────
+   ·          ───
    ╰────
   help: Move variable declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (foo) /* some comments */ var a; 
-   ·                              ──────
+   ·                              ───
    ╰────
   help: Move variable declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (foo){ function f(){ if(bar){ var a; } } }
-   ·           ─────────────────────────────────
+   ·           ────────
    ╰────
   help: Move function declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (foo){ function f(){ if(bar){ var a; } } }
-   ·                                  ──────
+   ·                                  ───
    ╰────
   help: Move variable declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (foo) function f(){ if(bar) var a; } 
-   ·          ──────────────────────────────
+   ·          ────────
    ╰────
   help: Move function declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (foo) function f(){ if(bar) var a; } 
-   ·                                ──────
+   ·                                ───
    ╰────
   help: Move variable declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (foo) { var fn = function(){} } 
-   ·            ─────────────────────
+   ·            ───
    ╰────
   help: Move variable declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (foo)  function f(){} 
-   ·           ──────────────
+   ·           ────────
    ╰────
   help: Move function declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ function bar() { if (foo) function f(){}; }
-   ·                           ──────────────
+   ·                           ────────
    ╰────
   help: Move function declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ function bar() { if (foo) var a; }
-   ·                           ──────
+   ·                           ───
    ╰────
   help: Move variable declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ if (foo){ var a; }
-   ·           ──────
+   ·           ───
    ╰────
   help: Move variable declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ function doSomething() { do { function somethingElse() { } } while (test); }
-   ·                               ────────────────────────────
+   ·                               ────────
    ╰────
   help: Move function declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ (function() { if (test) { function doSomething() { } } }());
-   ·                           ──────────────────────────
+   ·                           ────────
    ╰────
   help: Move function declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ while (test) { var foo; }
-   ·                ────────
+   ·                ───
    ╰────
   help: Move variable declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ function doSomething() { if (test) { var foo = 42; } }
-   ·                                      ─────────────
+   ·                                      ───
    ╰────
   help: Move variable declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ (function() { if (test) { var foo; } }());
-   ·                           ────────
+   ·                           ───
    ╰────
   help: Move variable declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ const doSomething = () => { if (test) { var foo = 42; } }
-   ·                                         ─────────────
+   ·                                         ───
    ╰────
   help: Move variable declaration to program root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ class C { method() { if(test) { var foo; } } }
-   ·                                 ────────
+   ·                                 ───
    ╰────
   help: Move variable declaration to function body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ class C { static { if (test) { function foo() {} } } }
-   ·                                ─────────────────
+   ·                                ────────
    ╰────
   help: Move function declaration to class static block body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ class C { static { if (test) { var foo; } } }
-   ·                                ────────
+   ·                                ───
    ╰────
   help: Move variable declaration to class static block body root
 
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:1]
  1 │ class C { static { if (test) { if (anotherTest) { var foo; } } } }
-   ·                                                   ────────
+   ·                                                   ───
    ╰────
   help: Move variable declaration to class static block body root
 
