@@ -387,27 +387,24 @@ impl NoUnusedVars {
         let name = ctx.symbols().get_name(symbol_id);
         // let Some(identifier) = decl.id.kind.identifier() else { return };
 
-        if self.is_ignored_var(name) {
-            return;
-        }
-
+        if
+        // allow unused vars that are ignored
+        self.is_ignored_var(name) ||
         // Allow `var x` for "vars": "local" b/c var keyword has side effects
-        if self.vars == VarsOption::Local && decl.kind.is_var() {
-            return;
+        (self.vars == VarsOption::Local && decl.kind.is_var()) {
+            return
+        }
+        let var_decl_node = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+        // ignore exported vars
+        match ctx.nodes().parent_node(var_decl_node.id()) {
+            Some(parent) if Self::is_exported(parent, ctx) => {
+                return
+            },
+            _ => { /* noop */ }
         }
 
-        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), decl.span))
-        // if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(identifier.name.as_str()) {
-        //     return
-        // }
-        // match arg.pattern.kind {
-        //     BindingPatternKind::BindingIdentifier(oxc_allocator::Box(BindingIdentifier { ref name, .. }))
-        //     | BindingPatternKind::AssignmentPattern(oxc_allocator::Box(AssignmentPattern { ref left: name, .. }))
-        //     => {
-        //         todo!()
-        //     },
-        //     _ => todo!()
-        // }
+        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), decl.span));
+
     }
 
     fn check_unused_catch_clause<'a>(
@@ -813,6 +810,7 @@ mod tests {
         let pass = vec![
             ("let a = 1; console.log(a);", None),
             ("let a = 1; let b = a + 1; console.log(b);", None),
+            ("export var foo = 123;", None),
         ];
         let fail = vec![("let a", None), ("let a = 1;", None), ("let a = 1; a += 2;", None)];
 
@@ -969,7 +967,7 @@ mod tests {
             ("(function z() { z(); })();", None),
             (" ", None),
             ("var who = \"Paul\";\nmodule.exports = `Hello ${who}!`;", None),
-            // ("export var foo = 123;", None),
+            ("export var foo = 123;", None),
             ("export function foo () {}", None),
             // FIXME
             // ("let toUpper = (partial) => partial.toUpperCase; export {toUpper}", None),
