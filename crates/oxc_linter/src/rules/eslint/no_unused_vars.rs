@@ -24,33 +24,11 @@ const EMPTY_STR: &'static Atom = &Atom::new_inline("");
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-unused-vars): Unused variables are not allowed")]
 #[diagnostic(severity(warning), help("{0} is {1} but never used{2}"))]
-struct NoUnusedVarsDiagnostic(pub Atom, pub &'static Atom, pub Atom, #[label] pub Span);
-
-bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    struct Usage: u8 {
-        const Ignored = 1 << 0;
-        // 000 = unused, 001 = Read, 010 = Write, 011 = ReadWrite, 100 = Unknown
-        const Read = 1 << 1;
-        const Write = 1 << 2;
-        const Unknown = 1 << 3;
-
-        const _USAGE_MASK = Self::Read.bits() | Self::Write.bits() | Self::Unknown.bits();
-    }
-}
-
-impl Usage {
-    pub fn is_ignored(&self) -> bool {
-        self.contains(Self::Ignored)
-    }
-    pub fn is_read(&self) -> bool {
-        self.contains(Self::Read)
-    }
-    pub fn is_write(&self) -> bool {
-        self.contains(Self::Write)
-    }
-    pub fn is_used(&self) -> bool {
-        self.intersects(Self::_USAGE_MASK)
+struct NoUnusedVarsDiagnostic(/* varName*/ pub Atom, /* action */ pub &'static Atom, /* additional */ pub Atom, #[label] pub Span);
+impl NoUnusedVarsDiagnostic {
+    /// Diagnostic for unused declaration, with no additional message.
+    pub fn decl(var: Atom, span: Span) -> Self {
+        Self(var, &DECLARED_STR, EMPTY_STR.clone(), span)
     }
 }
 
@@ -424,12 +402,7 @@ impl NoUnusedVars {
         //     _ => todo!()
         // }
 
-        ctx.diagnostic(NoUnusedVarsDiagnostic(
-            identifier.name.clone(),
-            DECLARED_STR,
-            "".into(),
-            decl.span,
-        ))
+        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(identifier.name.clone(), decl.span))
     }
 
     fn check_unused_function<'a>(&self, symbol_id: SymbolId, f: &'a Function, ctx: &LintContext<'a>) {
@@ -447,12 +420,7 @@ impl NoUnusedVars {
             return
         }
 
-        ctx.diagnostic(NoUnusedVarsDiagnostic(
-            name.clone(),
-            DECLARED_STR,
-            "".into(),
-            f.span,
-        ))
+        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), f.span))
     }
 
     fn check_unused_class<'a>(&self, symbol_id: SymbolId, class: &'a Class, ctx: &LintContext<'a>) {
@@ -461,12 +429,7 @@ impl NoUnusedVars {
             return
         }
 
-        ctx.diagnostic(NoUnusedVarsDiagnostic(
-            name.clone(),
-            DECLARED_STR,
-            "".into(),
-            class.span,
-        ))
+        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), class.span))
     }
 
     fn check_unused_arguments<'a>(&self, symbol_id: SymbolId, scope_id: ScopeId, args: &FormalParameters<'a>, ctx: &LintContext<'a>) {
@@ -481,7 +444,7 @@ impl NoUnusedVars {
                 let arg = args.items.iter().find(|arg| arg.pattern.kind.identifier().is_some_and(|id| id.name == name ));
                 match arg {
                     Some(arg) => {
-                        ctx.diagnostic(NoUnusedVarsDiagnostic(name.clone(), DECLARED_STR, "".into(), arg.span))
+                        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), arg.span))
                     },
                     None => {
                         debug_assert!(false, "Could not find FormalArgument in FormalArguments AST node even though Semantic said we would find it here. This is a bug.");
@@ -524,7 +487,7 @@ impl NoUnusedVars {
                     let arg = args.items.iter().find(|arg| arg.pattern.kind.identifier().is_some_and(|id| id.name == name ));
                     debug_assert!(arg.is_some(), "Expected {name} to be in FormalParameters.items but it wasn't");
                     let Some(arg) = arg else { return };
-                    ctx.diagnostic(NoUnusedVarsDiagnostic(name.clone(), DECLARED_STR, "".into(), arg.span))
+                    ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), arg.span))
                 }
             },
             ArgsOption::None => {
