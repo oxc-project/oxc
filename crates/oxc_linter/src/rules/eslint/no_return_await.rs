@@ -4,9 +4,9 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span, GetSpan};
+use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode, fixer::Fix};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-return-await): Redundant use of `await` on a return value.")]
@@ -41,10 +41,9 @@ impl Rule for NoReturnAwait {
                 let start = await_expr.span.start;
                 let end = start + 5;
                 let await_keyword_span = Span::new(start, end);
-                ctx.diagnostic_with_fix(
-                    NoReturnAwaitDiagnostic(await_keyword_span),
-                    || Fix::new("", await_keyword_span),
-                );
+                ctx.diagnostic_with_fix(NoReturnAwaitDiagnostic(await_keyword_span), || {
+                    Fix::new("", await_keyword_span)
+                });
             }
         }
     }
@@ -64,41 +63,44 @@ fn is_in_tail_call_position<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
             }
             AstKind::ConditionalExpression(cond_expr) => {
                 if (cond_expr.consequent.span() == node.kind().span())
-                    || (cond_expr.alternate.span() == node.kind().span()) {
+                    || (cond_expr.alternate.span() == node.kind().span())
+                {
                     return is_in_tail_call_position(parent, ctx);
                 }
-            },
+            }
             AstKind::LogicalExpression(logic_expr) => {
                 if logic_expr.right.span() == node.kind().span() {
                     return is_in_tail_call_position(parent, ctx);
                 }
-            },
+            }
             AstKind::SequenceExpression(seq_expr) => {
-                if let Some(seq_expr_last) = seq_expr.expressions.last() 
-                    && seq_expr_last.span() == node.kind().span(){
+                if let Some(seq_expr_last) = seq_expr.expressions.last() {
+                    if seq_expr_last.span() == node.kind().span() {
                         return is_in_tail_call_position(parent, ctx);
+                    }
                 }
-            },
+            }
             // `return (await b())`
-            AstKind::ParenthesizedExpression(paren_expr) => {                    
+            AstKind::ParenthesizedExpression(paren_expr) => {
                 if paren_expr.expression.span() == node.kind().span() {
                     return is_in_tail_call_position(parent, ctx);
                 }
-            },
+            }
             // async () => await bar()
             AstKind::ExpressionStatement(expr_stat) => {
                 // expression state in the last line of a `function_body`
                 if expr_stat.expression.span() == node.kind().span() {
                     return is_in_tail_call_position(parent, ctx);
                 }
-            },
+            }
             // last statement in `func_body`
             AstKind::FunctionBody(func_body) => {
-                if let Some(func_body_stat_last) = func_body.statements.last()
-                    && func_body_stat_last.span() == node.kind().span() {
-                    return is_in_tail_call_position(parent, ctx);
+                if let Some(func_body_stat_last) = func_body.statements.last() {
+                    if func_body_stat_last.span() == node.kind().span() {
+                        return is_in_tail_call_position(parent, ctx);
+                    }
                 }
-            },
+            }
             _ => {
                 return false;
             }

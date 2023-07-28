@@ -786,7 +786,7 @@ fn ignore() {
 
     // bugs
     test("var a=/\\s?auto?\\s?/i\nvar b;a,b", "var b,a=/\\s?auto?\\s?/i;a,b"); // #14
-    // expect("false"string"", "(!1)"string"");                                                               // #181
+                                                                               // expect("false"string"", "(!1)"string"");                                                               // #181
     test("x / /\\d+/.exec(s)[0]", "x/ /\\d+/.exec(s)[0]"); // #183
     test("()=>{return{a}}", "()=>({a})"); // #333
     test("()=>({a})", "()=>({a})"); // #333
@@ -794,7 +794,7 @@ fn ignore() {
         "function f(){if(a){return 1}else if(b){return 2}return 3}",
         "function f(){return a?1:b?2:3}",
     ); // #335
-    // expect("new RegExp("\xAA\xB5")", "new RegExp("\xAA\xB5")");                                            // #341
+       // expect("new RegExp("\xAA\xB5")", "new RegExp("\xAA\xB5")");                                            // #341
     test("for(var a;;)a();var b=5", "for(;;)a();var a,b=5"); // #346
     test("if(e?0:n=1,o=2){o.a}", "(e?0:n=1,o=2)&&o.a"); // #347
     test("const a=(a,b)=>({...a,b})", "const a=(a,b)=>({...a,b})"); // #369
@@ -822,5 +822,5 @@ fn ignore() {
         "export default function Foo(){a}Foo.prototype.bar=b",
     ); // #525
     test("(e=1,e=2)", "e=1,e=2"); // #528
-    // expect(""\x00\x31 \0\u0000"", "\"\x001 \x00\x00\""); // #577
+                                  // expect(""\x00\x31 \0\u0000"", "\"\x001 \x00\x00\""); // #577
 }

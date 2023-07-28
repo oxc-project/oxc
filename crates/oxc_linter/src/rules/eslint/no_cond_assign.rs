@@ -69,11 +69,15 @@ impl Rule for NoCondAssign {
                 ctx.diagnostic(NoCondAssignDiagnostic(stmt.test.span()));
             }
             AstKind::ForStatement(stmt) => {
-                if let Some(expr) = &stmt.test && self.is_assignment_expression(expr) {
-                    ctx.diagnostic(NoCondAssignDiagnostic(expr.span()));
+                if let Some(expr) = &stmt.test {
+                    if self.is_assignment_expression(expr) {
+                        ctx.diagnostic(NoCondAssignDiagnostic(expr.span()));
+                    }
                 }
             }
-            AstKind::ConditionalExpression(expr) if self.is_assignment_expression(expr.test.get_inner_expression()) => {
+            AstKind::ConditionalExpression(expr)
+                if self.is_assignment_expression(expr.test.get_inner_expression()) =>
+            {
                 ctx.diagnostic(NoCondAssignDiagnostic(expr.test.span()));
             }
             AstKind::AssignmentExpression(_) if self.config == NoCondAssignConfig::Always => {
@@ -85,10 +89,12 @@ impl Rule for NoCondAssign {
                         | AstKind::ForStatement(ForStatement { test: Some(test), .. })
                         | AstKind::ConditionalExpression(ConditionalExpression { test, .. }) => {
                             ctx.diagnostic(NoCondAssignDiagnostic(test.span()));
-                            return
+                            return;
                         }
-                        AstKind::Function(_) | AstKind::ArrowExpression(_)| AstKind::Program(_) => break,
-                        _ => {},
+                        AstKind::Function(_)
+                        | AstKind::ArrowExpression(_)
+                        | AstKind::Program(_) => break,
+                        _ => {}
                     }
                 }
             }

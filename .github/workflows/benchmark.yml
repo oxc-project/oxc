@@ -4,10 +4,19 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
-    paths:
-      - '**.rs'
-      - '!crates/oxc_resolver/**'
-      - '.github/workflows/benchmark.yml'
+    paths-ignore:
+      - '**/*.md'
+      - 'npm/**'
+      - 'website/**'
+      - 'crates/oxc/**'
+      - 'crates/oxc_cli/**'
+      - 'crates/oxc_formatter/**'
+      - 'crates/oxc_linter/**'
+      - 'crates/oxc_napi/**'
+      - 'crates/oxc_query/**'
+      - 'crates/oxc_resolver/**'
+      - 'crates/oxc_type_synthesis/**'
+      - 'crates/oxc_wasm/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}

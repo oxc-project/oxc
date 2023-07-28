@@ -7,8 +7,6 @@
 //! ## Cargo Features
 //! * `"serde"` enables support for serde serialization
 
-#![feature(let_chains)]
-
 #[cfg(feature = "serde")]
 mod serialize;
 

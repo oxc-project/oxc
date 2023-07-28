@@ -112,6 +112,13 @@ impl<'a> Expression<'a> {
         matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
     }
 
+    pub fn is_specific_string_literal(&self, string: &str) -> bool {
+        match self {
+            Self::StringLiteral(s) => s.value == string,
+            _ => false,
+        }
+    }
+
     /// Determines whether the given expr is a `null` literal
     pub fn is_null(&self) -> bool {
         matches!(self, Expression::NullLiteral(_))
@@ -129,13 +136,12 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
-        if let Self::UnaryExpression(expr) = self
-            && expr.operator == UnaryOperator::Void
-            && let Self::NumberLiteral(lit) = &expr.argument
-            && lit.value == 0.0 {
-            return true
+        match self {
+            Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void => {
+                matches!(&expr.argument, Self::NumberLiteral(lit) if lit.value == 0.0)
+            }
+            _ => false,
         }
-        false
     }
 
     /// Determines whether the given expr is a `0`
@@ -228,7 +234,11 @@ pub struct BooleanLiteral {
 
 impl BooleanLiteral {
     pub fn as_str(&self) -> &'static str {
-        if self.value { "true" } else { "false" }
+        if self.value {
+            "true"
+        } else {
+            "false"
+        }
     }
 }
 
@@ -277,7 +287,11 @@ impl<'a> NumberLiteral<'a> {
         let int32bit = pos_int % 2f64.powi(32);
 
         // step5
-        if int32bit >= 2f64.powi(31) { (int32bit - 2f64.powi(32)) as i32 } else { int32bit as i32 }
+        if int32bit >= 2f64.powi(31) {
+            (int32bit - 2f64.powi(32)) as i32
+        } else {
+            int32bit as i32
+        }
     }
 }
 
@@ -725,13 +739,12 @@ impl<'a> CallExpression<'a> {
     }
 
     pub fn common_js_require(&self) -> Option<&StringLiteral> {
-        if let Expression::Identifier(ident) = &self.callee
-            && ident.name =="require"
-            && self.arguments.len() == 1
-            && let Argument::Expression(Expression::StringLiteral(str_literal)) = &self.arguments[0] {
-            Some(str_literal)
-        } else {
-            None
+        if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
+            return None;
+        }
+        match &self.arguments[0] {
+            Argument::Expression(Expression::StringLiteral(str_literal)) => Some(str_literal),
+            _ => None,
         }
     }
 }

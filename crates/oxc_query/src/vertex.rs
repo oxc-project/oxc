@@ -176,7 +176,7 @@ impl Typename for Vertex<'_> {
             Vertex::TypeAnnotation(tn) => tn.typename(),
             Vertex::Type(_) => "Type",
             Vertex::Url(_) => "URL",
-            Vertex::VariableDeclaration(_) => "VariableDeclaration",
+            Vertex::VariableDeclaration(vd) => vd.typename(),
             Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
         }
     }
@@ -235,7 +235,11 @@ pub struct ClassVertex<'a> {
 
 impl<'a> Typename for ClassVertex<'a> {
     fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() { "ClassAST" } else { "Class" }
+        if self.ast_node.is_some() {
+            "ClassAST"
+        } else {
+            "Class"
+        }
     }
 }
 
@@ -262,7 +266,11 @@ pub struct ImportVertex<'a> {
 
 impl<'a> Typename for ImportVertex<'a> {
     fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() { "ImportAST" } else { "Import" }
+        if self.ast_node.is_some() {
+            "ImportAST"
+        } else {
+            "Import"
+        }
     }
 }
 
@@ -275,7 +283,11 @@ pub struct InterfaceVertex<'a> {
 
 impl<'a> Typename for InterfaceVertex<'a> {
     fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() { "InterfaceAST" } else { "Interface" }
+        if self.ast_node.is_some() {
+            "InterfaceAST"
+        } else {
+            "Interface"
+        }
     }
 }
 
@@ -309,7 +321,11 @@ pub struct JSXElementVertex<'a> {
 
 impl<'a> Typename for JSXElementVertex<'a> {
     fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() { "JSXElementAST" } else { "JSXElement" }
+        if self.ast_node.is_some() {
+            "JSXElementAST"
+        } else {
+            "JSXElement"
+        }
     }
 }
 
@@ -329,7 +345,11 @@ pub struct TypeAnnotationVertex<'a> {
 
 impl<'a> Typename for TypeAnnotationVertex<'a> {
     fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() { "TypeAnnotationAST" } else { "TypeAnnotation" }
+        if self.ast_node.is_some() {
+            "TypeAnnotationAST"
+        } else {
+            "TypeAnnotation"
+        }
     }
 }
 
@@ -345,4 +365,14 @@ pub struct SearchParameterVertex {
 pub struct VariableDeclarationVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub variable_declaration: &'a VariableDeclarator<'a>,
+}
+
+impl<'a> Typename for VariableDeclarationVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "VariableDeclarationAST"
+        } else {
+            "VariableDeclaration"
+        }
+    }
 }

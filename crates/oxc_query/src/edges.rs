@@ -1673,7 +1673,11 @@ mod object_literal {
                         .map_or(false, |key_from_iter| key_from_iter == key.as_str()),
                 };
 
-                if has_right_key_name { Some(Vertex::from(&prop.value)) } else { None }
+                if has_right_key_name {
+                    Some(Vertex::from(&prop.value))
+                } else {
+                    None
+                }
             }))
         })
     }
@@ -2066,7 +2070,7 @@ pub(super) fn resolve_variable_declaration_edge<'a, 'b: 'a>(
     resolve_info: &ResolveEdgeInfo,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
-        "entire_span" => variable_declaration::entire_span(contexts, resolve_info),
+        "span" => variable_declaration::span(contexts, resolve_info),
         "left" => variable_declaration::left(contexts, resolve_info),
         _ => {
             unreachable!(
@@ -2084,7 +2088,7 @@ mod variable_declaration {
 
     use super::super::vertex::Vertex;
 
-    pub(super) fn entire_span<'a, 'b: 'a>(
+    pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
@@ -2127,7 +2131,7 @@ pub(super) fn resolve_variable_declaration_ast_edge<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "ancestor" => variable_declaration_ast::ancestor(contexts, resolve_info, adapter),
-        "entire_span" => variable_declaration_ast::entire_span(contexts, resolve_info),
+        "span" => variable_declaration_ast::span(contexts, resolve_info),
         "left" => variable_declaration_ast::left(contexts, resolve_info),
         "parent" => variable_declaration_ast::parent(contexts, resolve_info, adapter),
         _ => {
@@ -2154,11 +2158,11 @@ mod variable_declaration_ast {
         super::ancestors(contexts, adapter)
     }
 
-    pub(super) fn entire_span<'a, 'b: 'a>(
+    pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
         resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::variable_declaration::entire_span(contexts, resolve_info)
+        super::variable_declaration::span(contexts, resolve_info)
     }
 
     pub(super) fn left<'a, 'b: 'a>(

@@ -48,51 +48,53 @@ declare_oxc_lint!(
 
 impl Rule for BadArrayMethodOnArguments {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::IdentifierReference(reference) = node.kind()
-            && reference.name == "arguments"
-            && let Some(parent_node_id) = ctx.nodes().parent_id(node.id())
-            && let AstKind::MemberExpression(member_expr) = ctx.nodes().kind(parent_node_id)
-            && let Some(parent_node_id) = ctx.nodes().parent_id(parent_node_id)
-            && let AstKind::CallExpression(_) = ctx.nodes().kind(parent_node_id)
-        {
-            match member_expr {
-                MemberExpression::StaticMemberExpression(expr) => {
-                    if ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
-                        ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                            expr.property.name.clone(),
-                            expr.span,
-                        ));
-                    }
+        if !node.kind().is_specific_id_reference("arguments") {
+            return;
+        }
+        let Some(parent_node_id) = ctx.nodes().parent_id(node.id()) else { return };
+        let AstKind::MemberExpression(member_expr) = ctx.nodes().kind(parent_node_id) else { return };
+        let Some(parent_node_id) = ctx.nodes().parent_id(parent_node_id) else { return };
+        let AstKind::CallExpression(_) = ctx.nodes().kind(parent_node_id) else { return };
+        match member_expr {
+            MemberExpression::StaticMemberExpression(expr) => {
+                if ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
+                    ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
+                        expr.property.name.clone(),
+                        expr.span,
+                    ));
                 }
-                MemberExpression::ComputedMemberExpression(expr) => {
-                    match &expr.expression {
-                        Expression::StringLiteral(name) => {
-                            if ARRAY_METHODS.binary_search(&name.value.as_str()).is_ok() {
-                                ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                    name.value.clone(),
-                                    expr.span,
-                                ));
-                            }
-                        }
-                        Expression::TemplateLiteral(template) => {
-                            // only check template string like "arguments[`METHOD_NAME`]" for Deepscan compatible
-                            if template.expressions.is_empty()
-                                && template.quasis.len() == 1
-                                && let Some(template_element) = template.quasis.get(0)
-                                && let Some(name) = template_element.value.cooked.as_deref()
-                                && ARRAY_METHODS.binary_search(&name).is_ok()
-                            {
-                                ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                    Atom::from(name),
-                                    expr.span,
-                                ));
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                MemberExpression::PrivateFieldExpression(_) => {}
             }
+            MemberExpression::ComputedMemberExpression(expr) => {
+                match &expr.expression {
+                    Expression::StringLiteral(name) => {
+                        if ARRAY_METHODS.binary_search(&name.value.as_str()).is_ok() {
+                            ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
+                                name.value.clone(),
+                                expr.span,
+                            ));
+                        }
+                    }
+                    Expression::TemplateLiteral(template) => {
+                        // only check template string like "arguments[`METHOD_NAME`]" for Deepscan compatible
+                        if template.expressions.is_empty() && template.quasis.len() == 1 {
+                            if let Some(name) =
+                                template.quasis.get(0).and_then(|template_element| {
+                                    template_element.value.cooked.as_deref()
+                                })
+                            {
+                                if ARRAY_METHODS.binary_search(&name).is_ok() {
+                                    ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
+                                        Atom::from(name),
+                                        expr.span,
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            MemberExpression::PrivateFieldExpression(_) => {}
         }
     }
 }
