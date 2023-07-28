@@ -1,14 +1,22 @@
 use std::borrow::Borrow;
 
 use oxc_ast::{ast::Expression, AstKind};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode, jest_ast_util::{ParsedGeneralJestFnCall, JestGeneralFnKind, parse_general_jest_fn_call}, fixer::Fix};
+use crate::{
+    context::LintContext,
+    fixer::Fix,
+    jest_ast_util::{parse_general_jest_fn_call, JestGeneralFnKind, ParsedGeneralJestFnCall},
+    rule::Rule,
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(jest/no-test-prefixes): Use {0:?} instead.")]
@@ -45,15 +53,11 @@ declare_oxc_lint!(
 );
 
 fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
-
     let ParsedGeneralJestFnCall { members, raw, .. } = jest_fn_call;
 
-    let preferred_modifier = if raw.starts_with('f') {
-        "only"
-    } else {
-        "skip"
-    };
-    let member_names = members.iter().map(|member| Borrow::borrow(&member.name)).collect::<Vec<&str>>().join(".");
+    let preferred_modifier = if raw.starts_with('f') { "only" } else { "skip" };
+    let member_names =
+        members.iter().map(|member| Borrow::borrow(&member.name)).collect::<Vec<&str>>().join(".");
     let name_slice = &raw[1..];
 
     if member_names.is_empty() {
@@ -65,36 +69,33 @@ fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
 
 impl Rule for NoTestPrefixes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx)
-             && let ParsedGeneralJestFnCall { kind, raw, .. } = &jest_fn_call
-             && let Some(kind) = kind.to_general()
-             {
-                if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
-                    return;
-                }
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else { return };
+        let ParsedGeneralJestFnCall { kind, raw, .. } = &jest_fn_call;
+        let Some(kind) = kind.to_general() else {return};
 
-                if !raw.starts_with('f') && !raw.starts_with('x') {
-                    return;
-                }
-
-                let span = match &call_expr.callee {
-                    Expression::TaggedTemplateExpression(tagged_template_expr) => {
-                        tagged_template_expr.tag.span()
-                    }
-                    Expression::CallExpression(child_call_expr) => child_call_expr.callee.span(),
-                    _ => call_expr.callee.span(),
-                };
-
-                let preferred_node_name = get_preferred_node_names(&jest_fn_call);
-                let preferred_node_name_cloned = preferred_node_name.clone();
-
-                ctx.diagnostic_with_fix(
-                    NoTestPrefixesDiagnostic(preferred_node_name, span),
-                    || Fix::new(preferred_node_name_cloned.to_string(), span),
-                );
-            }
+        if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
+            return;
         }
+
+        if !raw.starts_with('f') && !raw.starts_with('x') {
+            return;
+        }
+
+        let span = match &call_expr.callee {
+            Expression::TaggedTemplateExpression(tagged_template_expr) => {
+                tagged_template_expr.tag.span()
+            }
+            Expression::CallExpression(child_call_expr) => child_call_expr.callee.span(),
+            _ => call_expr.callee.span(),
+        };
+
+        let preferred_node_name = get_preferred_node_names(&jest_fn_call);
+        let preferred_node_name_cloned = preferred_node_name.clone();
+
+        ctx.diagnostic_with_fix(NoTestPrefixesDiagnostic(preferred_node_name, span), 
+        || Fix::new(preferred_node_name_cloned.to_string(), span),
+        );
     }
 }
 

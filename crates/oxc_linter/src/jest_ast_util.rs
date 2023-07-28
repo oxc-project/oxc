@@ -46,17 +46,17 @@ pub fn parse_jest_fn_call<'a>(
     // Ensure that we're at the "top" of the function call chain otherwise when
     // parsing e.g. x().y.z(), we'll incorrectly find & parse "x()" even though
     // the full chain is not a valid jest function call chain
-    if let Some(parent_node) = ctx.nodes().parent_node(node.id())
-        && matches!(parent_node.kind(), AstKind::CallExpression(_) | AstKind::MemberExpression(_))
-    {
-        return None
+    if ctx.nodes().parent_node(node.id()).is_some_and(|parent_node| {
+        matches!(parent_node.kind(), AstKind::CallExpression(_) | AstKind::MemberExpression(_))
+    }) {
+        return None;
     }
 
     if let (Some(first), Some(last)) = (chain.first(), chain.last()) {
         // If we're an `each()`, ensure we're the outer CallExpression (i.e `.each()()`)
         if last.name == "each"
-            && !matches!( 
-                callee, 
+            && !matches!(
+                callee,
                 Expression::CallExpression(_) | Expression::TaggedTemplateExpression(_)
             )
         {
@@ -85,17 +85,17 @@ pub fn parse_jest_fn_call<'a>(
         } else if members.len() == 1 {
             VALID_JEST_FN_CALL_CHAINS_2
                 .iter()
-                .any(|chain| chain[0] == name && chain[1] == members[0])
+                .any(|chain| chain[0] == name && chain[1] == members[0].name)
         } else if members.len() == 2 {
-            VALID_JEST_FN_CALL_CHAINS_3
-                .iter()
-                .any(|chain| chain[0] == name && chain[1] == members[0] && chain[2] == members[1])
+            VALID_JEST_FN_CALL_CHAINS_3.iter().any(|chain| {
+                chain[0] == name && chain[1] == members[0].name && chain[2] == members[1].name
+            })
         } else if members.len() == 3 {
             VALID_JEST_FN_CALL_CHAINS_4.iter().any(|chain| {
                 chain[0] == name
-                    && chain[1] == members[0]
-                    && chain[2] == members[1]
-                    && chain[3] == members[2]
+                    && chain[1] == members[0].name
+                    && chain[2] == members[1].name
+                    && chain[3] == members[2].name
             })
         } else {
             false
@@ -104,7 +104,11 @@ pub fn parse_jest_fn_call<'a>(
         if !is_valid_jest_call {
             return None;
         }
-        return Some(ParsedJestFnCall::GeneralJestFnCall(ParsedGeneralJestFnCall {kind, members, raw: first.name} ));
+        return Some(ParsedJestFnCall::GeneralJestFnCall(ParsedGeneralJestFnCall {
+            kind,
+            members,
+            raw: first.name,
+        }));
     }
 
     None
@@ -248,17 +252,17 @@ fn get_node_chain<'a>(
                 member_expr.object(),
                 KnownMemberExprPropertyKind::from(expr),
             ));
-            if let Some((span, name)) = member_expr.static_property_info()
-                && let Some(kind) = KnownMemberExprPropertyKind::from_member_expr(member_expr)
-            {
 
-                let parent_kind = KnownMemberExprPropertyKind::from(expr);
-                chain.push( KnownMemberExpressionProperty {
-                    name: Cow::Borrowed(name),
-                    kind,
-                    parent_kind,
-                    span
-                });
+            if let Some((span, name)) = member_expr.static_property_info() {
+                if let Some(kind) = KnownMemberExprPropertyKind::from_member_expr(member_expr) {
+                    let parent_kind = KnownMemberExprPropertyKind::from(expr);
+                    chain.push(KnownMemberExpressionProperty {
+                        name: Cow::Borrowed(name),
+                        kind,
+                        parent_kind,
+                        span,
+                    });
+                }
             }
         }
         Expression::Identifier(ident) => {
