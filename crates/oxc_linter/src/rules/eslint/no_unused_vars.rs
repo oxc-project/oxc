@@ -34,7 +34,7 @@ impl NoUnusedVarsDiagnostic {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub enum VarsOption {
     /// All variables are checked for usage, including those in the global scope.
     #[default]
@@ -391,6 +391,11 @@ impl NoUnusedVars {
             return;
         }
 
+        // Allow `var x` for "vars": "local" b/c var keyword has side effects
+        if self.vars == VarsOption::Local && decl.kind.is_var() {
+            return;
+        }
+
         ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), decl.span))
         // if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(identifier.name.as_str()) {
         //     return
@@ -738,15 +743,6 @@ mod tests {
     use crate::tester::Tester;
 
     // test-only trait implementations to make testing easier
-    impl PartialEq for VarsOption {
-        fn eq(&self, other: &Self) -> bool {
-            match (self, other) {
-                (Self::All, Self::All) => true,
-                (Self::Local, Self::Local) => true,
-                _ => false,
-            }
-        }
-    }
 
     impl PartialEq for ArgsOption {
         fn eq(&self, other: &Self) -> bool {
@@ -924,13 +920,13 @@ mod tests {
                 Some(serde_json::json!(["all"])),
             ),
             // todo
-            // ("function a(x, y){ return y; }; a();", Some(serde_json::json!(["all"]))),
+            ("function a(x, y){ return y; }; a();", Some(serde_json::json!(["all"]))),
             (
                 "var arr1 = [1, 2]; var arr2 = [3, 4]; for (var i in arr1) { arr1[i] = 5; } for (var i in arr2) { arr2[i] = 10; }",
                 Some(serde_json::json!(["all"])),
             ),
             // todo
-            // ("var a=10;", Some(serde_json::json!(["local"]))),
+            ("var a=10;", Some(serde_json::json!(["local"]))),
             ("var min = \"min\"; Math[min];", Some(serde_json::json!(["all"]))),
             ("Foo.bar = function(baz) { return baz; };", Some(serde_json::json!(["all"]))),
             ("myFunc(function foo() {}.bind(this))", None),
@@ -946,14 +942,14 @@ mod tests {
                 "var a=10; (function() { alert(a); })();",
                 Some(serde_json::json!([{ "vars": "all" }])),
             ),
-            // (
-            //     "function g(bar, baz) { return baz; }; g();",
-            //     Some(serde_json::json!([{ "vars": "all" }])),
-            // ),
-            // (
-            //     "function g(bar, baz) { return baz; }; g();",
-            //     Some(serde_json::json!([{ "vars": "all", "args": "after-used" }])),
-            // ),
+            (
+                "function g(bar, baz) { return baz; }; g();",
+                Some(serde_json::json!([{ "vars": "all" }])),
+            ),
+            (
+                "function g(bar, baz) { return baz; }; g();",
+                Some(serde_json::json!([{ "vars": "all", "args": "after-used" }])),
+            ),
             (
                 "function g(bar, baz) { return bar; }; g();",
                 Some(serde_json::json!([{ "vars": "all", "args": "none" }])),
@@ -971,18 +967,18 @@ mod tests {
                 Some(serde_json::json!([{ "vars": "all", "args": "none" }])),
             ),
             ("(function z() { z(); })();", None),
-            // (" ", None),
+            (" ", None),
             ("var who = \"Paul\";\nmodule.exports = `Hello ${who}!`;", None),
             // ("export var foo = 123;", None),
             ("export function foo () {}", None),
-            // todo
+            // FIXME
             // ("let toUpper = (partial) => partial.toUpperCase; export {toUpper}", None),
             ("export class foo {}", None),
-            // ("class Foo{}; var x = new Foo(); x.foo()", None),
-            // (
-            //     "const foo = \"hello!\";function bar(foobar = foo) {  foobar.replace(/!$/, \" world!\");}\nbar();",
-            //     None,
-            // ),
+            ("class Foo{}; var x = new Foo(); x.foo()", None),
+            (
+                "const foo = \"hello!\";function bar(foobar = foo) {  foobar.replace(/!$/, \" world!\");}\nbar();",
+                None,
+            ),
             ("function Foo(){}; var x = new Foo(); x.foo()", None),
             ("function foo() {var foo = 1; return foo}; foo();", None),
             ("function foo(foo) {return foo}; foo(1);", None),
@@ -1021,10 +1017,10 @@ mod tests {
             // ("/*eslint use-every-a:1*/ !function() { var a; return 1 }", None),
             ("var _a;", Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "^_" }]))),
             // todo
-            // (
-            //     "var a; function foo() { var _b; } foo();",
-            //     Some(serde_json::json!([{ "vars": "local", "varsIgnorePattern": "^_" }])),
-            // ),
+            (
+                "var a; function foo() { var _b; } foo();",
+                Some(serde_json::json!([{ "vars": "local", "varsIgnorePattern": "^_" }])),
+            ),
             (
                 "function foo(_a) { } foo();",
                 Some(serde_json::json!([{ "args": "all", "argsIgnorePattern": "^_" }])),
@@ -1096,7 +1092,7 @@ mod tests {
                     serde_json::json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]),
                 ),
             ),
-            // ("try{}catch(err){}", Some(serde_json::json!([{ "vars": "all", "args": "all" }]))),
+            ("try{}catch(err){}", Some(serde_json::json!([{ "vars": "all", "args": "all" }]))),
             // (
             //     "const data = { type: 'coords', x: 1, y: 2 };\nconst { type, ...coords } = data;\n console.log(coords);",
             //     Some(serde_json::json!([{ "ignoreRestSiblings": true }])),
