@@ -378,6 +378,33 @@ impl NoUnusedVars {
     //         // AstKind::FormalParameter(param)
     //     }
     // }
+    fn check_unused_binding_pattern<'a>(
+        &self,
+        symbol_id: SymbolId,
+        name: &Atom,
+        id: &BindingPattern<'a>,
+        ctx: &LintContext<'a>
+    ) -> Option<Span> {
+        match &id.kind {
+            | BindingPatternKind::BindingIdentifier(id) => {
+                debug_assert!(id.name == name, "Expected BindingIdentifier to have name '{name}', but it had name '{}'", id.name);
+                if self.is_ignored_var(name) {
+                    None
+                } else {
+                    Some(id.span)
+                }
+            },
+            | BindingPatternKind::AssignmentPattern(id) => self.check_unused_binding_pattern(
+                symbol_id,
+                name,
+                &id.left,
+                ctx
+            ) ,
+            | BindingPatternKind::ArrayPattern(arr) => todo!(),
+            | BindingPatternKind::ObjectPattern(obj) => todo!()
+        }
+    }
+
     fn check_unused_variable_declarator<'a>(
         &self,
         symbol_id: SymbolId,
@@ -385,26 +412,29 @@ impl NoUnusedVars {
         ctx: &LintContext<'a>,
     ) {
         let name = ctx.symbols().get_name(symbol_id);
-        // let Some(identifier) = decl.id.kind.identifier() else { return };
 
+        // match decl.id.kind {
+        //     | BindingPatternKind::BindingIdentifier(id)
+        //     | BindingPatternKind::AssignmentPattern(id) => todo!(),
+        //     | BindingPatternKind::ArrayPattern(arr) => todo!()
+        //     | BindingPatternKind::ObjectPattern(obj) => todo!()
+        // };
         if
         // allow unused vars that are ignored
         self.is_ignored_var(name) ||
         // Allow `var x` for "vars": "local" b/c var keyword has side effects
-        (self.vars == VarsOption::Local && decl.kind.is_var()) {
-            return
+        (self.vars == VarsOption::Local && decl.kind.is_var())
+        {
+            return;
         }
-        let var_decl_node = ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
+        let var_decl_node = ctx.semantic().symbol_declaration(symbol_id);
         // ignore exported vars
         match ctx.nodes().parent_node(var_decl_node.id()) {
-            Some(parent) if Self::is_exported(parent, ctx) => {
-                return
-            },
+            Some(parent) if Self::is_exported(parent, ctx) => return,
             _ => { /* noop */ }
         }
 
         ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), decl.span));
-
     }
 
     fn check_unused_catch_clause<'a>(
@@ -586,6 +616,7 @@ impl NoUnusedVars {
     fn is_exported(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         let Some(parent_kind) = ctx.nodes().parent_kind(node.id()) else { return false };
         let AstKind::ModuleDeclaration(module) = parent_kind else { return false };
+        // return module.is_export()
         match module {
             ModuleDeclaration::ExportAllDeclaration(_)
             | ModuleDeclaration::ExportNamedDeclaration(_)
@@ -808,36 +839,100 @@ mod tests {
     #[test]
     fn test_var_simple() {
         let pass = vec![
-            ("let a = 1; console.log(a);", None),
-            ("let a = 1; let b = a + 1; console.log(b);", None),
-            ("export var foo = 123;", None),
+            "let a = 1; console.log(a);",
+            "let a = 1; let b = a + 1; console.log(b);",
+            "export var foo = 123;",
         ];
-        let fail = vec![("let a", None), ("let a = 1;", None), ("let a = 1; a += 2;", None)];
+        let fail = vec!["let a", "let a = 1;", "let a = 1; a += 2;"];
+
+        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_var_simple_scoped() {
+        let pass = vec!["let a = 1; function foo(b) { return a + b }; console.log(foo(1));"];
+        let fail =
+            vec!["let a = 1; function foo(b) { let a = 1; return a + b }; console.log(foo(1));"];
+
+        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_var_ignored() {
+        let local = Some(json!(["local"]));
+        let ignore_underscore = Some(json!([{ "vars": "all", "varsIgnorePattern": "^_" }]));
+        let pass = vec![
+            // does const count?
+            ("var a", local.clone()),
+            ("var _a", ignore_underscore.clone()),
+            ("var a = 1; var _b = a", ignore_underscore.clone()),
+        ];
+        let fail = vec![
+            ("var a_", ignore_underscore.clone()),
+            // ("let a = 1;", None),
+            // ("let a = 1; a += 2;", None)
+        ];
 
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
 
     #[test]
-    fn test_var_simple_scoped() {
-        let pass =
-            vec![("let a = 1; function foo(b) { return a + b }; console.log(foo(1));", None)];
-        let fail = vec![(
-            "let a = 1; function foo(b) { let a = 1; return a + b }; console.log(foo(1));",
-            None,
-        )];
+    fn test_spread_arr_simple() {
+        let pass = vec![
+            ("let [b] = a; console.log(b);", None),
+        ];
+        let fail = vec![("let [b] = a", None), ("let [b, c] = a; console.log(b);", None)];
 
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_spread_arr_ignored() {
+        let ignore_underscore = Some(json!([{ "destructuredArrayIgnorePattern": "^_" }]));
+        let pass = vec![
+            ("let [_b] = a;", ignore_underscore),
+        ];
+        let fail = vec![];
+
+        Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_spread_obj_simple() {
+        let pass = vec![
+            "let { a } = x; console.log(a)",
+            "let { a: { b } } = x; console.log(b)"
+        ];
+        let fail = vec![
+            "let { a } = x;",
+            "let { a: { b } } = x;",
+            "let { a: { b, c, d } } = x; console.log(b + d)",
+        ];
+        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_spread_compound() {
+        let pass = vec![
+            ("let { a: [b, c, { e }] } = x; console.log(b + c + e)", None),
+            ("function foo({ bar = 1 }) { return bar }; foo()", None)
+        ];
+        let fail = vec![
+
+            ("let { a: [b, c, d] } = x", None)
+        ];
+        Tester::new(NoUnusedVars::NAME, pass, fail).test()
     }
 
     #[test]
     fn test_function_simple() {
         let pass = vec![
-            ("function foo() { return }; foo()", None),
-            ("export function foo() { return }", None),
-            ("export default function foo() { return }", None),
+            "function foo() { return }; foo()",
+            "export function foo() { return }",
+            "export default function foo() { return }",
         ];
-        let fail = vec![("function foo() { return }", None)];
-        Tester::new(NoUnusedVars::NAME, pass, fail).test();
+        let fail = vec!["function foo() { return }"];
+        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test();
     }
 
     #[test]
@@ -867,6 +962,7 @@ mod tests {
         ];
         let fail = vec![
             ("function foo(a) { return }; foo()", None),
+            ("function foo(a = 1) { return }; foo()", None),
             ("function foo() { return }", None),
             ("function foo(a, b) { return a }; foo()", None),
             ("function foo(a, b) { return b }; foo()", all.clone()),
@@ -877,16 +973,30 @@ mod tests {
     #[test]
     fn test_catch_clause_simple() {
         let all = Some(json!([{"caughtErrors": "all"}]));
-        let allow_underscore = Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }]));
+        let allow_underscore =
+            Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }]));
         let pass = vec![
             ("try {} catch (e) { }", None),
             ("try {} catch (_e) { }", allow_underscore.clone()),
             ("try {} catch (e) { console.error(e); }", all.clone()),
         ];
-        let fail = vec![
-            ("try {} catch (e) { }", all),
-            ("try {} catch (e) { }", allow_underscore)
+        let fail = vec![("try {} catch (e) { }", all), ("try {} catch (e) { }", allow_underscore)];
+        Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_modules_simple() {
+        let pass = vec![
+            ("export const foo = 1;", None),
+            ("export default { a: true };", None),
+            ("export function foo() {}", None),
+            ("export default function foo() {}", None),
+            ("export class Foo {}", None),
+            ("export default class Foo {}", None),
+            // todo
+            // ("export const Foo = class Foo {}", None),
         ];
+        let fail = vec![];
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
 
@@ -1031,10 +1141,10 @@ mod tests {
                 "var [ firstItemIgnored, secondItem ] = items;\nconsole.log(secondItem);",
                 Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "[iI]gnored" }])),
             ),
-            // (
-            //     "const [ a, _b, c ] = items;\nconsole.log(a+c);",
-            //     Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
-            // ),
+            (
+                "const [ a, _b, c ] = items;\nconsole.log(a+c);",
+                Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+            ),
             // (
             //     "const [ [a, _b, c] ] = items;\nconsole.log(a+c);",
             //     Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
