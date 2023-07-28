@@ -1,19 +1,16 @@
 use std::rc::Rc;
 
-use oxc_ast::{
-    ast::*,
-    AstKind,
-};
+use bitflags::bitflags;
+use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{SymbolId, ScopeId};
+use oxc_semantic::{ScopeId, SymbolId};
 use oxc_span::{Atom, Span};
 use regex::Regex;
 use serde_json::Value;
-use bitflags::bitflags;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -24,7 +21,12 @@ const EMPTY_STR: &'static Atom = &Atom::new_inline("");
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-unused-vars): Unused variables are not allowed")]
 #[diagnostic(severity(warning), help("{0} is {1} but never used{2}"))]
-struct NoUnusedVarsDiagnostic(/* varName*/ pub Atom, /* action */ pub &'static Atom, /* additional */ pub Atom, #[label] pub Span);
+struct NoUnusedVarsDiagnostic(
+    /* varName*/ pub Atom,
+    /* action */ pub &'static Atom,
+    /* additional */ pub Atom,
+    #[label] pub Span,
+);
 impl NoUnusedVarsDiagnostic {
     /// Diagnostic for unused declaration, with no additional message.
     pub fn decl(var: Atom, span: Span) -> Self {
@@ -326,31 +328,23 @@ impl NoUnusedVars {
     ) {
         if module.is_export() {
             // skip exported variables
-            return
+            return;
         }
         if let ModuleDeclaration::ImportDeclaration(import) = module {
             if import.specifiers.is_empty() {
                 // skip imports without specifiers
-                return
+                return;
             }
             todo!()
         }
     }
 
     fn is_ignored_var(&self, name: &str) -> bool {
-        if let Some(pat) = &self.vars_ignore_pattern {
-            pat.is_match(name)
-        } else {
-            false
-        }
+        if let Some(pat) = &self.vars_ignore_pattern { pat.is_match(name) } else { false }
     }
-    fn is_ignored_arg(&self, name: &str) -> bool {
 
-        if let Some(pat) = &self.args_ignore_pattern {
-            pat.is_match(name)
-        } else {
-            false
-        }
+    fn is_ignored_arg(&self, name: &str) -> bool {
+        if let Some(pat) = &self.args_ignore_pattern { pat.is_match(name) } else { false }
         // let Some(identifier) = arg.pattern.kind.identifier() else { return };
         // match &self.args_ignore_pattern {
         //     Some(pat) => if pat.is_match(identifier.name.as_str()) {
@@ -359,12 +353,17 @@ impl NoUnusedVars {
         //     None => {}
         // }
     }
+
     fn is_ignored_array_destructured(&self, name: &str) -> bool {
         if let Some(pat) = &self.destructured_array_ignore_pattern {
             pat.is_match(name)
         } else {
             false
         }
+    }
+
+    fn is_ignored_catch_err(&self, name: &str) -> bool {
+        if let Some(pat) = &self.caught_errors_ignore_pattern { pat.is_match(name) } else { false }
     }
 
     // fn is_ignored(&self, node: &AstNode<'_>) -> bool {
@@ -385,11 +384,14 @@ impl NoUnusedVars {
         decl: &'a VariableDeclarator<'a>,
         ctx: &LintContext<'a>,
     ) {
-        let Some(identifier) = decl.id.kind.identifier() else { return };
+        let name = ctx.symbols().get_name(symbol_id);
+        // let Some(identifier) = decl.id.kind.identifier() else { return };
 
-        if self.is_ignored_var(identifier.name.as_str()) {
-            return    
+        if self.is_ignored_var(name) {
+            return;
         }
+
+        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), decl.span))
         // if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(identifier.name.as_str()) {
         //     return
         // }
@@ -401,23 +403,50 @@ impl NoUnusedVars {
         //     },
         //     _ => todo!()
         // }
-
-        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(identifier.name.clone(), decl.span))
     }
 
-    fn check_unused_function<'a>(&self, symbol_id: SymbolId, f: &'a Function, ctx: &LintContext<'a>) {
+    fn check_unused_catch_clause<'a>(
+        &self,
+        symbol_id: SymbolId,
+        catch: &'a CatchClause,
+        ctx: &LintContext<'a>,
+    ) {
+        let name = ctx.symbols().get_name(symbol_id);
+        if self.caught_errors && !self.is_ignored_catch_err(name.as_str()) {
+            match &catch.param {
+                Some(error) => {
+                    if let Some(id) = error.kind.identifier() {
+                        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(id.name.clone(), id.span))
+                    }
+                }
+                None => {
+                    debug_assert!(
+                        false,
+                        "Found unused caught error but CatchClause AST node has no param"
+                    );
+                }
+            }
+        }
+    }
+
+    fn check_unused_function<'a>(
+        &self,
+        symbol_id: SymbolId,
+        f: &'a Function,
+        ctx: &LintContext<'a>,
+    ) {
         // skip exported functions
         // if Self::is_exported(f, ctx) {
         //     return
         // }
         // if f.modifiers.contains(ModifierKind::Export) {
-        //     return 
+        //     return
         // }
 
         // skip ignored functions
         let Some(name) = f.id.as_ref().map(|binding| &binding.name) else { return };
         if self.is_ignored_var(name.as_str()) {
-            return
+            return;
         }
 
         ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), f.span))
@@ -426,36 +455,47 @@ impl NoUnusedVars {
     fn check_unused_class<'a>(&self, symbol_id: SymbolId, class: &'a Class, ctx: &LintContext<'a>) {
         let Some(name) = class.id.as_ref().map(|binding| &binding.name) else { return };
         if self.is_ignored_var(name.as_str()) {
-            return
+            return;
         }
 
         ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), class.span))
     }
 
-    fn check_unused_arguments<'a>(&self, symbol_id: SymbolId, scope_id: ScopeId, args: &FormalParameters<'a>, ctx: &LintContext<'a>) {
-                // let semantic = ctx.semantic().clone();
+    fn check_unused_arguments<'a>(
+        &self,
+        symbol_id: SymbolId,
+        scope_id: ScopeId,
+        args: &FormalParameters<'a>,
+        ctx: &LintContext<'a>,
+    ) {
+        // let semantic = ctx.semantic().clone();
         match self.args {
-
             ArgsOption::All => {
                 let name = ctx.semantic().symbols().get_name(symbol_id);
                 if self.is_ignored_arg(name) {
-                    return
+                    return;
                 }
-                let arg = args.items.iter().find(|arg| arg.pattern.kind.identifier().is_some_and(|id| id.name == name ));
+                let arg = args
+                    .items
+                    .iter()
+                    .find(|arg| arg.pattern.kind.identifier().is_some_and(|id| id.name == name));
                 match arg {
                     Some(arg) => {
                         ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), arg.span))
-                    },
+                    }
                     None => {
-                        debug_assert!(false, "Could not find FormalArgument in FormalArguments AST node even though Semantic said we would find it here. This is a bug.");
+                        debug_assert!(
+                            false,
+                            "Could not find FormalArgument in FormalArguments AST node even though Semantic said we would find it here. This is a bug."
+                        );
                     }
                 }
-            //     args.items.iter().for_each(|arg| self.check_unused_argument(arg, ctx))
-            },
+                //     args.items.iter().for_each(|arg| self.check_unused_argument(arg, ctx))
+            }
             ArgsOption::AfterUsed => {
                 let name = ctx.semantic().symbols().get_name(symbol_id);
                 if self.is_ignored_arg(name) {
-                    return
+                    return;
                 }
 
                 // set to true when a arg defined before the current one is
@@ -463,20 +503,27 @@ impl NoUnusedVars {
                 let mut has_prev_used = false;
                 for arg in args.items.iter().rev() {
                     if has_prev_used {
-                        break
+                        break;
                     }
 
                     let Some(binding) = arg.pattern.kind.identifier() else { continue };
-                    let Some(arg_symbol_id) = ctx.scopes().get_binding(scope_id, &binding.name) else { continue };
+                    let Some(arg_symbol_id) = ctx.scopes().get_binding(scope_id, &binding.name)
+                    else {
+                        continue;
+                    };
 
                     // we've reached the current argument, break
                     if arg_symbol_id == symbol_id {
-                        break
+                        break;
                     }
 
                     {
-                        let refs = ctx.semantic().symbols().get_resolved_reference_ids(arg_symbol_id);
-                        let refs_count = refs.iter().filter(|r| !ctx.semantic().symbols().references[**r].is_write()).count();
+                        let refs =
+                            ctx.semantic().symbols().get_resolved_reference_ids(arg_symbol_id);
+                        let refs_count = refs
+                            .iter()
+                            .filter(|r| !ctx.semantic().symbols().references[**r].is_write())
+                            .count();
                         if refs_count > 0 {
                             has_prev_used = true;
                         }
@@ -484,25 +531,40 @@ impl NoUnusedVars {
                 }
 
                 if !has_prev_used {
-                    let arg = args.items.iter().find(|arg| arg.pattern.kind.identifier().is_some_and(|id| id.name == name ));
-                    debug_assert!(arg.is_some(), "Expected {name} to be in FormalParameters.items but it wasn't");
+                    let arg = args.items.iter().find(|arg| {
+                        arg.pattern.kind.identifier().is_some_and(|id| id.name == name)
+                    });
+                    debug_assert!(
+                        arg.is_some(),
+                        "Expected {name} to be in FormalParameters.items but it wasn't"
+                    );
                     let Some(arg) = arg else { return };
                     ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), arg.span))
                 }
-            },
+            }
             ArgsOption::None => {
                 // noop
             }
         }
     }
-    fn check_unused_argument<'a>(&self, symbol_id: SymbolId, arg: &'a FormalParameter, ctx: &LintContext<'a>) {
+
+    fn check_unused_argument<'a>(
+        &self,
+        symbol_id: SymbolId,
+        arg: &'a FormalParameter,
+        ctx: &LintContext<'a>,
+    ) {
         let name = ctx.semantic().symbols().get_name(symbol_id);
         if self.is_ignored_arg(name.as_str()) {
-            return
+            return;
         }
         let Some(identifier) = arg.pattern.kind.identifier() else {
-            debug_assert!(false, "No binding identifier found for FormalParameter with name {}", name.as_str());
-            return
+            debug_assert!(
+                false,
+                "No binding identifier found for FormalParameter with name {}",
+                name.as_str()
+            );
+            return;
         };
         // match &self.args_ignore_pattern {
         //     Some(pat) => if pat.is_match(identifier.name.as_str()) {
@@ -523,14 +585,13 @@ impl NoUnusedVars {
         let Some(parent_kind) = ctx.nodes().parent_kind(node.id()) else { return false };
         let AstKind::ModuleDeclaration(module) = parent_kind else { return false };
         match module {
-            | ModuleDeclaration::ExportAllDeclaration(_)
+            ModuleDeclaration::ExportAllDeclaration(_)
             | ModuleDeclaration::ExportNamedDeclaration(_)
             | ModuleDeclaration::ExportDefaultDeclaration(_) => true,
             // todo: should we include ts exports?
-            | _ => false
+            _ => false,
         }
     }
-
 }
 
 impl Rule for NoUnusedVars {
@@ -646,28 +707,23 @@ impl Rule for NoUnusedVars {
         // ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id));
         let declaration = semantic.symbol_declaration(symbol_id);
         if Self::is_exported(declaration, ctx) {
-            return
+            return;
         }
         // let parent_kind = nodes.parent_kind(declaration.id());
 
         match declaration.kind() {
-            AstKind::ModuleDeclaration(decl) => self.check_unused_module_declaration(symbol_id, decl, ctx),
-            AstKind::VariableDeclarator(decl) => self.check_unused_variable_declarator(symbol_id, decl, ctx),
+            AstKind::ModuleDeclaration(decl) => {
+                self.check_unused_module_declaration(symbol_id, decl, ctx)
+            }
+            AstKind::VariableDeclarator(decl) => {
+                self.check_unused_variable_declarator(symbol_id, decl, ctx)
+            }
             AstKind::Function(f) => self.check_unused_function(symbol_id, f, ctx),
             AstKind::Class(class) => self.check_unused_class(symbol_id, class, ctx),
-            // match decl.id.kind {
-            //     BindingPatternKind::ObjectPattern()
-            //     // BindingPatternKind::
-            // }
-            // if let Some(pat) = &self.vars_ignore_pattern && pat.is_match(decl.id.symbol_id.as_str()) {
-            //     return
-            // }
-            // decl.kind
-            // AstKind::FormalParameters(params) => match self.args {
-            //     ArgsOption::All => params.items.iter().for_each(|param| {
-            //     self.check_unused_argument(param, ctx)
-            // }),
-            AstKind::FormalParameters(params) => self.check_unused_arguments(symbol_id, declaration.scope_id(), params, ctx),
+            AstKind::CatchClause(catch) => self.check_unused_catch_clause(symbol_id, catch, ctx),
+            AstKind::FormalParameters(params) => {
+                self.check_unused_arguments(symbol_id, declaration.scope_id(), params, ctx)
+            }
             AstKind::FormalParameter(param) => self.check_unused_argument(symbol_id, param, ctx),
             s => todo!("handle decl kind {:?}", s),
         }
@@ -786,9 +842,7 @@ mod tests {
             ("export function foo() { return }", None),
             ("export default function foo() { return }", None),
         ];
-        let fail = vec![
-            ("function foo() { return }", None),
-        ];
+        let fail = vec![("function foo() { return }", None)];
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
 
@@ -822,6 +876,22 @@ mod tests {
             ("function foo() { return }", None),
             ("function foo(a, b) { return a }; foo()", None),
             ("function foo(a, b) { return b }; foo()", all.clone()),
+        ];
+        Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_catch_clause_simple() {
+        let all = Some(json!([{"caughtErrors": "all"}]));
+        let allow_underscore = Some(json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^_" }]));
+        let pass = vec![
+            ("try {} catch (e) { }", None),
+            ("try {} catch (_e) { }", allow_underscore.clone()),
+            ("try {} catch (e) { console.error(e); }", all.clone()),
+        ];
+        let fail = vec![
+            ("try {} catch (e) { }", all),
+            ("try {} catch (e) { }", allow_underscore)
         ];
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
@@ -865,14 +935,12 @@ mod tests {
             ("Foo.bar = function(baz) { return baz; };", Some(serde_json::json!(["all"]))),
             ("myFunc(function foo() {}.bind(this))", None),
             ("myFunc(function foo(){}.toString())", None),
-            // todo
-            // (
-            //     "function foo(first, second) {\ndoStuff(function() {\nconsole.log(second);});}; foo()",
-            //     None,
-            // ),
+            (
+                "function foo(first, second) {\ndoStuff(function() {\nconsole.log(second);});}; foo()",
+                None,
+            ),
             ("(function() { var doSomething = function doSomething() {}; doSomething() }())", None),
-            // todo
-            // ("try {} catch(e) {}", None),
+            ("try {} catch(e) {}", None),
             ("/* global a */ a;", None),
             (
                 "var a=10; (function() { alert(a); })();",
