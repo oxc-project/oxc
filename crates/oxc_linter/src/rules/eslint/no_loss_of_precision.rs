@@ -161,7 +161,7 @@ impl NoLossOfPrecision {
         };
 
         let coefficient = normalize_num.coefficient;
-        // 0 is the speical case
+        // 0 is the special case
         if coefficient == "0." {
             return String::from("0");
         }
