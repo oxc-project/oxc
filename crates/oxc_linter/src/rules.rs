@@ -39,6 +39,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_global_assign,
     eslint::no_import_assign,
     eslint::no_inner_declarations,
+    eslint::no_loss_of_precision,
     eslint::no_mixed_operators,
     eslint::no_new_symbol,
     eslint::no_obj_calls,
