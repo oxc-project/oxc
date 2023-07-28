@@ -71,7 +71,7 @@ declare_oxc_lint!(
     /// export function foo(sn: string | number): void;
     /// ```
     AdjacentOverloadSignatures,
-    correctness
+    style
 );
 
 #[derive(PartialEq, Debug)]
@@ -501,9 +501,9 @@ fn test() {
         r#"class Test {
         #private(): void;
         #private(arg: number): void {}
-      
+
         bar() {}
-      
+
         '#private'(): void;
         '#private'(arg: number): void {}
       }"#,
