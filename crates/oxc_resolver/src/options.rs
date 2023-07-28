@@ -16,6 +16,7 @@ pub enum AliasValue {
 /// Options are directly ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve#resolver-options).
 ///
 /// See [webpack resolve](https://webpack.js.org/configuration/resolve/) for information and examples
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone)]
 pub struct ResolveOptions {
     /// Create aliases to import or require certain modules more easily.
@@ -67,6 +68,11 @@ pub struct ResolveOptions {
     /// Default `[]`
     pub fallback: Alias,
 
+    /// Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests)
+    ///
+    /// Default `false`
+    pub fully_specified: bool,
+
     /// The filename to be used while resolving directories.
     ///
     /// Default `["index"]`
@@ -112,6 +118,7 @@ impl Default for ResolveOptions {
             extension_alias: vec![],
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             fallback: vec![],
+            fully_specified: false,
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
             prefer_relative: false,
