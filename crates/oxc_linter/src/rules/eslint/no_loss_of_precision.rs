@@ -146,10 +146,6 @@ impl NoLossOfPrecision {
     }
 
     fn normalize(num: &str) -> String {
-        if num == "inf" {
-            return String::from("inf");
-        }
-
         let num = num.replace('E', "e");
         let split_num = num.split('e');
         let split_num = split_num.collect::<Vec<_>>();
@@ -249,7 +245,8 @@ fn test() {
         ("var x = new Date()", None),
         ("var x = '9007199254740993'", None),
         ("var x = 0x1FFF_FFFF_FFF_FFF", None),
-        ("var x = 0X1_FFF_FFFF_FFF_FFF", None)
+        ("var x = 0X1_FFF_FFFF_FFF_FFF", None),
+        ("var a = Infinity", None),
     ];
 
     let fail = vec![
