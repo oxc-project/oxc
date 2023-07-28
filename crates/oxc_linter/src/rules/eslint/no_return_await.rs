@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoReturnAwait,
-    correctness
+    pedantic
 );
 
 impl Rule for NoReturnAwait {
