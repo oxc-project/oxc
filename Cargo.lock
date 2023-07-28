@@ -1467,6 +1467,7 @@ dependencies = [
 name = "oxc_linter"
 version = "0.0.0"
 dependencies = [
+ "bitflags 2.3.3",
  "insta",
  "lazy_static",
  "miette",

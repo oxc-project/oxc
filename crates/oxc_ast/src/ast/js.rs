@@ -1758,6 +1758,17 @@ pub enum ImportDeclarationSpecifier {
     /// import * as local from "source"
     ImportNamespaceSpecifier(ImportNamespaceSpecifier),
 }
+impl ImportDeclarationSpecifier {
+    /// Get the identifier for this import that is referrable by other nodes
+    /// within the scope the import occurred
+    pub fn local(&self) -> &BindingIdentifier {
+        match self {
+            Self::ImportSpecifier(import) => &import.local,
+            Self::ImportDefaultSpecifier(import) => &import.local,
+            Self::ImportNamespaceSpecifier(import) => &import.local,
+        }
+    }
+}
 
 // import {imported} from "source"
 // import {imported as local} from "source"
