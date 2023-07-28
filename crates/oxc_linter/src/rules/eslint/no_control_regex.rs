@@ -16,7 +16,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-control-regex): Unexpected control character(s)")]
 #[diagnostic(
-    severity(error),
+    severity(warning),
     help("Unexpected control character(s) in regular expression: \"{0}\"")
 )]
 struct NoControlRegexDiagnostic(Atom, #[label] pub Span);
