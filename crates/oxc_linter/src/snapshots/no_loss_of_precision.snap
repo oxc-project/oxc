@@ -236,4 +236,10 @@ expression: no_loss_of_precision
    ·         ──────────────────
    ╰────
 
+  ⚠ eslint(no-loss-of-precision): This number literal will lose precision at runtime.
+   ╭─[no_loss_of_precision.tsx:1:1]
+ 1 │ var x = 1e18_446_744_073_709_551_615
+   ·         ────────────────────────────
+   ╰────
+
 

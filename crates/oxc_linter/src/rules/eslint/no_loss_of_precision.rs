@@ -79,7 +79,9 @@ impl NoLossOfPrecision {
     }
 
     fn base_ten_loses_precision(node: &'_ NumberLiteral) -> bool {
-        let normalized_raw_num = Self::normalize(&Self::get_raw(node));
+        let normalized_raw_num = if let Some(s) = Self::normalize(&Self::get_raw(node)) {
+            s
+        } else { return true };
         let precision = normalized_raw_num.split('e').next().unwrap().replace('.', "").len();
 
         if precision > 100 {
@@ -87,7 +89,9 @@ impl NoLossOfPrecision {
         }
 
         let stored_num = format!("{:1$}", node.value, precision);
-        let normalized_stored_num = Self::normalize(&stored_num);
+        let normalized_stored_num = if let Some(s) = Self::normalize(&stored_num) {
+            s
+        } else {return true};
         normalized_raw_num != normalized_stored_num
     }
 
@@ -145,7 +149,7 @@ impl NoLossOfPrecision {
         );
     }
 
-    fn normalize(num: &str) -> String {
+    fn normalize(num: &str) -> Option<String> {
         let num = num.replace('E', "e");
         let split_num = num.split('e');
         let split_num = split_num.collect::<Vec<_>>();
@@ -159,14 +163,16 @@ impl NoLossOfPrecision {
         let coefficient = normalize_num.coefficient;
         // 0 is the special case
         if coefficient == "0." {
-            return String::from("0");
+            return Some(String::from("0"));
         }
         let magnitude = if split_num.len() > 1 {
-            split_num[1].parse::<isize>().unwrap() + normalize_num.magnitude
+            if let Ok(n) = split_num[1].parse::<isize>() {
+                n + normalize_num.magnitude
+            } else { return None }
         } else {
             normalize_num.magnitude
         };
-        format!("{coefficient}e{magnitude}")
+        Some(format!("{coefficient}e{magnitude}"))
     }
 
     pub fn lose_precision(node: &'_ NumberLiteral) -> bool {
@@ -288,7 +294,8 @@ fn test() {
         ("var x = 0o4_00000000000000_001", None),
         ("var x = 0O4_0000000000000000_1", None),
         ("var x = 0x2_0000000000001", None),
-        ("var x = 0X200000_0000000_1", None)
+        ("var x = 0X200000_0000000_1", None),
+        ("var x = 1e18_446_744_073_709_551_615", None),
     ];
 
     Tester::new(NoLossOfPrecision::NAME, pass, fail).test_and_snapshot();
