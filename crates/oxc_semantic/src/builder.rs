@@ -19,7 +19,7 @@ use crate::{
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
-    Semantic,
+    Semantic, code_path_analyzer::CodePathAnalyzer,
 };
 
 pub struct LabeledScope<'a> {
@@ -59,6 +59,9 @@ pub struct SemanticBuilder<'a> {
 
     with_module_record_builder: bool,
     pub module_record_builder: ModuleRecordBuilder,
+
+    pub code_path_analyzer: CodePathAnalyzer,
+
     unused_labels: UnusedLabels<'a>,
 
     jsdoc: JSDocBuilder<'a>,
@@ -95,6 +98,7 @@ impl<'a> SemanticBuilder<'a> {
             unused_labels: UnusedLabels { scopes: vec![], curr_scope: 0, labels: vec![] },
             jsdoc: JSDocBuilder::new(source_text, &trivias),
             check_syntax_error: false,
+            code_path_analyzer: CodePathAnalyzer::new()
         }
     }
 
@@ -144,6 +148,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record,
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
+            code_path_analyzer: self.code_path_analyzer
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
@@ -159,6 +164,7 @@ impl<'a> SemanticBuilder<'a> {
             module_record: ModuleRecord::default(),
             jsdoc: self.jsdoc.build(),
             unused_labels: self.unused_labels.labels,
+            code_path_analyzer: self.code_path_analyzer
         }
     }
 

@@ -8,10 +8,12 @@ mod node;
 mod reference;
 mod scope;
 mod symbol;
+mod code_path_analyzer;
 
 use std::rc::Rc;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
+use code_path_analyzer::CodePathAnalyzer;
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
 use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
 use oxc_span::SourceType;
@@ -46,6 +48,8 @@ pub struct Semantic<'a> {
     jsdoc: JSDoc<'a>,
 
     unused_labels: Vec<AstNodeId>,
+
+    code_path_analyzer: CodePathAnalyzer,
 }
 
 impl<'a> Semantic<'a> {
