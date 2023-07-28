@@ -1,16 +1,39 @@
 [package]
-name                  = "oxc_resolver"
-version               = "0.0.0"
-publish               = false
-authors.workspace     = true
-description.workspace = true
-edition.workspace     = true
-homepage.workspace    = true
-keywords.workspace    = true
-license.workspace     = true
-repository.workspace  = true
+name                   = "oxc_resolver"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+categories.workspace   = true
 
 [dependencies]
-oxc_span = { workspace = true }
+dashmap       = { workspace = true }
+serde         = { workspace = true, features = ["derive"] }
+serde_json    = { workspace = true }
+rustc-hash    = { workspace = true }
+indexmap      = { workspace = true, features = ["serde"] }
+dunce         = "1.0.4"
+identity-hash = "0.1.0"
 
-nodejs-resolver = { workspace = true }
+[dev-dependencies]
+static_assertions = { workspace = true }
+criterion         = { workspace = true }
+rayon             = { workspace = true } # for benchmark
+nodejs-resolver   = "0.0.88"             # for benchmark
+vfs               = "0.9.0"              # for testing with in memory file system
+
+[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
+jemallocator = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dev-dependencies]
+mimalloc = { workspace = true }
+
+[[bench]]
+name    = "resolver"
+harness = false

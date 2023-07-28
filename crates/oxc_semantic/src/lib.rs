@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 mod binder;
 mod builder;
 mod checker;
@@ -99,8 +97,21 @@ impl<'a> Semantic<'a> {
         self.scopes().root_unresolved_references().contains_key(&id.name)
     }
 
+    /// Find which scope a symbol is declared in
     pub fn symbol_scope(&self, symbol_id: SymbolId) -> ScopeId {
         self.symbols.get_scope_id(symbol_id)
+    }
+
+    /// Get all resolved references for a symbol
+    pub fn symbol_references(
+        &'a self,
+        symbol_id: SymbolId,
+    ) -> impl Iterator<Item = &'a Reference> + '_ {
+        self.symbols.get_resolved_references(symbol_id)
+    }
+
+    pub fn symbol_declaration(&self, symbol_id: SymbolId) -> AstNodeId {
+        self.symbols.get_declaration(symbol_id)
     }
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
@@ -111,36 +122,68 @@ impl<'a> Semantic<'a> {
 #[cfg(test)]
 mod tests {
     use oxc_allocator::Allocator;
-    use oxc_ast::AstKind;
-    use oxc_span::SourceType;
+    use oxc_ast::{ast::VariableDeclarationKind, AstKind};
+    use oxc_span::{Atom, SourceType};
 
-    use crate::SemanticBuilder;
+    use super::*;
+
+    /// Create a [`Semantic`] from source code, assuming there are no syntax/semantic errors.
+    fn get_semantic<'s, 'a: 's>(
+        allocator: &'a Allocator,
+        source: &'s str,
+        source_type: SourceType,
+    ) -> Semantic<'s> {
+        let parse = oxc_parser::Parser::new(allocator, source, source_type).parse();
+        assert!(parse.errors.is_empty());
+        let program = allocator.alloc(parse.program);
+        let semantic = SemanticBuilder::new(source, source_type).build(program);
+        assert!(semantic.errors.is_empty());
+        semantic.semantic
+    }
+
+    #[test]
+    fn test_symbols() {
+        let source = "
+            let a;
+            function foo(a) {
+                return a + 1;
+            }
+            let b = a + foo(1);";
+        let allocator = Allocator::default();
+        let semantic = get_semantic(&allocator, source, SourceType::default());
+
+        let top_level_a = semantic
+            .scopes()
+            .get_binding(semantic.scopes().root_scope_id(), &Atom::from("a"))
+            .unwrap();
+
+        let decl = semantic.symbol_declaration(top_level_a);
+        match semantic.nodes().get_node(decl).kind() {
+            AstKind::VariableDeclarator(decl) => {
+                assert_eq!(decl.kind, VariableDeclarationKind::Let);
+            }
+            kind => panic!("Expected VariableDeclarator for 'let', got {kind:?}"),
+        }
+
+        let references = semantic.symbol_references(top_level_a);
+        assert_eq!(references.count(), 1);
+    }
 
     #[test]
     fn test_is_global() {
         let source = "
-        var a = 0;
-        function foo() {
-          a += 1;
-        }
+            var a = 0;
+            function foo() {
+            a += 1;
+            }
 
-        var b = a + 2;
-      ";
+            var b = a + 2;
+        ";
         let allocator = Allocator::default();
-        let source_type = SourceType::default();
-        let parse =
-            oxc_parser::Parser::new(&allocator, source, oxc_span::SourceType::default()).parse();
-        assert!(parse.errors.is_empty());
-        let program = allocator.alloc(parse.program);
-
-        {
-            let semantic = SemanticBuilder::new(source, source_type).build(program);
-            assert!(semantic.errors.is_empty());
-            let semantic = semantic.semantic;
-            for node in semantic.nodes().iter() {
-                if let AstKind::IdentifierReference(id) = node.kind() {
-                    assert!(!semantic.is_reference_to_global_variable(id));
-                }
+        let semantic = get_semantic(&allocator, source, SourceType::default());
+        for node in semantic.nodes().iter() {
+            if let AstKind::IdentifierReference(id) = node.kind() {
+                assert!(!semantic.is_reference_to_global_variable(id));
             }
         }
     }

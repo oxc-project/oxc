@@ -50,7 +50,7 @@ impl Rule for NoDuplicateCase {
         if let AstKind::SwitchStatement(ss) = node.kind() {
             let mut map = FxHashMap::default();
             map.reserve(ss.cases.len());
-            for case in ss.cases.iter() {
+            for case in &ss.cases {
                 if let Some(test) = case.test.as_ref() {
                     let hash = calculate_hash(test);
 

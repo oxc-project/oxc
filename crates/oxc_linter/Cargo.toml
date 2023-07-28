@@ -1,14 +1,16 @@
 [package]
-name                  = "oxc_linter"
-version               = "0.0.0"
-publish               = false
-authors.workspace     = true
-description.workspace = true
-edition.workspace     = true
-homepage.workspace    = true
-keywords.workspace    = true
-license.workspace     = true
-repository.workspace  = true
+name                   = "oxc_linter"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+categories.workspace   = true
 
 [dependencies]
 oxc_allocator   = { workspace = true }
@@ -22,6 +24,7 @@ oxc_formatter   = { workspace = true }
 
 lazy_static = { workspace = true }                        # used in oxc_macros
 serde_json  = { workspace = true }
+regex       = { workspace = true }
 rustc-hash  = { workspace = true }
 phf         = { workspace = true, features = ["macros"] }
 num-traits  = { workspace = true }
@@ -32,4 +35,4 @@ rust-lapper = "1.1.0"
 oxc_parser = { workspace = true }
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 
-insta = { version = "1.28.0", features = ["glob"] }
+insta = { version = "1.31.0", features = ["glob"] }

@@ -1,8 +1,5 @@
 //! ECMAScript Minifier
 
-#![feature(let_chains)]
-#![feature(slice_group_by)]
-
 mod compressor;
 mod mangler;
 mod printer;

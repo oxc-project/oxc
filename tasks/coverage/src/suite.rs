@@ -285,11 +285,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             .with_module_record_builder(true)
             .with_check_syntax_error(true)
             .build(program);
-        let errors = parser_ret
-            .errors
-            .into_iter()
-            .chain(semantic_ret.errors.into_iter())
-            .collect::<Vec<_>>();
+        let errors = parser_ret.errors.into_iter().chain(semantic_ret.errors).collect::<Vec<_>>();
 
         let result = if errors.is_empty() {
             Ok(String::new())

@@ -54,7 +54,9 @@ declare_oxc_lint!(
 
 impl Rule for NoDupeClassMembers {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Class(class) = node.kind() else { return; };
+        let AstKind::Class(class) = node.kind() else {
+            return;
+        };
 
         let num_element = class.body.body.len();
         let mut property_table = PropertyTable::with_capacity(num_element);
@@ -91,14 +93,16 @@ impl PropertyTable {
             return None;
         }
 
-        let Some((property_name, property_span)) = element
-          .property_key()
-          .and_then(|key| key.static_name().map(|name| (name, key.span()))) else { return None; };
+        let Some((property_name, property_span)) =
+            element.property_key().and_then(|key| key.static_name().map(|name| (name, key.span())))
+        else {
+            return None;
+        };
         let property_kind = element.method_definition_kind();
 
         let key = (element.r#static(), property_name);
         let entry = self.0.entry(key).or_default();
-        for (kind, span) in entry.iter() {
+        for (kind, span) in &*entry {
             if Self::conflict(*kind, property_kind) {
                 return Some(*span);
             }

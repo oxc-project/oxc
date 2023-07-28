@@ -519,7 +519,7 @@ pub trait Visit<'a>: Sized {
     fn visit_array_expression(&mut self, expr: &'a ArrayExpression<'a>) {
         let kind = AstKind::ArrayExpression(expr);
         self.enter_node(kind);
-        for elem in expr.elements.iter() {
+        for elem in &expr.elements {
             self.visit_array_expression_element(elem);
         }
         self.leave_node(kind);
@@ -911,10 +911,13 @@ pub trait Visit<'a>: Sized {
     /* ----------  Expression ---------- */
 
     fn visit_jsx_element(&mut self, elem: &'a JSXElement<'a>) {
+        let kind = AstKind::JSXElement(elem);
+        self.enter_node(kind);
         self.visit_jsx_opening_element(&elem.opening_element);
         for child in &elem.children {
             self.visit_jsx_child(child);
         }
+        self.leave_node(kind);
     }
 
     fn visit_jsx_opening_element(&mut self, elem: &'a JSXOpeningElement<'a>) {

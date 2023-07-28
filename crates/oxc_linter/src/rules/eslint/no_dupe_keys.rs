@@ -44,13 +44,19 @@ impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(obj_expr) = node.kind() {
             let mut map = FxHashMap::default();
-            for prop in obj_expr.properties.iter() {
-                if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                    && let Some(key_name) = prop.key.static_name().as_ref() {
-                    let hash = calculate_hash(key_name);
-                    if let Some((prev_kind, prev_span)) = map.insert(hash, (prop.kind, prop.key.span())) {
-                        if prev_kind == PropertyKind::Init || prop.kind == PropertyKind::Init || prev_kind == prop.kind {
-                            ctx.diagnostic(NoDupeKeysDiagnostic(prev_span, prop.key.span()));
+            for prop in &obj_expr.properties {
+                if let ObjectPropertyKind::ObjectProperty(prop) = prop {
+                    if let Some(key_name) = prop.key.static_name().as_ref() {
+                        let hash = calculate_hash(key_name);
+                        if let Some((prev_kind, prev_span)) =
+                            map.insert(hash, (prop.kind, prop.key.span()))
+                        {
+                            if prev_kind == PropertyKind::Init
+                                || prop.kind == PropertyKind::Init
+                                || prev_kind == prop.kind
+                            {
+                                ctx.diagnostic(NoDupeKeysDiagnostic(prev_span, prop.key.span()));
+                            }
                         }
                     }
                 }

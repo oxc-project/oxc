@@ -21,10 +21,10 @@ declare_oxc_lint!(
     /// Disallow reassigning exceptions in catch clauses
     ///
     /// ### Why is this bad?
-    /// If a catch clause in a try statement accidentally 
-    /// (or purposely) assigns another value to the exception parameter, 
-    /// it is impossible to refer to the error from that point on. 
-    /// Since there is no arguments object to offer alternative access to this data, 
+    /// If a catch clause in a try statement accidentally
+    /// (or purposely) assigns another value to the exception parameter,
+    /// it is impossible to refer to the error from that point on.
+    /// Since there is no arguments object to offer alternative access to this data,
     /// assignment of the parameter is absolutely destructive.
     ///
     /// ### Example
@@ -43,12 +43,9 @@ impl Rule for NoExAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
         if symbol_table.get_flag(symbol_id).is_catch_variable() {
-            for reference_id in symbol_table.get_resolved_references(symbol_id) {
-                let reference = symbol_table.get_reference(*reference_id);
+            for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
-                    ctx.diagnostic(NoExAssignDiagnostic(
-                        reference.span(),
-                    ));
+                    ctx.diagnostic(NoExAssignDiagnostic(reference.span()));
                 }
             }
         }

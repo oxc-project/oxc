@@ -1,0 +1,22 @@
+{
+  "browser": {
+    "./lib/ignore.js": false,
+    "./lib/replaced.js": "./lib/browser",
+    "module-a": "./browser/module-a.js",
+    "module-b": "module-c",
+    "./toString": "./lib/toString.js",
+    ".": false
+  },
+  "innerBrowser1": {
+    "field": {
+      "browser": {
+        "./lib/main1.js": "./lib/main.js"
+      }
+    }
+  },
+  "innerBrowser2": {
+    "browser": {
+      "./lib/main2.js": "./lib/replaced.js"
+    }
+  }
+}

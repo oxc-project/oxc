@@ -1,0 +1,19 @@
+A-ast:
+- any: ['crates/oxc_ast/**/*', 'crates/oxc_ast_lower/**/*']
+
+A-cli:
+- any: ['crates/oxc_cli/**/*', 'npm/**/*']
+
+A-linter: 'crates/oxc_linter/**/*'
+
+A-minifier: 'crates/oxc_minifier/**/*'
+
+A-parser: 'crates/oxc_parser/**/*'
+
+A-printer: 'crates/oxc_minifier/src/printer/**/*'
+
+A-semantic: 'crates/oxc_semantic/**/*'
+
+A-resolver: 'crates/oxc_resolver/**/*'
+
+A-type-checking: 'crates/oxc_type_synthesis/**/*'

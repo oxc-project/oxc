@@ -1,11 +1,13 @@
 use std::borrow::Cow;
 
+use num_bigint::BigInt;
+use num_traits::{One, Zero};
 use oxc_semantic::ReferenceFlag;
 use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 use crate::hir::{
-    ArrayExpressionElement, Expression, NumberLiteral, ObjectProperty, ObjectPropertyKind,
-    PropertyKey, SpreadElement, UnaryExpression,
+    ArrayExpressionElement, BinaryExpression, Expression, NumberLiteral, ObjectProperty,
+    ObjectPropertyKind, PropertyKey, SpreadElement, UnaryExpression,
 };
 
 /// Code ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/NodeUtil.java#LL836C6-L836C6)
@@ -120,6 +122,9 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
             Self::UnaryExpression(unary_expr) => {
                 unary_expr.check_for_state_change(check_for_new_objects)
             }
+            Self::BinaryExpression(binary_expr) => {
+                binary_expr.check_for_state_change(check_for_new_objects)
+            }
             Self::ObjectExpression(object_expr) => {
                 if check_for_new_objects {
                     return true;
@@ -150,6 +155,15 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for UnaryExpression<'a> {
             return self.argument.check_for_state_change(check_for_new_objects);
         }
         true
+    }
+}
+
+impl<'a, 'b> CheckForStateChange<'a, 'b> for BinaryExpression<'a> {
+    fn check_for_state_change(&self, check_for_new_objects: bool) -> bool {
+        let left = self.left.check_for_state_change(check_for_new_objects);
+        let right = self.right.check_for_state_change(check_for_new_objects);
+
+        left || right
     }
 }
 
@@ -225,6 +239,45 @@ impl NumberValue {
             Self::NaN => Self::NaN,
         }
     }
+
+    pub fn is_nan(&self) -> bool {
+        matches!(self, Self::NaN)
+    }
+}
+
+pub fn is_exact_int64(num: f64) -> bool {
+    num.fract() == 0.0
+}
+
+/// port from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/NodeUtil.java#L540)
+pub fn get_string_bigint_value(raw_string: &str) -> Option<BigInt> {
+    if raw_string.contains('\u{000b}') {
+        // vertical tab is not always whitespace
+        return None;
+    }
+
+    let s = raw_string.trim();
+
+    if s.is_empty() {
+        return Some(BigInt::zero());
+    }
+
+    if s.len() > 2 && s.starts_with('0') {
+        let radix: u32 = match s.chars().nth(1) {
+            Some('x' | 'X') => 16,
+            Some('o' | 'O') => 8,
+            Some('b' | 'B') => 2,
+            _ => 0,
+        };
+
+        if radix == 0 {
+            return None;
+        }
+
+        return BigInt::parse_bytes(s[2..].as_bytes(), radix);
+    }
+
+    return BigInt::parse_bytes(s.as_bytes(), 10);
 }
 
 /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L348)
@@ -277,6 +330,47 @@ pub fn get_number_value(expr: &Expression) -> Option<NumberValue> {
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
+pub fn get_bigint_value(expr: &Expression) -> Option<BigInt> {
+    match expr {
+        Expression::NumberLiteral(number_literal) => {
+            let value = number_literal.value;
+            if value.abs() < 2_f64.powi(53) && is_exact_int64(value) {
+                Some(BigInt::from(value as i64))
+            } else {
+                None
+            }
+        }
+        Expression::BigintLiteral(bigint_literal) => Some(bigint_literal.value.clone()),
+        Expression::BooleanLiteral(bool_literal) => {
+            if bool_literal.value {
+                Some(BigInt::one())
+            } else {
+                Some(BigInt::zero())
+            }
+        }
+        Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+            UnaryOperator::LogicalNot => {
+                get_boolean_value(expr)
+                    .map(|boolean| if boolean { BigInt::one() } else { BigInt::zero() })
+            }
+            UnaryOperator::UnaryNegation => {
+                get_bigint_value(&unary_expr.argument).map(std::ops::Neg::neg)
+            }
+            UnaryOperator::BitwiseNot => {
+                get_bigint_value(&unary_expr.argument).map(std::ops::Not::not)
+            }
+            UnaryOperator::UnaryPlus => get_bigint_value(&unary_expr.argument),
+            _ => None,
+        },
+        Expression::StringLiteral(string_literal) => get_string_bigint_value(&string_literal.value),
+        Expression::TemplateLiteral(_) => {
+            get_string_value(expr).and_then(|value| get_string_bigint_value(&value))
+        }
+        _ => None,
+    }
+}
+
 /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L104-L114)
 /// Returns the number value of the node if it has one and it cannot have side effects.
 pub fn get_side_free_number_value(expr: &Expression) -> Option<NumberValue> {
@@ -285,10 +379,25 @@ pub fn get_side_free_number_value(expr: &Expression) -> Option<NumberValue> {
     // and there are only a very few cases where we can compute a number value, but there could
     // also be side effects. e.g. `void doSomething()` has value NaN, regardless of the behavior
     // of `doSomething()`
-    if value.is_some() && !expr.may_have_side_effects() {
-        return value;
+    if value.is_some() && expr.may_have_side_effects() {
+        None
+    } else {
+        value
     }
-    None
+}
+
+/// port from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/AbstractPeepholeOptimization.java#L121)
+pub fn get_side_free_bigint_value(expr: &Expression) -> Option<BigInt> {
+    let value = get_bigint_value(expr);
+    // Calculating the bigint value, if any, is likely to be faster than calculating side effects,
+    // and there are only a very few cases where we can compute a bigint value, but there could
+    // also be side effects. e.g. `void doSomething()` has value NaN, regardless of the behavior
+    // of `doSomething()`
+    if value.is_some() && expr.may_have_side_effects() {
+        None
+    } else {
+        value
+    }
 }
 
 /// port from [closure compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/NodeUtil.java#L109)
@@ -296,8 +405,6 @@ pub fn get_side_free_number_value(expr: &Expression) -> Option<NumberValue> {
 /// such value can be determined by static analysis.
 /// This method does not consider whether the node may have side-effects.
 pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
-    use num_traits::Zero;
-
     match expr {
         Expression::RegExpLiteral(_)
         | Expression::ArrayExpression(_)
@@ -313,11 +420,12 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
             // only for ``
-            if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
-                Some(quasi.value.cooked.as_ref().map_or(false, |cooked| !cooked.is_empty()))
-            } else {
-                None
-            }
+            template_literal
+                .quasis
+                .get(0)
+                .filter(|quasi| quasi.tail)
+                .and_then(|quasi| quasi.value.cooked.as_ref())
+                .map(|cooked| !cooked.is_empty())
         }
         Expression::Identifier(ident) => {
             if expr.is_undefined() || ident.name == "NaN" {
@@ -405,11 +513,12 @@ fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
         Expression::TemplateLiteral(template_literal) => {
             // TODO: I don't know how to iterate children of TemplateLiteral in order,so only checkout string like `hi`.
             // Closure-compiler do more: [case TEMPLATELIT](https://github.com/google/closure-compiler/blob/e13f5cd0a5d3d35f2db1e6c03fdf67ef02946009/src/com/google/javascript/jscomp/NodeUtil.java#L241-L256).
-            if let Some(quasi) = template_literal.quasis.get(0) && quasi.tail {
-                quasi.value.cooked.as_ref().map(|cooked| Cow::Borrowed(cooked.as_str()))
-            } else {
-                None
-            }
+            template_literal
+                .quasis
+                .get(0)
+                .filter(|quasi| quasi.tail)
+                .and_then(|quasi| quasi.value.cooked.as_ref())
+                .map(|cooked| Cow::Borrowed(cooked.as_str()))
         }
         Expression::Identifier(ident) => {
             let name = ident.name.as_str();
@@ -439,7 +548,11 @@ fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
                 UnaryOperator::LogicalNot => {
                     get_boolean_value(&unary_expr.argument).map(|boolean| {
                         // need reversed.
-                        if boolean { Cow::Borrowed("false") } else { Cow::Borrowed("true") }
+                        if boolean {
+                            Cow::Borrowed("false")
+                        } else {
+                            Cow::Borrowed("true")
+                        }
                     })
                 }
                 _ => None,

@@ -1,6 +1,6 @@
 //! <https://github.com/google/closure-compiler/blob/master/test/com/google/javascript/jscomp/PeepholeFoldConstantsTest.java>
 
-use crate::{test, test_same, test_without_compress_booleans};
+use crate::{test, test_same, test_without_compress_booleans as test_wcb};
 
 #[test]
 fn undefined_comparison1() {
@@ -121,6 +121,157 @@ fn test_undefined_comparison3() {
 }
 
 #[test]
+fn test_null_comparison1() {
+    test_wcb("null == undefined", "true");
+    test_wcb("null == null", "true");
+    test_wcb("null == void 0", "true");
+
+    test_wcb("null == 0", "false");
+    test_wcb("null == 1", "false");
+    test_wcb("null == 0n", "false");
+    test_wcb("null == 1n", "false");
+    test_wcb("null == 'hi'", "false");
+    test_wcb("null == true", "false");
+    test_wcb("null == false", "false");
+
+    test_wcb("null === undefined", "false");
+    test_wcb("null === null", "true");
+    test_wcb("null === void 0", "false");
+    test_same("null===x");
+
+    test_same("null==this");
+    test_same("null==x");
+
+    test_wcb("null != undefined", "false");
+    test_wcb("null != null", "false");
+    test_wcb("null != void 0", "false");
+
+    test_wcb("null != 0", "true");
+    test_wcb("null != 1", "true");
+    test_wcb("null != 0n", "true");
+    test_wcb("null != 1n", "true");
+    test_wcb("null != 'hi'", "true");
+    test_wcb("null != true", "true");
+    test_wcb("null != false", "true");
+
+    test_wcb("null !== undefined", "true");
+    test_wcb("null !== void 0", "true");
+    test_wcb("null !== null", "false");
+
+    test_same("null!=this");
+    test_same("null!=x");
+
+    test_wcb("null < null", "false");
+    test_wcb("null > null", "false");
+    test_wcb("null >= null", "true");
+    test_wcb("null <= null", "true");
+
+    test_wcb("0 < null", "false");
+    test_wcb("0 > null", "false");
+    test_wcb("0 >= null", "true");
+    test_wcb("0n < null", "false");
+    test_wcb("0n > null", "false");
+    test_wcb("0n >= null", "true");
+    test_wcb("true > null", "true");
+    test_wcb("'hi' < null", "false");
+    test_wcb("'hi' >= null", "false");
+    test_wcb("null <= null", "true");
+
+    test_wcb("null < 0", "false");
+    test_wcb("null < 0n", "false");
+    test_wcb("null > true", "false");
+    test_wcb("null < 'hi'", "false");
+    test_wcb("null >= 'hi'", "false");
+    test_wcb("null <= null", "true");
+
+    test_wcb("null == null", "true");
+    test_wcb("0 == null", "false");
+    test_wcb("1 == null", "false");
+    test_wcb("'hi' == null", "false");
+    test_wcb("true == null", "false");
+    test_wcb("false == null", "false");
+    test_wcb("null === null", "true");
+    test_wcb("void 0 === null", "false");
+
+    test_wcb("null == NaN", "false");
+    test_wcb("NaN == null", "false");
+    test_wcb("null == Infinity", "false");
+    test_wcb("Infinity == null", "false");
+    test_wcb("null == -Infinity", "false");
+    test_wcb("-Infinity == null", "false");
+    test_wcb("({}) == null", "false");
+    test_wcb("null == ({})", "false");
+    test_wcb("([]) == null", "false");
+    test_wcb("null == ([])", "false");
+    test_wcb("(/a/g) == null", "false");
+    test_wcb("null == (/a/g)", "false");
+    test_wcb("(function(){}) == null", "false");
+    test_wcb("null == (function(){})", "false");
+
+    test_wcb("null != NaN", "true");
+    test_wcb("NaN != null", "true");
+    test_wcb("null != Infinity", "true");
+    test_wcb("Infinity != null", "true");
+    test_wcb("null != -Infinity", "true");
+    test_wcb("-Infinity != null", "true");
+    test_wcb("({}) != null", "true");
+    test_wcb("null != ({})", "true");
+    test_wcb("([]) != null", "true");
+    test_wcb("null != ([])", "true");
+    test_wcb("(/a/g) != null", "true");
+    test_wcb("null != (/a/g)", "true");
+    test_wcb("(function(){}) != null", "true");
+    test_wcb("null != (function(){})", "true");
+
+    test_same("({a:f()})==null");
+    test_same("null=={a:f()}");
+    test_same("[f()]==null");
+    test_same("null==[f()]");
+
+    test_same("this==null");
+    test_same("x==null");
+}
+
+#[test]
+fn test_boolean_boolean_comparison() {
+    test_same("!x==!y");
+    test_same("!x<!y");
+    test_same("!x!==!y");
+
+    test_same("!x==!x"); // foldable
+    test_same("!x<!x"); // foldable
+    test_same("!x!==!x"); // foldable
+}
+
+#[test]
+fn test_boolean_number_comparison() {
+    test_same("!x==+y");
+    test_same("!x<=+y");
+    test_wcb("!x !== +y", "true");
+}
+
+#[test]
+fn test_number_boolean_comparison() {
+    test_same("+x==!y");
+    test_same("+x<=!y");
+    test_wcb("+x === !y", "false");
+}
+
+#[test]
+fn test_boolean_string_comparison() {
+    test_same("!x==''+y");
+    test_same("!x<=''+y");
+    test_wcb("!x !== '' + y", "true");
+}
+
+#[test]
+fn test_string_boolean_comparison() {
+    test_same("''+x==!y");
+    test_same("''+x<=!y");
+    test_wcb("'' + x === !y", "false");
+}
+
+#[test]
 fn test_string_string_comparison() {
     test("'a' < 'b'", "!0");
     test("'a' <= 'b'", "!0");
@@ -151,6 +302,143 @@ fn test_string_string_comparison() {
     test_same("''+x<=''+x"); // potentially foldable
     test_same("''+x!=''+x"); // potentially foldable
     test_same("''+x===''+x"); // potentially foldable
+}
+
+#[test]
+fn test_number_string_comparison() {
+    test_wcb("1 < '2'", "true");
+    test_wcb("2 > '1'", "true");
+    test_wcb("123 > '34'", "true");
+    test_wcb("NaN >= 'NaN'", "false");
+    test_wcb("1 == '2'", "false");
+    test_wcb("1 != '1'", "false");
+    test_wcb("NaN == 'NaN'", "false");
+    test_wcb("1 === '1'", "false");
+    test_wcb("1 !== '1'", "true");
+    test_same("+x>''+y");
+    test_same("+x==''+y");
+    test_wcb("+x !== '' + y", "true");
+}
+
+#[test]
+fn test_string_number_comparison() {
+    test_wcb("'1' < 2", "true");
+    test_wcb("'2' > 1", "true");
+    test_wcb("'123' > 34", "true");
+    test_wcb("'NaN' < NaN", "false");
+    test_wcb("'1' == 2", "false");
+    test_wcb("'1' != 1", "false");
+    test_wcb("'NaN' == NaN", "false");
+    test_wcb("'1' === 1", "false");
+    test_wcb("'1' !== 1", "true");
+    test_same("''+x<+y");
+    test_same("''+x==+y");
+    test_wcb("'' + x === +y", "false");
+}
+
+#[test]
+fn test_bigint_number_comparison() {
+    test_wcb("1n < 2", "true");
+    test_wcb("1n > 2", "false");
+    test_wcb("1n == 1", "true");
+    test_wcb("1n == 2", "false");
+
+    // comparing with decimals is allowed
+    test_wcb("1n < 1.1", "true");
+    test_wcb("1n < 1.9", "true");
+    test_wcb("1n < 0.9", "false");
+    test_wcb("-1n < -1.1", "false");
+    test_wcb("-1n < -1.9", "false");
+    test_wcb("-1n < -0.9", "true");
+    test_wcb("1n > 1.1", "false");
+    test_wcb("1n > 0.9", "true");
+    test_wcb("-1n > -1.1", "true");
+    test_wcb("-1n > -0.9", "false");
+
+    // Don't fold unsafely large numbers because there might be floating-point error
+    let max_safe_int = 9_007_199_254_740_991_i64;
+    let neg_max_safe_int = -9_007_199_254_740_991_i64;
+    let max_safe_float = 9_007_199_254_740_991_f64;
+    let neg_max_safe_float = -9_007_199_254_740_991_f64;
+    test_wcb(&format!("0n > {max_safe_int}"), "false");
+    test_wcb(&format!("0n < {max_safe_int}"), "true");
+    test_wcb(&format!("0n > {neg_max_safe_int}"), "true");
+    test_wcb(&format!("0n < {neg_max_safe_int}"), "false");
+    test_wcb(&format!("0n > {max_safe_float}"), "false");
+    test_wcb(&format!("0n < {max_safe_float}"), "true");
+    test_wcb(&format!("0n > {neg_max_safe_float}"), "true");
+    test_wcb(&format!("0n < {neg_max_safe_float}"), "false");
+
+    // comparing with Infinity is allowed
+    test_wcb("1n < Infinity", "true");
+    test_wcb("1n > Infinity", "false");
+    test_wcb("1n < -Infinity", "false");
+    test_wcb("1n > -Infinity", "true");
+
+    // null is interpreted as 0 when comparing with bigint
+    test_wcb("1n < null", "false");
+    test_wcb("1n > null", "true");
+}
+
+#[test]
+fn test_bigint_string_comparison() {
+    test_wcb("1n < '2'", "true");
+    test_wcb("2n > '1'", "true");
+    test_wcb("123n > '34'", "true");
+    test_wcb("1n == '1'", "true");
+    test_wcb("1n == '2'", "false");
+    test_wcb("1n != '1'", "false");
+    test_wcb("1n === '1'", "false");
+    test_wcb("1n !== '1'", "true");
+}
+
+#[test]
+fn test_string_bigint_comparison() {
+    test_wcb("'1' < 2n", "true");
+    test_wcb("'2' > 1n", "true");
+    test_wcb("'123' > 34n", "true");
+    test_wcb("'1' == 1n", "true");
+    test_wcb("'1' == 2n", "false");
+    test_wcb("'1' != 1n", "false");
+    test_wcb("'1' === 1n", "false");
+    test_wcb("'1' !== 1n", "true");
+}
+
+#[test]
+fn test_nan_comparison() {
+    test_wcb("NaN < 1", "false");
+    test_wcb("NaN <= 1", "false");
+    test_wcb("NaN > 1", "false");
+    test_wcb("NaN >= 1", "false");
+    test_wcb("NaN < 1n", "false");
+    test_wcb("NaN <= 1n", "false");
+    test_wcb("NaN > 1n", "false");
+    test_wcb("NaN >= 1n", "false");
+
+    test_wcb("NaN < NaN", "false");
+    test_wcb("NaN >= NaN", "false");
+    test_wcb("NaN == NaN", "false");
+    test_wcb("NaN === NaN", "false");
+
+    test_wcb("NaN < null", "false");
+    test_wcb("null >= NaN", "false");
+    test_wcb("NaN == null", "false");
+    test_wcb("null != NaN", "true");
+    test_wcb("null === NaN", "false");
+
+    test_wcb("NaN < undefined", "false");
+    test_wcb("undefined >= NaN", "false");
+    test_wcb("NaN == undefined", "false");
+    test_wcb("undefined != NaN", "true");
+    test_wcb("undefined === NaN", "false");
+
+    test_same("NaN<x");
+    test_same("x>=NaN");
+    test_same("NaN==x");
+    test_same("x!=NaN");
+    test_wcb("NaN === x", "false");
+    test_wcb("x !== NaN", "true");
+    test_same("NaN==foo()");
 }
 
 #[test]
@@ -215,7 +503,7 @@ fn unary_ops() {
 fn unary_with_big_int() {
     test("-(1n)", "-1n");
     test("- -1n", "1n");
-    test_without_compress_booleans("!1n", "false");
+    test_wcb("!1n", "false");
     test("~0n", "-1n");
 }
 
@@ -252,8 +540,8 @@ fn test_fold_logical_op() {
     test("a = b ? x && true : c", "a=b?x&&!0:c");
 
     // folded, but not here.
-    test_without_compress_booleans("a = x || false ? b : c", "a=x||false?b:c");
-    test_without_compress_booleans("a = x && true ? b : c", "a=x&&true?b:c");
+    test_wcb("a = x || false ? b : c", "a=x||false?b:c");
+    test_wcb("a = x && true ? b : c", "a=x&&true?b:c");
 
     test("x = foo() || true || bar()", "x=foo()||!0");
     test("x = foo() || true && bar()", "x=foo()||bar()");
@@ -291,8 +579,8 @@ fn test_fold_logical_op() {
     // An example would be if foo() is 1 (truthy) and bar() is 0 (falsey):
     // (1 && true) || 0 == true
     // 1 || 0 == 1, but true =/= 1
-    test_without_compress_booleans("x=foo()&&true||bar()", "x=foo()&&true||bar()");
-    test_without_compress_booleans("foo()&&true||bar()", "foo()&&true||bar()");
+    test_wcb("x=foo()&&true||bar()", "x=foo()&&true||bar()");
+    test_wcb("foo()&&true||bar()", "foo()&&true||bar()");
 }
 
 #[test]

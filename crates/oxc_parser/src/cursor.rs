@@ -211,7 +211,7 @@ impl<'a> Parser<'a> {
 
     /// Tell lexer to re-read a jsx identifier
     pub(crate) fn re_lex_jsx_identifier(&mut self) {
-        self.token = self.lexer.next_jsx_identifier(self.prev_token_end);
+        self.token = self.lexer.next_jsx_identifier(self.cur_token().start);
     }
 
     pub(crate) fn re_lex_right_angle(&mut self) -> Kind {

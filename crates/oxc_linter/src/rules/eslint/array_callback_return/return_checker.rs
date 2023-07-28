@@ -140,7 +140,7 @@ pub fn check_statement(statement: &Statement) -> StatementReturnStatus {
         Statement::WhileStatement(stmt) => {
             let test = &stmt.test;
             let inner_return = check_statement(&stmt.body);
-            if let Some(val) = test.get_boolean_value() && val {
+            if test.get_boolean_value() == Some(true) {
                 inner_return
             } else {
                 inner_return.join(StatementReturnStatus::NotReturn)

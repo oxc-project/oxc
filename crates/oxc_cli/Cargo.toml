@@ -1,14 +1,16 @@
 [package]
-name                  = "oxc_cli"
-version               = "0.0.0"
-publish               = false
-authors.workspace     = true
-description.workspace = true
-edition.workspace     = true
-homepage.workspace    = true
-keywords.workspace    = true
-license.workspace     = true
-repository.workspace  = true
+name                   = "oxc_cli"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+categories.workspace   = true
 
 [[bin]]
 name = "oxlint"
@@ -21,14 +23,14 @@ jemallocator = { workspace = true }
 mimalloc = { workspace = true }
 
 [dependencies]
-oxc_diagnostics    = { workspace = true }
 oxc_allocator      = { workspace = true }
+oxc_diagnostics    = { workspace = true }
+oxc_index          = { workspace = true }
+oxc_linter         = { workspace = true }
 oxc_parser         = { workspace = true }
 oxc_semantic       = { workspace = true }
-oxc_linter         = { workspace = true }
-oxc_type_synthesis = { workspace = true }
 oxc_span           = { workspace = true }
-oxc_resolver       = { workspace = true }
+oxc_type_synthesis = { workspace = true }
 
 # TODO temp, for type check output, replace with Miette
 codespan-reporting = "0.11.1"
@@ -36,8 +38,8 @@ codespan-reporting = "0.11.1"
 clap              = { workspace = true }
 crossbeam-channel = { workspace = true }
 dashmap           = { workspace = true }
-rayon             = { workspace = true }
-miette            = { workspace = true, features = ["fancy-no-backtrace"] }
-rustc-hash        = { workspace = true }
 ignore            = { workspace = true, features = ["simd-accel"] }
+miette            = { workspace = true, features = ["fancy-no-backtrace"] }
+rayon             = { workspace = true }
+rustc-hash        = { workspace = true }
 # git2 = { version = "0.16.1", default_features = false }

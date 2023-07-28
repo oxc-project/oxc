@@ -8,8 +8,6 @@
 mod constants;
 mod kind;
 mod number;
-#[cfg(not(target_arch = "wasm32"))]
-mod simd;
 mod string_builder;
 mod token;
 mod trivia_builder;
@@ -28,8 +26,6 @@ use oxc_syntax::{
     },
     unicode_id_start::is_id_start_unicode,
 };
-#[cfg(not(target_arch = "wasm32"))]
-use simd::{SkipMultilineComment, SkipWhitespace};
 pub use token::{RegExp, Token, TokenValue};
 
 pub use self::kind::Kind;
@@ -216,8 +212,8 @@ impl<'a> Lexer<'a> {
     }
 
     /// Expand the current token for `JSXIdentifier`
-    pub fn next_jsx_identifier(&mut self, prev_len: u32) -> Token<'a> {
-        let kind = self.read_jsx_identifier(prev_len);
+    pub fn next_jsx_identifier(&mut self, start_offset: u32) -> Token<'a> {
+        let kind = self.read_jsx_identifier(start_offset);
         self.lookahead.clear();
         self.finish_next(kind)
     }
@@ -329,9 +325,6 @@ impl<'a> Lexer<'a> {
         self.current.token.start = self.offset();
 
         loop {
-            #[cfg(not(target_arch = "wasm32"))]
-            self.skip_whitespace();
-
             let offset = self.offset();
             self.current.token.start = offset;
             let builder = AutoCow::new(self);
@@ -368,9 +361,7 @@ impl<'a> Lexer<'a> {
         // > the rough order of frequency for different token kinds is as follows:
         // identifiers/keywords, ‘.’, ‘=’, strings, decimal numbers, ‘:’, ‘+’, hex/octal numbers, and then everything else
         match c {
-            #[cfg(target_arch = "wasm32")]
             ' ' | '\t' => Kind::WhiteSpace,
-            #[cfg(target_arch = "wasm32")]
             '\r' | '\n' => {
                 self.current.token.is_on_new_line = true;
                 Kind::NewLine
@@ -460,36 +451,6 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    // Portable SIMD adds a bit to the binary and we're not really sure if it
-    // uses the WASM instructions yet so we use a linear implementation.
-    #[cfg(not(target_arch = "wasm32"))]
-    fn skip_whitespace(&mut self) {
-        let c = self.peek();
-        let any_newline = c == '\r' || c == '\n';
-        let any_white = c == ' ' || c == '\t' || any_newline;
-        // Fast path for single non-whitespace
-        if any_white {
-            self.current.chars.next();
-            if any_newline {
-                self.current.token.is_on_new_line = true;
-            }
-        } else {
-            return;
-        }
-
-        let remaining = self.remaining().as_bytes();
-        let mut state = SkipWhitespace::new(self.current.token.is_on_new_line);
-        state.simd(remaining);
-
-        // SAFETY: offset is computed to the boundary
-        self.current.chars =
-            unsafe { std::str::from_utf8_unchecked(&remaining[state.offset..]) }.chars();
-
-        if state.newline {
-            self.current.token.is_on_new_line = true;
-        }
-    }
-
     /// Section 12.4 Single Line Comment
     fn skip_single_line_comment(&mut self) -> Kind {
         while let Some(c) = self.current.chars.next().as_ref() {
@@ -503,32 +464,6 @@ impl<'a> Lexer<'a> {
     }
 
     /// Section 12.4 Multi Line Comment
-    #[cfg(not(target_arch = "wasm32"))]
-    fn skip_multi_line_comment(&mut self) -> Kind {
-        let remaining = self.remaining().as_bytes();
-        let newline = self.current.token.is_on_new_line;
-        let mut state = SkipMultilineComment::new(newline, remaining);
-        state.simd();
-
-        // SAFETY: offset is computed to the boundary
-        self.current.chars =
-            unsafe { std::str::from_utf8_unchecked(&remaining[state.offset..]) }.chars();
-
-        if state.newline && !newline {
-            self.current.token.is_on_new_line = true;
-        }
-
-        if !state.found {
-            self.error(diagnostics::UnterminatedMultiLineComment(self.unterminated_range()));
-            return Kind::Eof;
-        }
-
-        self.trivia_builder.add_multi_line_comment(self.current.token.start, self.offset());
-        Kind::MultiLineComment
-    }
-
-    /// Section 12.4 Multi Line Comment
-    #[cfg(target_arch = "wasm32")]
     fn skip_multi_line_comment(&mut self) -> Kind {
         while let Some(c) = self.current.chars.next() {
             if c == '*' && self.next_eq('/') {
@@ -601,7 +536,11 @@ impl<'a> Lexer<'a> {
     /// returns None for `SingleLineHTMLOpenComment` `<!--` in script mode
     fn read_left_angle(&mut self) -> Option<Kind> {
         if self.next_eq('<') {
-            if self.next_eq('=') { Some(Kind::ShiftLeftEq) } else { Some(Kind::ShiftLeft) }
+            if self.next_eq('=') {
+                Some(Kind::ShiftLeftEq)
+            } else {
+                Some(Kind::ShiftLeft)
+            }
         } else if self.next_eq('=') {
             Some(Kind::LtEq)
         } else if self.peek() == '!'
@@ -618,7 +557,11 @@ impl<'a> Lexer<'a> {
     fn read_right_angle(&mut self) -> Kind {
         if self.next_eq('>') {
             if self.next_eq('>') {
-                if self.next_eq('=') { Kind::ShiftRight3Eq } else { Kind::ShiftRight3 }
+                if self.next_eq('=') {
+                    Kind::ShiftRight3Eq
+                } else {
+                    Kind::ShiftRight3
+                }
             } else if self.next_eq('=') {
                 Kind::ShiftRightEq
             } else {
@@ -633,7 +576,11 @@ impl<'a> Lexer<'a> {
 
     fn read_equal(&mut self) -> Kind {
         if self.next_eq('=') {
-            if self.next_eq('=') { Kind::Eq3 } else { Kind::Eq2 }
+            if self.next_eq('=') {
+                Kind::Eq3
+            } else {
+                Kind::Eq2
+            }
         } else if self.next_eq('>') {
             Kind::Arrow
         } else {
@@ -643,7 +590,11 @@ impl<'a> Lexer<'a> {
 
     fn read_exclamation(&mut self) -> Kind {
         if self.next_eq('=') {
-            if self.next_eq('=') { Kind::Neq2 } else { Kind::Neq }
+            if self.next_eq('=') {
+                Kind::Neq2
+            } else {
+                Kind::Neq
+            }
         } else {
             Kind::Bang
         }
@@ -679,16 +630,28 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_caret(&mut self) -> Kind {
-        if self.next_eq('=') { Kind::CaretEq } else { Kind::Caret }
+        if self.next_eq('=') {
+            Kind::CaretEq
+        } else {
+            Kind::Caret
+        }
     }
 
     fn read_percent(&mut self) -> Kind {
-        if self.next_eq('=') { Kind::PercentEq } else { Kind::Percent }
+        if self.next_eq('=') {
+            Kind::PercentEq
+        } else {
+            Kind::Percent
+        }
     }
 
     fn read_star(&mut self) -> Kind {
         if self.next_eq('*') {
-            if self.next_eq('=') { Kind::Star2Eq } else { Kind::Star2 }
+            if self.next_eq('=') {
+                Kind::Star2Eq
+            } else {
+                Kind::Star2
+            }
         } else if self.next_eq('=') {
             Kind::StarEq
         } else {
@@ -698,7 +661,11 @@ impl<'a> Lexer<'a> {
 
     fn read_ampersand(&mut self) -> Kind {
         if self.next_eq('&') {
-            if self.next_eq('=') { Kind::Amp2Eq } else { Kind::Amp2 }
+            if self.next_eq('=') {
+                Kind::Amp2Eq
+            } else {
+                Kind::Amp2
+            }
         } else if self.next_eq('=') {
             Kind::AmpEq
         } else {
@@ -708,7 +675,11 @@ impl<'a> Lexer<'a> {
 
     fn read_pipe(&mut self) -> Kind {
         if self.next_eq('|') {
-            if self.next_eq('=') { Kind::Pipe2Eq } else { Kind::Pipe2 }
+            if self.next_eq('=') {
+                Kind::Pipe2Eq
+            } else {
+                Kind::Pipe2
+            }
         } else if self.next_eq('=') {
             Kind::PipeEq
         } else {
@@ -718,7 +689,11 @@ impl<'a> Lexer<'a> {
 
     fn read_question(&mut self) -> Kind {
         if self.next_eq('?') {
-            if self.next_eq('=') { Kind::Question2Eq } else { Kind::Question2 }
+            if self.next_eq('=') {
+                Kind::Question2Eq
+            } else {
+                Kind::Question2
+            }
         } else if self.peek() == '.' {
             // parse `?.1` as `?` `.1`
             if self.peek2().is_ascii_digit() {
@@ -733,7 +708,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_slash(&mut self) -> Kind {
-        if self.next_eq('=') { Kind::SlashEq } else { Kind::Slash }
+        if self.next_eq('=') {
+            Kind::SlashEq
+        } else {
+            Kind::Slash
+        }
     }
 
     fn private_identifier(&mut self, mut builder: AutoCow<'a>) -> Kind {
@@ -1127,8 +1106,8 @@ impl<'a> Lexer<'a> {
     ///   `IdentifierStart`
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
-    fn read_jsx_identifier(&mut self, prev_len: u32) -> Kind {
-        let prev_str = &self.source[prev_len as usize..self.offset() as usize];
+    fn read_jsx_identifier(&mut self, start_offset: u32) -> Kind {
+        let prev_str = &self.source[start_offset as usize..self.offset() as usize];
 
         let mut builder = AutoCow::new(self);
         loop {

@@ -112,6 +112,13 @@ impl<'a> Expression<'a> {
         matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
     }
 
+    pub fn is_specific_string_literal(&self, string: &str) -> bool {
+        match self {
+            Self::StringLiteral(s) => s.value == string,
+            _ => false,
+        }
+    }
+
     /// Determines whether the given expr is a `null` literal
     pub fn is_null(&self) -> bool {
         matches!(self, Expression::NullLiteral(_))
@@ -129,13 +136,12 @@ impl<'a> Expression<'a> {
 
     /// Determines whether the given expr is a `void 0`
     pub fn is_void_0(&self) -> bool {
-        if let Self::UnaryExpression(expr) = self
-            && expr.operator == UnaryOperator::Void
-            && let Self::NumberLiteral(lit) = &expr.argument
-            && lit.value == 0.0 {
-            return true
+        match self {
+            Self::UnaryExpression(expr) if expr.operator == UnaryOperator::Void => {
+                matches!(&expr.argument, Self::NumberLiteral(lit) if lit.value == 0.0)
+            }
+            _ => false,
         }
-        false
     }
 
     /// Determines whether the given expr is a `0`
@@ -193,6 +199,10 @@ impl<'a> Expression<'a> {
             Expression::TSTypeAssertion(expr) => expr.expression.get_inner_expression(),
             _ => self,
         }
+    }
+
+    pub fn is_identifier_reference(&self) -> bool {
+        matches!(self, Expression::Identifier(_))
     }
 
     pub fn get_identifier_reference(&self) -> Option<&IdentifierReference> {
@@ -355,8 +365,19 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
+    pub fn is_specific_static_name(&self, name: &str) -> bool {
+        self.static_name().is_some_and(|n| n == name)
+    }
+
     pub fn is_private_identifier(&self) -> bool {
         matches!(self, Self::PrivateIdentifier(_))
+    }
+
+    pub fn is_specific_id(&self, name: &str) -> bool {
+        match self {
+            PropertyKey::Identifier(ident) => ident.name == name,
+            _ => false,
+        }
     }
 }
 
@@ -568,13 +589,12 @@ impl<'a> CallExpression<'a> {
     }
 
     pub fn common_js_require(&self) -> Option<&StringLiteral> {
-        if let Expression::Identifier(ident) = &self.callee
-            && ident.name =="require"
-            && self.arguments.len() == 1
-            && let Argument::Expression(Expression::StringLiteral(str_literal)) = &self.arguments[0] {
-            Some(str_literal)
-        } else {
-            None
+        if !(self.callee.is_specific_id("require") && self.arguments.len() == 1) {
+            return None;
+        }
+        match &self.arguments[0] {
+            Argument::Expression(Expression::StringLiteral(str_literal)) => Some(str_literal),
+            _ => None,
         }
     }
 }
@@ -1240,15 +1260,15 @@ pub struct BindingPattern<'a> {
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(untagged))]
 pub enum BindingPatternKind<'a> {
-    /// const a = 1
+    /// `const a = 1`
     BindingIdentifier(Box<'a, BindingIdentifier>),
-    /// const {a} = 1
+    /// `const {a} = 1`
     ObjectPattern(Box<'a, ObjectPattern<'a>>),
-    /// const [a] = 1
+    /// `const [a] = 1`
     ArrayPattern(Box<'a, ArrayPattern<'a>>),
-    /// A defaulted binding pattern, ie:
-    /// const {a = 1} = 1
-    /// the assignment pattern is a = 1
+    /// A defaulted binding pattern, i.e.:
+    /// `const {a = 1} = 1`
+    /// the assignment pattern is `a = 1`
     /// it has an inner left that has a BindingIdentifier
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>),
 }

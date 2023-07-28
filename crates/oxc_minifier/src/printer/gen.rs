@@ -108,8 +108,7 @@ impl<'a> Gen for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Printer, ctx: Context) {
         p.start_of_stmt = p.code_len();
         self.expression.gen_expr(p, Precedence::lowest(), Context::default());
-        if let Expression::Identifier(ident) = &self.expression
-        && ident.name == "let" {
+        if self.expression.is_specific_id("let") {
             p.print_semicolon();
         } else {
             p.print_semicolon_after_statement();
@@ -509,12 +508,12 @@ impl<'a> Gen for FunctionBody<'a> {
         for directive in &self.directives {
             directive.gen(p, ctx);
         }
-        p.needs_semicolon = if let Some(Statement::ExpressionStatement(expr_stmt)) = self.statements.get(0)
-            && matches!(expr_stmt.expression, Expression::StringLiteral(_)) {
-                true
-            } else {
-                false
-            };
+        p.needs_semicolon = match self.statements.get(0) {
+            Some(Statement::ExpressionStatement(expr_stmt)) => {
+                matches!(expr_stmt.expression, Expression::StringLiteral(_))
+            }
+            _ => false,
+        };
         for stmt in &self.statements {
             p.print_semicolon_if_needed();
             stmt.gen(p, ctx);
@@ -764,12 +763,13 @@ impl<'a> GenExpr for Expression<'a> {
 
 impl Gen for IdentifierReference {
     fn gen(&self, p: &mut Printer, ctx: Context) {
-        if let Some(mangler) = &p.mangler
-            && let Some(name) = mangler.get_reference_name(self.reference_id.clone().into_inner()) {
-            p.print_str(name.clone().as_bytes());
-        } else {
-            p.print_str(self.name.as_bytes());
+        if let Some(mangler) = &p.mangler {
+            if let Some(name) = mangler.get_reference_name(self.reference_id.clone().into_inner()) {
+                p.print_str(name.clone().as_bytes());
+                return;
+            }
         }
+        p.print_str(self.name.as_bytes());
     }
 }
 
@@ -826,7 +826,11 @@ impl<'a> Gen for NumberLiteral<'a> {
             } else if (1_000_000_000_000..=0xFFFF_FFFF_FFFF_F800).contains(&value) {
                 let hex = format!("{value:#x}");
                 let result = print_non_negative_float(abs_value, p);
-                if hex.len() < result.len() { hex } else { result }
+                if hex.len() < result.len() {
+                    hex
+                } else {
+                    result
+                }
             } else {
                 print_non_negative_float(abs_value, p)
             }

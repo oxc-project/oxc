@@ -17,38 +17,39 @@
 [![Code Size][code-size-badge]][code-size-url]
 [![MIT licensed][mit-badge]][mit-url]
 
-### [Playground](https://boshen.github.io/oxc/playground)
+### [Playground](https://web-infra-dev.github.io/oxc/playground)
 </div>
 
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=discord&color=brightgreen
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg?color=brightgreen
 [mit-url]: LICENSE
-[ci-badge]: https://github.com/Boshen/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
-[ci-url]: https://github.com/Boshen/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
+[ci-badge]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml/badge.svg?event=push&branch=main
+[ci-url]: https://github.com/web-infra-dev/oxc/actions/workflows/ci.yml?query=event%3Apush+branch%3Amain
 [npm-badge]: https://img.shields.io/npm/v/oxlint/latest?color=brightgreen
 [npm-url]: https://www.npmjs.com/package/oxlint/v/latest
 [crates-badge]: https://img.shields.io/crates/v/oxc_parser.svg
 [crates-url]: https://crates.io/crates/oxc_parser
-[docs-badge]: https://docs.rs/oxc_parser/badge.svg
-[docs-url]: https://docs.rs/oxc_parser
-[code-size-badge]: https://img.shields.io/github/languages/code-size/Boshen/oxc
-[code-size-url]: https://github.com/Boshen/oxc
+[docs-badge]: https://docs.rs/oxc/badge.svg
+[docs-url]: https://docs.rs/oxc
+[code-size-badge]: https://img.shields.io/github/languages/code-size/web-infra-dev/oxc
+[code-size-url]: https://github.com/web-infra-dev/oxc
 [code-coverage-badge]: https://codecov.io/gh/Boshen/oxc/branch/main/graph/badge.svg
 [code-coverage-url]: https://codecov.io/gh/Boshen/oxc
 
 The Oxidation Compiler is creating a suite of high-performance tools for the JavaScript / TypeScript language re-written in Rust:
 
-* [AST](./crates/oxc_ast) - See [docs.rs/oxc_ast][docs-ast]
-* [Parser](./crates/oxc_parser) ([acorn][acorn]) - See [docs.rs/oxc_parser][docs-parser], [@oxidation-compiler/napi][npm-napi]
+* [AST](./crates/oxc_ast) - See [docs.rs][docs-ast]
+* [Parser](./crates/oxc_parser) ([acorn][acorn]) - See [docs.rs][docs-parser], [@oxidation-compiler/napi][npm-napi]
 * [Linter](./crates/oxc_linter) ([ESLint][ESLint]) - Prototype - Try it out! `npx oxlint@latest path`
 * Formatter ([prettier][prettier])
 * Transpiler ([babel][babel])
-* [Minifier](./crates/oxc_minifier) ([terser][terser]) - [Prototype](https://github.com/Boshen/oxc/tree/main/crates/oxc_minifier)
+* [Minifier](./crates/oxc_minifier) ([terser][terser]) - [Prototype](https://github.com/web-infra-dev/oxc/tree/main/crates/oxc_minifier)
+* [Resolver](./crates/oxc_resolver) ([enhanced-resolve](enhanced-resolve))
 * Type Checker - See [ezno][ezno], available via `npx oxidation-compiler@latest check path`
 
-[docs-ast]: https://docs.rs/oxc_ast
-[docs-parser]: https://docs.rs/oxc_parser
+[docs-ast]: https://docs.rs/oxc/latest/oxc/ast/index.html
+[docs-parser]: https://docs.rs/oxc/latest/oxc/parser/index.html
 [npm-napi]: https://www.npmjs.com/package/@oxidation-compiler/napi
 [acorn]: https://github.com/acornjs/acorn
 [babel]: https://babel.dev
@@ -57,6 +58,7 @@ The Oxidation Compiler is creating a suite of high-performance tools for the Jav
 [prettier]: https://github.com/prettier/prettier
 [ezno]: https://github.com/kaleidawave/ezno
 [terser]: https://terser.org
+[enhanced-resolve]: https://github.com/webpack/enhanced-resolve
 
 ## Philosophy
 
@@ -79,7 +81,7 @@ The current objectives are:
 This project is an invitation for you to come and learn Rust with us,
 any contributions to this project are appreciated.
 
-To get started, check out some of the [good first issues](https://github.com/Boshen/oxc/contribute) or ask us on [Discord][discord-url].
+To get started, check out some of the [good first issues](https://github.com/web-infra-dev/oxc/contribute) or ask us on [Discord][discord-url].
 
 If you are unable to contribute by code, you can still participate by:
 
@@ -87,7 +89,7 @@ If you are unable to contribute by code, you can still participate by:
 * test the linter by running `npx oxlint@latest .` in your own projects
 * join us on [Discord](https://discord.gg/9uXCAwqQZW)
 * [follow me on twitter](https://twitter.com/boshen_c)
-* provide your wisdom in [discussions](https://github.com/Boshen/oxc/discussions)
+* provide your wisdom in [discussions](https://github.com/web-infra-dev/oxc/discussions)
 
 ## Linter
 
@@ -150,6 +152,10 @@ Only unstable stage 3 `json-modules` and stage 3 `decorators` tests are skipped.
 * My small article - [Pursuit of Performance on Building a JavaScript Compiler](https://rustmagazine.org/issue-3/javascript-compiler/)
 * [Crafting Interpreters](https://craftinginterpreters.com)
 * [Create an issue and insert your inspirational learning resources here]
+
+## Maintainers
+
+* Project Lead: [Boshen](https://github.com/boshen)
 
 ## Credits
 

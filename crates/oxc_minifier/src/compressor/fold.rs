@@ -4,11 +4,12 @@
 
 use std::{cmp::Ordering, mem, ops::Not};
 
+use num_bigint::BigInt;
 #[allow(clippy::wildcard_imports)]
 use oxc_hir::hir::*;
 use oxc_hir::hir_util::{
-    get_boolean_value, get_number_value, get_side_free_number_value, get_side_free_string_value,
-    IsLiteralValue, MayHaveSideEffects, NumberValue,
+    get_boolean_value, get_number_value, get_side_free_bigint_value, get_side_free_number_value,
+    get_side_free_string_value, is_exact_int64, IsLiteralValue, MayHaveSideEffects, NumberValue,
 };
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
@@ -35,8 +36,70 @@ impl Tri {
         }
     }
 
+    pub fn xor(self, other: Self) -> Self {
+        self.for_int(-self.value() * other.value())
+    }
+
+    pub fn for_int(self, int: i8) -> Self {
+        match int {
+            -1 => Self::False,
+            1 => Self::True,
+            _ => Self::Unknown,
+        }
+    }
+
     pub fn for_boolean(boolean: bool) -> Self {
-        if boolean { Self::True } else { Self::False }
+        if boolean {
+            Self::True
+        } else {
+            Self::False
+        }
+    }
+
+    pub fn value(self) -> i8 {
+        match self {
+            Self::True => 1,
+            Self::False => -1,
+            Self::Unknown => 0,
+        }
+    }
+}
+
+/// ported from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1250)
+#[allow(clippy::cast_possible_truncation)]
+fn bigint_less_than_number(
+    bigint_value: &BigInt,
+    number_value: &NumberValue,
+    invert: Tri,
+    will_negative: bool,
+) -> Tri {
+    // if invert is false, then the number is on the right in tryAbstractRelationalComparison
+    // if it's true, then the number is on the left
+    match number_value {
+        NumberValue::NaN => Tri::for_boolean(will_negative),
+        NumberValue::PositiveInfinity => Tri::True.xor(invert),
+        NumberValue::NegativeInfinity => Tri::False.xor(invert),
+        NumberValue::Number(num) => {
+            if let Some(Ordering::Equal | Ordering::Greater) =
+                num.abs().partial_cmp(&2_f64.powi(53))
+            {
+                Tri::Unknown
+            } else {
+                let number_as_bigint = BigInt::from(*num as i64);
+
+                match bigint_value.cmp(&number_as_bigint) {
+                    Ordering::Less => Tri::True.xor(invert),
+                    Ordering::Greater => Tri::False.xor(invert),
+                    Ordering::Equal => {
+                        if is_exact_int64(*num) {
+                            Tri::False
+                        } else {
+                            Tri::for_boolean(num.is_sign_positive()).xor(invert)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -82,8 +145,29 @@ impl<'a> From<&Expression<'a>> for Ty {
                     }
                     Self::Number
                 }
+                UnaryOperator::UnaryPlus => Self::Number,
                 UnaryOperator::LogicalNot => Self::Boolean,
                 UnaryOperator::Typeof => Self::Str,
+                _ => Self::Undetermined,
+            },
+            Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
+                BinaryOperator::Addition => {
+                    let left_ty = Self::from(&binary_expr.left);
+                    let right_ty = Self::from(&binary_expr.right);
+
+                    if left_ty == Self::Str || right_ty == Self::Str {
+                        return Self::Str;
+                    }
+
+                    // There are some pretty weird cases for object types:
+                    //   {} + [] === "0"
+                    //   [] + {} === "[object Object]"
+                    if left_ty == Self::Object || right_ty == Self::Object {
+                        return Self::Undetermined;
+                    }
+
+                    Self::Undetermined
+                }
                 _ => Self::Undetermined,
             },
             _ => Self::Undetermined,
@@ -163,7 +247,7 @@ impl<'a> Compressor<'a> {
     }
 
     fn evaluate_comparison<'b>(
-        &self,
+        &mut self,
         op: BinaryOperator,
         left: &'b Expression<'a>,
         right: &'b Expression<'a>,
@@ -195,7 +279,7 @@ impl<'a> Compressor<'a> {
 
     /// <https://tc39.es/ecma262/#sec-abstract-equality-comparison>
     fn try_abstract_equality_comparison<'b>(
-        &self,
+        &mut self,
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
     ) -> Tri {
@@ -207,6 +291,63 @@ impl<'a> Compressor<'a> {
             }
             if matches!((left, right), (Ty::Null, Ty::Void) | (Ty::Void, Ty::Null)) {
                 return Tri::True;
+            }
+
+            if matches!((left, right), (Ty::Number, Ty::Str)) || matches!(right, Ty::Boolean) {
+                let right_number = get_side_free_number_value(right_expr);
+
+                if let Some(NumberValue::Number(num)) = right_number {
+                    let raw = self.hir.new_str(num.to_string().as_str());
+
+                    let number_literal = self.hir.number_literal(
+                        right_expr.span(),
+                        num,
+                        raw,
+                        if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
+                    );
+                    let number_literal_expr = self.hir.literal_number_expression(number_literal);
+
+                    return self.try_abstract_equality_comparison(left_expr, &number_literal_expr);
+                }
+
+                return Tri::Unknown;
+            }
+
+            if matches!((left, right), (Ty::Str, Ty::Number)) || matches!(left, Ty::Boolean) {
+                let left_number = get_side_free_number_value(left_expr);
+
+                if let Some(NumberValue::Number(num)) = left_number {
+                    let raw = self.hir.new_str(num.to_string().as_str());
+
+                    let number_literal = self.hir.number_literal(
+                        left_expr.span(),
+                        num,
+                        raw,
+                        if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
+                    );
+                    let number_literal_expr = self.hir.literal_number_expression(number_literal);
+
+                    return self.try_abstract_equality_comparison(&number_literal_expr, right_expr);
+                }
+
+                return Tri::Unknown;
+            }
+
+            if matches!(left, Ty::BigInt) || matches!(right, Ty::BigInt) {
+                let left_bigint = get_side_free_bigint_value(left_expr);
+                let right_bigint = get_side_free_bigint_value(right_expr);
+
+                if let (Some(l_big), Some(r_big)) = (left_bigint, right_bigint) {
+                    return Tri::for_boolean(l_big.eq(&r_big));
+                }
+            }
+
+            if matches!(left, Ty::Str | Ty::Number) && matches!(right, Ty::Object) {
+                return Tri::Unknown;
+            }
+
+            if matches!(left, Ty::Object) && matches!(right, Ty::Str | Ty::Number) {
+                return Tri::Unknown;
             }
 
             return Tri::False;
@@ -228,35 +369,59 @@ impl<'a> Compressor<'a> {
         if left == Ty::Str && right == Ty::Str {
             let left_string = get_side_free_string_value(left_expr);
             let right_string = get_side_free_string_value(right_expr);
-            if let Some(left_string) = left_string && let Some(right_string) = right_string {
+            if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
                 // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
                 if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
                     return Tri::Unknown;
                 }
 
-                return Tri::for_boolean(left_string.cmp(&right_string) == Ordering::Less)
+                return Tri::for_boolean(left_string.cmp(&right_string) == Ordering::Less);
             }
 
-            if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) = (left_expr, right_expr)
-                && (left.operator, right.operator) == (UnaryOperator::Typeof, UnaryOperator::Typeof)
-                && let Expression::Identifier(left) = &left.argument
-                && let Expression::Identifier(right) = &right.argument
-                && left.name == right.name
+            if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
+                (left_expr, right_expr)
             {
-                // Special case: `typeof a < typeof a` is always false.
-                return Tri::False;
+                if (left.operator, right.operator) == (UnaryOperator::Typeof, UnaryOperator::Typeof)
+                {
+                    if let (Expression::Identifier(left), Expression::Identifier(right)) =
+                        (&left.argument, &right.argument)
+                    {
+                        if left.name == right.name {
+                            // Special case: `typeof a < typeof a` is always false.
+                            return Tri::False;
+                        }
+                    }
+                }
             }
         }
 
-        // try comparing as Numbers.
+        let left_bigint = get_side_free_bigint_value(left_expr);
+        let right_bigint = get_side_free_bigint_value(right_expr);
+
         let left_num = get_side_free_number_value(left_expr);
         let right_num = get_side_free_number_value(right_expr);
-        if let Some(left_num) = left_num && let Some(right_num) = right_num {
-            match (left_num, right_num) {
-                (NumberValue::NaN, _) | (_, NumberValue::NaN) => return Tri::for_boolean(will_negative),
-                (NumberValue::Number(left_num), NumberValue::Number(right_num)) => return Tri::for_boolean(left_num < right_num),
-                _ => {}
+
+        match (left_bigint, right_bigint, left_num, right_num) {
+            // Next, try to evaluate based on the value of the node. Try comparing as BigInts first.
+            (Some(l_big), Some(r_big), _, _) => {
+                return Tri::for_boolean(l_big < r_big);
             }
+            // try comparing as Numbers.
+            (_, _, Some(l_num), Some(r_num)) => match (l_num, r_num) {
+                (NumberValue::NaN, _) | (_, NumberValue::NaN) => {
+                    return Tri::for_boolean(will_negative);
+                }
+                (NumberValue::Number(l), NumberValue::Number(r)) => return Tri::for_boolean(l < r),
+                _ => {}
+            },
+            // Finally, try comparisons between BigInt and Number.
+            (Some(l_big), _, _, Some(r_num)) => {
+                return bigint_less_than_number(&l_big, &r_num, Tri::False, will_negative);
+            }
+            (_, Some(r_big), Some(l_num), _) => {
+                return bigint_less_than_number(&r_big, &l_num, Tri::True, will_negative);
+            }
+            _ => {}
         }
 
         Tri::Unknown
@@ -276,26 +441,47 @@ impl<'a> Compressor<'a> {
                 return Tri::False;
             }
             return match left {
+                Ty::Number => {
+                    let left_number = get_side_free_number_value(left_expr);
+                    let right_number = get_side_free_number_value(right_expr);
+
+                    if let (Some(l_num), Some(r_num)) = (left_number, right_number) {
+                        if l_num.is_nan() || r_num.is_nan() {
+                            return Tri::False;
+                        }
+
+                        return Tri::for_boolean(l_num == r_num);
+                    }
+
+                    Tri::Unknown
+                }
                 Ty::Str => {
                     let left_string = get_side_free_string_value(left_expr);
                     let right_string = get_side_free_string_value(right_expr);
-                    if let Some(left_string) = left_string && let Some(right_string) = right_string {
+                    if let (Some(left_string), Some(right_string)) = (left_string, right_string) {
                         // In JS, browsers parse \v differently. So do not compare strings if one contains \v.
                         if left_string.contains('\u{000B}') || right_string.contains('\u{000B}') {
                             return Tri::Unknown;
                         }
 
-                        return Tri::for_boolean(left_string == right_string)
+                        return Tri::for_boolean(left_string == right_string);
                     }
 
-                    if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) = (left_expr, right_expr)
-                        && (left.operator, right.operator) == (UnaryOperator::Typeof, UnaryOperator::Typeof)
-                        && let Expression::Identifier(left) = &left.argument
-                        && let Expression::Identifier(right) = &right.argument
-                        && left.name == right.name
+                    if let (Expression::UnaryExpression(left), Expression::UnaryExpression(right)) =
+                        (left_expr, right_expr)
                     {
-                        // Special case, typeof a == typeof a is always true.
-                        return Tri::True;
+                        if (left.operator, right.operator)
+                            == (UnaryOperator::Typeof, UnaryOperator::Typeof)
+                        {
+                            if let (Expression::Identifier(left), Expression::Identifier(right)) =
+                                (&left.argument, &right.argument)
+                            {
+                                if left.name == right.name {
+                                    // Special case, typeof a == typeof a is always true.
+                                    return Tri::True;
+                                }
+                            }
+                        }
                     }
 
                     Tri::Unknown
@@ -303,6 +489,13 @@ impl<'a> Compressor<'a> {
                 Ty::Void | Ty::Null => Tri::True,
                 _ => Tri::Unknown,
             };
+        }
+
+        // Then, try to evaluate based on the value of the expression.
+        // There's only one special case:
+        // Any strict equality comparison against NaN returns false.
+        if left_expr.is_nan() || right_expr.is_nan() {
+            return Tri::False;
         }
         Tri::Unknown
     }
@@ -395,8 +588,9 @@ impl<'a> Compressor<'a> {
                         // +true -> 1
                         // +false -> 0
                         // +null -> 0
-                        if let Some(value) = get_number_value(&unary_expr.argument)
-                            && let NumberValue::Number(value) = value {
+                        if let Some(NumberValue::Number(value)) =
+                            get_number_value(&unary_expr.argument)
+                        {
                             let raw = self.hir.new_str(value.to_string().as_str());
                             let literal = self.hir.number_literal(
                                 unary_expr.span,
@@ -540,8 +734,9 @@ impl<'a> Compressor<'a> {
         let left_num = get_side_free_number_value(left);
         let right_num = get_side_free_number_value(right);
 
-        if let Some(NumberValue::Number(left_val)) = left_num &&
-           let Some(NumberValue::Number(right_val)) = right_num {
+        if let (Some(NumberValue::Number(left_val)), Some(NumberValue::Number(right_val))) =
+            (left_num, right_num)
+        {
             if left_val.fract() != 0.0 || right_val.fract() != 0.0 {
                 return None;
             }
@@ -556,12 +751,8 @@ impl<'a> Compressor<'a> {
             let bits = NumberLiteral::ecmascript_to_int32(left_val);
 
             let result_val: f64 = match op {
-                BinaryOperator::ShiftLeft => {
-                    f64::from(bits << right_val_int)
-                }
-                BinaryOperator::ShiftRight => {
-                    f64::from(bits >> right_val_int)
-                }
+                BinaryOperator::ShiftLeft => f64::from(bits << right_val_int),
+                BinaryOperator::ShiftRight => f64::from(bits >> right_val_int),
                 BinaryOperator::ShiftRightZeroFill => {
                     // JavaScript always treats the result of >>> as unsigned.
                     // We must force Rust to do the same here.
@@ -569,17 +760,13 @@ impl<'a> Compressor<'a> {
                     let res = bits as u32 >> right_val_int as u32;
                     f64::from(res)
                 }
-                _ => unreachable!("Unknown binary operator {:?}", op)
+                _ => unreachable!("Unknown binary operator {:?}", op),
             };
 
             let value_raw = self.hir.new_str(result_val.to_string().as_str());
 
-            let number_literal = self.hir.number_literal(
-                span,
-                result_val,
-                value_raw,
-                NumberBase::Decimal,
-            );
+            let number_literal =
+                self.hir.number_literal(span, result_val, value_raw, NumberBase::Decimal);
 
             return Some(self.hir.literal_number_expression(number_literal));
         }
@@ -624,22 +811,28 @@ impl<'a> Compressor<'a> {
             vec.push(right);
             let sequence_expr = self.hir.sequence_expression(logic_expr.span, vec);
             return Some(sequence_expr);
-        } else if let Expression::LogicalExpression(left_child) = &mut logic_expr.left && left_child.operator == logic_expr.operator {
-            let left_child_right_boolean = get_boolean_value(&left_child.right);
-            let left_child_op = left_child.operator;
-            if let Some(right_boolean) = left_child_right_boolean && !left_child.right.may_have_side_effects() {
-                // a || false || b => a || b
-                // a && true && b => a && b
-                if !right_boolean && left_child_op == LogicalOperator::Or  || right_boolean && left_child_op == LogicalOperator::And {
-                    let left = move_out(&mut left_child.left);
-                    let right = move_out(&mut logic_expr.right);
-                    let logic_expr = self.hir.logical_expression(
-                        logic_expr.span,
-                        left,
-                        left_child_op,
-                        right,
-                    );
-                    return Some(logic_expr)
+        } else if let Expression::LogicalExpression(left_child) = &mut logic_expr.left {
+            if left_child.operator == logic_expr.operator {
+                let left_child_right_boolean = get_boolean_value(&left_child.right);
+                let left_child_op = left_child.operator;
+                if let Some(right_boolean) = left_child_right_boolean {
+                    if !left_child.right.may_have_side_effects() {
+                        // a || false || b => a || b
+                        // a && true && b => a && b
+                        if !right_boolean && left_child_op == LogicalOperator::Or
+                            || right_boolean && left_child_op == LogicalOperator::And
+                        {
+                            let left = move_out(&mut left_child.left);
+                            let right = move_out(&mut logic_expr.right);
+                            let logic_expr = self.hir.logical_expression(
+                                logic_expr.span,
+                                left,
+                                left_child_op,
+                                right,
+                            );
+                            return Some(logic_expr);
+                        }
+                    }
                 }
             }
         }

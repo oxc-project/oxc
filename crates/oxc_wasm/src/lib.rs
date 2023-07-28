@@ -6,7 +6,7 @@ use oxc_allocator::Allocator;
 use oxc_ast_lower::AstLower;
 use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
-use oxc_linter::Linter;
+use oxc_linter::{LintContext, Linter};
 use oxc_minifier::{CompressOptions, Compressor, ManglerBuilder, Printer, PrinterOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -187,7 +187,8 @@ impl Oxc {
             self.save_diagnostics(semantic_ret.errors);
 
             let semantic = Rc::new(semantic_ret.semantic);
-            let linter_ret = Linter::new().run(&semantic);
+            let lint_ctx = LintContext::new(&semantic);
+            let linter_ret = Linter::new().run(lint_ctx);
             let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
             self.save_diagnostics(diagnostics);
         }

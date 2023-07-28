@@ -4,9 +4,19 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
-    paths:
-      - '**.rs'
-      - '.github/workflows/benchmark.yml'
+    paths-ignore:
+      - '**/*.md'
+      - 'npm/**'
+      - 'website/**'
+      - 'crates/oxc/**'
+      - 'crates/oxc_cli/**'
+      - 'crates/oxc_formatter/**'
+      - 'crates/oxc_linter/**'
+      - 'crates/oxc_napi/**'
+      - 'crates/oxc_query/**'
+      - 'crates/oxc_resolver/**'
+      - 'crates/oxc_type_synthesis/**'
+      - 'crates/oxc_wasm/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -20,7 +30,7 @@ jobs:
     name: Run benchmark on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
+      - name: Checkout Main Branch
         uses: actions/checkout@v3
         with:
           ref: main # Checkout main first because the cache is warm
@@ -43,10 +53,10 @@ jobs:
         shell: bash
         run: sleep 15s
 
-      - name: Run Bench on PR Branch
+      - name: Run Bench on Main Branch
         run: cargo benchmark --save-baseline main
 
-      - name: Checkout Main Branch
+      - name: Checkout PR Branch
         uses: actions/checkout@v3
         with:
           clean: false
@@ -65,7 +75,7 @@ jobs:
         shell: bash
         run: sleep 15s
 
-      - name: Run Bench on Main Branch
+      - name: Run Bench on PR Branch
         run: cargo benchmark --save-baseline pr
 
       - name: Upload benchmark results

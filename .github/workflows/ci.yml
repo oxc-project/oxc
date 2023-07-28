@@ -70,6 +70,7 @@ jobs:
         run: |
           rustup target add wasm32-unknown-unknown
           cargo check -p oxc_wasm --target wasm32-unknown-unknown
+          cargo check -p oxc_resolver --target wasm32-unknown-unknown
 
   typos:
     name: Spell Check
@@ -80,26 +81,6 @@ jobs:
       - uses: crate-ci/typos@master
         with:
           files: .
-
-  check-dependencies:
-    name: Check Unused Dependencies
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            src:
-              - 'Cargo.lock'
-
-      - name: Install cargo-udeps
-        if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@cargo-udeps
-
-      - if: steps.filter.outputs.src == 'true'
-        run: cargo udeps
 
   deny:
     name: Cargo Deny
@@ -149,6 +130,50 @@ jobs:
       - name: Run Clippy
         run: cargo lint -- -D warnings
 
+  ecosystem-test:
+    needs: cache
+    name: Testing Linter with VSCode Repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+        with:
+          shared-key: benchmark
+
+      - name: Clone VSCode
+        uses: actions/checkout@v3
+        with:
+          repository: microsoft/vscode
+          path: ./vscode
+
+      - name: Build oxlint
+        run: cargo build --release -p oxc_cli --bin oxlint
+
+      - name: Run oxlint on VSCode and throw output to a temp file
+        run: ./target/release/oxlint --quiet --ignore-path ./vscode/.eslintignore --allow no-control-regex ./vscode/ > ./log.tmp
+
+      - name: Using grep to check if oxlint panic
+        run: >
+          if grep --quiet --ignore-case panic ./log.tmp; then
+            exit 1
+          fi
+
+  doc:
+    name: Doc
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: ./.github/actions/rustup
+        with:
+          docs: true
+
+      - name: Run doc
+        run: RUSTDOCFLAGS='-D warnings' cargo doc -p oxc
+
   test:
     name: Test
     strategy:
@@ -175,20 +200,3 @@ jobs:
 
       - if: runner.os != 'Windows'
         run: cargo nextest run
-
-  conformance:
-    name: Conformance
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true # Pull submodules for `cargo coverage`
-
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
-
-      - run: cargo coverage
-      - run: cargo minsize
-
-      - name: Check for snapshot diff
-        run: git diff --exit-code

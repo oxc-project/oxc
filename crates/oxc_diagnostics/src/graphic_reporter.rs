@@ -14,16 +14,14 @@ use miette::{
 use owo_colors::{OwoColorize, Style};
 use unicode_width::UnicodeWidthChar;
 
-use crate::graphical_theme::GraphicalTheme;
+pub use crate::graphical_theme::GraphicalTheme;
 
 /**
 A [`ReportHandler`] that displays a given [`Report`](crate::Report) in a
 quasi-graphical way, using terminal colors, unicode drawing characters, and
 other such things.
 This is the default reporter bundled with `miette`.
-This printer can be customized by using [`new_themed()`](GraphicalReportHandler::new_themed) and handing it a
-[`GraphicalTheme`] of your own creation (or using one of its own defaults!)
-See [`set_hook()`](crate::set_hook) for more details on customizing your global
+See [`set_hook()`](miette::set_hook) for more details on customizing your global
 printer.
 */
 #[derive(Debug, Clone)]

@@ -51,13 +51,13 @@ const DISALLOWED_PROPS: &[&str; 3] = &["hasOwnProperty", "isPrototypeOf", "prope
 
 impl Rule for NoPrototypeBuiltins {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(expr) = node.kind()
-        && let Some(member_expr) = expr.callee.get_member_expr()
-        && let Some(prop_name) = member_expr.static_property_name()
-        && DISALLOWED_PROPS.contains(&prop_name){
+        let AstKind::CallExpression(expr) = node.kind() else { return };
+        let Some(member_expr) = expr.callee.get_member_expr() else { return };
+        let Some(prop_name) = member_expr.static_property_name() else { return };
+        if DISALLOWED_PROPS.contains(&prop_name) {
             ctx.diagnostic(NoPrototypeBuiltinsDiagnostic(
-                    prop_name.to_string(),
-                    member_expr.span(),
+                prop_name.to_string(),
+                member_expr.span(),
             ));
         }
     }

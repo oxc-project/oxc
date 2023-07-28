@@ -72,8 +72,7 @@ impl<'a> Gen for ExpressionStatement<'a> {
     fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         self.expression.gen(p);
-        if let Expression::Identifier(ident) = &self.expression
-        && ident.name == "let" {
+        if self.expression.is_specific_id("let") {
             p.print_semicolon();
         } else {
             p.print_semicolon_after_statement();

@@ -1,0 +1,28 @@
+[package]
+name                   = "oxc_query"
+version                = "0.0.0"
+publish                = false
+authors.workspace      = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+categories.workspace   = true
+
+[dependencies]
+oxc_ast      = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_span     = { workspace = true }
+serde        = { workspace = true, features = ["derive"] }
+serde_json   = { workspace = true }
+url          = { workspace = true }
+
+trustfall     = "0.6.0"
+enum-as-inner = "0.6.0"
+
+[dev_dependencies]
+oxc_allocator = { workspace = true }
+oxc_parser    = { workspace = true }

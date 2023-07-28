@@ -92,27 +92,40 @@ impl TestCase {
         if let Statement::BlockStatement(block_stmt) = &labeled_stmt.body {
             for stmt in &block_stmt.body {
                 // Parse options
-                if let Statement::ExpressionStatement(expr_stmt) = stmt
-                && let Expression::AssignmentExpression(assign_expr) = &expr_stmt.expression
-                && let AssignmentTarget::SimpleAssignmentTarget(SimpleAssignmentTarget::AssignmentTargetIdentifier(ident)) = &assign_expr.left
-                && ident.name == "options"
-                && let Expression::ObjectExpression(object_expr) = &assign_expr.right {
-                    options = Self::parse_options(object_expr);
+                if let Statement::ExpressionStatement(expr_stmt) = stmt {
+                    if let Expression::AssignmentExpression(assign_expr) = &expr_stmt.expression {
+                        if let AssignmentTarget::SimpleAssignmentTarget(
+                            SimpleAssignmentTarget::AssignmentTargetIdentifier(ident),
+                        ) = &assign_expr.left
+                        {
+                            if ident.name == "options" {
+                                if let Expression::ObjectExpression(object_expr) =
+                                    &assign_expr.right
+                                {
+                                    options = Self::parse_options(object_expr);
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Parse input / expect
-                if let Statement::LabeledStatement(labeled_stmt) = stmt
-                && let Statement::BlockStatement(block_stmt) = &labeled_stmt.body {
-                    let span = block_stmt.span;
-                    let code = Span::new(span.start + 1, span.end - 1).source_text(source_text).to_string().into_boxed_str();
-                    match labeled_stmt.label.name.as_str() {
-                        "input" => {
-                            input = code;
+                if let Statement::LabeledStatement(labeled_stmt) = stmt {
+                    if let Statement::BlockStatement(block_stmt) = &labeled_stmt.body {
+                        let span = block_stmt.span;
+                        let code = Span::new(span.start + 1, span.end - 1)
+                            .source_text(source_text)
+                            .to_string()
+                            .into_boxed_str();
+                        match labeled_stmt.label.name.as_str() {
+                            "input" => {
+                                input = code;
+                            }
+                            "expect" => {
+                                expect = code;
+                            }
+                            _ => {}
                         }
-                        "expect" => {
-                            expect = code;
-                        }
-                        _ => {}
                     }
                 }
             }
@@ -125,13 +138,9 @@ impl TestCase {
     fn parse_options<'a>(object_expr: &'a ObjectExpression<'a>) -> CompressOptions {
         let mut options = CompressOptions::default();
         for object_property in &object_expr.properties {
-            if let ObjectPropertyKind::ObjectProperty(property) = object_property
-                && let Some(name) = property.key.static_name() {
-                match name.as_str() {
-                    "drop_debugger" => {
-                        options.drop_debugger = Self::get_boolean(&property.value);
-                    }
-                    _ => {}
+            if let ObjectPropertyKind::ObjectProperty(property) = object_property {
+                if property.key.is_specific_static_name("drop_debugger") {
+                    options.drop_debugger = Self::get_boolean(&property.value);
                 }
             }
         }

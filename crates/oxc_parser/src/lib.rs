@@ -6,8 +6,7 @@
 //! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
 //! * Short strings are inlined by [CompactString](https://github.com/ParkMyCar/compact_str)
 //! * No other heap allocations are done except the above two
-//! * SIMD is used for skipping whitespace and multiline comments
-//! * [oxc_ast::Span] offsets uses `u32` instead of `usize`
+//! * [oxc_span::Span] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are deligated to the [semantic analyzer](https://docs.rs/oxc_semantic)
 //!
@@ -43,7 +42,7 @@
 //!
 //! # Visitor
 //!
-//! See [oxc_ast::visit::Visit] and [oxc_ast::visit_mut::VisitMut]
+//! See [oxc_ast::Visit] and [oxc_ast::VisitMut]
 //!
 //! # Visiting without a visitor
 //!
@@ -61,8 +60,6 @@
 //! See [full linter example](https://github.com/Boshen/oxc/blob/ab2ef4f89ba3ca50c68abb2ca43e36b7793f3673/crates/oxc_linter/examples/linter.rs#L38-L39)
 
 #![allow(clippy::wildcard_imports)] // allow for use `oxc_ast::ast::*`
-#![cfg_attr(not(target_arch = "wasm32"), feature(portable_simd))]
-#![feature(slice_as_chunks)]
 
 mod context;
 mod cursor;

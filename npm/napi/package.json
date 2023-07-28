@@ -1,6 +1,6 @@
 {
   "name": "@oxidation-compiler/napi",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "The JavaScript Oxidation Compiler Node API",
   "main": "index.js",
   "author": "Boshen and oxc contributors",

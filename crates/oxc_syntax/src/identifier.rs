@@ -4,29 +4,29 @@ pub const EOF: char = '\0';
 
 // 11.1 Unicode Format-Control Characters
 
-/// U+200C ZERO WIDTH NON-JOINER, abbreviated in the spec as <ZWNJ>.
+/// U+200C ZERO WIDTH NON-JOINER, abbreviated in the spec as `<ZWNJ>`.
 /// Specially permitted in identifiers.
 pub const ZWNJ: char = '\u{200c}';
 
-/// U+200D ZERO WIDTH JOINER, abbreviated as <ZWJ>.
+/// U+200D ZERO WIDTH JOINER, abbreviated as `<ZWJ>`.
 /// Specially permitted in identifiers.
 pub const ZWJ: char = '\u{200d}';
 
-/// U+FEFF ZERO WIDTH NO-BREAK SPACE, abbreviated <ZWNBSP>.
+/// U+FEFF ZERO WIDTH NO-BREAK SPACE, abbreviated `<ZWNBSP>`.
 /// Considered a whitespace character in JS.
 pub const ZWNBSP: char = '\u{feff}';
 
 // 11.2 White Space
-/// U+0009 CHARACTER TABULATION, abbreviated <TAB>.
+/// U+0009 CHARACTER TABULATION, abbreviated `<TAB>`.
 pub const TAB: char = '\u{9}';
 
-/// U+000B VERTICAL TAB, abbreviated <VT>.
+/// U+000B VERTICAL TAB, abbreviated `<VT>`.
 pub const VT: char = '\u{b}';
 
-/// U+000C FORM FEED, abbreviated <FF>.
+/// U+000C FORM FEED, abbreviated `<FF>`.
 pub const FF: char = '\u{c}';
 
-/// U+00A0 NON-BREAKING SPACE, abbreviated <NBSP>.
+/// U+00A0 NON-BREAKING SPACE, abbreviated `<NBSP>`.
 pub const NBSP: char = '\u{a0}';
 
 pub fn is_irregular_whitespace(c: char) -> bool {
@@ -39,16 +39,16 @@ pub fn is_irregular_whitespace(c: char) -> bool {
 
 // 11.3 Line Terminators
 
-///  U+000A LINE FEED, abbreviated in the spec as <LF>.
+///  U+000A LINE FEED, abbreviated in the spec as `<LF>`.
 pub const LF: char = '\u{a}';
 
-/// U+000D CARRIAGE RETURN, abbreviated in the spec as <CR>.
+/// U+000D CARRIAGE RETURN, abbreviated in the spec as `<CR>`.
 pub const CR: char = '\u{d}';
 
-/// U+2028 LINE SEPARATOR, abbreviated <LS>.
+/// U+2028 LINE SEPARATOR, abbreviated `<LS>`.
 pub const LS: char = '\u{2028}';
 
-/// U+2029 PARAGRAPH SEPARATOR, abbreviated <PS>.
+/// U+2029 PARAGRAPH SEPARATOR, abbreviated `<PS>`.
 pub const PS: char = '\u{2029}';
 
 pub fn is_regular_line_terminator(c: char) -> bool {

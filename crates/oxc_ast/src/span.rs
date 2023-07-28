@@ -239,6 +239,15 @@ impl<'a> GetSpan for ForStatementInit<'a> {
     }
 }
 
+impl<'a> GetSpan for ForStatementLeft<'a> {
+    fn span(&self) -> Span {
+        match self {
+            Self::VariableDeclaration(x) => x.span,
+            Self::AssignmentTarget(x) => x.span(),
+        }
+    }
+}
+
 impl<'a> GetSpan for SimpleAssignmentTarget<'a> {
     fn span(&self) -> Span {
         match self {
@@ -354,6 +363,24 @@ impl<'a> GetSpan for AssignmentTargetPattern<'a> {
         match &self {
             Self::ArrayAssignmentTarget(x) => x.span,
             Self::ObjectAssignmentTarget(x) => x.span,
+        }
+    }
+}
+
+impl<'a> GetSpan for JSXAttributeItem<'a> {
+    fn span(&self) -> Span {
+        match &self {
+            JSXAttributeItem::Attribute(attr) => attr.span,
+            JSXAttributeItem::SpreadAttribute(attr) => attr.span,
+        }
+    }
+}
+
+impl<'a> GetSpan for JSXExpression<'a> {
+    fn span(&self) -> Span {
+        match &self {
+            JSXExpression::Expression(expr) => expr.span(),
+            JSXExpression::EmptyExpression(exmpty_expr) => exmpty_expr.span,
         }
     }
 }

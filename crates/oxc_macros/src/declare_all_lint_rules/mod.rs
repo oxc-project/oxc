@@ -2,7 +2,7 @@ mod trie;
 
 use convert_case::{Case, Casing};
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{
     parse::{Parse, ParseStream},
     Result,
@@ -40,7 +40,7 @@ impl Parse for AllLintRulesMeta {
     }
 }
 
-#[allow(clippy::cognitive_complexity)]
+#[allow(clippy::cognitive_complexity, clippy::too_many_lines)]
 pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let AllLintRulesMeta { rules } = metadata;
     // all the top-level module trees
@@ -63,12 +63,17 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             .collect::<Vec<_>>()
             .join("/")
     });
+    let rule_timer = rules
+        .iter()
+        .map(|node| format_ident!("RuleTimer{}", node.name.to_string().to_case(Case::Pascal)))
+        .collect::<Vec<_>>();
 
     quote! {
         #(#mod_stmts)*
         #(#use_stmts)*
 
-        use crate::{context::LintContext, rule::{Rule, RuleCategory}, rule::RuleMeta, AstNode};
+        use std::time::{Instant, Duration};
+        use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleMeta}, rule_timer:: RuleTimer, AstNode};
         use oxc_semantic::SymbolId;
 
         #[derive(Debug, Clone)]
@@ -110,16 +115,49 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+            pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, print_execution_times: bool) {
+                let start = print_execution_times.then(|| Instant::now());
                 match self {
-                    #(Self::#struct_names(rule) => rule.run(node, ctx)),*
+                    #(Self::#struct_names(rule) => {
+                        let diagnostics = rule.run(node, ctx);
+                        if let Some(start) = start {
+                            unsafe { #rule_timer.update(&start.elapsed()) };
+                        }
+                        diagnostics
+                    }),*
                 }
             }
 
-            pub fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>) {
-              match self {
-                #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx)),*
-              }
+            pub fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>, print_execution_times: bool) {
+                let start = print_execution_times.then(|| Instant::now());
+                match self {
+                    #(Self::#struct_names(rule) => {
+                        let diagnostics = rule.run_on_symbol(symbol_id, ctx);
+                        if let Some(start) = start {
+                            unsafe { #rule_timer.update(&start.elapsed()) };
+                        }
+                        diagnostics
+                    }),*
+                }
+            }
+
+            pub fn run_once<'a>(&self, ctx: &LintContext<'a>, print_execution_times: bool) {
+                let start = print_execution_times.then(|| Instant::now());
+                match self {
+                    #(Self::#struct_names(rule) => {
+                        let diagnostics = rule.run_once(ctx);
+                        if let Some(start) = start {
+                            unsafe { #rule_timer.update(&start.elapsed()) };
+                        }
+                        diagnostics
+                    }),*
+                }
+            }
+
+            pub fn execute_time(&self) -> Duration {
+                match self {
+                    #(Self::#struct_names(_) => unsafe { #rule_timer.duration() }),*
+                }
             }
         }
 
@@ -148,6 +186,8 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 Some(self.cmp(&other))
             }
         }
+
+        #(pub static mut #rule_timer : RuleTimer = RuleTimer::new());*;
 
         lazy_static::lazy_static! {
             pub static ref RULES: Vec<RuleEnum> = vec![
