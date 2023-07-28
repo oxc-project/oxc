@@ -7,7 +7,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span, Atom};
+use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
 use lazy_static::lazy_static;
 
@@ -61,7 +61,7 @@ impl Rule for NoDupeKeys {
 }
 
 // todo: should this be located within oxc_ast?
-fn calculate_property_kind_hash<'a>(key: &PropertyKey<'a>) -> Option<u64> {
+fn calculate_property_kind_hash(key: &PropertyKey) -> Option<u64> {
     lazy_static! {
         static ref NULL_HASH: u64 = calculate_hash(&"null");
     }
@@ -80,7 +80,7 @@ fn calculate_property_kind_hash<'a>(key: &PropertyKey<'a>) -> Option<u64> {
             Expression::BigintLiteral(lit) => Some(calculate_hash(&lit.value.to_string())),
             Expression::NullLiteral(_) => Some(*NULL_HASH),
             Expression::TemplateLiteral(lit) => {
-                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(|lit| calculate_hash(lit))
+                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(calculate_hash)
             }
             _ => None,
         },
