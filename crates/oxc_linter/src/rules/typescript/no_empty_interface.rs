@@ -40,7 +40,7 @@ declare_oxc_lint!(
     /// interface Bar extends Foo {}
     /// ```
     NoEmptyInterface,
-    correctness
+    style
 );
 
 impl Rule for NoEmptyInterface {
