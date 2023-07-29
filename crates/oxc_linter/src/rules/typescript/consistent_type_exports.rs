@@ -76,12 +76,10 @@ fn check_export_named_declaration(
         if matches!(specifier.export_kind, ImportOrExportKind::Type) {
             continue;
         }
-        // {export {foo} }
         let Some(symbol_id) = scopes.get_binding(scope_id, specifier.local.name()) else {
             continue;
         };
-        // Symbol resolution should not be done in a rule it should be a global function...
-        // Pretend this was TS equivalent check.getAliasedSymbol
+        
         let symbol_is_type = symbol_table.get_flag(symbol_id).is_type();
         if symbol_is_type {
             ctx.diagnostic(ConsistentTypeExportDiagnostic(specifier.span));
