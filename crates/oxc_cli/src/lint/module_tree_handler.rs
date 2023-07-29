@@ -73,7 +73,7 @@ impl ModuleTreeLintHandler {
             },
         );
 
-        let (number_of_warnings, number_of_diagnostics) = self.process_diagnostics(&rx_error);
+        let (number_of_warnings, number_of_errors) = self.process_diagnostics(&rx_error);
 
         if let Err(err) = result {
             return CliRunResult::IOError(err);
@@ -83,8 +83,8 @@ impl ModuleTreeLintHandler {
             duration: now.elapsed(),
             number_of_rules: self.linter.number_of_rules(),
             number_of_files: visited.len(),
-            number_of_diagnostics,
             number_of_warnings,
+            number_of_errors,
             max_warnings_exceeded: self
                 .options
                 .max_warnings
@@ -94,18 +94,23 @@ impl ModuleTreeLintHandler {
 
     fn process_diagnostics(&self, rx_error: &Receiver<(PathBuf, Vec<Error>)>) -> (usize, usize) {
         let mut number_of_warnings = 0;
-        let mut number_of_diagnostics = 0;
+        let mut number_of_errors = 0;
         let mut buf_writer = BufWriter::new(io::stdout());
         let handler = GraphicalReportHandler::new();
 
         for (path, diagnostics) in rx_error {
-            number_of_diagnostics += diagnostics.len();
-
             let mut output = String::new();
-
             for diagnostic in diagnostics {
-                if diagnostic.severity() == Some(Severity::Warning) {
-                    number_of_warnings += 1;
+                let severity = diagnostic.severity();
+                let is_warning = severity == Some(Severity::Warning);
+                let is_error = severity.is_none() || severity == Some(Severity::Error);
+                if is_warning || is_error {
+                    if is_warning {
+                        number_of_warnings += 1;
+                    }
+                    if is_error {
+                        number_of_errors += 1;
+                    }
                     // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
                     // Note that it does not disable ALL diagnostics, only Warning diagnostics
                     if self.options.quiet {
@@ -141,7 +146,7 @@ impl ModuleTreeLintHandler {
 
         // see comment above
         buf_writer.flush().expect("Flushing stdout can't fail");
-        (number_of_warnings, number_of_diagnostics)
+        (number_of_warnings, number_of_errors)
     }
 }
 
