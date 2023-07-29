@@ -20,9 +20,6 @@ pub enum NumberBase {
 
 impl NumberBase {
     pub fn is_base_10(&self) -> bool {
-        match self {
-            Self::Float | Self::Decimal => true,
-            _ => false,
-        }
+        matches!(self, Self::Float | Self::Decimal)
     }
 }
