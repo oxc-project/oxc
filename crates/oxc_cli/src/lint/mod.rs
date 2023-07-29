@@ -131,12 +131,12 @@ impl LintRunner {
         let total = timings.iter().map(|x| x.1).sum::<Duration>().as_secs_f64();
 
         println!("Rule timings in milliseconds:");
-        println!("Total: {:.3}ms", total * 1000.0);
-        println!("Time  |     % | Rule");
+        println!("Total: {:.2}ms", total * 1000.0);
+        println!("{:>7} | {:>5} | Rule", "Time", "%");
         for (name, duration) in timings.iter().rev() {
             let millis = duration.as_secs_f64() * 1000.0;
             let relative = duration.as_secs_f64() / total * 100.0;
-            println!("{millis:.3} | {relative:>4.1}% | {name}");
+            println!("{millis:>7.2} | {relative:>4.1}% | {name}");
         }
     }
 }
