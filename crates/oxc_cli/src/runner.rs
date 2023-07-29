@@ -40,7 +40,7 @@ pub enum CliRunResult {
         number_of_rules: usize,
         number_of_files: usize,
         number_of_warnings: usize,
-        number_of_diagnostics: usize,
+        number_of_errors: usize,
         max_warnings_exceeded: bool,
     },
     TypeCheckResult {
@@ -66,11 +66,12 @@ impl Termination for CliRunResult {
                 number_of_rules,
                 number_of_files,
                 number_of_warnings,
-                number_of_diagnostics,
+                number_of_errors,
                 max_warnings_exceeded,
             } => {
                 let ms = duration.as_millis();
                 let threads = rayon::current_num_threads();
+                let number_of_diagnostics = number_of_warnings + number_of_errors;
 
                 if number_of_diagnostics > 0 {
                     println!();
@@ -86,11 +87,16 @@ impl Termination for CliRunResult {
                 }
 
                 if number_of_diagnostics > 0 {
-                    println!("Found {number_of_diagnostics} warnings.");
+                    let warnings = if number_of_warnings == 1 { "warning" } else { "warnings" };
+                    let errors = if number_of_errors == 1 { "error" } else { "errors" };
+                    println!(
+                        "Found {number_of_warnings} {warnings} and {number_of_errors} {errors}."
+                    );
                     return ExitCode::from(1);
                 }
 
-                println!("Found no warnings.");
+                // eslint does not print anything after success, so we do the same.
+                // It is also standard to not print anything after success in the *nix world.
                 ExitCode::from(0)
             }
             Self::TypeCheckResult { duration, number_of_diagnostics } => {
@@ -102,8 +108,6 @@ impl Termination for CliRunResult {
                     return ExitCode::from(1);
                 }
 
-                // TODO
-                // println!("Found no errors.");
                 ExitCode::from(0)
             }
         }
