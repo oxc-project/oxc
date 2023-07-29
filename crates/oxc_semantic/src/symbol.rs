@@ -54,6 +54,10 @@ impl SymbolTable {
         self.flags[symbol_id]
     }
 
+    pub fn set_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
+        self.flags[symbol_id] |= includes;
+    }
+
     pub fn get_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
         self.scope_ids[symbol_id]
     }

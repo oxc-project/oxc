@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5060/5063 (99.94%)
 Positive Passed: 5051/5063 (99.76%)
-Negative Passed: 984/4761 (20.67%)
+Negative Passed: 986/4761 (20.71%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -3617,8 +3617,6 @@ Expect Syntax Error: "conformance/types/tuple/wideningTuples7.ts"
 Expect Syntax Error: "conformance/types/typeAliases/directDependenceBetweenTypeAliases.ts"
 Expect Syntax Error: "conformance/types/typeAliases/intrinsicKeyword.ts"
 Expect Syntax Error: "conformance/types/typeAliases/intrinsicTypes.ts"
-Expect Syntax Error: "conformance/types/typeAliases/typeAliasesDoNotMerge.ts"
-Expect Syntax Error: "conformance/types/typeAliases/typeAliasesForObjectTypes.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeArgumentLists/callGenericFunctionWithIncorrectNumberOfTypeArguments.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeArgumentLists/callNonGenericFunctionWithTypeArguments.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeArgumentLists/functionConstraintSatisfaction2.ts"
@@ -19003,6 +19001,28 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  7 │ type object = I;
    ╰────
   help: Try insert a semicolon here
+
+  × Identifier `A` has already been declared
+   ╭─[conformance/types/typeAliases/typeAliasesDoNotMerge.ts:1:1]
+ 1 │ export type A = {}
+   ·             ┬
+   ·             ╰── `A` has already been declared here
+ 2 │ type A = {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `T2` has already been declared
+    ╭─[conformance/types/typeAliases/typeAliasesForObjectTypes.ts:9:1]
+  9 │ // An interface can have multiple merged declarations, but a type alias for an object type literal cannot.
+ 10 │ type T2 = { x: string }
+    ·      ─┬
+    ·       ╰── `T2` has already been declared here
+ 11 │ type T2 = { y: number }
+    ·      ─┬
+    ·       ╰── It can not be redeclared here
+ 12 │ 
+    ╰────
 
   × Unexpected token
     ╭─[conformance/types/typeParameters/typeArgumentLists/instantiationExpressionErrors.ts:20:1]
