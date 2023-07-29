@@ -199,6 +199,16 @@ impl BinaryOperator {
         }
     }
 
+    pub fn equality_inverse_operator(self) -> Option<Self> {
+        match self {
+            Self::Equality => Some(Self::Inequality),
+            Self::Inequality => Some(Self::Equality),
+            Self::StrictEquality => Some(Self::StrictInequality),
+            Self::StrictInequality => Some(Self::StrictEquality),
+            _ => None,
+        }
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Equality => "==",
