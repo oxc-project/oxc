@@ -14,6 +14,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 // const ARGUMENTS_STR: Atom = Atom::from("arguments");
 const DECLARED_STR: &Atom = &Atom::new_inline("declared");
+const IMPORTED_STR: &Atom = &Atom::new_inline("imported");
 const EMPTY_STR: &Atom = &Atom::new_inline("");
 
 #[derive(Debug, Error, Diagnostic)]
@@ -25,10 +26,15 @@ struct NoUnusedVarsDiagnostic(
     /* additional */ pub Atom,
     #[label] pub Span,
 );
+
 impl NoUnusedVarsDiagnostic {
     /// Diagnostic for unused declaration, with no additional message.
     pub fn decl(var: Atom, span: Span) -> Self {
         Self(var, DECLARED_STR, EMPTY_STR.clone(), span)
+    }
+
+    pub fn import(var: Atom, span: Span) -> Self {
+        Self(var, IMPORTED_STR, EMPTY_STR.clone(), span)
     }
 }
 
@@ -320,20 +326,22 @@ fn parse_unicode_rule(value: Option<&Value>, name: &str) -> Option<Regex> {
 impl NoUnusedVars {
     fn check_unused_module_declaration<'a>(
         &self,
-        _symbol_id: SymbolId,
+        symbol_id: SymbolId,
         module: &'a ModuleDeclaration<'a>,
-        _ctx: &LintContext<'a>,
+        ctx: &LintContext<'a>,
     ) {
         if module.is_export() {
             // skip exported variables
             return;
         }
+
+        let name = ctx.symbols().get_name(symbol_id);
         if let ModuleDeclaration::ImportDeclaration(import) = module {
             if import.specifiers.is_empty() {
                 // skip imports without specifiers
                 return;
             }
-            todo!()
+            ctx.diagnostic(NoUnusedVarsDiagnostic::import(name.clone(), import.span));
         }
     }
 
@@ -1297,51 +1305,51 @@ mod tests {
             ("function f() { var a = 1; return function(){ f(a *= 2); }; }", None),
             ("function f() { var a = 1; return function(){ f(++a); }; }", None),
             // ("/*global a */", None),
-            // (
-            //     "function foo(first, second) {\ndoStuff(function() {\nconsole.log(second);});};",
-            //     None,
-            // ),
-            // ("var a=10;", Some(serde_json::json!(["all"]))),
-            // ("var a=10; a=20;", Some(serde_json::json!(["all"]))),
-            // (
-            //     "var a=10; (function() { var a = 1; alert(a); })();",
-            //     Some(serde_json::json!(["all"])),
-            // ),
-            // ("var a=10, b=0, c=null; alert(a+b)", Some(serde_json::json!(["all"]))),
-            // (
-            //     "var a=10, b=0, c=null; setTimeout(function() { var b=2; alert(a+b+c); }, 0);",
-            //     Some(serde_json::json!(["all"])),
-            // ),
-            // (
-            //     "var a=10, b=0, c=null; setTimeout(function() { var b=2; var c=2; alert(a+b+c); }, 0);",
-            //     Some(serde_json::json!(["all"])),
-            // ),
-            // (
-            //     "function f(){var a=[];return a.map(function(){});}",
-            //     Some(serde_json::json!(["all"])),
-            // ),
-            // (
-            //     "function f(){var a=[];return a.map(function g(){});}",
-            //     Some(serde_json::json!(["all"])),
-            // ),
-            // (
-            //     "function foo() {function foo(x) {\nreturn x; }; return function() {return foo; }; }",
-            //     None,
-            // ),
-            // (
-            //     "function f(){var x;function a(){x=42;}function b(){alert(x);}}",
-            //     Some(serde_json::json!(["all"])),
-            // ),
-            // ("function f(a) {}; f();", Some(serde_json::json!(["all"]))),
-            // ("function a(x, y, z){ return y; }; a();", Some(serde_json::json!(["all"]))),
-            // ("var min = Math.min", Some(serde_json::json!(["all"]))),
-            // ("var min = {min: 1}", Some(serde_json::json!(["all"]))),
-            // ("Foo.bar = function(baz) { return 1; };", Some(serde_json::json!(["all"]))),
-            // ("var min = {min: 1}", Some(serde_json::json!([{ "vars": "all" }]))),
-            // (
-            //     "function gg(baz, bar) { return baz; }; gg();",
-            //     Some(serde_json::json!([{ "vars": "all" }])),
-            // ),
+            (
+                "function foo(first, second) {\ndoStuff(function() {\nconsole.log(second);});};",
+                None,
+            ),
+            ("var a=10;", Some(serde_json::json!(["all"]))),
+            ("var a=10; a=20;", Some(serde_json::json!(["all"]))),
+            (
+                "var a=10; (function() { var a = 1; alert(a); })();",
+                Some(serde_json::json!(["all"])),
+            ),
+            ("var a=10, b=0, c=null; alert(a+b)", Some(serde_json::json!(["all"]))),
+            (
+                "var a=10, b=0, c=null; setTimeout(function() { var b=2; alert(a+b+c); }, 0);",
+                Some(serde_json::json!(["all"])),
+            ),
+            (
+                "var a=10, b=0, c=null; setTimeout(function() { var b=2; var c=2; alert(a+b+c); }, 0);",
+                Some(serde_json::json!(["all"])),
+            ),
+            (
+                "function f(){var a=[];return a.map(function(){});}",
+                Some(serde_json::json!(["all"])),
+            ),
+            (
+                "function f(){var a=[];return a.map(function g(){});}",
+                Some(serde_json::json!(["all"])),
+            ),
+            (
+                "function foo() {function foo(x) {\nreturn x; }; return function() {return foo; }; }",
+                None,
+            ),
+            (
+                "function f(){var x;function a(){x=42;}function b(){alert(x);}}",
+                Some(serde_json::json!(["all"])),
+            ),
+            ("function f(a) {}; f();", Some(serde_json::json!(["all"]))),
+            ("function a(x, y, z){ return y; }; a();", Some(serde_json::json!(["all"]))),
+            ("var min = Math.min", Some(serde_json::json!(["all"]))),
+            ("var min = {min: 1}", Some(serde_json::json!(["all"]))),
+            ("Foo.bar = function(baz) { return 1; };", Some(serde_json::json!(["all"]))),
+            ("var min = {min: 1}", Some(serde_json::json!([{ "vars": "all" }]))),
+            (
+                "function gg(baz, bar) { return baz; }; gg();",
+                Some(serde_json::json!([{ "vars": "all" }])),
+            ),
             (
                 "(function(foo, baz, bar) { return baz; })();",
                 Some(serde_json::json!([{ "vars": "all", "args": "after-used" }])),
@@ -1354,40 +1362,41 @@ mod tests {
                 "(function z(foo) { var bar = 33; })();",
                 Some(serde_json::json!([{ "vars": "all", "args": "all" }])),
             ),
-            // ("(function z(foo) { z(); })();", Some(serde_json::json!([{}]))),
-            // (
-            //     "function f() { var a = 1; return function(){ f(a = 2); }; }",
-            //     Some(serde_json::json!([{}])),
-            // ),
-            // ("import x from \"y\";", None),
-            // ("export function fn2({ x, y }) {\n console.log(x); \n};", None),
-            // ("export function fn2( x, y ) {\n console.log(x); \n};", None),
-            // ("/*exported max*/ var max = 1, min = {min: 1}", None),
-            // ("/*exported x*/ var { x, y } = z", None),
-            // (
-            //     "var _a; var b;",
-            //     Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "^_" }])),
-            // ),
+            ("(function z(foo) { z(); })();", Some(serde_json::json!([{}]))),
+            (
+                "function f() { var a = 1; return function(){ f(a = 2); }; }",
+                Some(serde_json::json!([{}])),
+            ),
+            ("import x from \"y\";", None),
+            ("export function fn2({ x, y }) {\n console.log(x); \n};", None),
+            ("export function fn2( x, y ) {\n console.log(x); \n};", None),
+            ("/*exported max*/ var max = 1, min = {min: 1}", None),
+            ("/*exported x*/ var { x, y } = z", None),
+            (
+                "var _a; var b;",
+                Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "^_" }])),
+            ),
+            // todo
             // (
             //     "var a; function foo() { var _b; var c_; } foo();",
             //     Some(serde_json::json!([{ "vars": "local", "varsIgnorePattern": "^_" }])),
             // ),
-            // (
-            //     "function foo(a, _b) { } foo();",
-            //     Some(serde_json::json!([{ "args": "all", "argsIgnorePattern": "^_" }])),
-            // ),
-            // (
-            //     "function foo(a, _b, c) { return a; } foo();",
-            //     Some(serde_json::json!([{ "args": "after-used", "argsIgnorePattern": "^_" }])),
-            // ),
-            // (
-            //     "function foo(_a) { } foo();",
-            //     Some(serde_json::json!([{ "args": "all", "argsIgnorePattern": "[iI]gnored" }])),
-            // ),
-            // (
-            //     "var [ firstItemIgnored, secondItem ] = items;",
-            //     Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "[iI]gnored" }])),
-            // ),
+            (
+                "function foo(a, _b) { } foo();",
+                Some(serde_json::json!([{ "args": "all", "argsIgnorePattern": "^_" }])),
+            ),
+            (
+                "function foo(a, _b, c) { return a; } foo();",
+                Some(serde_json::json!([{ "args": "after-used", "argsIgnorePattern": "^_" }])),
+            ),
+            (
+                "function foo(_a) { } foo();",
+                Some(serde_json::json!([{ "args": "all", "argsIgnorePattern": "[iI]gnored" }])),
+            ),
+            (
+                "var [ firstItemIgnored, secondItem ] = items;",
+                Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "[iI]gnored" }])),
+            ),
             // /*
             //       {
             //        code: "const [ a, _b, c ] = items;\nconsole.log(a+c);",
@@ -1465,7 +1474,7 @@ mod tests {
             //        parserOptions: { ecmaVersion: 2018 }
             //    },
             // */
-            // ("(function(obj) { var name; for ( name in obj ) { i(); return; } })({});", None),
+            ("(function(obj) { var name; for ( name in obj ) { i(); return; } })({});", None),
             // ("(function(obj) { var name; for ( name in obj ) { } })({});", None),
             // ("(function(obj) { for ( var name in obj ) { } })({});", None),
             // ("(function(iter) { var name; for ( name of iter ) { i(); return; } })({});", None),
@@ -1473,10 +1482,10 @@ mod tests {
             // ("(function(iter) { for ( var name of iter ) { } })({});", None),
             // ("\n/* global foobar, foo, bar */\nfoobar;", None),
             // ("\n/* global foobar,\n   foo,\n   bar\n */\nfoobar;", None),
-            // (
-            //     "const data = { type: 'coords', x: 1, y: 2 };\nconst { type, ...coords } = data;\n console.log(coords);",
-            //     None,
-            // ),
+            (
+                "const data = { type: 'coords', x: 1, y: 2 };\nconst { type, ...coords } = data;\n console.log(coords);",
+                None,
+            ),
             // (
             //     "const data = { type: 'coords', x: 2, y: 2 };\nconst { type, ...coords } = data;\n console.log(type)",
             //     Some(serde_json::json!([{ "ignoreRestSiblings": true }])),
@@ -1485,18 +1494,19 @@ mod tests {
             //     "let type, coords;\n({ type, ...coords } = data);\n console.log(type)",
             //     Some(serde_json::json!([{ "ignoreRestSiblings": true }])),
             // ),
+            // FIXME
             // (
             //     "const data = { type: 'coords', x: 3, y: 2 };\nconst { type, ...coords } = data;\n console.log(type)",
             //     None,
             // ),
-            // (
-            //     "const data = { vars: ['x','y'], x: 1, y: 2 };\nconst { vars: [x], ...coords } = data;\n console.log(coords)",
-            //     None,
-            // ),
-            // (
-            //     "const data = { defaults: { x: 0 }, x: 1, y: 2 };\nconst { defaults: { x }, ...coords } = data;\n console.log(coords)",
-            //     None,
-            // ),
+            (
+                "const data = { vars: ['x','y'], x: 1, y: 2 };\nconst { vars: [x], ...coords } = data;\n console.log(coords)",
+                None,
+            ),
+            (
+                "const data = { defaults: { x: 0 }, x: 1, y: 2 };\nconst { defaults: { x }, ...coords } = data;\n console.log(coords)",
+                None,
+            ),
             // (
             //     "(({a, ...rest}) => {})",
             //     Some(serde_json::json!([{ "args": "all", "ignoreRestSiblings": true }])),
@@ -1508,12 +1518,12 @@ mod tests {
             // ("/*global foo:true*/", None),
             // ("/*global 変数, 数*/\n変数;", None),
             // ("/*global 𠮷𩸽, 𠮷*/\n\\u{20BB7}\\u{29E3D};", None),
-            // ("export default function(a) {}", None),
-            // ("export default function(a, b) { console.log(a); }", None),
-            // ("export default (function(a) {});", None),
-            // ("export default (function(a, b) { console.log(a); });", None),
-            // ("export default (a) => {};", None),
-            // ("export default (a, b) => { console.log(a); };", None),
+            ("export default function(a) {}", None),
+            ("export default function(a, b) { console.log(a); }", None),
+            ("export default (function(a) {});", None),
+            ("export default (function(a, b) { console.log(a); });", None),
+            ("export default (a) => {};", None),
+            ("export default (a, b) => { console.log(a); };", None),
             // ("try{}catch(err){};", Some(serde_json::json!([{ "caughtErrors": "all" }]))),
             // (
             //     "try{}catch(err){};",
