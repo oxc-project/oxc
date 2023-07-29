@@ -53,7 +53,7 @@ impl SymbolTable {
     pub fn get_flag(&self, symbol_id: SymbolId) -> SymbolFlags {
         self.flags[symbol_id]
     }
-    
+
     pub fn set_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
         self.flags[symbol_id] |= includes;
     }

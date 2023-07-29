@@ -161,10 +161,14 @@ impl<'a> Binder for FormalParameters<'a> {
 impl<'a> Binder for TSTypeAliasDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         // My understanding is this makes type foo = 1; type foo = 2; illegal
-        builder.declare_symbol(self.id.span, &self.id.name, SymbolFlags::TypeAlias, SymbolFlags::TypeAlias);
+        builder.declare_symbol(
+            self.id.span,
+            &self.id.name,
+            SymbolFlags::TypeAlias,
+            SymbolFlags::TypeAlias,
+        );
     }
 }
-
 
 impl<'a> Binder for CatchClause<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {

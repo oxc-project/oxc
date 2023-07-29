@@ -252,9 +252,6 @@ impl<'a> SemanticBuilder<'a> {
         symbol_id
     }
 
-
-
-
     pub fn declare_symbol(
         &mut self,
         span: Span,
