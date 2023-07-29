@@ -1,4 +1,3 @@
-
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::{
@@ -66,7 +65,7 @@ impl TryFrom<&Value> for VarsOption {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum ArgsOption {
     /// Unused positional arguments that occur before the last used argument
     /// will not be checked, but all named arguments and all positional
@@ -339,11 +338,13 @@ impl NoUnusedVars {
     }
 
     fn is_ignored_var(&self, name: &str) -> bool {
-        if let Some(pat) = &self.vars_ignore_pattern { pat.is_match(name) } else { false }
+        self.vars_ignore_pattern.as_ref().map_or(false, |pat| pat.is_match(name))
+        // if let Some(pat) = &self.vars_ignore_pattern { pat.is_match(name) } else { false }
     }
 
     fn is_ignored_arg(&self, name: &str) -> bool {
-        if let Some(pat) = &self.args_ignore_pattern { pat.is_match(name) } else { false }
+        self.args_ignore_pattern.as_ref().map_or(false, |pat| pat.is_match(name))
+        // if let Some(pat) = &self.args_ignore_pattern { pat.is_match(name) } else { false }
         // let Some(identifier) = arg.pattern.kind.identifier() else { return };
         // match &self.args_ignore_pattern {
         //     Some(pat) => if pat.is_match(identifier.name.as_str()) {
@@ -354,15 +355,11 @@ impl NoUnusedVars {
     }
 
     fn is_ignored_array_destructured(&self, name: &str) -> bool {
-        if let Some(pat) = &self.destructured_array_ignore_pattern {
-            pat.is_match(name)
-        } else {
-            false
-        }
+        self.destructured_array_ignore_pattern.as_ref().map_or(false, |pat| pat.is_match(name))
     }
 
     fn is_ignored_catch_err(&self, name: &str) -> bool {
-        if let Some(pat) = &self.caught_errors_ignore_pattern { pat.is_match(name) } else { false }
+        self.caught_errors_ignore_pattern.as_ref().map_or(false, |pat| pat.is_match(name))
     }
 
     // fn is_ignored(&self, node: &AstNode<'_>) -> bool {
@@ -379,51 +376,49 @@ impl NoUnusedVars {
     // }
     fn check_unused_binding_pattern<'a>(
         &self,
-        symbol_id: SymbolId,
+        _symbol_id: SymbolId,
         name: &Atom,
         id: &BindingPattern<'a>,
-        ctx: &LintContext<'a>
+        _ctx: &LintContext<'a>,
     ) -> Option<Span> {
         match &id.kind {
-            | BindingPatternKind::BindingIdentifier(id) => {
+            BindingPatternKind::BindingIdentifier(id) => {
                 // debug_assert!(id.name == name, "Expected BindingIdentifier to
                 // have name '{name}', but it had name '{}'", id.name);
                 // id might not be name if we're in a recursive call from an
                 // array or object pattern
-                if &id.name != name || self.is_ignored_var(name) {
+                if id.name != name || self.is_ignored_var(name) {
                     None
                 } else {
                     Some(id.span)
                 }
-            },
-            | BindingPatternKind::AssignmentPattern(id) => self.check_unused_binding_pattern(
-                symbol_id,
-                name,
-                &id.left,
-                ctx
-            ),
-            | BindingPatternKind::ArrayPattern(arr) => {
+            }
+            BindingPatternKind::AssignmentPattern(id) => {
+                self.check_unused_binding_pattern(_symbol_id, name, &id.left, _ctx)
+            }
+            BindingPatternKind::ArrayPattern(arr) => {
                 for el in arr.elements.iter() {
                     let Some(el) = el else { continue };
                     if let Some(id) = el.kind.identifier() {
-                        if &id.name != name {
-                            continue
+                        if id.name != name {
+                            continue;
                         }
                         // let _id_name = id.name.as_str();
                         if !self.is_ignored_array_destructured(&id.name) {
-                            return Some(id.span)
+                            return Some(id.span);
                         }
                     } else {
-                        return self.check_unused_binding_pattern(symbol_id, name, el, ctx);
+                        return self.check_unused_binding_pattern(_symbol_id, name, el, _ctx);
                     }
                 }
                 None
-            },
-            | BindingPatternKind::ObjectPattern(obj) => {
+            }
+            BindingPatternKind::ObjectPattern(obj) => {
                 for el in obj.properties.iter() {
-                    let maybe_span = self.check_unused_binding_pattern(symbol_id, name, &el.value, ctx);
+                    let maybe_span =
+                        self.check_unused_binding_pattern(_symbol_id, name, &el.value, _ctx);
                     if maybe_span.is_some() {
-                        return maybe_span
+                        return maybe_span;
                     }
                     // match el.key {
                     //     PropertyKey::Identifier(id) => {
@@ -477,11 +472,13 @@ impl NoUnusedVars {
         ctx: &LintContext<'a>,
     ) {
         let name = ctx.symbols().get_name(symbol_id);
+        // clippy is wrong here. The suggested fix is harder to read
+        #[allow(clippy::option_if_let_else)]
         if self.caught_errors && !self.is_ignored_catch_err(name.as_str()) {
             match &catch.param {
                 Some(error) => {
                     if let Some(id) = error.kind.identifier() {
-                        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(id.name.clone(), id.span))
+                        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(id.name.clone(), id.span));
                     }
                 }
                 None => {
@@ -490,7 +487,7 @@ impl NoUnusedVars {
                         "Found unused caught error but CatchClause AST node has no param"
                     );
                 }
-            }
+            };
         }
     }
 
@@ -514,16 +511,21 @@ impl NoUnusedVars {
             return;
         }
 
-        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), f.span))
+        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), f.span));
     }
 
-    fn check_unused_class<'a>(&self, _symbol_id: SymbolId, class: &'a Class, ctx: &LintContext<'a>) {
+    fn check_unused_class<'a>(
+        &self,
+        _symbol_id: SymbolId,
+        class: &'a Class,
+        ctx: &LintContext<'a>,
+    ) {
         let Some(name) = class.id.as_ref().map(|binding| &binding.name) else { return };
         if self.is_ignored_var(name.as_str()) {
             return;
         }
 
-        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), class.span))
+        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), class.span));
     }
 
     fn check_unused_arguments<'a>(
@@ -540,22 +542,19 @@ impl NoUnusedVars {
                 if self.is_ignored_arg(name) {
                     return;
                 }
+                #[allow(clippy::collection_is_never_read)]
                 let arg = args
                     .items
                     .iter()
                     .find(|arg| arg.pattern.kind.identifier().is_some_and(|id| id.name == name));
-                match arg {
-                    Some(arg) => {
-                        ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), arg.span))
-                    }
-                    None => {
-                        debug_assert!(
-                            false,
-                            "Could not find FormalArgument in FormalArguments AST node even though Semantic said we would find it here. This is a bug."
-                        );
-                    }
-                }
-                //     args.items.iter().for_each(|arg| self.check_unused_argument(arg, ctx))
+                arg.map_or_else(|| {
+                    debug_assert!(
+                        false,
+                        "Could not find FormalArgument in FormalArguments AST node even though Semantic said we would find it here. This is a bug."
+                    );
+                }, |arg| {
+                    ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), arg.span));
+                });
             }
             ArgsOption::AfterUsed => {
                 let name = ctx.semantic().symbols().get_name(symbol_id);
@@ -600,9 +599,11 @@ impl NoUnusedVars {
                     //     arg.pattern.kind.identifier().is_some_and(|id| id.name == name)
                     // });
                     for arg in args.items.iter() {
-                        if let Some(arg_span) = self.check_unused_binding_pattern(symbol_id, name, &arg.pattern, ctx) {
+                        if let Some(arg_span) =
+                            self.check_unused_binding_pattern(symbol_id, name, &arg.pattern, ctx)
+                        {
                             ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), arg_span));
-                            return
+                            return;
                         }
                     }
                     // debug_assert!(
@@ -647,7 +648,7 @@ impl NoUnusedVars {
             DECLARED_STR,
             "".into(),
             arg.span,
-        ))
+        ));
     }
 
     fn is_exported(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
@@ -758,14 +759,14 @@ impl Rule for NoUnusedVars {
         let semantic = ctx.semantic();
         let symbols = ctx.symbols();
 
-        // Find all references that count as a usage
-        let references: Vec<_> = symbols
+        // Find all references that count as a usage. If its used, the rule
+        // doesn't apply
+        let num_usages = symbols
             .get_resolved_references(symbol_id)
             .filter(|reference| reference.is_read())
-            .collect();
+            .count();
 
-        // Symbol is used, rule doesn't apply
-        if !references.is_empty() {
+        if num_usages > 0 {
             return;
         }
 
@@ -780,18 +781,18 @@ impl Rule for NoUnusedVars {
         match declaration.kind() {
             AstKind::ModuleDeclaration(decl) => {
                 self.check_unused_module_declaration(symbol_id, decl, ctx);
-            },
+            }
             AstKind::VariableDeclarator(decl) => {
                 self.check_unused_variable_declarator(symbol_id, decl, ctx);
-            },
+            }
             AstKind::Function(f) => self.check_unused_function(symbol_id, f, ctx),
             AstKind::Class(class) => self.check_unused_class(symbol_id, class, ctx),
             AstKind::CatchClause(catch) => self.check_unused_catch_clause(symbol_id, catch, ctx),
             AstKind::FormalParameters(params) => {
                 self.check_unused_arguments(symbol_id, declaration.scope_id(), params, ctx);
-            },
+            }
             AstKind::FormalParameter(param) => self.check_unused_argument(symbol_id, param, ctx),
-            s => todo!("handle decl kind {:?}", s),
+            s => debug_assert!(false, "handle decl kind {s:?}"),
         };
     }
 }
@@ -804,17 +805,6 @@ mod tests {
     use crate::tester::Tester;
 
     // test-only trait implementations to make testing easier
-
-    impl PartialEq for ArgsOption {
-        fn eq(&self, other: &Self) -> bool {
-            match (self, other) {
-                (Self::AfterUsed, Self::AfterUsed) => true,
-                (Self::All, Self::All) => true,
-                (Self::None, Self::None) => true,
-                _ => false,
-            }
-        }
-    }
     impl From<Value> for NoUnusedVars {
         fn from(value: Value) -> Self {
             Self::from_configuration(value)
@@ -831,7 +821,7 @@ mod tests {
         assert!(!rule.caught_errors);
         assert!(rule.caught_errors_ignore_pattern.is_none());
         assert!(rule.destructured_array_ignore_pattern.is_none());
-        assert!(!rule.ignore_rest_siblings)
+        assert!(!rule.ignore_rest_siblings);
     }
 
     #[test]
@@ -911,9 +901,7 @@ mod tests {
 
     #[test]
     fn test_spread_arr_simple() {
-        let pass = vec![
-            ("let [b] = a; console.log(b);", None),
-        ];
+        let pass = vec![("let [b] = a; console.log(b);", None)];
         let fail = vec![("let [b] = a", None), ("let [b, c] = a; console.log(b);", None)];
 
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
@@ -922,9 +910,7 @@ mod tests {
     #[test]
     fn test_spread_arr_ignored() {
         let ignore_underscore = Some(json!([{ "destructuredArrayIgnorePattern": "^_" }]));
-        let pass = vec![
-            ("let [_b] = a;", ignore_underscore),
-        ];
+        let pass = vec![("let [_b] = a;", ignore_underscore)];
         let fail = vec![];
 
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
@@ -932,10 +918,7 @@ mod tests {
 
     #[test]
     fn test_spread_obj_simple() {
-        let pass = vec![
-            "let { a } = x; console.log(a)",
-            "let { a: { b } } = x; console.log(b)"
-        ];
+        let pass = vec!["let { a } = x; console.log(a)", "let { a: { b } } = x; console.log(b)"];
         let fail = vec![
             "let { a } = x;",
             "let { a: { b } } = x;",
@@ -948,13 +931,10 @@ mod tests {
     fn test_spread_compound() {
         let pass = vec![
             ("let { a: [b, c, { e }] } = x; console.log(b + c + e)", None),
-            ("function foo({ bar = 1 }) { return bar }; foo()", None)
+            ("function foo({ bar = 1 }) { return bar }; foo()", None),
         ];
-        let fail = vec![
-
-            ("let { a: [b, c, d] } = x", None)
-        ];
-        Tester::new(NoUnusedVars::NAME, pass, fail).test()
+        let fail = vec![("let { a: [b, c, d] } = x", None)];
+        Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
 
     #[test]
@@ -970,12 +950,10 @@ mod tests {
 
     #[test]
     fn test_function_arg_unpacking() {
-        let pass = vec![
-            (
-                "function baz([_b, foo]) { foo; };\nbaz()",
-                Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
-            ),
-        ];
+        let pass = vec![(
+            "function baz([_b, foo]) { foo; };\nbaz()",
+            Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+        )];
         let fail = vec![];
         Tester::new(NoUnusedVars::NAME, pass, fail);
     }
@@ -988,7 +966,7 @@ mod tests {
             ("export default class Foo {}"),
         ];
         let fail = vec![("class Foo {}")];
-        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test()
+        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test();
     }
 
     #[test]
@@ -1043,6 +1021,7 @@ mod tests {
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
 
+    #[allow(clippy::too_many_lines)]
     #[test]
     fn test() {
         let pass = vec![
