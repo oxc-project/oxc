@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// var x = 2e999;
     /// ```
     NoLossOfPrecision,
-    correctness
+    nursery // There are false positives, see https://github.com/web-infra-dev/oxc/issues/656
 );
 
 impl Rule for NoLossOfPrecision {
@@ -59,8 +59,7 @@ impl<'a> PartialEq for NormalizedNum<'a> {
         if self.coefficient == "0" {
             true
         } else {
-            self.magnitude == other.magnitude
-                && self.coefficient == other.coefficient
+            self.magnitude == other.magnitude && self.coefficient == other.coefficient
         }
     }
 }
@@ -72,11 +71,6 @@ impl NoLossOfPrecision {
         } else {
             Cow::Borrowed(node.raw)
         }
-    }
-
-    fn base_ten(node: &'_ NumberLiteral) -> bool {
-        let prefixes = ["0x", "0X", "0b", "0B", "0o", "0O"];
-        !prefixes.iter().any(|prefix| node.raw.starts_with(prefix))
     }
 
     fn not_base_ten_loses_precision(node: &'_ NumberLiteral) -> bool {
@@ -140,10 +134,7 @@ impl NoLossOfPrecision {
     fn normalize_int(num: Cow<'_, str>) -> NormalizedNum<'_> {
         // specially deal with 0
         if num == "0" {
-            return NormalizedNum {
-                magnitude: 0,
-                coefficient: Cow::Borrowed("0"),
-            };
+            return NormalizedNum { magnitude: 0, coefficient: Cow::Borrowed("0") };
         }
 
         #[allow(clippy::cast_possible_wrap)]
@@ -163,10 +154,7 @@ impl NoLossOfPrecision {
                 // unwrap here will never panic, we guarantee the input contains a `.`
                 #[allow(clippy::cast_possible_wrap)]
                 let magnitude = (trimmed_float.find('.').unwrap() - 1) as isize;
-                NormalizedNum {
-                    coefficient: Cow::Owned(trimmed_float.replace('.', "")),
-                    magnitude,
-                }
+                NormalizedNum { coefficient: Cow::Owned(trimmed_float.replace('.', "")), magnitude }
             },
             |stripped| {
                 let decimal_digits = stripped.len();
@@ -205,7 +193,7 @@ impl NoLossOfPrecision {
     }
 
     pub fn lose_precision(node: &'_ NumberLiteral) -> bool {
-        if Self::base_ten(node) {
+        if node.base.is_base_10() {
             Self::base_ten_loses_precision(node)
         } else {
             Self::not_base_ten_loses_precision(node)

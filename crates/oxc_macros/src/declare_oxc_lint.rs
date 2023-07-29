@@ -62,6 +62,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         "correctness" => quote! { RuleCategory::Correctness },
         "suspicious" => quote! { RuleCategory::Suspicious },
         "pedantic" => quote! { RuleCategory::Pedantic },
+        "style" => quote! { RuleCategory::Style },
         "restriction" => quote! { RuleCategory::Restriction },
         "nursery" => quote! { RuleCategory::Nursery },
         _ => panic!("invalid rule category"),

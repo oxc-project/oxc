@@ -53,25 +53,15 @@ impl Rule for NoGlobalAssign {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let symbol_table = ctx.semantic().symbols();
+        let symbol_table = ctx.symbols();
         for reference_id_list in ctx.scopes().root_unresolved_references().values() {
             for &reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
-                if symbol_table.is_global_reference(reference_id) && reference.is_write() {
-                    let name = reference.name().clone();
-                    let mut is_global_assign = false;
-                    if let Some(&value) = BUILTINS.get(&name) {
-                        if !value {
-                            is_global_assign = true;
-                        }
-                    }
+                if reference.is_write() && symbol_table.is_global_reference(reference_id) {
+                    let name = reference.name();
 
-                    if self.excludes.contains(&name.clone()) {
-                        is_global_assign = false;
-                    }
-
-                    if is_global_assign {
-                        ctx.diagnostic(NoGlobalAssignDiagnostic(name, reference.span()));
+                    if !self.excludes.contains(name) && BUILTINS.contains_key(name) {
+                        ctx.diagnostic(NoGlobalAssignDiagnostic(name.clone(), reference.span()));
                     }
                 }
             }

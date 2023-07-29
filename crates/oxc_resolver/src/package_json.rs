@@ -35,7 +35,8 @@ pub struct PackageJson {
     /// The "exports" field allows defining the entry points of a package when imported by name loaded either via a node_modules lookup or a self-reference to its own name.
     ///
     /// <https://nodejs.org/api/packages.html#exports>
-    pub exports: Option<ExportsField>,
+    #[serde(default)]
+    pub exports: ExportsField,
 
     /// The browser field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
     ///
@@ -54,18 +55,28 @@ pub enum BrowserField {
 pub type MatchObject = FxIndexMap<ExportsKey, ExportsField>;
 
 /// Coped from Parcel's resolver
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Default, Deserialize)]
 #[serde(untagged)]
 pub enum ExportsField {
+    #[default]
+    None, // For `undefined` or `null` value.
     String(String),
     Array(Vec<ExportsField>),
     Map(MatchObject),
 }
 
+impl ExportsField {
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+}
+
+// TODO: use compact string for these String fields
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum ExportsKey {
     Main,
     Pattern(String),
+    Hash(String),
     CustomCondition(String),
 }
 
@@ -73,10 +84,10 @@ impl From<&str> for ExportsKey {
     fn from(key: &str) -> Self {
         if key == "." {
             Self::Main
-        } else if let Some(key) = key.strip_prefix("./") {
-            Self::Pattern(key.to_string())
+        } else if key.starts_with("./") {
+            Self::Pattern(key.trim_start_matches('.').to_string())
         } else if let Some(key) = key.strip_prefix('#') {
-            Self::Pattern(key.to_string())
+            Self::Hash(key.to_string())
         } else {
             Self::CustomCondition(key.to_string())
         }

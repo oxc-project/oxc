@@ -14,18 +14,21 @@ pub struct Request<'a> {
 pub enum RequestPath<'a> {
     /// `/path`
     Absolute(&'a str),
+
     /// `./path`, `../path`
     Relative(&'a str),
+
     /// `#path`
     Hash(&'a str),
-    /// `path`, `@scope/path`
-    Module(&'a str),
+
+    /// Specifier without any leading syntax is called a bare specifier.
+    Bare(&'a str),
 }
 
 impl<'a> RequestPath<'a> {
     pub fn as_str(&self) -> &str {
         match self {
-            Self::Absolute(s) | Self::Relative(s) | Self::Hash(s) | Self::Module(s) => s,
+            Self::Absolute(s) | Self::Relative(s) | Self::Hash(s) | Self::Bare(s) => s,
         }
     }
 }
@@ -51,7 +54,7 @@ impl<'a> Request<'a> {
             }
             _ => {
                 let (path, query, fragment) = Self::parse_query_framgment(request, 0);
-                (RequestPath::Module(path), query, fragment)
+                (RequestPath::Bare(path), query, fragment)
             }
         };
 
@@ -145,7 +148,7 @@ mod tests {
             let mut r = request.to_string();
             r.push_str("?#");
             let parsed = Request::parse(&r)?;
-            assert_eq!(parsed.path, RequestPath::Module(request));
+            assert_eq!(parsed.path, RequestPath::Bare(request));
             assert_eq!(parsed.query, Some("?"));
             assert_eq!(parsed.fragment, Some("#"));
         }

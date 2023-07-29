@@ -17,3 +17,9 @@ pub enum NumberBase {
     Octal,
     Hex,
 }
+
+impl NumberBase {
+    pub fn is_base_10(&self) -> bool {
+        matches!(self, Self::Float | Self::Decimal)
+    }
+}
