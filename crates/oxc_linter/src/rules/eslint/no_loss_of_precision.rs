@@ -34,7 +34,7 @@ declare_oxc_lint!(
     /// var x = 2e999;
     /// ```
     NoLossOfPrecision,
-    correctness
+    nursery // There are false positives, see https://github.com/web-infra-dev/oxc/issues/656
 );
 
 impl Rule for NoLossOfPrecision {
