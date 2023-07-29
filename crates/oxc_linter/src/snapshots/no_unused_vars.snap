@@ -25,6 +25,41 @@ expression: no_unused_vars
 
   ⚠ eslint(no-unused-vars): Unused variables are not allowed
    ╭─[no_unused_vars.tsx:1:1]
+ 1 │ (function(foo, baz, bar) { return baz; })();
+   ·                     ───
+   ╰────
+  help: bar is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ (function(foo, baz, bar) { return baz; })();
+   ·           ───
+   ╰────
+  help: foo is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ (function(foo, baz, bar) { return baz; })();
+   ·                     ───
+   ╰────
+  help: bar is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ (function z(foo) { var bar = 33; })();
+   ·             ───
+   ╰────
+  help: foo is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ (function z(foo) { var bar = 33; })();
+   ·                        ───
+   ╰────
+  help: bar is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
  1 │ let x = 0; x++, 0;
    ·     ─
    ╰────

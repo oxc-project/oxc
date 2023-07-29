@@ -597,15 +597,19 @@ impl NoUnusedVars {
                 }
 
                 if !has_prev_used {
-                    let arg = args.items.iter().find(|arg| {
-                        arg.pattern.kind.identifier().is_some_and(|id| id.name == name)
-                    });
-                    debug_assert!(
-                        arg.is_some(),
-                        "Expected {name} to be in FormalParameters.items but it wasn't"
-                    );
-                    let Some(arg) = arg else { return };
-                    ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), arg.span))
+                    // let arg = args.items.iter().find(|arg| {
+                    //     arg.pattern.kind.identifier().is_some_and(|id| id.name == name)
+                    // });
+                    for arg in args.items.iter() {
+                        if let Some(arg_span) = self.check_unused_binding_pattern(symbol_id, name, &arg.pattern, ctx) {
+                            ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), arg_span));
+                            return
+                        }
+                    }
+                    // debug_assert!(
+                    //     false,
+                    //     "Expected {name} to be in FormalParameters.items but it wasn't"
+                    // );
                 }
             }
             ArgsOption::None => {
@@ -754,16 +758,12 @@ impl Rule for NoUnusedVars {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let semantic = ctx.semantic();
         let symbols = ctx.symbols();
-        let nodes = ctx.nodes();
 
         // Find all references that count as a usage
         let references: Vec<_> = symbols
             .get_resolved_references(symbol_id)
             .filter(|reference| reference.is_read())
             .collect();
-
-        let name = symbols.get_name(symbol_id);
-        let _name_str: &str = name.as_str();
 
         // Symbol is used, rule doesn't apply
         if references.len() > 0 {
@@ -970,6 +970,18 @@ mod tests {
     }
 
     #[test]
+    fn test_function_arg_unpacking() {
+        let pass = vec![
+            (
+                "function baz([_b, foo]) { foo; };\nbaz()",
+                Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+            ),
+        ];
+        let fail = vec![];
+        Tester::new(NoUnusedVars::NAME, pass, fail);
+    }
+
+    #[test]
     fn test_class_simple() {
         let pass = vec![
             ("class Foo {}; const f = new Foo(); console.log(f)"),
@@ -1059,13 +1071,11 @@ mod tests {
                 "var c = 0; function f(a){ var b = a; return b; }; f(c);",
                 Some(serde_json::json!(["all"])),
             ),
-            // todo
             ("function a(x, y){ return y; }; a();", Some(serde_json::json!(["all"]))),
             (
                 "var arr1 = [1, 2]; var arr2 = [3, 4]; for (var i in arr1) { arr1[i] = 5; } for (var i in arr2) { arr2[i] = 10; }",
                 Some(serde_json::json!(["all"])),
             ),
-            // todo
             ("var a=10;", Some(serde_json::json!(["local"]))),
             ("var min = \"min\"; Math[min];", Some(serde_json::json!(["all"]))),
             ("Foo.bar = function(baz) { return baz; };", Some(serde_json::json!(["all"]))),
@@ -1132,20 +1142,20 @@ mod tests {
             ("const x = []; const {z: [y] = x} = {}; foo(y);", None),
             ("const x = 1; let y; [y = x] = []; foo(y);", None),
             ("const x = 1; let y; ({z: [y = x]} = {}); foo(y);", None),
-            // ("const x = []; let y; ({z: [y] = x} = {}); foo(y);", None),
-            // ("const x = 1; function foo(y = x) { bar(y); } foo();", None),
-            // ("const x = 1; function foo({y = x} = {}) { bar(y); } foo();", None),
-            // ("const x = 1; function foo(y = function(z = x) { bar(z); }) { y(); } foo();", None),
-            // ("const x = 1; function foo(y = function() { bar(x); }) { y(); } foo();", None),
-            // ("var x = 1; var [y = x] = []; foo(y);", None),
-            // ("var x = 1; var {y = x} = {}; foo(y);", None),
-            // ("var x = 1; var {z: [y = x]} = {}; foo(y);", None),
-            // ("var x = []; var {z: [y] = x} = {}; foo(y);", None),
-            // ("var x = 1, y; [y = x] = []; foo(y);", None),
-            // ("var x = 1, y; ({z: [y = x]} = {}); foo(y);", None),
-            // ("var x = [], y; ({z: [y] = x} = {}); foo(y);", None),
+            ("const x = []; let y; ({z: [y] = x} = {}); foo(y);", None),
+            ("const x = 1; function foo(y = x) { bar(y); } foo();", None),
+            ("const x = 1; function foo({y = x} = {}) { bar(y); } foo();", None),
+            ("const x = 1; function foo(y = function(z = x) { bar(z); }) { y(); } foo();", None),
+            ("const x = 1; function foo(y = function() { bar(x); }) { y(); } foo();", None),
+            ("var x = 1; var [y = x] = []; foo(y);", None),
+            ("var x = 1; var {y = x} = {}; foo(y);", None),
+            ("var x = 1; var {z: [y = x]} = {}; foo(y);", None),
+            ("var x = []; var {z: [y] = x} = {}; foo(y);", None),
+            ("var x = 1, y; [y = x] = []; foo(y);", None),
+            ("var x = 1, y; ({z: [y = x]} = {}); foo(y);", None),
+            ("var x = [], y; ({z: [y] = x} = {}); foo(y);", None),
             ("var x = 1; function foo(y = x) { bar(y); } foo();", None),
-            // ("var x = 1; function foo({y = x} = {}) { bar(y); } foo();", None),
+            ("var x = 1; function foo({y = x} = {}) { bar(y); } foo();", None),
             ("var x = 1; function foo(y = function(z = x) { bar(z); }) { y(); } foo();", None),
             ("var x = 1; function foo(y = function() { bar(x); }) { y(); } foo();", None),
             // ("/*exported toaster*/ var toaster = 'great'", None),
@@ -1156,7 +1166,6 @@ mod tests {
             // ("/*eslint use-every-a:1*/ !function(a) { return 1; }", None),
             // ("/*eslint use-every-a:1*/ !function() { var a; return 1 }", None),
             ("var _a;", Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "^_" }]))),
-            // todo
             (
                 "var a; function foo() { var _b; } foo();",
                 Some(serde_json::json!([{ "vars": "local", "varsIgnorePattern": "^_" }])),
@@ -1173,22 +1182,22 @@ mod tests {
                 "var [ firstItemIgnored, secondItem ] = items;\nconsole.log(secondItem);",
                 Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "[iI]gnored" }])),
             ),
-            // (
-            //     "const [ a, _b, c ] = items;\nconsole.log(a+c);",
-            //     Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
-            // ),
-            // (
-            //     "const [ [a, _b, c] ] = items;\nconsole.log(a+c);",
-            //     Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
-            // ),
-            // (
-            //     "const { x: [_a, foo] } = bar;\nconsole.log(foo);",
-            //     Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
-            // ),
-            // (
-            //     "function baz([_b, foo]) { foo; };\nbaz()",
-            //     Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
-            // ),
+            (
+                "const [ a, _b, c ] = items;\nconsole.log(a+c);",
+                Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+            ),
+            (
+                "const [ [a, _b, c] ] = items;\nconsole.log(a+c);",
+                Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+            ),
+            (
+                "const { x: [_a, foo] } = bar;\nconsole.log(foo);",
+                Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+            ),
+            (
+                "function baz([_b, foo]) { foo; };\nbaz()",
+                Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+            ),
             // (
             //     "function baz({x: [_b, foo]}) {foo};\nbaz()",
             //     Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
@@ -1237,6 +1246,7 @@ mod tests {
             //     "const data = { type: 'coords', x: 1, y: 2 };\nconst { type, ...coords } = data;\n console.log(coords);",
             //     Some(serde_json::json!([{ "ignoreRestSiblings": true }])),
             // ),
+            // FIXME: a's usage in rhs of b assignment isn't counting as a read
             // ("var a = 0, b; b = a = a + 1; foo(b);", None),
             // ("var a = 0, b; b = a += a + 1; foo(b);", None),
             // ("var a = 0, b; b = a++; foo(b);", None),
@@ -1295,7 +1305,7 @@ mod tests {
             ("const a = () => { a(); }; a();", None),
             ("const a = () => () => { a(); }; a();", None),
             ("export * as ns from \"source\"", None),
-            // ("import.meta", None),
+            ("import.meta", None),
             // FIXME
             // ("var a; a ||= 1;", None),
             // ("var a; a &&= 1;", None),
@@ -1354,18 +1364,18 @@ mod tests {
             //     "function gg(baz, bar) { return baz; }; gg();",
             //     Some(serde_json::json!([{ "vars": "all" }])),
             // ),
-            // (
-            //     "(function(foo, baz, bar) { return baz; })();",
-            //     Some(serde_json::json!([{ "vars": "all", "args": "after-used" }])),
-            // ),
-            // (
-            //     "(function(foo, baz, bar) { return baz; })();",
-            //     Some(serde_json::json!([{ "vars": "all", "args": "all" }])),
-            // ),
-            // (
-            //     "(function z(foo) { var bar = 33; })();",
-            //     Some(serde_json::json!([{ "vars": "all", "args": "all" }])),
-            // ),
+            (
+                "(function(foo, baz, bar) { return baz; })();",
+                Some(serde_json::json!([{ "vars": "all", "args": "after-used" }])),
+            ),
+            (
+                "(function(foo, baz, bar) { return baz; })();",
+                Some(serde_json::json!([{ "vars": "all", "args": "all" }])),
+            ),
+            (
+                "(function z(foo) { var bar = 33; })();",
+                Some(serde_json::json!([{ "vars": "all", "args": "all" }])),
+            ),
             // ("(function z(foo) { z(); })();", Some(serde_json::json!([{}]))),
             // (
             //     "function f() { var a = 1; return function(){ f(a = 2); }; }",
