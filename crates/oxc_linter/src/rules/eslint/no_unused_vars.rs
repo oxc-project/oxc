@@ -1,6 +1,5 @@
-use std::rc::Rc;
 
-use bitflags::bitflags;
+#[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -15,8 +14,8 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 // const ARGUMENTS_STR: Atom = Atom::from("arguments");
-const DECLARED_STR: &'static Atom = &Atom::new_inline("declared");
-const EMPTY_STR: &'static Atom = &Atom::new_inline("");
+const DECLARED_STR: &Atom = &Atom::new_inline("declared");
+const EMPTY_STR: &Atom = &Atom::new_inline("");
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-unused-vars): Unused variables are not allowed")]
@@ -30,11 +29,11 @@ struct NoUnusedVarsDiagnostic(
 impl NoUnusedVarsDiagnostic {
     /// Diagnostic for unused declaration, with no additional message.
     pub fn decl(var: Atom, span: Span) -> Self {
-        Self(var, &DECLARED_STR, EMPTY_STR.clone(), span)
+        Self(var, DECLARED_STR, EMPTY_STR.clone(), span)
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum VarsOption {
     /// All variables are checked for usage, including those in the global scope.
     #[default]
@@ -315,16 +314,16 @@ fn parse_unicode_rule(value: Option<&Value>, name: &str) -> Option<Regex> {
         .and_then(Value::as_str)
         .map(|pattern| regex::RegexBuilder::new(pattern).unicode(true).build())
         .transpose()
-        .map_err(|err| panic!("Invalid '{}' option for no-unused-vars: {}", name, err))
+        .map_err(|err| panic!("Invalid '{name}' option for no-unused-vars: {err}"))
         .unwrap()
 }
 
 impl NoUnusedVars {
     fn check_unused_module_declaration<'a>(
         &self,
-        symbol_id: SymbolId,
+        _symbol_id: SymbolId,
         module: &'a ModuleDeclaration<'a>,
-        ctx: &LintContext<'a>,
+        _ctx: &LintContext<'a>,
     ) {
         if module.is_export() {
             // skip exported variables
@@ -497,7 +496,7 @@ impl NoUnusedVars {
 
     fn check_unused_function<'a>(
         &self,
-        symbol_id: SymbolId,
+        _symbol_id: SymbolId,
         f: &'a Function,
         ctx: &LintContext<'a>,
     ) {
@@ -518,7 +517,7 @@ impl NoUnusedVars {
         ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), f.span))
     }
 
-    fn check_unused_class<'a>(&self, symbol_id: SymbolId, class: &'a Class, ctx: &LintContext<'a>) {
+    fn check_unused_class<'a>(&self, _symbol_id: SymbolId, class: &'a Class, ctx: &LintContext<'a>) {
         let Some(name) = class.id.as_ref().map(|binding| &binding.name) else { return };
         if self.is_ignored_var(name.as_str()) {
             return;
@@ -672,7 +671,7 @@ impl Rule for NoUnusedVars {
             Value::String(vars) => {
                 let vars: VarsOption = vars
                     .try_into()
-                    .map_err(|err| format!("Invalid 'vars' option for no-unused-vars: {:}", err))
+                    .map_err(|err| format!("Invalid 'vars' option for no-unused-vars: {err:}"))
                     .unwrap();
                 Self { vars, ..Default::default() }
             }
@@ -683,7 +682,7 @@ impl Rule for NoUnusedVars {
                         let vars: VarsOption = vars
                             .try_into()
                             .map_err(|err| {
-                                format!("Invalid 'vars' option for no-unused-vars: {:}", err)
+                                format!("Invalid 'vars' option for no-unused-vars: {err:}")
                             })
                             .unwrap();
                         vars
@@ -699,7 +698,7 @@ impl Rule for NoUnusedVars {
                         let args: ArgsOption = args
                             .try_into()
                             .map_err(|err| {
-                                format!("Invalid 'args' option for no-unused-vars: {:}", err)
+                                format!("Invalid 'args' option for no-unused-vars: {err:}")
                             })
                             .unwrap();
                         args
@@ -716,9 +715,9 @@ impl Rule for NoUnusedVars {
                             Value::String(s) => match s.as_str() {
                                 "all" => true,
                                 "none" => false,
-                                _ => panic!("Invalid 'caughtErrors' option for no-unused-vars: Expected 'all' or 'none', got {}", s),
+                                _ => panic!("Invalid 'caughtErrors' option for no-unused-vars: Expected 'all' or 'none', got {s}"),
                             },
-                            _ => panic!("Invalid 'caughtErrors' option for no-unused-vars: Expected a string, got {}", caught_errors),
+                            _ => panic!("Invalid 'caughtErrors' option for no-unused-vars: Expected a string, got {caught_errors}"),
                             }
                         }).unwrap_or_default();
 
@@ -766,7 +765,7 @@ impl Rule for NoUnusedVars {
             .collect();
 
         // Symbol is used, rule doesn't apply
-        if references.len() > 0 {
+        if !references.is_empty() {
             return;
         }
 
@@ -780,20 +779,20 @@ impl Rule for NoUnusedVars {
 
         match declaration.kind() {
             AstKind::ModuleDeclaration(decl) => {
-                self.check_unused_module_declaration(symbol_id, decl, ctx)
-            }
+                self.check_unused_module_declaration(symbol_id, decl, ctx);
+            },
             AstKind::VariableDeclarator(decl) => {
-                self.check_unused_variable_declarator(symbol_id, decl, ctx)
-            }
+                self.check_unused_variable_declarator(symbol_id, decl, ctx);
+            },
             AstKind::Function(f) => self.check_unused_function(symbol_id, f, ctx),
             AstKind::Class(class) => self.check_unused_class(symbol_id, class, ctx),
             AstKind::CatchClause(catch) => self.check_unused_catch_clause(symbol_id, catch, ctx),
             AstKind::FormalParameters(params) => {
-                self.check_unused_arguments(symbol_id, declaration.scope_id(), params, ctx)
-            }
+                self.check_unused_arguments(symbol_id, declaration.scope_id(), params, ctx);
+            },
             AstKind::FormalParameter(param) => self.check_unused_argument(symbol_id, param, ctx),
             s => todo!("handle decl kind {:?}", s),
-        }
+        };
     }
 }
 
@@ -897,12 +896,12 @@ mod tests {
         let ignore_underscore = Some(json!([{ "vars": "all", "varsIgnorePattern": "^_" }]));
         let pass = vec![
             // does const count?
-            ("var a", local.clone()),
+            ("var a", local),
             ("var _a", ignore_underscore.clone()),
             ("var a = 1; var _b = a", ignore_underscore.clone()),
         ];
         let fail = vec![
-            ("var a_", ignore_underscore.clone()),
+            ("var a_", ignore_underscore),
             // ("let a = 1;", None),
             // ("let a = 1; a += 2;", None)
         ];
@@ -1009,7 +1008,7 @@ mod tests {
             ("function foo(a = 1) { return }; foo()", None),
             ("function foo() { return }", None),
             ("function foo(a, b) { return a }; foo()", None),
-            ("function foo(a, b) { return b }; foo()", all.clone()),
+            ("function foo(a, b) { return b }; foo()", all),
         ];
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
