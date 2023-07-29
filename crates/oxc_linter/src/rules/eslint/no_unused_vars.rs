@@ -1524,40 +1524,40 @@ mod tests {
             ("export default (function(a, b) { console.log(a); });", None),
             ("export default (a) => {};", None),
             ("export default (a, b) => { console.log(a); };", None),
-            // ("try{}catch(err){};", Some(serde_json::json!([{ "caughtErrors": "all" }]))),
-            // (
-            //     "try{}catch(err){};",
-            //     Some(
-            //         serde_json::json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]),
-            //     ),
-            // ),
-            // (
-            //     "try{}catch(ignoreErr){}try{}catch(err){};",
-            //     Some(
-            //         serde_json::json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]),
-            //     ),
-            // ),
-            // (
-            //     "try{}catch(error){}try{}catch(err){};",
-            //     Some(
-            //         serde_json::json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]),
-            //     ),
-            // ),
-            // (
-            //     "try{}catch(err){};",
-            //     Some(serde_json::json!([{ "vars": "all", "args": "all", "caughtErrors": "all" }])),
-            // ),
-            // (
-            //     "try{}catch(err){};",
-            //     Some(serde_json::json!([
-            //         {
-            //             "vars": "all",
-            //             "args": "all",
-            //             "caughtErrors": "all",
-            //             "argsIgnorePattern": "^er"
-            //         }
-            //     ])),
-            // ),
+            ("try{}catch(err){};", Some(serde_json::json!([{ "caughtErrors": "all" }]))),
+            (
+                "try{}catch(err){};",
+                Some(
+                    serde_json::json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]),
+                ),
+            ),
+            (
+                "try{}catch(ignoreErr){}try{}catch(err){};",
+                Some(
+                    serde_json::json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]),
+                ),
+            ),
+            (
+                "try{}catch(error){}try{}catch(err){};",
+                Some(
+                    serde_json::json!([{ "caughtErrors": "all", "caughtErrorsIgnorePattern": "^ignore" }]),
+                ),
+            ),
+            (
+                "try{}catch(err){};",
+                Some(serde_json::json!([{ "vars": "all", "args": "all", "caughtErrors": "all" }])),
+            ),
+            (
+                "try{}catch(err){};",
+                Some(serde_json::json!([
+                    {
+                        "vars": "all",
+                        "args": "all",
+                        "caughtErrors": "all",
+                        "argsIgnorePattern": "^er"
+                    }
+                ])),
+            ),
             // ("var a = 0; a = a + 1;", None),
             // ("var a = 0; a = a + a;", None),
             // ("var a = 0; a += a + 1;", None),
@@ -1585,19 +1585,19 @@ mod tests {
             //     errors: [assignedError("b")]
             // },
             //  */
-            // ("(function(a, b, c) {})", Some(serde_json::json!([{ "argsIgnorePattern": "c" }]))),
-            // (
-            //     "(function(a, b, {c, d}) {})",
-            //     Some(serde_json::json!([{ "argsIgnorePattern": "[cd]" }])),
-            // ),
-            // (
-            //     "(function(a, b, {c, d}) {})",
-            //     Some(serde_json::json!([{ "argsIgnorePattern": "c" }])),
-            // ),
-            // (
-            //     "(function(a, b, {c, d}) {})",
-            //     Some(serde_json::json!([{ "argsIgnorePattern": "d" }])),
-            // ),
+            ("(function(a, b, c) {})", Some(serde_json::json!([{ "argsIgnorePattern": "c" }]))),
+            (
+                "(function(a, b, {c, d}) {})",
+                Some(serde_json::json!([{ "argsIgnorePattern": "[cd]" }])),
+            ),
+            (
+                "(function(a, b, {c, d}) {})",
+                Some(serde_json::json!([{ "argsIgnorePattern": "c" }])),
+            ),
+            (
+                "(function(a, b, {c, d}) {})",
+                Some(serde_json::json!([{ "argsIgnorePattern": "d" }])),
+            ),
             // ("/*global\rfoo*/", None),
             // ("(function ({ a }, b ) { return b; })();", None),
             // ("(function ({ a }, { b, c } ) { return b; })();", None),
@@ -1664,14 +1664,15 @@ mod tests {
             // ("let x = 0; foo = ((0, x = x + 1), 0);", None),
             // ("let x = 0; foo = (x = x+1, 0);", None),
             // ("let x = 0; 0, (1, x=x+1);", None),
-            // ("(function ({ a, b }, { c } ) { return b; })();", None),
+            ("(function ({ a, b }, { c } ) { return b; })();", None),
+            // todo
             // ("(function ([ a ], b ) { return b; })();", None),
-            // ("(function ([ a ], [ b, c ] ) { return b; })();", None),
-            // ("(function ([ a, b ], [ c ] ) { return b; })();", None),
-            // (
-            //     "(function(_a) {})();",
-            //     Some(serde_json::json!([{ "args": "all", "varsIgnorePattern": "^_" }])),
-            // ),
+            ("(function ([ a ], [ b, c ] ) { return b; })();", None),
+            ("(function ([ a, b ], [ c ] ) { return b; })();", None),
+            (
+                "(function(_a) {})();",
+                Some(serde_json::json!([{ "args": "all", "varsIgnorePattern": "^_" }])),
+            ),
             // (
             //     "(function(_a) {})();",
             //     Some(serde_json::json!([{ "args": "all", "caughtErrorsIgnorePattern": "^_" }])),
