@@ -620,4 +620,18 @@ expression: no_unused_vars
    ╰────
   help: _a is declared but never used
 
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ (function(_a) {})();
+   ·           ──
+   ╰────
+  help: _a is declared but never used
+
+  ⚠ eslint(no-unused-vars): Unused variables are not allowed
+   ╭─[no_unused_vars.tsx:1:1]
+ 1 │ const a = 1; a += 1;
+   ·       ─
+   ╰────
+  help: a is declared but never used
+
 

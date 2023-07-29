@@ -193,6 +193,16 @@ pub struct NoUnusedVars {
     /// Using a Rest property it is possible to "omit" properties from an
     /// object, but by default the sibling properties are marked as "unused".
     /// With this option enabled the rest property's siblings are ignored.
+    /// 
+    /// ## Example
+    /// Examples of **correct** code when this option is set to `true`:
+    /// ```js
+    /// // 'foo' and 'bar' were ignored because they have a rest property sibling.
+    /// var { foo, ...coords } = data;
+    /// 
+    /// var bar;
+    /// ({ bar, ...coords } = data);
+    /// ```
     ignore_rest_siblings: bool,
 }
 
@@ -426,7 +436,12 @@ impl NoUnusedVars {
                     let maybe_span =
                         self.check_unused_binding_pattern(_symbol_id, name, &el.value, _ctx);
                     if maybe_span.is_some() {
-                        return maybe_span;
+                        // has a rest sibling and the rule is configured to
+                        // ignore variables that have them
+                        let is_ignorable = self.ignore_rest_siblings && obj.rest.is_some();
+                        if !is_ignorable {
+                            return maybe_span;
+                        }
                     }
                     // match el.key {
                     //     PropertyKey::Identifier(id) => {
@@ -906,6 +921,20 @@ mod tests {
 
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
+    #[test]
+    fn test_var_read_write() {
+        let pass = vec![
+            "let a = 1; let b = a + 1; console.log(b)"
+            // todo
+            // "var a = 1; let b = a++; console.log(b)"
+        ];
+        let fail = vec![
+            "let a = 1; a += 1;",
+            // todo
+            // "let a = 1; a = a + 1;",
+        ];
+        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test()
+    }
 
     #[test]
     fn test_spread_arr_simple() {
@@ -918,8 +947,14 @@ mod tests {
     #[test]
     fn test_spread_arr_ignored() {
         let ignore_underscore = Some(json!([{ "destructuredArrayIgnorePattern": "^_" }]));
-        let pass = vec![("let [_b] = a;", ignore_underscore)];
-        let fail = vec![];
+        let ignore_rest_siblings = Some(json!([{ "ignoreRestSiblings": true }]));
+        let pass = vec![
+            ("let [_b] = a;", ignore_underscore),
+            ("var { a, ...rest } = arr; console.log(rest)", ignore_rest_siblings)
+            ];
+        let fail = vec![
+            ("var { a, ...rest } = arr; console.log(rest)", None)
+        ];
 
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
@@ -957,16 +992,6 @@ mod tests {
     }
 
     #[test]
-    fn test_function_arg_unpacking() {
-        let pass = vec![(
-            "function baz([_b, foo]) { foo; };\nbaz()",
-            Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
-        )];
-        let fail = vec![];
-        Tester::new(NoUnusedVars::NAME, pass, fail);
-    }
-
-    #[test]
     fn test_class_simple() {
         let pass = vec![
             ("class Foo {}; const f = new Foo(); console.log(f)"),
@@ -997,6 +1022,26 @@ mod tests {
             ("function foo(a, b) { return b }; foo()", all),
         ];
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
+    fn test_args_unpacking() {
+        let ignore_rest_siblings = Some(json!([{ "ignoreRestSiblings": true }]));
+        let ignore_arg_underscore = Some(json!([{ "destructuredArrayIgnorePattern": "^_" }]));
+        let pass = vec![
+            ("function baz([_b, foo]) { foo; };\nbaz()",ignore_arg_underscore) ,
+            (
+                "let { foo, ...rest } = something;
+                console.log(rest);",
+                ignore_rest_siblings.clone(),
+            ), 
+            (
+                "let foo, rest; ({ foo, ...rest } = something); console.log(rest);",
+                ignore_rest_siblings,
+            ), 
+        ];
+        let fail = vec![];
+        Tester::new(NoUnusedVars::NAME, pass, fail);
     }
 
     #[test]
@@ -1184,14 +1229,14 @@ mod tests {
                 "function baz([_b, foo]) { foo; };\nbaz()",
                 Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
             ),
-            // (
-            //     "function baz({x: [_b, foo]}) {foo};\nbaz()",
-            //     Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
-            // ),
-            // (
-            //     "function baz([{x: [_b, foo]}]) {foo};\nbaz()",
-            //     Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
-            // ),
+            (
+                "function baz({x: [_b, foo]}) {foo};\nbaz()",
+                Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+            ),
+            (
+                "function baz([{x: [_b, foo]}]) {foo};\nbaz()",
+                Some(serde_json::json!([{ "destructuredArrayIgnorePattern": "^_" }])),
+            ),
             // // ,
             // // ,
             // // ,
@@ -1228,10 +1273,10 @@ mod tests {
                 ),
             ),
             ("try{}catch(err){}", Some(serde_json::json!([{ "vars": "all", "args": "all" }]))),
-            // (
-            //     "const data = { type: 'coords', x: 1, y: 2 };\nconst { type, ...coords } = data;\n console.log(coords);",
-            //     Some(serde_json::json!([{ "ignoreRestSiblings": true }])),
-            // ),
+            (
+                "const data = { type: 'coords', x: 1, y: 2 };\nconst { type, ...coords } = data;\n console.log(coords);",
+                Some(serde_json::json!([{ "ignoreRestSiblings": true }])),
+            ),
             // FIXME: a's usage in rhs of b assignment isn't counting as a read
             // ("var a = 0, b; b = a = a + 1; foo(b);", None),
             // ("var a = 0, b; b = a += a + 1; foo(b);", None),
@@ -1258,10 +1303,11 @@ mod tests {
             // ("function* foo(cb) { cb = yield function(a) { cb(1 + a); }; } foo();", None),
             // ("function foo(cb) { cb = tag`hello${function(a) { cb(1 + a); }}`; } foo();", None),
             // ("function foo(cb) { var b; cb = b = function(a) { cb(1 + a); }; b(); } foo();", None),
-            // (
-            //     "function someFunction() {\n    var a = 0, i;\n    for (i = 0; i < 2; i++) {\n        a = myFunction(a);\n    }\n}\nsomeFunction();\n",
-            //     None,
-            // ),
+            (
+                "function someFunction() {\n    var a = 0, i;\n    for (i = 0; i < 2; i++) {\n        a = myFunction(a);\n    }\n}\nsomeFunction();\n",
+                None,
+            ),
+            // todo
             // (
             //     "(function(a, b, {c, d}) { d })",
             //     Some(serde_json::json!([{ "argsIgnorePattern": "c" }])),
@@ -1277,10 +1323,12 @@ mod tests {
             // ),
             // ("(class { set foo(UNUSED) {} })", None),
             // ("class Foo { set bar(UNUSED) {} } console.log(Foo)", None),
+            // todo
             // (
             //     "(({a, ...rest}) => rest)",
             //     Some(serde_json::json!([{ "args": "all", "ignoreRestSiblings": true }])),
             // ),
+            // todo
             // (
             //     "let foo, rest;\n({ foo, ...rest } = something);\nconsole.log(rest);",
             //     Some(serde_json::json!([{ "ignoreRestSiblings": true }])),
@@ -1673,10 +1721,10 @@ mod tests {
                 "(function(_a) {})();",
                 Some(serde_json::json!([{ "args": "all", "varsIgnorePattern": "^_" }])),
             ),
-            // (
-            //     "(function(_a) {})();",
-            //     Some(serde_json::json!([{ "args": "all", "caughtErrorsIgnorePattern": "^_" }])),
-            // ),
+            (
+                "(function(_a) {})();",
+                Some(serde_json::json!([{ "args": "all", "caughtErrorsIgnorePattern": "^_" }])),
+            ),
             // ("var a = function() { a(); };", None),
             // ("var a = function(){ return function() { a(); } };", None),
             // ("const a = () => { a(); };", None),
@@ -1689,7 +1737,7 @@ mod tests {
             //         errors: [{ ...assignedError("myArray"), line: 2, column: 5 }]
             //     },
             //  */
-            // ("const a = 1; a += 1;", None),
+            ("const a = 1; a += 1;", None),
             // ("var a = function() { a(); };", None),
             // ("var a = function(){ return function() { a(); } };", None),
             // ("const a = () => { a(); };", None),
