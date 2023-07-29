@@ -1849,6 +1849,7 @@ pub struct ExportSpecifier {
     pub span: Span,
     pub local: ModuleExportName,
     pub exported: ModuleExportName,
+    pub export_kind: ImportOrExportKind
 }
 
 #[derive(Debug, Hash)]

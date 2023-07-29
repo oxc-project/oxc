@@ -239,6 +239,8 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
+            // Push in the includes files
+            self.symbols.set_flag(symbol_id, includes);
             return symbol_id;
         }
 
@@ -249,6 +251,9 @@ impl<'a> SemanticBuilder<'a> {
         self.scope.add_binding(scope_id, name.clone(), symbol_id);
         symbol_id
     }
+
+
+
 
     pub fn declare_symbol(
         &mut self,
@@ -450,6 +455,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
                 class.bind(self);
+            }
+            AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
+                type_alias_declaration.bind(self);
             }
             AstKind::FormalParameters(params) => {
                 params.bind(self);

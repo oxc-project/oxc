@@ -10,6 +10,8 @@ define_index_type! {
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct SymbolFlags: u16 {
+        // Empty Symbol Flags for no excludes
+        const None                   = 0;
         /// Variable (var) or parameter
         const FunctionScopedVariable  = 1 << 0;
         /// A block-scoped variable (let or const)
@@ -24,6 +26,7 @@ bitflags! {
         const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
         const Function                = 1 << 7;
         const ImportBinding           = 1 << 8; // Imported ESM binding
+        const TypeAlias               = 1 << 9;
 
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
         const Value = Self::Variable.bits() | Self::Class.bits();
@@ -44,6 +47,10 @@ bitflags! {
 impl SymbolFlags {
     pub fn is_variable(&self) -> bool {
         self.intersects(Self::Variable)
+    }
+    pub fn is_type(&self) -> bool {
+        // Formally in TS the way to assert a pure type is that it can't be a value
+        return !self.intersects(Self::Value)
     }
 
     pub fn is_const_variable(&self) -> bool {

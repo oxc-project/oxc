@@ -1276,7 +1276,15 @@ impl<'a> AstLower<'a> {
         );
         self.hir.import_specifier(specifier.span, imported, local)
     }
-
+    fn lower_import_export_type_or_value(
+        &mut self,
+        import_export_kind: ast::ImportOrExportKind,
+    ) -> hir::ImportOrExportKind {
+        match import_export_kind {
+            ast::ImportOrExportKind::Value => hir::ImportOrExportKind::Value,
+            ast::ImportOrExportKind::Type => hir::ImportOrExportKind::Type,
+        }
+    }
     fn lower_import_default_specifier(
         &mut self,
         specifier: &ast::ImportDefaultSpecifier,
@@ -1311,10 +1319,7 @@ impl<'a> AstLower<'a> {
             .assertions
             .as_ref()
             .map(|attributes| self.lower_vec(attributes, Self::lower_import_attribute));
-        let export_kind = match decl.export_kind {
-            ast::ImportOrExportKind::Value => hir::ImportOrExportKind::Value,
-            ast::ImportOrExportKind::Type => hir::ImportOrExportKind::Type,
-        };
+        let export_kind = self.lower_import_export_type_or_value(decl.export_kind);
         self.hir.export_all_declaration(decl.span, exported, source, assertions, export_kind)
     }
 
@@ -1362,7 +1367,8 @@ impl<'a> AstLower<'a> {
     fn lower_export_specifier(&mut self, specifier: &ast::ExportSpecifier) -> hir::ExportSpecifier {
         let local = self.lower_module_export_name(&specifier.local);
         let exported = self.lower_module_export_name(&specifier.exported);
-        self.hir.export_specifier(specifier.span, local, exported)
+        let export_kind = self.lower_import_export_type_or_value(specifier.export_kind);
+        self.hir.export_specifier(specifier.span, local, exported, export_kind)
     }
 
     fn lower_declaration(&mut self, decl: &ast::Declaration<'a>) -> Option<hir::Declaration<'a>> {
