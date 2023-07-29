@@ -783,29 +783,23 @@ impl<'a> Compressor<'a> {
     ) -> Option<Expression<'a>> {
         let boolean_value = get_boolean_value(&logic_expr.left);
 
-        let mut move_out = |dest: &mut Expression<'a>| {
-            let null_literal = self.hir.null_literal(dest.span());
-            let null_expr = self.hir.literal_null_expression(null_literal);
-            mem::replace(dest, null_expr)
-        };
-
         if let Some(boolean_value) = boolean_value {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if (boolean_value && op == LogicalOperator::Or)
                 || (!boolean_value && op == LogicalOperator::And)
             {
-                return Some(move_out(&mut logic_expr.left));
+                return Some(self.move_out_expression(&mut logic_expr.left));
             } else if !logic_expr.left.may_have_side_effects() {
                 // (FALSE || x) => x
                 // (TRUE && x) => x
-                return Some(move_out(&mut logic_expr.right));
+                return Some(self.move_out_expression(&mut logic_expr.right));
             }
             // Left side may have side effects, but we know its boolean value.
             // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
-            let left = move_out(&mut logic_expr.left);
-            let right = move_out(&mut logic_expr.right);
+            let left = self.move_out_expression(&mut logic_expr.left);
+            let right = self.move_out_expression(&mut logic_expr.right);
             let mut vec = self.hir.new_vec_with_capacity(2);
             vec.push(left);
             vec.push(right);
@@ -822,8 +816,8 @@ impl<'a> Compressor<'a> {
                         if !right_boolean && left_child_op == LogicalOperator::Or
                             || right_boolean && left_child_op == LogicalOperator::And
                         {
-                            let left = move_out(&mut left_child.left);
-                            let right = move_out(&mut logic_expr.right);
+                            let left = self.move_out_expression(&mut left_child.left);
+                            let right = self.move_out_expression(&mut logic_expr.right);
                             let logic_expr = self.hir.logical_expression(
                                 logic_expr.span,
                                 left,
