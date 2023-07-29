@@ -49,7 +49,6 @@ impl SymbolFlags {
         self.intersects(Self::Variable)
     }
     pub fn is_type(&self) -> bool {
-        // In TS the way to assert a pure type is that it can't be a value
         !self.intersects(Self::Value)
     }
 
