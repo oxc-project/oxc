@@ -838,11 +838,7 @@ impl<'a> Compressor<'a> {
         }
         None
     }
-}
 
-type ShouldFold = bool;
-
-impl<'a> Compressor<'a> {
     pub(crate) fn fold_condition<'b>(&mut self, stmt: &'b mut Statement<'a>) {
         match stmt {
             Statement::WhileStatement(while_stmt) => {
@@ -896,7 +892,8 @@ impl<'a> Compressor<'a> {
         mem::replace(expr, null_expr)
     }
 
-    fn try_minimize_not(&mut self, expr: &mut Expression<'a>) -> ShouldFold {
+    /// ported from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java#L401-L435)
+    fn try_minimize_not(&mut self, expr: &mut Expression<'a>) -> bool {
         let span = &mut expr.span();
 
         match expr {
