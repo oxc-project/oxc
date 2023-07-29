@@ -12,9 +12,6 @@ pub struct Atom(CompactString);
 const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$_0123456789";
 
 impl Atom {
-    pub const fn new_inline(s: &'static str) -> Self {
-        Self(CompactString::new_inline(s))
-    }
 
     #[inline]
     pub fn as_str(&self) -> &str {
