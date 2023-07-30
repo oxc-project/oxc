@@ -239,6 +239,7 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
+            self.symbols.set_flag(symbol_id, includes);
             return symbol_id;
         }
 
@@ -456,6 +457,21 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::CatchClause(clause) => {
                 clause.bind(self);
+            }
+            AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
+                type_alias_declaration.bind(self);
+            }
+            AstKind::TSInterfaceDeclaration(interface_declaration) => {
+                interface_declaration.bind(self);
+            }
+            AstKind::TSEnumDeclaration(enum_declaration) => {
+                enum_declaration.bind(self);
+            }
+            AstKind::TSEnumMember(enum_member) => {
+                enum_member.bind(self);
+            }
+            AstKind::TSTypeParameter(type_parameter) => {
+                type_parameter.bind(self);
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);

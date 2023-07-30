@@ -10,6 +10,7 @@ define_index_type! {
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct SymbolFlags: u16 {
+        const None                    = 0 << 0;
         /// Variable (var) or parameter
         const FunctionScopedVariable  = 1 << 0;
         /// A block-scoped variable (let or const)
@@ -24,9 +25,20 @@ bitflags! {
         const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
         const Function                = 1 << 7;
         const ImportBinding           = 1 << 8; // Imported ESM binding
+        // Type specific symbol flags
+        const TypeAlias               = 1 << 9;
+        const Interface               = 1 << 10;
+        const RegularEnum             = 1 << 11;
+        const ConstEnum               = 1 << 12;
+        const EnumMember              = 1 << 13; // TODO: implement
+        const TypeLiteral             = 1 << 14; // Unsure if this is needed
+        const TypeParameter           = 1 << 15;
+        
+        const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
 
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
         const Value = Self::Variable.bits() | Self::Class.bits();
+        const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::TypeLiteral.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
         /// same name, or any other value that is not a variable, e.g. ValueModule or Class
@@ -38,12 +50,25 @@ bitflags! {
 
         const ClassExcludes = Self::Value.bits();
         const ImportBindingExcludes = Self::ImportBinding.bits();
+        // Type specific excludes
+        const TypeAliasExcludes = Self::Type.bits();
+        const InterfaceExcludes = Self::Type.bits() & !(Self::Interface.bits() | Self::Class.bits());
+        const TypeParameterExcludes = Self::Type.bits() & !Self::TypeParameter.bits();
+        const ConstEnumExcludes = (Self::Type.bits() | Self::Value.bits()) & !Self::ConstEnum.bits();
+        // TODO: include value module in regualr enum excludes
+        const RegularEnumExcludes = (Self::Value.bits() | Self::Type.bits()) & !(Self::RegularEnum.bits() );
+        const EnumMemberExcludes = Self::EnumMember.bits(); 
+        
     }
 }
 
 impl SymbolFlags {
     pub fn is_variable(&self) -> bool {
         self.intersects(Self::Variable)
+    }
+
+    pub fn is_type(&self) -> bool {
+        !self.intersects(Self::Value)
     }
 
     pub fn is_const_variable(&self) -> bool {

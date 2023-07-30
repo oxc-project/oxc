@@ -3,7 +3,7 @@
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::{syntax_directed_operations::BoundNames, AstKind};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Atom};
 
 use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
 
@@ -194,3 +194,75 @@ impl<'a> Binder for ModuleDeclaration<'a> {
         });
     }
 }
+
+impl<'a> Binder for TSTypeAliasDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        builder.declare_symbol(
+            self.id.span,
+            &self.id.name,
+            SymbolFlags::TypeAlias,
+            SymbolFlags::TypeAliasExcludes,
+        );
+    }
+}
+
+
+impl<'a> Binder for TSInterfaceDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        builder.declare_symbol(
+            self.id.span,
+            &self.id.name,
+            SymbolFlags::Interface,
+            SymbolFlags::InterfaceExcludes,
+        );
+    }
+}
+
+impl<'a> Binder for TSEnumDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        let is_const =  self.modifiers.contains(ModifierKind::Const);
+        let includes = if is_const {SymbolFlags::ConstEnum} else {SymbolFlags::RegularEnum};
+        let excludes = if is_const {SymbolFlags::ConstEnumExcludes} else {SymbolFlags::RegularEnumExcludes};
+        builder.declare_symbol(
+            self.id.span,
+            &self.id.name,
+            includes,
+            excludes
+        );
+    }
+}
+
+impl<'a> Binder for TSEnumMember<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        // TODO: Perf
+        if matches!(&self.id, TSEnumMemberName::ComputedPropertyName(_)) {
+            return;
+        }
+        let name = match &self.id {
+            TSEnumMemberName::Identifier(id) => id.name.clone(),
+            TSEnumMemberName::StringLiteral(s) => s.value.clone(),
+            TSEnumMemberName::NumberLiteral(n) => Atom::new_inline(&n.value.to_string()),
+            TSEnumMemberName::ComputedPropertyName(_) =>  panic!("TODO: implement"),
+        };
+        builder.declare_symbol(self.span, 
+            &name,
+            SymbolFlags::EnumMember, 
+            SymbolFlags::EnumMemberExcludes);
+    }
+    
+
+}
+
+
+
+impl<'a> Binder for TSTypeParameter<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        builder.declare_symbol(
+            self.name.span,
+            &self.name.name,
+            SymbolFlags::TypeParameter,
+            SymbolFlags::TypeParameterExcludes,
+        );
+    }
+}
+

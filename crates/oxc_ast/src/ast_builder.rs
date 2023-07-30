@@ -1297,7 +1297,7 @@ impl<'a> AstBuilder<'a> {
         Declaration::TSEnumDeclaration(self.alloc(TSEnumDeclaration {
             span,
             id,
-            members,
+            body: TSEnumBody { span, members },
             modifiers,
         }))
     }

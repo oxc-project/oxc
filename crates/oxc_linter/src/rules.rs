@@ -60,6 +60,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::use_isnan,
     eslint::valid_typeof,
     typescript::adjacent_overload_signatures,
+    typescript::consistent_type_exports,
     typescript::isolated_declaration,
     typescript::no_empty_interface,
     typescript::no_extra_non_null_assertion,

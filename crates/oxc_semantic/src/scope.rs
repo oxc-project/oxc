@@ -131,6 +131,8 @@ impl ScopeTree {
             AstKind::ArrowExpression(_) => Some(ScopeFlags::Function | ScopeFlags::Arrow),
             AstKind::StaticBlock(_) => Some(ScopeFlags::ClassStaticBlock),
             AstKind::TSModuleBlock(_) => Some(ScopeFlags::TsModuleBlock),
+            AstKind::TSTypeParameter(_) => Some(ScopeFlags::empty()),
+            AstKind::TSEnumBody(_) => Some(ScopeFlags::empty()),
             AstKind::Class(class) if matches!(class.r#type, ClassType::ClassExpression) => {
                 // Class expression creates a temporary scope with the class name as its only variable
                 // E.g., `let c = class A { foo() { console.log(A) } }`
