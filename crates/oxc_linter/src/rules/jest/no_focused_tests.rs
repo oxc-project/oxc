@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     fixer::Fix,
     jest_ast_util::{
-        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, KnownMemberExprPropertyKind,
+        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, MemberExpressionElement,
         ParsedGeneralJestFnCall,
     },
     rule::Rule,
@@ -78,12 +78,14 @@ impl Rule for NoFocusedTests {
             return;
         }
 
-        let only_node = members.iter().find(|member| member.name == "only");
+        let only_node = members.iter().find(|member| {
+            member.is_name_equal("only")
+        });
         if let Some(only_node) = only_node {
             ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
                 let span = only_node.span;
                 let start = span.start - 1;
-                let end = if matches!(only_node.kind, KnownMemberExprPropertyKind::Identifier) {
+                let end = if matches!(only_node.element, MemberExpressionElement::IdentName(_)) {
                     span.end
                 } else {
                     span.end + 1
@@ -116,8 +118,7 @@ fn test() {
 
     let fail = vec![
         ("describe.only()", None),
-        // TODO: our aim is zero-config
-        // this need set setting like `settings: { jest: { globalAliases: { describe: ['context'] } } },`
+        // TODO: this need set setting like `settings: { jest: { globalAliases: { describe: ['context'] } } },`
         // ("context.only()", None),
         ("describe.only.each()()", None),
         ("describe.only.each`table`()", None),
@@ -141,7 +142,6 @@ fn test() {
     let fix = vec![
         ("describe.only('foo', () => {})", "describe('foo', () => {})", None),
         ("describe['only']('foo', () => {})", "describe('foo', () => {})", None),
-        ("describe('foo', () => {})", "describe('foo', () => {})", None),
         ("fdescribe('foo', () => {})", "describe('foo', () => {})", None),
     ];
 

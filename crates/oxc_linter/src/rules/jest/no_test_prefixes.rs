@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
@@ -13,7 +11,7 @@ use oxc_span::{Atom, GetSpan, Span};
 use crate::{
     context::LintContext,
     fixer::Fix,
-    jest_ast_util::{parse_general_jest_fn_call, JestGeneralFnKind, ParsedGeneralJestFnCall},
+    jest_ast_util::{parse_general_jest_fn_call, JestGeneralFnKind, ParsedGeneralJestFnCall, KnownMemberExpressionProperty},
     rule::Rule,
     AstNode,
 };
@@ -56,8 +54,11 @@ fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
     let ParsedGeneralJestFnCall { members, raw, .. } = jest_fn_call;
 
     let preferred_modifier = if raw.starts_with('f') { "only" } else { "skip" };
-    let member_names =
-        members.iter().map(|member| Borrow::borrow(&member.name)).collect::<Vec<&str>>().join(".");
+    let member_names = members
+        .iter()
+        .filter_map(KnownMemberExpressionProperty::name)
+        .collect::<Vec<_>>()
+        .join(".");
     let name_slice = &raw[1..];
 
     if member_names.is_empty() {
@@ -133,13 +134,14 @@ fn test() {
         ("xit.each``('foo', function () {})", None),
         ("xtest.each``('foo', function () {})", None),
         ("xit.each([])('foo', function () {})", None),
-        ("xtest.each([])('foo', function () {})", None), // TODO: Continue work on it when [#510](https://github.com/Boshen/oxc/issues/510) solved
-                                                         // (r#"import { xit } from '@jest/globals';
-                                                         // xit("foo", function () {})"#, None),
-                                                         // (r#"import { xit as skipThis } from '@jest/globals';
-                                                         // skipThis("foo", function () {})"#, None),
-                                                         // (r#"import { fit as onlyThis } from '@jest/globals';
-                                                         // onlyThis("foo", function () {})"#, None)
+        ("xtest.each([])('foo', function () {})", None),
+        // TODO: Continue work on it when [#510](https://github.com/Boshen/oxc/issues/510) solved
+        // (r#"import { xit } from '@jest/globals';
+        // xit("foo", function () {})"#, None),
+        // (r#"import { xit as skipThis } from '@jest/globals';
+        // skipThis("foo", function () {})"#, None),
+        // (r#"import { fit as onlyThis } from '@jest/globals';
+        // onlyThis("foo", function () {})"#, None)
     ];
 
     Tester::new(NoTestPrefixes::NAME, pass, fail).test_and_snapshot();

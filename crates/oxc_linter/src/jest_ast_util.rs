@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    ast::{CallExpression, Expression, IdentifierReference, MemberExpression},
+    ast::{CallExpression, Expression, IdentifierName, IdentifierReference, MemberExpression},
     AstKind,
 };
 use oxc_semantic::AstNode;
@@ -32,11 +32,14 @@ pub fn parse_jest_fn_call<'a>(
     // If bailed out, we're not jest function
     let resolved = resolve_to_jest_fn(call_expr, ctx)?;
 
-    // We traverse nodes from `node.callee`, so this `parent_kind` always be CallExpression.
-    let chain = get_node_chain(callee, Some(KnownMemberExprPropertyKind::CallExpression));
-    let all_member_expr_except_last = chain.iter().rev().skip(1).all(|member| {
-        matches!(member.parent_kind, Some(KnownMemberExprPropertyKind::MemberExpression))
-    });
+    // only the top level Call expression callee's parent is None, it's not necessary to set it to None, but
+    // I didn't know how to pass Expression to it.
+    let chain = get_node_chain(callee, None);
+    let all_member_expr_except_last = chain
+        .iter()
+        .rev()
+        .skip(1)
+        .all(|member| matches!(member.parent, Some(Expression::MemberExpression(_))));
 
     // Check every link in the chain except the last is a member expression
     if !all_member_expr_except_last {
@@ -54,7 +57,7 @@ pub fn parse_jest_fn_call<'a>(
 
     if let (Some(first), Some(last)) = (chain.first(), chain.last()) {
         // If we're an `each()`, ensure we're the outer CallExpression (i.e `.each()()`)
-        if last.name == "each"
+        if last.is_name_equal("each")
             && !matches!(
                 callee,
                 Expression::CallExpression(_) | Expression::TaggedTemplateExpression(_)
@@ -63,14 +66,14 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        if matches!(callee, Expression::TaggedTemplateExpression(_)) && last.name != "each" {
+        if matches!(callee, Expression::TaggedTemplateExpression(_)) && last.is_name_unequal("each")
+        {
             return None;
         }
-
-        let kind = JestFnKind::from(&first.name);
+        let Some(first_name )= first.name() else { return None };
+        let kind = JestFnKind::from(&first_name);
         let mut members = Vec::new();
-        let mut iter = chain.into_iter();
-        let first = iter.next().expect("first ident name");
+        let iter = chain.into_iter().skip(1);
         let rest = iter;
 
         // every member node must have a member expression as their parent
@@ -85,17 +88,19 @@ pub fn parse_jest_fn_call<'a>(
         } else if members.len() == 1 {
             VALID_JEST_FN_CALL_CHAINS_2
                 .iter()
-                .any(|chain| chain[0] == name && chain[1] == members[0].name)
+                .any(|chain| chain[0] == name && members[0].is_name_equal(chain[1]))
         } else if members.len() == 2 {
             VALID_JEST_FN_CALL_CHAINS_3.iter().any(|chain| {
-                chain[0] == name && chain[1] == members[0].name && chain[2] == members[1].name
+                chain[0] == name
+                    && members[0].is_name_equal(chain[1])
+                    && members[1].is_name_equal(chain[2])
             })
         } else if members.len() == 3 {
             VALID_JEST_FN_CALL_CHAINS_4.iter().any(|chain| {
                 chain[0] == name
-                    && chain[1] == members[0].name
-                    && chain[2] == members[1].name
-                    && chain[3] == members[2].name
+                    && members[0].is_name_equal(chain[1])
+                    && members[1].is_name_equal(chain[2])
+                    && members[2].is_name_equal(chain[3])
             })
         } else {
             false
@@ -107,7 +112,7 @@ pub fn parse_jest_fn_call<'a>(
         return Some(ParsedJestFnCall::GeneralJestFnCall(ParsedGeneralJestFnCall {
             kind,
             members,
-            raw: first.name,
+            raw: first_name,
         }));
     }
 
@@ -119,7 +124,6 @@ fn resolve_to_jest_fn<'a>(
     ctx: &'a LintContext,
 ) -> Option<ResolvedJestFn<'a>> {
     let ident = resolve_first_ident(&call_expr.callee)?;
-
     if ctx.semantic().is_reference_to_global_variable(ident) {
         return Some(ResolvedJestFn { local: &ident.name });
     }
@@ -199,41 +203,55 @@ struct ResolvedJestFn<'a> {
 }
 
 pub struct KnownMemberExpressionProperty<'a> {
-    pub name: Cow<'a, str>,
-    pub kind: KnownMemberExprPropertyKind,
-    pub parent_kind: Option<KnownMemberExprPropertyKind>,
+    pub element: MemberExpressionElement<'a>,
+    pub parent: Option<&'a Expression<'a>>,
     pub span: Span,
 }
 
-pub enum KnownMemberExprPropertyKind {
-    CallExpression,
-    Identifier,
-    MemberExpression,
-    StringLiteral,
-    TaggedTemplateExpression,
-}
-
-impl KnownMemberExprPropertyKind {
-    pub fn from(expr: &Expression) -> Option<Self> {
-        match expr {
-            Expression::MemberExpression(_) => Some(Self::MemberExpression),
-            Expression::Identifier(_) => Some(Self::Identifier),
-            // We make sure TemplateLiteral are static when call it, so we can treat it as StringLiteral.
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
-                Some(Self::StringLiteral)
+impl<'a> KnownMemberExpressionProperty<'a> {
+    pub fn name(&self) -> Option<Cow<'a, str>> {
+        match &self.element {
+            MemberExpressionElement::Expression(expr) => match expr {
+                Expression::Identifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
+                Expression::StringLiteral(string_literal) => {
+                    Some(Cow::Borrowed(string_literal.value.as_str()))
+                }
+                Expression::TemplateLiteral(template_literal) => Some(Cow::Borrowed(
+                    template_literal.quasi().expect("get string content").as_str(),
+                )),
+                _ => None,
+            },
+            MemberExpressionElement::IdentName(ident_name) => {
+                Some(Cow::Borrowed(ident_name.name.as_str()))
             }
-            Expression::CallExpression(_) => Some(Self::CallExpression),
-            Expression::TaggedTemplateExpression(_) => Some(Self::TaggedTemplateExpression),
-            // The result of `get_node_chain` only contains nodes above, mark others as None.
-            _ => None,
         }
     }
+    pub fn is_name_equal(&self, name: &str) -> bool {
+        self.name().map_or(false, |n| n == name)
+    }
+    pub fn is_name_unequal(&self, name: &str) -> bool {
+        !self.is_name_equal(name)
+    }
+}
 
-    pub fn from_member_expr(member_expr: &MemberExpression) -> Option<Self> {
+pub enum MemberExpressionElement<'a> {
+    Expression(&'a Expression<'a>),
+    IdentName(&'a IdentifierName),
+}
+
+impl<'a> MemberExpressionElement<'a> {
+    pub fn from_member_expr(
+        member_expr: &'a MemberExpression<'a>,
+    ) -> Option<(Span, MemberExpressionElement<'a>)> {
+        let Some((span, _)) = member_expr.static_property_info() else { return None };
         match member_expr {
-            MemberExpression::StaticMemberExpression(_) => Some(Self::Identifier),
-            MemberExpression::ComputedMemberExpression(expr) => Self::from(&expr.expression),
-            // Jest test cases will never be there, just return None
+            MemberExpression::ComputedMemberExpression(expr) => {
+                Some((span, Self::Expression(&expr.expression)))
+            }
+            MemberExpression::StaticMemberExpression(expr) => {
+                Some((span, Self::IdentName(&expr.property)))
+            }
+            // Jest fn chains don't have private fields, just ignore it.
             MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
@@ -242,67 +260,44 @@ impl KnownMemberExprPropertyKind {
 /// Port from [eslint-plugin-jest](https://github.com/jest-community/eslint-plugin-jest/blob/a058f22f94774eeea7980ea2d1f24c6808bf3e2c/src/rules/utils/parseJestFnCall.ts#L36-L51)
 fn get_node_chain<'a>(
     expr: &'a Expression<'a>,
-    parent_kind: Option<KnownMemberExprPropertyKind>,
+    parent: Option<&'a Expression<'a>>,
 ) -> Vec<KnownMemberExpressionProperty<'a>> {
     let mut chain = Vec::new();
 
     match expr {
         Expression::MemberExpression(member_expr) => {
-            chain.extend(get_node_chain(
-                member_expr.object(),
-                KnownMemberExprPropertyKind::from(expr),
-            ));
-
-            if let Some((span, name)) = member_expr.static_property_info() {
-                if let Some(kind) = KnownMemberExprPropertyKind::from_member_expr(member_expr) {
-                    let parent_kind = KnownMemberExprPropertyKind::from(expr);
-                    chain.push(KnownMemberExpressionProperty {
-                        name: Cow::Borrowed(name),
-                        kind,
-                        parent_kind,
-                        span,
-                    });
-                }
+            chain.extend(get_node_chain(member_expr.object(), Some(expr)));
+            if let Some((span, element)) = MemberExpressionElement::from_member_expr(member_expr) {
+                chain.push(KnownMemberExpressionProperty { element, parent: Some(expr), span });
             }
         }
         Expression::Identifier(ident) => {
             chain.push(KnownMemberExpressionProperty {
-                name: Cow::Borrowed(ident.name.as_str()),
-                kind: KnownMemberExprPropertyKind::Identifier,
-                parent_kind,
+                element: MemberExpressionElement::Expression(expr),
+                parent,
                 span: ident.span,
             });
         }
         Expression::CallExpression(call_expr) => {
-            let sub_chain = get_node_chain(
-                &call_expr.callee,
-                Some(KnownMemberExprPropertyKind::CallExpression),
-            );
+            let sub_chain = get_node_chain(&call_expr.callee, Some(expr));
             chain.extend(sub_chain);
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {
-            let sub_chain = get_node_chain(
-                &tagged_expr.tag,
-                Some(KnownMemberExprPropertyKind::TaggedTemplateExpression),
-            );
+            let sub_chain = get_node_chain(&tagged_expr.tag, Some(expr));
             chain.extend(sub_chain);
         }
         Expression::StringLiteral(string_literal) => {
             chain.push(KnownMemberExpressionProperty {
-                name: Cow::Borrowed(string_literal.value.as_str()),
-                kind: KnownMemberExprPropertyKind::StringLiteral,
-                parent_kind,
+                element: MemberExpressionElement::Expression(expr),
+                parent,
                 span: string_literal.span,
             });
         }
         Expression::TemplateLiteral(template_literal) => {
             if template_literal.expressions.is_empty() && template_literal.quasis.len() == 1 {
                 chain.push(KnownMemberExpressionProperty {
-                    name: Cow::Borrowed(
-                        template_literal.quasi().expect("get string content").as_str(),
-                    ),
-                    kind: KnownMemberExprPropertyKind::StringLiteral,
-                    parent_kind,
+                    element: MemberExpressionElement::Expression(expr),
+                    parent,
                     span: template_literal.span,
                 });
             }

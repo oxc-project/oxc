@@ -8,7 +8,9 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    jest_ast_util::{JestFnKind, ParsedGeneralJestFnCall, JestGeneralFnKind, parse_general_jest_fn_call},
+    jest_ast_util::{
+        parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall,
+    },
     rule::Rule,
     AstNode,
 };
@@ -90,7 +92,10 @@ impl Rule for NoDisabledTests {
                     JestFnKind::Expect | JestFnKind::Unknown => return,
                     JestFnKind::General(kind) => kind,
                 };
-                if matches!(kind, JestGeneralFnKind::Test) && call_expr.arguments.len() < 2 && members.iter().all(|member| member.name != "todo")  {
+                if matches!(kind, JestGeneralFnKind::Test)
+                    && call_expr.arguments.len() < 2
+                    && members.iter().all(|member| member.is_name_unequal("todo"))
+                {
                     let (error, help) = Message::MissingFunction.details();
                     ctx.diagnostic(NoDisabledTestsDiagnostic(error, help, call_expr.span));
                     return;
@@ -110,7 +115,7 @@ impl Rule for NoDisabledTests {
 
                 // `it.skip('foo', function () {})'`
                 // `describe.skip('foo', function () {})'`
-                if members.iter().any(|member| member.name == "skip") {
+                if members.iter().any(|member| member.is_name_equal("skip")) {
                     let (error, help) = if matches!(kind, JestGeneralFnKind::Describe) {
                         Message::DisabledSuiteWithSkip.details()
                     } else {
