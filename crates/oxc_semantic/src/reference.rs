@@ -14,7 +14,8 @@ pub struct Reference {
     /// The name of the identifier that was referred to
     name: Atom,
     symbol_id: Option<SymbolId>,
-    /// Nature of the reference usage
+    /// Describes how this referenced is used by other AST nodes. References can
+    /// be reads, writes, or both.
     flag: ReferenceFlag,
 }
 
