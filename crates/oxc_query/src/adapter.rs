@@ -274,13 +274,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "JSXElement" => super::edges::resolve_jsxelement_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "JSXElementAST" => super::edges::resolve_jsxelement_ast_edge(
+            "JSXElement" | "JSXElementAST" => super::edges::resolve_jsxelement_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
