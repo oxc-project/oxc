@@ -94,6 +94,15 @@ impl<'a> AstNodes<'a> {
         self.nodes.iter()
     }
 
+    /// Walk up the AST, iterating over each 
+    pub fn iter_parents(&self, node_id: AstNodeId) -> impl Iterator<Item = &AstNode<'a>> + '_ {
+        let parent = self.parent_node(node_id);
+        AstNodeParentIter{
+            curr: parent,
+            nodes: self
+        }
+    }
+
     pub fn kind(&self, ast_node_id: AstNodeId) -> AstKind<'a> {
         self.nodes[ast_node_id].kind
     }
@@ -130,4 +139,23 @@ impl<'a> AstNodes<'a> {
         self.nodes.push(node);
         ast_node_id
     }
+}
+
+#[derive(Debug)]
+pub struct AstNodeParentIter<'s, 'a> {
+    curr: Option<&'s AstNode<'a>>,
+    nodes: &'s AstNodes<'a>
+}
+
+impl<'s, 'a> Iterator for AstNodeParentIter<'s, 'a> {
+    type Item = &'s AstNode<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.curr = self.curr.and_then(|curr| {
+            self.nodes.parent_node(curr.id())
+        });
+
+        self.curr
+    }
+
 }
