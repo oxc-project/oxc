@@ -1673,10 +1673,13 @@ pub(super) fn resolve_variable_declaration_edge<'a, 'b: 'a>(
     edge_name: &str,
     _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => variable_declaration::span(contexts, resolve_info),
         "left" => variable_declaration::left(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'VariableDeclaration'"
@@ -1724,64 +1727,5 @@ mod variable_declaration {
                     .kind,
             )));
         })
-    }
-}
-
-pub(super) fn resolve_variable_declaration_ast_edge<'a, 'b: 'a>(
-    contexts: ContextIterator<'a, Vertex<'b>>,
-    edge_name: &str,
-    _parameters: &EdgeParameters,
-    resolve_info: &ResolveEdgeInfo,
-    adapter: &'a Adapter<'b>,
-) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-    match edge_name {
-        "ancestor" => variable_declaration_ast::ancestor(contexts, resolve_info, adapter),
-        "span" => variable_declaration_ast::span(contexts, resolve_info),
-        "left" => variable_declaration_ast::left(contexts, resolve_info),
-        "parent" => variable_declaration_ast::parent(contexts, resolve_info, adapter),
-        _ => {
-            unreachable!(
-                "attempted to resolve unexpected edge '{edge_name}' on type 'VariableDeclarationAST'"
-            )
-        }
-    }
-}
-
-mod variable_declaration_ast {
-    use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
-    };
-
-    use super::super::vertex::Vertex;
-    use crate::Adapter;
-
-    pub(super) fn ancestor<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
-        adapter: &'a Adapter<'b>,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::ancestors(contexts, adapter)
-    }
-
-    pub(super) fn span<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::variable_declaration::span(contexts, resolve_info)
-    }
-
-    pub(super) fn left<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::variable_declaration::left(contexts, resolve_info)
-    }
-
-    pub(super) fn parent<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
-        adapter: &'a Adapter<'b>,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::parents(contexts, adapter)
     }
 }

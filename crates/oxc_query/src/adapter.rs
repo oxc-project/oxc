@@ -374,19 +374,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "VariableDeclaration" => super::edges::resolve_variable_declaration_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "VariableDeclarationAST" => super::edges::resolve_variable_declaration_ast_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-                self,
-            ),
+            "VariableDeclaration" | "VariableDeclarationAST" => {
+                super::edges::resolve_variable_declaration_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             _ => {
                 unreachable!(
                     "attempted to resolve edge '{edge_name}' on unexpected type: {type_name}"
