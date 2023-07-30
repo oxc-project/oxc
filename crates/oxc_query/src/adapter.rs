@@ -204,13 +204,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "Class" => super::edges::resolve_class_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "ClassAST" => super::edges::resolve_class_ast_edge(
+            "Class" | "ClassAST" => super::edges::resolve_class_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -254,26 +248,14 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "Import" => super::edges::resolve_import_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "ImportAST" => super::edges::resolve_import_ast_edge(
+            "Import" | "ImportAST" => super::edges::resolve_import_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
                 self,
             ),
-            "Interface" => super::edges::resolve_interface_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "InterfaceAST" => super::edges::resolve_interface_ast_edge(
+            "Interface" | "InterfaceAST" => super::edges::resolve_interface_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -292,13 +274,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "JSXElement" => super::edges::resolve_jsxelement_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "JSXElementAST" => super::edges::resolve_jsxelement_ast_edge(
+            "JSXElement" | "JSXElementAST" => super::edges::resolve_jsxelement_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -379,13 +355,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "TypeAnnotation" => super::edges::resolve_type_annotation_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "TypeAnnotationAST" => super::edges::resolve_type_annotation_ast_edge(
+            "TypeAnnotation" | "TypeAnnotationAST" => super::edges::resolve_type_annotation_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -404,19 +374,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "VariableDeclaration" => super::edges::resolve_variable_declaration_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "VariableDeclarationAST" => super::edges::resolve_variable_declaration_ast_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-                self,
-            ),
+            "VariableDeclaration" | "VariableDeclarationAST" => {
+                super::edges::resolve_variable_declaration_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             _ => {
                 unreachable!(
                     "attempted to resolve edge '{edge_name}' on unexpected type: {type_name}"

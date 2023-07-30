@@ -32,13 +32,6 @@ expression: no_disabled_tests
 
   ⚠ eslint(jest/no-disabled-tests): "Disabled test suite"
    ╭─[no_disabled_tests.tsx:1:1]
- 1 │ describe[`skip`]('foo', function () {})
-   · ───────────────────────────────────────
-   ╰────
-  help: "Remove the appending `.skip`"
-
-  ⚠ eslint(jest/no-disabled-tests): "Disabled test suite"
-   ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe['skip']('foo', function () {})
    · ───────────────────────────────────────
    ╰────
