@@ -23,7 +23,7 @@ pub struct TSEnumDeclaration<'a> {
 }
 /// Enum Body
 ///
-/// A scope must be created on the enum body so this abstration exists
+/// A scope must be created on the enum body so this abstraction exists
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TSEnumBody<'a> {

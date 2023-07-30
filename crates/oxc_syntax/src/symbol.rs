@@ -55,7 +55,7 @@ bitflags! {
         const InterfaceExcludes = Self::Type.bits() & !(Self::Interface.bits() | Self::Class.bits());
         const TypeParameterExcludes = Self::Type.bits() & !Self::TypeParameter.bits();
         const ConstEnumExcludes = (Self::Type.bits() | Self::Value.bits()) & !Self::ConstEnum.bits();
-        // TODO: include value module in regualr enum excludes
+        // TODO: include value module in regular enum excludes
         const RegularEnumExcludes = (Self::Value.bits() | Self::Type.bits()) & !(Self::RegularEnum.bits() );
         const EnumMemberExcludes = Self::EnumMember.bits();
 
