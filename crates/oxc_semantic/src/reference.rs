@@ -1,3 +1,4 @@
+use bitflags::bitflags;
 use oxc_index::define_index_type;
 use oxc_span::{Atom, Span};
 
@@ -10,8 +11,10 @@ define_index_type! {
 #[derive(Debug, Clone)]
 pub struct Reference {
     span: Span,
+    /// The name of the identifier that was referred to
     name: Atom,
     symbol_id: Option<SymbolId>,
+    /// Nature of the reference usage
     flag: ReferenceFlag,
 }
 
@@ -36,28 +39,47 @@ impl Reference {
         self.symbol_id = Some(symbol_id);
     }
 
+    /// Returns `true` if the identifier value was read. This is not mutually
+    /// exclusive with [`#is_write`]
     pub fn is_read(&self) -> bool {
-        self.flag == ReferenceFlag::Read
+        self.flag.is_read()
     }
 
+    /// Returns `true` if the identifier was written to. This is not mutually
+    /// exclusive with [`#is_read`]
     pub fn is_write(&self) -> bool {
-        self.flag == ReferenceFlag::Write
+        self.flag.is_write()
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum ReferenceFlag {
-    None,
-    Read,
-    Write,
+bitflags! {
+    #[derive(Debug, Clone, Copy, Eq, PartialEq)]
+    pub struct ReferenceFlag: u8 {
+        const None = 1 << 0;
+        const Read = 1 << 1;
+        const Write = 1 << 2;
+        const ReadWrite = Self::Read.bits() | Self::Write.bits();
+    }
 }
 
 impl ReferenceFlag {
-    pub fn read() -> Self {
+    pub const fn read() -> Self {
         Self::Read
     }
 
-    pub fn write() -> Self {
+    pub const fn write() -> Self {
         Self::Write
+    }
+
+    pub const fn is_read(&self) -> bool {
+        self.contains(Self::Read)
+    }
+
+    pub const fn is_write(&self) -> bool {
+        self.contains(Self::Write)
+    }
+
+    pub const fn is_read_write(&self) -> bool {
+        self.contains(Self::ReadWrite)
     }
 }
