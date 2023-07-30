@@ -597,11 +597,15 @@ pub(super) fn resolve_import_edge<'a, 'b: 'a>(
     edge_name: &str,
     _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "default_import" => import::default_import(contexts, resolve_info),
         "entire_span" => import::entire_span(contexts, resolve_info),
         "specific_import" => import::specific_import(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "span" => get_span(contexts),
+        "parent" => parents(contexts, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Import'")
         }
@@ -683,79 +687,6 @@ mod import {
                     }),
             )
         })
-    }
-}
-
-pub(super) fn resolve_import_ast_edge<'a, 'b: 'a>(
-    contexts: ContextIterator<'a, Vertex<'b>>,
-    edge_name: &str,
-    _parameters: &EdgeParameters,
-    resolve_info: &ResolveEdgeInfo,
-    adapter: &'a Adapter<'b>,
-) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-    match edge_name {
-        "ancestor" => import_ast::ancestor(contexts, resolve_info, adapter),
-        "default_import" => import_ast::default_import(contexts, resolve_info),
-        "entire_span" => import_ast::entire_span(contexts, resolve_info),
-        "parent" => import_ast::parent(contexts, resolve_info, adapter),
-        "span" => import_ast::span(contexts, resolve_info),
-        "specific_import" => import_ast::specific_import(contexts, resolve_info),
-        _ => {
-            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'ImportAST'")
-        }
-    }
-}
-
-mod import_ast {
-    use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
-    };
-
-    use super::super::vertex::Vertex;
-    use crate::Adapter;
-
-    pub(super) fn ancestor<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
-        adapter: &'a Adapter<'b>,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::ancestors(contexts, adapter)
-    }
-
-    pub(super) fn default_import<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::import::default_import(contexts, resolve_info)
-    }
-
-    pub(super) fn entire_span<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::import::entire_span(contexts, resolve_info)
-    }
-
-    pub(super) fn parent<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
-        adapter: &'a Adapter<'b>,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::parents(contexts, adapter)
-    }
-
-    pub(super) fn span<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::get_span(contexts)
-    }
-
-    pub(super) fn specific_import<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::import::specific_import(contexts, resolve_info)
     }
 }
 

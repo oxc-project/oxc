@@ -248,13 +248,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "Import" => super::edges::resolve_import_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "ImportAST" => super::edges::resolve_import_ast_edge(
+            "Import" | "ImportAST" => super::edges::resolve_import_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
