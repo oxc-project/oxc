@@ -6,6 +6,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use regex::Regex;
 use std::borrow::Cow;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -48,18 +49,89 @@ impl Rule for NoLossOfPrecision {
     }
 }
 
-#[derive(Debug, Eq)]
-pub struct NormalizedNum<'a> {
-    magnitude: isize,
-    coefficient: Cow<'a, str>,
+pub struct RawNum<'a> {
+    int: &'a str,
+    frac: &'a str,
+    exp: isize,
 }
 
-impl<'a> PartialEq for NormalizedNum<'a> {
+#[derive(Debug)]
+pub struct ScientificNotation<'a> {
+    int: &'a str,
+    frac: Cow<'a, str>,
+    exp: isize,
+    scientific: bool,
+    precision: usize,
+}
+
+impl PartialEq for ScientificNotation<'_> {
     fn eq(&self, other: &Self) -> bool {
-        if self.coefficient == "0" {
-            true
+        if self.int == other.int && self.frac == other.frac {
+            if self.int == "0" && self.frac == "" {
+                return true;
+            }
+            return self.exp == other.exp;
+        }
+        false
+    }
+}
+
+impl<'a> RawNum<'a> {
+    fn new(num: &str) -> Option<RawNum<'_>> {
+        let re = Regex::new(
+            r"-?0*(?P<int>0|[1-9]\d*)?(?:\.(?P<frac>\d+))?(?:[eE](?P<exp>[+-]?\d+))?",
+        )
+        .unwrap();
+
+        if let Some(captures) = re.captures(num) {
+            let int = captures.name("int").map_or("0", |m| m.as_str());
+            let frac = captures.name("frac").map_or("", |m| m.as_str());
+            let exp = captures.name("exp").map_or("0", |m| m.as_str());
+
+            let exp = match exp.parse::<isize>() {
+                Ok(x) => x,
+                Err(_) => return None,
+            };
+
+            Some(RawNum { int, frac, exp })
         } else {
-            self.magnitude == other.magnitude && self.coefficient == other.coefficient
+            None
+        }
+    }
+
+    fn normalize(&mut self) -> ScientificNotation<'a> {
+        let scientific = self.exp != 0;
+        let precision = self.frac.len();
+        if self.int.starts_with('0') {
+            #[allow(clippy::cast_possible_wrap)]
+            let exp = self.exp - 1 - self.frac.chars().take_while(|&ch| ch == '0').count() as isize;
+            self.frac = self.frac.trim_start_matches('0');
+
+            match self.frac.len() {
+                0 => ScientificNotation { int: "0", frac: Cow::Borrowed(""), exp, scientific, precision },
+                1 => ScientificNotation { int: &self.frac[..1], frac: Cow::Borrowed(""), exp, scientific, precision },
+                _ => ScientificNotation {
+                    int: &self.frac[..1],
+                    frac: Cow::Borrowed(&self.frac[1..]),
+                    exp,
+                    scientific, precision
+                },
+            }
+        } else {
+            #[allow(clippy::cast_possible_wrap)]
+            let exp = self.exp + self.int.len() as isize - 1;
+            if self.int.len() == 1 {
+                ScientificNotation { int: self.int, frac: Cow::Borrowed(self.frac), exp, scientific, precision }
+            } else {
+                ScientificNotation {
+                    int: &self.int[..1],
+                    frac: Cow::Owned(
+                        format!("{}{}", &self.int[1..], self.frac).trim_end_matches('0').to_string(),
+                    ),
+                    exp,
+                    scientific, precision
+                }
+            }
         }
     }
 }
@@ -89,107 +161,23 @@ impl NoLossOfPrecision {
     }
 
     fn base_ten_loses_precision(node: &'_ NumberLiteral) -> bool {
-        let normalized_raw_num =
-            if let Some(s) = Self::normalize(Self::get_raw(node)) { s } else { return true };
-        let precision = normalized_raw_num.coefficient.len();
+        let raw = Self::get_raw(node);
+        let raw = if let Some(s) = Self::normalize(&raw) { s } else { return true };
 
-        if precision > 100 {
+        if raw.frac.len() >= 100 {
             return true;
         }
-
-        let stored_num = Cow::Owned(format!("{:1$}", node.value, precision));
-        let normalized_stored_num =
-            if let Some(s) = Self::normalize(stored_num) { s } else { return true };
-        normalized_raw_num != normalized_stored_num
-    }
-
-    fn remove_leading_zeros(num: Cow<'_, str>) -> Cow<'_, str> {
-        if num.starts_with('0') {
-            Cow::Owned(
-                match num.trim_start_matches('0') {
-                    "" => "0",
-                    s => s,
-                }
-                .to_string(),
-            )
-        } else {
-            num
-        }
-    }
-
-    fn remove_trailing_zeros(num: Cow<'_, str>) -> Cow<'_, str> {
-        if num.ends_with('0') {
-            Cow::Owned(
-                match num.trim_end_matches('0') {
-                    "" => "0",
-                    s => s,
-                }
-                .to_string(),
-            )
-        } else {
-            num
-        }
-    }
-
-    fn normalize_int(num: Cow<'_, str>) -> NormalizedNum<'_> {
-        // specially deal with 0
-        if num == "0" {
-            return NormalizedNum { magnitude: 0, coefficient: Cow::Borrowed("0") };
-        }
-
-        #[allow(clippy::cast_possible_wrap)]
-        // the length of number is larger then isize is almost impossible in real-world codebase
-        let magnitude =
-            if num.starts_with('0') { num.len() as isize - 2 } else { num.len() as isize - 1 };
-        let significant_digits = Self::remove_leading_zeros(Self::remove_trailing_zeros(num));
-        NormalizedNum { magnitude, coefficient: significant_digits }
-    }
-
-    fn normalize_float(num: Cow<'_, str>) -> NormalizedNum<'_> {
-        let trimmed_float = Self::remove_leading_zeros(num);
-
-        return trimmed_float.strip_prefix('.').map_or_else(
-            || {
-                let trimmed_float = trimmed_float.trim_end_matches('0');
-                // unwrap here will never panic, we guarantee the input contains a `.`
-                #[allow(clippy::cast_possible_wrap)]
-                let magnitude = (trimmed_float.find('.').unwrap() - 1) as isize;
-                NormalizedNum { coefficient: Cow::Owned(trimmed_float.replace('.', "")), magnitude }
-            },
-            |stripped| {
-                let decimal_digits = stripped.len();
-                let significant_digits =
-                    Self::remove_leading_zeros(Cow::Owned(stripped.to_string()));
-                #[allow(clippy::cast_possible_wrap)]
-                // the length of number is larger then isize is almost impossible in real-world codebase
-                let magnitude = significant_digits.len() as isize - decimal_digits as isize - 1;
-                NormalizedNum { coefficient: significant_digits, magnitude }
-            },
-        );
-    }
-
-    fn normalize<'a, S: AsRef<str>>(num: S) -> Option<NormalizedNum<'a>> {
-        let split_num = num.as_ref().split(|c| c == 'e' || c == 'E').collect::<Vec<_>>();
-        let original_coefficient = Cow::Owned(split_num[0].to_owned());
-        let normalize_num = if num.as_ref().contains('.') {
-            Self::normalize_float(original_coefficient)
-        } else {
-            Self::normalize_int(original_coefficient)
+        let stored = match (raw.scientific, raw.precision) {
+            (true, _) => format!("{:.1$e}", node.value, raw.frac.len()),
+            (false, _precision @ 0) => format!("{}", node.value),
+            (false, precision ) => format!("{:.1$}", node.value, precision),
         };
+        let stored = if let Some(s) = Self::normalize(&stored) { s } else { return true };
+        raw != stored
+    }
 
-        let coefficient = normalize_num.coefficient;
-
-        let magnitude = if split_num.len() > 1 {
-            if let Ok(n) = split_num[1].parse::<isize>() {
-                n + normalize_num.magnitude
-            } else {
-                return None;
-            }
-        } else {
-            normalize_num.magnitude
-        };
-
-        Some(NormalizedNum { magnitude, coefficient })
+    fn normalize(num: &str) -> Option<ScientificNotation<'_>> {
+        Some(RawNum::new(num)?.normalize())
     }
 
     pub fn lose_precision(node: &'_ NumberLiteral) -> bool {
@@ -270,6 +258,8 @@ fn test() {
         ("var x = 0x1FFF_FFFF_FFF_FFF", None),
         ("var x = 0X1_FFF_FFFF_FFF_FFF", None),
         ("var a = Infinity", None),
+        ("var a = 480.00", None),
+        ("var a = -30.00", None),
     ];
 
     let fail = vec![
