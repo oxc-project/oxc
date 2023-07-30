@@ -151,8 +151,9 @@ impl<'s, 'a> Iterator for AstNodeParentIter<'s, 'a> {
     type Item = &'s AstNode<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        let next = self.curr;
         self.curr = self.curr.and_then(|curr| self.nodes.parent_node(curr.id()));
 
-        self.curr
+        next
     }
 }

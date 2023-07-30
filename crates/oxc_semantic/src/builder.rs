@@ -528,21 +528,29 @@ impl<'a> SemanticBuilder<'a> {
     /// Resolve reference flags for the current ast node.
     fn resolve_reference_usages(&self) -> ReferenceFlag {
         let mut flags = ReferenceFlag::None;
-        let mut height = 0;
+
+        if self.nodes.parent_id(self.current_node_id).is_none() {
+            return ReferenceFlag::Read;
+        }
 
         for parent in self.nodes.iter_parents(self.current_node_id) {
-            height += 1;
-
             match parent.kind() {
                 AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_) => {
                     flags |= ReferenceFlag::Write;
                     break;
                 }
+
+                AstKind::UpdateExpression(_) => {
+                    flags |= ReferenceFlag::Write
+                    // continue up tree
+                }
+
                 // todo: handle sequential expressions
-                AstKind::UpdateExpression(_) | AstKind::ParenthesizedExpression(_) => {
+                AstKind::ParenthesizedExpression(_) => {
                     flags |= ReferenceFlag::Read;
                     // continue up tree
                 }
+
                 _ => {
                     flags |= ReferenceFlag::Read;
                     break;
@@ -550,9 +558,7 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
 
-        if height == 0 {
-            flags = ReferenceFlag::Read;
-        }
+        debug_assert!(flags != ReferenceFlag::None);
 
         flags
     }
