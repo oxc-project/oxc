@@ -10,7 +10,7 @@ define_index_type! {
 bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct SymbolFlags: u16 {
-        const None                    = 0 << 0;
+        const None                    = 0;
         /// Variable (var) or parameter
         const FunctionScopedVariable  = 1 << 0;
         /// A block-scoped variable (let or const)
@@ -30,10 +30,10 @@ bitflags! {
         const Interface               = 1 << 10;
         const RegularEnum             = 1 << 11;
         const ConstEnum               = 1 << 12;
-        const EnumMember              = 1 << 13; 
-        const TypeLiteral             = 1 << 14; 
+        const EnumMember              = 1 << 13;
+        const TypeLiteral             = 1 << 14;
         const TypeParameter           = 1 << 15;
-        
+
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
 
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
@@ -57,8 +57,8 @@ bitflags! {
         const ConstEnumExcludes = (Self::Type.bits() | Self::Value.bits()) & !Self::ConstEnum.bits();
         // TODO: include value module in regualr enum excludes
         const RegularEnumExcludes = (Self::Value.bits() | Self::Type.bits()) & !(Self::RegularEnum.bits() );
-        const EnumMemberExcludes = Self::EnumMember.bits(); 
-        
+        const EnumMemberExcludes = Self::EnumMember.bits();
+
     }
 }
 
