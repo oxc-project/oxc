@@ -76,14 +76,27 @@ impl ReferenceFlag {
         Self::ReadWrite
     }
 
+    /// The identifier is read from. It may also be written to.
     pub const fn is_read(&self) -> bool {
         self.intersects(Self::Read)
     }
 
+    /// The identifier is only read from.
+    pub const fn is_read_only(&self) -> bool {
+        self.contains(Self::Read)
+    }
+
+    /// The identifier is written to. It may also be read from.
     pub const fn is_write(&self) -> bool {
         self.intersects(Self::Write)
     }
 
+    /// The identifier is only written to. It is not read from in this reference.
+    pub const fn is_write_only(&self) -> bool {
+        self.contains(Self::Write)
+    }
+
+    /// The identifier is both read from and written to, e.g `a += 1`.
     pub const fn is_read_write(&self) -> bool {
         self.contains(Self::ReadWrite)
     }

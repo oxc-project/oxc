@@ -533,10 +533,9 @@ impl<'a> SemanticBuilder<'a> {
             return ReferenceFlag::Read;
         }
 
-        for parent_id in self.nodes.ancestors(self.current_node_id).skip(1) {
-            let Some(parent) = self.nodes.parent_kind(parent_id) else { break };
+        for parent in self.nodes.iter_parents(self.current_node_id) {
 
-            match parent {
+            match parent.kind() {
                 AstKind::AssignmentTarget(_)
                 | AstKind::SimpleAssignmentTarget(_)
                 | AstKind::UpdateExpression(_) => {
