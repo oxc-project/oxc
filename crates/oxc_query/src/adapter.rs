@@ -136,11 +136,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "ObjectLiteral" => super::properties::resolve_object_literal_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-            ),
+            "ObjectLiteralAST" | "ObjectLiteral" => {
+                super::properties::resolve_object_literal_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "PathPart" => super::properties::resolve_path_part_property(
                 contexts,
                 property_name.as_ref(),
