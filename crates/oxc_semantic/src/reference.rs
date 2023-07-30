@@ -56,7 +56,7 @@ bitflags! {
     #[derive(Debug, Clone, Copy, Eq, PartialEq)]
     pub struct ReferenceFlag: u8 {
         const None = 0;
-        const Read = 1 << 0;  
+        const Read = 1 << 0;
         const Write = 1 << 1;
         const ReadWrite = Self::Read.bits() | Self::Write.bits();
     }

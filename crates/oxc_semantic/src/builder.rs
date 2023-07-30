@@ -535,9 +535,8 @@ impl<'a> SemanticBuilder<'a> {
 
         for parent in self.nodes.iter_parents(self.current_node_id) {
             match parent.kind() {
-                AstKind::AssignmentTarget(_)
-                | AstKind::SimpleAssignmentTarget(_) => {
-                    flags |= ReferenceFlag::Write
+                AstKind::AssignmentTarget(_) | AstKind::SimpleAssignmentTarget(_) => {
+                    flags |= ReferenceFlag::Write;
                     // continue up tree
                 }
 
