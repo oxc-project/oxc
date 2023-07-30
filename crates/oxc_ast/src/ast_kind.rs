@@ -371,3 +371,162 @@ impl<'a> GetSpan for AstKind<'a> {
         }
     }
 }
+
+#[cfg(debug_assertions)]
+impl<'a> AstKind<'a> {
+    #[allow(clippy::match_same_arms, clippy::too_many_lines)]
+    /// Get the AST kind name with minimal details. Particularly useful for
+    /// when debugging an iteration over an AST.
+    ///
+    /// Note that this method does not exist in release builds. Do not include
+    /// usage of this method within your code.
+    pub fn debug_name(&self) -> std::borrow::Cow<str> {
+        match self {
+            Self::Program(_) => "Program".into(),
+            Self::Directive(d) => format!("{}", d.directive).into(),
+            Self::Hashbang(_) => "Hashbang".into(),
+
+            Self::BlockStatement(_) => "BlockStatement".into(),
+            Self::BreakStatement(_) => "BreakStatement".into(),
+            Self::ContinueStatement(_) => "ContinueStatement".into(),
+            Self::DebuggerStatement(_) => "DebuggerStatement".into(),
+            Self::DoWhileStatement(_) => "DoWhileStatement".into(),
+            Self::EmptyStatement(_) => "EmptyStatement".into(),
+            Self::ExpressionStatement(_) => "ExpressionStatement".into(),
+            Self::ForInStatement(_) => "ForInStatement".into(),
+            Self::ForOfStatement(_) => "ForOfStatement".into(),
+            Self::ForStatement(_) => "ForStatement".into(),
+            Self::ForStatementInit(_) => "ForStatementInit".into(),
+            Self::IfStatement(_) => "IfStatement".into(),
+            Self::LabeledStatement(_) => "LabeledStatement".into(),
+            Self::ReturnStatement(_) => "ReturnStatement".into(),
+            Self::SwitchStatement(_) => "SwitchStatement".into(),
+            Self::ThrowStatement(_) => "ThrowStatement".into(),
+            Self::TryStatement(_) => "TryStatement".into(),
+            Self::WhileStatement(_) => "WhileStatement".into(),
+            Self::WithStatement(_) => "WithStatement".into(),
+
+            Self::SwitchCase(_) => "SwitchCase".into(),
+            Self::CatchClause(_) => "CatchClause".into(),
+            Self::FinallyClause(_) => "FinallyClause".into(),
+
+            Self::VariableDeclaration(_) => "VariableDeclaration".into(),
+            Self::VariableDeclarator(_) => "VariableDeclarator".into(),
+
+            Self::IdentifierName(x) => format!("IdentifierName({})", x.name).into(),
+            Self::IdentifierReference(x) => format!("IdentifierReference({})", x.name).into(),
+            Self::BindingIdentifier(x) => format!("BindingIdentifier({})", x.name).into(),
+            Self::LabelIdentifier(x) => format!("LabelIdentifier({})", x.name).into(),
+            Self::PrivateIdentifier(x) => format!("PrivateIdentifier({})", x.name).into(),
+
+            Self::NumberLiteral(n) => format!("NumberLiteral({})", n.value).into(),
+            Self::StringLiteral(s) => format!("NumberLiteral({})", s.value).into(),
+            Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
+            Self::NullLiteral(_) => "NullLiteral".into(),
+            Self::BigintLiteral(b) => format!("BigintLiteral({})", b.value).into(),
+            Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
+            Self::TemplateLiteral(t) => format!(
+                "TemplateLiteral({})",
+                t.quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
+            ).into(),
+
+            Self::MetaProperty(_) => "MetaProperty".into(),
+            Self::Super(_) => "Super".into(),
+
+            Self::ArrayExpression(_) => "ArrayExpression".into(),
+            Self::ArrowExpression(_) => "ArrowExpression".into(),
+            Self::AssignmentExpression(_) => "AssignmentExpression".into(),
+            Self::AwaitExpression(_) => "AwaitExpression".into(),
+            Self::BinaryExpression(b) => format!("BinaryExpression{}", b.operator.as_str()).into(),
+            Self::CallExpression(_) => "CallExpression".into(),
+            Self::ConditionalExpression(_) => "ConditionalExpression".into(),
+            Self::LogicalExpression(_) => "LogicalExpression".into(),
+            Self::MemberExpression(_) => "MemberExpression".into(),
+            Self::NewExpression(_) => "NewExpression".into(),
+            Self::ObjectExpression(_) => "ObjectExpression".into(),
+            Self::ParenthesizedExpression(_) => "ParenthesizedExpression".into(),
+            Self::SequenceExpression(_) => "SequenceExpression".into(),
+            Self::TaggedTemplateExpression(_) => "TaggedTemplateExpression".into(),
+            Self::ThisExpression(_) => "ThisExpression".into(),
+            Self::UnaryExpression(expr) => {
+                format!("UnaryExpression({:?})", expr.operator).into()
+            }
+            Self::UpdateExpression(_) => "UpdateExpression".into(),
+            Self::YieldExpression(_) => "YieldExpression".into(),
+
+            Self::ObjectProperty(_) => "ObjectProperty".into(),
+            Self::PropertyKey(_) => "PropertyKey".into(),
+            Self::Argument(_) => "Argument".into(),
+            Self::ArrayExpressionElement(_) => "ArrayExpressionElement".into(),
+            Self::AssignmentTarget(_) => "AssignmentTarget".into(),
+            Self::SimpleAssignmentTarget(_) => "SimpleAssignmentTarget".into(),
+            Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
+            Self::SpreadElement(_) => "SpreadElement".into(),
+            Self::Elision(_) => "Elision".into(),
+            Self::RestElement(_) => "RestElement".into(),
+
+            Self::Function(x) => format!(
+                "Function({})",
+                x.id.as_ref().map_or_else(|| "<anonymous>", |id| id.name.as_str())
+            )
+            .into(),
+            Self::FunctionBody(_) => "FunctionBody".into(),
+            Self::FormalParameters(_) => "FormalParameters".into(),
+            Self::FormalParameter(_) => "FormalParameter".into(),
+
+            Self::Class(c) => format!(
+                "Class({})",
+                c.id.as_ref().map_or_else(|| "<anonymous>", |id| id.name.as_str())
+            )
+            .into(),
+            Self::ClassHeritage(_) => "ClassHeritage".into(),
+            Self::StaticBlock(_) => "StaticBlock".into(),
+            Self::PropertyDefinition(_) => "PropertyDefinition".into(),
+            Self::MethodDefinition(_) => "MethodDefinition".into(),
+
+            Self::ArrayPattern(_) => "ArrayPattern".into(),
+            Self::ObjectPattern(_) => "ObjectPattern".into(),
+            Self::AssignmentPattern(_) => "AssignmentPattern".into(),
+
+            Self::Decorator(_) => "Decorator".into(),
+
+            Self::ModuleDeclaration(_) => "ModuleDeclaration".into(),
+            Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
+            Self::JSXElementName(_) => "JSXElementName".into(),
+            Self::JSXElement(_) => "JSXElement".into(),
+
+            Self::TSModuleBlock(_) => "TSModuleBlock".into(),
+
+            Self::TSAnyKeyword(_) => "TSAnyKeyword".into(),
+            Self::TSIntersectionType(_) => "TSIntersectionType".into(),
+            Self::TSLiteralType(_) => "TSLiteralType".into(),
+            Self::TSMethodSignature(_) => "TSMethodSignature".into(),
+            Self::TSNullKeyword(_) => "TSNullKeyword".into(),
+            Self::TSTypeLiteral(_) => "TSTypeLiteral".into(),
+            Self::TSTypeReference(_) => "TSTypeReference".into(),
+            Self::TSUnionType(_) => "TSUnionType".into(),
+            Self::TSVoidKeyword(_) => "TSVoidKeyword".into(),
+
+            Self::TSIndexedAccessType(_) => "TSIndexedAccessType".into(),
+
+            Self::TSAsExpression(_) => "TSAsExpression".into(),
+            Self::TSSatisfiesExpression(_) => "TSSatisfiesExpression".into(),
+            Self::TSNonNullExpression(_) => "TSNonNullExpression".into(),
+
+            Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
+            Self::TSEnumMember(_) => "TSEnumMember".into(),
+
+            Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),
+            Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
+            Self::TSModuleDeclaration(_) => "TSModuleDeclaration".into(),
+            Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
+            Self::TSTypeAnnotation(_) => "TSTypeAnnotation".into(),
+            Self::TSTypeAssertion(_) => "TSTypeAssertion".into(),
+            Self::TSTypeParameter(_) => "TSTypeParameter".into(),
+            Self::TSTypeParameterDeclaration(_) => "TSTypeParameterDeclaration".into(),
+            Self::TSTypeParameterInstantiation(_) => "TSTypeParameterInstantiation".into(),
+
+            Self::TSPropertySignature(_) => "TSPropertySignature".into(),
+        }
+    }
+}
