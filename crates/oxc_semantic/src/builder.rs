@@ -7,7 +7,7 @@ use itertools::Itertools;
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::module_record::ModuleRecord;
+use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -539,20 +539,33 @@ impl<'a> SemanticBuilder<'a> {
         let curr_kind = self.nodes.get_node(self.current_node_id).kind();
         println!("=================================================================");
         println!("checking node: {}", curr_kind.debug_name());
-        debug_assert!(matches!(self.nodes.get_node(self.current_node_id).kind(), AstKind::IdentifierReference(_)));
+        debug_assert!(matches!(
+            self.nodes.get_node(self.current_node_id).kind(),
+            AstKind::IdentifierReference(_)
+        ));
 
-        for (curr, parent) in self.nodes.iter_parents(self.current_node_id).tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>() {
+        for (curr, parent) in self
+            .nodes
+            .iter_parents(self.current_node_id)
+            .tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>()
+        {
             let (curr_kind, parent_kind) = (curr.kind(), parent.kind());
             println!("({}, {})", curr_kind.debug_name(), parent_kind.debug_name());
             match (curr.kind(), parent.kind()) {
                 // lhs of assignment expression
-                | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_))
-                | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentTarget(_))
-                | (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
+                (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
                     debug_assert!(!flags.is_read());
                     flags = ReferenceFlag::write();
                     // a lhs expr will not propagate upwards into a rhs
                     // expression, sow e can safely break
+                    break;
+                }
+                (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(expr)) => {
+                    flags |= if expr.operator == AssignmentOperator::Assign {
+                        ReferenceFlag::write()
+                    } else {
+                        ReferenceFlag::read_write()
+                    };
                     break;
                 }
                 // | (AstKind::IdentifierReference(_), AstKind::AssignmentTarget(_)) => {
@@ -565,7 +578,8 @@ impl<'a> SemanticBuilder<'a> {
                     // safely break
                     break;
                 }
-                (_, AstKind::SimpleAssignmentTarget(_)) => {
+                (_, AstKind::SimpleAssignmentTarget(_))
+                | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentTarget(_)) => {
                     flags |= ReferenceFlag::write();
                     // continue up tree
                 }
@@ -581,24 +595,6 @@ impl<'a> SemanticBuilder<'a> {
                     break;
                 }
             }
-            // match parent.kind() {
-            //     AstKind::AssignmentTarget(_)
-            //     | AstKind::SimpleAssignmentTarget(_)
-            //     | AstKind::UpdateExpression(_) => {
-            //         flags |= ReferenceFlag::Write;
-            //         // continue up tree
-            //     }
-
-            //     AstKind::ParenthesizedExpression(_) => {
-            //         flags |= ReferenceFlag::Read;
-            //         // continue up tree
-            //     }
-
-            //     _ => {
-            //         flags |= ReferenceFlag::Read;
-            //         break;
-            //     }
-            // }
         }
 
         debug_assert!(flags != ReferenceFlag::None);

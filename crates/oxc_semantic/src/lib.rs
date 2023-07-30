@@ -137,7 +137,7 @@ mod tests {
         assert!(parse.errors.is_empty());
         let program = allocator.alloc(parse.program);
         let semantic = SemanticBuilder::new(source, source_type).build(program);
-        assert!(semantic.errors.is_empty());
+        assert!(semantic.errors.is_empty(), "Parse error: {}", semantic.errors[0]);
         semantic.semantic
     }
 
@@ -200,6 +200,13 @@ mod tests {
             ("function a() { return }; a()", ReferenceFlag::read()),
             ("let a; function foo() { return a }", ReferenceFlag::read()),
 
+            // pattern assignment
+            ("let a = 1, b; b = { a }", ReferenceFlag::read()),
+            ("let a, b; ({ b } = { a })", ReferenceFlag::read()),
+            ("let a, b; ({ a } = { b })", ReferenceFlag::write()),
+            ("let a, b; ([ b ] = [ a ])", ReferenceFlag::read()),
+            ("let a, b; ([ a ] = [ b ])", ReferenceFlag::write()),
+
             // parens are pass-through
             ("let a = 1, b; b = (a)", ReferenceFlag::read()),
             ("let a = 1, b; b = ++(a)", ReferenceFlag::read_write()),
@@ -217,14 +224,21 @@ mod tests {
             // assignment expressions count as read-write
             ("let a = 1, b; b = a += 5", ReferenceFlag::read_write()),
             ("let a = 1; a += 5", ReferenceFlag::read_write()),
-            ("let a, b; b = a = 1", ReferenceFlag::read_write()),
-            ("let a, b; b = (a = 1)", ReferenceFlag::read_write()),
+            // note: we consider a to be written, and the read of `1` propagates upwards
+            ("let a, b; b = a = 1", ReferenceFlag::write()), 
+            ("let a, b; b = (a = 1)", ReferenceFlag::write()),
+            ("let a, b, c; b = c = a", ReferenceFlag::read()),
             // sequences return last value in sequence
             ("let a, b; b = (0, a++)", ReferenceFlag::read_write()),
             // identifiers not in last value are also considered a read (at
             // least, or now)
             ("let a, b; b = (a, 0)", ReferenceFlag::read()),
             ("let a, b; b = (--a, 0)", ReferenceFlag::read_write()),
+            // other reads after a is written 
+            // a = 1 writes, but the CallExpression reads the rhs (1) so a isn't read
+            ("let a; function foo(a) { return a }; foo(a = 1)", ReferenceFlag::write()),
+            ("let a, b, c; a = b = c")
+            
         ];
 
         for (source, flag) in sources {
@@ -237,15 +251,16 @@ mod tests {
             let num_refs = a_refs.len();
 
             assert!(num_refs == 1, "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}");
+            let ref_type = a_refs[0];
             if flag.is_write() {
-                assert!(a_refs[0].is_write(), "expected reference to '{target_symbol_name}' to be read/write, but it is not write\n\nsource:\n{source}");
+                assert!(ref_type.is_write(), "expected reference to '{target_symbol_name}' to be write\n\nsource:\n{source}");
             } else {
-                assert!(!a_refs[0].is_write(), "expected reference to '{target_symbol_name}' not to have been written to, but it is\n\nsource:\n{source}");
+                assert!(!ref_type.is_write(), "expected reference to '{target_symbol_name}' not to have been written to, but it is\n\nsource:\n{source}");
             }
             if flag.is_read() {
-                assert!(a_refs[0].is_read(), "expected reference to '{target_symbol_name}' to be read/write, but it is not read\n\nsource:\n{source}");
+                assert!(ref_type.is_read(), "expected reference to '{target_symbol_name}' to be read\n\nsource:\n{source}");
             } else {
-                assert!(!a_refs[0].is_read(), "expected reference to '{target_symbol_name}' not to be read, but it is\n\nsource:\n{source}");
+                assert!(!ref_type.is_read(), "expected reference to '{target_symbol_name}' not to be read, but it is\n\nsource:\n{source}");
             }
         }
     }
