@@ -198,6 +198,7 @@ mod tests {
             ("let a = 1, b; b = a", ReferenceFlag::read()),
             ("let a = 1, b = 1, c; c = a + b", ReferenceFlag::read()),
             ("function a() { return }; a()", ReferenceFlag::read()),
+            ("class a {}; new a()", ReferenceFlag::read()),
             ("let a; function foo() { return a }", ReferenceFlag::read()),
 
             // pattern assignment
@@ -207,38 +208,58 @@ mod tests {
             ("let a, b; ([ b ] = [ a ])", ReferenceFlag::read()),
             ("let a, b; ([ a ] = [ b ])", ReferenceFlag::write()),
 
+            // property access/mutation
+            ("let a = { b: 1 }; a.b = 2", ReferenceFlag::read()),
+            ("let a = { b: 1 }; a.b += 2", ReferenceFlag::read()),
+
             // parens are pass-through
             ("let a = 1, b; b = (a)", ReferenceFlag::read()),
             ("let a = 1, b; b = ++(a)", ReferenceFlag::read_write()),
             ("let a = 1, b; b = ++((((a))))", ReferenceFlag::read_write()),
             ("let a = 1, b; b = ((++((a))))", ReferenceFlag::read_write()),
+
             // simple binops/calls for sanity check
             ("let a, b; a + b", ReferenceFlag::read()),
             ("let a, b; b(a)", ReferenceFlag::read()),
             ("let a, b; a = 5", ReferenceFlag::write()),
+
             // unary op counts as write, but checking continues up tree
             ("let a = 1, b; b = ++a", ReferenceFlag::read_write()),
             ("let a = 1, b; b = --a", ReferenceFlag::read_write()),
             ("let a = 1, b; b = a++", ReferenceFlag::read_write()),
             ("let a = 1, b; b = a--", ReferenceFlag::read_write()),
+
             // assignment expressions count as read-write
             ("let a = 1, b; b = a += 5", ReferenceFlag::read_write()),
             ("let a = 1; a += 5", ReferenceFlag::read_write()),
+
             // note: we consider a to be written, and the read of `1` propagates upwards
-            ("let a, b; b = a = 1", ReferenceFlag::write()), 
+            ("let a, b; b = a = 1", ReferenceFlag::write()),
             ("let a, b; b = (a = 1)", ReferenceFlag::write()),
             ("let a, b, c; b = c = a", ReferenceFlag::read()),
+
             // sequences return last value in sequence
             ("let a, b; b = (0, a++)", ReferenceFlag::read_write()),
+
+            // loops
+            ("var a, arr = [1, 2, 3]; for(a in arr) { break }", ReferenceFlag::write()),
+            ("var a, obj = { }; for(a of obj) { break }", ReferenceFlag::write()),
+            ("var a; for(; false; a++) { }" , ReferenceFlag::read_write()),
+            ("var a = 1; while(a < 5) { break }", ReferenceFlag::read()),
+
+            // if statements
+            ("let a; if (a) { true } else { false }", ReferenceFlag::read()),
+            ("let a, b; if (a == b) { true } else { false }", ReferenceFlag::read()),
+            ("let a, b; if (b == a) { true } else { false }", ReferenceFlag::read()),
+
             // identifiers not in last value are also considered a read (at
             // least, or now)
             ("let a, b; b = (a, 0)", ReferenceFlag::read()),
             ("let a, b; b = (--a, 0)", ReferenceFlag::read_write()),
-            // other reads after a is written 
+
+            // other reads after a is written
             // a = 1 writes, but the CallExpression reads the rhs (1) so a isn't read
             ("let a; function foo(a) { return a }; foo(a = 1)", ReferenceFlag::write()),
-            ("let a, b, c; a = b = c")
-            
         ];
 
         for (source, flag) in sources {
@@ -253,12 +274,18 @@ mod tests {
             assert!(num_refs == 1, "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}");
             let ref_type = a_refs[0];
             if flag.is_write() {
-                assert!(ref_type.is_write(), "expected reference to '{target_symbol_name}' to be write\n\nsource:\n{source}");
+                assert!(
+                    ref_type.is_write(),
+                    "expected reference to '{target_symbol_name}' to be write\n\nsource:\n{source}"
+                );
             } else {
                 assert!(!ref_type.is_write(), "expected reference to '{target_symbol_name}' not to have been written to, but it is\n\nsource:\n{source}");
             }
             if flag.is_read() {
-                assert!(ref_type.is_read(), "expected reference to '{target_symbol_name}' to be read\n\nsource:\n{source}");
+                assert!(
+                    ref_type.is_read(),
+                    "expected reference to '{target_symbol_name}' to be read\n\nsource:\n{source}"
+                );
             } else {
                 assert!(!ref_type.is_read(), "expected reference to '{target_symbol_name}' not to be read, but it is\n\nsource:\n{source}");
             }

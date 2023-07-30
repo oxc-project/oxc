@@ -536,9 +536,6 @@ impl<'a> SemanticBuilder<'a> {
 
         // This func should only get called when an IdentifierReference is
         // reached
-        let curr_kind = self.nodes.get_node(self.current_node_id).kind();
-        println!("=================================================================");
-        println!("checking node: {}", curr_kind.debug_name());
         debug_assert!(matches!(
             self.nodes.get_node(self.current_node_id).kind(),
             AstKind::IdentifierReference(_)
@@ -549,8 +546,6 @@ impl<'a> SemanticBuilder<'a> {
             .iter_parents(self.current_node_id)
             .tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>()
         {
-            let (curr_kind, parent_kind) = (curr.kind(), parent.kind());
-            println!("({}, {})", curr_kind.debug_name(), parent_kind.debug_name());
             match (curr.kind(), parent.kind()) {
                 // lhs of assignment expression
                 (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
@@ -568,9 +563,6 @@ impl<'a> SemanticBuilder<'a> {
                     };
                     break;
                 }
-                // | (AstKind::IdentifierReference(_), AstKind::AssignmentTarget(_)) => {
-                //     // probably a write, this will be handled by next iteration
-                // }
                 // rhs of assignment expression
                 (AstKind::IdentifierReference(_), AstKind::AssignmentExpression(_)) => {
                     flags |= ReferenceFlag::Read;
@@ -578,14 +570,17 @@ impl<'a> SemanticBuilder<'a> {
                     // safely break
                     break;
                 }
-                (_, AstKind::SimpleAssignmentTarget(_))
-                | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentTarget(_)) => {
+                (_, AstKind::SimpleAssignmentTarget(_)) | (_, AstKind::AssignmentTarget(_)) => {
                     flags |= ReferenceFlag::write();
                     // continue up tree
                 }
                 (_, AstKind::UpdateExpression(_)) => {
                     flags |= ReferenceFlag::Write;
                     // continue up tree
+                }
+                (AstKind::AssignmentTarget(_), AstKind::ForInStatement(_)) 
+                | (AstKind::AssignmentTarget(_), AstKind::ForOfStatement(_)) => {
+                    break;
                 }
                 (_, AstKind::ParenthesizedExpression(_)) => {
                     // continue up tree
