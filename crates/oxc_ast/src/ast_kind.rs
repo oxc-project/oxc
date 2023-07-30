@@ -383,7 +383,7 @@ impl<'a> AstKind<'a> {
     pub fn debug_name(&self) -> std::borrow::Cow<str> {
         match self {
             Self::Program(_) => "Program".into(),
-            Self::Directive(d) => format!("{}", d.directive).into(),
+            Self::Directive(d) => d.directive.into(),
             Self::Hashbang(_) => "Hashbang".into(),
 
             Self::BlockStatement(_) => "BlockStatement".into(),
@@ -428,7 +428,8 @@ impl<'a> AstKind<'a> {
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",
                 t.quasi().map_or_else(|| "None".into(), |q| format!("Some({q})"))
-            ).into(),
+            )
+            .into(),
 
             Self::MetaProperty(_) => "MetaProperty".into(),
             Self::Super(_) => "Super".into(),
@@ -448,9 +449,7 @@ impl<'a> AstKind<'a> {
             Self::SequenceExpression(_) => "SequenceExpression".into(),
             Self::TaggedTemplateExpression(_) => "TaggedTemplateExpression".into(),
             Self::ThisExpression(_) => "ThisExpression".into(),
-            Self::UnaryExpression(expr) => {
-                format!("UnaryExpression({:?})", expr.operator).into()
-            }
+            Self::UnaryExpression(expr) => format!("UnaryExpression({:?})", expr.operator).into(),
             Self::UpdateExpression(_) => "UpdateExpression".into(),
             Self::YieldExpression(_) => "YieldExpression".into(),
 
