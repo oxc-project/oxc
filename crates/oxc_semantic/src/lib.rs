@@ -193,8 +193,11 @@ mod tests {
         let alloc = Allocator::default();
         let target_symbol_name = Atom::from("a");
         let sources = [
+            ("let a = 1, b; b = ++a", ReferenceFlag::read_write()),
             // parens are pass-through
             ("let a = 1, b; b = (a)", ReferenceFlag::read()),
+            ("let a = 1, b; b = ++(a)", ReferenceFlag::read_write()),
+            ("let a = 1, b; b = ++((((a))))", ReferenceFlag::read_write()),
             // simple binops/calls for sanity check
             ("let a, b; a + b", ReferenceFlag::read()),
             ("let a, b; b(a)", ReferenceFlag::read()),
@@ -211,6 +214,10 @@ mod tests {
             ("let a, b; b = (a = 1)", ReferenceFlag::read_write()),
             // sequences return last value in sequence
             ("let a, b; b = (0, a++)", ReferenceFlag::read_write()),
+            // identifiers not in last value are also considered a read (at
+            // least, or now)
+            ("let a, b; b = (a, 0)", ReferenceFlag::read()),
+            ("let a, b; b = (--a, 0)", ReferenceFlag::read_write()),
         ];
 
         for (source, flag) in sources {
