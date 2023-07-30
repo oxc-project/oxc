@@ -215,10 +215,10 @@ mod tests {
 
         for (source, flag) in sources {
             let semantic = get_semantic(&alloc, source, SourceType::default());
-            let a_id = semantic
-                .scopes()
-                .get_root_binding(&target_symbol_name)
-                .expect(format!("no references for '{target_symbol_name}' found").as_str());
+            let a_id =
+                semantic.scopes().get_root_binding(&target_symbol_name).unwrap_or_else(|| {
+                    panic!("no references for '{target_symbol_name}' found");
+                });
             let a_refs: Vec<_> = semantic.symbol_references(a_id).collect();
             let num_refs = a_refs.len();
 
