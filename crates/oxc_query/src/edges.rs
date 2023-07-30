@@ -133,6 +133,7 @@ pub(super) fn resolve_class_edge<'a, 'b: 'a>(
     edge_name: &str,
     _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "constructor" => class::constructor(contexts, resolve_info),
@@ -142,6 +143,9 @@ pub(super) fn resolve_class_edge<'a, 'b: 'a>(
         "name_span" => class::name_span(contexts, resolve_info),
         "property" => class::property(contexts, resolve_info),
         "setter" => class::setter(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "span" => get_span(contexts),
+        "parent" => parents(contexts, adapter),
         _ => {
             unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Class'")
         }
@@ -293,111 +297,6 @@ mod class {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         class_fn_edge_implem!(contexts, Set)
-    }
-}
-
-pub(super) fn resolve_class_ast_edge<'a, 'b: 'a>(
-    contexts: ContextIterator<'a, Vertex<'b>>,
-    edge_name: &str,
-    _parameters: &EdgeParameters,
-    resolve_info: &ResolveEdgeInfo,
-    adapter: &'a Adapter<'b>,
-) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-    match edge_name {
-        "ancestor" => class_ast::ancestor(contexts, resolve_info, adapter),
-        "constructor" => class_ast::constructor(contexts, resolve_info),
-        "entire_class_span" => class_ast::entire_class_span(contexts, resolve_info),
-        "getter" => class_ast::getter(contexts, resolve_info),
-        "method" => class_ast::method(contexts, resolve_info),
-        "name_span" => class_ast::name_span(contexts, resolve_info),
-        "parent" => class_ast::parent(contexts, resolve_info, adapter),
-        "property" => class_ast::property(contexts, resolve_info),
-        "setter" => class_ast::setter(contexts, resolve_info),
-        "span" => class_ast::span(contexts, resolve_info),
-        _ => {
-            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'ClassAST'")
-        }
-    }
-}
-
-mod class_ast {
-    use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
-    };
-
-    use super::super::vertex::Vertex;
-    use crate::Adapter;
-
-    pub(super) fn ancestor<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
-        adapter: &'a Adapter<'b>,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::ancestors(contexts, adapter)
-    }
-
-    pub(super) fn constructor<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::class::constructor(contexts, resolve_info)
-    }
-
-    pub(super) fn entire_class_span<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::class::entire_class_span(contexts, resolve_info)
-    }
-
-    pub(super) fn getter<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::class::getter(contexts, resolve_info)
-    }
-
-    pub(super) fn method<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::class::method(contexts, resolve_info)
-    }
-
-    pub(super) fn name_span<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::class::name_span(contexts, resolve_info)
-    }
-
-    pub(super) fn parent<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
-        adapter: &'a Adapter<'b>,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::parents(contexts, adapter)
-    }
-
-    pub(super) fn property<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::class::property(contexts, resolve_info)
-    }
-
-    pub(super) fn setter<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::class::setter(contexts, resolve_info)
-    }
-
-    pub(super) fn span<'a, 'b: 'a>(
-        contexts: ContextIterator<'a, Vertex<'b>>,
-        _resolve_info: &ResolveEdgeInfo,
-    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
-        super::get_span(contexts)
     }
 }
 

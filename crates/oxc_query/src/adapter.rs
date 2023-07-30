@@ -204,13 +204,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "Class" => super::edges::resolve_class_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "ClassAST" => super::edges::resolve_class_ast_edge(
+            "Class" | "ClassAST" => super::edges::resolve_class_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
