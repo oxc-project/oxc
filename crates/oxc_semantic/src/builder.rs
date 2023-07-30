@@ -563,14 +563,7 @@ impl<'a> SemanticBuilder<'a> {
                     };
                     break;
                 }
-                // rhs of assignment expression
-                (AstKind::IdentifierReference(_), AstKind::AssignmentExpression(_)) => {
-                    flags |= ReferenceFlag::Read;
-                    // assignment expressions are not valid lhs, so we can
-                    // safely break
-                    break;
-                }
-                (_, AstKind::SimpleAssignmentTarget(_)) | (_, AstKind::AssignmentTarget(_)) => {
+                (_, AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)) => {
                     flags |= ReferenceFlag::write();
                     // continue up tree
                 }
@@ -578,8 +571,10 @@ impl<'a> SemanticBuilder<'a> {
                     flags |= ReferenceFlag::Write;
                     // continue up tree
                 }
-                (AstKind::AssignmentTarget(_), AstKind::ForInStatement(_)) 
-                | (AstKind::AssignmentTarget(_), AstKind::ForOfStatement(_)) => {
+                (
+                    AstKind::AssignmentTarget(_),
+                    AstKind::ForInStatement(_) | AstKind::ForOfStatement(_),
+                ) => {
                     break;
                 }
                 (_, AstKind::ParenthesizedExpression(_)) => {
