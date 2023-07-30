@@ -2,6 +2,7 @@
 
 use std::{cell::RefCell, rc::Rc};
 
+use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
@@ -533,26 +534,71 @@ impl<'a> SemanticBuilder<'a> {
             return ReferenceFlag::Read;
         }
 
-        for parent in self.nodes.iter_parents(self.current_node_id) {
+        // This func should only get called when an IdentifierReference is
+        // reached
+        let curr_kind = self.nodes.get_node(self.current_node_id).kind();
+        println!("=================================================================");
+        println!("checking node: {}", curr_kind.debug_name());
+        debug_assert!(matches!(self.nodes.get_node(self.current_node_id).kind(), AstKind::IdentifierReference(_)));
 
-            match parent.kind() {
-                AstKind::AssignmentTarget(_)
-                | AstKind::SimpleAssignmentTarget(_)
-                | AstKind::UpdateExpression(_) => {
+        for (curr, parent) in self.nodes.iter_parents(self.current_node_id).tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>() {
+            let (curr_kind, parent_kind) = (curr.kind(), parent.kind());
+            println!("({}, {})", curr_kind.debug_name(), parent_kind.debug_name());
+            match (curr.kind(), parent.kind()) {
+                // lhs of assignment expression
+                | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_))
+                | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentTarget(_))
+                | (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
+                    debug_assert!(!flags.is_read());
+                    flags = ReferenceFlag::write();
+                    // a lhs expr will not propagate upwards into a rhs
+                    // expression, sow e can safely break
+                    break;
+                }
+                // | (AstKind::IdentifierReference(_), AstKind::AssignmentTarget(_)) => {
+                //     // probably a write, this will be handled by next iteration
+                // }
+                // rhs of assignment expression
+                (AstKind::IdentifierReference(_), AstKind::AssignmentExpression(_)) => {
+                    flags |= ReferenceFlag::Read;
+                    // assignment expressions are not valid lhs, so we can
+                    // safely break
+                    break;
+                }
+                (_, AstKind::SimpleAssignmentTarget(_)) => {
+                    flags |= ReferenceFlag::write();
+                    // continue up tree
+                }
+                (_, AstKind::UpdateExpression(_)) => {
                     flags |= ReferenceFlag::Write;
                     // continue up tree
                 }
-
-                AstKind::ParenthesizedExpression(_) => {
-                    flags |= ReferenceFlag::Read;
+                (_, AstKind::ParenthesizedExpression(_)) => {
                     // continue up tree
                 }
-
                 _ => {
                     flags |= ReferenceFlag::Read;
                     break;
                 }
             }
+            // match parent.kind() {
+            //     AstKind::AssignmentTarget(_)
+            //     | AstKind::SimpleAssignmentTarget(_)
+            //     | AstKind::UpdateExpression(_) => {
+            //         flags |= ReferenceFlag::Write;
+            //         // continue up tree
+            //     }
+
+            //     AstKind::ParenthesizedExpression(_) => {
+            //         flags |= ReferenceFlag::Read;
+            //         // continue up tree
+            //     }
+
+            //     _ => {
+            //         flags |= ReferenceFlag::Read;
+            //         break;
+            //     }
+            // }
         }
 
         debug_assert!(flags != ReferenceFlag::None);

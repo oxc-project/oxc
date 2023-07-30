@@ -193,11 +193,18 @@ mod tests {
         let alloc = Allocator::default();
         let target_symbol_name = Atom::from("a");
         let sources = [
-            ("let a = 1, b; b = ++a", ReferenceFlag::read_write()),
+            // simple cases
+            ("let a = 1; a = 2", ReferenceFlag::write()),
+            ("let a = 1, b; b = a", ReferenceFlag::read()),
+            ("let a = 1, b = 1, c; c = a + b", ReferenceFlag::read()),
+            ("function a() { return }; a()", ReferenceFlag::read()),
+            ("let a; function foo() { return a }", ReferenceFlag::read()),
+
             // parens are pass-through
             ("let a = 1, b; b = (a)", ReferenceFlag::read()),
             ("let a = 1, b; b = ++(a)", ReferenceFlag::read_write()),
             ("let a = 1, b; b = ++((((a))))", ReferenceFlag::read_write()),
+            ("let a = 1, b; b = ((++((a))))", ReferenceFlag::read_write()),
             // simple binops/calls for sanity check
             ("let a, b; a + b", ReferenceFlag::read()),
             ("let a, b; b(a)", ReferenceFlag::read()),
@@ -232,9 +239,13 @@ mod tests {
             assert!(num_refs == 1, "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}");
             if flag.is_write() {
                 assert!(a_refs[0].is_write(), "expected reference to '{target_symbol_name}' to be read/write, but it is not write\n\nsource:\n{source}");
+            } else {
+                assert!(!a_refs[0].is_write(), "expected reference to '{target_symbol_name}' not to have been written to, but it is\n\nsource:\n{source}");
             }
             if flag.is_read() {
                 assert!(a_refs[0].is_read(), "expected reference to '{target_symbol_name}' to be read/write, but it is not read\n\nsource:\n{source}");
+            } else {
+                assert!(!a_refs[0].is_read(), "expected reference to '{target_symbol_name}' not to be read, but it is\n\nsource:\n{source}");
             }
         }
     }
