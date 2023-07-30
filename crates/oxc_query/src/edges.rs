@@ -1272,6 +1272,7 @@ pub(super) fn resolve_object_literal_edge<'a, 'b: 'a>(
     edge_name: &str,
     parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => object_literal::span(contexts, resolve_info),
@@ -1283,6 +1284,8 @@ pub(super) fn resolve_object_literal_edge<'a, 'b: 'a>(
                 .expect("unexpected null or other incorrect datatype for Trustfall type 'String!'");
             object_literal::value(contexts, key, resolve_info)
         }
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'ObjectLiteral'"
@@ -1322,7 +1325,7 @@ mod object_literal {
                 panic!("expected to have an objectliteral vertex, instead have: {v:#?}")
             });
 
-            Box::new(obj.properties.iter().filter_map(move |property| {
+            Box::new(obj.object_expression.properties.iter().filter_map(move |property| {
                 let ObjectPropertyKind::ObjectProperty(prop) = property else { return None };
 
                 let has_right_key_name = match &prop.key {
