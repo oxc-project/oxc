@@ -121,11 +121,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "JSXOpeningElement" => super::properties::resolve_jsxopening_element_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-            ),
+            "JSXOpeningElementAST" | "JSXOpeningElement" => {
+                super::properties::resolve_jsxopening_element_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "JSXText" => super::properties::resolve_jsxtext_property(
                 contexts,
                 property_name.as_ref(),
@@ -295,12 +297,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
-            "JSXOpeningElement" => super::edges::resolve_jsxopening_element_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
+            "JSXOpeningElementAST" | "JSXOpeningElement" => {
+                super::edges::resolve_jsxopening_element_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             "JSXSpreadAttribute" => super::edges::resolve_jsxspread_attribute_edge(
                 contexts,
                 edge_name.as_ref(),

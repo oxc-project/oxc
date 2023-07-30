@@ -37,7 +37,7 @@ pub enum Vertex<'a> {
     JSXElement(Rc<JSXElementVertex<'a>>),
     JSXExpressionContainer(&'a JSXExpressionContainer<'a>),
     JSXFragment(&'a JSXFragment<'a>),
-    JSXOpeningElement(&'a JSXOpeningElement<'a>),
+    JSXOpeningElement(Rc<JSXOpeningElementVertex<'a>>),
     JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>),
     JSXSpreadChild(&'a JSXSpreadChild<'a>),
     JSXText(&'a JSXText),
@@ -73,7 +73,7 @@ impl<'a> Vertex<'a> {
             Self::JSXElement(data) => data.element.span,
             Self::JSXExpressionContainer(data) => data.span,
             Self::JSXFragment(data) => data.span,
-            Self::JSXOpeningElement(data) => data.span,
+            Self::JSXOpeningElement(data) => data.opening_element.span,
             Self::JSXSpreadAttribute(data) => data.span,
             Self::JSXSpreadChild(data) => data.span,
             Self::JSXText(data) => data.span,
@@ -104,6 +104,7 @@ impl<'a> Vertex<'a> {
             Vertex::VariableDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::ObjectLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::ReturnStatementAST(data) => data.ast_node.map(|x| x.id()),
+            Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -116,7 +117,6 @@ impl<'a> Vertex<'a> {
             | Vertex::JSXText(_)
             | Vertex::JSXSpreadChild(_)
             | Vertex::JSXSpreadAttribute(_)
-            | Vertex::JSXOpeningElement(_)
             | Vertex::PathPart(_)
             | Vertex::Url(_)
             | Vertex::Type(_)
@@ -164,7 +164,7 @@ impl Typename for Vertex<'_> {
             Vertex::JSXElement(jsx) => jsx.typename(),
             Vertex::JSXExpressionContainer(_) => "JSXExpressionContainer",
             Vertex::JSXFragment(_) => "JSXFragment",
-            Vertex::JSXOpeningElement(_) => "JSXOpeningElement",
+            Vertex::JSXOpeningElement(jsx) => jsx.typename(),
             Vertex::JSXSpreadAttribute(_) => "JSXSpreadAttribute",
             Vertex::JSXSpreadChild(_) => "JSXSpreadChild",
             Vertex::JSXText(_) => "JSXText",
@@ -208,6 +208,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             }
             AstKind::ObjectExpression(objexpr) => Self::ObjectLiteral(
                 ObjectLiteralVertex { ast_node: Some(ast_node), object_expression: objexpr }.into(),
+            ),
+            AstKind::JSXOpeningElement(opening_element) => Self::JSXOpeningElement(
+                JSXOpeningElementVertex { ast_node: Some(ast_node), opening_element }.into(),
             ),
             _ => Vertex::ASTNode(ast_node),
         }
@@ -395,6 +398,23 @@ impl<'a> Typename for ObjectLiteralVertex<'a> {
             "ObjectLiteralAST"
         } else {
             "ObjectLiteral"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct JSXOpeningElementVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub opening_element: &'a JSXOpeningElement<'a>,
+}
+
+impl<'a> Typename for JSXOpeningElementVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "JSXOpeningElementAST"
+        } else {
+            "JSXOpeningElement"
         }
     }
 }
