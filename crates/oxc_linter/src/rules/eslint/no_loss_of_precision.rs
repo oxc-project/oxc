@@ -8,6 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 use std::borrow::Cow;
+use std::sync::OnceLock;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -78,10 +79,8 @@ impl PartialEq for ScientificNotation<'_> {
 
 impl<'a> RawNum<'a> {
     fn new(num: &str) -> Option<RawNum<'_>> {
-        let re = Regex::new(
-            r"-?0*(?P<int>0|[1-9]\d*)?(?:\.(?P<frac>\d+))?(?:[eE](?P<exp>[+-]?\d+))?",
-        )
-        .unwrap();
+        static RE: OnceLock<Regex> = OnceLock::new();
+        let re = RE.get_or_init(|| {Regex::new(r"-?0*(?P<int>0|[1-9]\d*)?(?:\.(?P<frac>\d+))?(?:[eE](?P<exp>[+-]?\d+))?").unwrap()});
 
         if let Some(captures) = re.captures(num) {
             let int = captures.name("int").map_or("0", |m| m.as_str());
