@@ -520,16 +520,41 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
-        let flag = if matches!(
-            self.nodes.parent_kind(self.current_node_id),
-            Some(AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_))
-        ) {
-            ReferenceFlag::write()
-        } else {
-            ReferenceFlag::read()
-        };
+        let flag = self.resolve_reference_usages();
         let reference = Reference::new(ident.span, ident.name.clone(), flag);
         self.declare_reference(reference);
+    }
+
+    /// Resolve reference flags for the current ast node.
+    fn resolve_reference_usages(&self) -> ReferenceFlag {
+        let mut flags = ReferenceFlag::None;
+        let mut height = 0;
+
+        for parent in self.nodes.iter_parents(self.current_node_id) {
+            height += 1;
+
+            match parent.kind() {
+                AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_) => {
+                    flags |= ReferenceFlag::Write;
+                    break;
+                }
+                // todo: handle sequential expressions
+                AstKind::UpdateExpression(_) | AstKind::ParenthesizedExpression(_) => {
+                    flags |= ReferenceFlag::Read;
+                    // continue up tree
+                }
+                _ => {
+                    flags |= ReferenceFlag::Read;
+                    break;
+                }
+            }
+        }
+
+        if height == 0 {
+            flags = ReferenceFlag::Read;
+        }
+
+        flags
     }
 
     fn reference_jsx_element_name(&mut self, elem: &JSXElementName) {
