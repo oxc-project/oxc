@@ -187,4 +187,48 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_reference_resolutions_simple_read_write() {
+        let alloc = Allocator::default();
+        let target_symbol_name = Atom::from("a");
+        let sources = [
+            // parens are pass-through
+            ("let a = 1, b; b = (a)", ReferenceFlag::read()),
+            // simple binops/calls for sanity check
+            ("let a, b; a + b", ReferenceFlag::read()),
+            ("let a, b; b(a)", ReferenceFlag::read()),
+            ("let a, b; a = 5", ReferenceFlag::write()),
+            // unary op counts as write, but checking continues up tree
+            ("let a = 1, b; b = ++a", ReferenceFlag::read_write()),
+            ("let a = 1, b; b = --a", ReferenceFlag::read_write()),
+            ("let a = 1, b; b = a++", ReferenceFlag::read_write()),
+            ("let a = 1, b; b = a--", ReferenceFlag::read_write()),
+            // assignment expressions count as read-write
+            ("let a = 1, b; b = a += 5", ReferenceFlag::read_write()),
+            ("let a = 1; a += 5", ReferenceFlag::read_write()),
+            ("let a, b; b = a = 1", ReferenceFlag::read_write()),
+            ("let a, b; b = (a = 1)", ReferenceFlag::read_write()),
+            // sequences return last value in sequence
+            ("let a, b; b = (0, a++)", ReferenceFlag::read_write()),
+        ];
+
+        for (source, flag) in sources {
+            let semantic = get_semantic(&alloc, source, SourceType::default());
+            let a_id = semantic
+                .scopes()
+                .get_root_binding(&target_symbol_name)
+                .expect(format!("no references for '{target_symbol_name}' found").as_str());
+            let a_refs: Vec<_> = semantic.symbol_references(a_id).collect();
+            let num_refs = a_refs.len();
+
+            assert!(num_refs == 1, "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}");
+            if flag.is_write() {
+                assert!(a_refs[0].is_write(), "expected reference to '{target_symbol_name}' to be read/write, but it is not write\n\nsource:\n{source}");
+            }
+            if flag.is_read() {
+                assert!(a_refs[0].is_read(), "expected reference to '{target_symbol_name}' to be read/write, but it is not read\n\nsource:\n{source}");
+            }
+        }
+    }
 }

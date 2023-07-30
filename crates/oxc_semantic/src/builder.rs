@@ -535,12 +535,8 @@ impl<'a> SemanticBuilder<'a> {
 
         for parent in self.nodes.iter_parents(self.current_node_id) {
             match parent.kind() {
-                AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_) => {
-                    flags |= ReferenceFlag::Write;
-                    break;
-                }
-
-                AstKind::UpdateExpression(_) => {
+                AstKind::AssignmentTarget(_)
+                | AstKind::SimpleAssignmentTarget(_) => {
                     flags |= ReferenceFlag::Write
                     // continue up tree
                 }
@@ -548,6 +544,10 @@ impl<'a> SemanticBuilder<'a> {
                 // todo: handle sequential expressions
                 AstKind::ParenthesizedExpression(_) => {
                     flags |= ReferenceFlag::Read;
+                    // continue up tree
+                }
+                // pass-through
+                AstKind::UpdateExpression(_) => {
                     // continue up tree
                 }
 

@@ -55,9 +55,9 @@ impl Reference {
 bitflags! {
     #[derive(Debug, Clone, Copy, Eq, PartialEq)]
     pub struct ReferenceFlag: u8 {
-        const None = 1 << 0;
-        const Read = 1 << 1;
-        const Write = 1 << 2;
+        const None = 0;
+        const Read = 1 << 0;  
+        const Write = 1 << 1;
         const ReadWrite = Self::Read.bits() | Self::Write.bits();
     }
 }
@@ -71,12 +71,16 @@ impl ReferenceFlag {
         Self::Write
     }
 
+    pub const fn read_write() -> Self {
+        Self::ReadWrite
+    }
+
     pub const fn is_read(&self) -> bool {
-        self.contains(Self::Read)
+        self.intersects(Self::Read)
     }
 
     pub const fn is_write(&self) -> bool {
-        self.contains(Self::Write)
+        self.intersects(Self::Write)
     }
 
     pub const fn is_read_write(&self) -> bool {
