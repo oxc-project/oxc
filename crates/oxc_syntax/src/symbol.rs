@@ -30,14 +30,14 @@ bitflags! {
         const Interface               = 1 << 10;
         const RegularEnum             = 1 << 11;
         const ConstEnum               = 1 << 12;
-        const EnumMember              = 1 << 13; // TODO: implement
-        const TypeLiteral             = 1 << 14; // Unsure if this is needed
+        const EnumMember              = 1 << 13; 
+        const TypeLiteral             = 1 << 14; 
         const TypeParameter           = 1 << 15;
         
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
 
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
-        const Value = Self::Variable.bits() | Self::Class.bits();
+        const Value = Self::Variable.bits() | Self::Class.bits() | Self::Enum.bits();
         const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::TypeLiteral.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
@@ -48,7 +48,7 @@ bitflags! {
         /// they can not merge with anything in the value space
         const BlockScopedVariableExcludes = Self::Value.bits();
 
-        const ClassExcludes = Self::Value.bits();
+        const ClassExcludes = Self::Value.bits() | Self::TypeAlias.bits();
         const ImportBindingExcludes = Self::ImportBinding.bits();
         // Type specific excludes
         const TypeAliasExcludes = Self::Type.bits();
