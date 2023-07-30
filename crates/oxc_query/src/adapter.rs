@@ -255,13 +255,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
-            "Interface" => super::edges::resolve_interface_edge(
-                contexts,
-                edge_name.as_ref(),
-                parameters,
-                resolve_info,
-            ),
-            "InterfaceAST" => super::edges::resolve_interface_ast_edge(
+            "Interface" | "InterfaceAST" => super::edges::resolve_interface_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
