@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use oxc_ast::ast::NumberLiteral;
 use oxc_ast::AstKind;
 use oxc_diagnostics::{
@@ -8,7 +9,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 use std::borrow::Cow;
-use once_cell::sync::Lazy;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -36,7 +36,7 @@ declare_oxc_lint!(
     /// var x = 2e999;
     /// ```
     NoLossOfPrecision,
-    nursery // There are false positives, see https://github.com/web-infra-dev/oxc/issues/656
+    correctness
 );
 
 impl Rule for NoLossOfPrecision {
@@ -77,10 +77,12 @@ impl PartialEq for ScientificNotation<'_> {
     }
 }
 
+static RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"-?0*(?P<int>0|[1-9]\d*)?(?:\.(?P<frac>\d+))?(?:[eE](?P<exp>[+-]?\d+))?").unwrap()
+});
+
 impl<'a> RawNum<'a> {
     fn new(num: &str) -> Option<RawNum<'_>> {
-        static RE: Lazy<Regex> = Lazy::new(|| {Regex::new(r"-?0*(?P<int>0|[1-9]\d*)?(?:\.(?P<frac>\d+))?(?:[eE](?P<exp>[+-]?\d+))?").unwrap()});
-
         if let Some(captures) = RE.captures(num) {
             let int = captures.name("int").map_or("0", |m| m.as_str());
             let frac = captures.name("frac").map_or("", |m| m.as_str());
@@ -106,28 +108,50 @@ impl<'a> RawNum<'a> {
             self.frac = self.frac.trim_start_matches('0');
 
             match self.frac.len() {
-                0 => ScientificNotation { int: "0", frac: Cow::Borrowed(""), exp, scientific, precision },
-                1 => ScientificNotation { int: &self.frac[..1], frac: Cow::Borrowed(""), exp, scientific, precision },
+                0 => ScientificNotation {
+                    int: "0",
+                    frac: Cow::Borrowed(""),
+                    exp,
+                    scientific,
+                    precision,
+                },
+                1 => ScientificNotation {
+                    int: &self.frac[..1],
+                    frac: Cow::Borrowed(""),
+                    exp,
+                    scientific,
+                    precision,
+                },
                 _ => ScientificNotation {
                     int: &self.frac[..1],
                     frac: Cow::Borrowed(&self.frac[1..]),
                     exp,
-                    scientific, precision
+                    scientific,
+                    precision,
                 },
             }
         } else {
             #[allow(clippy::cast_possible_wrap)]
             let exp = self.exp + self.int.len() as isize - 1;
             if self.int.len() == 1 {
-                ScientificNotation { int: self.int, frac: Cow::Borrowed(self.frac), exp, scientific, precision }
+                ScientificNotation {
+                    int: self.int,
+                    frac: Cow::Borrowed(self.frac),
+                    exp,
+                    scientific,
+                    precision,
+                }
             } else {
                 ScientificNotation {
                     int: &self.int[..1],
                     frac: Cow::Owned(
-                        format!("{}{}", &self.int[1..], self.frac).trim_end_matches('0').to_string(),
+                        format!("{}{}", &self.int[1..], self.frac)
+                            .trim_end_matches('0')
+                            .to_string(),
                     ),
                     exp,
-                    scientific, precision
+                    scientific,
+                    precision,
                 }
             }
         }
@@ -168,7 +192,7 @@ impl NoLossOfPrecision {
         let stored = match (raw.scientific, raw.precision) {
             (true, _) => format!("{:.1$e}", node.value, raw.frac.len()),
             (false, 0) => format!("{}", node.value),
-            (false, precision ) => format!("{:.1$}", node.value, precision),
+            (false, precision) => format!("{:.1$}", node.value, precision),
         };
         let stored = if let Some(s) = Self::normalize(&stored) { s } else { return true };
         raw != stored
