@@ -139,6 +139,67 @@ query {
 }
 
 #[test]
+fn test_object_literal_ast() {
+    let code = "const colors = {blue: 1, green: 2, red: {a: 1}};";
+
+    let allocator = Allocator::default();
+    let source_type = SourceType::default().with_module(true).with_jsx(true).with_typescript(true);
+    let ret = Parser::new(&allocator, code, source_type).parse();
+    let program = allocator.alloc(ret.program);
+    let semantic_ret =
+        SemanticBuilder::new(code, source_type).with_trivias(&ret.trivias).build(program);
+
+    let adapter = Adapter {
+        path_components: vec![Some("index".to_string())],
+        semantic: Rc::new(semantic_ret.semantic),
+    };
+
+    let args: BTreeMap<Arc<str>, FieldValue> = BTreeMap::new();
+
+    let adapter = Arc::from(&adapter);
+
+    #[allow(clippy::items_after_statements)]
+    #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
+    struct Output {
+        __typename: String,
+        value_typename: String,
+    }
+
+    let mut results: Vec<Output> = execute_query(
+        schema(),
+        adapter,
+        r#"
+query {
+  File {
+    ast_node {
+      ... on ObjectLiteralAST {
+        value(key: "red") {
+          value_typename: __typename @output
+        }
+        __typename @output
+      }
+    }
+  }
+}
+        "#,
+        args,
+    )
+    .expect("to successfully execute the query")
+    .map(|row| row.try_into_struct().expect("shape mismatch"))
+    .collect::<Vec<_>>();
+
+    results.sort_unstable();
+
+    assert_eq!(
+        vec![Output {
+            __typename: "ObjectLiteralAST".to_owned(),
+            value_typename: "ObjectLiteral".to_owned()
+        }],
+        results
+    );
+}
+
+#[test]
 fn test_parent_query() {
     let code = "interface MyGreatInterface { myGreatProperty: number }";
 

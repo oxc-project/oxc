@@ -37,11 +37,11 @@ pub enum Vertex<'a> {
     JSXElement(Rc<JSXElementVertex<'a>>),
     JSXExpressionContainer(&'a JSXExpressionContainer<'a>),
     JSXFragment(&'a JSXFragment<'a>),
-    JSXOpeningElement(&'a JSXOpeningElement<'a>),
+    JSXOpeningElement(Rc<JSXOpeningElementVertex<'a>>),
     JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>),
     JSXSpreadChild(&'a JSXSpreadChild<'a>),
     JSXText(&'a JSXText),
-    ObjectLiteral(&'a ObjectExpression<'a>),
+    ObjectLiteral(Rc<ObjectLiteralVertex<'a>>),
     PathPart(usize),
     SearchParameter(Rc<SearchParameterVertex>),
     Span(Span),
@@ -73,11 +73,11 @@ impl<'a> Vertex<'a> {
             Self::JSXElement(data) => data.element.span,
             Self::JSXExpressionContainer(data) => data.span,
             Self::JSXFragment(data) => data.span,
-            Self::JSXOpeningElement(data) => data.span,
+            Self::JSXOpeningElement(data) => data.opening_element.span,
             Self::JSXSpreadAttribute(data) => data.span,
             Self::JSXSpreadChild(data) => data.span,
             Self::JSXText(data) => data.span,
-            Self::ObjectLiteral(data) => data.span,
+            Self::ObjectLiteral(data) => data.object_expression.span,
             Self::SpecificImport(data) => data.span,
             Self::TypeAnnotation(data) => data.type_annotation.span,
             Self::Type(data) => data.span(),
@@ -102,7 +102,9 @@ impl<'a> Vertex<'a> {
             Vertex::JSXElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::TypeAnnotation(data) => data.ast_node.map(|x| x.id()),
             Vertex::VariableDeclaration(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ObjectLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::ReturnStatementAST(data) => data.ast_node.map(|x| x.id()),
+            Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -112,11 +114,9 @@ impl<'a> Vertex<'a> {
             | Vertex::JSXAttribute(_)
             | Vertex::JSXExpressionContainer(_)
             | Vertex::JSXFragment(_)
-            | Vertex::ObjectLiteral(_)
             | Vertex::JSXText(_)
             | Vertex::JSXSpreadChild(_)
             | Vertex::JSXSpreadAttribute(_)
-            | Vertex::JSXOpeningElement(_)
             | Vertex::PathPart(_)
             | Vertex::Url(_)
             | Vertex::Type(_)
@@ -164,11 +164,11 @@ impl Typename for Vertex<'_> {
             Vertex::JSXElement(jsx) => jsx.typename(),
             Vertex::JSXExpressionContainer(_) => "JSXExpressionContainer",
             Vertex::JSXFragment(_) => "JSXFragment",
-            Vertex::JSXOpeningElement(_) => "JSXOpeningElement",
+            Vertex::JSXOpeningElement(jsx) => jsx.typename(),
             Vertex::JSXSpreadAttribute(_) => "JSXSpreadAttribute",
             Vertex::JSXSpreadChild(_) => "JSXSpreadChild",
             Vertex::JSXText(_) => "JSXText",
-            Vertex::ObjectLiteral(_) => "ObjectLiteral",
+            Vertex::ObjectLiteral(objlit) => objlit.typename(),
             Vertex::PathPart(_) => "PathPart",
             Vertex::SearchParameter(_) => "SearchParameter",
             Vertex::Span(_) => "Span",
@@ -206,6 +206,12 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::Class(class) => {
                 Self::Class(ClassVertex { ast_node: Some(ast_node), class }.into())
             }
+            AstKind::ObjectExpression(objexpr) => Self::ObjectLiteral(
+                ObjectLiteralVertex { ast_node: Some(ast_node), object_expression: objexpr }.into(),
+            ),
+            AstKind::JSXOpeningElement(opening_element) => Self::JSXOpeningElement(
+                JSXOpeningElementVertex { ast_node: Some(ast_node), opening_element }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -217,7 +223,9 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
 
         // NOTE: When string literal / template literal is added, add to as_constant_string
         match &expr.get_inner_expression() {
-            Expression::ObjectExpression(objexpr) => Vertex::ObjectLiteral(objexpr),
+            Expression::ObjectExpression(object_expression) => Vertex::ObjectLiteral(
+                ObjectLiteralVertex { ast_node: None, object_expression }.into(),
+            ),
             Expression::JSXElement(element) => {
                 Vertex::JSXElement(JSXElementVertex { ast_node: None, element }.into())
             }
@@ -373,6 +381,40 @@ impl<'a> Typename for VariableDeclarationVertex<'a> {
             "VariableDeclarationAST"
         } else {
             "VariableDeclaration"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ObjectLiteralVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub object_expression: &'a ObjectExpression<'a>,
+}
+
+impl<'a> Typename for ObjectLiteralVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ObjectLiteralAST"
+        } else {
+            "ObjectLiteral"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct JSXOpeningElementVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub opening_element: &'a JSXOpeningElement<'a>,
+}
+
+impl<'a> Typename for JSXOpeningElementVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "JSXOpeningElementAST"
+        } else {
+            "JSXOpeningElement"
         }
     }
 }
