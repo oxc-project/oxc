@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5060/5063 (99.94%)
 Positive Passed: 5051/5063 (99.76%)
-Negative Passed: 992/4761 (20.84%)
+Negative Passed: 995/4761 (20.90%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -163,8 +163,6 @@ Expect Syntax Error: "compiler/asyncFunctionNoReturnType.ts"
 Expect Syntax Error: "compiler/asyncFunctionReturnExpressionErrorSpans.ts"
 Expect Syntax Error: "compiler/augmentedClassWithPrototypePropertyOnModule.ts"
 Expect Syntax Error: "compiler/augmentedTypesEnum3.ts"
-Expect Syntax Error: "compiler/augmentedTypesModules.ts"
-Expect Syntax Error: "compiler/augmentedTypesModules2.ts"
 Expect Syntax Error: "compiler/augmentedTypesModules3.ts"
 Expect Syntax Error: "compiler/autolift3.ts"
 Expect Syntax Error: "compiler/autolift4.ts"
@@ -528,7 +526,6 @@ Expect Syntax Error: "compiler/duplicateObjectLiteralProperty_computedName1.ts"
 Expect Syntax Error: "compiler/duplicateObjectLiteralProperty_computedName2.ts"
 Expect Syntax Error: "compiler/duplicatePropertiesInStrictMode.ts"
 Expect Syntax Error: "compiler/duplicateStringNamedProperty1.ts"
-Expect Syntax Error: "compiler/duplicateSymbolsExportMatching.ts"
 Expect Syntax Error: "compiler/duplicateTypeParameters1.ts"
 Expect Syntax Error: "compiler/duplicateTypeParameters2.ts"
 Expect Syntax Error: "compiler/duplicateTypeParameters3.ts"
@@ -4349,6 +4346,103 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  27 │ 
     ╰────
 
+  × Identifier `m1a` has already been declared
+   ╭─[compiler/augmentedTypesModules.ts:4:1]
+ 4 │ 
+ 5 │ module m1a { var y = 2; } // error
+   · ────────────┬────────────
+   ·             ╰── `m1a` has already been declared here
+ 6 │ var m1a = 1; // error
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+ 7 │ 
+   ╰────
+
+  × Identifier `m1b` has already been declared
+    ╭─[compiler/augmentedTypesModules.ts:7:1]
+  7 │ 
+  8 │ module m1b { export var y = 2; } // error
+    · ────────────────┬───────────────
+    ·                 ╰── `m1b` has already been declared here
+  9 │ var m1b = 1; // error
+    ·     ─┬─
+    ·      ╰── It can not be redeclared here
+ 10 │ 
+    ╰────
+
+  × Identifier `m1d` has already been declared
+    ╭─[compiler/augmentedTypesModules.ts:15:1]
+ 15 │     
+ 16 │ ╭─▶ module m1d { // error
+ 17 │ │       export class I { foo() { } }
+ 18 │ ├─▶ }
+    · ╰──── `m1d` has already been declared here
+ 19 │ ╭─▶ var m1d = 1; // error
+    · │     ─┬─
+    · │      ╰── It can not be redeclared here
+ 20 │     
+    ╰────
+
+  × Identifier `m2a` has already been declared
+    ╭─[compiler/augmentedTypesModules.ts:24:1]
+ 24 │ 
+ 25 │ module m2a { var y = 2; }
+    · ────────────┬────────────
+    ·             ╰── `m2a` has already been declared here
+ 26 │ function m2a() { }; // error since the module is instantiated
+    ·          ─┬─
+    ·           ╰── It can not be redeclared here
+ 27 │ 
+    ╰────
+
+  × Identifier `m2b` has already been declared
+    ╭─[compiler/augmentedTypesModules.ts:27:1]
+ 27 │ 
+ 28 │ module m2b { export var y = 2; }
+    · ────────────────┬───────────────
+    ·                 ╰── `m2b` has already been declared here
+ 29 │ function m2b() { };  // error since the module is instantiated
+    ·          ─┬─
+    ·           ╰── It can not be redeclared here
+ 30 │ 
+    ╰────
+
+  × Identifier `m2a` has already been declared
+   ╭─[compiler/augmentedTypesModules2.ts:4:1]
+ 4 │ 
+ 5 │ module m2a { var y = 2; }
+   · ────────────┬────────────
+   ·             ╰── `m2a` has already been declared here
+ 6 │ function m2a() { }; // error since the module is instantiated
+   ·          ─┬─
+   ·           ╰── It can not be redeclared here
+ 7 │ 
+   ╰────
+
+  × Identifier `m2b` has already been declared
+    ╭─[compiler/augmentedTypesModules2.ts:7:1]
+  7 │ 
+  8 │ module m2b { export var y = 2; }
+    · ────────────────┬───────────────
+    ·                 ╰── `m2b` has already been declared here
+  9 │ function m2b() { };  // error since the module is instantiated
+    ·          ─┬─
+    ·           ╰── It can not be redeclared here
+ 10 │ 
+    ╰────
+
+  × Identifier `m2cc` has already been declared
+    ╭─[compiler/augmentedTypesModules2.ts:13:1]
+ 13 │ 
+ 14 │ module m2cc { export var y = 2; }
+    · ────────────────┬────────────────
+    ·                 ╰── `m2cc` has already been declared here
+ 15 │ function m2cc() { }; // error to have module first
+    ·          ──┬─
+    ·            ╰── It can not be redeclared here
+ 16 │ 
+    ╰────
+
   × Identifier `x4` has already been declared
     ╭─[compiler/augmentedTypesVar.ts:12:1]
  12 │ // var then class
@@ -5960,6 +6054,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │   while (true) {
    ╰────
 
+  × Identifier `F` has already been declared
+    ╭─[compiler/duplicateSymbolsExportMatching.ts:49:1]
+ 49 │     module M {
+ 50 │ ╭─▶     module F {
+ 51 │ │           var t;
+ 52 │ ├─▶     }
+    · ╰──── `F` has already been declared here
+ 53 │ ╭─▶     export function F() { } // Only one error for duplicate identifier (don't consider visibility)
+    · │                     ┬
+    · │                     ╰── It can not be redeclared here
+ 54 │     }
+    ╰────
+
   × Empty parenthesized expression
    ╭─[compiler/emptyMemberAccess.ts:2:1]
  2 │ 
@@ -7294,6 +7401,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    · ──────
  2 │     .then((role: Role) =>
    ╰────
+
+  × Identifier `z` has already been declared
+    ╭─[compiler/nameCollisions.ts:9:1]
+  9 │     
+ 10 │ ╭─▶     module z {
+ 11 │ │           var t;
+ 12 │ ├─▶     }
+    · ╰──── `z` has already been declared here
+ 13 │ ╭─▶     var z; // error
+    · │         ┬
+    · │         ╰── It can not be redeclared here
+ 14 │     
+    ╰────
 
   × Identifier `C` has already been declared
     ╭─[compiler/nameCollisions.ts:32:1]

@@ -51,6 +51,11 @@ pub struct SemanticBuilder<'a> {
     pub current_scope_id: ScopeId,
     /// Stores current `AstKind::Function` and `AstKind::ArrowExpression` during AST visit
     pub function_stack: Vec<AstNodeId>,
+    // To make a namespace/module value like
+    // we need the to know the modules we are inside
+    // and when we reach a value declaration we set it
+    // to value like
+    pub namespace_stack: Vec<SymbolId>,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -87,6 +92,7 @@ impl<'a> SemanticBuilder<'a> {
             current_symbol_flags: SymbolFlags::empty(),
             current_scope_id,
             function_stack: vec![],
+            namespace_stack: vec![],
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
@@ -440,23 +446,35 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
+                self.make_all_namespaces_valuelike();
             }
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
                 func.bind(self);
+                self.make_all_namespaces_valuelike();
             }
             AstKind::ArrowExpression(_) => {
                 self.function_stack.push(self.current_node_id);
+                self.make_all_namespaces_valuelike();
             }
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
                 class.bind(self);
+                self.make_all_namespaces_valuelike();
             }
             AstKind::FormalParameters(params) => {
                 params.bind(self);
             }
             AstKind::CatchClause(clause) => {
                 clause.bind(self);
+            }
+            AstKind::TSModuleDeclaration(module_declaration) => {
+                module_declaration.bind(self);
+                let symbol_id = self
+                    .scope
+                    .get_bindings(self.current_scope_id)
+                    .get(module_declaration.id.name());
+                self.namespace_stack.push(*symbol_id.unwrap());
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
@@ -466,6 +484,8 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
+                // TODO: const enum?
+                self.make_all_namespaces_valuelike();
             }
             AstKind::TSEnumMember(enum_member) => {
                 enum_member.bind(self);
@@ -531,7 +551,18 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::Function(_) | AstKind::ArrowExpression(_) => {
                 self.function_stack.pop();
             }
+            AstKind::TSModuleBlock(_) => {
+                self.namespace_stack.pop();
+            }
             _ => {}
+        }
+    }
+
+    fn make_all_namespaces_valuelike(&mut self) {
+        for symbol_id in &self.namespace_stack {
+            // Ambient modules cannot be value modules
+            if self.symbols.get_flag(*symbol_id).intersects(SymbolFlags::Ambient) {continue;}
+            self.symbols.set_flag(*symbol_id, SymbolFlags::ValueModule);
         }
     }
 
