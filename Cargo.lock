@@ -1470,6 +1470,7 @@ dependencies = [
  "lazy_static",
  "miette",
  "num-traits",
+ "once_cell",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
