@@ -4,10 +4,10 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span, Atom};
+use oxc_span::{Atom, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode, globals::BUILTINS};
+use crate::{context::LintContext, globals::BUILTINS, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-undef): Disallow the use of undeclared variables")]
@@ -17,7 +17,7 @@ struct NoUndefDiagnostic(Atom, #[label] pub Span);
 #[derive(Debug, Default, Clone)]
 pub struct NoUndef {
     #[allow(dead_code)]
-    type_of: bool
+    type_of: bool,
 }
 
 declare_oxc_lint!(
@@ -45,11 +45,13 @@ impl Rule for NoUndef {
             .and_then(|config| config.get("typeof"))
             .and_then(serde_json::Value::as_bool)
             .unwrap_or_default();
-        Self { type_of }  
+        Self { type_of }
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::IdentifierReference(ident) = node.kind() {
-            if ctx.semantic().is_reference_to_global_variable(ident) && !BUILTINS.contains_key(ident.name.as_str())  {
+            if ctx.semantic().is_reference_to_global_variable(ident)
+                && !BUILTINS.contains_key(ident.name.as_str())
+            {
                 if !self.type_of && has_typeof_operator(node, ctx) {
                     return;
                 }
@@ -61,16 +63,10 @@ impl Rule for NoUndef {
 
 fn has_typeof_operator(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     ctx.nodes().parent_node(node.id()).map_or(false, |parent| match parent.kind() {
-            AstKind::UnaryExpression(expr) => {
-                expr.operator == UnaryOperator::Typeof
-            }
-            AstKind::ParenthesizedExpression(_) => {
-                has_typeof_operator(parent, ctx)
-            }
-            _ => {
-                false
-            }
-        })
+        AstKind::UnaryExpression(expr) => expr.operator == UnaryOperator::Typeof,
+        AstKind::ParenthesizedExpression(_) => has_typeof_operator(parent, ctx),
+        _ => false,
+    })
 }
 
 #[test]
