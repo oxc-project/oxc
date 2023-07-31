@@ -13,6 +13,15 @@ const BASE54_CHARS: &[u8; 64] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST
 
 impl Atom {
     /// Creates a new inline [`Atom`] at compile time.
+    /// 
+    /// Note: Trying to create a long string that can't be inlined, will fail to build.
+    /// 
+    /// ## Example
+    /// ```
+    /// use oxc_span::Atom;
+    /// // will get inlined and put on the stack
+    /// const NEW_KEYWORD: Atom = Atom::new_inline("new");
+    /// ```
     pub const fn new_inline(s: &str) -> Self {
         Self(CompactString::new_inline(s))
     }

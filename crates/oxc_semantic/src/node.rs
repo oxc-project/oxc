@@ -94,6 +94,15 @@ impl<'a> AstNodes<'a> {
         self.nodes.iter()
     }
 
+    /// Walk up the AST, iterating over each parent node.
+    ///
+    /// The first node produced by this iterator is the first parent of the node
+    /// pointed to by `node_id`. The last node will usually be a `Program`.
+    pub fn iter_parents(&self, node_id: AstNodeId) -> impl Iterator<Item = &AstNode<'a>> + '_ {
+        let curr = Some(self.get_node(node_id));
+        AstNodeParentIter { curr, nodes: self }
+    }
+
     pub fn kind(&self, ast_node_id: AstNodeId) -> AstKind<'a> {
         self.nodes[ast_node_id].kind
     }
@@ -118,6 +127,10 @@ impl<'a> AstNodes<'a> {
         &mut self.nodes[ast_node_id]
     }
 
+    /// Walk up the AST, iterating over each parent node.
+    ///
+    /// The first node produced by this iterator is the first parent of the node
+    /// pointed to by `node_id`. The last node will usually be a `Program`.
     pub fn ancestors(&self, ast_node_id: AstNodeId) -> impl Iterator<Item = AstNodeId> + '_ {
         let parent_ids = &self.parent_ids;
         std::iter::successors(Some(ast_node_id), |node_id| parent_ids[*node_id])
@@ -129,5 +142,22 @@ impl<'a> AstNodes<'a> {
         node.id = ast_node_id;
         self.nodes.push(node);
         ast_node_id
+    }
+}
+
+#[derive(Debug)]
+pub struct AstNodeParentIter<'s, 'a> {
+    curr: Option<&'s AstNode<'a>>,
+    nodes: &'s AstNodes<'a>,
+}
+
+impl<'s, 'a> Iterator for AstNodeParentIter<'s, 'a> {
+    type Item = &'s AstNode<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.curr;
+        self.curr = self.curr.and_then(|curr| self.nodes.parent_node(curr.id()));
+
+        next
     }
 }

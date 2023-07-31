@@ -36,7 +36,6 @@ oxc_type_synthesis = { workspace = true }
 codespan-reporting = "0.11.1"
 
 clap              = { workspace = true }
-crossbeam-channel = { workspace = true }
 dashmap           = { workspace = true }
 ignore            = { workspace = true, features = ["simd-accel"] }
 miette            = { workspace = true, features = ["fancy-no-backtrace"] }

@@ -1,7 +1,7 @@
 parser_typescript Summary:
 AST Parsed     : 5060/5063 (99.94%)
 Positive Passed: 5051/5063 (99.76%)
-Negative Passed: 984/4761 (20.67%)
+Negative Passed: 995/4761 (20.90%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -162,13 +162,7 @@ Expect Syntax Error: "compiler/assignmentToReferenceTypes.ts"
 Expect Syntax Error: "compiler/asyncFunctionNoReturnType.ts"
 Expect Syntax Error: "compiler/asyncFunctionReturnExpressionErrorSpans.ts"
 Expect Syntax Error: "compiler/augmentedClassWithPrototypePropertyOnModule.ts"
-Expect Syntax Error: "compiler/augmentedTypesClass2.ts"
-Expect Syntax Error: "compiler/augmentedTypesEnum.ts"
-Expect Syntax Error: "compiler/augmentedTypesEnum2.ts"
 Expect Syntax Error: "compiler/augmentedTypesEnum3.ts"
-Expect Syntax Error: "compiler/augmentedTypesInterface.ts"
-Expect Syntax Error: "compiler/augmentedTypesModules.ts"
-Expect Syntax Error: "compiler/augmentedTypesModules2.ts"
 Expect Syntax Error: "compiler/augmentedTypesModules3.ts"
 Expect Syntax Error: "compiler/autolift3.ts"
 Expect Syntax Error: "compiler/autolift4.ts"
@@ -532,7 +526,6 @@ Expect Syntax Error: "compiler/duplicateObjectLiteralProperty_computedName1.ts"
 Expect Syntax Error: "compiler/duplicateObjectLiteralProperty_computedName2.ts"
 Expect Syntax Error: "compiler/duplicatePropertiesInStrictMode.ts"
 Expect Syntax Error: "compiler/duplicateStringNamedProperty1.ts"
-Expect Syntax Error: "compiler/duplicateSymbolsExportMatching.ts"
 Expect Syntax Error: "compiler/duplicateTypeParameters1.ts"
 Expect Syntax Error: "compiler/duplicateTypeParameters2.ts"
 Expect Syntax Error: "compiler/duplicateTypeParameters3.ts"
@@ -565,7 +558,6 @@ Expect Syntax Error: "compiler/enumAssignmentCompat5.ts"
 Expect Syntax Error: "compiler/enumBasics1.ts"
 Expect Syntax Error: "compiler/enumBasics2.ts"
 Expect Syntax Error: "compiler/enumBasics3.ts"
-Expect Syntax Error: "compiler/enumGenericTypeClash.ts"
 Expect Syntax Error: "compiler/enumIdentifierLiterals.ts"
 Expect Syntax Error: "compiler/enumLiteralAssignableToEnumInsideUnion.ts"
 Expect Syntax Error: "compiler/enumPropertyAccess.ts"
@@ -1532,7 +1524,6 @@ Expect Syntax Error: "compiler/sourceMap-SemiColon1.ts"
 Expect Syntax Error: "compiler/sourceMap-SingleSpace1.ts"
 Expect Syntax Error: "compiler/sourceMap-StringLiteralWithNewLine.ts"
 Expect Syntax Error: "compiler/sourceMapSample.ts"
-Expect Syntax Error: "compiler/sourceMapValidationEnums.ts"
 Expect Syntax Error: "compiler/sourceMapValidationFor.ts"
 Expect Syntax Error: "compiler/specialIntersectionsInMappedTypes.ts"
 Expect Syntax Error: "compiler/specializedSignatureAsCallbackParameter1.ts"
@@ -3617,8 +3608,6 @@ Expect Syntax Error: "conformance/types/tuple/wideningTuples7.ts"
 Expect Syntax Error: "conformance/types/typeAliases/directDependenceBetweenTypeAliases.ts"
 Expect Syntax Error: "conformance/types/typeAliases/intrinsicKeyword.ts"
 Expect Syntax Error: "conformance/types/typeAliases/intrinsicTypes.ts"
-Expect Syntax Error: "conformance/types/typeAliases/typeAliasesDoNotMerge.ts"
-Expect Syntax Error: "conformance/types/typeAliases/typeAliasesForObjectTypes.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeArgumentLists/callGenericFunctionWithIncorrectNumberOfTypeArguments.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeArgumentLists/callNonGenericFunctionWithTypeArguments.ts"
 Expect Syntax Error: "conformance/types/typeParameters/typeArgumentLists/functionConstraintSatisfaction2.ts"
@@ -4172,6 +4161,33 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │ 
    ╰────
 
+  × Identifier `c4` has already been declared
+   ╭─[compiler/augmentedTypesClass.ts:5:1]
+ 5 │ //// class then enum
+ 6 │ class c4 { public foo() { } }
+   ·       ─┬
+   ·        ╰── `c4` has already been declared here
+ 7 │ enum c4 { One } // error
+   ·      ─┬
+   ·       ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `c33` has already been declared
+    ╭─[compiler/augmentedTypesClass2.ts:15:1]
+ 15 │ // class then enum 
+ 16 │ class c33 {
+    ·       ─┬─
+    ·        ╰── `c33` has already been declared here
+ 17 │     foo() {
+ 18 │         return 1;
+ 19 │     }
+ 20 │ }
+ 21 │ enum c33 { One };
+    ·      ─┬─
+    ·       ╰── It can not be redeclared here
+ 22 │ 
+    ╰────
+
   × Identifier `c2` has already been declared
    ╭─[compiler/augmentedTypesClass2a.ts:1:1]
  1 │ //// class then function
@@ -4207,6 +4223,79 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·        ╰── It can not be redeclared here
    ╰────
 
+  × Identifier `e1111` has already been declared
+   ╭─[compiler/augmentedTypesEnum.ts:1:1]
+ 1 │ // enum then var
+ 2 │ enum e1111 { One } // error
+   ·      ──┬──
+   ·        ╰── `e1111` has already been declared here
+ 3 │ var e1111 = 1; // error
+   ·     ──┬──
+   ·       ╰── It can not be redeclared here
+ 4 │ 
+   ╰────
+
+  × Identifier `e2` has already been declared
+   ╭─[compiler/augmentedTypesEnum.ts:5:1]
+ 5 │ // enum then function
+ 6 │ enum e2 { One } // error
+   ·      ─┬
+   ·       ╰── `e2` has already been declared here
+ 7 │ function e2() { } // error
+   ·          ─┬
+   ·           ╰── It can not be redeclared here
+ 8 │ 
+   ╰────
+
+  × Identifier `e3` has already been declared
+    ╭─[compiler/augmentedTypesEnum.ts:8:1]
+  8 │ 
+  9 │ enum e3 { One } // error
+    ·      ─┬
+    ·       ╰── `e3` has already been declared here
+ 10 │ var e3 = () => { } // error
+    ·     ─┬
+    ·      ╰── It can not be redeclared here
+ 11 │ 
+    ╰────
+
+  × Identifier `e4` has already been declared
+    ╭─[compiler/augmentedTypesEnum.ts:12:1]
+ 12 │ // enum then class
+ 13 │ enum e4 { One } // error
+    ·      ─┬
+    ·       ╰── `e4` has already been declared here
+ 14 │ class e4 { public foo() { } } // error
+    ·       ─┬
+    ·        ╰── It can not be redeclared here
+ 15 │ 
+    ╰────
+
+  × Identifier `e1` has already been declared
+   ╭─[compiler/augmentedTypesEnum2.ts:1:1]
+ 1 │ // enum then interface
+ 2 │ enum e1 { One } // error
+   ·      ─┬
+   ·       ╰── `e1` has already been declared here
+ 3 │ 
+ 4 │ interface e1 { // error
+   ·           ─┬
+   ·            ╰── It can not be redeclared here
+ 5 │     foo(): void;
+   ╰────
+
+  × Identifier `e2` has already been declared
+    ╭─[compiler/augmentedTypesEnum2.ts:10:1]
+ 10 │ // enum then class
+ 11 │ enum e2 { One }; // error
+    ·      ─┬
+    ·       ╰── `e2` has already been declared here
+ 12 │ class e2 { // error
+    ·       ─┬
+    ·        ╰── It can not be redeclared here
+ 13 │     foo() {
+    ╰────
+
   × Identifier `y3` has already been declared
     ╭─[compiler/augmentedTypesFunction.ts:12:1]
  12 │ // function then class
@@ -4231,6 +4320,129 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  18 │ 
     ╰────
 
+  × Identifier `y4` has already been declared
+    ╭─[compiler/augmentedTypesFunction.ts:19:1]
+ 19 │ // function then enum
+ 20 │ function y4() { } // error
+    ·          ─┬
+    ·           ╰── `y4` has already been declared here
+ 21 │ enum y4 { One } // error
+    ·      ─┬
+    ·       ╰── It can not be redeclared here
+ 22 │ 
+    ╰────
+
+  × Identifier `i3` has already been declared
+    ╭─[compiler/augmentedTypesInterface.ts:22:1]
+ 22 │ // interface then enum
+ 23 │ interface i3 { // error
+    ·           ─┬
+    ·            ╰── `i3` has already been declared here
+ 24 │     foo(): void;
+ 25 │ }
+ 26 │ enum i3 { One }; // error
+    ·      ─┬
+    ·       ╰── It can not be redeclared here
+ 27 │ 
+    ╰────
+
+  × Identifier `m1a` has already been declared
+   ╭─[compiler/augmentedTypesModules.ts:4:1]
+ 4 │ 
+ 5 │ module m1a { var y = 2; } // error
+   · ────────────┬────────────
+   ·             ╰── `m1a` has already been declared here
+ 6 │ var m1a = 1; // error
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+ 7 │ 
+   ╰────
+
+  × Identifier `m1b` has already been declared
+    ╭─[compiler/augmentedTypesModules.ts:7:1]
+  7 │ 
+  8 │ module m1b { export var y = 2; } // error
+    · ────────────────┬───────────────
+    ·                 ╰── `m1b` has already been declared here
+  9 │ var m1b = 1; // error
+    ·     ─┬─
+    ·      ╰── It can not be redeclared here
+ 10 │ 
+    ╰────
+
+  × Identifier `m1d` has already been declared
+    ╭─[compiler/augmentedTypesModules.ts:15:1]
+ 15 │     
+ 16 │ ╭─▶ module m1d { // error
+ 17 │ │       export class I { foo() { } }
+ 18 │ ├─▶ }
+    · ╰──── `m1d` has already been declared here
+ 19 │ ╭─▶ var m1d = 1; // error
+    · │     ─┬─
+    · │      ╰── It can not be redeclared here
+ 20 │     
+    ╰────
+
+  × Identifier `m2a` has already been declared
+    ╭─[compiler/augmentedTypesModules.ts:24:1]
+ 24 │ 
+ 25 │ module m2a { var y = 2; }
+    · ────────────┬────────────
+    ·             ╰── `m2a` has already been declared here
+ 26 │ function m2a() { }; // error since the module is instantiated
+    ·          ─┬─
+    ·           ╰── It can not be redeclared here
+ 27 │ 
+    ╰────
+
+  × Identifier `m2b` has already been declared
+    ╭─[compiler/augmentedTypesModules.ts:27:1]
+ 27 │ 
+ 28 │ module m2b { export var y = 2; }
+    · ────────────────┬───────────────
+    ·                 ╰── `m2b` has already been declared here
+ 29 │ function m2b() { };  // error since the module is instantiated
+    ·          ─┬─
+    ·           ╰── It can not be redeclared here
+ 30 │ 
+    ╰────
+
+  × Identifier `m2a` has already been declared
+   ╭─[compiler/augmentedTypesModules2.ts:4:1]
+ 4 │ 
+ 5 │ module m2a { var y = 2; }
+   · ────────────┬────────────
+   ·             ╰── `m2a` has already been declared here
+ 6 │ function m2a() { }; // error since the module is instantiated
+   ·          ─┬─
+   ·           ╰── It can not be redeclared here
+ 7 │ 
+   ╰────
+
+  × Identifier `m2b` has already been declared
+    ╭─[compiler/augmentedTypesModules2.ts:7:1]
+  7 │ 
+  8 │ module m2b { export var y = 2; }
+    · ────────────────┬───────────────
+    ·                 ╰── `m2b` has already been declared here
+  9 │ function m2b() { };  // error since the module is instantiated
+    ·          ─┬─
+    ·           ╰── It can not be redeclared here
+ 10 │ 
+    ╰────
+
+  × Identifier `m2cc` has already been declared
+    ╭─[compiler/augmentedTypesModules2.ts:13:1]
+ 13 │ 
+ 14 │ module m2cc { export var y = 2; }
+    · ────────────────┬────────────────
+    ·                 ╰── `m2cc` has already been declared here
+ 15 │ function m2cc() { }; // error to have module first
+    ·          ──┬─
+    ·            ╰── It can not be redeclared here
+ 16 │ 
+    ╰────
+
   × Identifier `x4` has already been declared
     ╭─[compiler/augmentedTypesVar.ts:12:1]
  12 │ // var then class
@@ -4253,6 +4465,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·       ─┬─
     ·        ╰── It can not be redeclared here
  18 │ 
+    ╰────
+
+  × Identifier `x5` has already been declared
+    ╭─[compiler/augmentedTypesVar.ts:19:1]
+ 19 │ // var then enum
+ 20 │ var x5 = 1;
+    ·     ─┬
+    ·      ╰── `x5` has already been declared here
+ 21 │ enum x5 { One } // error
+    ·      ─┬
+    ·       ╰── It can not be redeclared here
+ 22 │ 
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -5830,6 +6054,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │   while (true) {
    ╰────
 
+  × Identifier `F` has already been declared
+    ╭─[compiler/duplicateSymbolsExportMatching.ts:49:1]
+ 49 │     module M {
+ 50 │ ╭─▶     module F {
+ 51 │ │           var t;
+ 52 │ ├─▶     }
+    · ╰──── `F` has already been declared here
+ 53 │ ╭─▶     export function F() { } // Only one error for duplicate identifier (don't consider visibility)
+    · │                     ┬
+    · │                     ╰── It can not be redeclared here
+ 54 │     }
+    ╰────
+
   × Empty parenthesized expression
    ╭─[compiler/emptyMemberAccess.ts:2:1]
  2 │ 
@@ -5845,6 +6082,16 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·    ─
    ╰────
   help: Try insert a semicolon here
+
+  × Identifier `X` has already been declared
+   ╭─[compiler/enumGenericTypeClash.ts:1:1]
+ 1 │ class X<A,B,C> { }
+   ·       ┬
+   ·       ╰── `X` has already been declared here
+ 2 │ enum X { MyVal }
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/enumMemberResolution.ts:4:1]
@@ -7155,6 +7402,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │     .then((role: Role) =>
    ╰────
 
+  × Identifier `z` has already been declared
+    ╭─[compiler/nameCollisions.ts:9:1]
+  9 │     
+ 10 │ ╭─▶     module z {
+ 11 │ │           var t;
+ 12 │ ├─▶     }
+    · ╰──── `z` has already been declared here
+ 13 │ ╭─▶     var z; // error
+    · │         ┬
+    · │         ╰── It can not be redeclared here
+ 14 │     
+    ╰────
+
   × Identifier `C` has already been declared
     ╭─[compiler/nameCollisions.ts:32:1]
  32 │ 
@@ -8071,6 +8331,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/slashBeforeVariableDeclaration1.ts:1:1]
  1 │ \ declare var v;
    · ─────────
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[compiler/sourceMapValidationEnums.ts:2:1]
+ 2 │ enum e {
+ 3 │     x,
+   ·     ┬
+   ·     ╰── `x` has already been declared here
+ 4 │     y,
+ 5 │     x
+   ·     ┬
+   ·     ╰── It can not be redeclared here
+ 6 │ }
    ╰────
 
   × 'with' statements are not allowed
@@ -19003,6 +19276,28 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  7 │ type object = I;
    ╰────
   help: Try insert a semicolon here
+
+  × Identifier `A` has already been declared
+   ╭─[conformance/types/typeAliases/typeAliasesDoNotMerge.ts:1:1]
+ 1 │ export type A = {}
+   ·             ┬
+   ·             ╰── `A` has already been declared here
+ 2 │ type A = {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `T2` has already been declared
+    ╭─[conformance/types/typeAliases/typeAliasesForObjectTypes.ts:9:1]
+  9 │ // An interface can have multiple merged declarations, but a type alias for an object type literal cannot.
+ 10 │ type T2 = { x: string }
+    ·      ─┬
+    ·       ╰── `T2` has already been declared here
+ 11 │ type T2 = { y: number }
+    ·      ─┬
+    ·       ╰── It can not be redeclared here
+ 12 │ 
+    ╰────
 
   × Unexpected token
     ╭─[conformance/types/typeParameters/typeArgumentLists/instantiationExpressionErrors.ts:20:1]

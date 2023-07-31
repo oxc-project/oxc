@@ -1366,7 +1366,6 @@ version = "0.0.0"
 dependencies = [
  "clap",
  "codespan-reporting",
- "crossbeam-channel",
  "dashmap",
  "ignore",
  "jemallocator",
@@ -1472,6 +1471,7 @@ dependencies = [
  "lazy_static",
  "miette",
  "num-traits",
+ "once_cell",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
@@ -1609,6 +1609,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags 2.3.3",
  "indexmap 2.0.0",
+ "itertools 0.11.0",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
