@@ -54,7 +54,7 @@ impl SymbolTable {
         self.flags[symbol_id]
     }
 
-    pub fn set_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
+    pub fn union_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
         self.flags[symbol_id] |= includes;
     }
 

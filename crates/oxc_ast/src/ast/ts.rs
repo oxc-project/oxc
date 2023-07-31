@@ -31,6 +31,7 @@ pub struct TSEnumBody<'a> {
     pub span: Span,
     pub members: Vec<'a, TSEnumMember<'a>>,
 }
+
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
 pub struct TSEnumMember<'a> {

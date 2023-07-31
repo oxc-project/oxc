@@ -245,7 +245,7 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
-            self.symbols.set_flag(symbol_id, includes);
+            self.symbols.union_flag(symbol_id, includes);
             return symbol_id;
         }
 
@@ -564,7 +564,7 @@ impl<'a> SemanticBuilder<'a> {
             if self.symbols.get_flag(*symbol_id).intersects(SymbolFlags::Ambient) {
                 continue;
             }
-            self.symbols.set_flag(*symbol_id, SymbolFlags::ValueModule);
+            self.symbols.union_flag(*symbol_id, SymbolFlags::ValueModule);
         }
     }
 
