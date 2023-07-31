@@ -146,6 +146,8 @@ impl ScopeTree {
             | AstKind::ForStatement(_)
             | AstKind::ForInStatement(_)
             | AstKind::ForOfStatement(_)
+            | AstKind::TSTypeParameter(_)
+            | AstKind::TSEnumBody(_)
             | AstKind::SwitchStatement(_) => Some(ScopeFlags::empty()),
             _ => None,
         }

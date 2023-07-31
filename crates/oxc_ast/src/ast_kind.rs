@@ -131,6 +131,8 @@ pub enum AstKind<'a> {
 
     TSEnumDeclaration(&'a TSEnumDeclaration<'a>),
     TSEnumMember(&'a TSEnumMember<'a>),
+    TSEnumBody(&'a TSEnumBody<'a>),
+
     TSImportEqualsDeclaration(&'a TSImportEqualsDeclaration<'a>),
     TSInterfaceDeclaration(&'a TSInterfaceDeclaration<'a>),
     TSModuleDeclaration(&'a TSModuleDeclaration<'a>),
@@ -357,6 +359,8 @@ impl<'a> GetSpan for AstKind<'a> {
 
             Self::TSEnumDeclaration(x) => x.span,
             Self::TSEnumMember(x) => x.span,
+            Self::TSEnumBody(x) => x.span,
+
             Self::TSImportEqualsDeclaration(x) => x.span,
             Self::TSInterfaceDeclaration(x) => x.span,
             Self::TSModuleDeclaration(x) => x.span,
@@ -513,6 +517,8 @@ impl<'a> AstKind<'a> {
             Self::TSNonNullExpression(_) => "TSNonNullExpression".into(),
 
             Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
+            Self::TSEnumBody(_) => "TSEnumBody".into(),
+
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),

@@ -17,9 +17,19 @@ pub struct TSEnumDeclaration<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier,
-    pub members: Vec<'a, TSEnumMember<'a>>,
+    pub body: TSEnumBody<'a>,
     /// Valid Modifiers: `const`, `export`, `declare`
     pub modifiers: Modifiers<'a>,
+}
+/// Enum Body
+///
+/// A scope must be created on the enum body so this abstraction exists
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
+pub struct TSEnumBody<'a> {
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    pub span: Span,
+    pub members: Vec<'a, TSEnumMember<'a>>,
 }
 
 #[derive(Debug, Hash)]
