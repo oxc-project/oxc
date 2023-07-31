@@ -561,7 +561,9 @@ impl<'a> SemanticBuilder<'a> {
     fn make_all_namespaces_valuelike(&mut self) {
         for symbol_id in &self.namespace_stack {
             // Ambient modules cannot be value modules
-            if self.symbols.get_flag(*symbol_id).intersects(SymbolFlags::Ambient) {continue;}
+            if self.symbols.get_flag(*symbol_id).intersects(SymbolFlags::Ambient) {
+                continue;
+            }
             self.symbols.set_flag(*symbol_id, SymbolFlags::ValueModule);
         }
     }

@@ -255,7 +255,11 @@ impl<'a> Binder for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         // At declaration time a module has no value declaration it is only when a value declaration
         // is made inside a the scope of a module that the symbol is modified
-        let ambient = if self.modifiers.contains(ModifierKind::Declare) {SymbolFlags::Ambient} else {SymbolFlags::None};
+        let ambient = if self.modifiers.contains(ModifierKind::Declare) {
+            SymbolFlags::Ambient
+        } else {
+            SymbolFlags::None
+        };
         builder.declare_symbol(
             self.span,
             self.id.name(),

@@ -36,7 +36,7 @@ bitflags! {
         const NameSpaceModule         = 1 << 16;
         const ValueModule             = 1 << 17;
         // In a dts file or there is a declare flag
-        const Ambient                 = 1 << 18; 
+        const Ambient                 = 1 << 18;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
 
