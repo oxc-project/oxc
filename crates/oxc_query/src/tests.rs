@@ -159,23 +159,23 @@ fn test_parent_query() {
     let results = run_query::<Output>(
         "interface MyGreatInterface { myGreatProperty: number }",
         r#"
-query {
-    File {
-        ast_node {
-            ... on TypeAnnotationAST {
-                type {
-                    type_: str @output
-                }
-                parent {
-                    tn1: __typename @output
-                    parent {
-                        tn2: __typename @output
+        query {
+            File {
+                ast_node {
+                    ... on TypeAnnotationAST {
+                        type {
+                            type_: str @output
+                        }
+                        parent {
+                            tn1: __typename @output
+                            parent {
+                                tn2: __typename @output
+                            }
+                        }
                     }
                 }
             }
         }
-    }
-}
         "#,
     );
 
