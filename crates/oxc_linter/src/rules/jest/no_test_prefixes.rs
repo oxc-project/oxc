@@ -9,7 +9,10 @@ use oxc_span::{Atom, GetSpan, Span};
 use crate::{
     context::LintContext,
     fixer::Fix,
-    jest_ast_util::{parse_general_jest_fn_call, JestGeneralFnKind, ParsedGeneralJestFnCall, KnownMemberExpressionProperty},
+    jest_ast_util::{
+        parse_general_jest_fn_call, JestGeneralFnKind, KnownMemberExpressionProperty,
+        ParsedGeneralJestFnCall,
+    },
     rule::Rule,
     AstNode,
 };
@@ -92,9 +95,9 @@ impl Rule for NoTestPrefixes {
         let preferred_node_name = get_preferred_node_names(&jest_fn_call);
         let preferred_node_name_cloned = preferred_node_name.clone();
 
-        ctx.diagnostic_with_fix(NoTestPrefixesDiagnostic(preferred_node_name, span), 
-        || Fix::new(preferred_node_name_cloned.to_string(), span),
-        );
+        ctx.diagnostic_with_fix(NoTestPrefixesDiagnostic(preferred_node_name, span), || {
+            Fix::new(preferred_node_name_cloned.to_string(), span)
+        });
     }
 }
 

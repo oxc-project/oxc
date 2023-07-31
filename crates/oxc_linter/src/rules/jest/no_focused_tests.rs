@@ -78,9 +78,7 @@ impl Rule for NoFocusedTests {
             return;
         }
 
-        let only_node = members.iter().find(|member| {
-            member.is_name_equal("only")
-        });
+        let only_node = members.iter().find(|member| member.is_name_equal("only"));
         if let Some(only_node) = only_node {
             ctx.diagnostic_with_fix(NoFocusedTestsDiagnostic(call_expr.span), || {
                 let span = only_node.span;
