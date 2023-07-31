@@ -1291,6 +1291,24 @@ impl<'a> BindingPatternKind<'a> {
             _ => None,
         }
     }
+
+    pub fn has_binding_for(&self, name: &Atom) -> bool {
+        match self {
+            Self::BindingIdentifier(id) => id.name == name,
+            Self::AssignmentPattern(id) => id.left.kind.has_binding_for(name),
+            Self::ObjectPattern(pat) => {
+                pat.rest.as_ref().is_some_and(|rest| rest.argument.kind.has_binding_for(name))
+                    || pat.properties.iter().any(|p| p.value.kind.has_binding_for(name))
+            }
+            Self::ArrayPattern(pat) => {
+                pat.rest.as_ref().is_some_and(|rest| rest.argument.kind.has_binding_for(name))
+                    || pat
+                        .elements
+                        .iter()
+                        .any(|el| el.as_ref().is_some_and(|el| el.kind.has_binding_for(name)))
+            }
+        }
+    }
 }
 
 #[derive(Debug, Hash)]

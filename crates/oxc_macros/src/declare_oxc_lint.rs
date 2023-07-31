@@ -65,7 +65,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         "style" => quote! { RuleCategory::Style },
         "restriction" => quote! { RuleCategory::Restriction },
         "nursery" => quote! { RuleCategory::Nursery },
-        _ => panic!("invalid rule category"),
+        c => panic!("invalid rule category {c}"),
     };
 
     let import_statement = if used_in_test {

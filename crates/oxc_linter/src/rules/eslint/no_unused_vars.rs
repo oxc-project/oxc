@@ -193,13 +193,13 @@ pub struct NoUnusedVars {
     /// Using a Rest property it is possible to "omit" properties from an
     /// object, but by default the sibling properties are marked as "unused".
     /// With this option enabled the rest property's siblings are ignored.
-    /// 
+    ///
     /// ## Example
     /// Examples of **correct** code when this option is set to `true`:
     /// ```js
     /// // 'foo' and 'bar' were ignored because they have a rest property sibling.
     /// var { foo, ...coords } = data;
-    /// 
+    ///
     /// var bar;
     /// ({ bar, ...coords } = data);
     /// ```
@@ -347,7 +347,7 @@ impl NoUnusedVars {
 
         let name = ctx.symbols().get_name(symbol_id);
         if let ModuleDeclaration::ImportDeclaration(import) = module {
-            if import.specifiers.is_empty() {
+            if import.specifiers.is_empty() || self.is_ignored_var(name) {
                 // skip imports without specifiers
                 return;
             }
@@ -478,12 +478,12 @@ impl NoUnusedVars {
         // allow ignored args
         let Some(span) = self.check_unused_binding_pattern(symbol_id, name, &decl.id, ctx) else { return };
 
-        // ignore exported vars
-        let var_decl_node = ctx.semantic().symbol_declaration(symbol_id);
-        match ctx.nodes().parent_node(var_decl_node.id()) {
-            Some(parent) if Self::is_exported(parent, ctx) => return,
-            _ => { /* noop */ }
-        }
+        // // ignore exported vars
+        // let var_decl_node = ctx.semantic().symbol_declaration(symbol_id);
+        // match ctx.nodes().parent_node(var_decl_node.id()) {
+        //     Some(parent) if Self::is_exported(parent, ctx) => return,
+        //     _ => { /* noop */ }
+        // }
 
         ctx.diagnostic(NoUnusedVarsDiagnostic::decl(name.clone(), span));
     }
@@ -638,7 +638,7 @@ impl NoUnusedVars {
             ArgsOption::None => {
                 // noop
             }
-        }
+        };
     }
 
     fn check_unused_argument<'a>(
@@ -686,6 +686,105 @@ impl NoUnusedVars {
             _ => false,
         }
     }
+}
+// fn is_exported(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+//     let Some(parent_kind) = ctx.nodes().parent_kind(node.id()) else { return false };
+//     let AstKind::ModuleDeclaration(module) = parent_kind else { return false };
+//     // return module.is_export()
+//     match module {
+//         ModuleDeclaration::ExportAllDeclaration(_)
+//         | ModuleDeclaration::ExportNamedDeclaration(_)
+//         | ModuleDeclaration::ExportDefaultDeclaration(_) => true,
+//         // todo: should we include ts exports?
+//         _ => false,
+//     }
+// }
+
+/// Returns `true` if a symbol has any "valid" usages.
+// fn is_symbol_used(symbol_id: SymbolId, semantic: &Rc<Semantic<'_>>) -> bool {
+fn is_symbol_used(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
+    let symbols = ctx.symbols();
+    let nodes = ctx.nodes();
+
+    let num_usages =
+        symbols.get_resolved_references(symbol_id).filter(|reference| reference.is_read()).count();
+
+    if num_usages > 0 {
+        return true;
+    }
+
+    // let declaration = ctx.semantic().symbol_declaration(symbol_id);
+    let mut is_first_parent = true;
+    let name = symbols.get_name(symbol_id);
+    
+    let _name_str = name.as_str();
+    println!("checking {_name_str}");
+    // for parent in ctx.nodes().
+    let mut parents = nodes.iter_parents(symbols.get_declaration(symbol_id));
+    let _ = parents.next();
+    for parent in parents {
+        match parent.kind() {
+            AstKind::ModuleDeclaration(module) if is_first_parent && module.is_export() => {
+                return true;
+            }
+            AstKind::VariableDeclaration(decls) => {
+                return true
+                // for decl in decls.declarations {
+                //     if decl.id.kind.has_binding_for(name)
+                // }
+            }
+            AstKind::VariableDeclarator(decl) => {
+                // should this be inverted?
+                // if !decl.id.kind.has_binding_for(name) {
+                //     return true;
+                // }
+                return true
+            }
+            AstKind::AssignmentExpression(_assignment) => {
+                return true;
+                // assignment.right.
+                // match assignment.left {
+                //     AssignmentTarget::SimpleAssignmentTarget(target) => {
+                //         target.get_expression().
+                //     }
+                // }
+                // if assignment.id.kind.has_binding_for(name) {
+                //     return true
+                // }
+            }
+            x => { dbg!(x); }
+        }
+        is_first_parent = false;
+    }
+
+    false
+
+    // if let Some(parent_kind) = ctx.nodes().parent_kind(declaration.id()) {
+    //     match parent_kind {
+    //         AstKind::ModuleDeclaration(module) if module.is_export() => {
+    //             return true;
+    //         },
+    //         // | AstKind::AssignmentExpression(_) => {
+    //         //     return true;
+    //         // }
+    //         _ => { /* noop */}
+    //     }
+    // }
+    // {
+    //     let parent = ctx.nodes().parent_node(declaration.id());
+    //     if parent.is_some_and(f)
+    // }
+
+    // if is_exported(declaration, ctx) {
+    //     return true;
+    // }
+
+    // let num_usages = symbols
+    //     .get_resolved_references(symbol_id)
+    //     .filter(|reference| reference.is_read())
+    //     .count();
+
+    // num_usages > 0
 }
 
 impl Rule for NoUnusedVars {
@@ -780,16 +879,10 @@ impl Rule for NoUnusedVars {
 
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let semantic = ctx.semantic();
-        let symbols = ctx.symbols();
 
         // Find all references that count as a usage. If its used, the rule
         // doesn't apply
-        let num_usages = symbols
-            .get_resolved_references(symbol_id)
-            .filter(|reference| reference.is_read())
-            .count();
-
-        if num_usages > 0 {
+        if is_symbol_used(symbol_id, ctx) {
             return;
         }
 
@@ -895,6 +988,17 @@ mod tests {
     }
 
     #[test]
+    fn test_var_assignment() {
+        let pass = vec![
+            "let a = 1; b = a + 1; console.log(b)",
+            "let a = 1; b = ++a; console.log(b)",
+            "export const Foo = class Bar {}",
+        ];
+        let fail = vec![];
+        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test();
+    }
+
+    #[test]
     fn test_var_simple_scoped() {
         let pass = vec!["let a = 1; function foo(b) { return a + b }; console.log(foo(1));"];
         let fail =
@@ -921,19 +1025,19 @@ mod tests {
 
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
+
     #[test]
     fn test_var_read_write() {
         let pass = vec![
-            "let a = 1; let b = a + 1; console.log(b)"
-            // todo
-            // "var a = 1; let b = a++; console.log(b)"
+            "let a = 1; let b = a + 1; console.log(b)", // todo
+                                                        // "var a = 1; let b = a++; console.log(b)"
         ];
         let fail = vec![
             "let a = 1; a += 1;",
             // todo
             // "let a = 1; a = a + 1;",
         ];
-        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test()
+        Tester::new_without_config(NoUnusedVars::NAME, pass, fail).test();
     }
 
     #[test]
@@ -950,11 +1054,9 @@ mod tests {
         let ignore_rest_siblings = Some(json!([{ "ignoreRestSiblings": true }]));
         let pass = vec![
             ("let [_b] = a;", ignore_underscore),
-            ("var { a, ...rest } = arr; console.log(rest)", ignore_rest_siblings)
-            ];
-        let fail = vec![
-            ("var { a, ...rest } = arr; console.log(rest)", None)
+            ("var { a, ...rest } = arr; console.log(rest)", ignore_rest_siblings),
         ];
+        let fail = vec![("var { a, ...rest } = arr; console.log(rest)", None)];
 
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
@@ -1029,16 +1131,16 @@ mod tests {
         let ignore_rest_siblings = Some(json!([{ "ignoreRestSiblings": true }]));
         let ignore_arg_underscore = Some(json!([{ "destructuredArrayIgnorePattern": "^_" }]));
         let pass = vec![
-            ("function baz([_b, foo]) { foo; };\nbaz()",ignore_arg_underscore) ,
+            ("function baz([_b, foo]) { foo; };\nbaz()", ignore_arg_underscore),
             (
                 "let { foo, ...rest } = something;
                 console.log(rest);",
                 ignore_rest_siblings.clone(),
-            ), 
+            ),
             (
                 "let foo, rest; ({ foo, ...rest } = something); console.log(rest);",
                 ignore_rest_siblings,
-            ), 
+            ),
         ];
         let fail = vec![];
         Tester::new(NoUnusedVars::NAME, pass, fail);
@@ -1059,6 +1161,17 @@ mod tests {
     }
 
     #[test]
+    fn test_nested_decl_usage() {
+        let pass = vec![
+            // ("export function foo(a) { let b = ++a; return b }", None),
+            ("var a = 0, b; b = a++; foo(b);", None),
+            // ("var a = 0, b; b = (0, a++); foo(b);", None),
+        ];
+        let fail = vec![];
+        Tester::new(NoUnusedVars::NAME, pass, fail);
+    }
+
+    #[test]
     fn test_modules_simple() {
         let pass = vec![
             ("export const foo = 1;", None),
@@ -1067,10 +1180,22 @@ mod tests {
             ("export default function foo() {}", None),
             ("export class Foo {}", None),
             ("export default class Foo {}", None),
+            ("import { foo } from './foo'; foo();", None),
+            ("import foo, { bar } from './foo'; foo(bar);", None),
+            ("import { foo as bar } from './foo'; bar();", None),
+            ("import { ignored } from './foo'", Some(json!([{ "varsIgnorePattern": "^ignored" }]))),
+            ("import { foo as _foo } from './foo'", Some(json!([{ "varsIgnorePattern": "^_" }]))),
+            ("import _foo from './foo'", Some(json!([{ "varsIgnorePattern": "^_" }]))),
             // todo
             // ("export const Foo = class Foo {}", None),
         ];
-        let fail = vec![];
+        let fail = vec![
+            ("import { unused } from './foo';", None),
+            ("import unused from './foo';", None),
+            ("import unused, { foo } from './foo'; foo()", None),
+            ("import * as unused from './foo';", None),
+            ("import { foo as bar } from './foo'; foo();", None),
+        ];
         Tester::new(NoUnusedVars::NAME, pass, fail).test();
     }
 
@@ -1277,9 +1402,9 @@ mod tests {
                 "const data = { type: 'coords', x: 1, y: 2 };\nconst { type, ...coords } = data;\n console.log(coords);",
                 Some(serde_json::json!([{ "ignoreRestSiblings": true }])),
             ),
+            ("var a = 0, b; b = a = a + 1; foo(b);", None),
+            ("var a = 0, b; b = a += a + 1; foo(b);", None),
             // FIXME: a's usage in rhs of b assignment isn't counting as a read
-            // ("var a = 0, b; b = a = a + 1; foo(b);", None),
-            // ("var a = 0, b; b = a += a + 1; foo(b);", None),
             // ("var a = 0, b; b = a++; foo(b);", None),
             // ("function foo(a) { var b = a = a + 1; bar(b) } foo();", None),
             // ("function foo(a) { var b = a += a + 1; bar(b) } foo();", None),
@@ -1340,7 +1465,7 @@ mod tests {
             ("const a = () => () => { a(); }; a();", None),
             ("export * as ns from \"source\"", None),
             ("import.meta", None),
-            // FIXME
+            // todo: should these really count as passing?
             // ("var a; a ||= 1;", None),
             // ("var a; a &&= 1;", None),
             // ("var a; a ??= 1;", None),
