@@ -517,6 +517,8 @@ impl<'a> AstKind<'a> {
             Self::TSNonNullExpression(_) => "TSNonNullExpression".into(),
 
             Self::TSEnumDeclaration(decl) => format!("TSEnumDeclaration({})", &decl.id.name).into(),
+            Self::TSEnumBody(_) => "TSEnumBody".into(),
+
             Self::TSEnumMember(_) => "TSEnumMember".into(),
 
             Self::TSImportEqualsDeclaration(_) => "TSImportEqualsDeclaration".into(),
