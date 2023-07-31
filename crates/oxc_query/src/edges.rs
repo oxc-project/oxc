@@ -911,7 +911,7 @@ mod jsxelement {
     };
 
     use super::{super::vertex::Vertex, get_span};
-    use crate::vertex::JSXElementVertex;
+    use crate::vertex::{JSXElementVertex, JSXOpeningElementVertex};
 
     macro_rules! child_edge_iter {
         ($contexts: ident, $vertex_type: ident, $jsx_child_type: ident) => {
@@ -990,12 +990,17 @@ mod jsxelement {
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
             Box::new(std::iter::once(Vertex::JSXOpeningElement(
-                &v.as_jsx_element()
-                    .unwrap_or_else(|| {
-                        panic!("expected to have a JSXElement vertex, instead have: {v:#?}")
-                    })
-                    .element
-                    .opening_element,
+                JSXOpeningElementVertex {
+                    ast_node: None,
+                    opening_element: &v
+                        .as_jsx_element()
+                        .unwrap_or_else(|| {
+                            panic!("expected to have a JSXElement vertex, instead have: {v:#?}")
+                        })
+                        .element
+                        .opening_element,
+                }
+                .into(),
             )))
         })
     }
@@ -1073,11 +1078,14 @@ pub(super) fn resolve_jsxopening_element_edge<'a, 'b: 'a>(
     edge_name: &str,
     _parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "attribute" => jsxopening_element::attribute(contexts, resolve_info),
         "span" => jsxopening_element::span(contexts, resolve_info),
         "spread_attribute" => jsxopening_element::spread_attribute(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'JSXOpeningElement'"
@@ -1105,6 +1113,7 @@ mod jsxopening_element {
                     .unwrap_or_else(|| {
                         panic!("expected to have a jsxopeningelement vertex, instead have: {v:#?}")
                     })
+                    .opening_element
                     .attributes
                     .iter()
                     .filter_map(|attr| match attr {
@@ -1132,6 +1141,7 @@ mod jsxopening_element {
                     .unwrap_or_else(|| {
                         panic!("expected to have a jsxopeningelement vertex, instead have: {v:#?}")
                     })
+                    .opening_element
                     .attributes
                     .iter()
                     .filter_map(|attr| match attr {
@@ -1272,6 +1282,7 @@ pub(super) fn resolve_object_literal_edge<'a, 'b: 'a>(
     edge_name: &str,
     parameters: &EdgeParameters,
     resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => object_literal::span(contexts, resolve_info),
@@ -1283,6 +1294,8 @@ pub(super) fn resolve_object_literal_edge<'a, 'b: 'a>(
                 .expect("unexpected null or other incorrect datatype for Trustfall type 'String!'");
             object_literal::value(contexts, key, resolve_info)
         }
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
         _ => {
             unreachable!(
                 "attempted to resolve unexpected edge '{edge_name}' on type 'ObjectLiteral'"
@@ -1322,7 +1335,7 @@ mod object_literal {
                 panic!("expected to have an objectliteral vertex, instead have: {v:#?}")
             });
 
-            Box::new(obj.properties.iter().filter_map(move |property| {
+            Box::new(obj.object_expression.properties.iter().filter_map(move |property| {
                 let ObjectPropertyKind::ObjectProperty(prop) = property else { return None };
 
                 let has_right_key_name = match &prop.key {
