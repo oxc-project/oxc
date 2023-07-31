@@ -167,7 +167,7 @@ impl NoLossOfPrecision {
         }
         let stored = match (raw.scientific, raw.precision) {
             (true, _) => format!("{:.1$e}", node.value, raw.frac.len()),
-            (false, _precision @ 0) => format!("{}", node.value),
+            (false, 0) => format!("{}", node.value),
             (false, precision ) => format!("{:.1$}", node.value, precision),
         };
         let stored = if let Some(s) = Self::normalize(&stored) { s } else { return true };
