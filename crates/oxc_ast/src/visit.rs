@@ -1232,13 +1232,20 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
+    fn visit_enum_body(&mut self, body: &'a TSEnumBody<'a>) {
+        let kind = AstKind::TSEnumBody(body);
+        self.enter_node(kind);
+        for member in &body.members {
+            self.visit_enum_member(member);
+        }
+        self.leave_node(kind);
+    }
+
     fn visit_enum(&mut self, decl: &'a TSEnumDeclaration<'a>) {
         let kind = AstKind::TSEnumDeclaration(decl);
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
-        for member in &decl.members {
-            self.visit_enum_member(member);
-        }
+        self.visit_enum_body(&decl.body);
         self.leave_node(kind);
     }
 

@@ -1,7 +1,6 @@
 mod command;
 mod error;
 mod isolated_handler;
-mod module_tree_handler;
 mod options;
 
 use std::{io::BufWriter, sync::Arc, time::Duration};
@@ -11,10 +10,7 @@ use oxc_linter::{Linter, RuleCategory, RuleEnum, RULES};
 use rustc_hash::FxHashSet;
 
 pub use self::{error::Error, options::LintOptions};
-use self::{
-    isolated_handler::IsolatedLintHandler, module_tree_handler::ModuleTreeLintHandler,
-    options::AllowWarnDeny,
-};
+use self::{isolated_handler::IsolatedLintHandler, options::AllowWarnDeny};
 use crate::{CliRunResult, Runner};
 
 pub struct LintRunner {
@@ -48,11 +44,8 @@ impl Runner for LintRunner {
             return CliRunResult::None;
         }
 
-        let result = if Self::enable_module_tree() {
-            ModuleTreeLintHandler::new(Arc::clone(&self.options), Arc::clone(&self.linter)).run()
-        } else {
-            IsolatedLintHandler::new(Arc::clone(&self.options), Arc::clone(&self.linter)).run()
-        };
+        let result =
+            IsolatedLintHandler::new(Arc::clone(&self.options), Arc::clone(&self.linter)).run();
 
         if self.options.print_execution_times {
             self.print_execution_times();
@@ -63,11 +56,6 @@ impl Runner for LintRunner {
 }
 
 impl LintRunner {
-    /// check if the module tree should be provided when linting
-    fn enable_module_tree() -> bool {
-        matches!(std::env::var("OXC_MODULE_TREE"), Ok(x) if x == "true" || x == "1")
-    }
-
     fn print_rules() {
         let mut stdout = BufWriter::new(std::io::stdout());
         Linter::print_rules(&mut stdout);
@@ -131,12 +119,12 @@ impl LintRunner {
         let total = timings.iter().map(|x| x.1).sum::<Duration>().as_secs_f64();
 
         println!("Rule timings in milliseconds:");
-        println!("Total: {:.3}ms", total * 1000.0);
-        println!("Time  |     % | Rule");
+        println!("Total: {:.2}ms", total * 1000.0);
+        println!("{:>7} | {:>5} | Rule", "Time", "%");
         for (name, duration) in timings.iter().rev() {
             let millis = duration.as_secs_f64() * 1000.0;
             let relative = duration.as_secs_f64() / total * 100.0;
-            println!("{millis:.3} | {relative:>4.1}% | {name}");
+            println!("{millis:>7.2} | {relative:>4.1}% | {name}");
         }
     }
 }

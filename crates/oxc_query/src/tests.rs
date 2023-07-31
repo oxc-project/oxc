@@ -8,10 +8,10 @@ use trustfall::{execute_query, provider::check_adapter_invariants, FieldValue, T
 
 use crate::{adapter::schema, Adapter};
 
-#[test]
-fn test_path_query() {
-    let code = "const apple = 1;";
-
+fn run_query<T: for<'de> serde::Deserialize<'de> + std::cmp::Ord>(
+    code: &str,
+    query: &str,
+) -> Vec<T> {
     let allocator = Allocator::default();
     let source_type = SourceType::default().with_module(true).with_jsx(true).with_typescript(true);
     let ret = Parser::new(&allocator, code, source_type).parse();
@@ -28,60 +28,44 @@ fn test_path_query() {
 
     let adapter = Arc::from(&adapter);
 
-    #[allow(clippy::items_after_statements)]
+    let mut results: Vec<T> = execute_query(schema(), adapter, query, args)
+        .expect("to successfully execute the query")
+        .map(|row| row.try_into_struct::<T>().expect("shape mismatch"))
+        .collect::<Vec<_>>();
+
+    results.sort_unstable();
+
+    results
+}
+
+#[test]
+fn test_path_query() {
     #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
     struct Output {
         name: String,
         is_first: bool,
         is_last: bool,
     }
-
-    let mut results: Vec<Output> = execute_query(
-        schema(),
-        adapter,
+    let results = run_query::<Output>(
+        "const apple = 1;",
         r#"
-query {
-    File {
-        last_path_part {
-            name @output
-            is_first @output
-            is_last @output
+        query {
+            File {
+                last_path_part {
+                    name @output
+                    is_first @output
+                    is_last @output
+                }
+            }
         }
-    }
-}
         "#,
-        args,
-    )
-    .expect("to successfully execute the query")
-    .map(|row| row.try_into_struct().expect("shape mismatch"))
-    .collect::<Vec<_>>();
-
-    results.sort_unstable();
+    );
 
     assert_eq!(vec![Output { name: "index".into(), is_first: true, is_last: true },], results);
 }
 
 #[test]
 fn test_variable_query() {
-    let code = "const apple = 1;";
-
-    let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true).with_jsx(true).with_typescript(true);
-    let ret = Parser::new(&allocator, code, source_type).parse();
-    let program = allocator.alloc(ret.program);
-    let semantic_ret =
-        SemanticBuilder::new(code, source_type).with_trivias(&ret.trivias).build(program);
-
-    let adapter = Adapter {
-        path_components: vec![Some("index".to_string())],
-        semantic: Rc::new(semantic_ret.semantic),
-    };
-
-    let args: BTreeMap<Arc<str>, FieldValue> = BTreeMap::new();
-
-    let adapter = Arc::from(&adapter);
-
-    #[allow(clippy::items_after_statements)]
     #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
     struct Output {
         assignment_to_variable_name: String,
@@ -91,39 +75,31 @@ fn test_variable_query() {
         span_end: u64,
         __typename: String,
     }
-
-    let mut results: Vec<Output> = execute_query(
-        schema(),
-        adapter,
+    let results = run_query::<Output>(
+        "const apple = 1;",
         r#"
-query {
-    File {
-        variable_declaration {
-            left {
-                assignment_to_variable_name @output
-                span_asmt_type_: span {
-                    start @output
-                    end @output
+        query {
+            File {
+                variable_declaration {
+                    left {
+                        assignment_to_variable_name @output
+                        span_asmt_type_: span {
+                            start @output
+                            end @output
+                        }
+                    }
+
+                    __typename @output
+
+                    span_: span {
+                        start @output
+                        end @output
+                    }
                 }
             }
-
-            __typename @output
-
-            span_: span {
-                start @output
-                end @output
-            }
         }
-    }
-}
         "#,
-        args,
-    )
-    .expect("to successfully execute the query")
-    .map(|row| row.try_into_struct().expect("shape mismatch"))
-    .collect::<Vec<_>>();
-
-    results.sort_unstable();
+    );
 
     assert_eq!(
         vec![Output {
@@ -139,62 +115,69 @@ query {
 }
 
 #[test]
+fn test_object_literal_ast() {
+    #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
+    struct Output {
+        __typename: String,
+        value_typename: String,
+    }
+    let results = run_query::<Output>(
+        "const colors = { blue: 1, green: 2, red: 3 };",
+        r#"
+        {
+            File {
+                ast_node {
+                    ... on ObjectLiteralAST {
+                        value(key: "blue") {
+                            value_typename: __typename @output
+                        }
+                        __typename @output
+                    }
+                }
+            }
+        }
+        "#,
+    );
+
+    assert_eq!(
+        vec![Output {
+            __typename: "ObjectLiteralAST".to_owned(),
+            value_typename: "Expression".to_owned()
+        }],
+        results
+    );
+}
+
+#[test]
 fn test_parent_query() {
-    let code = "interface MyGreatInterface { myGreatProperty: number }";
-
-    let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true).with_jsx(true).with_typescript(true);
-    let ret = Parser::new(&allocator, code, source_type).parse();
-    let program = allocator.alloc(ret.program);
-    let semantic_ret =
-        SemanticBuilder::new(code, source_type).with_trivias(&ret.trivias).build(program);
-
-    let adapter = Adapter {
-        path_components: vec![Some("index".to_string())],
-        semantic: Rc::new(semantic_ret.semantic),
-    };
-
-    let args: BTreeMap<Arc<str>, FieldValue> = BTreeMap::new();
-
-    let adapter = Arc::from(&adapter);
-
-    #[allow(clippy::items_after_statements)]
     #[derive(Debug, PartialOrd, Ord, PartialEq, Eq, serde::Deserialize)]
     struct Output {
         type_: String,
         tn1: String,
         tn2: String,
     }
-
-    let mut results: Vec<Output> = execute_query(
-        schema(),
-        adapter,
+    let results = run_query::<Output>(
+        "interface MyGreatInterface { myGreatProperty: number }",
         r#"
-query {
-    File {
-        ast_node {
-            ... on TypeAnnotationAST {
-                type {
-                    type_: str @output
-                }
-                parent {
-                    tn1: __typename @output
-                    parent {
-                        tn2: __typename @output
+        query {
+            File {
+                ast_node {
+                    ... on TypeAnnotationAST {
+                        type {
+                            type_: str @output
+                        }
+                        parent {
+                            tn1: __typename @output
+                            parent {
+                                tn2: __typename @output
+                            }
+                        }
                     }
                 }
             }
         }
-    }
-}
         "#,
-        args,
-    )
-    .expect("to successfully execute the query")
-    .map(|row| row.try_into_struct().expect("shape mismatch"))
-    .collect::<Vec<_>>();
-
-    results.sort_unstable();
+    );
 
     assert_eq!(
         vec![Output {

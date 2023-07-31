@@ -1,5 +1,6 @@
+use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{ObjectPropertyKind, PropertyKind},
+    ast::{Expression, ObjectPropertyKind, PropertyKey, PropertyKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -42,26 +43,47 @@ declare_oxc_lint!(
 
 impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ObjectExpression(obj_expr) = node.kind() {
-            let mut map = FxHashMap::default();
-            for prop in &obj_expr.properties {
-                if let ObjectPropertyKind::ObjectProperty(prop) = prop {
-                    if let Some(key_name) = prop.key.static_name().as_ref() {
-                        let hash = calculate_hash(key_name);
-                        if let Some((prev_kind, prev_span)) =
-                            map.insert(hash, (prop.kind, prop.key.span()))
-                        {
-                            if prev_kind == PropertyKind::Init
-                                || prop.kind == PropertyKind::Init
-                                || prev_kind == prop.kind
-                            {
-                                ctx.diagnostic(NoDupeKeysDiagnostic(prev_span, prop.key.span()));
-                            }
-                        }
-                    }
+        let AstKind::ObjectExpression(obj_expr) = node.kind() else { return };
+        let mut map = FxHashMap::default();
+        for prop in &obj_expr.properties {
+            let ObjectPropertyKind::ObjectProperty(prop) = prop else { continue };
+            let Some(hash) = calculate_property_kind_hash(&prop.key) else { continue };
+            if let Some((prev_kind, prev_span)) = map.insert(hash, (prop.kind, prop.key.span())) {
+                if prev_kind == PropertyKind::Init
+                    || prop.kind == PropertyKind::Init
+                    || prev_kind == prop.kind
+                {
+                    ctx.diagnostic(NoDupeKeysDiagnostic(prev_span, prop.key.span()));
                 }
             }
         }
+    }
+}
+
+// todo: should this be located within oxc_ast?
+fn calculate_property_kind_hash(key: &PropertyKey) -> Option<u64> {
+    lazy_static! {
+        static ref NULL_HASH: u64 = calculate_hash(&"null");
+    }
+
+    match key {
+        PropertyKey::Identifier(ident) => Some(calculate_hash(&ident)),
+        PropertyKey::PrivateIdentifier(_) => None,
+        PropertyKey::Expression(expr) => match expr {
+            Expression::StringLiteral(lit) => Some(calculate_hash(&lit.value)),
+            // note: hashes won't work as expected if these aren't strings. Save
+            // NumberLiteral I don't think this should be too much of a problem
+            // b/c most people don't use `null`, regexes, etc. as object
+            // property keys when writing real code.
+            Expression::RegExpLiteral(lit) => Some(calculate_hash(&lit.regex.to_string())),
+            Expression::NumberLiteral(lit) => Some(calculate_hash(&lit.value.to_string())),
+            Expression::BigintLiteral(lit) => Some(calculate_hash(&lit.value.to_string())),
+            Expression::NullLiteral(_) => Some(*NULL_HASH),
+            Expression::TemplateLiteral(lit) => {
+                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(calculate_hash)
+            }
+            _ => None,
+        },
     }
 }
 

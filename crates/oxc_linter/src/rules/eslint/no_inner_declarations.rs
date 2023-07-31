@@ -4,7 +4,7 @@ use oxc_diagnostics::{
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -64,12 +64,17 @@ impl Rule for NoInnerDeclarations {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+        let span = match node.kind() {
             AstKind::VariableDeclaration(decl)
-                if decl.kind.is_var() && self.config == NoInnerDeclarationsConfig::Both => {}
-            AstKind::Function(func) if func.is_function_declaration() => {}
+                if decl.kind.is_var() && self.config == NoInnerDeclarationsConfig::Both =>
+            {
+                Span::new(decl.span.start, decl.span.start + 3) // 3 for "var".len()
+            }
+            AstKind::Function(func) if func.is_function_declaration() => {
+                Span::new(func.span.start, func.span.start + 8) // 8 for "function".len()
+            }
             _ => return,
-        }
+        };
 
         let mut parent = ctx.nodes().parent_node(node.id());
         if let Some(parent_node) = parent {
@@ -120,7 +125,7 @@ impl Rule for NoInnerDeclarations {
             }
         }
 
-        ctx.diagnostic(NoInnerDeclarationsDiagnostic(decl_type, body, node.kind().span()));
+        ctx.diagnostic(NoInnerDeclarationsDiagnostic(decl_type, body, span));
     }
 }
 
