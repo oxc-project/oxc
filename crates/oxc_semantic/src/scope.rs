@@ -74,6 +74,11 @@ impl ScopeTree {
         self.parent_ids[scope_id]
     }
 
+    /// Get a variable binding by name that was declared in the top-level scope
+    pub fn get_root_binding(&self, name: &Atom) -> Option<SymbolId> {
+        self.get_binding(self.root_scope_id(), name)
+    }
+
     pub fn get_binding(&self, scope_id: ScopeId, name: &Atom) -> Option<SymbolId> {
         self.bindings[scope_id].get(name).copied()
     }

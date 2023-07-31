@@ -2,11 +2,12 @@
 
 use std::{cell::RefCell, rc::Rc};
 
+use itertools::Itertools;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_diagnostics::Error;
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::module_record::ModuleRecord;
+use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -520,16 +521,75 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
-        let flag = if matches!(
-            self.nodes.parent_kind(self.current_node_id),
-            Some(AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_))
-        ) {
-            ReferenceFlag::write()
-        } else {
-            ReferenceFlag::read()
-        };
+        let flag = self.resolve_reference_usages();
         let reference = Reference::new(ident.span, ident.name.clone(), flag);
         self.declare_reference(reference);
+    }
+
+    /// Resolve reference flags for the current ast node.
+    fn resolve_reference_usages(&self) -> ReferenceFlag {
+        let mut flags = ReferenceFlag::None;
+
+        if self.nodes.parent_id(self.current_node_id).is_none() {
+            return ReferenceFlag::Read;
+        }
+
+        // This func should only get called when an IdentifierReference is
+        // reached
+        debug_assert!(matches!(
+            self.nodes.get_node(self.current_node_id).kind(),
+            AstKind::IdentifierReference(_)
+        ));
+
+        for (curr, parent) in self
+            .nodes
+            .iter_parents(self.current_node_id)
+            .tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>()
+        {
+            match (curr.kind(), parent.kind()) {
+                // lhs of assignment expression
+                (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
+                    debug_assert!(!flags.is_read());
+                    flags = ReferenceFlag::write();
+                    // a lhs expr will not propagate upwards into a rhs
+                    // expression, sow e can safely break
+                    break;
+                }
+                (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(expr)) => {
+                    flags |= if expr.operator == AssignmentOperator::Assign {
+                        ReferenceFlag::write()
+                    } else {
+                        ReferenceFlag::read_write()
+                    };
+                    break;
+                }
+                (_, AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)) => {
+                    flags |= ReferenceFlag::write();
+                    // continue up tree
+                }
+                (_, AstKind::UpdateExpression(_)) => {
+                    flags |= ReferenceFlag::Write;
+                    // continue up tree
+                }
+                (
+                    AstKind::AssignmentTarget(_),
+                    AstKind::ForInStatement(_) | AstKind::ForOfStatement(_),
+                ) => {
+                    break;
+                }
+                (_, AstKind::ParenthesizedExpression(_)) => {
+                    // continue up tree
+                }
+                _ => {
+                    flags |= ReferenceFlag::Read;
+                    break;
+                }
+            }
+        }
+
+        debug_assert!(flags != ReferenceFlag::None);
+
+        flags
     }
 
     fn reference_jsx_element_name(&mut self, elem: &JSXElementName) {
