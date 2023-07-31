@@ -59,7 +59,10 @@ impl Rule for ConsistentTypeExports {
 
         if let ModuleDeclaration::ExportNamedDeclaration(export_named_declaration) =
             module_declaration
-        {   if export_named_declaration.export_kind == ImportOrExportKind::Type {return} 
+        {
+            if export_named_declaration.export_kind == ImportOrExportKind::Type {
+                return;
+            }
             check_export_named_declaration(node.scope_id(), export_named_declaration, ctx);
         }
     }
@@ -87,25 +90,21 @@ fn check_export_named_declaration(
     }
 }
 
-
-
-
 #[test]
 fn test() {
     use crate::tester::Tester;
 
-    let pass: Vec<(&str, Option<serde_json::Value>)> =
-        vec![
-            ("type foo = number; export {type foo}", None),
-            ("type foo = number; export type {foo}", None),
-            ("type foo = number; const foo = 3; export {foo}", None),
-
-            // from rule
-            ("export { Foo } from 'foo';", None),
-            ("export type { Type1 } from './consistent-type-exports';", None),
-            ("export { value1 } from './consistent-type-exports';", None),
-            ("export type { value1 } from './consistent-type-exports';", None),
-            ("
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![
+        ("type foo = number; export {type foo}", None),
+        ("type foo = number; export type {foo}", None),
+        ("type foo = number; const foo = 3; export {foo}", None),
+        // from rule
+        ("export { Foo } from 'foo';", None),
+        ("export type { Type1 } from './consistent-type-exports';", None),
+        ("export { value1 } from './consistent-type-exports';", None),
+        ("export type { value1 } from './consistent-type-exports';", None),
+        (
+            "
             const variable = 1;
             class Class {}
             enum Enum {}
@@ -115,46 +114,57 @@ fn test() {
             }
             export { variable, Class, Enum, Func, ValueNS };
                 ",
-             None),
-
-            ("type Alias = 1;
+            None,
+        ),
+        (
+            "type Alias = 1;
             interface IFace {}
             namespace TypeNS {
               export type x = 1;
             }
-            export type { Alias, IFace, TypeNS };", None),
-            ("const foo = 1;
-            export type { foo };", None),
-            ("namespace NonTypeNS {
+            export type { Alias, IFace, TypeNS };",
+            None,
+        ),
+        (
+            "const foo = 1;
+            export type { foo };",
+            None,
+        ),
+        (
+            "namespace NonTypeNS {
                 export const x = 1;
               }
               
-              export { NonTypeNS };", None),
-
-        ];
+              export { NonTypeNS };",
+            None,
+        ),
+    ];
 
     let fail = vec![
         ("type foo = number; export {foo}", None),
         // namespace check
-       ("
+        (
+            "
         namespace TypeNS {
             type foo = 1
         }
         export {TypeNS}
-        ", None),
-
-        
+        ",
+            None,
+        ),
         // from rule
-        ("type Alias = 1;
+        (
+            "type Alias = 1;
         interface IFace {}
         namespace TypeNS {
           export type x = 1;
           export const f = 1;
         }
         
-        export { Alias, IFace, TypeNS };", None)
-
-        ];
+        export { Alias, IFace, TypeNS };",
+            None,
+        ),
+    ];
 
     Tester::new(ConsistentTypeExports::NAME, pass, fail).test();
 }

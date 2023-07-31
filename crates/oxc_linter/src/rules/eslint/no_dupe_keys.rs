@@ -1,5 +1,6 @@
+use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{ObjectPropertyKind, PropertyKey, PropertyKind, Expression},
+    ast::{Expression, ObjectPropertyKind, PropertyKey, PropertyKind},
     AstKind,
 };
 use oxc_diagnostics::{
@@ -9,7 +10,6 @@ use oxc_diagnostics::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashMap;
-use lazy_static::lazy_static;
 
 use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
 

@@ -62,3 +62,4 @@ Run `just` for the list of available commands.
 Run `just r` (alias for `just ready`) to make sure the whole project builds and runs correctly.
 
 Take a look at `just new-rule` if you need to start porting a new ESLint rule.
+Make sure the rule is registered in `crates/oxc_linter/src/rules.rs`.

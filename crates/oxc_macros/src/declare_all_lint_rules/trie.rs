@@ -25,33 +25,6 @@ impl RulePathTrieNode {
         Self { name, kind: NodeKind::InternalNode(vec![]) }
     }
 
-    // mod root {
-    //   pub mod inner1;
-    //   pub mod inner2;
-    // }
-    pub fn mod_stmt(&self, is_root: bool) -> TokenStream {
-        let name = &self.name;
-        let mut stmts = quote! { mod #name };
-
-        if !is_root {
-            stmts = quote! { pub #stmts };
-        }
-
-        match &self.kind {
-            NodeKind::InternalNode(children) => {
-                let child_mods = children.iter().map(|node| node.mod_stmt(false));
-                quote! {
-                  #stmts {
-                    #(#child_mods)*
-                  }
-                }
-            }
-            NodeKind::LeafNode(_) => {
-                quote! { #stmts; }
-            }
-        }
-    }
-
     // pub use root::{
     //   inner1::Rule1,
     //   inner2::Rule2,
