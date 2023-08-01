@@ -96,7 +96,12 @@ impl<'a> Visit<'a> for TestCase<'a> {
                     PropertyKey::Identifier(ident) if ident.name == "code" => {
                         self.code = match &prop.value {
                             Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
+                            // eslint-plugin-jest use dedent to strips indentation from multi-line strings
                             Expression::TaggedTemplateExpression(tag_expr) => {
+                                let Expression::Identifier(ident) = &tag_expr.tag else {continue;};
+                                if ident.name != "dedent" {
+                                    continue;
+                                }
                                 tag_expr.quasi.quasi().map(|s| Cow::Borrowed(s.as_str()))
                             }
                             _ => continue,
