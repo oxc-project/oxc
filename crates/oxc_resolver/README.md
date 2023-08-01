@@ -52,7 +52,7 @@ Crossed out test files are irrelevant.
 - [ ] fullSpecified.test.js
 - [ ] getPaths.test.js
 - [x] identifier.test.js (see unit test in `crates/oxc_resolver/src/request.rs`)
-- [ ] importsField.test.js
+- [x] importsField.test.js
 - [x] incorrect-description-file.test.js (need to add ctx.fileDependencies)
 - [ ] missing.test.js
 - [ ] path.test.js
