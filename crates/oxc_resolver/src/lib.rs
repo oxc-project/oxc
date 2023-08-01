@@ -27,14 +27,15 @@ use std::{
 use crate::{
     cache::{Cache, CacheValue},
     file_system::FileSystemOs,
-    package_json::{ExportsField, ExportsKey, MatchObject, PackageJson},
-    path::PathUtil,
+    package_json::{ExportsKey, MatchObject, PackageJson},
     request::{Request, RequestPath},
 };
 pub use crate::{
     error::{JSONError, ResolveError},
     file_system::{FileMetadata, FileSystem},
     options::{Alias, AliasValue, ResolveOptions},
+    package_json::ExportsField,
+    path::PathUtil,
     resolution::Resolution,
 };
 
@@ -533,8 +534,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     /// PACKAGE_EXPORTS_RESOLVE(packageURL, subpath, exports, conditions)
     ///
-    /// <https://nodejs.org/api/esm.html#resolution-algorithm-specification>
-    fn package_exports_resolve(
+    /// # Errors
+    pub fn package_exports_resolve(
         &self,
         package_url: &Path,
         subpath: &str,
@@ -559,42 +560,58 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 2. If subpath is equal to ".", then
         // Note: subpath is not prepended with a dot when passed in.
         if subpath.is_empty() {
-            //   1. Let mainExport be undefined.
-            //   2. If exports is a String or Array, or an Object containing no keys starting with ".", then
-            //     1. Set mainExport to exports.
-            match exports {
-                ExportsField::None => {}
+            // 1. Let mainExport be undefined.
+            let main_export = match exports {
+                ExportsField::None => None,
+                // 2. If exports is a String or Array, or an Object containing no keys starting with ".", then
                 ExportsField::String(_) | ExportsField::Array(_) => {
-                    return self.package_target_resolve(package_url, exports, None, conditions);
+                    // 1. Set mainExport to exports.
+                    Some(exports)
                 }
                 // 3. Otherwise if exports is an Object containing a "." property, then
-                //   1. Set mainExport to exports["."].
                 ExportsField::Map(map) => {
-                    //  4. If mainExport is not undefined, then
-                    if let Some(main_export) = map.get(&ExportsKey::Main) {
-                        // 1. Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, mainExport, null, false, conditions).
-                        // 2. If resolved is not null or undefined, return resolved.
-                        return self.package_target_resolve(
-                            package_url,
-                            main_export,
-                            None,
-                            conditions,
-                        );
-                    }
+                    // 1. Set mainExport to exports["."].
+                    map.get(&ExportsKey::Main).map_or_else(
+                        || {
+                            if map.keys().any(|key| matches!(key, ExportsKey::Pattern(_))) {
+                                None
+                            } else {
+                                Some(exports)
+                            }
+                        },
+                        Some,
+                    )
+                }
+            };
+            // 4. If mainExport is not undefined, then
+            if let Some(main_export) = main_export {
+                // 1. Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, mainExport, null, false, conditions).
+                let resolved = self.package_target_resolve(
+                    package_url,
+                    ".",
+                    main_export,
+                    None,
+                    /* is_imports */ false,
+                    conditions,
+                )?;
+                // 2. If resolved is not null or undefined, return resolved.
+                if let Some(path) = resolved {
+                    return Ok(Some(path));
                 }
             }
         }
         // 3. Otherwise, if exports is an Object and all keys of exports start with ".", then
         if let ExportsField::Map(exports) = exports {
-            //   1. Let matchKey be the string "./" concatenated with subpath.
+            // 1. Let matchKey be the string "./" concatenated with subpath.
+            // Note: `package_imports_exports_resolve` does not require the leading dot.
             let match_key = subpath;
-            //   2. Let resolved be the result of PACKAGE_IMPORTS_EXPORTS_RESOLVE( matchKey, exports, packageURL, false, conditions).
+            // 2. Let resolved be the result of PACKAGE_IMPORTS_EXPORTS_RESOLVE( matchKey, exports, packageURL, false, conditions).
             if let Some(path) =
                 self.package_imports_exports_resolve(match_key, exports, package_url, conditions)?
             {
+                // 3. If resolved is not null or undefined, return resolved.
                 return Ok(Some(path));
             }
-            //   3. If resolved is not null or undefined, return resolved.
         }
         // 4. Throw a Package Path Not Exported error.
         Err(ResolveError::PackagePathNotExported(format!(".{subpath}")))
@@ -608,65 +625,76 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         package_url: &Path,
         conditions: &[String],
     ) -> ResolveState {
+        // enhanced_resolve behaves differently, it throws
+        // Error: Resolving to directories is not possible with the exports field (request was ./dist/)
+        if match_key.ends_with('/') {
+            return Ok(None);
+        }
         // 1. If matchKey is a key of matchObj and does not contain "*", then
         if !match_key.contains('*') {
             // 1. Let target be the value of matchObj[matchKey].
             if let Some(target) = match_obj.get(&ExportsKey::Pattern(match_key.to_string())) {
                 // 2. Return the result of PACKAGE_TARGET_RESOLVE(packageURL, target, null, isImports, conditions).
-                return self.package_target_resolve(package_url, target, None, conditions);
+                return self.package_target_resolve(
+                    package_url,
+                    match_key,
+                    target,
+                    None,
+                    /* is_imports */ false,
+                    conditions,
+                );
             }
         }
+
+        let mut best_target = None;
+        let mut best_match = "";
+        let mut best_key = "";
         // 2. Let expansionKeys be the list of keys of matchObj containing only a single "*", sorted by the sorting function PATTERN_KEY_COMPARE which orders in descending order of specificity.
         // 3. For each key expansionKey in expansionKeys, do
-        let mut best_key = "";
-        let mut best_match = "";
-        let mut best_target = None;
         for (expansion_key, target) in match_obj {
             if let ExportsKey::Pattern(expansion_key) = expansion_key {
                 // 1. Let patternBase be the substring of expansionKey up to but excluding the first "*" character.
                 if let Some((pattern_base, pattern_trailer)) = expansion_key.split_once('*') {
                     // 2. If matchKey starts with but is not equal to patternBase, then
                     if match_key.starts_with(pattern_base)
+                        // 1. Let patternTrailer be the substring of expansionKey from the index after the first "*" character.
                         && !pattern_trailer.contains('*')
+                        // 2. If patternTrailer has zero length, or if matchKey ends with patternTrailer and the length of matchKey is greater than or equal to the length of expansionKey, then
                         && (pattern_trailer.is_empty()
                             || (match_key.len() >= expansion_key.len()
                                 && match_key.ends_with(pattern_trailer)))
-                        && Self::pattern_key_compare(best_key, expansion_key) == Ordering::Greater
+                        && Self::pattern_key_compare(best_key, expansion_key).is_gt()
                     {
-                        best_key = expansion_key;
+                        // 1. Let target be the value of matchObj[expansionKey].
+                        best_target = Some(target);
+                        // 2. Let patternMatch be the substring of matchKey starting at the index of the length of patternBase up to the length of matchKey minus the length of patternTrailer.
                         best_match =
                             &match_key[pattern_base.len()..match_key.len() - pattern_trailer.len()];
-                        best_target = Some(target);
-                        //     1. Let patternTrailer be the substring of expansionKey from the index after the first "*" character.
-                        //     2. If patternTrailer has zero length, or if matchKey ends with patternTrailer and the length of matchKey is greater than or equal to the length of expansionKey, then
-                        //       1. Let target be the value of matchObj[expansionKey].
-                        //       2. Let patternMatch be the substring of matchKey starting at the index of the length of patternBase up to the length of matchKey minus the length of patternTrailer.
-                        //       3. Return the result of PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, conditions).
+                        best_key = expansion_key;
                     }
-                } else {
+                } else if expansion_key.ends_with('/')
+                    && match_key.starts_with(expansion_key)
+                    && Self::pattern_key_compare(best_key, expansion_key).is_gt()
+                {
                     // TODO: [DEP0148] DeprecationWarning: Use of deprecated folder mapping "./dist/" in the "exports" field module resolution of the package at xxx/package.json.
-                    // Update this package.json to use a subpath pattern like "./dist/*".
-                    if let Some(pattern_match) = match_key.strip_prefix(expansion_key) {
-                        return self.package_target_resolve(
-                            package_url,
-                            target,
-                            Some(pattern_match),
-                            conditions,
-                        );
-                    }
+                    best_target = Some(target);
+                    best_match = &match_key[expansion_key.len()..];
+                    best_key = expansion_key;
                 }
             }
         }
-
-        if !best_key.is_empty() {
+        if let Some(best_target) = best_target {
+            // 3. Return the result of PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, conditions).
             return self.package_target_resolve(
                 package_url,
-                best_target.unwrap(),
+                best_key,
+                best_target,
                 Some(best_match),
+                /* is_imports */ false,
                 conditions,
             );
         }
-        // Return null.
+        // 4. Return null.
         Ok(None)
     }
 
@@ -674,122 +702,183 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn package_target_resolve(
         &self,
         package_url: &Path,
+        target_key: &str,
         target: &ExportsField,
         pattern_match: Option<&str>,
+        is_imports: bool,
         conditions: &[String],
     ) -> ResolveState {
-        // 1. If target is a String, then
         match target {
             ExportsField::None => {}
+            // 1. If target is a String, then
             ExportsField::String(target) => {
-                //   1. If target does not start with "./", then
-                //     1. If isImports is false, or if target starts with "../" or "/", or if target is a valid URL, then
-                //       1. Throw an Invalid Package Target error.
-                //     2. If patternMatch is a String, then
-                //       1. Return PACKAGE_RESOLVE(target with every instance of "*" replaced by patternMatch, packageURL + "/").
-                //     3. Return PACKAGE_RESOLVE(target, packageURL + "/").
-                //   2. If target split on "/" or "\" contains any "", ".", "..", or "node_modules" segments after the first "." segment, case insensitive and including percent encoded variants, throw an Invalid Package Target error.
-                if Path::new(target).is_invalid_exports_target() {
+                // 1. If target does not start with "./", then
+                if !target.starts_with("./") {
+                    // 1. If isImports is false, or if target starts with "../" or "/", or if target is a valid URL, then
+                    if !is_imports || target.starts_with("../") || target.starts_with('/') {
+                        // 1. Throw an Invalid Package Target error.
+                        // TODO:
+                        // Error [ERR_INVALID_PACKAGE_TARGET]: Invalid "exports" target "/a/" defined for './utils/*' in the package config /Users/bytedance/github/test-resolver/node_modules/foo/package.json; targets must start with "./"
+                        return Err(ResolveError::InvalidPackageTarget(target.to_string()));
+                    }
+                    // 2. If patternMatch is a String, then
+                    //   1. Return PACKAGE_RESOLVE(target with every instance of "*" replaced by patternMatch, packageURL + "/").
+                    // 3. Return PACKAGE_RESOLVE(target, packageURL + "/").
+                }
+                // 2. If target split on "/" or "\" contains any "", ".", "..", or "node_modules" segments after the first "." segment, case insensitive and including percent encoded variants, throw an Invalid Package Target error.
+                let target = if let Some(pattern_match) = pattern_match {
+                    if !target_key.contains('*') && !target.contains('*') {
+                        // enhanced_resolve behaviour
+                        // TODO: [DEP0148] DeprecationWarning: Use of deprecated folder mapping "./dist/" in the "exports" field module resolution of the package at xxx/package.json.
+                        if target_key.ends_with('/') && target.ends_with('/') {
+                            Cow::Owned(format!("{target}{pattern_match}"))
+                        } else {
+                            return Err(ResolveError::InvalidPackageConfigDirectory(
+                                package_url.join("package.json"),
+                            ));
+                        }
+                    } else {
+                        // if !target.contains('*') && target.ends_with('/') {
+                        // Cow::Owned(format!("{target}{pattern_match}"))
+                        // } else {
+                        Cow::Owned(target.replace('*', pattern_match))
+                    }
+                    // }
+                } else {
+                    Cow::Borrowed(target)
+                };
+
+                if Path::new(target.as_str()).is_invalid_exports_target() {
                     return Err(ResolveError::InvalidPackageTarget(target.to_string()));
                 }
-                //   3. Let resolvedTarget be the URL resolution of the concatenation of packageURL and target.
-                let resolved_target = package_url.join(target);
-                //   4. Assert: resolvedTarget is contained in packageURL.
-                //   5. If patternMatch is null, then
-                let Some(pattern_match) = pattern_match else {
-                //     1. Return resolvedTarget.
-                    return Ok(Some(self.cache.value(&resolved_target)))
-                };
-                //   6. If patternMatch split on "/" or "\" contains any "", ".", "..", or "node_modules" segments, case insensitive and including percent encoded variants, throw an Invalid Module Specifier error.
-                if Path::new(pattern_match).is_invalid_exports_target() {
-                    return Err(ResolveError::InvalidModuleSpecifier(pattern_match.to_string()));
-                }
-                //   7. Return the URL resolution of resolvedTarget with every instance of "*" replaced with patternMatch.
-                let path = if target.contains('*') {
-                    package_url.join(target.replace('*', pattern_match))
-                } else {
-                    // DEP0148 behaviour
-                    package_url.join(target).join(pattern_match)
-                }
-                .normalize();
-                return Ok(Some(self.cache.value(&path)));
+                // 3. Let resolvedTarget be the URL resolution of the concatenation of packageURL and target.
+                let resolved_target = package_url.join(target.as_str()).normalize();
+                // 4. Assert: resolvedTarget is contained in packageURL.
+                // 5. If patternMatch is null, then
+                // 6. If patternMatch split on "/" or "\" contains any "", ".", "..", or "node_modules" segments, case insensitive and including percent encoded variants, throw an Invalid Module Specifier error.
+                // 7. Return the URL resolution of resolvedTarget with every instance of "*" replaced with patternMatch.
+                return Ok(Some(self.cache.value(&resolved_target)));
             }
             // 2. Otherwise, if target is a non-null Object, then
             ExportsField::Map(target) => {
-                //   1. If exports contains any index property keys, as defined in ECMA-262 6.1.7 Array Index, throw an Invalid Package Configuration error.
-                //   2. For each property p of target, in object insertion order as,
-                for (key, target_value) in target {
-                    //     1. If p equals "default" or conditions contains an entry for p, then
-                    if matches!(key, ExportsKey::CustomCondition(condition) if condition == "default" || conditions.contains(condition))
+                // 1. If exports contains any index property keys, as defined in ECMA-262 6.1.7 Array Index, throw an Invalid Package Configuration error.
+                // 2. For each property p of target, in object insertion order as,
+                for (i, (key, target_value)) in target.iter().enumerate() {
+                    // https://nodejs.org/api/packages.html#conditional-exports
+                    // "default" - the generic fallback that always matches. Can be a CommonJS or ES module file. This condition should always come last.
+                    // Note: node.js does not throw this but enhanced_resolve does.
+                    let is_default = matches!(key, ExportsKey::CustomCondition(condition) if condition == "default");
+                    if i < target.len() - 1 && is_default {
+                        return Err(ResolveError::InvalidPackageConfigDefault(
+                            package_url.join("package.json"),
+                        ));
+                    }
+
+                    // 1. If p equals "default" or conditions contains an entry for p, then
+                    if is_default
+                        || matches!(key, ExportsKey::CustomCondition(condition) if conditions.contains(condition))
                     {
-                        //       1. Let targetValue be the value of the p property in target.
-                        //       2. Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, targetValue, patternMatch, isImports, conditions).
-                        //       3. If resolved is equal to undefined, continue the loop.
-                        //       4. Return resolved.
-                        let x = self.package_target_resolve(
+                        // 1. Let targetValue be the value of the p property in target.
+                        // 2. Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, targetValue, patternMatch, isImports, conditions).
+                        let resolved = self.package_target_resolve(
                             package_url,
+                            target_key,
                             target_value,
                             pattern_match,
+                            /* is_imports */ false,
                             conditions,
                         );
-                        if let Some(path) = x? {
+                        // 3. If resolved is equal to undefined, continue the loop.
+                        if let Some(path) = resolved? {
+                            // 4. Return resolved.
                             return Ok(Some(path));
                         }
                     }
-                    //   3. Return undefined.
                 }
-            } // 3. Otherwise, if target is an Array, then
+                // 3. Return undefined.
+                return Ok(None);
+            }
+            // 3. Otherwise, if target is an Array, then
             ExportsField::Array(targets) => {
-                //   1. If _target.length is zero, return null.
-                //   2. For each item targetValue in target, do
-                for target_value in targets {
-                    //     1. Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, targetValue, patternMatch, isImports, conditions), continuing the loop on any Invalid Package Target error.
-                    //     2. If resolved is undefined, continue the loop.
-                    if let Some(path) = self.package_target_resolve(
+                // 1. If _target.length is zero, return null.
+                if targets.is_empty() {
+                    // Note: return PackagePathNotExported has the same effect as return because there are no matches.
+                    return Err(ResolveError::PackagePathNotExported(format!(
+                        ".{}",
+                        pattern_match.unwrap_or(".")
+                    )));
+                }
+                // 2. For each item targetValue in target, do
+                for (i, target_value) in targets.iter().enumerate() {
+                    // 1. Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, targetValue, patternMatch, isImports, conditions), continuing the loop on any Invalid Package Target error.
+                    let resolved = self.package_target_resolve(
                         package_url,
+                        target_key,
                         target_value,
                         pattern_match,
+                        /* is_imports */ false,
                         conditions,
-                    )? {
+                    );
+
+                    if resolved.is_err() && i == targets.len() {
+                        return resolved;
+                    }
+
+                    // 2. If resolved is undefined, continue the loop.
+                    if let Ok(Some(path)) = resolved {
+                        // 3. Return resolved.
                         return Ok(Some(path));
                     }
-                    //     3. Return resolved.
-                    //   3. Return or throw the last fallback resolution null return or error.
                 }
+                // 3. Return or throw the last fallback resolution null return or error.
+                // Note: see `resolved.is_err() && i == targets.len()`
             }
         }
         // 4. Otherwise, if target is null, return null.
-        // 5. Otherwise throw an Invalid Package Target error.
         Ok(None)
+        // 5. Otherwise throw an Invalid Package Target error.
     }
 
     /// PATTERN_KEY_COMPARE(keyA, keyB)
-    fn pattern_key_compare(a: &str, b: &str) -> Ordering {
-        // 1. Assert: keyA ends with "/" or contains only a single "*".
-        // 2. Assert: keyB ends with "/" or contains only a single "*".
-        // 3. Let baseLengthA be the index of "*" in keyA plus one, if keyA contains "*", or the length of keyA otherwise.
-        let a_pos = a.chars().position(|c| c == '*');
-        // 4. Let baseLengthB be the index of "*" in keyB plus one, if keyB contains "*", or the length of keyB otherwise.
-        let b_pos = b.chars().position(|c| c == '*');
-        // 5. If baseLengthA is greater than baseLengthB, return -1.
-        let base_length_a = a_pos.map_or(a.len(), |p| p + 1);
-        // 6. If baseLengthB is greater than baseLengthA, return 1.
-        let base_length_b = b_pos.map_or(b.len(), |p| p + 1);
-        // 7. If keyA does not contain "*", return 1.
-        // 8. If keyB does not contain "*", return -1.
-        // 9. If the length of keyA is greater than the length of keyB, return -1.
-        // 10. If the length of keyB is greater than the length of keyA, return 1.
-        // 11. Return 0.
-        let cmp = base_length_b.cmp(&base_length_a);
-        if cmp != Ordering::Equal {
-            return cmp;
-        }
-        if a_pos.is_none() {
+    fn pattern_key_compare(key_a: &str, key_b: &str) -> Ordering {
+        if key_a.is_empty() {
             return Ordering::Greater;
         }
-        if b_pos.is_none() {
+        // 1. Assert: keyA ends with "/" or contains only a single "*".
+        debug_assert!(key_a.ends_with('/') || key_a.match_indices('*').count() == 1, "{key_a}");
+        // 2. Assert: keyB ends with "/" or contains only a single "*".
+        debug_assert!(key_b.ends_with('/') || key_b.match_indices('*').count() == 1, "{key_b}");
+        // 3. Let baseLengthA be the index of "*" in keyA plus one, if keyA contains "*", or the length of keyA otherwise.
+        let a_pos = key_a.chars().position(|c| c == '*');
+        let base_length_a = a_pos.map_or(key_a.len(), |p| p + 1);
+        // 4. Let baseLengthB be the index of "*" in keyB plus one, if keyB contains "*", or the length of keyB otherwise.
+        let b_pos = key_b.chars().position(|c| c == '*');
+        let base_length_b = b_pos.map_or(key_b.len(), |p| p + 1);
+        // 5. If baseLengthA is greater than baseLengthB, return -1.
+        if base_length_a > base_length_b {
             return Ordering::Less;
         }
-        b.len().cmp(&a.len())
+        // 6. If baseLengthB is greater than baseLengthA, return 1.
+        if base_length_b > base_length_a {
+            return Ordering::Greater;
+        }
+        // 7. If keyA does not contain "*", return 1.
+        if !key_a.contains('*') {
+            return Ordering::Greater;
+        }
+        // 8. If keyB does not contain "*", return -1.
+        if !key_b.contains('*') {
+            return Ordering::Less;
+        }
+        // 9. If the length of keyA is greater than the length of keyB, return -1.
+        if key_a.len() > key_b.len() {
+            return Ordering::Less;
+        }
+        // 10. If the length of keyB is greater than the length of keyA, return 1.
+        if key_b.len() > key_a.len() {
+            return Ordering::Greater;
+        }
+        // 11. Return 0.
+        Ordering::Equal
     }
 }
