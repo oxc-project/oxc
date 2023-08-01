@@ -76,18 +76,17 @@ impl Rule for NoExtraBooleanCast {
         }
         let parent = parent.unwrap();
 
-        match (node.kind(), parent.kind()) {
-            (AstKind::UnaryExpression(expr), AstKind::UnaryExpression(parent_expr)) => {
-                match (expr.operator, parent_expr.operator) {
-                    (UnaryOperator::LogicalNot, UnaryOperator::LogicalNot)
-                        if is_flagged_ctx(parent, ctx, self.enforce_for_logical_operands) =>
-                    {
-                        ctx.diagnostic(NoExtraDoubleNegationCastDiagnostic(expr.span));
-                    }
-                    _ => (),
+        if let (AstKind::UnaryExpression(expr), AstKind::UnaryExpression(parent_expr)) =
+            (node.kind(), parent.kind())
+        {
+            match (expr.operator, parent_expr.operator) {
+                (UnaryOperator::LogicalNot, UnaryOperator::LogicalNot)
+                    if is_flagged_ctx(parent, ctx, self.enforce_for_logical_operands) =>
+                {
+                    ctx.diagnostic(NoExtraDoubleNegationCastDiagnostic(expr.span));
                 }
+                _ => (),
             }
-            _ => (),
         }
     }
 }
@@ -107,13 +106,11 @@ fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, enforce_for_logical_operand
 
 // Check if a node is in a context where its value would be coerced to a boolean at runtime
 fn is_bool_context(node: &AstNode, ctx: &LintContext) -> bool {
-    if let Some(parent) = get_real_parent(node, ctx) {
+    get_real_parent(node, ctx).map_or(false, |parent| {
         (is_bool_fn_or_constructor_call(parent) && is_first_arg(node, parent))
             || is_inside_test_condition(node, ctx)
             || is_unary_negation(parent)
-    } else {
-        false
-    }
+    })
 }
 
 // Checks whether the node is a logical expression and that the option is enabled
@@ -162,36 +159,29 @@ fn is_first_arg(node: &AstNode, parent: &AstNode) -> bool {
 }
 
 fn is_inside_test_condition(node: &AstNode, ctx: &LintContext) -> bool {
-    if let Some(parent) = get_real_parent(node, ctx) {
-        match parent.kind() {
-            AstKind::IfStatement(stmt) => {
-                let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
-                expr_span == node.kind().span()
-            }
-            AstKind::DoWhileStatement(stmt) => {
-                let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
-                expr_span == node.kind().span()
-            }
-            AstKind::WhileStatement(stmt) => {
-                let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
-                expr_span == node.kind().span()
-            }
-            AstKind::ConditionalExpression(stmt) => {
-                let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
-                expr_span == node.kind().span()
-            }
-            AstKind::ForStatement(stmt) => match &stmt.test {
-                Some(expr) => {
-                    let expr_span = expr.get_inner_expression().without_parenthesized().span();
-                    expr_span == node.kind().span()
-                }
-                None => false,
-            },
-            _ => false,
+    get_real_parent(node, ctx).map_or(false, |parent| match parent.kind() {
+        AstKind::IfStatement(stmt) => {
+            let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
+            expr_span == node.kind().span()
         }
-    } else {
-        false
-    }
+        AstKind::DoWhileStatement(stmt) => {
+            let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
+            expr_span == node.kind().span()
+        }
+        AstKind::WhileStatement(stmt) => {
+            let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
+            expr_span == node.kind().span()
+        }
+        AstKind::ConditionalExpression(stmt) => {
+            let expr_span = stmt.test.get_inner_expression().without_parenthesized().span();
+            expr_span == node.kind().span()
+        }
+        AstKind::ForStatement(stmt) => stmt.test.as_ref().map_or(false, |expr| {
+            let expr_span = expr.get_inner_expression().without_parenthesized().span();
+            expr_span == node.kind().span()
+        }),
+        _ => false,
+    })
 }
 
 fn is_unary_negation(node: &AstNode) -> bool {
@@ -210,12 +200,13 @@ fn get_real_parent<'a, 'b>(node: &AstNode, ctx: &'a LintContext<'b>) -> Option<&
         {
             parent = ctx.nodes().parent_node(parent.unwrap().id());
         }
-        Some(&parent.unwrap())
+        Some(parent.unwrap())
     } else {
         None
     }
 }
 
+#[allow(clippy::too_many_lines)]
 #[test]
 fn test() {
     use crate::tester::Tester;
