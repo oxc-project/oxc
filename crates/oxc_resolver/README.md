@@ -44,7 +44,7 @@ Crossed out test files are irrelevant.
 - [x] alias.test.js (need to fix a todo)
 - [x] browserField.test.js (reading the browser field is currently static - not read from the `browserField` option)
 - [ ] dependencies.test.js
-- [ ] exportsField.test.js
+- [x] exportsField.test.js
 - [x] extension-alias.test.js
 - [x] extensions.test.js
 - [x] fallback.test.js (need to fix a todo)
