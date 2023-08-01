@@ -45,6 +45,7 @@ mod eslint {
     pub mod no_empty_pattern;
     pub mod no_eval;
     pub mod no_ex_assign;
+    pub mod no_extra_boolean_cast;
     pub mod no_func_assign;
     pub mod no_global_assign;
     pub mod no_import_assign;
