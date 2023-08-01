@@ -1,14 +1,21 @@
-use std::borrow::Borrow;
-
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
     thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Span, GetSpan, Atom};
+use oxc_span::{Atom, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode, jest_ast_util::{parse_jest_fn_call, ParsedJestFnCall, JestFnKind}, fixer::Fix};
+use crate::{
+    context::LintContext,
+    fixer::Fix,
+    jest_ast_util::{
+        parse_general_jest_fn_call, JestGeneralFnKind, KnownMemberExpressionProperty,
+        ParsedGeneralJestFnCall,
+    },
+    rule::Rule,
+    AstNode,
+};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(jest/no-test-prefixes): Use {0:?} instead.")]
@@ -20,16 +27,16 @@ pub struct NoTestPrefixes;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// 
+    ///
     /// Require using `.only` and `.skip` over `f` and `x`.
     ///
     /// ### Why is this bad?
     ///
-    /// Jest allows you to choose how you want to define focused and skipped tests, 
+    /// Jest allows you to choose how you want to define focused and skipped tests,
     /// with multiple permutations for each:
     /// - only & skip: it.only, test.only, describe.only, it.skip, test.skip, describe.skip.
     /// - 'f' & 'x': fit, fdescribe, xit, xtest, xdescribe.
-    /// 
+    ///
     /// This rule enforces usages from the only & skip list.
     ///
     /// ### Example
@@ -44,16 +51,15 @@ declare_oxc_lint!(
     nursery
 );
 
-fn get_preferred_node_names(jest_fn_call: &ParsedJestFnCall) -> Atom {
+fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> Atom {
+    let ParsedGeneralJestFnCall { members, raw, .. } = jest_fn_call;
 
-    let ParsedJestFnCall { members, raw, .. } = jest_fn_call;
-
-    let preferred_modifier = if raw.starts_with('f') {
-        "only"
-    } else {
-        "skip"
-    };
-    let member_names = members.iter().map(Borrow::borrow).collect::<Vec<&str>>().join(".");
+    let preferred_modifier = if raw.starts_with('f') { "only" } else { "skip" };
+    let member_names = members
+        .iter()
+        .filter_map(KnownMemberExpressionProperty::name)
+        .collect::<Vec<_>>()
+        .join(".");
     let name_slice = &raw[1..];
 
     if member_names.is_empty() {
@@ -65,39 +71,33 @@ fn get_preferred_node_names(jest_fn_call: &ParsedJestFnCall) -> Atom {
 
 impl Rule for NoTestPrefixes {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::CallExpression(call_expr) = node.kind() {
-            if let Some(jest_fn_call) = parse_jest_fn_call(call_expr, ctx) {
-                let ParsedJestFnCall { kind, raw, .. } = &jest_fn_call;
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, node, ctx) else { return };
+        let ParsedGeneralJestFnCall { kind, raw, .. } = &jest_fn_call;
+        let Some(kind) = kind.to_general() else {return};
 
-                if !matches!(kind, JestFnKind::Describe | JestFnKind::Test) {
-                    return;
-                }
-
-                if !raw.starts_with('f') && !raw.starts_with('x') {
-                    return;
-                }
-
-                let span = match &call_expr.callee {
-                    Expression::TaggedTemplateExpression(tagged_template_expr) => {
-                        tagged_template_expr.tag.span()
-                    }
-                    Expression::CallExpression(child_call_expr) => {
-                        child_call_expr.callee.span()
-                    }
-                    _ => {
-                        call_expr.callee.span()
-                    }
-                };
-
-                let preferred_node_name = get_preferred_node_names(&jest_fn_call);
-                let preferred_node_name_cloned = preferred_node_name.clone();
-
-                ctx.diagnostic_with_fix(
-                    NoTestPrefixesDiagnostic(preferred_node_name, span),
-                    || Fix::new(preferred_node_name_cloned.to_string(), span)
-                );
-            }
+        if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
+            return;
         }
+
+        if !raw.starts_with('f') && !raw.starts_with('x') {
+            return;
+        }
+
+        let span = match &call_expr.callee {
+            Expression::TaggedTemplateExpression(tagged_template_expr) => {
+                tagged_template_expr.tag.span()
+            }
+            Expression::CallExpression(child_call_expr) => child_call_expr.callee.span(),
+            _ => call_expr.callee.span(),
+        };
+
+        let preferred_node_name = get_preferred_node_names(&jest_fn_call);
+        let preferred_node_name_cloned = preferred_node_name.clone();
+
+        ctx.diagnostic_with_fix(NoTestPrefixesDiagnostic(preferred_node_name, span), || {
+            Fix::new(preferred_node_name_cloned.to_string(), span)
+        });
     }
 }
 
@@ -135,7 +135,7 @@ fn test() {
         ("xit.each``('foo', function () {})", None),
         ("xtest.each``('foo', function () {})", None),
         ("xit.each([])('foo', function () {})", None),
-        ("xtest.each([])('foo', function () {})", None)
+        ("xtest.each([])('foo', function () {})", None),
         // TODO: Continue work on it when [#510](https://github.com/Boshen/oxc/issues/510) solved
         // (r#"import { xit } from '@jest/globals';
         // xit("foo", function () {})"#, None),

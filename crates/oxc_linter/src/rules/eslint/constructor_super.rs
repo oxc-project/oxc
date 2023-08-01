@@ -48,7 +48,9 @@ declare_oxc_lint!(
 impl Rule for ConstructorSuper {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::MethodDefinition(ctor) = node.kind() else { return };
-        if ctor.kind != MethodDefinitionKind::Constructor || ctor.value.body.is_none() { return }
+        if ctor.kind != MethodDefinitionKind::Constructor || ctor.value.body.is_none() {
+            return;
+        }
         let Some(AstKind::Class(class)) = ctx.nodes().parent_kind(node.id()) else { return };
 
         // In cases where there's no super-class, calling 'super()' inside the constructor

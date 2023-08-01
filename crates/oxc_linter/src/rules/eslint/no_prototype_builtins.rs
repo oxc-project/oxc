@@ -56,8 +56,8 @@ impl Rule for NoPrototypeBuiltins {
         let Some(prop_name) = member_expr.static_property_name() else { return };
         if DISALLOWED_PROPS.contains(&prop_name) {
             ctx.diagnostic(NoPrototypeBuiltinsDiagnostic(
-                    prop_name.to_string(),
-                    member_expr.span(),
+                prop_name.to_string(),
+                member_expr.span(),
             ));
         }
     }

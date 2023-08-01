@@ -3,9 +3,7 @@ use std::{collections::BTreeMap, env, path::PathBuf};
 use clap::ArgMatches;
 
 use super::command::lint_command;
-pub use super::{
-    error::Error, isolated_handler::IsolatedLintHandler, module_tree_handler::ModuleTreeLintHandler,
-};
+pub use super::{error::Error, isolated_handler::IsolatedLintHandler};
 use crate::runner::RunnerOptions;
 
 #[derive(Debug)]

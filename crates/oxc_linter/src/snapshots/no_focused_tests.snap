@@ -1,0 +1,131 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_focused_tests
+---
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ describe.only()
+   · ───────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ describe.only.each()()
+   · ──────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ describe.only.each`table`()
+   · ───────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ describe["only"]()
+   · ──────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.only()
+   · ─────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.concurrent.only.each``()
+   · ───────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.only.each()()
+   · ────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.only.each`table`()
+   · ─────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it["only"]()
+   · ────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ test.only()
+   · ───────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ test.concurrent.only.each()()
+   · ─────────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ test.only.each()()
+   · ──────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ test.only.each`table`()
+   · ───────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ test["only"]()
+   · ──────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ fdescribe()
+   · ───────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ fit()
+   · ─────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ fit.each()()
+   · ────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ fit.each`table`()
+   · ─────────────────
+   ╰────
+  help: Remove focus from test.
+
+

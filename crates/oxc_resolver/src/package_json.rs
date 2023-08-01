@@ -1,3 +1,6 @@
+//! package.json definitions
+//!
+//! Code related to export field are copied from [Parcel's resolver](https://github.com/parcel-bundler/parcel/blob/v2/packages/utils/node-resolver-rs/src/package_json.rs)
 use std::{
     hash::BuildHasherDefault,
     path::{Path, PathBuf},
@@ -32,7 +35,8 @@ pub struct PackageJson {
     /// The "exports" field allows defining the entry points of a package when imported by name loaded either via a node_modules lookup or a self-reference to its own name.
     ///
     /// <https://nodejs.org/api/packages.html#exports>
-    pub exports: Option<ExportsField>,
+    #[serde(default)]
+    pub exports: ExportsField,
 
     /// The browser field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
     ///
@@ -47,12 +51,57 @@ pub enum BrowserField {
     Map(FxIndexMap<PathBuf, serde_json::Value>),
 }
 
-#[derive(Debug, Deserialize)]
+/// `matchObj` defined in `PACKAGE_IMPORTS_EXPORTS_RESOLVE`
+pub type MatchObject = FxIndexMap<ExportsKey, ExportsField>;
+
+/// Coped from Parcel's resolver
+#[derive(Debug, Default, Deserialize)]
 #[serde(untagged)]
 pub enum ExportsField {
+    #[default]
+    None, // For `undefined` or `null` value.
     String(String),
     Array(Vec<ExportsField>),
-    Map(FxIndexMap<String, ExportsField>),
+    Map(MatchObject),
+}
+
+impl ExportsField {
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+}
+
+// TODO: use compact string for these String fields
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub enum ExportsKey {
+    Main,
+    Pattern(String),
+    Hash(String),
+    CustomCondition(String),
+}
+
+impl From<&str> for ExportsKey {
+    fn from(key: &str) -> Self {
+        if key == "." {
+            Self::Main
+        } else if key.starts_with("./") {
+            Self::Pattern(key.trim_start_matches('.').to_string())
+        } else if let Some(key) = key.strip_prefix('#') {
+            Self::Hash(key.to_string())
+        } else {
+            Self::CustomCondition(key.to_string())
+        }
+    }
+}
+
+impl<'a, 'de: 'a> Deserialize<'de> for ExportsKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s: &'de str = Deserialize::deserialize(deserializer)?;
+        Ok(Self::from(s))
+    }
 }
 
 impl PackageJson {
@@ -114,23 +163,5 @@ impl PackageJson {
             }
             _ => Ok(None),
         }
-    }
-
-    /// [PACKAGE_EXPORTS_RESOLVE](https://nodejs.org/api/esm.html#resolution-algorithm-specification)
-    #[allow(clippy::single_match)]
-    pub fn package_exports_resolve(&self, request: &str) -> Option<PathBuf> {
-        let Some(exports) = &self.exports else {
-            return None;
-        };
-        match exports {
-            ExportsField::Map(map) => match map.get(request) {
-                Some(ExportsField::String(value)) => {
-                    return Some(self.path.parent().unwrap().join(value));
-                }
-                _ => {}
-            },
-            _ => {}
-        }
-        None
     }
 }

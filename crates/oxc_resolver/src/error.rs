@@ -31,6 +31,24 @@ pub enum ResolveError {
 
     /// JSON parse error
     JSON(JSONError),
+
+    // TODO: TypeError [ERR_INVALID_MODULE_SPECIFIER]: Invalid module "./dist/../../../a.js" request is not a valid subpath for the "exports" resolution of /xxx/package.json
+    InvalidModuleSpecifier(String),
+
+    // TODO: Error [ERR_INVALID_PACKAGE_TARGET]: Invalid "exports" target "./../../a.js" defined for './dist/a.js' in the package config /xxx/package.json
+    InvalidPackageTarget(String),
+
+    // TODO: Error [ERR_PACKAGE_PATH_NOT_EXPORTED]: Package subpath './anything/else' is not defined by "exports" in /xxx/package.json
+    PackagePathNotExported(String),
+
+    // TODO: Invalid package config /xxx/package.json. "exports" cannot contain some keys starting with '.' and some not. The exports object must either be an object of package subpath keys or an object of main entry condition name keys only.
+    InvalidPackageConfig(PathBuf),
+
+    // TODO: Default condition should be last one
+    InvalidPackageConfigDefault(PathBuf),
+
+    // TODO:  Expecting folder to folder mapping. "./data/timezones" should end with "/"
+    InvalidPackageConfigDirectory(PathBuf),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]

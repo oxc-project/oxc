@@ -1,8 +1,8 @@
 #![no_main]
 
 use oxc_allocator::Allocator;
-use oxc_span::SourceType;
 use oxc_parser::Parser;
+use oxc_span::SourceType;
 
 libfuzzer_sys::fuzz_target!(|data: &[u8]| {
     if let Ok(s) = std::str::from_utf8(data) {

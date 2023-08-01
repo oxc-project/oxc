@@ -323,6 +323,7 @@ impl<'a, 'b> VisitMut<'a, 'b> for Compressor<'a> {
     fn visit_statement(&mut self, stmt: &'b mut Statement<'a>) {
         self.compress_block(stmt);
         self.compress_while(stmt);
+        self.fold_condition(stmt);
         self.visit_statement_match(stmt);
     }
 

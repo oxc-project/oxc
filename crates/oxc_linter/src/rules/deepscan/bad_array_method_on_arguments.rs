@@ -59,8 +59,8 @@ impl Rule for BadArrayMethodOnArguments {
             MemberExpression::StaticMemberExpression(expr) => {
                 if ARRAY_METHODS.binary_search(&expr.property.name.as_str()).is_ok() {
                     ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                            expr.property.name.clone(),
-                            expr.span,
+                        expr.property.name.clone(),
+                        expr.span,
                     ));
                 }
             }
@@ -69,25 +69,27 @@ impl Rule for BadArrayMethodOnArguments {
                     Expression::StringLiteral(name) => {
                         if ARRAY_METHODS.binary_search(&name.value.as_str()).is_ok() {
                             ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                    name.value.clone(),
-                                    expr.span,
+                                name.value.clone(),
+                                expr.span,
                             ));
                         }
                     }
                     Expression::TemplateLiteral(template) => {
                         // only check template string like "arguments[`METHOD_NAME`]" for Deepscan compatible
-                        if template.expressions.is_empty()
-                            && template.quasis.len() == 1 {
-                                if let Some(name) = template.quasis.get(0).and_then(|template_element| template_element.value.cooked.as_deref()) {
-                                if ARRAY_METHODS.binary_search(&name).is_ok()
-                        {
-                            ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
-                                    Atom::from(name),
-                                    expr.span,
-                            ));
-                        }
+                        if template.expressions.is_empty() && template.quasis.len() == 1 {
+                            if let Some(name) =
+                                template.quasis.get(0).and_then(|template_element| {
+                                    template_element.value.cooked.as_deref()
+                                })
+                            {
+                                if ARRAY_METHODS.binary_search(&name).is_ok() {
+                                    ctx.diagnostic(BadArrayMethodOnArgumentsDiagnostic(
+                                        Atom::from(name),
+                                        expr.span,
+                                    ));
                                 }
                             }
+                        }
                     }
                     _ => {}
                 }

@@ -347,6 +347,7 @@ pub enum PropertyKey<'a> {
 }
 
 impl<'a> PropertyKey<'a> {
+    // FIXME: this would ideally return Option<&'a Atom> or a Cow
     pub fn static_name(&self) -> Option<Atom> {
         match self {
             Self::Identifier(ident) => Some(ident.name.clone()),
@@ -1849,6 +1850,7 @@ pub struct ExportSpecifier {
     pub span: Span,
     pub local: ModuleExportName,
     pub exported: ModuleExportName,
+    pub export_kind: ImportOrExportKind, // `export type *`
 }
 
 #[derive(Debug, Hash)]

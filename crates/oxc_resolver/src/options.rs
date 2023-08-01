@@ -16,6 +16,7 @@ pub enum AliasValue {
 /// Options are directly ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve#resolver-options).
 ///
 /// See [webpack resolve](https://webpack.js.org/configuration/resolve/) for information and examples
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone)]
 pub struct ResolveOptions {
     /// Create aliases to import or require certain modules more easily.
@@ -27,6 +28,12 @@ pub struct ResolveOptions {
     ///
     /// Default `[]`
     pub alias_fields: Vec<String>,
+
+    /// Condition names for exports field which defines entry points of a package.
+    /// The key order in the exports field is significant. During condition matching, earlier entries have higher priority and take precedence over later entries.
+    ///
+    /// Default `[]`
+    pub condition_names: Vec<String>,
 
     /// The JSON files to use for descriptions. (There was once a `bower.json`.)
     ///
@@ -60,6 +67,11 @@ pub struct ResolveOptions {
     ///
     /// Default `[]`
     pub fallback: Alias,
+
+    /// Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests)
+    ///
+    /// Default `false`
+    pub fully_specified: bool,
 
     /// The filename to be used while resolving directories.
     ///
@@ -100,11 +112,13 @@ impl Default for ResolveOptions {
         Self {
             alias: vec![],
             alias_fields: vec![],
+            condition_names: vec![],
             description_files: vec!["package.json".into()],
             enforce_extension: None,
             extension_alias: vec![],
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             fallback: vec![],
+            fully_specified: false,
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
             prefer_relative: false,

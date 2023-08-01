@@ -33,7 +33,7 @@ declare_oxc_lint!(
     /// let foo = require('foo');
     /// ```
     NoVarRequires,
-    correctness
+    restriction
 );
 
 impl Rule for NoVarRequires {

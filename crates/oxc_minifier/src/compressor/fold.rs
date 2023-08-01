@@ -783,29 +783,23 @@ impl<'a> Compressor<'a> {
     ) -> Option<Expression<'a>> {
         let boolean_value = get_boolean_value(&logic_expr.left);
 
-        let mut move_out = |dest: &mut Expression<'a>| {
-            let null_literal = self.hir.null_literal(dest.span());
-            let null_expr = self.hir.literal_null_expression(null_literal);
-            mem::replace(dest, null_expr)
-        };
-
         if let Some(boolean_value) = boolean_value {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if (boolean_value && op == LogicalOperator::Or)
                 || (!boolean_value && op == LogicalOperator::And)
             {
-                return Some(move_out(&mut logic_expr.left));
+                return Some(self.move_out_expression(&mut logic_expr.left));
             } else if !logic_expr.left.may_have_side_effects() {
                 // (FALSE || x) => x
                 // (TRUE && x) => x
-                return Some(move_out(&mut logic_expr.right));
+                return Some(self.move_out_expression(&mut logic_expr.right));
             }
             // Left side may have side effects, but we know its boolean value.
             // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
-            let left = move_out(&mut logic_expr.left);
-            let right = move_out(&mut logic_expr.right);
+            let left = self.move_out_expression(&mut logic_expr.left);
+            let right = self.move_out_expression(&mut logic_expr.right);
             let mut vec = self.hir.new_vec_with_capacity(2);
             vec.push(left);
             vec.push(right);
@@ -822,8 +816,8 @@ impl<'a> Compressor<'a> {
                         if !right_boolean && left_child_op == LogicalOperator::Or
                             || right_boolean && left_child_op == LogicalOperator::And
                         {
-                            let left = move_out(&mut left_child.left);
-                            let right = move_out(&mut logic_expr.right);
+                            let left = self.move_out_expression(&mut left_child.left);
+                            let right = self.move_out_expression(&mut logic_expr.right);
                             let logic_expr = self.hir.logical_expression(
                                 logic_expr.span,
                                 left,
@@ -837,5 +831,80 @@ impl<'a> Compressor<'a> {
             }
         }
         None
+    }
+
+    pub(crate) fn fold_condition<'b>(&mut self, stmt: &'b mut Statement<'a>) {
+        match stmt {
+            Statement::WhileStatement(while_stmt) => {
+                let minimized_expr = self.fold_expression_in_condition(&mut while_stmt.0.test);
+
+                if let Some(min_expr) = minimized_expr {
+                    while_stmt.0.test = min_expr;
+                }
+            }
+            Statement::ForStatement(for_stmt) => {
+                let test_expr = for_stmt.0.test.as_mut();
+
+                if let Some(test_expr) = test_expr {
+                    let minimized_expr = self.fold_expression_in_condition(test_expr);
+
+                    if let Some(min_expr) = minimized_expr {
+                        for_stmt.0.test = Some(min_expr);
+                    }
+                }
+            }
+            _ => {}
+        };
+    }
+
+    fn fold_expression_in_condition(
+        &mut self,
+        expr: &mut Expression<'a>,
+    ) -> Option<Expression<'a>> {
+        let folded_expr = match expr {
+            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
+                UnaryOperator::LogicalNot => {
+                    let should_fold = self.try_minimize_not(&mut unary_expr.0.argument);
+
+                    if should_fold {
+                        Some(self.move_out_expression(&mut unary_expr.0.argument))
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            _ => None,
+        };
+
+        folded_expr
+    }
+
+    fn move_out_expression(&mut self, expr: &mut Expression<'a>) -> Expression<'a> {
+        let null_literal = self.hir.null_literal(expr.span());
+        let null_expr = self.hir.literal_null_expression(null_literal);
+        mem::replace(expr, null_expr)
+    }
+
+    /// ported from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java#L401-L435)
+    fn try_minimize_not(&mut self, expr: &mut Expression<'a>) -> bool {
+        let span = &mut expr.span();
+
+        match expr {
+            Expression::BinaryExpression(binary_expr) => {
+                let new_op = binary_expr.0.operator.equality_inverse_operator();
+
+                match new_op {
+                    Some(new_op) => {
+                        binary_expr.0.operator = new_op;
+                        binary_expr.0.span = *span;
+
+                        true
+                    }
+                    _ => false,
+                }
+            }
+            _ => false,
+        }
     }
 }

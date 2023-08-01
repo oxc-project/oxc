@@ -20,6 +20,10 @@ pub trait PathUtil {
     ///
     /// However, this does not resolve links.
     fn normalize_with<P: AsRef<Path>>(&self, subpath: P) -> PathBuf;
+
+    /// Defined in ESM PACKAGE_TARGET_RESOLVE
+    /// If target split on "/" or "\" contains any "", ".", "..", or "node_modules" segments after the first "." segment, case insensitive and including percent encoded variants
+    fn is_invalid_exports_target(&self) -> bool;
 }
 
 impl PathUtil for Path {
@@ -74,5 +78,14 @@ impl PathUtil for Path {
         }
 
         ret
+    }
+
+    fn is_invalid_exports_target(&self) -> bool {
+        self.components().enumerate().any(|(index, c)| match c {
+            Component::ParentDir => true,
+            Component::CurDir => index > 0,
+            Component::Normal(c) => c.eq_ignore_ascii_case("node_modules"),
+            _ => false,
+        })
     }
 }

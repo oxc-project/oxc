@@ -37,8 +37,10 @@ pub enum RuleCategory {
     Correctness,
     /// Code that is most likely wrong or useless
     Suspicious,
-    /// Pedantic
+    /// Lints which are rather strict or have occasional false positives
     Pedantic,
+    /// Code that should be written in a more idiomatic way
+    Style,
     /// Lints which prevent the use of language and library features
     /// The restriction category should, emphatically, not be enabled as a whole.
     /// The contained lints may lint against perfectly reasonable code, may not have an alternative suggestion,
@@ -55,6 +57,7 @@ impl RuleCategory {
             "correctness" => Some(Self::Correctness),
             "suspicious" => Some(Self::Suspicious),
             "pedantic" => Some(Self::Pedantic),
+            "style" => Some(Self::Style),
             "restriction" => Some(Self::Restriction),
             "nursery" => Some(Self::Nursery),
             _ => None,
@@ -68,8 +71,22 @@ impl fmt::Display for RuleCategory {
             Self::Correctness => write!(f, "Correctness"),
             Self::Suspicious => write!(f, "Suspicious"),
             Self::Pedantic => write!(f, "Pedantic"),
+            Self::Style => write!(f, "Style"),
             Self::Restriction => write!(f, "Restriction"),
             Self::Nursery => write!(f, "Nursery"),
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::RULES;
+
+    #[test]
+    fn ensure_documentation() {
+        assert!(!RULES.is_empty());
+        for rule in RULES.iter() {
+            assert!(rule.documentation().is_some_and(|s| !s.is_empty()), "{}", rule.name());
         }
     }
 }
