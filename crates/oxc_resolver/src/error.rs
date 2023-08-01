@@ -43,6 +43,12 @@ pub enum ResolveError {
 
     // TODO: Invalid package config /xxx/package.json. "exports" cannot contain some keys starting with '.' and some not. The exports object must either be an object of package subpath keys or an object of main entry condition name keys only.
     InvalidPackageConfig(PathBuf),
+
+    // TODO: Default condition should be last one
+    InvalidPackageConfigDefault(PathBuf),
+
+    // TODO:  Expecting folder to folder mapping. "./data/timezones" should end with "/"
+    InvalidPackageConfigDirectory(PathBuf),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
