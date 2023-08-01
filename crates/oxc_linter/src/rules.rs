@@ -69,6 +69,7 @@ mod eslint {
     pub mod require_yield;
     pub mod use_isnan;
     pub mod valid_typeof;
+    pub mod no_useless_backreference;
 }
 
 mod typescript {
@@ -146,6 +147,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unsafe_negation,
     eslint::no_unsafe_optional_chaining,
     eslint::no_unused_labels,
+    eslint::no_useless_backreference,
     eslint::no_useless_catch,
     eslint::no_useless_escape,
     eslint::require_yield,
