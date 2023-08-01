@@ -10,7 +10,7 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression,
         ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
+        PropertyKey, Statement, StringLiteral, TemplateLiteral,
     },
     Visit,
 };
@@ -64,9 +64,6 @@ impl<'a> Visit<'a> for TestCase<'a> {
         match expr {
             Expression::StringLiteral(lit) => self.visit_string_literal(lit),
             Expression::TemplateLiteral(lit) => self.visit_template_literal(lit),
-            Expression::TaggedTemplateExpression(tag_expr) => {
-                self.visit_tagged_template_expression(tag_expr);
-            }
             Expression::ObjectExpression(obj_expr) => self.visit_object_expression(obj_expr),
             Expression::CallExpression(call_expr) => self.visit_call_expression(call_expr),
             _ => {}
@@ -97,10 +94,13 @@ impl<'a> Visit<'a> for TestCase<'a> {
             match obj_prop {
                 ObjectPropertyKind::ObjectProperty(prop) => match &prop.key {
                     PropertyKey::Identifier(ident) if ident.name == "code" => {
-                        let Expression::StringLiteral(s) = &prop.value else {
-                            continue;
-                        };
-                        self.code = Some(Cow::Borrowed(s.value.as_str()));
+                        self.code = match &prop.value {
+                            Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
+                            Expression::TaggedTemplateExpression(tag_expr) => {
+                                tag_expr.quasi.quasi().map(|s| Cow::Borrowed(s.as_str()))
+                            }
+                            _ => continue,
+                        }
                     }
                     PropertyKey::Identifier(ident) if ident.name == "options" => {
                         let span = prop.value.span();
@@ -117,11 +117,6 @@ impl<'a> Visit<'a> for TestCase<'a> {
 
     fn visit_template_literal(&mut self, lit: &'a TemplateLiteral<'a>) {
         self.code = Some(Cow::Borrowed(lit.quasi().unwrap().as_str()));
-        self.test_code = None;
-    }
-
-    fn visit_tagged_template_expression(&mut self, tag_expr: &'a TaggedTemplateExpression<'a>) {
-        self.code = Some(Cow::Borrowed(tag_expr.quasi.quasi().unwrap().as_str()));
         self.test_code = None;
     }
 
