@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use oxc_resolver::{Resolution, ResolveOptions, Resolver};
+use crate::{Resolution, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("scoped")

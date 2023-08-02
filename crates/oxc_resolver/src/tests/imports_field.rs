@@ -4,7 +4,7 @@
 
 use serde_json::json;
 
-use oxc_resolver::{MatchObject, PathUtil, Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{MatchObject, PathUtil, Resolution, ResolveError, ResolveOptions, Resolver};
 use std::path::Path;
 
 #[test]

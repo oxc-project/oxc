@@ -1,6 +1,6 @@
 use std::{env, fs, io, path::Path};
 
-use oxc_resolver::{Resolution, ResolveOptions, Resolver};
+use crate::{Resolution, ResolveOptions, Resolver};
 
 #[derive(Debug, Clone, Copy)]
 enum FileType {
