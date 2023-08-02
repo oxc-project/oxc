@@ -47,15 +47,24 @@ impl Rule for NoUndef {
             .unwrap_or_default();
         Self { type_of }
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::IdentifierReference(ident) = node.kind() {
-            if ctx.semantic().is_reference_to_global_variable(ident)
-                && !BUILTINS.contains_key(ident.name.as_str())
-            {
-                if !self.type_of && has_typeof_operator(node, ctx) {
+    fn run_once(&self, ctx: &LintContext) {
+        let symbol_table = ctx.symbols();
+
+        for reference_id_list in ctx.scopes().root_unresolved_references().values() {
+            for &reference_id in reference_id_list {
+                let reference = symbol_table.get_reference(reference_id);
+                if BUILTINS.contains_key(reference.name().as_str()) {
                     return;
                 }
-                ctx.diagnostic(NoUndefDiagnostic(ident.name.clone(), ident.span));
+                if !self.type_of {
+                    for node in ctx.semantic().nodes().iter() {
+                        if has_typeof_operator(node, ctx) {
+                            return;
+                        }
+                    }
+                }
+
+                ctx.diagnostic(NoUndefDiagnostic(reference.name().clone(), reference.span()));
             }
         }
     }
