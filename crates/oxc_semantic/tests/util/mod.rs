@@ -87,7 +87,16 @@ impl SemanticTester {
     }
 
     pub fn has_root_symbol(&self, name: &str) -> SymbolTester {
-        SymbolTester::new_at_root(self.build(), name.to_owned(), self.source_text)
+        SymbolTester::new_at_root(self.build(), name, self.source_text)
+    }
+    /// Finds some symbol by name in the source code.
+    /// 
+    /// ## Fails
+    /// 1. No symbol with the given name exists,
+    /// 2. More than one symbol with the given name exists, so a symbol cannot
+    ///    be uniquely obtained.
+    pub fn has_some_symbol(&self, name: &str) -> SymbolTester {
+        SymbolTester::new_unique(self.build(), name, self.source_text)
     }
 
     fn wrap_diagnostics(&self, diagnostics: Vec<Error>) -> Vec<Error> {
@@ -119,15 +128,28 @@ pub struct SymbolTester<'a> {
 //     Err(oxc_diagnostics::Error)
 // }
 impl<'a> SymbolTester<'a> {
-    pub fn new_at_root(semantic: Semantic<'a>, target: String, source: &'static str) -> Self {
-        let decl = semantic
-            .scopes()
-            .get_binding(semantic.scopes().root_scope_id(), &Atom::from(target.as_str()));
+    pub fn new_at_root(semantic: Semantic<'a>, target: &str, source: &'static str) -> Self {
+        let decl =
+            semantic.scopes().get_binding(semantic.scopes().root_scope_id(), &Atom::from(target));
         let data = decl.map_or_else(
             || Err(miette!("Could not find declaration for {target}")),
             |decl| Ok(decl),
         );
-        SymbolTester { semantic, target, data, source }
+
+        SymbolTester { semantic, target: target.to_string(), data, source }
+    }
+
+    pub fn new_unique(semantic: Semantic<'a>, target: &str, source: &'static str) -> Self {
+        let symbols_with_target_name: Vec<_> =
+            semantic.scopes().iter_bindings().filter(|(_, _, name)| name == &target).collect();
+        let data = match symbols_with_target_name.len() {
+            0 => Err(miette!("Could not find declaration for {target}")),
+            1 => Ok(symbols_with_target_name.iter().map(|(_, symbol_id, _)| *symbol_id).nth(0).unwrap()),
+            n if n > 1 => Err(miette!("Couldn't uniquely resolve symbol id for target {target}; {n} symbols with that name are declared in the source.")),
+            _ => unreachable!()
+        };
+
+        SymbolTester { semantic, target: target.to_string(), data, source }
     }
 
     /// Checks if the resolved symbol contains all flags in `flags`, using [`SymbolFlags::contains()`]
@@ -140,6 +162,26 @@ impl<'a> SymbolTester<'a> {
                 } else {
                     Err(miette!(
                         "Expected {} to contain flags {:?}, but it had {:?}",
+                        self.target,
+                        flags,
+                        found_flags
+                    ))
+                }
+            }
+            err => err,
+        };
+        self
+    }
+
+    pub fn intersects_flags(mut self, flags: SymbolFlags) -> Self {
+        self.data = match self.data {
+            Ok(symbol_id) => {
+                let found_flags = self.semantic.symbols().get_flag(symbol_id);
+                if found_flags.intersects(flags) {
+                    Ok(symbol_id)
+                } else {
+                    Err(miette!(
+                        "Expected {} to intersect with flags {:?}, but it had {:?}",
                         self.target,
                         flags,
                         found_flags

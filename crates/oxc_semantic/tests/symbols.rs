@@ -23,3 +23,11 @@ fn test_function_simple() {
         .contains_flags(SymbolFlags::Function)
         .test();
 }
+
+#[test]
+fn test_var_simple() {
+    SemanticTester::js("let x; { let y; }")
+    .has_some_symbol("x")
+    .intersects_flags(SymbolFlags::Variable)
+    .test();
+}
