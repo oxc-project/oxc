@@ -4,6 +4,7 @@ mod exports_field;
 mod extension_alias;
 mod extensions;
 mod fallback;
+mod imports_field;
 mod incorrect_description_file;
 mod resolve;
 mod roots;
