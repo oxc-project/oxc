@@ -20,7 +20,7 @@
 |  ✅  | extensions       | [".js", ".json", ".node"]   | A list of extensions which should be tried for files                                                                                                      |
 |  ✅  | fallback         | []                          | Same as `alias`, but only used if default resolving fails                                                                                                 |
 |  ✅  | fileSystem       |                             | The file system which should be used                                                                                                                      |
-|      | fullySpecified   | false                       | Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests) |
+|  ✅  | fullySpecified   | false                       | Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests) |
 |      | mainFields       | ["main"]                    | A list of main fields in description files                                                                                                                |
 |  ✅  | mainFiles        | ["index"]                   | A list of main files in directories                                                                                                                       |
 |  ✅  | modules          | ["node_modules"]            | A list of directories to resolve modules from, can be absolute path or folder name                                                                        |
@@ -51,7 +51,7 @@ Crossed out test files are irrelevant.
 - [x] extensions.test.js
 - [x] fallback.test.js (need to fix a todo)
 - [x] ~forEachBail.test.js~
-- [ ] fullSpecified.test.js
+- [x] fullSpecified.test.js
 - [ ] getPaths.test.js
 - [x] identifier.test.js (see unit test in `crates/oxc_resolver/src/request.rs`)
 - [x] importsField.test.js
