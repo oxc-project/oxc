@@ -2,7 +2,7 @@
 
 use std::env;
 
-use oxc_resolver::{AliasValue, Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{AliasValue, Resolution, ResolveError, ResolveOptions, Resolver};
 
 #[test]
 fn roots() {

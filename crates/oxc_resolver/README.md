@@ -37,6 +37,8 @@
 ## Test
 
 Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve).
+Test cases are located in `./src/tests`, fixtures are located in `./tests`
+
 Crossed out test files are irrelevant.
 
 - [x] ~CachedInputFileSystem.test.js~

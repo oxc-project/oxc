@@ -1,8 +1,8 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/incorrect-description-file.test.js>
 
-use std::path::PathBuf;
+use std::{env, path::PathBuf};
 
-use oxc_resolver::{JSONError, ResolveError, Resolver};
+use crate::{JSONError, Resolution, ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("incorrect-package")
@@ -44,4 +44,22 @@ fn incorrect_description_file_3() {
     let f = fixture();
     let resolution = Resolver::default().resolve(f.join("pack2"), ".");
     assert!(resolution.is_err());
+}
+
+// `enhanced_resolve` does not have this test case
+#[test]
+fn no_description_file() {
+    let f = env::current_dir().unwrap().join("tests/enhanced_resolve");
+
+    // has description file
+    let resolver = Resolver::default();
+    assert_eq!(
+        resolver.resolve(&f, ".").map(Resolution::into_path_buf),
+        Ok(f.join("lib/index.js"))
+    );
+
+    // without description file
+    let resolver =
+        Resolver::new(ResolveOptions { description_files: vec![], ..ResolveOptions::default() });
+    assert_eq!(resolver.resolve(&f, "."), Err(ResolveError::NotFound(f.into_boxed_path())));
 }

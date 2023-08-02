@@ -75,7 +75,6 @@ impl ExportsField {
 pub enum ExportsKey {
     Main,
     Pattern(String),
-    Hash(String),
     CustomCondition(String),
 }
 

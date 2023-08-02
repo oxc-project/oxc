@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use oxc_resolver::{Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{Resolution, ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("browser-module")

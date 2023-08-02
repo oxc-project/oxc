@@ -2,7 +2,7 @@
 
 use std::env;
 
-use oxc_resolver::Resolver;
+use crate::Resolver;
 
 #[test]
 fn simple() {

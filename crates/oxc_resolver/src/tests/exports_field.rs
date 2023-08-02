@@ -2,7 +2,7 @@
 //!
 //! The huge exports field test cases are at the bottom of this file.
 
-use oxc_resolver::{ExportsField, PathUtil, Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{ExportsField, PathUtil, Resolution, ResolveError, ResolveOptions, Resolver};
 use serde_json::json;
 use std::path::Path;
 

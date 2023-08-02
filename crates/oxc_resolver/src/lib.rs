@@ -17,6 +17,9 @@ mod path;
 mod request;
 mod resolution;
 
+#[cfg(test)]
+mod tests;
+
 use std::{
     borrow::Cow,
     cmp::Ordering,
@@ -27,15 +30,15 @@ use std::{
 use crate::{
     cache::{Cache, CacheValue},
     file_system::FileSystemOs,
+    package_json::{ExportsField, MatchObject},
     package_json::{ExportsKey, PackageJson},
+    path::PathUtil,
     request::{Request, RequestPath},
 };
 pub use crate::{
     error::{JSONError, ResolveError},
     file_system::{FileMetadata, FileSystem},
     options::{Alias, AliasValue, ResolveOptions},
-    package_json::{ExportsField, MatchObject},
-    path::PathUtil,
     resolution::Resolution,
 };
 
@@ -535,9 +538,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     /// PACKAGE_EXPORTS_RESOLVE(packageURL, subpath, exports, conditions)
-    ///
-    /// # Errors
-    pub fn package_exports_resolve(
+    fn package_exports_resolve(
         &self,
         package_url: &Path,
         subpath: &str,
@@ -550,8 +551,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             let mut without_dot = false;
             for key in map.keys() {
                 has_dot = has_dot || matches!(key, ExportsKey::Main | ExportsKey::Pattern(_));
-                without_dot = without_dot
-                    || matches!(key, ExportsKey::Hash(_) | ExportsKey::CustomCondition(_));
+                without_dot = without_dot || matches!(key, ExportsKey::CustomCondition(_));
                 if has_dot && without_dot {
                     return Err(ResolveError::InvalidPackageConfig(
                         package_url.join("package.json"),
@@ -661,9 +661,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     /// PACKAGE_IMPORTS_EXPORTS_RESOLVE(matchKey, matchObj, packageURL, isImports, conditions)
-    ///
-    /// # Errors
-    pub fn package_imports_exports_resolve(
+    fn package_imports_exports_resolve(
         &self,
         match_key: &str,
         match_obj: &MatchObject,
