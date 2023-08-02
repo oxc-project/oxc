@@ -1609,6 +1609,7 @@ dependencies = [
  "bitflags 2.3.3",
  "indexmap 2.0.0",
  "itertools 0.11.0",
+ "miette",
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
