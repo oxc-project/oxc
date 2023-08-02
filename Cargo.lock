@@ -1817,7 +1817,6 @@ dependencies = [
 name = "oxc_vscode"
 version = "0.0.1"
 dependencies = [
- "dashmap",
  "env_logger",
  "ignore",
  "miette",

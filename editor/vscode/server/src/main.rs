@@ -4,7 +4,6 @@ mod walk;
 
 use std::fmt::Debug;
 
-use dashmap::DashMap;
 use linter::ServerLinter;
 use tokio::sync::{OnceCell, SetError};
 use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
@@ -16,7 +15,6 @@ struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Url>>,
     server_linter: ServerLinter,
-    resolved_diagnostics: DashMap<Url, Vec<Diagnostic>>,
 }
 
 #[tower_lsp::async_trait]
@@ -52,11 +50,11 @@ impl LanguageServer for Backend {
             let result = self.server_linter.run_full(root_uri);
 
             for (path, diagnostics) in result {
-                self.resolved_diagnostics.insert(Url::from_file_path(path).unwrap(), diagnostics);
+                self.client
+                    .publish_diagnostics(Url::from_file_path(path).unwrap(), diagnostics, None)
+                    .await;
             }
         }
-
-        self.publish_all_diagnostics().await;
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -67,9 +65,6 @@ impl LanguageServer for Backend {
         if let Some(Some(root_uri)) = self.root_uri.get() {
             match self.server_linter.run_single(root_uri, &params.text_document.uri) {
                 Some((_, diagnostics)) => {
-                    self.resolved_diagnostics
-                        .insert(params.text_document.uri.clone(), diagnostics.clone());
-
                     self.client
                         .publish_diagnostics(params.text_document.uri, diagnostics, None)
                         .await;
@@ -83,9 +78,6 @@ impl LanguageServer for Backend {
         if let Some(Some(root_uri)) = self.root_uri.get() {
             match self.server_linter.run_single(root_uri, &params.text_document.uri) {
                 Some((_, diagnostics)) => {
-                    self.resolved_diagnostics
-                        .insert(params.text_document.uri.clone(), diagnostics.clone());
-
                     self.client
                         .publish_diagnostics(params.text_document.uri, diagnostics, None)
                         .await;
@@ -107,14 +99,6 @@ impl Backend {
             Error { code: ErrorCode::ParseError, message, data: None }
         })
     }
-
-    async fn publish_all_diagnostics(&self) {
-        for entry in self.resolved_diagnostics.iter() {
-            let (uri, diagnostics) = entry.pair();
-
-            self.client.publish_diagnostics(uri.clone(), diagnostics.to_vec(), None).await;
-        }
-    }
 }
 
 #[tokio::main]
@@ -126,13 +110,9 @@ async fn main() {
 
     let server_linter = ServerLinter::new();
 
-    let (service, socket) = LspService::build(|client| Backend {
-        client,
-        root_uri: OnceCell::new(),
-        server_linter,
-        resolved_diagnostics: DashMap::new(),
-    })
-    .finish();
+    let (service, socket) =
+        LspService::build(|client| Backend { client, root_uri: OnceCell::new(), server_linter })
+            .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
 }

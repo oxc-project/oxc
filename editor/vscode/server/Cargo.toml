@@ -29,4 +29,3 @@ tower-lsp = { workspace = true, features = ["proposed"]}
 rayon = { workspace = true }
 ignore  = { workspace = true, features = ["simd-accel"] }
 miette  = { workspace = true, features = ["fancy-no-backtrace"] }
-dashmap = { workspace = true }
