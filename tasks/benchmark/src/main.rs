@@ -112,7 +112,9 @@ fn bench_semantic(criterion: &mut Criterion, files: &[&TestFile]) {
                 let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
                 let program = allocator.alloc(ret.program);
                 b.iter_with_large_drop(|| {
-                    SemanticBuilder::new(source_text, source_type).build(program)
+                    SemanticBuilder::new(source_text, source_type)
+                        .with_module_record_builder(true)
+                        .build(program)
                 });
             },
         );
