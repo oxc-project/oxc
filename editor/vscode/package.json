@@ -1,0 +1,68 @@
+{
+  "name": "vscode-oxc",
+  "description": "vscode extension",
+  "license": "MIT",
+  "version": "0.0.1",
+  "categories": [],
+  "keywords": [
+    "linter",
+    "language-server",
+    "oxc"
+  ],
+  "engines": {
+    "vscode": ">=1.66.0"
+  },
+  "enabledApiProposals": [],
+  "activationEvents": [
+		"onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "oxc.restartServer",
+        "title": "Restart Oxc Server",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.applyAllFixes",
+        "title": "Fix All Auto-fixable Problems",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.showOutputChannel",
+        "title": "Show Output Channel",
+        "category": "Oxc"
+      }
+    ]
+  },
+  "scripts": {
+    "ts-build": "tsc -b",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./client/src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "test-compile": "tsc -p ./",
+    "compile": "cross-env NODE_ENV=production tsc -b",
+    "watch": "tsc -b -w",
+    "test": "node ./dist/test/runTest.js",
+    "build": "webpack --config webpack.config.js",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/mocha": "^8.0.0",
+    "@types/node": "^20.2.5",
+    "@types/vscode": "^1.80.0",
+    "@vscode/test-electron": "^2.3.3",
+    "cross-env": "^7.0.2",
+    "esbuild": "^0.18.17",
+    "mocha": "^8.0.1",
+    "typescript": "^5.1.6",
+    "vscode-uri": "^3.0.7",
+    "webpack": "^5.85.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  }
+}
