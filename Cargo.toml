@@ -67,6 +67,7 @@ rayon             = { version = "1.7.0" }
 regex             = { version = "1.9.1" }
 rustc-hash        = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js            = { version = "0.2.2" }
+ropey              = { version = "1.6.0" }
 serde             = { version = "1.0.175" }
 serde_json        = { version = "1.0.103" }
 syn               = { version = "=1" }

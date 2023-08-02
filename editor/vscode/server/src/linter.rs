@@ -6,7 +6,6 @@ use std::{
         atomic::{AtomicUsize, Ordering},
         mpsc, Arc,
     },
-    thread::spawn,
 };
 
 use crate::options::LintOptions;
@@ -21,25 +20,43 @@ use oxc_linter::{Fixer, LintContext, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use tower_lsp::lsp_types::{self, Range, Url};
+use ropey::Rope;
+use tower_lsp::lsp_types::{self, Position, Range, Url};
 
-trait IntoLspDiagnostic {
-    fn into_lsp_diagnostic(&self) -> lsp_types::Diagnostic;
+struct ErrorWithPosition {
+    pub start_pos: Position,
+    pub end_pos: Position,
+    pub miette_err: Error,
 }
 
-impl IntoLspDiagnostic for Error {
+impl ErrorWithPosition {
+    pub fn new(error: Error, text: &str) -> Self {
+        let labels = error.labels().map_or(vec![], Iterator::collect);
+        let start =
+            labels.iter().min_by_key(|span| span.offset()).map_or(0, |span| span.offset() as u32);
+        let end = labels
+            .iter()
+            .max_by_key(|span| span.offset() + span.len())
+            .map_or(0, |span| (span.offset() + span.len()) as u32);
+        Self {
+            miette_err: error,
+            start_pos: offset_to_position(start as usize, text).unwrap_or_default(),
+            end_pos: offset_to_position(end as usize, text).unwrap_or_default(),
+        }
+    }
+
     fn into_lsp_diagnostic(&self) -> lsp_types::Diagnostic {
-        let severity = match self.severity() {
+        let severity = match self.miette_err.severity() {
             Some(Severity::Error) => Some(lsp_types::DiagnosticSeverity::ERROR),
             Some(Severity::Warning) => Some(lsp_types::DiagnosticSeverity::WARNING),
             _ => None,
         };
 
         lsp_types::Diagnostic {
-            range: Range::default(),
+            range: Range { start: self.start_pos, end: self.end_pos },
             severity,
             code: None,
-            message: self.to_string(),
+            message: self.miette_err.to_string(),
             source: Some("oxc".into()),
             code_description: None,
             related_information: None,
@@ -48,6 +65,7 @@ impl IntoLspDiagnostic for Error {
         }
     }
 }
+
 
 pub struct IsolatedLintHandler {
     options: Arc<LintOptions>,
@@ -64,7 +82,7 @@ impl IsolatedLintHandler {
     /// * When `mpsc::channel` fails to send.
     pub fn run_full(&self) -> Vec<(PathBuf, Vec<lsp_types::Diagnostic>)> {
         let number_of_files = Arc::new(AtomicUsize::new(0));
-        let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
+        let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<ErrorWithPosition>)>();
 
         self.process_paths(&number_of_files, tx_error);
         self.process_diagnostics(&rx_error)
@@ -102,7 +120,7 @@ impl IsolatedLintHandler {
     fn process_paths(
         &self,
         number_of_files: &Arc<AtomicUsize>,
-        tx_error: mpsc::Sender<(PathBuf, Vec<Error>)>,
+        tx_error: mpsc::Sender<(PathBuf, Vec<ErrorWithPosition>)>,
     ) {
         let (tx_path, rx_path) = mpsc::channel::<Box<Path>>();
 
@@ -134,7 +152,7 @@ impl IsolatedLintHandler {
 
     fn process_diagnostics(
         &self,
-        rx_error: &mpsc::Receiver<(PathBuf, Vec<Error>)>,
+        rx_error: &mpsc::Receiver<(PathBuf, Vec<ErrorWithPosition>)>,
     ) -> Vec<(PathBuf, Vec<lsp_types::Diagnostic>)> {
         rx_error
             .iter()
@@ -142,7 +160,7 @@ impl IsolatedLintHandler {
             .collect()
     }
 
-    fn lint_path(linter: &Linter, path: &Path) -> Option<(PathBuf, Vec<Error>)> {
+    fn lint_path(linter: &Linter, path: &Path) -> Option<(PathBuf, Vec<ErrorWithPosition>)> {
         let source_text =
             fs::read_to_string(path).unwrap_or_else(|_| panic!("Failed to read {path:?}"));
         let allocator = Allocator::default();
@@ -188,14 +206,27 @@ impl IsolatedLintHandler {
         path: &Path,
         source_text: &str,
         diagnostics: Vec<Error>,
-    ) -> (PathBuf, Vec<Error>) {
+    ) -> (PathBuf, Vec<ErrorWithPosition>) {
         let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
         let diagnostics = diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
+            .map(|diagnostic| {
+                ErrorWithPosition::new(
+                    diagnostic.with_source_code(Arc::clone(&source)),
+                    source_text,
+                )
+            })
             .collect();
         (path.to_path_buf(), diagnostics)
     }
+}
+
+fn offset_to_position(offset: usize, source_text: &str) -> Option<Position> {
+    let rope = Rope::from_str(source_text);
+    let line = rope.try_char_to_line(offset).ok()?;
+    let first_char_of_line = rope.try_line_to_char(line).ok()?;
+    let column = offset - first_char_of_line;
+    Some(Position::new(line as u32, column as u32))
 }
 
 #[derive(Debug)]
