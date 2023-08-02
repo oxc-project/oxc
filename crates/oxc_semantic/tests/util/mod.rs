@@ -3,7 +3,7 @@ use std::{path::PathBuf, sync::Arc};
 use itertools::Itertools;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
-    miette::{miette, ErrorHook, NamedSource, Diagnostic},
+    miette::{miette, Diagnostic, ErrorHook, NamedSource},
     Error, GraphicalReportHandler,
 };
 use oxc_semantic::{Reference, Semantic, SemanticBuilder, SymbolFlags, SymbolId};
@@ -193,7 +193,7 @@ impl<'a> SymbolTester<'a> {
     pub fn test(self) {
         // self.into::<Result<_, Error>>().unwrap()
         let res: Result<_, _> = self.into();
-        
+
         // res.map_err(|e| {
         //     let s = String::new();
         //     // let res = GraphicalReportHandler::new().render_report(s, &e).unwrap();
