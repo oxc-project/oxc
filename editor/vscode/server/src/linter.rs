@@ -56,7 +56,7 @@ impl ErrorWithPosition {
             range: Range { start: self.start_pos, end: self.end_pos },
             severity,
             code: None,
-            message: self.miette_err.to_string(),
+            message: format!("{}", self.miette_err),
             source: Some("oxc".into()),
             code_description: None,
             related_information: None,
@@ -65,7 +65,6 @@ impl ErrorWithPosition {
         }
     }
 }
-
 
 pub struct IsolatedLintHandler {
     options: Arc<LintOptions>,

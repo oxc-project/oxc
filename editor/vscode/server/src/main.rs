@@ -2,9 +2,11 @@ mod linter;
 mod options;
 mod walk;
 
+use crate::linter::ServerLinter;
 use std::fmt::Debug;
+use std::path::PathBuf;
 
-use linter::ServerLinter;
+use futures::future::join_all;
 use tokio::sync::{OnceCell, SetError};
 use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
 use tower_lsp::lsp_types::*;
@@ -49,11 +51,7 @@ impl LanguageServer for Backend {
         if let Some(Some(root_uri)) = self.root_uri.get() {
             let result = self.server_linter.run_full(root_uri);
 
-            for (path, diagnostics) in result {
-                self.client
-                    .publish_diagnostics(Url::from_file_path(path).unwrap(), diagnostics, None)
-                    .await;
-            }
+            self.publish_all_diagnostics(result).await;
         }
     }
 
@@ -98,6 +96,13 @@ impl Backend {
 
             Error { code: ErrorCode::ParseError, message, data: None }
         })
+    }
+
+    async fn publish_all_diagnostics(&self, result: Vec<(PathBuf, Vec<Diagnostic>)>) {
+        join_all(result.into_iter().map(|(path, diagnostics)| {
+            self.client.publish_diagnostics(Url::from_file_path(path).unwrap(), diagnostics, None)
+        }))
+        .await;
     }
 }
 

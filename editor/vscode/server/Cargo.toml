@@ -30,3 +30,4 @@ rayon = { workspace = true }
 ignore  = { workspace = true, features = ["simd-accel"] }
 miette  = { workspace = true, features = ["fancy-no-backtrace"] }
 ropey = { workspace = true }
+futures = { workspace = true }
