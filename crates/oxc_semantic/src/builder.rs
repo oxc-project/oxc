@@ -457,6 +457,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 }
 
 impl<'a> SemanticBuilder<'a> {
+    #[allow(clippy::too_many_lines)]
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::ModuleDeclaration(decl) => {
@@ -473,9 +474,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.make_all_namespaces_valuelike();
                 if let Some(body) = &func.body {
                     for stmt in &body.statements {
-                        if let Statement::Declaration(
-                            Declaration::VariableDeclaration(var_decl)
-                        ) = stmt {
+                        if let Statement::Declaration(Declaration::VariableDeclaration(var_decl)) =
+                            stmt
+                        {
                             self.add_variable(var_decl, false);
                         }
                     }
@@ -558,48 +559,39 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::Program(program) => {
                 for stmt in &program.body {
-                    if let Statement::Declaration(
-                        Declaration::VariableDeclaration(var_decl)
-                    ) = stmt {
+                    if let Statement::Declaration(Declaration::VariableDeclaration(var_decl)) = stmt
+                    {
                         self.add_variable(var_decl, false);
                     }
                 }
             }
             AstKind::ForStatement(for_stmt) => {
-                if let Some(
-                    ForStatementInit::VariableDeclaration(var_decl)
-                ) = &for_stmt.init {
+                if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &for_stmt.init {
                     self.add_variable(var_decl, false);
                 }
             }
             AstKind::ForInStatement(for_in_stmt) => {
-                if let ForStatementLeft::VariableDeclaration(
-                    var_decl
-                ) = &for_in_stmt.left {
+                if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
                     self.add_variable(var_decl, false);
                 }
             }
             AstKind::ForOfStatement(for_of_stmt) => {
-                if let ForStatementLeft::VariableDeclaration(
-                    var_decl
-                ) = &for_of_stmt.left {
+                if let ForStatementLeft::VariableDeclaration(var_decl) = &for_of_stmt.left {
                     self.add_variable(var_decl, false);
                 }
             }
             AstKind::StaticBlock(static_block) => {
                 for stmt in &static_block.body {
-                    if let Statement::Declaration(
-                        Declaration::VariableDeclaration(var_decl)
-                    ) = stmt {
+                    if let Statement::Declaration(Declaration::VariableDeclaration(var_decl)) = stmt
+                    {
                         self.add_variable(var_decl, false);
                     }
                 }
             }
             AstKind::BlockStatement(block_stmt) => {
                 for stmt in &block_stmt.body {
-                    if let Statement::Declaration(
-                        Declaration::VariableDeclaration(var_decl)
-                    ) = stmt {
+                    if let Statement::Declaration(Declaration::VariableDeclaration(var_decl)) = stmt
+                    {
                         self.add_variable(var_decl, true);
                     }
                 }
