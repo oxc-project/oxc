@@ -1,0 +1,81 @@
+name: "next:no-title-in-document-head:rule"
+
+query: |
+  query {
+    File {
+      import {
+        from_path @filter(op: "=", value: ["$nextslashdocument"])
+
+        specific_import @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+          original_name @filter(op: "=", value: ["$Head"])
+        }
+      }
+
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$title"])
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  Head: "Head"
+  zero: 0
+  title: "title"
+  nextslashdocument: "next/document"
+
+reason: "Do not use `<title>` element with `<Head />` component from `next/document`. Titles should defined at the page-level using `<Head />` from `next/head` instead."
+
+tests:
+  pass:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Head from "next/head";
+
+        class Test {
+          render() {
+            return (
+              <Head>
+                <title>My page title</title>
+              </Head>
+            );
+          }
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import Document, { Html, Head } from "next/document";
+
+        class MyDocument extends Document {
+          render() {
+            return (
+              <Html>
+                <Head>
+                </Head>
+              </Html>
+            );
+          }
+        }
+
+        export default MyDocument;
+  fail:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import { Head } from "next/document";
+
+        class Test {
+          render() {
+            return (
+              <Head>
+                <title>My page title</title>
+              </Head>
+            );
+          }
+        }

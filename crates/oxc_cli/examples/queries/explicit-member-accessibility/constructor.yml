@@ -1,0 +1,31 @@
+name: "tseslint:explicit-member-accessibility:constructor"
+query: |
+  query {
+    File {
+      class {
+        constructor {
+          accessibility @filter(op: "is_null")
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+
+reason: Add access modifier.
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        class A { public constructor() {} }
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        class A { constructor() {} }

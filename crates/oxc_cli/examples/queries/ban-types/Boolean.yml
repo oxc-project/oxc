@@ -1,0 +1,33 @@
+name: "tseslint:ban-types:Boolean"
+
+query: |
+  query {
+    File {
+      type_annotation {
+        type {
+          str @filter(op: "=", value: ["$Boolean"])
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  Boolean: "Boolean"
+
+reason: Use boolean instead
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: boolean = false;
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: Boolean = false;

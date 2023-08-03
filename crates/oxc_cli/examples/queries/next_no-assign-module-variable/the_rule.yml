@@ -1,0 +1,41 @@
+name: "next:inline-script-id:no-assign-module-variable:rule"
+
+query: |
+  query {
+    File {
+      variable_declaration {
+        left {
+          assignment_to_variable_name @filter(op: "=", value: ["$module"])
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  module: "module"
+
+reason: "Do not assign to the variable `module`."
+
+tests:
+  pass:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        let myModule = {};
+
+        export default function MyComponent() {
+          return <></>
+        }
+  fail:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        let module = {};
+
+        export default function MyComponent() {
+          return <></>
+        }

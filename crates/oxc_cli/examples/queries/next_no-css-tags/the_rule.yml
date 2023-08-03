@@ -1,0 +1,118 @@
+name: "next:no-css-tags:rule"
+
+query: |
+  query {
+    File {
+      jsx_element {
+        opening_element {
+          name @filter(op: "=", value: ["$link"])
+
+          span_: span {
+            start @output
+            end @output
+          }
+
+          attribute @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+            name @filter(op: "=", value: ["$rel"])
+            value_as_constant_string @filter(op: "=", value: ["$stylesheet"])
+          }
+
+          attribute @fold @transform(op: "count") @filter(op: ">", value: ["$zero"]) {
+            name @output @filter(op: "=", value: ["$href"])
+            value_as_constant_string @output @filter(op: "not_regex", value: ["$https_regex"])
+          }
+        }
+      }
+    }
+  }
+
+args:
+  zero: 0
+  link: "link"
+  href: "href"
+  rel: "rel"
+  stylesheet: "stylesheet"
+  https_regex: "^https?"
+
+reason: "Do not include stylesheets manually."
+
+tests:
+  pass:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import {Head} from 'next/document';
+
+        export class Blah extends Head {
+          render() {
+            return (
+              <div>
+                <h1>Hello title</h1>
+              </div>
+            );
+          }
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import {Head} from 'next/document';
+        export class Blah extends Head {
+          render() {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet" />
+              </div>
+            );
+          }
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import {Head} from 'next/document';
+        export class Blah extends Head {
+          render(props) {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <link {...props} />
+              </div>
+            );
+          }
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import {Head} from 'next/document';
+        export class Blah extends Head {
+          render(props) {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <link rel="stylesheet" {...props} />
+              </div>
+            );
+          }
+        }
+  fail:
+    - relative_path:
+        - "index.tsx"
+      code: |
+        import {Head} from 'next/document';
+
+        export class Blah extends Head {
+          render() {
+            return (
+              <div>
+                <h1>Hello title</h1>
+                <link href="/_next/static/css/styles.css" rel="stylesheet" />
+              </div>
+            );
+          }
+        }
+    - relative_path:
+        - "index.tsx"
+      code: |
+        <div>
+          <link href="/_next/static/css/styles.css" rel="stylesheet" />
+        </div>

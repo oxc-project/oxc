@@ -1,0 +1,33 @@
+name: "tseslint:ban-types:String"
+
+query: |
+  query {
+    File {
+      type_annotation {
+        type {
+          str @filter(op: "=", value: ["$String"])
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  String: "String"
+
+reason: Use string instead
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: string = '';
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: String = '';

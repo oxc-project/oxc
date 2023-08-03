@@ -1,0 +1,33 @@
+name: "tseslint:ban-types:Number"
+
+query: |
+  query {
+    File {
+      type_annotation {
+        type {
+          str @filter(op: "=", value: ["$Number"])
+          span_: span {
+            start @output
+            end @output
+          }
+        }
+      }
+    }
+  }
+
+args:
+  Number: "Number"
+
+reason: Use number instead
+
+tests:
+  pass:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: number = 1;
+  fail:
+    - relative_path:
+        - "index.ts"
+      code: |
+        const a: Number = 1;
