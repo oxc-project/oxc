@@ -17,6 +17,7 @@ oxc_ast         = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
+oxc_allocator = { workspace = true }
 
 bitflags   = { workspace = true }
 rustc-hash = { workspace = true }
@@ -25,4 +26,3 @@ indexmap   = { workspace = true }
 
 [dev-dependencies]
 oxc_parser    = { workspace = true }
-oxc_allocator = { workspace = true }

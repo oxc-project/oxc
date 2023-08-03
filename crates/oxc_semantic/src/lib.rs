@@ -9,7 +9,7 @@ mod reference;
 mod scope;
 mod symbol;
 
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 pub use jsdoc::{JSDoc, JSDocComment, JSDocTag};
@@ -22,6 +22,7 @@ pub use oxc_syntax::{
 };
 
 pub use crate::{
+    builder::VariableInfo,
     node::{AstNode, AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::ScopeTree,
@@ -46,6 +47,8 @@ pub struct Semantic<'a> {
     jsdoc: JSDoc<'a>,
 
     unused_labels: Vec<AstNodeId>,
+
+    redeclare_variables: RefCell<Vec<VariableInfo>>,
 }
 
 impl<'a> Semantic<'a> {
@@ -116,6 +119,10 @@ impl<'a> Semantic<'a> {
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         self.scopes().root_unresolved_references().contains_key(&ident.name)
+    }
+
+    pub fn redeclare_variables(&self) -> Vec<VariableInfo> {
+        self.redeclare_variables.clone().into_inner()
     }
 }
 
