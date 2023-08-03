@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
@@ -11,12 +12,18 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-extra-boolean-cast): Redundant double negation")]
-#[diagnostic(severity(warning), help("Remove double negation as it will be coerced to boolean"))]
+#[diagnostic(
+    severity(warning),
+    help("Remove the double negation as it will already be coerced to a boolean")
+)]
 struct NoExtraDoubleNegationCastDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-extra-boolean-cast): Redundant Boolean call")]
-#[diagnostic(severity(warning), help("Remove the Boolean call as it will be coerced to boolean"))]
+#[diagnostic(
+    severity(warning),
+    help("Remove the Boolean call as it will already be coerced to a boolean")
+)]
 struct NoExtraBooleanCastDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
@@ -60,21 +67,20 @@ impl Rule for NoExtraBooleanCast {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::CallExpression(expr) = node.kind() {
-            if let Some(ident) = expr.callee.without_parenthesized().get_identifier_reference() {
-                if ident.name != "Boolean" {
-                    return;
-                }
+            if expr
+                .callee
+                .without_parenthesized()
+                .get_identifier_reference()
+                .is_some_and(|ident| ident.name != "Boolean")
+            {
+                return;
             }
             if is_flagged_ctx(node, ctx, self.enforce_for_logical_operands) {
                 ctx.diagnostic(NoExtraBooleanCastDiagnostic(expr.span));
             }
         }
 
-        let parent = get_real_parent(node, ctx);
-        if parent.is_none() {
-            return;
-        }
-        let parent = parent.unwrap();
+        let Some(parent) = get_real_parent(node, ctx) else { return };
 
         if let (AstKind::UnaryExpression(expr), AstKind::UnaryExpression(parent_expr)) =
             (node.kind(), parent.kind())
@@ -106,7 +112,7 @@ fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, enforce_for_logical_operand
 
 // Check if a node is in a context where its value would be coerced to a boolean at runtime
 fn is_bool_context(node: &AstNode, ctx: &LintContext) -> bool {
-    get_real_parent(node, ctx).map_or(false, |parent| {
+    get_real_parent(node, ctx).is_some_and(|parent| {
         (is_bool_fn_or_constructor_call(parent) && is_first_arg(node, parent))
             || is_inside_test_condition(node, ctx)
             || is_unary_negation(parent)
@@ -126,14 +132,16 @@ fn is_logical_ctx(node: &AstNode, enforce_for_logical_operands: bool) -> bool {
 
 fn is_bool_fn_or_constructor_call(node: &AstNode) -> bool {
     match node.kind() {
-        AstKind::CallExpression(expr) => {
-            let x = expr.callee.without_parenthesized().get_identifier_reference().unwrap();
-            x.name == "Boolean"
-        }
-        AstKind::NewExpression(expr) => {
-            let x = expr.callee.without_parenthesized().get_identifier_reference().unwrap();
-            x.name == "Boolean"
-        }
+        AstKind::CallExpression(expr) => expr
+            .callee
+            .without_parenthesized()
+            .get_identifier_reference()
+            .is_some_and(|x| x.name == "Boolean"),
+        AstKind::NewExpression(expr) => expr
+            .callee
+            .without_parenthesized()
+            .get_identifier_reference()
+            .is_some_and(|x| x.name == "Boolean"),
         _ => false,
     }
 }
@@ -192,18 +200,16 @@ fn is_unary_negation(node: &AstNode) -> bool {
 }
 
 fn get_real_parent<'a, 'b>(node: &AstNode, ctx: &'a LintContext<'b>) -> Option<&'a AstNode<'b>> {
-    let mut parent = ctx.nodes().parent_node(node.id());
-
-    if parent.is_some() {
-        while let AstKind::Argument(_) | AstKind::ParenthesizedExpression(_) =
-            parent.unwrap().kind()
-        {
-            parent = ctx.nodes().parent_node(parent.unwrap().id());
+    for (_, parent) in
+        ctx.nodes().iter_parents(node.id()).tuple_windows::<(&AstNode<'b>, &AstNode<'b>)>()
+    {
+        if let AstKind::Argument(_) | AstKind::ParenthesizedExpression(_) = parent.kind() {
+            continue;
         }
-        Some(parent.unwrap())
-    } else {
-        None
+
+        return Some(parent);
     }
+    None
 }
 
 #[allow(clippy::too_many_lines)]
