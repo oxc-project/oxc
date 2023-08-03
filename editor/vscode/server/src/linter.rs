@@ -43,7 +43,6 @@ impl ErrorWithPosition {
         let labels_with_pos: Vec<LabeledSpanWithPosition> = labels
             .iter()
             .map(|labeled_span| LabeledSpanWithPosition {
-                // TODO: use custom global allocator
                 start_pos: offset_to_position(labeled_span.offset() as usize, text)
                     .unwrap_or_default(),
                 end_pos: offset_to_position(
@@ -129,20 +128,6 @@ impl IsolatedLintHandler {
 
     pub fn run_single(&self, path: PathBuf) -> Option<(PathBuf, Vec<lsp_types::Diagnostic>)> {
         if self.is_wanted_ext(&path) {
-            // let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
-            //
-            // let linter = Arc::clone(&self.linter);
-            // spawn(move || {
-            //     if let Some(diagnostics) = Self::lint_path(&linter, &path) {
-            //         tx_error.send(diagnostics).unwrap();
-            //     }
-            //     drop(tx_error);
-            // });
-
-            // rx_error.recv().ok().map(|(path, errors)| {
-            //     (path, errors.iter().map(|e| e.into_lsp_diagnostic()).collect())
-            // })
-
             Some(Self::lint_path(&self.linter, &path).map_or((path, vec![]), |(p, errors)| {
                 (p.clone(), errors.iter().map(|e| e.into_lsp_diagnostic(&p)).collect())
             }))
