@@ -136,6 +136,7 @@ impl Tester {
         let program = allocator.alloc(ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_trivias(&ret.trivias)
+            .with_module_record_builder(true)
             .build(program);
         assert!(semantic_ret.errors.is_empty(), "{:?}", &semantic_ret.errors);
         let rule = RULES

@@ -2,11 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use oxc_resolver::{
-    AliasValue, Resolution, ResolveError, ResolveOptions, Resolver, ResolverGeneric,
-};
+use crate::{AliasValue, Resolution, ResolveError, ResolveOptions, Resolver, ResolverGeneric};
 
-use crate::MemoryFS;
+use super::memory_fs::MemoryFS;
 
 #[test]
 #[cfg(not(target_os = "windows"))] // MemoryFS's path separator is always `/` so the test will not pass in windows.

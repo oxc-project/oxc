@@ -1,10 +1,10 @@
 //! https://github.com/webpack/enhanced-resolve/blob/main/test/exportsField.test.js
 //!
-//! The resolution tests are at the bottom of the file.
+//! The huge exports field test cases are at the bottom of this file.
 
-use oxc_resolver::{ExportsField, PathUtil, Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{ExportsField, PathUtil, Resolution, ResolveError, ResolveOptions, Resolver};
 use serde_json::json;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 #[test]
 fn test() {
@@ -235,7 +235,7 @@ fn exports_field(value: serde_json::Value) -> ExportsField {
 }
 
 #[test]
-fn entry_points() {
+fn test_cases() {
     let test_cases = [
         TestCase {
             name: "sample #1",
@@ -2456,12 +2456,7 @@ fn entry_points() {
                 );
             } else {
                 for expect in expect {
-                    assert_eq!(
-                        resolved,
-                        Ok(Some(PathBuf::from(expect).normalize())),
-                        "{}",
-                        &case.name
-                    );
+                    assert_eq!(resolved, Ok(Some(Path::new(expect).normalize())), "{}", &case.name);
                 }
             }
         } else {
