@@ -10,13 +10,13 @@ use std::{
 
 use crate::options::LintOptions;
 use crate::walk::Walk;
-use miette::{LabeledSpan, NamedSource};
+use miette::NamedSource;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
     miette::{self},
     Error, Severity,
 };
-use oxc_linter::{Fixer, LintContext, Linter};
+use oxc_linter::{Fixer, LintContext, Linter, RuleCategory, RULES};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -39,37 +39,33 @@ struct LabeledSpanWithPosition {
 impl ErrorWithPosition {
     pub fn new(error: Error, text: &str) -> Self {
         let labels = error.labels().map_or(vec![], Iterator::collect);
-        let start =
-            labels.iter().min_by_key(|span| span.offset()).map_or(0, |span| span.offset() as u32);
-        let end = labels
+
+        let labels_with_pos: Vec<LabeledSpanWithPosition> = labels
             .iter()
-            .max_by_key(|span| span.offset() + span.len())
-            .map_or(0, |span| (span.offset() + span.len()) as u32);
-        Self {
-            miette_err: error,
-            start_pos: offset_to_position(start as usize, text).unwrap_or_default(),
-            end_pos: offset_to_position(end as usize, text).unwrap_or_default(),
-            labels_with_pos: labels
-                .iter()
-                .map(|labeled_span| LabeledSpanWithPosition {
-                    start_pos: offset_to_position(labeled_span.offset() as usize, text)
-                        .unwrap_or_default(),
-                    end_pos: offset_to_position(
-                        labeled_span.offset() + labeled_span.len() as usize,
-                        text,
-                    )
+            .map(|labeled_span| LabeledSpanWithPosition {
+                // TODO: use custom global allocator
+                start_pos: offset_to_position(labeled_span.offset() as usize, text)
                     .unwrap_or_default(),
-                    message: labeled_span.label().map(|label| label.to_string()),
-                })
-                .collect(),
-        }
+                end_pos: offset_to_position(
+                    labeled_span.offset() + labeled_span.len() as usize,
+                    text,
+                )
+                .unwrap_or_default(),
+                message: labeled_span.label().map(|label| label.to_string()),
+            })
+            .collect();
+
+        let start_pos = labels_with_pos[0].start_pos;
+        let end_pos = labels_with_pos[labels_with_pos.len() - 1].end_pos;
+
+        Self { miette_err: error, start_pos, end_pos, labels_with_pos }
     }
 
     fn into_lsp_diagnostic(&self, path: &PathBuf) -> lsp_types::Diagnostic {
         let severity = match self.miette_err.severity() {
             Some(Severity::Error) => Some(lsp_types::DiagnosticSeverity::ERROR),
             Some(Severity::Warning) => Some(lsp_types::DiagnosticSeverity::WARNING),
-            _ => None,
+            _ => Some(lsp_types::DiagnosticSeverity::INFORMATION),
         };
 
         let help = self.miette_err.help().map(|help| format!("{}", help)).unwrap_or_default();
@@ -100,7 +96,7 @@ impl ErrorWithPosition {
             range: Range { start: self.start_pos, end: self.end_pos },
             severity,
             code: None,
-            message: format!("{}\n\n{}", self.miette_err, help),
+            message: format!("{}\n{}", self.miette_err, help),
             source: Some("oxc".into()),
             code_description: None,
             related_information,
@@ -281,7 +277,15 @@ pub struct ServerLinter {
 
 impl ServerLinter {
     pub fn new() -> Self {
-        Self { linter: Arc::new(Linter::new()) }
+        let linter = Linter::from_rules(
+            RULES
+                .iter()
+                .cloned()
+                .filter(|rule| rule.category() != RuleCategory::Nursery)
+                .collect::<Vec<_>>(),
+        );
+
+        Self { linter: Arc::new(linter) }
     }
 
     pub fn run_full(&self, root_uri: &Url) -> Vec<(PathBuf, Vec<lsp_types::Diagnostic>)> {
