@@ -8,6 +8,7 @@ fn test_class_simple() {
         .has_root_symbol("Foo")
         .contains_flags(SymbolFlags::Class | SymbolFlags::Export)
         .has_number_of_references(0)
+        .is_exported()
         .test();
 
     SemanticTester::js("class Foo {}; let f = new Foo()")
@@ -31,6 +32,34 @@ fn test_var_simple() {
         .intersects_flags(SymbolFlags::Variable)
         .contains_flags(SymbolFlags::BlockScopedVariable)
         .test();
+}
+
+#[test]
+fn test_var_read_write() {
+    SemanticTester::js("let x; x += 1")
+        .has_root_symbol("x")
+        .has_number_of_references(1)
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let a; let b = 1 + (0, ((a)));")
+        .has_some_symbol("a")
+        .has_number_of_reads(1)
+        .has_number_of_writes(0)
+        .test();
+
+    SemanticTester::js(
+        "
+        let x;
+        function foo(a) {
+            console.log(x(a))
+        }",
+    )
+    .has_some_symbol("x")
+    .has_number_of_reads(1)
+    .has_number_of_writes(0)
+    .test()
 }
 
 #[test]

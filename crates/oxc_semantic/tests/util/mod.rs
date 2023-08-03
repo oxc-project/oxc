@@ -231,7 +231,7 @@ impl<'a> SymbolTester<'a> {
     }
 
     #[allow(dead_code)]
-    pub fn has_number_of_write(self, ref_count: usize) -> Self {
+    pub fn has_number_of_writes(self, ref_count: usize) -> Self {
         self.has_number_of_references_where(ref_count, |r| r.is_write())
     }
 
@@ -257,6 +257,23 @@ impl<'a> SymbolTester<'a> {
                     Ok(symbol_id)
                 } else {
                     Err(miette!("Expected to find {ref_count} acceptable references, but only found {num_accepted}"))
+                }
+            }
+            e => e,
+        };
+        self
+    }
+
+    pub fn is_exported(mut self) -> Self {
+        self.data = match self.data {
+            Ok(symbol_id) => {
+                let binding = Atom::from(self.target.to_owned());
+                if self.semantic.module_record().exported_bindings.contains_key(&binding)
+                    && self.semantic.scopes().get_root_binding(&binding) == Some(symbol_id)
+                {
+                    Ok(symbol_id)
+                } else {
+                    Err(miette!("Expected {binding} to be exported."))
                 }
             }
             e => e,
