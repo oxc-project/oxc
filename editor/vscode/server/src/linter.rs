@@ -67,8 +67,6 @@ impl ErrorWithPosition {
             _ => Some(lsp_types::DiagnosticSeverity::INFORMATION),
         };
 
-        let help = self.miette_err.help().map(|help| format!("{}", help)).unwrap_or_default();
-
         let related_information = Some(
             self.labels_with_pos
                 .iter()
@@ -91,11 +89,16 @@ impl ErrorWithPosition {
                 .collect(),
         );
 
+        let message = match self.miette_err.help() {
+            Some(help) => format!("{}\n{}", self.miette_err, help),
+            None => self.miette_err.to_string(),
+        };
+
         lsp_types::Diagnostic {
             range: Range { start: self.start_pos, end: self.end_pos },
             severity,
             code: None,
-            message: format!("{}\n{}", self.miette_err, help),
+            message,
             source: Some("oxc".into()),
             code_description: None,
             related_information,
