@@ -10,7 +10,7 @@ use std::{
 
 use crate::options::LintOptions;
 use crate::walk::Walk;
-use miette::NamedSource;
+use miette::{LabeledSpan, NamedSource};
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{
     miette::{self},
@@ -27,6 +27,13 @@ struct ErrorWithPosition {
     pub start_pos: Position,
     pub end_pos: Position,
     pub miette_err: Error,
+    pub labels_with_pos: Vec<LabeledSpanWithPosition>,
+}
+
+struct LabeledSpanWithPosition {
+    pub start_pos: Position,
+    pub end_pos: Position,
+    pub message: Option<String>,
 }
 
 impl ErrorWithPosition {
@@ -42,24 +49,61 @@ impl ErrorWithPosition {
             miette_err: error,
             start_pos: offset_to_position(start as usize, text).unwrap_or_default(),
             end_pos: offset_to_position(end as usize, text).unwrap_or_default(),
+            labels_with_pos: labels
+                .iter()
+                .map(|labeled_span| LabeledSpanWithPosition {
+                    start_pos: offset_to_position(labeled_span.offset() as usize, text)
+                        .unwrap_or_default(),
+                    end_pos: offset_to_position(
+                        labeled_span.offset() + labeled_span.len() as usize,
+                        text,
+                    )
+                    .unwrap_or_default(),
+                    message: labeled_span.label().map(|label| label.to_string()),
+                })
+                .collect(),
         }
     }
 
-    fn into_lsp_diagnostic(&self) -> lsp_types::Diagnostic {
+    fn into_lsp_diagnostic(&self, path: &PathBuf) -> lsp_types::Diagnostic {
         let severity = match self.miette_err.severity() {
             Some(Severity::Error) => Some(lsp_types::DiagnosticSeverity::ERROR),
             Some(Severity::Warning) => Some(lsp_types::DiagnosticSeverity::WARNING),
             _ => None,
         };
 
+        let help = self.miette_err.help().map(|help| format!("{}", help)).unwrap_or_default();
+
+        let related_information = Some(
+            self.labels_with_pos
+                .iter()
+                .map(|labeled_span| lsp_types::DiagnosticRelatedInformation {
+                    location: lsp_types::Location {
+                        uri: lsp_types::Url::from_file_path(path).unwrap(),
+                        range: lsp_types::Range {
+                            start: lsp_types::Position {
+                                line: labeled_span.start_pos.line as u32,
+                                character: labeled_span.start_pos.character as u32,
+                            },
+                            end: lsp_types::Position {
+                                line: labeled_span.end_pos.line as u32,
+                                character: labeled_span.end_pos.character as u32,
+                            },
+                        },
+                    },
+                    message: labeled_span.message.clone().unwrap_or_default(),
+                })
+                .collect(),
+        );
+
         lsp_types::Diagnostic {
             range: Range { start: self.start_pos, end: self.end_pos },
             severity,
             code: None,
-            message: format!("{}", self.miette_err),
+            message: format!("{}\n\n{}", self.miette_err, help),
             source: Some("oxc".into()),
             code_description: None,
-            related_information: None,
+            related_information,
             tags: None,
             data: None,
         }
@@ -104,7 +148,7 @@ impl IsolatedLintHandler {
             // })
 
             Some(Self::lint_path(&self.linter, &path).map_or((path, vec![]), |(p, errors)| {
-                (p, errors.iter().map(|e| e.into_lsp_diagnostic()).collect())
+                (p.clone(), errors.iter().map(|e| e.into_lsp_diagnostic(&p)).collect())
             }))
         } else {
             None
@@ -155,7 +199,9 @@ impl IsolatedLintHandler {
     ) -> Vec<(PathBuf, Vec<lsp_types::Diagnostic>)> {
         rx_error
             .iter()
-            .map(|(path, errors)| (path, errors.iter().map(|e| e.into_lsp_diagnostic()).collect()))
+            .map(|(path, errors)| {
+                (path.clone(), errors.iter().map(|e| e.into_lsp_diagnostic(&path)).collect())
+            })
             .collect()
     }
 
