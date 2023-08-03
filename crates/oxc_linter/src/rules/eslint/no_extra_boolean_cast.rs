@@ -100,19 +100,20 @@ impl Rule for NoExtraBooleanCast {
 // Checks whether the node is a context that should report an error
 // Acts recursively if it is in a logical context
 fn is_flagged_ctx(node: &AstNode, ctx: &LintContext, enforce_for_logical_operands: bool) -> bool {
-    if is_bool_context(node, ctx) {
-        true
-    } else if let Some(parent) = get_real_parent(node, ctx) {
+    let parent = get_real_parent(node, ctx);
+    if is_bool_context(node, parent, ctx) {
+        return true;
+    }
+
+    parent.is_some_and(|parent| {
         is_logical_ctx(parent, enforce_for_logical_operands)
             && is_flagged_ctx(parent, ctx, enforce_for_logical_operands)
-    } else {
-        false
-    }
+    })
 }
 
 // Check if a node is in a context where its value would be coerced to a boolean at runtime
-fn is_bool_context(node: &AstNode, ctx: &LintContext) -> bool {
-    get_real_parent(node, ctx).is_some_and(|parent| {
+fn is_bool_context(node: &AstNode, parent: Option<&AstNode>, ctx: &LintContext) -> bool {
+    parent.is_some_and(|parent| {
         (is_bool_fn_or_constructor_call(parent) && is_first_arg(node, parent))
             || is_inside_test_condition(node, ctx)
             || is_unary_negation(parent)
