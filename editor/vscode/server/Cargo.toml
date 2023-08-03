@@ -15,19 +15,19 @@ categories.workspace   = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-oxc_allocator = { workspace = true }
+oxc_allocator   = { workspace = true }
 oxc_diagnostics = { workspace = true }
-oxc_linter = { workspace = true }
-oxc_parser = { workspace = true}
-oxc_semantic = { workspace = true }
-oxc_span = { workspace = true }
-env_logger = { workspace = true }
-serde_json = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-tokio = { workspace = true, features = ["full"] }
-tower-lsp = { workspace = true, features = ["proposed"]}
-rayon = { workspace = true }
-ignore  = { workspace = true, features = ["simd-accel"] }
-miette  = { workspace = true, features = ["fancy-no-backtrace"] }
-ropey = { workspace = true }
-futures = { workspace = true }
+oxc_linter      = { workspace = true }
+oxc_parser      = { workspace = true}
+oxc_semantic    = { workspace = true }
+oxc_span        = { workspace = true }
+env_logger      = { workspace = true }
+futures         = { workspace = true }
+ignore          = { workspace = true, features = ["simd-accel"] }
+miette          = { workspace = true, features = ["fancy-no-backtrace"] }
+rayon           = { workspace = true }
+ropey           = { workspace = true }
+serde_json      = { workspace = true }
+serde           = { workspace = true, features = ["derive"] }
+tokio           = { workspace = true, features = ["full"] }
+tower-lsp       = { workspace = true, features = ["proposed"]}
