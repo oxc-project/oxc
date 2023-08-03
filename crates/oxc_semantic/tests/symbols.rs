@@ -27,7 +27,32 @@ fn test_function_simple() {
 #[test]
 fn test_var_simple() {
     SemanticTester::js("let x; { let y; }")
-    .has_some_symbol("x")
-    .intersects_flags(SymbolFlags::Variable)
-    .test();
+        .has_some_symbol("x")
+        .intersects_flags(SymbolFlags::Variable)
+        .contains_flags(SymbolFlags::BlockScopedVariable)
+        .test();
+}
+
+#[test]
+fn test_types_simple() {
+    let test = SemanticTester::ts(
+        "
+    interface A {
+      x: number;
+      y: string;
+    }
+    type T = { x: number; y: string; }
+
+    const t: T = { x: 1, y: 'foo' };
+    ",
+    );
+    test.has_root_symbol("A")
+        .contains_flags(SymbolFlags::Interface)
+        .has_number_of_references(0)
+        .test();
+
+    test.has_root_symbol("T")
+        .contains_flags(SymbolFlags::TypeAlias)
+        .has_number_of_references(1)
+        .test();
 }
