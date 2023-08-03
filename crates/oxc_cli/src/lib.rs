@@ -1,5 +1,6 @@
 // mod git;
 mod lint;
+mod plugin;
 mod runner;
 mod type_check;
 mod walk;
