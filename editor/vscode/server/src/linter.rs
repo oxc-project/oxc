@@ -23,6 +23,7 @@ use oxc_span::{SourceType, VALID_EXTENSIONS};
 use ropey::Rope;
 use tower_lsp::lsp_types::{self, Position, Range, Url};
 
+#[derive(Debug)]
 struct ErrorWithPosition {
     pub start_pos: Position,
     pub end_pos: Position,
@@ -30,6 +31,7 @@ struct ErrorWithPosition {
     pub labels_with_pos: Vec<LabeledSpanWithPosition>,
 }
 
+#[derive(Debug)]
 struct LabeledSpanWithPosition {
     pub start_pos: Position,
     pub end_pos: Position,
@@ -108,6 +110,7 @@ impl ErrorWithPosition {
     }
 }
 
+#[derive(Debug)]
 pub struct IsolatedLintHandler {
     options: Arc<LintOptions>,
     linter: Arc<Linter>,
