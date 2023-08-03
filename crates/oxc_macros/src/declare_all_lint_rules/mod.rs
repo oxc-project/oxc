@@ -51,7 +51,6 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         }
         builder.finish()
     };
-    let mod_stmts = module_tries.iter().map(|node| node.mod_stmt(true));
     let use_stmts = module_tries.iter().map(|node| node.use_stmt(true));
     let struct_names = rules.iter().map(|rule| &rule.name).collect::<Vec<_>>();
     let mod_names = rules.iter().map(|node| {
@@ -69,7 +68,6 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
         .collect::<Vec<_>>();
 
     quote! {
-        #(#mod_stmts)*
         #(#use_stmts)*
 
         use std::time::{Instant, Duration};

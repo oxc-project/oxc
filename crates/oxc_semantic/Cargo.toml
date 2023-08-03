@@ -23,6 +23,7 @@ bitflags   = { workspace = true }
 rustc-hash = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
 indexmap   = { workspace = true }
+itertools  = { workspace = true }
 
 [dev-dependencies]
 oxc_parser    = { workspace = true }

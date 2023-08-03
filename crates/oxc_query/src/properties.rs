@@ -304,14 +304,14 @@ pub(super) fn resolve_jsxopening_element_property<'a, 'b: 'a>(
             let jsx = v.as_jsx_opening_element().unwrap_or_else(|| {
                 panic!("expected to have a jsxopeningelement vertex, instead have: {v:#?}")
             });
-            (jsx.attributes.len() as u64).into()
+            (jsx.opening_element.attributes.len() as u64).into()
         }),
         "name" => resolve_property_with(contexts, |v| {
-            let jsx = v.as_jsx_opening_element().unwrap_or_else(|| {
+            let data = v.as_jsx_opening_element().unwrap_or_else(|| {
                 panic!("expected to have a jsxopeningelement vertex, instead have: {v:#?}")
             });
 
-            jsx_element_name_to_string(&jsx.name).into()
+            jsx_element_name_to_string(&data.opening_element.name).into()
         }),
         _ => {
             unreachable!(

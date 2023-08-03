@@ -50,14 +50,14 @@ impl IsolatedLintHandler {
         let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<Error>)>();
 
         self.process_paths(&number_of_files, tx_error);
-        let (number_of_warnings, number_of_diagnostics) = self.process_diagnostics(&rx_error);
+        let (number_of_warnings, number_of_errors) = self.process_diagnostics(&rx_error);
 
         CliRunResult::LintResult {
             duration: now.elapsed(),
             number_of_rules: self.linter.number_of_rules(),
             number_of_files: number_of_files.load(Ordering::Relaxed),
-            number_of_diagnostics,
             number_of_warnings,
+            number_of_errors,
             max_warnings_exceeded: self
                 .options
                 .max_warnings
@@ -103,16 +103,23 @@ impl IsolatedLintHandler {
         rx_error: &mpsc::Receiver<(PathBuf, Vec<Error>)>,
     ) -> (usize, usize) {
         let mut number_of_warnings = 0;
-        let mut number_of_diagnostics = 0;
+        let mut number_of_errors = 0;
         let mut buf_writer = BufWriter::new(std::io::stdout());
         let handler = GraphicalReportHandler::new();
 
         while let Ok((path, diagnostics)) = rx_error.recv() {
-            number_of_diagnostics += diagnostics.len();
             let mut output = String::new();
             for diagnostic in diagnostics {
-                if diagnostic.severity() == Some(Severity::Warning) {
-                    number_of_warnings += 1;
+                let severity = diagnostic.severity();
+                let is_warning = severity == Some(Severity::Warning);
+                let is_error = severity.is_none() || severity == Some(Severity::Error);
+                if is_warning || is_error {
+                    if is_warning {
+                        number_of_warnings += 1;
+                    }
+                    if is_error {
+                        number_of_errors += 1;
+                    }
                     // The --quiet flag follows ESLint's --quiet behavior as documented here: https://eslint.org/docs/latest/use/command-line-interface#--quiet
                     // Note that it does not disable ALL diagnostics, only Warning diagnostics
                     if self.options.quiet {
@@ -141,7 +148,7 @@ impl IsolatedLintHandler {
         }
 
         buf_writer.flush().unwrap();
-        (number_of_warnings, number_of_diagnostics)
+        (number_of_warnings, number_of_errors)
     }
 
     fn lint_path(linter: &Linter, path: &Path) -> Option<(PathBuf, Vec<Error>)> {
@@ -162,6 +169,7 @@ impl IsolatedLintHandler {
         let semantic_ret = SemanticBuilder::new(&source_text, source_type)
             .with_trivias(&ret.trivias)
             .with_check_syntax_error(true)
+            .with_module_record_builder(true)
             .build(program);
 
         if !semantic_ret.errors.is_empty() {

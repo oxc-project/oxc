@@ -7,21 +7,17 @@ use oxc_span::{Atom, Span};
 
 use crate::{context::LintContext, globals::BUILTINS, rule::Rule};
 
-
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-redeclare): '{0}' is already defined.")]
 #[diagnostic(severity(warning))]
-struct NoRedeclareDiagnostic(
-    Atom,
-    #[label("'{0}' is already defined.")] pub Span
-);
+struct NoRedeclareDiagnostic(Atom, #[label("'{0}' is already defined.")] pub Span);
 
 #[derive(Debug, Error, Diagnostic)]
 #[error("eslint(no-redeclare): '{0}' is already defined as a built-in global variable.")]
 #[diagnostic(severity(warning))]
 struct NoRedeclareAsBuiltiInDiagnostic(
     Atom,
-    #[label("'{0}' is already defined as a built-in global variable.")] pub Span
+    #[label("'{0}' is already defined as a built-in global variable.")] pub Span,
 );
 
 #[derive(Debug, Error, Diagnostic)]
@@ -32,17 +28,9 @@ struct NoRedeclareBySyntaxDiagnostic(
     #[label("'{0}' is already defined by a variable declaration.")] pub Span,
 );
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct NoRedeclare {
     built_in_globals: bool,
-}
-
-impl Default for NoRedeclare {
-    fn default() -> Self {
-        Self {
-            built_in_globals: false,
-        }
-    }
 }
 
 declare_oxc_lint!(
@@ -71,9 +59,7 @@ impl Rule for NoRedeclare {
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
 
-        Self {
-            built_in_globals
-        }
+        Self { built_in_globals }
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -86,8 +72,8 @@ impl Rule for NoRedeclare {
                 let mut idx = current + 1;
                 while idx <= total {
                     if let Some(next_variable) = redeclare_variables.get(idx) {
-                        if next_variable.name == current_variable.name &&
-                            next_variable.scope_id == current_variable.scope_id
+                        if next_variable.name == current_variable.name
+                            && next_variable.scope_id == current_variable.scope_id
                         {
                             if self.built_in_globals {
                                 if let Some(&value) = BUILTINS.get(&current_variable.name) {
@@ -110,7 +96,7 @@ impl Rule for NoRedeclare {
                                 }
                             } else {
                                 ctx.diagnostic(NoRedeclareDiagnostic(
-                                    current_variable.name.clone(), 
+                                    current_variable.name.clone(),
                                     current_variable.span,
                                 ));
                             }
@@ -152,7 +138,6 @@ fn test() {
         ("var self = 1", Some(serde_json::json!([{ "builtinGlobals": false }]))),
         ("var globalThis = foo", Some(serde_json::json!([{ "builtinGlobals": false }]))),
         ("var globalThis = foo", Some(serde_json::json!([{ "builtinGlobals": false }]))),
-
         // Comments and built-ins.
         ("/*globals Array */", Some(serde_json::json!([{ "builtinGlobals": false }]))),
         ("/*globals a */", Some(serde_json::json!([{ "builtinGlobals": false }]))),

@@ -42,9 +42,7 @@ declare_oxc_lint!(
 impl Rule for NoSetterReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ReturnStatement(stmt) = node.kind() else { return };
-        if stmt.argument.is_some()
-            && ctx.scopes().get_flags(node.scope_id()).is_set_accessor()
-        {
+        if stmt.argument.is_some() && ctx.scopes().get_flags(node.scope_id()).is_set_accessor() {
             ctx.diagnostic(NoSetterReturnDiagnostic(stmt.span));
         }
     }

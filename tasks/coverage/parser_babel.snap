@@ -1,7 +1,7 @@
 parser_babel Summary:
 AST Parsed     : 2072/2078 (99.71%)
 Positive Passed: 2069/2078 (99.57%)
-Negative Passed: 1324/1507 (87.86%)
+Negative Passed: 1342/1507 (89.05%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -127,24 +127,6 @@ Expect Syntax Error: "typescript/interface/invalid-modifiers-method/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-method-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/invalid-modifiers-property/input.ts"
 Expect Syntax Error: "typescript/regression/keyword-qualified-type-disallowed/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-class-enum/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-class-type/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-constenum-enum/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-enum-class/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-enum-constenum/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-enum-function/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-enum-interface/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-enum-let/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-enum-type/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-enum-var/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-function-enum/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-interface-enum/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-let-enum/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-type-class/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-type-enum/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-type-interface/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-type-type/input.ts"
-Expect Syntax Error: "typescript/scope/redeclaration-var-enum/input.ts"
 Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-accessibility-private-01/input.ts"
 Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-accessibility-protected-01/input.ts"
 Expect Syntax Error: "typescript/static-blocks/invalid-static-block-with-accessibility-public-01/input.ts"
@@ -9907,6 +9889,116 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·       ╰── It can not be redeclared here
    ╰────
 
+  × Identifier `A` has already been declared
+   ╭─[typescript/scope/redeclaration-class-enum/input.ts:1:1]
+ 1 │ class A {}
+   ·       ┬
+   ·       ╰── `A` has already been declared here
+ 2 │ enum A {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `A` has already been declared
+   ╭─[typescript/scope/redeclaration-class-type/input.ts:1:1]
+ 1 │ class A {}
+   ·       ┬
+   ·       ╰── `A` has already been declared here
+ 2 │ type A = number;
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `X` has already been declared
+   ╭─[typescript/scope/redeclaration-constenum-enum/input.ts:1:1]
+ 1 │ const enum X {}
+   ·            ┬
+   ·            ╰── `X` has already been declared here
+ 2 │ enum X {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `X` has already been declared
+   ╭─[typescript/scope/redeclaration-enum-class/input.ts:1:1]
+ 1 │ enum X {}
+   ·      ┬
+   ·      ╰── `X` has already been declared here
+ 2 │ class X {}
+   ·       ┬
+   ·       ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `X` has already been declared
+   ╭─[typescript/scope/redeclaration-enum-constenum/input.ts:1:1]
+ 1 │ enum X {}
+   ·      ┬
+   ·      ╰── `X` has already been declared here
+ 2 │ const enum X {}
+   ·            ┬
+   ·            ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[typescript/scope/redeclaration-enum-function/input.ts:1:1]
+ 1 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── `Foo` has already been declared here
+ 2 │ function Foo() {}
+   ·          ─┬─
+   ·           ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `X` has already been declared
+   ╭─[typescript/scope/redeclaration-enum-interface/input.ts:1:1]
+ 1 │ enum X {}
+   ·      ┬
+   ·      ╰── `X` has already been declared here
+ 2 │ interface X {}
+   ·           ┬
+   ·           ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[typescript/scope/redeclaration-enum-let/input.ts:1:1]
+ 1 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── `Foo` has already been declared here
+ 2 │ let Foo;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `X` has already been declared
+   ╭─[typescript/scope/redeclaration-enum-type/input.ts:1:1]
+ 1 │ enum X {}
+   ·      ┬
+   ·      ╰── `X` has already been declared here
+ 2 │ type X = number;
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[typescript/scope/redeclaration-enum-var/input.ts:1:1]
+ 1 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── `Foo` has already been declared here
+ 2 │ let Foo;
+   ·     ─┬─
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[typescript/scope/redeclaration-function-enum/input.ts:1:1]
+ 1 │ function Foo() {}
+   ·          ─┬─
+   ·           ╰── `Foo` has already been declared here
+ 2 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── It can not be redeclared here
+   ╰────
+
   × Identifier `Context` has already been declared
    ╭─[typescript/scope/redeclaration-import-type-import/input.ts:1:1]
  1 │ import type { Context } from 'react';
@@ -9915,6 +10007,76 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │ import { Context } from 'react';
    ·          ───┬───
    ·             ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `X` has already been declared
+   ╭─[typescript/scope/redeclaration-interface-enum/input.ts:1:1]
+ 1 │ interface X {}
+   ·           ┬
+   ·           ╰── `X` has already been declared here
+ 2 │ enum X {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[typescript/scope/redeclaration-let-enum/input.ts:1:1]
+ 1 │ let Foo;
+   ·     ─┬─
+   ·      ╰── `Foo` has already been declared here
+ 2 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `A` has already been declared
+   ╭─[typescript/scope/redeclaration-type-class/input.ts:1:1]
+ 1 │ type A = number;
+   ·      ┬
+   ·      ╰── `A` has already been declared here
+ 2 │ class A {}
+   ·       ┬
+   ·       ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `A` has already been declared
+   ╭─[typescript/scope/redeclaration-type-enum/input.ts:1:1]
+ 1 │ type A = number;
+   ·      ┬
+   ·      ╰── `A` has already been declared here
+ 2 │ enum A {}
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `A` has already been declared
+   ╭─[typescript/scope/redeclaration-type-interface/input.ts:1:1]
+ 1 │ type A = number;
+   ·      ┬
+   ·      ╰── `A` has already been declared here
+ 2 │ interface A {}
+   ·           ┬
+   ·           ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `A` has already been declared
+   ╭─[typescript/scope/redeclaration-type-type/input.ts:1:1]
+ 1 │ type A = number;
+   ·      ┬
+   ·      ╰── `A` has already been declared here
+ 2 │ type A = string;
+   ·      ┬
+   ·      ╰── It can not be redeclared here
+   ╰────
+
+  × Identifier `Foo` has already been declared
+   ╭─[typescript/scope/redeclaration-var-enum/input.ts:1:1]
+ 1 │ let Foo;
+   ·     ─┬─
+   ·      ╰── `Foo` has already been declared here
+ 2 │ enum Foo {}
+   ·      ─┬─
+   ·       ╰── It can not be redeclared here
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

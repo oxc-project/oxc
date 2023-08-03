@@ -13,7 +13,7 @@
 |  ✅  | extensionAlias   | {}                          | An object which maps extension to extension aliases                                                                                                       |
 |      | cachePredicate   | function() { return true }; | A function which decides whether a request should be cached or not. An object is passed to the function with `path` and `request` properties.             |
 |      | cacheWithContext | true                        | If unsafe cache is enabled, includes `request.context` in the cache key                                                                                   |
-|      | conditionNames   | []                          | A list of exports field condition names                                                                                                                   |
+|  ✅  | conditionNames   | []                          | A list of exports field condition names                                                                                                                   |
 |  ✅  | descriptionFiles | ["package.json"]            | A list of description files to read from                                                                                                                  |
 |  ✅  | enforceExtension | false                       | Enforce that a extension from extensions must be used                                                                                                     |
 |      | exportsFields    | ["exports"]                 | A list of exports fields in description files                                                                                                             |
@@ -37,6 +37,8 @@
 ## Test
 
 Tests ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve).
+Test cases are located in `./src/tests`, fixtures are located in `./tests`
+
 Crossed out test files are irrelevant.
 
 - [x] ~CachedInputFileSystem.test.js~
@@ -44,7 +46,7 @@ Crossed out test files are irrelevant.
 - [x] alias.test.js (need to fix a todo)
 - [x] browserField.test.js (reading the browser field is currently static - not read from the `browserField` option)
 - [ ] dependencies.test.js
-- [ ] exportsField.test.js
+- [x] exportsField.test.js
 - [x] extension-alias.test.js
 - [x] extensions.test.js
 - [x] fallback.test.js (need to fix a todo)
@@ -52,7 +54,7 @@ Crossed out test files are irrelevant.
 - [ ] fullSpecified.test.js
 - [ ] getPaths.test.js
 - [x] identifier.test.js (see unit test in `crates/oxc_resolver/src/request.rs`)
-- [ ] importsField.test.js
+- [x] importsField.test.js
 - [x] incorrect-description-file.test.js (need to add ctx.fileDependencies)
 - [ ] missing.test.js
 - [ ] path.test.js

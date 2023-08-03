@@ -45,9 +45,16 @@ declare_oxc_lint!(
 impl Rule for UninvokedArrayCallback {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(new_expr) = node.kind() else { return };
-        if !new_expr.callee.is_specific_id("Array") { return }
-        if new_expr.arguments.len() != 1 { return }
-        if !matches!(new_expr.arguments.get(0), Some(Argument::Expression(Expression::NumberLiteral(_)))) {
+        if !new_expr.callee.is_specific_id("Array") {
+            return;
+        }
+        if new_expr.arguments.len() != 1 {
+            return;
+        }
+        if !matches!(
+            new_expr.arguments.get(0),
+            Some(Argument::Expression(Expression::NumberLiteral(_)))
+        ) {
             return;
         }
 
@@ -58,7 +65,8 @@ impl Rule for UninvokedArrayCallback {
         };
 
         let Some(AstKind::CallExpression(call_expr)) = ctx.nodes().parent_kind(member_expr_node.id()) else { return };
-        if !matches!(call_expr.arguments.get(0), Some(Argument::Expression(arg_expr)) if arg_expr.is_function()) {
+        if !matches!(call_expr.arguments.get(0), Some(Argument::Expression(arg_expr)) if arg_expr.is_function())
+        {
             return;
         }
 
@@ -67,10 +75,7 @@ impl Rule for UninvokedArrayCallback {
             MemberExpression::StaticMemberExpression(expr) => expr.property.span,
             MemberExpression::PrivateFieldExpression(expr) => expr.field.span,
         };
-        ctx.diagnostic(UninvokedArrayCallbackDiagnostic(
-                property_span,
-                new_expr.span,
-        ));
+        ctx.diagnostic(UninvokedArrayCallbackDiagnostic(property_span, new_expr.span));
     }
 }
 

@@ -79,13 +79,13 @@ fn is_bad_comparison(expr: &BinaryExpression) -> bool {
     if expr.operator.is_equality()
         && matches!(&expr.left, Expression::BinaryExpression(left_expr) if left_expr.operator.is_equality())
     {
-        return true
+        return true;
     }
 
     if expr.operator.is_compare()
         && matches!(&expr.left, Expression::BinaryExpression(left_expr) if left_expr.operator.is_compare())
     {
-        return true
+        return true;
     }
 
     false

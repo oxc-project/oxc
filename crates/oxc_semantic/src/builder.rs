@@ -2,12 +2,13 @@
 
 use std::{cell::RefCell, rc::Rc};
 
+use itertools::Itertools;
+use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
-use oxc_allocator::Box;
 use oxc_diagnostics::Error;
 use oxc_span::{Atom, SourceType, Span};
-use oxc_syntax::module_record::ModuleRecord;
+use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 use rustc_hash::FxHashMap;
 
 use crate::{
@@ -64,6 +65,11 @@ pub struct SemanticBuilder<'a> {
     pub current_scope_id: ScopeId,
     /// Stores current `AstKind::Function` and `AstKind::ArrowExpression` during AST visit
     pub function_stack: Vec<AstNodeId>,
+    // To make a namespace/module value like
+    // we need the to know the modules we are inside
+    // and when we reach a value declaration we set it
+    // to value like
+    pub namespace_stack: Vec<SymbolId>,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -102,6 +108,7 @@ impl<'a> SemanticBuilder<'a> {
             current_symbol_flags: SymbolFlags::empty(),
             current_scope_id,
             function_stack: vec![],
+            namespace_stack: vec![],
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
@@ -257,6 +264,7 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) = self.check_redeclaration(scope_id, span, name, excludes, true) {
+            self.symbols.union_flag(symbol_id, includes);
             return symbol_id;
         }
 
@@ -457,32 +465,61 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
+                self.make_all_namespaces_valuelike();
             }
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
                 func.bind(self);
+                self.make_all_namespaces_valuelike();
                 if let Some(body) = &func.body {
                     for stmt in &body.statements {
-                        if let Statement::Declaration(decl) = stmt {
-                            if let Declaration::VariableDeclaration(var_decl) = decl {
-                                self.add_variable(var_decl, false);
-                            }
+                        if let Statement::Declaration(
+                            Declaration::VariableDeclaration(var_decl)
+                        ) = stmt {
+                            self.add_variable(var_decl, false);
                         }
                     }
                 }
             }
             AstKind::ArrowExpression(_) => {
                 self.function_stack.push(self.current_node_id);
+                self.make_all_namespaces_valuelike();
             }
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
                 class.bind(self);
+                self.make_all_namespaces_valuelike();
             }
             AstKind::FormalParameters(params) => {
                 params.bind(self);
             }
             AstKind::CatchClause(clause) => {
                 clause.bind(self);
+            }
+            AstKind::TSModuleDeclaration(module_declaration) => {
+                module_declaration.bind(self);
+                let symbol_id = self
+                    .scope
+                    .get_bindings(self.current_scope_id)
+                    .get(module_declaration.id.name());
+                self.namespace_stack.push(*symbol_id.unwrap());
+            }
+            AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
+                type_alias_declaration.bind(self);
+            }
+            AstKind::TSInterfaceDeclaration(interface_declaration) => {
+                interface_declaration.bind(self);
+            }
+            AstKind::TSEnumDeclaration(enum_declaration) => {
+                enum_declaration.bind(self);
+                // TODO: const enum?
+                self.make_all_namespaces_valuelike();
+            }
+            AstKind::TSEnumMember(enum_member) => {
+                enum_member.bind(self);
+            }
+            AstKind::TSTypeParameter(type_parameter) => {
+                type_parameter.bind(self);
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
@@ -521,43 +558,49 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::Program(program) => {
                 for stmt in &program.body {
-                    if let Statement::Declaration(decl) = stmt {
-                        if let Declaration::VariableDeclaration(var_decl) = decl {
-                            self.add_variable(var_decl, false);
-                        }
+                    if let Statement::Declaration(
+                        Declaration::VariableDeclaration(var_decl)
+                    ) = stmt {
+                        self.add_variable(var_decl, false);
                     }
                 }
             }
             AstKind::ForStatement(for_stmt) => {
-                if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &for_stmt.init {
+                if let Some(
+                    ForStatementInit::VariableDeclaration(var_decl)
+                ) = &for_stmt.init {
                     self.add_variable(var_decl, false);
                 }
             }
             AstKind::ForInStatement(for_in_stmt) => {
-                if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
+                if let ForStatementLeft::VariableDeclaration(
+                    var_decl
+                ) = &for_in_stmt.left {
                     self.add_variable(var_decl, false);
                 }
             }
             AstKind::ForOfStatement(for_of_stmt) => {
-                if let ForStatementLeft::VariableDeclaration(var_decl) = &for_of_stmt.left {
+                if let ForStatementLeft::VariableDeclaration(
+                    var_decl
+                ) = &for_of_stmt.left {
                     self.add_variable(var_decl, false);
                 }
             }
             AstKind::StaticBlock(static_block) => {
                 for stmt in &static_block.body {
-                    if let Statement::Declaration(decl) = stmt {
-                        if let Declaration::VariableDeclaration(var_decl) = decl {
-                            self.add_variable(var_decl, false);
-                        }
+                    if let Statement::Declaration(
+                        Declaration::VariableDeclaration(var_decl)
+                    ) = stmt {
+                        self.add_variable(var_decl, false);
                     }
                 }
             }
             AstKind::BlockStatement(block_stmt) => {
                 for stmt in &block_stmt.body {
-                    if let Statement::Declaration(decl) = stmt {
-                        if let Declaration::VariableDeclaration(var_decl) = decl {
-                            self.add_variable(var_decl, true);
-                        }
+                    if let Statement::Declaration(
+                        Declaration::VariableDeclaration(var_decl)
+                    ) = stmt {
+                        self.add_variable(var_decl, true);
                     }
                 }
             }
@@ -584,21 +627,93 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::Function(_) | AstKind::ArrowExpression(_) => {
                 self.function_stack.pop();
             }
+            AstKind::TSModuleBlock(_) => {
+                self.namespace_stack.pop();
+            }
             _ => {}
         }
     }
 
+    fn make_all_namespaces_valuelike(&mut self) {
+        for symbol_id in &self.namespace_stack {
+            // Ambient modules cannot be value modules
+            if self.symbols.get_flag(*symbol_id).intersects(SymbolFlags::Ambient) {
+                continue;
+            }
+            self.symbols.union_flag(*symbol_id, SymbolFlags::ValueModule);
+        }
+    }
+
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
-        let flag = if matches!(
-            self.nodes.parent_kind(self.current_node_id),
-            Some(AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_))
-        ) {
-            ReferenceFlag::write()
-        } else {
-            ReferenceFlag::read()
-        };
+        let flag = self.resolve_reference_usages();
         let reference = Reference::new(ident.span, ident.name.clone(), flag);
         self.declare_reference(reference);
+    }
+
+    /// Resolve reference flags for the current ast node.
+    fn resolve_reference_usages(&self) -> ReferenceFlag {
+        let mut flags = ReferenceFlag::None;
+
+        if self.nodes.parent_id(self.current_node_id).is_none() {
+            return ReferenceFlag::Read;
+        }
+
+        // This func should only get called when an IdentifierReference is
+        // reached
+        debug_assert!(matches!(
+            self.nodes.get_node(self.current_node_id).kind(),
+            AstKind::IdentifierReference(_)
+        ));
+
+        for (curr, parent) in self
+            .nodes
+            .iter_parents(self.current_node_id)
+            .tuple_windows::<(&AstNode<'a>, &AstNode<'a>)>()
+        {
+            match (curr.kind(), parent.kind()) {
+                // lhs of assignment expression
+                (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
+                    debug_assert!(!flags.is_read());
+                    flags = ReferenceFlag::write();
+                    // a lhs expr will not propagate upwards into a rhs
+                    // expression, sow e can safely break
+                    break;
+                }
+                (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(expr)) => {
+                    flags |= if expr.operator == AssignmentOperator::Assign {
+                        ReferenceFlag::write()
+                    } else {
+                        ReferenceFlag::read_write()
+                    };
+                    break;
+                }
+                (_, AstKind::SimpleAssignmentTarget(_) | AstKind::AssignmentTarget(_)) => {
+                    flags |= ReferenceFlag::write();
+                    // continue up tree
+                }
+                (_, AstKind::UpdateExpression(_)) => {
+                    flags |= ReferenceFlag::Write;
+                    // continue up tree
+                }
+                (
+                    AstKind::AssignmentTarget(_),
+                    AstKind::ForInStatement(_) | AstKind::ForOfStatement(_),
+                ) => {
+                    break;
+                }
+                (_, AstKind::ParenthesizedExpression(_)) => {
+                    // continue up tree
+                }
+                _ => {
+                    flags |= ReferenceFlag::Read;
+                    break;
+                }
+            }
+        }
+
+        debug_assert!(flags != ReferenceFlag::None);
+
+        flags
     }
 
     fn reference_jsx_element_name(&mut self, elem: &JSXElementName) {
@@ -636,8 +751,8 @@ impl<'a> SemanticBuilder<'a> {
         if is_block {
             for scope_id in self.scope.ancestors(current_scope_id).skip(1) {
                 if self.scope.get_flags(scope_id).is_var() {
-                        current_scope_id = scope_id;
-                        break;
+                    current_scope_id = scope_id;
+                    break;
                 }
             }
         }

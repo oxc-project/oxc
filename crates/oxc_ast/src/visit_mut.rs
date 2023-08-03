@@ -946,7 +946,7 @@ pub trait VisitMut<'a, 'b>: Sized {
 
     fn visit_enum(&mut self, decl: &'b mut TSEnumDeclaration<'a>) {
         self.visit_binding_identifier(&mut decl.id);
-        for member in decl.members.iter_mut() {
+        for member in decl.body.members.iter_mut() {
             self.visit_enum_member(member);
         }
     }

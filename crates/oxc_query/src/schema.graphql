@@ -306,6 +306,18 @@ type ObjectLiteral implements Expression & HasSpan {
   span: Span!
 }
 
+type ObjectLiteralAST implements Expression & HasSpan & ASTNode {
+  value(key: String!): [Expression!]!
+
+  # Expression
+  as_constant_string: String
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
 interface Expression implements HasSpan {
   """
   Only non-null if the string can be trivially coerced to a constant string
