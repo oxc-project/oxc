@@ -4,7 +4,7 @@ mod util;
 use util::*;
 
 #[test]
-fn test_named_exports() {
+fn test_exports() {
     let test = SemanticTester::js(
         "
         function foo(a, b) {
@@ -22,8 +22,12 @@ fn test_named_exports() {
 
         export { foo };
         export default defaultExport;
-        "
-    ).with_module_record_builder(true);
+        ",
+    )
+    .with_module_record_builder(true);
 
-    test.has_some_symbol("defaultExport")
+    test.has_some_symbol("foo").is_exported().test();
+
+    // FIXME: failing
+    // test.has_some_symbol("defaultExport").is_exported().test();
 }

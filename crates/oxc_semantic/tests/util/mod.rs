@@ -22,6 +22,7 @@ impl SemanticTester {
     /// Create a new tester for a TypeScript test case.
     ///
     /// Use [`SemanticTester::js`] for JavaScript test cases.
+    #[allow(dead_code)]
     pub fn ts(source_text: &'static str) -> Self {
         Self::new(source_text, SourceType::default().with_module(true).with_typescript(true))
     }
@@ -62,23 +63,22 @@ impl SemanticTester {
     #[allow(unstable_name_collisions)]
     pub fn build(&self) -> Semantic<'_> {
         let parse =
-            oxc_parser::Parser::new(&self.allocator, &self.source_text, self.source_type).parse();
+            oxc_parser::Parser::new(&self.allocator, self.source_text, self.source_type).parse();
 
-        if !parse.errors.is_empty() {
-            panic!(
-                "\n Failed to parse source:\n{}\n\n{}",
-                self.source_text,
-                parse
-                    .errors
-                    .iter()
-                    .map(|e| format!("{e}"))
-                    .intersperse("\n\n".to_owned())
-                    .collect::<String>()
-            );
-        }
+        assert!(
+            parse.errors.is_empty(),
+            "\n Failed to parse source:\n{}\n\n{}",
+            self.source_text,
+            parse
+                .errors
+                .iter()
+                .map(|e| format!("{e}"))
+                .intersperse("\n\n".to_owned())
+                .collect::<String>()
+        );
 
         let program = self.allocator.alloc(parse.program);
-        let semantic_ret = SemanticBuilder::new(&self.source_text, self.source_type)
+        let semantic_ret = SemanticBuilder::new(self.source_text, self.source_type)
             .with_check_syntax_error(true)
             .with_trivias(&parse.trivias)
             .with_module_record_builder(self.module_builder)
@@ -90,7 +90,7 @@ impl SemanticTester {
                 "Semantic analysis failed:\n\n{}",
                 report
                     .iter()
-                    .map(|r| r.to_string())
+                    .map(ToString::to_string)
                     .intersperse("\n\n".to_owned())
                     .collect::<String>()
             );
@@ -104,6 +104,7 @@ impl SemanticTester {
     ///
     /// ## Fails
     /// If no symbol with the given name exists at the top-level scope.
+    #[allow(dead_code)]
     pub fn has_root_symbol(&self, name: &str) -> SymbolTester {
         SymbolTester::new_at_root(self, self.build(), name)
     }
@@ -128,11 +129,10 @@ impl SemanticTester {
             };
 
         let source = Arc::new(NamedSource::new(name, self.source_text.to_owned()));
-        let diagnostics = diagnostics
+        diagnostics
             .into_iter()
             .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
-            .collect();
-        diagnostics
+            .collect()
     }
 }
 
@@ -152,6 +152,7 @@ pub struct SymbolTester<'a> {
 }
 
 impl<'a> SymbolTester<'a> {
+    #[allow(dead_code)]
     pub(super) fn new_at_root(
         parent: &'a SemanticTester,
         semantic: Semantic<'a>,
@@ -159,10 +160,7 @@ impl<'a> SymbolTester<'a> {
     ) -> Self {
         let decl =
             semantic.scopes().get_binding(semantic.scopes().root_scope_id(), &Atom::from(target));
-        let data = decl.map_or_else(
-            || Err(miette!("Could not find declaration for {target}")),
-            |decl| Ok(decl),
-        );
+        let data = decl.map_or_else(|| Err(miette!("Could not find declaration for {target}")), Ok);
 
         SymbolTester { parent, semantic, target: target.to_string(), data }
     }
@@ -176,7 +174,7 @@ impl<'a> SymbolTester<'a> {
             semantic.scopes().iter_bindings().filter(|(_, _, name)| name == &target).collect();
         let data = match symbols_with_target_name.len() {
             0 => Err(miette!("Could not find declaration for {target}")),
-            1 => Ok(symbols_with_target_name.iter().map(|(_, symbol_id, _)| *symbol_id).nth(0).unwrap()),
+            1 => Ok(symbols_with_target_name.iter().map(|(_, symbol_id, _)| *symbol_id).next().unwrap()),
             n if n > 1 => Err(miette!("Couldn't uniquely resolve symbol id for target {target}; {n} symbols with that name are declared in the source.")),
             _ => unreachable!()
         };
@@ -227,12 +225,12 @@ impl<'a> SymbolTester<'a> {
     }
 
     pub fn has_number_of_reads(self, ref_count: usize) -> Self {
-        self.has_number_of_references_where(ref_count, |r| r.is_read())
+        self.has_number_of_references_where(ref_count, Reference::is_read)
     }
 
     #[allow(dead_code)]
     pub fn has_number_of_writes(self, ref_count: usize) -> Self {
-        self.has_number_of_references_where(ref_count, |r| r.is_write())
+        self.has_number_of_references_where(ref_count, Reference::is_write)
     }
 
     pub fn has_number_of_references(self, ref_count: usize) -> Self {
@@ -264,10 +262,11 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn is_exported(mut self) -> Self {
         self.data = match self.data {
             Ok(symbol_id) => {
-                let binding = Atom::from(self.target.to_owned());
+                let binding = Atom::from(self.target.clone());
                 if self.semantic.module_record().exported_bindings.contains_key(&binding)
                     && self.semantic.scopes().get_root_binding(&binding) == Some(symbol_id)
                 {
@@ -290,9 +289,9 @@ impl<'a> SymbolTester<'a> {
     }
 }
 
-impl<'a> Into<Result<(), Error>> for SymbolTester<'a> {
-    fn into(self) -> Result<(), Error> {
-        self.data.map(|_| {}).map_err(|e| e.with_source_code(self.parent.source_text))
+impl<'a> From<SymbolTester<'a>> for Result<(), Error> {
+    fn from(val: SymbolTester<'a>) -> Self {
+        val.data.map(|_| {}).map_err(|e| e.with_source_code(val.parent.source_text))
     }
 }
 

@@ -59,7 +59,7 @@ fn test_var_read_write() {
     .has_some_symbol("x")
     .has_number_of_reads(1)
     .has_number_of_writes(0)
-    .test()
+    .test();
 }
 
 #[test]
