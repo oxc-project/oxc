@@ -89,7 +89,7 @@ impl Rule for NoExtraBooleanCast {
                 (UnaryOperator::LogicalNot, UnaryOperator::LogicalNot)
                     if is_flagged_ctx(parent, ctx, self.enforce_for_logical_operands) =>
                 {
-                    ctx.diagnostic(NoExtraDoubleNegationCastDiagnostic(expr.span));
+                    ctx.diagnostic(NoExtraDoubleNegationCastDiagnostic(parent_expr.span));
                 }
                 _ => (),
             }

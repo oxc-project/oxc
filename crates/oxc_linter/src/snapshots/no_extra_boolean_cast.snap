@@ -6,56 +6,56 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!foo) {}
-   ·      ────
+   ·     ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while (!!foo)
-   ·               ────
+   ·              ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while (!!foo) {}
-   ·         ────
+   ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!foo ? bar : baz
-   ·  ────
+   · ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; !!foo;) {}
-   ·         ────
+   ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!foo
-   ·   ────
+   ·  ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean(!!foo)
-   ·          ────
+   ·         ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean(!!foo)
-   ·              ────
+   ·             ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -216,56 +216,56 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean(!!foo, bar)
-   ·          ────
+   ·         ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield!!a ? b : c }
-   ·                         ──
+   ·                        ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield!! a ? b : c }
-   ·                         ───
+   ·                        ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield! !a ? b : c }
-   ·                          ──
+   ·                        ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield !!a ? b : c }
-   ·                          ──
+   ·                         ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield(!!a) ? b : c }
-   ·                          ──
+   ·                         ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield/**/!!a ? b : c }
-   ·                             ──
+   ·                            ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ x=!!a ? b : c 
-   ·    ──
+   ·   ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -328,42 +328,42 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !/**/!!foo
-   ·       ────
+   ·      ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!/**/!foo
-   ·       ────
+   ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!/**/foo
-   ·   ────────
+   ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!foo/**/
-   ·   ────
+   ·  ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if(!/**/!foo);
-   ·         ────
+   ·    ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ (!!/**/foo ? 1 : 2)
-   ·   ────────
+   ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -503,77 +503,77 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!foo || bar) {}
-   ·      ────
+   ·     ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!foo && bar) {}
-   ·      ────
+   ·     ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if ((!!foo || bar) && bat) {}
-   ·       ────
+   ·      ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (foo && !!bar) {}
-   ·             ────
+   ·            ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while (!!foo || bar)
-   ·               ────
+   ·              ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while (!!foo || bar) {}
-   ·         ────
+   ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!foo && bat ? bar : baz
-   ·  ────
+   · ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; !!foo || bar;) {}
-   ·         ────
+   ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!foo || bar
-   ·   ────
+   ·  ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean(!!foo || bar)
-   ·          ────
+   ·         ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean(!!foo || bar)
-   ·              ────
+   ·             ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -734,42 +734,42 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield(!!a || d) ? b : c }
-   ·                          ──
+   ·                         ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield(!! a || d) ? b : c }
-   ·                          ───
+   ·                         ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield(! !a || d) ? b : c }
-   ·                           ──
+   ·                         ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield (!!a || d) ? b : c }
-   ·                           ──
+   ·                          ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield/**/(!!a || d) ? b : c }
-   ·                              ──
+   ·                             ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ x=!!a || d ? b : c 
-   ·    ──
+   ·   ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -811,42 +811,42 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !/**/(!!foo || bar)
-   ·        ────
+   ·       ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!/**/!foo || bar
-   ·       ────
+   ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!/**/foo || bar
-   ·   ────────
+   ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !(!!foo || bar)/**/
-   ·    ────
+   ·   ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if(!/**/!foo || bar);
-   ·         ────
+   ·    ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ (!!/**/foo || bar ? 1 : 2)
-   ·   ────────
+   ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -986,21 +986,21 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (a && !!(b ? c : d)){}
-   ·           ────────────
+   ·          ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ function *foo() { yield!!a || d ? b : c }
-   ·                         ──
+   ·                        ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean(!!(a, b))
-   ·          ───────
+   ·         ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1014,7 +1014,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean((!!(a, b)))
-   ·           ───────
+   ·          ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1028,28 +1028,28 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean(!(!(a, b)))
-   ·           ───────
+   ·         ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean((!(!(a, b))))
-   ·            ───────
+   ·          ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean(!!(a = b))
-   ·          ────────
+   ·         ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean((!!(a = b)))
-   ·           ────────
+   ·          ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1070,21 +1070,21 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean(!!(a === b))
-   ·          ──────────
+   ·         ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean(!!((a !== b)))
-   ·          ────────────
+   ·         ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean(!!a.b)
-   ·          ────
+   ·         ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1098,14 +1098,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ Boolean((!!(a)))
-   ·           ────
+   ·          ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean(!!(a, b))
-   ·              ───────
+   ·             ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1119,7 +1119,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean((!!(a, b)))
-   ·               ───────
+   ·              ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1133,28 +1133,28 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean(!(!(a, b)))
-   ·               ───────
+   ·             ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean((!(!(a, b))))
-   ·                ───────
+   ·              ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean(!!(a = b))
-   ·              ────────
+   ·             ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean((!!(a = b)))
-   ·               ────────
+   ·              ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1175,21 +1175,21 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean(!!(a === b))
-   ·              ──────────
+   ·             ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean(!!((a !== b)))
-   ·              ────────────
+   ·             ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean(!!a.b)
-   ·              ────
+   ·             ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1203,14 +1203,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ new Boolean((!!(a)))
-   ·               ────
+   ·              ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a, b));
-   ·      ───────
+   ·     ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1224,14 +1224,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!(!(a, b)));
-   ·       ───────
+   ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a = b));
-   ·      ────────
+   ·     ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1245,7 +1245,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a > b));
-   ·      ────────
+   ·     ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1259,7 +1259,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!f(a));
-   ·      ─────
+   ·     ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1273,14 +1273,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(f(a)));
-   ·      ───────
+   ·     ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if ((!!f(a)));
-   ·       ─────
+   ·      ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1294,7 +1294,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!a);
-   ·      ──
+   ·     ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1308,7 +1308,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while (!!(a, b));
-   ·         ───────
+   ·        ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1322,14 +1322,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while (!(!(a, b)));
-   ·          ───────
+   ·        ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while (!!(a = b));
-   ·         ────────
+   ·        ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1343,7 +1343,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while (!!(a > b));
-   ·         ────────
+   ·        ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1357,7 +1357,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while (!!f(a));
-   ·         ─────
+   ·        ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1371,14 +1371,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while (!!(f(a)));
-   ·         ───────
+   ·        ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while ((!!f(a)));
-   ·          ─────
+   ·         ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1392,7 +1392,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ while (!!a);
-   ·         ──
+   ·        ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1406,7 +1406,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while (!!(a, b));
-   ·               ───────
+   ·              ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1420,14 +1420,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while (!(!(a, b)));
-   ·                ───────
+   ·              ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while (!!(a = b));
-   ·               ────────
+   ·              ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1441,7 +1441,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while (!!(a > b));
-   ·               ────────
+   ·              ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1455,7 +1455,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while (!!f(a));
-   ·               ─────
+   ·              ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1469,14 +1469,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while (!!(f(a)));
-   ·               ───────
+   ·              ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while ((!!f(a)));
-   ·                ─────
+   ·               ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1490,7 +1490,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ do {} while (!!a);
-   ·               ──
+   ·              ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1504,7 +1504,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; !!(a, b););
-   ·         ───────
+   ·        ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1518,14 +1518,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; !(!(a, b)););
-   ·          ───────
+   ·        ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; !!(a = b););
-   ·         ────────
+   ·        ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1539,7 +1539,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; !!(a > b););
-   ·         ────────
+   ·        ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1553,7 +1553,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; !!f(a););
-   ·         ─────
+   ·        ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1567,14 +1567,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; !!(f(a)););
-   ·         ───────
+   ·        ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; (!!f(a)););
-   ·          ─────
+   ·         ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1588,7 +1588,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ for (; !!a;);
-   ·         ──
+   ·        ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1602,14 +1602,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!(a, b) ? c : d
-   ·  ───────
+   · ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ (!!(a, b)) ? c : d
-   ·   ───────
+   ·  ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1623,7 +1623,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!(a = b) ? c : d
-   ·  ────────
+   · ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1644,7 +1644,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!(a ? b : c) ? d : e
-   ·  ────────────
+   · ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1658,7 +1658,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!(a || b) ? c : d
-   ·  ─────────
+   · ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1672,7 +1672,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!(a === b) ? c : d
-   ·  ──────────
+   · ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1686,7 +1686,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!((a !== b)) ? c : d
-   ·  ────────────
+   · ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1700,14 +1700,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!+a ? b : c
-   ·  ───
+   · ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!+(a) ? b : c
-   ·  ─────
+   · ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1721,14 +1721,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!f(a) ? b : c
-   ·  ─────
+   · ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ (!!f(a)) ? b : c
-   ·   ─────
+   ·  ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1742,7 +1742,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!a ? b : c
-   ·  ──
+   · ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1756,7 +1756,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(a, b)
-   ·   ───────
+   ·  ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1770,21 +1770,21 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(a = b)
-   ·   ────────
+   ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!(!(a += b))
-   ·    ─────────
+   ·  ────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !(!!(a += b))
-   ·    ─────────
+   ·   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1812,7 +1812,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(a || b)
-   ·   ─────────
+   ·  ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1826,7 +1826,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(a && b)
-   ·   ─────────
+   ·  ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1840,14 +1840,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(a != b)
-   ·   ─────────
+   ·  ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(a === b)
-   ·   ──────────
+   ·  ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1861,14 +1861,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(a - b)
-   ·   ────────
+   ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(a ** b)
-   ·   ─────────
+   ·  ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1882,7 +1882,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ async function f() { !!!(await a) }
-   ·                        ──────────
+   ·                       ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1896,14 +1896,21 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!!a
-   ·   ───
+   ·  ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!!a
-   ·    ──
+   ·   ───
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ !!(!(!a))
+   ·  ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1911,13 +1918,6 @@ expression: no_extra_boolean_cast
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!(!(!a))
    ·    ─────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ !!(!(!a))
-   ·      ──
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1952,28 +1952,28 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!+a
-   ·   ───
+   ·  ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(+a)
-   ·   ─────
+   ·  ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!(!+a)
-   ·    ───
+   ·  ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !(!!+a)
-   ·    ───
+   ·   ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -1994,7 +1994,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(--a)
-   ·   ──────
+   ·  ───────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2008,21 +2008,21 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!f(a)
-   ·   ─────
+   ·  ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!(f(a))
-   ·   ───────
+   ·  ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ !!!a
-   ·   ──
+   ·  ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2036,14 +2036,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a, b) || !!(c, d)) {}
-   ·      ───────
+   ·     ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a, b) || !!(c, d)) {}
-   ·                  ───────
+   ·                 ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2064,98 +2064,98 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if ((!!((a, b))) || (!!((c, d)))) {}
-   ·       ─────────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if ((!!((a, b))) || (!!((c, d)))) {}
-   ·                       ─────────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if (!!(a, b) && !!(c, d)) {}
-   ·      ───────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if (!!(a, b) && !!(c, d)) {}
-   ·                  ───────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if (Boolean((a, b)) && Boolean((c, d))) {}
-   ·     ───────────────
-   ╰────
-  help: Remove the Boolean call as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if (Boolean((a, b)) && Boolean((c, d))) {}
-   ·                        ───────────────
-   ╰────
-  help: Remove the Boolean call as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if ((!!((a, b))) && (!!((c, d)))) {}
-   ·       ─────────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if ((!!((a, b))) && (!!((c, d)))) {}
-   ·                       ─────────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if (!!(a = b) || !!(c = d)) {}
-   ·      ────────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if (!!(a = b) || !!(c = d)) {}
-   ·                   ────────
-   ╰────
-  help: Remove the double negation as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if (Boolean(a /= b) || Boolean(c /= d)) {}
-   ·     ───────────────
-   ╰────
-  help: Remove the Boolean call as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if (Boolean(a /= b) || Boolean(c /= d)) {}
-   ·                        ───────────────
-   ╰────
-  help: Remove the Boolean call as it will already be coerced to a boolean
-
-  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
-   ╭─[no_extra_boolean_cast.tsx:1:1]
- 1 │ if (!!(a >>= b) && !!(c >>= d)) {}
    ·      ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if ((!!((a, b))) || (!!((c, d)))) {}
+   ·                      ──────────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if (!!(a, b) && !!(c, d)) {}
+   ·     ────────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if (!!(a, b) && !!(c, d)) {}
+   ·                 ────────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if (Boolean((a, b)) && Boolean((c, d))) {}
+   ·     ───────────────
+   ╰────
+  help: Remove the Boolean call as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if (Boolean((a, b)) && Boolean((c, d))) {}
+   ·                        ───────────────
+   ╰────
+  help: Remove the Boolean call as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if ((!!((a, b))) && (!!((c, d)))) {}
+   ·      ──────────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if ((!!((a, b))) && (!!((c, d)))) {}
+   ·                      ──────────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if (!!(a = b) || !!(c = d)) {}
+   ·     ─────────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if (!!(a = b) || !!(c = d)) {}
+   ·                  ─────────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if (Boolean(a /= b) || Boolean(c /= d)) {}
+   ·     ───────────────
+   ╰────
+  help: Remove the Boolean call as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if (Boolean(a /= b) || Boolean(c /= d)) {}
+   ·                        ───────────────
+   ╰────
+  help: Remove the Boolean call as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a >>= b) && !!(c >>= d)) {}
-   ·                     ──────────
+   ·     ───────────
+   ╰────
+  help: Remove the double negation as it will already be coerced to a boolean
+
+  ⚠ eslint(no-extra-boolean-cast): Redundant double negation
+   ╭─[no_extra_boolean_cast.tsx:1:1]
+ 1 │ if (!!(a >>= b) && !!(c >>= d)) {}
+   ·                    ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2176,14 +2176,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a ? b : c) || !!(d ? e : f)) {}
-   ·      ────────────
+   ·     ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a ? b : c) || !!(d ? e : f)) {}
-   ·                       ────────────
+   ·                      ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2204,14 +2204,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a ? b : c) && !!(d ? e : f)) {}
-   ·      ────────────
+   ·     ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a ? b : c) && !!(d ? e : f)) {}
-   ·                       ────────────
+   ·                      ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2232,14 +2232,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a || b) || !!(c || d)) {}
-   ·      ─────────
+   ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a || b) || !!(c || d)) {}
-   ·                    ─────────
+   ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2260,14 +2260,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a || b) && !!(c || d)) {}
-   ·      ─────────
+   ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a || b) && !!(c || d)) {}
-   ·                    ─────────
+   ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2288,14 +2288,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a && b) || !!(c && d)) {}
-   ·      ─────────
+   ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a && b) || !!(c && d)) {}
-   ·                    ─────────
+   ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2316,14 +2316,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a && b) && !!(c && d)) {}
-   ·      ─────────
+   ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a && b) && !!(c && d)) {}
-   ·                    ─────────
+   ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2344,14 +2344,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a !== b) || !!(c !== d)) {}
-   ·      ──────────
+   ·     ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a !== b) || !!(c !== d)) {}
-   ·                     ──────────
+   ·                    ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2372,28 +2372,28 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a === b) && !!(c === d)) {}
-   ·      ──────────
+   ·     ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a === b) && !!(c === d)) {}
-   ·                     ──────────
+   ·                    ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a > b) || !!(c < d)) {}
-   ·      ────────
+   ·     ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!(a > b) || !!(c < d)) {}
-   ·                   ────────
+   ·                  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2414,14 +2414,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!f(a) && !!b.c) {}
-   ·      ─────
+   ·     ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!f(a) && !!b.c) {}
-   ·                ────
+   ·               ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2435,14 +2435,14 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (Boolean(a) || !!b) {}
-   ·                    ──
+   ·                   ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if (!!a && Boolean(b)) {}
-   ·      ──
+   ·     ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
@@ -2456,7 +2456,7 @@ expression: no_extra_boolean_cast
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
  1 │ if ((!!a) || (Boolean(b))) {}
-   ·       ──
+   ·      ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
 
