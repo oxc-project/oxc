@@ -3,7 +3,6 @@ import {
   ExtensionContext,
   window,
   commands,
-  Uri,
   workspace,
 } from "vscode";
 
@@ -13,6 +12,8 @@ import {
   LanguageClientOptions,
   ServerOptions,
 } from "vscode-languageclient/node";
+
+import { join } from 'node:path'
 
 const languageClientId = 'oxc-client';
 const languageClientName = 'oxc';
@@ -63,7 +64,7 @@ export async function activate(context: ExtensionContext) {
   const traceOutputChannel = window.createOutputChannel(traceOutputChannelName);
 
   const command = process.env.NODE_ENV === 'production' 
-                ? process.env.SERVER_PATH_PROD 
+                ? join(context.extensionPath, './target/release/oxc_vscode') 
                 : process.env.SERVER_PATH_DEV ;
 
   window.showInformationMessage(`oxc server path: ${command}`);
@@ -72,8 +73,8 @@ export async function activate(context: ExtensionContext) {
     command: command!,
     options: {
       env: {
-        ...process.env,
-        RUST_LOG: "debug",
+         ...process.env,
+        RUST_LOG: 'debug',
       },
     },
   };

@@ -7,9 +7,9 @@ const path = require("path");
 /**@type {import('webpack').Configuration}*/
 const config = {
 	target: "node", // vscode extensions run in node context for VS Code web 📖 -> https://webpack.js.org/configuration/target/#target
-	mode: "none",
+	mode: "production",
 
-	entry: "./client/src/extension.ts", // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
+	entry: "./client/extension.ts", // the entry point of this extension, 📖 -> https://webpack.js.org/configuration/entry-context/
 	output: {
 		// the bundle is stored in the 'dist' folder (check package.json), 📖 -> https://webpack.js.org/configuration/output/
 		path: path.resolve(__dirname, "dist"),

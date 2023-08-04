@@ -12,8 +12,7 @@
 			"outFiles": ["${workspaceFolder}/editor/vscode/dist/*.js"],
 			"preLaunchTask": "watch",
 			"env": {
-        "SERVER_PATH_DEV": "${workspaceRoot}/target/debug/oxc_vscode",
-				"SERVER_PATH_PROD": "${workspaceRoot}/target/release/oxc_vscode",
+        "SERVER_PATH_DEV": "${workspaceRoot}/target/debug/oxc_vscode"
       }
 		}
 	]

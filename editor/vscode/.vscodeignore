@@ -5,4 +5,8 @@ src/
 tsconfig.json
 webpack.config.js
 client/**
+pnpm-lock.yaml
+server
 target
+!target/release/oxc_vscode
+!target/release/oxc_vscode.exe
