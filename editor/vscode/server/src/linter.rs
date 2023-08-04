@@ -90,7 +90,7 @@ impl ErrorWithPosition {
 
         let message = self.miette_err.help().map_or_else(
             || self.miette_err.to_string(),
-            |help| format!("{}\n{}", self.miette_err, help),
+            |help| format!("{}\nhelp: {}", self.miette_err, help),
         );
 
         lsp_types::Diagnostic {
