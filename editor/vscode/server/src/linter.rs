@@ -250,11 +250,6 @@ impl IsolatedLintHandler {
         }
 
         if linter.has_fix() {
-            // let fix_result = Fixer::new(&source_text, result).fix();
-            // fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
-            // let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
-            // return Some(Self::wrap_diagnostics(path, &source_text, errors));
-
             let reports = result
                 .into_iter()
                 .map(|msg| {

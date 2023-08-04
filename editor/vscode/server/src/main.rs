@@ -75,60 +75,15 @@ impl LanguageServer for Backend {
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        if let Some(Some(root_uri)) = self.root_uri.get() {
-            if let Some((_, diagnostics)) =
-                self.server_linter.run_single(root_uri, &params.text_document.uri)
-            {
-                self.client
-                    .publish_diagnostics(
-                        params.text_document.uri.clone(),
-                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                        None,
-                    )
-                    .await;
-
-                self.diagnostics_report_map
-                    .insert(params.text_document.uri.to_string(), diagnostics);
-            }
-        }
+        self.handle_file_update(params.text_document.uri).await;
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
-        if let Some(Some(root_uri)) = self.root_uri.get() {
-            if let Some((_, diagnostics)) =
-                self.server_linter.run_single(root_uri, &params.text_document.uri)
-            {
-                self.client
-                    .publish_diagnostics(
-                        params.text_document.uri.clone(),
-                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                        None,
-                    )
-                    .await;
-
-                self.diagnostics_report_map
-                    .insert(params.text_document.uri.to_string(), diagnostics);
-            }
-        }
+        self.handle_file_update(params.text_document.uri).await;
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        if let Some(Some(root_uri)) = self.root_uri.get() {
-            if let Some((_, diagnostics)) =
-                self.server_linter.run_single(root_uri, &params.text_document.uri)
-            {
-                self.client
-                    .publish_diagnostics(
-                        params.text_document.uri.clone(),
-                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                        None,
-                    )
-                    .await;
-
-                self.diagnostics_report_map
-                    .insert(params.text_document.uri.to_string(), diagnostics);
-            }
-        }
+        self.handle_file_update(params.text_document.uri).await;
     }
 
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
@@ -192,6 +147,22 @@ impl Backend {
             )
         }))
         .await;
+    }
+
+    async fn handle_file_update(&self, uri: Url) {
+        if let Some(Some(root_uri)) = self.root_uri.get() {
+            if let Some((_, diagnostics)) = self.server_linter.run_single(root_uri, &uri) {
+                self.client
+                    .publish_diagnostics(
+                        uri.clone(),
+                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                        None,
+                    )
+                    .await;
+
+                self.diagnostics_report_map.insert(uri.to_string(), diagnostics);
+            }
+        }
     }
 }
 
