@@ -83,7 +83,15 @@ impl Tester {
 
     fn run(&mut self, source_text: &str, config: Option<Value>) -> bool {
         let name = self.rule_name.replace('-', "_");
-        let path = PathBuf::from(name).with_extension("tsx");
+        let c = config.clone();
+        let extension = c
+            .as_ref()
+            .and_then(|x| x.get(0))
+            .and_then(|x| x.get("extension"))
+            .and_then(|x| serde_json::Value::as_str(x))
+            .unwrap_or("tsx");
+        // println!("@@ TESTER {:?}", extension);
+        let path = PathBuf::from(name).with_extension(extension);
         let allocator = Allocator::default();
         let result = self.run_rules(&allocator, &path, source_text, config, false);
         if result.is_empty() {
