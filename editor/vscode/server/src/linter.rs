@@ -28,6 +28,7 @@ struct ErrorWithPosition {
     pub start_pos: Position,
     pub end_pos: Position,
     pub miette_err: Error,
+    pub fixed_code: Option<String>,
     pub labels_with_pos: Vec<LabeledSpanWithPosition>,
 }
 
@@ -39,7 +40,7 @@ struct LabeledSpanWithPosition {
 }
 
 impl ErrorWithPosition {
-    pub fn new(error: Error, text: &str) -> Self {
+    pub fn new(error: Error, text: &str, fixed_code: Option<String>) -> Self {
         let labels = error.labels().map_or(vec![], Iterator::collect);
 
         let labels_with_pos: Vec<LabeledSpanWithPosition> = labels
@@ -59,7 +60,7 @@ impl ErrorWithPosition {
         let start_pos = labels_with_pos[0].start_pos;
         let end_pos = labels_with_pos[labels_with_pos.len() - 1].end_pos;
 
-        Self { miette_err: error, start_pos, end_pos, labels_with_pos }
+        Self { miette_err: error, start_pos, end_pos, labels_with_pos, fixed_code }
     }
 
     fn into_lsp_diagnostic(&self, path: &PathBuf) -> lsp_types::Diagnostic {
@@ -108,6 +109,22 @@ impl ErrorWithPosition {
             data: None,
         }
     }
+
+    fn into_diagnostic_report(self, path: &PathBuf) -> DiagnosticReport {
+        DiagnosticReport { diagnostic: self.into_lsp_diagnostic(path), fixed_code: self.fixed_code }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct DiagnosticReport {
+    pub diagnostic: lsp_types::Diagnostic,
+    pub fixed_code: Option<String>,
+}
+
+#[derive(Debug)]
+struct ErrorReport {
+    pub error: Error,
+    pub fixed_code: Option<String>,
 }
 
 #[derive(Debug)]
@@ -124,7 +141,7 @@ impl IsolatedLintHandler {
     /// # Panics
     ///
     /// * When `mpsc::channel` fails to send.
-    pub fn run_full(&self) -> Vec<(PathBuf, Vec<lsp_types::Diagnostic>)> {
+    pub fn run_full(&self) -> Vec<(PathBuf, Vec<DiagnosticReport>)> {
         let number_of_files = Arc::new(AtomicUsize::new(0));
         let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<ErrorWithPosition>)>();
 
@@ -132,10 +149,10 @@ impl IsolatedLintHandler {
         self.process_diagnostics(&rx_error)
     }
 
-    pub fn run_single(&self, path: PathBuf) -> Option<(PathBuf, Vec<lsp_types::Diagnostic>)> {
+    pub fn run_single(&self, path: PathBuf) -> Option<(PathBuf, Vec<DiagnosticReport>)> {
         if self.is_wanted_ext(&path) {
             Some(Self::lint_path(&self.linter, &path).map_or((path, vec![]), |(p, errors)| {
-                (p.clone(), errors.iter().map(|e| e.into_lsp_diagnostic(&p)).collect())
+                (p.clone(), errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect())
             }))
         } else {
             None
@@ -183,11 +200,14 @@ impl IsolatedLintHandler {
     fn process_diagnostics(
         &self,
         rx_error: &mpsc::Receiver<(PathBuf, Vec<ErrorWithPosition>)>,
-    ) -> Vec<(PathBuf, Vec<lsp_types::Diagnostic>)> {
+    ) -> Vec<(PathBuf, Vec<DiagnosticReport>)> {
         rx_error
             .iter()
             .map(|(path, errors)| {
-                (path.clone(), errors.iter().map(|e| e.into_lsp_diagnostic(&path)).collect())
+                (
+                    path.clone(),
+                    errors.into_iter().map(|e| e.into_diagnostic_report(&path)).collect(),
+                )
             })
             .collect()
     }
@@ -203,7 +223,13 @@ impl IsolatedLintHandler {
             .parse();
 
         if !ret.errors.is_empty() {
-            return Some(Self::wrap_diagnostics(path, &source_text, ret.errors));
+            let reports = ret
+                .errors
+                .into_iter()
+                .map(|diagnostic| ErrorReport { error: diagnostic, fixed_code: None })
+                .collect();
+
+            return Some(Self::wrap_diagnostics(path, &source_text, reports));
         };
 
         let program = allocator.alloc(ret.program);
@@ -213,7 +239,12 @@ impl IsolatedLintHandler {
             .build(program);
 
         if !semantic_ret.errors.is_empty() {
-            return Some(Self::wrap_diagnostics(path, &source_text, semantic_ret.errors));
+            let reports = semantic_ret
+                .errors
+                .into_iter()
+                .map(|diagnostic| ErrorReport { error: diagnostic, fixed_code: None })
+                .collect();
+            return Some(Self::wrap_diagnostics(path, &source_text, reports));
         };
 
         let lint_ctx = LintContext::new(&Rc::new(semantic_ret.semantic));
@@ -224,28 +255,43 @@ impl IsolatedLintHandler {
         }
 
         if linter.has_fix() {
-            let fix_result = Fixer::new(&source_text, result).fix();
-            fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
-            let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
-            return Some(Self::wrap_diagnostics(path, &source_text, errors));
+            // let fix_result = Fixer::new(&source_text, result).fix();
+            // fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
+            // let errors = fix_result.messages.into_iter().map(|m| m.error).collect();
+            // return Some(Self::wrap_diagnostics(path, &source_text, errors));
+
+            let reports = result
+                .into_iter()
+                .map(|msg| {
+                    let fixed_code = msg.fix.map(|f| f.content.to_string());
+
+                    ErrorReport { error: msg.error, fixed_code }
+                })
+                .collect::<Vec<ErrorReport>>();
+
+            return Some(Self::wrap_diagnostics(path, &source_text, reports));
         }
 
-        let errors = result.into_iter().map(|diagnostic| diagnostic.error).collect();
+        let errors = result
+            .into_iter()
+            .map(|diagnostic| ErrorReport { error: diagnostic.error, fixed_code: None })
+            .collect();
         Some(Self::wrap_diagnostics(path, &source_text, errors))
     }
 
     fn wrap_diagnostics(
         path: &Path,
         source_text: &str,
-        diagnostics: Vec<Error>,
+        reports: Vec<ErrorReport>,
     ) -> (PathBuf, Vec<ErrorWithPosition>) {
         let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
-        let diagnostics = diagnostics
+        let diagnostics = reports
             .into_iter()
-            .map(|diagnostic| {
+            .map(|report| {
                 ErrorWithPosition::new(
-                    diagnostic.with_source_code(Arc::clone(&source)),
+                    report.error.with_source_code(Arc::clone(&source)),
                     source_text,
+                    report.fixed_code,
                 )
             })
             .collect();
@@ -279,10 +325,11 @@ impl ServerLinter {
         Self { linter: Arc::new(linter) }
     }
 
-    pub fn run_full(&self, root_uri: &Url) -> Vec<(PathBuf, Vec<lsp_types::Diagnostic>)> {
+    pub fn run_full(&self, root_uri: &Url) -> Vec<(PathBuf, Vec<DiagnosticReport>)> {
         let options = LintOptions {
             paths: vec![root_uri.to_file_path().unwrap()],
             ignore_path: "node_modules".into(),
+            fix: true,
             ..LintOptions::default()
         };
 
@@ -293,10 +340,11 @@ impl ServerLinter {
         &self,
         root_uri: &Url,
         uri: &Url,
-    ) -> Option<(PathBuf, Vec<lsp_types::Diagnostic>)> {
+    ) -> Option<(PathBuf, Vec<DiagnosticReport>)> {
         let options = LintOptions {
             paths: vec![root_uri.to_file_path().unwrap()],
             ignore_path: "node_modules".into(),
+            fix: true,
             ..LintOptions::default()
         };
 

@@ -2,10 +2,12 @@ mod linter;
 mod options;
 mod walk;
 
-use crate::linter::ServerLinter;
+use crate::linter::{DiagnosticReport, ServerLinter};
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::path::PathBuf;
 
+use dashmap::DashMap;
 use futures::future::join_all;
 use tokio::sync::{OnceCell, SetError};
 use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
@@ -17,6 +19,7 @@ struct Backend {
     client: Client,
     root_uri: OnceCell<Option<Url>>,
     server_linter: ServerLinter,
+    diagnostics_report_map: DashMap<String, Vec<DiagnosticReport>>,
 }
 
 #[tower_lsp::async_trait]
@@ -31,15 +34,15 @@ impl LanguageServer for Backend {
                 text_document_sync: Some(TextDocumentSyncCapability::Kind(
                     TextDocumentSyncKind::FULL,
                 )),
-                // code_action_provider: Some(CodeActionProviderCapability::Options(
-                //     CodeActionOptions {
-                //         code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
-                //         work_done_progress_options: WorkDoneProgressOptions {
-                //             work_done_progress: None,
-                //         },
-                //         resolve_provider: None,
-                //     },
-                // )),
+                code_action_provider: Some(CodeActionProviderCapability::Options(
+                    CodeActionOptions {
+                        code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
+                        work_done_progress_options: WorkDoneProgressOptions {
+                            work_done_progress: None,
+                        },
+                        resolve_provider: None,
+                    },
+                )),
                 ..ServerCapabilities::default()
             },
         })
@@ -51,7 +54,13 @@ impl LanguageServer for Backend {
         if let Some(Some(root_uri)) = self.root_uri.get() {
             let result = self.server_linter.run_full(root_uri);
 
-            self.publish_all_diagnostics(result).await;
+            self.publish_all_diagnostics(
+                &result
+                    .into_iter()
+                    .map(|(p, d)| (p, d.into_iter().map(|d| d.diagnostic).collect()))
+                    .collect(),
+            )
+            .await;
         }
     }
 
@@ -64,8 +73,15 @@ impl LanguageServer for Backend {
             match self.server_linter.run_single(root_uri, &params.text_document.uri) {
                 Some((_, diagnostics)) => {
                     self.client
-                        .publish_diagnostics(params.text_document.uri, diagnostics, None)
+                        .publish_diagnostics(
+                            params.text_document.uri.clone(),
+                            diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                            None,
+                        )
                         .await;
+
+                    self.diagnostics_report_map
+                        .insert(params.text_document.uri.to_string(), diagnostics);
                 }
                 None => {}
             }
@@ -77,12 +93,73 @@ impl LanguageServer for Backend {
             match self.server_linter.run_single(root_uri, &params.text_document.uri) {
                 Some((_, diagnostics)) => {
                     self.client
-                        .publish_diagnostics(params.text_document.uri, diagnostics, None)
+                        .publish_diagnostics(
+                            params.text_document.uri.clone(),
+                            diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                            None,
+                        )
                         .await;
+
+                    self.diagnostics_report_map
+                        .insert(params.text_document.uri.to_string(), diagnostics);
                 }
                 None => {}
             }
         }
+    }
+
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        if let Some(Some(root_uri)) = self.root_uri.get() {
+            match self.server_linter.run_single(root_uri, &params.text_document.uri) {
+                Some((_, diagnostics)) => {
+                    self.client
+                        .publish_diagnostics(
+                            params.text_document.uri.clone(),
+                            diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                            None,
+                        )
+                        .await;
+
+                    self.diagnostics_report_map
+                        .insert(params.text_document.uri.to_string(), diagnostics);
+                }
+                None => {}
+            }
+        }
+    }
+
+    async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
+        let uri = params.text_document.uri;
+
+        if let Some(value) = self.diagnostics_report_map.get(&uri.to_string()) {
+            if let Some(report) =
+                value.iter().find(|r| r.diagnostic.range == params.range && r.fixed_code.is_some())
+            {
+                self.client.log_message(MessageType::INFO, "found quick fix").await;
+
+                return Ok(Some(vec![CodeActionOrCommand::CodeAction(CodeAction {
+                    title: "Fix".into(),
+                    kind: Some(CodeActionKind::QUICKFIX),
+                    is_preferred: Some(true),
+                    edit: Some(WorkspaceEdit {
+                        changes: Some(HashMap::from([(
+                            uri,
+                            vec![TextEdit {
+                                range: report.diagnostic.range,
+                                new_text: report.fixed_code.clone().unwrap(),
+                            }],
+                        )])),
+                        ..WorkspaceEdit::default()
+                    }),
+                    disabled: None,
+                    data: None,
+                    diagnostics: None,
+                    command: None,
+                })]));
+            }
+        }
+
+        Ok(None)
     }
 }
 
@@ -98,9 +175,13 @@ impl Backend {
         })
     }
 
-    async fn publish_all_diagnostics(&self, result: Vec<(PathBuf, Vec<Diagnostic>)>) {
+    async fn publish_all_diagnostics(&self, result: &Vec<(PathBuf, Vec<Diagnostic>)>) {
         join_all(result.into_iter().map(|(path, diagnostics)| {
-            self.client.publish_diagnostics(Url::from_file_path(path).unwrap(), diagnostics, None)
+            self.client.publish_diagnostics(
+                Url::from_file_path(path).unwrap(),
+                diagnostics.to_vec(),
+                None,
+            )
         }))
         .await;
     }
@@ -114,10 +195,15 @@ async fn main() {
     let stdout = tokio::io::stdout();
 
     let server_linter = ServerLinter::new();
+    let diagnostics_report_map = DashMap::new();
 
-    let (service, socket) =
-        LspService::build(|client| Backend { client, root_uri: OnceCell::new(), server_linter })
-            .finish();
+    let (service, socket) = LspService::build(|client| Backend {
+        client,
+        root_uri: OnceCell::new(),
+        server_linter,
+        diagnostics_report_map,
+    })
+    .finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
 }
