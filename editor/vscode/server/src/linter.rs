@@ -16,7 +16,7 @@ use oxc_diagnostics::{
     miette::{self},
     Error, Severity,
 };
-use oxc_linter::{Fixer, LintContext, Linter, RuleCategory, RULES};
+use oxc_linter::{LintContext, Linter, RuleCategory, RULES};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
@@ -320,7 +320,8 @@ impl ServerLinter {
                 .cloned()
                 .filter(|rule| rule.category() != RuleCategory::Nursery)
                 .collect::<Vec<_>>(),
-        );
+        )
+        .with_fix(true);
 
         Self { linter: Arc::new(linter) }
     }

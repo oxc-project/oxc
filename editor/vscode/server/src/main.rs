@@ -135,10 +135,13 @@ impl LanguageServer for Backend {
             if let Some(report) =
                 value.iter().find(|r| r.diagnostic.range == params.range && r.fixed_code.is_some())
             {
-                self.client.log_message(MessageType::INFO, "found quick fix").await;
+                let title = match report.diagnostic.message.split(':').next() {
+                    Some(s) => format!("Fix this {} issue", s),
+                    None => "Fix this issue".into(),
+                };
 
                 return Ok(Some(vec![CodeActionOrCommand::CodeAction(CodeAction {
-                    title: "Fix".into(),
+                    title,
                     kind: Some(CodeActionKind::QUICKFIX),
                     is_preferred: Some(true),
                     edit: Some(WorkspaceEdit {
