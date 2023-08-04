@@ -11,7 +11,13 @@ use dashmap::DashMap;
 use futures::future::join_all;
 use tokio::sync::{OnceCell, SetError};
 use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
-use tower_lsp::lsp_types::*;
+use tower_lsp::lsp_types::{
+    CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
+    CodeActionProviderCapability, CodeActionResponse, Diagnostic, DidChangeTextDocumentParams,
+    DidOpenTextDocumentParams, DidSaveTextDocumentParams, InitializeParams, InitializeResult,
+    InitializedParams, MessageType, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
+    TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
+};
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
 #[derive(Debug)]
@@ -70,60 +76,57 @@ impl LanguageServer for Backend {
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
         if let Some(Some(root_uri)) = self.root_uri.get() {
-            match self.server_linter.run_single(root_uri, &params.text_document.uri) {
-                Some((_, diagnostics)) => {
-                    self.client
-                        .publish_diagnostics(
-                            params.text_document.uri.clone(),
-                            diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                            None,
-                        )
-                        .await;
+            if let Some((_, diagnostics)) =
+                self.server_linter.run_single(root_uri, &params.text_document.uri)
+            {
+                self.client
+                    .publish_diagnostics(
+                        params.text_document.uri.clone(),
+                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                        None,
+                    )
+                    .await;
 
-                    self.diagnostics_report_map
-                        .insert(params.text_document.uri.to_string(), diagnostics);
-                }
-                None => {}
+                self.diagnostics_report_map
+                    .insert(params.text_document.uri.to_string(), diagnostics);
             }
         }
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         if let Some(Some(root_uri)) = self.root_uri.get() {
-            match self.server_linter.run_single(root_uri, &params.text_document.uri) {
-                Some((_, diagnostics)) => {
-                    self.client
-                        .publish_diagnostics(
-                            params.text_document.uri.clone(),
-                            diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                            None,
-                        )
-                        .await;
+            if let Some((_, diagnostics)) =
+                self.server_linter.run_single(root_uri, &params.text_document.uri)
+            {
+                self.client
+                    .publish_diagnostics(
+                        params.text_document.uri.clone(),
+                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                        None,
+                    )
+                    .await;
 
-                    self.diagnostics_report_map
-                        .insert(params.text_document.uri.to_string(), diagnostics);
-                }
-                None => {}
+                self.diagnostics_report_map
+                    .insert(params.text_document.uri.to_string(), diagnostics);
             }
         }
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         if let Some(Some(root_uri)) = self.root_uri.get() {
-            match self.server_linter.run_single(root_uri, &params.text_document.uri) {
-                Some((_, diagnostics)) => {
-                    self.client
-                        .publish_diagnostics(
-                            params.text_document.uri.clone(),
-                            diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
-                            None,
-                        )
-                        .await;
+            if let Some((_, diagnostics)) =
+                self.server_linter.run_single(root_uri, &params.text_document.uri)
+            {
+                self.client
+                    .publish_diagnostics(
+                        params.text_document.uri.clone(),
+                        diagnostics.clone().into_iter().map(|d| d.diagnostic).collect(),
+                        None,
+                    )
+                    .await;
 
-                    self.diagnostics_report_map
-                        .insert(params.text_document.uri.to_string(), diagnostics);
-                }
-                None => {}
+                self.diagnostics_report_map
+                    .insert(params.text_document.uri.to_string(), diagnostics);
             }
         }
     }
@@ -135,10 +138,11 @@ impl LanguageServer for Backend {
             if let Some(report) =
                 value.iter().find(|r| r.diagnostic.range == params.range && r.fixed_code.is_some())
             {
-                let title = match report.diagnostic.message.split(':').next() {
-                    Some(s) => format!("Fix this {} issue", s),
-                    None => "Fix this issue".into(),
-                };
+                let title =
+                    report.diagnostic.message.split(':').next().map_or_else(
+                        || "Fix this problem".into(),
+                        |s| format!("Fix this {s} problem"),
+                    );
 
                 return Ok(Some(vec![CodeActionOrCommand::CodeAction(CodeAction {
                     title,
@@ -178,11 +182,12 @@ impl Backend {
         })
     }
 
+    #[allow(clippy::ptr_arg)]
     async fn publish_all_diagnostics(&self, result: &Vec<(PathBuf, Vec<Diagnostic>)>) {
-        join_all(result.into_iter().map(|(path, diagnostics)| {
+        join_all(result.iter().map(|(path, diagnostics)| {
             self.client.publish_diagnostics(
                 Url::from_file_path(path).unwrap(),
-                diagnostics.to_vec(),
+                diagnostics.clone(),
                 None,
             )
         }))

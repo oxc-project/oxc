@@ -46,14 +46,10 @@ impl ErrorWithPosition {
         let labels_with_pos: Vec<LabeledSpanWithPosition> = labels
             .iter()
             .map(|labeled_span| LabeledSpanWithPosition {
-                start_pos: offset_to_position(labeled_span.offset() as usize, text)
+                start_pos: offset_to_position(labeled_span.offset(), text).unwrap_or_default(),
+                end_pos: offset_to_position(labeled_span.offset() + labeled_span.len(), text)
                     .unwrap_or_default(),
-                end_pos: offset_to_position(
-                    labeled_span.offset() + labeled_span.len() as usize,
-                    text,
-                )
-                .unwrap_or_default(),
-                message: labeled_span.label().map(|label| label.to_string()),
+                message: labeled_span.label().map(ToString::to_string),
             })
             .collect();
 
@@ -63,7 +59,7 @@ impl ErrorWithPosition {
         Self { miette_err: error, start_pos, end_pos, labels_with_pos, fixed_code }
     }
 
-    fn into_lsp_diagnostic(&self, path: &PathBuf) -> lsp_types::Diagnostic {
+    fn to_lsp_diagnostic(&self, path: &PathBuf) -> lsp_types::Diagnostic {
         let severity = match self.miette_err.severity() {
             Some(Severity::Error) => Some(lsp_types::DiagnosticSeverity::ERROR),
             Some(Severity::Warning) => Some(lsp_types::DiagnosticSeverity::WARNING),
@@ -78,12 +74,12 @@ impl ErrorWithPosition {
                         uri: lsp_types::Url::from_file_path(path).unwrap(),
                         range: lsp_types::Range {
                             start: lsp_types::Position {
-                                line: labeled_span.start_pos.line as u32,
-                                character: labeled_span.start_pos.character as u32,
+                                line: labeled_span.start_pos.line,
+                                character: labeled_span.start_pos.character,
                             },
                             end: lsp_types::Position {
-                                line: labeled_span.end_pos.line as u32,
-                                character: labeled_span.end_pos.character as u32,
+                                line: labeled_span.end_pos.line,
+                                character: labeled_span.end_pos.character,
                             },
                         },
                     },
@@ -92,10 +88,10 @@ impl ErrorWithPosition {
                 .collect(),
         );
 
-        let message = match self.miette_err.help() {
-            Some(help) => format!("{}\n{}", self.miette_err, help),
-            None => self.miette_err.to_string(),
-        };
+        let message = self.miette_err.help().map_or_else(
+            || self.miette_err.to_string(),
+            |help| format!("{}\n{}", self.miette_err, help),
+        );
 
         lsp_types::Diagnostic {
             range: Range { start: self.start_pos, end: self.end_pos },
@@ -111,7 +107,7 @@ impl ErrorWithPosition {
     }
 
     fn into_diagnostic_report(self, path: &PathBuf) -> DiagnosticReport {
-        DiagnosticReport { diagnostic: self.into_lsp_diagnostic(path), fixed_code: self.fixed_code }
+        DiagnosticReport { diagnostic: self.to_lsp_diagnostic(path), fixed_code: self.fixed_code }
     }
 }
 
@@ -146,11 +142,11 @@ impl IsolatedLintHandler {
         let (tx_error, rx_error) = mpsc::channel::<(PathBuf, Vec<ErrorWithPosition>)>();
 
         self.process_paths(&number_of_files, tx_error);
-        self.process_diagnostics(&rx_error)
+        Self::process_diagnostics(&rx_error)
     }
 
     pub fn run_single(&self, path: PathBuf) -> Option<(PathBuf, Vec<DiagnosticReport>)> {
-        if self.is_wanted_ext(&path) {
+        if Self::is_wanted_ext(&path) {
             Some(Self::lint_path(&self.linter, &path).map_or((path, vec![]), |(p, errors)| {
                 (p.clone(), errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect())
             }))
@@ -159,7 +155,7 @@ impl IsolatedLintHandler {
         }
     }
 
-    fn is_wanted_ext(&self, path: &PathBuf) -> bool {
+    fn is_wanted_ext(path: &Path) -> bool {
         path.extension()
             .map_or(false, |ext| VALID_EXTENSIONS.contains(&ext.to_string_lossy().as_ref()))
     }
@@ -198,7 +194,6 @@ impl IsolatedLintHandler {
     }
 
     fn process_diagnostics(
-        &self,
         rx_error: &mpsc::Receiver<(PathBuf, Vec<ErrorWithPosition>)>,
     ) -> Vec<(PathBuf, Vec<DiagnosticReport>)> {
         rx_error
@@ -299,6 +294,7 @@ impl IsolatedLintHandler {
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
 fn offset_to_position(offset: usize, source_text: &str) -> Option<Position> {
     let rope = Rope::from_str(source_text);
     let line = rope.try_char_to_line(offset).ok()?;
