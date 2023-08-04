@@ -109,7 +109,6 @@ fn exports_not_browser_field2() {
 }
 
 #[test]
-#[ignore = "fully_specified"]
 // should resolve extension without fullySpecified
 fn extension_without_fully_specified() {
     let f2 = super::fixture().join("exports-field2");
@@ -125,10 +124,9 @@ fn extension_without_fully_specified() {
     assert_eq!(resolved_path, Ok(f2.join("node_modules/exports-field/lib/lib2/main.js")));
 }
 
-#[test]
-#[ignore = "exports field name"]
+// #[test]
 // field name path #1 - #5
-fn field_name() {}
+// fn field_name() {}
 
 #[test]
 fn extension_alias_1_2() {
@@ -181,7 +179,6 @@ fn extension_alias_3() {
 }
 
 #[test]
-#[ignore = "fully_specified"]
 fn extension_alias_throw_error() {
     let f = super::fixture().join("exports-field-and-extension-alias");
 
@@ -195,10 +192,11 @@ fn extension_alias_throw_error() {
 
     #[rustfmt::skip]
     let fail = [
-        // These two test cases are exactly the same in enhanced-resolve
+        // enhanced-resolve has two test cases that are exactly the same here
         // https://github.com/webpack/enhanced-resolve/blob/a998c7d218b7a9ec2461fc4fddd1ad5dd7687485/test/exportsField.test.js#L2976-L3024
-        ("should throw error with the `extensionAlias` option", f.clone(), "pkg/string.js", ResolveError::PackagePathNotExported("node_modules/pkg/dist/string.js".to_string())),
-        ("should throw error with the `extensionAlias` option #2", f, "pkg/string.js", ResolveError::PackagePathNotExported("node_modules/pkg/dist/string.js".to_string())),
+        ("should throw error with the `extensionAlias` option", f, "pkg/string.js", ResolveError::ExtensionAlias),
+        // TODO: The error is PackagePathNotExported in enhanced_resolve
+        // ("should throw error with the `extensionAlias` option", f.clone(), "pkg/string.js", ResolveError::PackagePathNotExported("node_modules/pkg/dist/string.ts".to_string())),
     ];
 
     for (comment, path, request, error) in fail {

@@ -50,10 +50,9 @@ fn test() {
     }
 }
 
-#[test]
-#[ignore = "imports field name"]
+// #[test]
 // field name path #1 - #2
-fn field_name() {}
+// fn field_name() {}
 
 // Small script for generating the test cases from enhanced_resolve
 // for (c of testCases) {
