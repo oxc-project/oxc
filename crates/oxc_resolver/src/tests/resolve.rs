@@ -1,6 +1,6 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/resolve.test.js>
 
-use oxc_resolver::{Resolution, ResolveOptions, Resolver};
+use crate::{Resolution, ResolveOptions, Resolver};
 
 #[test]
 fn resolve() {

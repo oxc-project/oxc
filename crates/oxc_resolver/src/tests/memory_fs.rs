@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use oxc_resolver::{FileMetadata, FileSystem};
+use crate::{FileMetadata, FileSystem};
 
 pub struct MemoryFS {
     fs: vfs::MemoryFS,

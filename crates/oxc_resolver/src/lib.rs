@@ -17,6 +17,9 @@ mod path;
 mod request;
 mod resolution;
 
+#[cfg(test)]
+mod tests;
+
 use std::{
     borrow::Cow,
     cmp::Ordering,
@@ -27,15 +30,15 @@ use std::{
 use crate::{
     cache::{Cache, CacheValue},
     file_system::FileSystemOs,
-    package_json::{ExportsKey, MatchObject, PackageJson},
+    package_json::{ExportsField, MatchObject},
+    package_json::{ExportsKey, PackageJson},
+    path::PathUtil,
     request::{Request, RequestPath},
 };
 pub use crate::{
     error::{JSONError, ResolveError},
     file_system::{FileMetadata, FileSystem},
     options::{Alias, AliasValue, ResolveOptions},
-    package_json::ExportsField,
-    path::PathUtil,
     resolution::Resolution,
 };
 
@@ -131,8 +134,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 self.require_relative(cache_value, relative_path)
             }
             // 4. If X begins with '#'
-            //    a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
-            RequestPath::Hash(hash_path) => self.package_resolve(cache_value, hash_path),
+            RequestPath::Hash(specifier) => {
+                // a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
+                self.package_imports_resolve(cache_value, specifier)
+            }
             // (ESM) 5. Otherwise,
             // Note: specifier is now a bare specifier.
             // Set resolved the result of PACKAGE_RESOLVE(specifier, parentURL).
@@ -421,11 +426,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(SCOPE),
                     // "." + X.slice("name".length), `package.json` "exports", ["node", "require"])
                     // defined in the ESM resolver.
-                    let path = package_json.path.parent().unwrap();
+                    let package_url = package_json.path.parent().unwrap();
                     // Note: The subpath is not prepended with a dot on purpose
                     // because `package_exports_resolve` matches subpath without the leading dot.
                     if let Some(path) = self.package_exports_resolve(
-                        path,
+                        package_url,
                         subpath,
                         &package_json.exports,
                         &self.options.condition_names,
@@ -533,9 +538,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     /// PACKAGE_EXPORTS_RESOLVE(packageURL, subpath, exports, conditions)
-    ///
-    /// # Errors
-    pub fn package_exports_resolve(
+    fn package_exports_resolve(
         &self,
         package_url: &Path,
         subpath: &str,
@@ -548,8 +551,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             let mut without_dot = false;
             for key in map.keys() {
                 has_dot = has_dot || matches!(key, ExportsKey::Main | ExportsKey::Pattern(_));
-                without_dot = without_dot
-                    || matches!(key, ExportsKey::Hash(_) | ExportsKey::CustomCondition(_));
+                without_dot = without_dot || matches!(key, ExportsKey::CustomCondition(_));
                 if has_dot && without_dot {
                     return Err(ResolveError::InvalidPackageConfig(
                         package_url.join("package.json"),
@@ -606,9 +608,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             // Note: `package_imports_exports_resolve` does not require the leading dot.
             let match_key = subpath;
             // 2. Let resolved be the result of PACKAGE_IMPORTS_EXPORTS_RESOLVE( matchKey, exports, packageURL, false, conditions).
-            if let Some(path) =
-                self.package_imports_exports_resolve(match_key, exports, package_url, conditions)?
-            {
+            if let Some(path) = self.package_imports_exports_resolve(
+                match_key,
+                exports,
+                package_url,
+                /* is_imports */ false,
+                conditions,
+            )? {
                 // 3. If resolved is not null or undefined, return resolved.
                 return Ok(Some(path));
             }
@@ -617,12 +623,50 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Err(ResolveError::PackagePathNotExported(format!(".{subpath}")))
     }
 
+    /// PACKAGE_IMPORTS_RESOLVE(specifier, parentURL, conditions)
+    fn package_imports_resolve(
+        &self,
+        cache_value: &CacheValue,
+        specifier: &str,
+    ) -> Result<CacheValue, ResolveError> {
+        // 1. Assert: specifier begins with "#".
+        debug_assert!(specifier.starts_with('#'), "{specifier}");
+        // 2. If specifier is exactly equal to "#" or starts with "#/", then
+        if specifier == "#" || specifier.starts_with("#/") {
+            // 1. Throw an Invalid Module Specifier error.
+            return Err(ResolveError::InvalidModuleSpecifier(specifier.to_string()));
+        }
+        // 3. Let packageURL be the result of LOOKUP_PACKAGE_SCOPE(parentURL).
+        // 4. If packageURL is not null, then
+        if let Some(package_json) = cache_value.find_package_json(&self.cache.fs)? {
+            // 1. Let pjson be the result of READ_PACKAGE_JSON(packageURL).
+            // 2. If pjson.imports is a non-null Object, then
+            if !package_json.imports.is_empty() {
+                // 1. Let resolved be the result of PACKAGE_IMPORTS_EXPORTS_RESOLVE( specifier, pjson.imports, packageURL, true, conditions).
+                let package_url = package_json.path.parent().unwrap();
+                if let Some(path) = self.package_imports_exports_resolve(
+                    specifier,
+                    &package_json.imports,
+                    package_url,
+                    /* is_imports */ true,
+                    &self.options.condition_names,
+                )? {
+                    // 2. If resolved is not null or undefined, return resolved.
+                    return Ok(path);
+                }
+            }
+        }
+        // 5. Throw a Package Import Not Defined error.
+        Err(ResolveError::PackageImportNotDefined(specifier.to_string()))
+    }
+
     /// PACKAGE_IMPORTS_EXPORTS_RESOLVE(matchKey, matchObj, packageURL, isImports, conditions)
     fn package_imports_exports_resolve(
         &self,
         match_key: &str,
         match_obj: &MatchObject,
         package_url: &Path,
+        is_imports: bool,
         conditions: &[String],
     ) -> ResolveState {
         // enhanced_resolve behaves differently, it throws
@@ -640,7 +684,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     match_key,
                     target,
                     None,
-                    /* is_imports */ false,
+                    is_imports,
                     conditions,
                 );
             }
@@ -690,7 +734,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 best_key,
                 best_target,
                 Some(best_match),
-                /* is_imports */ false,
+                is_imports,
                 conditions,
             );
         }
@@ -708,6 +752,32 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         is_imports: bool,
         conditions: &[String],
     ) -> ResolveState {
+        fn normalize_string_target<'a>(
+            target_key: &'a str,
+            target: &'a str,
+            pattern_match: Option<&'a str>,
+            package_url: &Path,
+        ) -> Result<Cow<'a, str>, ResolveError> {
+            let target = if let Some(pattern_match) = pattern_match {
+                if !target_key.contains('*') && !target.contains('*') {
+                    // enhanced_resolve behaviour
+                    // TODO: [DEP0148] DeprecationWarning: Use of deprecated folder mapping "./dist/" in the "exports" field module resolution of the package at xxx/package.json.
+                    if target_key.ends_with('/') && target.ends_with('/') {
+                        Cow::Owned(format!("{target}{pattern_match}"))
+                    } else {
+                        return Err(ResolveError::InvalidPackageConfigDirectory(
+                            package_url.join("package.json"),
+                        ));
+                    }
+                } else {
+                    Cow::Owned(target.replace('*', pattern_match))
+                }
+            } else {
+                Cow::Borrowed(target)
+            };
+            Ok(target)
+        }
+
         match target {
             ExportsField::None => {}
             // 1. If target is a String, then
@@ -723,38 +793,23 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     }
                     // 2. If patternMatch is a String, then
                     //   1. Return PACKAGE_RESOLVE(target with every instance of "*" replaced by patternMatch, packageURL + "/").
-                    // 3. Return PACKAGE_RESOLVE(target, packageURL + "/").
+                    let target =
+                        normalize_string_target(target_key, target, pattern_match, package_url)?;
+                    let package_url = self.cache.value(package_url);
+                    // // 3. Return PACKAGE_RESOLVE(target, packageURL + "/").
+                    return self.package_resolve(&package_url, &target).map(Some);
                 }
-                // 2. If target split on "/" or "\" contains any "", ".", "..", or "node_modules" segments after the first "." segment, case insensitive and including percent encoded variants, throw an Invalid Package Target error.
-                let target = if let Some(pattern_match) = pattern_match {
-                    if !target_key.contains('*') && !target.contains('*') {
-                        // enhanced_resolve behaviour
-                        // TODO: [DEP0148] DeprecationWarning: Use of deprecated folder mapping "./dist/" in the "exports" field module resolution of the package at xxx/package.json.
-                        if target_key.ends_with('/') && target.ends_with('/') {
-                            Cow::Owned(format!("{target}{pattern_match}"))
-                        } else {
-                            return Err(ResolveError::InvalidPackageConfigDirectory(
-                                package_url.join("package.json"),
-                            ));
-                        }
-                    } else {
-                        // if !target.contains('*') && target.ends_with('/') {
-                        // Cow::Owned(format!("{target}{pattern_match}"))
-                        // } else {
-                        Cow::Owned(target.replace('*', pattern_match))
-                    }
-                    // }
-                } else {
-                    Cow::Borrowed(target)
-                };
 
-                if Path::new(target.as_str()).is_invalid_exports_target() {
-                    return Err(ResolveError::InvalidPackageTarget(target.to_string()));
-                }
+                // 2. If target split on "/" or "\" contains any "", ".", "..", or "node_modules" segments after the first "." segment, case insensitive and including percent encoded variants, throw an Invalid Package Target error.
                 // 3. Let resolvedTarget be the URL resolution of the concatenation of packageURL and target.
-                let resolved_target = package_url.join(target.as_str()).normalize();
                 // 4. Assert: resolvedTarget is contained in packageURL.
                 // 5. If patternMatch is null, then
+                let target =
+                    normalize_string_target(target_key, target, pattern_match, package_url)?;
+                if Path::new(target.as_ref()).is_invalid_exports_target() {
+                    return Err(ResolveError::InvalidPackageTarget(target.to_string()));
+                }
+                let resolved_target = package_url.join(target.as_ref()).normalize();
                 // 6. If patternMatch split on "/" or "\" contains any "", ".", "..", or "node_modules" segments, case insensitive and including percent encoded variants, throw an Invalid Module Specifier error.
                 // 7. Return the URL resolution of resolvedTarget with every instance of "*" replaced with patternMatch.
                 return Ok(Some(self.cache.value(&resolved_target)));
@@ -785,7 +840,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                             target_key,
                             target_value,
                             pattern_match,
-                            /* is_imports */ false,
+                            is_imports,
                             conditions,
                         );
                         // 3. If resolved is equal to undefined, continue the loop.
@@ -816,7 +871,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         target_key,
                         target_value,
                         pattern_match,
-                        /* is_imports */ false,
+                        is_imports,
                         conditions,
                     );
 

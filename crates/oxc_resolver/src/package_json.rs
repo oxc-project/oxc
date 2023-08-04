@@ -38,17 +38,16 @@ pub struct PackageJson {
     #[serde(default)]
     pub exports: ExportsField,
 
-    /// The browser field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
+    /// In addition to the "exports" field, there is a package "imports" field to create private mappings that only apply to import specifiers from within the package itself.
+    ///
+    /// <https://nodejs.org/api/packages.html#subpath-imports>
+    #[serde(default)]
+    pub imports: MatchObject,
+
+    /// The "browser" field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
     ///
     /// <https://github.com/defunctzombie/package-browser-field-spec>
     pub browser: Option<BrowserField>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub enum BrowserField {
-    String(String),
-    Map(FxIndexMap<PathBuf, serde_json::Value>),
 }
 
 /// `matchObj` defined in `PACKAGE_IMPORTS_EXPORTS_RESOLVE`
@@ -76,7 +75,6 @@ impl ExportsField {
 pub enum ExportsKey {
     Main,
     Pattern(String),
-    Hash(String),
     CustomCondition(String),
 }
 
@@ -86,8 +84,8 @@ impl From<&str> for ExportsKey {
             Self::Main
         } else if key.starts_with("./") {
             Self::Pattern(key.trim_start_matches('.').to_string())
-        } else if let Some(key) = key.strip_prefix('#') {
-            Self::Hash(key.to_string())
+        } else if key.starts_with('#') {
+            Self::Pattern(key.to_string())
         } else {
             Self::CustomCondition(key.to_string())
         }
@@ -102,6 +100,13 @@ impl<'a, 'de: 'a> Deserialize<'de> for ExportsKey {
         let s: &'de str = Deserialize::deserialize(deserializer)?;
         Ok(Self::from(s))
     }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum BrowserField {
+    String(String),
+    Map(FxIndexMap<PathBuf, serde_json::Value>),
 }
 
 impl PackageJson {

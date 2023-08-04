@@ -49,6 +49,8 @@ pub enum ResolveError {
 
     // TODO:  Expecting folder to folder mapping. "./data/timezones" should end with "/"
     InvalidPackageConfigDirectory(PathBuf),
+
+    PackageImportNotDefined(String),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
