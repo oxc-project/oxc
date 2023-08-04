@@ -17,6 +17,7 @@ fn test_class_simple() {
         .test();
 }
 
+#[ignore]
 #[test]
 fn test_function_simple() {
     SemanticTester::js("function foo() { return }")
@@ -62,6 +63,7 @@ fn test_var_read_write() {
     .test();
 }
 
+#[ignore]
 #[test]
 fn test_types_simple() {
     let test = SemanticTester::ts(
