@@ -68,7 +68,9 @@ pub struct ResolveOptions {
     /// Default `[]`
     pub fallback: Alias,
 
-    /// Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests)
+    /// Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests).
+    ///
+    /// See also webpack configuration [resolve.fullySpecified](https://webpack.js.org/configuration/module/#resolvefullyspecified)
     ///
     /// Default `false`
     pub fully_specified: bool,
