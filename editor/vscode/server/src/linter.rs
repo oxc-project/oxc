@@ -145,10 +145,10 @@ impl IsolatedLintHandler {
         Self::process_diagnostics(&rx_error)
     }
 
-    pub fn run_single(&self, path: PathBuf) -> Option<(PathBuf, Vec<DiagnosticReport>)> {
-        if Self::is_wanted_ext(&path) {
-            Some(Self::lint_path(&self.linter, &path).map_or((path, vec![]), |(p, errors)| {
-                (p.clone(), errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect())
+    pub fn run_single(&self, path: &Path) -> Option<Vec<DiagnosticReport>> {
+        if Self::is_wanted_ext(path) {
+            Some(Self::lint_path(&self.linter, path).map_or(vec![], |(p, errors)| {
+                errors.into_iter().map(|e| e.into_diagnostic_report(&p)).collect()
             }))
         } else {
             None
@@ -328,11 +328,7 @@ impl ServerLinter {
         IsolatedLintHandler::new(Arc::new(options), Arc::clone(&self.linter)).run_full()
     }
 
-    pub fn run_single(
-        &self,
-        root_uri: &Url,
-        uri: &Url,
-    ) -> Option<(PathBuf, Vec<DiagnosticReport>)> {
+    pub fn run_single(&self, root_uri: &Url, uri: &Url) -> Option<Vec<DiagnosticReport>> {
         let options = LintOptions {
             paths: vec![root_uri.to_file_path().unwrap()],
             ignore_path: "node_modules".into(),
@@ -341,6 +337,6 @@ impl ServerLinter {
         };
 
         IsolatedLintHandler::new(Arc::new(options), Arc::clone(&self.linter))
-            .run_single(uri.to_file_path().unwrap())
+            .run_single(&uri.to_file_path().unwrap())
     }
 }
