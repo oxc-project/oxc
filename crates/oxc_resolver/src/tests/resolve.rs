@@ -48,9 +48,8 @@ fn resolve() {
     }
 }
 
-#[test]
-#[ignore = "issue238Resolve"]
-fn issue238_resolve() {}
+// #[test]
+// fn issue238_resolve() {}
 
 #[test]
 fn prefer_relative() {
