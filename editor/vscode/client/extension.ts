@@ -23,7 +23,8 @@ const traceOutputChannelName = 'oxc.trace';
 const enum OxcCommands {
   RestartServer    = "oxc.restartServer",
   ApplyAllFixes    = "oxc.applyAllFixes",
-  ShowOutputChannel = "oxc.showOutputChannel"
+  ShowOutputChannel = "oxc.showOutputChannel",
+  ShowTraceOutputChannel = "oxc.showTraceOutputChannel"
 };
 
 
@@ -55,9 +56,14 @@ export async function activate(context: ExtensionContext) {
     client?.outputChannel?.show()
   })
 
+  const showTraceOutputCommand = commands.registerCommand(OxcCommands.ShowTraceOutputChannel, () => {
+    client?.traceOutputChannel?.show()
+  })
+
   context.subscriptions.push(
     restartCommand,
-    showOutputCommand
+    showOutputCommand,
+    showTraceOutputCommand
   );
 
   const outputChannel = window.createOutputChannel(outputChannelName);

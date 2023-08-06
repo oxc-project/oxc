@@ -35,13 +35,13 @@
         "category": "Oxc"
       },
       {
-        "command": "oxc.applyAllFixes",
-        "title": "Fix All Auto-fixable Problems",
+        "command": "oxc.showOutputChannel",
+        "title": "Show Output Channel",
         "category": "Oxc"
       },
       {
-        "command": "oxc.showOutputChannel",
-        "title": "Show Output Channel",
+        "command": "oxc.showTraceOutputChannel",
+        "title": "Show Trace Output Channel",
         "category": "Oxc"
       }
     ]
