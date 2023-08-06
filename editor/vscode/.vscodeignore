@@ -8,5 +8,7 @@ client/**
 pnpm-lock.yaml
 server
 target
+dist/
+!dist/extension.js
 !target/release/oxc_vscode
 !target/release/oxc_vscode.exe
