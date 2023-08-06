@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members  = ["crates/*", "tasks/*"]
+members  = ["crates/*", "tasks/*", "editor/vscode/server"]
 
 [workspace.package]
 authors      = ["Boshen <boshenc@gmail.com>", "Oxc contributors"]
@@ -37,6 +37,7 @@ oxc_resolver       = { path = "crates/oxc_resolver" }
 oxc_query          = { path = "crates/oxc_query" }
 
 oxc_tasks_common = { path = "tasks/common" }
+oxc_vscode       = { path = "editor/vscode/server" }
 
 bitflags          = { version = "2.3.3" }
 bumpalo           = { version = "3.13.0" }
@@ -46,7 +47,9 @@ convert_case      = { version = "0.6.0" }
 criterion         = { version = "0.5.1", default-features = false }
 crossbeam-channel = { version = "0.5.8" }
 dashmap           = { version = "5.5.0" }
+env_logger        = { version = "0.10.0" }
 flate2            = { version = "1.0.26" }
+futures           = { version = "0.3.28" }
 ignore            = { version = "0.4.20" }
 itertools         = { version = "0.11.0" }
 jemallocator      = { version = "0.5.0" }
@@ -65,11 +68,13 @@ rayon             = { version = "1.7.0" }
 regex             = { version = "1.9.1" }
 rustc-hash        = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js            = { version = "0.2.2" }
+ropey             = { version = "1.6.0" }
 serde             = { version = "1.0.175" }
 serde_json        = { version = "1.0.103" }
 syn               = { version = "=1" }
 thiserror         = { version = "1.0.44" }
 tokio             = { version = "1" }
+tower-lsp         = { version = "0.19.0", features = ["proposed"] }
 unicode-id-start  = { version = "1.1.0" }
 ureq              = { version = "2.7.1", default-features = false, features = ["tls"] }
 url               = { version = "2.4.0" }
