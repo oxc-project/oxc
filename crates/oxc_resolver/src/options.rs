@@ -1,16 +1,5 @@
 use std::path::PathBuf;
 
-pub type Alias = Vec<(String, Vec<AliasValue>)>;
-
-#[derive(Debug, Clone)]
-pub enum AliasValue {
-    /// The path value
-    Path(String),
-
-    /// The `false` value
-    Ignore,
-}
-
 /// Module Resolution Options
 ///
 /// Options are directly ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve#resolver-options).
@@ -107,6 +96,19 @@ pub struct ResolveOptions {
     ///
     /// Default `true`
     pub symlinks: bool,
+}
+
+/// Alias for [ResolveOptions::alias] and [ResolveOptions::fallback].
+pub type Alias = Vec<(String, Vec<AliasValue>)>;
+
+/// Alias Value for [ResolveOptions::alias] and [ResolveOptions::fallback].
+#[derive(Debug, Clone)]
+pub enum AliasValue {
+    /// The path value
+    Path(String),
+
+    /// The `false` value
+    Ignore,
 }
 
 impl Default for ResolveOptions {

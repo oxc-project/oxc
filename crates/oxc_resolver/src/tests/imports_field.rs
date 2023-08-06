@@ -4,7 +4,9 @@
 
 use serde_json::json;
 
-use crate::{MatchObject, PathUtil, Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{
+    MatchObject, PathUtil, Resolution, ResolveContext, ResolveError, ResolveOptions, Resolver,
+};
 use std::path::Path;
 
 #[test]
@@ -1281,6 +1283,7 @@ fn test_cases() {
                 Path::new(""),
                 true,
                 &case.condition_names.iter().map(ToString::to_string).collect::<Vec<_>>(),
+                &ResolveContext::default(),
             )
             .map(|p| p.map(|p| p.to_path_buf()));
         if let Some(expect) = case.expect {

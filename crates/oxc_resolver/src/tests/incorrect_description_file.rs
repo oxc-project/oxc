@@ -61,5 +61,5 @@ fn no_description_file() {
     // without description file
     let resolver =
         Resolver::new(ResolveOptions { description_files: vec![], ..ResolveOptions::default() });
-    assert_eq!(resolver.resolve(&f, "."), Err(ResolveError::NotFound(f.into_boxed_path())));
+    assert_eq!(resolver.resolve(&f, "."), Err(ResolveError::NotFound(f)));
 }

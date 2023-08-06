@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+/// File System abstraction used for `ResolverGeneric`.
 pub trait FileSystem: Default + Send + Sync {
     /// See [std::fs::read_to_string]
     ///
@@ -34,6 +35,7 @@ pub trait FileSystem: Default + Send + Sync {
     fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf>;
 }
 
+/// Metadata information about a file.
 #[derive(Debug, Clone, Copy)]
 pub struct FileMetadata {
     pub(crate) is_file: bool,
