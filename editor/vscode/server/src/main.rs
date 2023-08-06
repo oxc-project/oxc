@@ -90,14 +90,17 @@ impl LanguageServer for Backend {
         let uri = params.text_document.uri;
 
         if let Some(value) = self.diagnostics_report_map.get(&uri.to_string()) {
-            if let Some(report) =
-                value.iter().find(|r| r.diagnostic.range == params.range && r.fixed_code.is_some())
+            if let Some(report) = value
+                .iter()
+                .find(|r| r.diagnostic.range == params.range && r.fixed_content.is_some())
             {
                 let title =
                     report.diagnostic.message.split(':').next().map_or_else(
                         || "Fix this problem".into(),
                         |s| format!("Fix this {s} problem"),
                     );
+
+                let fixed_content = report.fixed_content.clone().unwrap();
 
                 return Ok(Some(vec![CodeActionOrCommand::CodeAction(CodeAction {
                     title,
@@ -107,8 +110,8 @@ impl LanguageServer for Backend {
                         changes: Some(HashMap::from([(
                             uri,
                             vec![TextEdit {
-                                range: report.diagnostic.range,
-                                new_text: report.fixed_code.clone().unwrap(),
+                                range: fixed_content.range,
+                                new_text: fixed_content.code,
                             }],
                         )])),
                         ..WorkspaceEdit::default()

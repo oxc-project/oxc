@@ -28,7 +28,7 @@ struct ErrorWithPosition {
     pub start_pos: Position,
     pub end_pos: Position,
     pub miette_err: Error,
-    pub fixed_code: Option<String>,
+    pub fixed_content: Option<FixedContent>,
     pub labels_with_pos: Vec<LabeledSpanWithPosition>,
 }
 
@@ -40,7 +40,7 @@ struct LabeledSpanWithPosition {
 }
 
 impl ErrorWithPosition {
-    pub fn new(error: Error, text: &str, fixed_code: Option<String>) -> Self {
+    pub fn new(error: Error, text: &str, fixed_content: Option<FixedContent>) -> Self {
         let labels = error.labels().map_or(vec![], Iterator::collect);
 
         let labels_with_pos: Vec<LabeledSpanWithPosition> = labels
@@ -56,7 +56,7 @@ impl ErrorWithPosition {
         let start_pos = labels_with_pos[0].start_pos;
         let end_pos = labels_with_pos[labels_with_pos.len() - 1].end_pos;
 
-        Self { miette_err: error, start_pos, end_pos, labels_with_pos, fixed_code }
+        Self { miette_err: error, start_pos, end_pos, labels_with_pos, fixed_content }
     }
 
     fn to_lsp_diagnostic(&self, path: &PathBuf) -> lsp_types::Diagnostic {
@@ -107,20 +107,29 @@ impl ErrorWithPosition {
     }
 
     fn into_diagnostic_report(self, path: &PathBuf) -> DiagnosticReport {
-        DiagnosticReport { diagnostic: self.to_lsp_diagnostic(path), fixed_code: self.fixed_code }
+        DiagnosticReport {
+            diagnostic: self.to_lsp_diagnostic(path),
+            fixed_content: self.fixed_content,
+        }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct DiagnosticReport {
     pub diagnostic: lsp_types::Diagnostic,
-    pub fixed_code: Option<String>,
+    pub fixed_content: Option<FixedContent>,
 }
 
 #[derive(Debug)]
 struct ErrorReport {
     pub error: Error,
-    pub fixed_code: Option<String>,
+    pub fixed_content: Option<FixedContent>,
+}
+
+#[derive(Debug, Clone)]
+pub struct FixedContent {
+    pub code: String,
+    pub range: Range,
 }
 
 #[derive(Debug)]
@@ -221,7 +230,7 @@ impl IsolatedLintHandler {
             let reports = ret
                 .errors
                 .into_iter()
-                .map(|diagnostic| ErrorReport { error: diagnostic, fixed_code: None })
+                .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
                 .collect();
 
             return Some(Self::wrap_diagnostics(path, &source_text, reports));
@@ -237,7 +246,7 @@ impl IsolatedLintHandler {
             let reports = semantic_ret
                 .errors
                 .into_iter()
-                .map(|diagnostic| ErrorReport { error: diagnostic, fixed_code: None })
+                .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
                 .collect();
             return Some(Self::wrap_diagnostics(path, &source_text, reports));
         };
@@ -253,9 +262,17 @@ impl IsolatedLintHandler {
             let reports = result
                 .into_iter()
                 .map(|msg| {
-                    let fixed_code = msg.fix.map(|f| f.content.to_string());
+                    let fixed_content = msg.fix.map(|f| FixedContent {
+                        code: f.content.to_string(),
+                        range: Range {
+                            start: offset_to_position(f.span.start as usize, &source_text)
+                                .unwrap_or_default(),
+                            end: offset_to_position(f.span.end as usize, &source_text)
+                                .unwrap_or_default(),
+                        },
+                    });
 
-                    ErrorReport { error: msg.error, fixed_code }
+                    ErrorReport { error: msg.error, fixed_content }
                 })
                 .collect::<Vec<ErrorReport>>();
 
@@ -264,7 +281,7 @@ impl IsolatedLintHandler {
 
         let errors = result
             .into_iter()
-            .map(|diagnostic| ErrorReport { error: diagnostic.error, fixed_code: None })
+            .map(|diagnostic| ErrorReport { error: diagnostic.error, fixed_content: None })
             .collect();
         Some(Self::wrap_diagnostics(path, &source_text, errors))
     }
@@ -281,7 +298,7 @@ impl IsolatedLintHandler {
                 ErrorWithPosition::new(
                     report.error.with_source_code(Arc::clone(&source)),
                     source_text,
-                    report.fixed_code,
+                    report.fixed_content,
                 )
             })
             .collect();
