@@ -92,7 +92,7 @@ export async function activate(context: ExtensionContext) {
       "javascript",
       "typescriptreact",
       "javascriptreact",
-    ].map(lang => ({ language: lang, scheme: "file" })),
+    ].map(lang => ({ language: lang, scheme: "file", pattern: "!**/node_modules/**/*" })),
 
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
