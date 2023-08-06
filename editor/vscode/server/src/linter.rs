@@ -321,7 +321,7 @@ impl ServerLinter {
         let options = LintOptions {
             paths: vec![root_uri.to_file_path().unwrap()],
             ignore_path: "node_modules".into(),
-            ignore_pattern:vec!["!**/node_modules/**/*".into()],
+            ignore_pattern: vec!["!**/node_modules/**/*".into()],
             fix: true,
             ..LintOptions::default()
         };
@@ -333,7 +333,7 @@ impl ServerLinter {
         let options = LintOptions {
             paths: vec![root_uri.to_file_path().unwrap()],
             ignore_path: "node_modules".into(),
-            ignore_pattern:vec!["!**/node_modules/**/*".into()],
+            ignore_pattern: vec!["!**/node_modules/**/*".into()],
             fix: true,
             ..LintOptions::default()
         };
