@@ -39,7 +39,7 @@ fn extensions() {
 
     for (comment, request, expected_error) in fail {
         let resolution = resolver.resolve(&f, request);
-        let error = ResolveError::NotFound(expected_error.into_boxed_path());
+        let error = ResolveError::NotFound(expected_error);
         assert_eq!(resolution, Err(error), "{comment} {request} {resolution:?}");
     }
 }
@@ -55,7 +55,7 @@ fn default_enforce_extension() {
     })
     .resolve(&f, "./foo");
 
-    assert_eq!(resolved, Err(ResolveError::NotFound(f.join("foo").into_boxed_path())));
+    assert_eq!(resolved, Err(ResolveError::NotFound(f.join("foo"))));
     // TODO: need to match missingDependencies returned from the resolve function
 }
 

@@ -27,7 +27,7 @@ fn ignore() {
 
     for (path, request, expected) in data {
         let resolution = resolver.resolve(&path, request);
-        let expected = ResolveError::Ignored(expected.into());
+        let expected = ResolveError::Ignored(expected);
         assert_eq!(resolution, Err(expected), "{path:?} {request}");
     }
 }

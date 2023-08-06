@@ -15,7 +15,7 @@ use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
     // Using IdentityHasher to avoid double hashing in the `get` + `insert` case.
-    cache: DashMap<u64, CacheValue, BuildIdentityHasher<u64>>,
+    cache: DashMap<u64, CachedPath, BuildIdentityHasher<u64>>,
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
@@ -32,15 +32,15 @@ impl<Fs: FileSystem> Cache<Fs> {
     /// # Panics
     ///
     /// * Path is file but does not have a parent
-    pub fn dirname<'a>(&self, cache_value: &'a CacheValue) -> &'a CacheValue {
+    pub fn dirname(&self, cache_value: &CachedPath) -> CachedPath {
         if cache_value.is_file(&self.fs) {
-            cache_value.parent.as_ref().unwrap()
+            cache_value.parent.clone().unwrap()
         } else {
-            cache_value
+            cache_value.clone()
         }
     }
 
-    pub fn value(&self, path: &Path) -> CacheValue {
+    pub fn value(&self, path: &Path) -> CachedPath {
         let hash = {
             let mut hasher = FxHasher::default();
             path.hash(&mut hasher);
@@ -51,40 +51,40 @@ impl<Fs: FileSystem> Cache<Fs> {
         }
         let parent = path.parent().map(|p| self.value(p));
         let data =
-            CacheValue(Arc::new(CacheValueImpl::new(path.to_path_buf().into_boxed_path(), parent)));
+            CachedPath(Arc::new(CachedPathImpl::new(path.to_path_buf().into_boxed_path(), parent)));
         self.cache.insert(hash, data.clone());
         data
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct CacheValue(Arc<CacheValueImpl>);
+pub struct CachedPath(Arc<CachedPathImpl>);
 
-impl Deref for CacheValue {
-    type Target = CacheValueImpl;
+impl Deref for CachedPath {
+    type Target = CachedPathImpl;
 
     fn deref(&self) -> &Self::Target {
         self.0.as_ref()
     }
 }
 
-impl AsRef<CacheValueImpl> for CacheValue {
-    fn as_ref(&self) -> &CacheValueImpl {
+impl AsRef<CachedPathImpl> for CachedPath {
+    fn as_ref(&self) -> &CachedPathImpl {
         self.0.as_ref()
     }
 }
 
 #[derive(Debug)]
-pub struct CacheValueImpl {
+pub struct CachedPathImpl {
     path: Box<Path>,
-    parent: Option<CacheValue>,
+    parent: Option<CachedPath>,
     meta: OnceLock<Option<FileMetadata>>,
     symlink: OnceLock<Option<PathBuf>>,
     package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
 }
 
-impl CacheValueImpl {
-    fn new(path: Box<Path>, parent: Option<CacheValue>) -> Self {
+impl CachedPathImpl {
+    fn new(path: Box<Path>, parent: Option<CachedPath>) -> Self {
         Self {
             path,
             parent,

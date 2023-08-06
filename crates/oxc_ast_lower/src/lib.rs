@@ -50,7 +50,8 @@ impl<'a> AstLower<'a> {
         name: &Atom,
         reference_flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference = Reference::new(span, name.clone(), reference_flag);
+        let reference =
+            Reference::new(span, name.clone(), self.semantic.current_node_id, reference_flag);
         self.semantic.declare_reference(reference)
     }
 
