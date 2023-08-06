@@ -80,7 +80,7 @@ fn fallback() {
 
     #[rustfmt::skip]
     let ignore = [
-        ("should resolve an ignore module", "ignored", ResolveError::Ignored(f.join("ignored").into_boxed_path()))
+        ("should resolve an ignore module", "ignored", ResolveError::Ignored(f.join("ignored")))
     ];
 
     for (comment, request, expected) in ignore {

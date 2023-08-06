@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+/// The final path resolution with optional `?query` and `#fragment`.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Resolution {
     pub(crate) path: PathBuf,

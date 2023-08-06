@@ -2,7 +2,9 @@
 //!
 //! The huge exports field test cases are at the bottom of this file.
 
-use crate::{ExportsField, PathUtil, Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{
+    ExportsField, PathUtil, Resolution, ResolveContext, ResolveError, ResolveOptions, Resolver,
+};
 use serde_json::json;
 use std::path::Path;
 
@@ -53,10 +55,10 @@ fn test() {
 
     #[rustfmt::skip]
     let fail = [
-        ("throw error if extension not provided", f2.clone(), "exports-field/dist/main", ResolveError::NotFound(f2.join("node_modules/exports-field/lib/lib2/main").into_boxed_path())),
-        // TODO: ("resolver should respect query parameters #2. Direct matching", f2.clone(), "exports-field?foo", ResolveError::NotFound(f2.join("").into_boxed_path())),
-        // TODO: ("resolver should respect fragment parameters #2. Direct matching", f2.clone(), "exports-field#foo", ResolveError::NotFound(f2.join("").into_boxed_path())),
-        ("relative path should not work with exports field", f.clone(), "./node_modules/exports-field/dist/main.js", ResolveError::NotFound(f.join("node_modules/exports-field/dist/main.js").into_boxed_path())),
+        ("throw error if extension not provided", f2.clone(), "exports-field/dist/main", ResolveError::NotFound(f2.join("node_modules/exports-field/lib/lib2/main"))),
+        // TODO: ("resolver should respect query parameters #2. Direct matching", f2.clone(), "exports-field?foo", ResolveError::NotFound(f2.join(""))),
+        // TODO: ("resolver should respect fragment parameters #2. Direct matching", f2.clone(), "exports-field#foo", ResolveError::NotFound(f2.join(""))),
+        ("relative path should not work with exports field", f.clone(), "./node_modules/exports-field/dist/main.js", ResolveError::NotFound(f.join("node_modules/exports-field/dist/main.js"))),
         ("backtracking should not work for request", f.clone(), "exports-field/dist/../../../a.js", ResolveError::InvalidPackageTarget("./lib/../../../a.js".to_string())),
         ("backtracking should not work for exports field target", f.clone(), "exports-field/dist/a.js", ResolveError::InvalidPackageTarget("./../../a.js".to_string())),
         ("not exported error", f.clone(), "exports-field/anything/else", ResolveError::PackagePathNotExported("./anything/else".to_string())),
@@ -2443,6 +2445,7 @@ fn test_cases() {
                 case.request.trim_start_matches('.'),
                 &case.exports_field,
                 &case.condition_names.iter().map(ToString::to_string).collect::<Vec<_>>(),
+                &ResolveContext::default(),
             )
             .map(|p| p.map(|p| p.to_path_buf()));
         if let Some(expect) = case.expect {

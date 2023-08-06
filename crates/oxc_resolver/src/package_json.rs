@@ -17,8 +17,9 @@ type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 // TODO: allocate everything into an arena or SoA
 #[derive(Debug, Deserialize)]
 pub struct PackageJson {
+    /// Path to `package.json`. Contains the `package.json` filename.
     #[serde(skip)]
-    pub path: PathBuf,
+    path: PathBuf,
 
     /// The "name" field defines your package's name.
     /// The "name" field can be used in addition to the "exports" field to self-reference a package using its name.
@@ -131,12 +132,18 @@ impl PackageJson {
         Ok(package_json)
     }
 
+    /// Directory to `package.json`
+    pub fn directory(&self) -> &Path {
+        debug_assert!(self.path.file_name().is_some_and(|x| x == "package.json"));
+        self.path.parent().unwrap()
+    }
+
     /// Resolve the request string for this package.json by looking at the `browser` field.
     ///
     /// # Errors
     ///
     /// * Returns [ResolveError::Ignored] for `"path": false` in `browser` field.
-    pub fn resolve(
+    pub fn resolve_browser_field(
         &self,
         path: &Path,
         request: Option<&str>,
@@ -163,9 +170,7 @@ impl PackageJson {
     ) -> Result<Option<&'a str>, ResolveError> {
         match value {
             serde_json::Value::String(value) => Ok(Some(value.as_str())),
-            serde_json::Value::Bool(b) if !b => {
-                Err(ResolveError::Ignored(key.to_path_buf().into_boxed_path()))
-            }
+            serde_json::Value::Bool(b) if !b => Err(ResolveError::Ignored(key.to_path_buf())),
             _ => Ok(None),
         }
     }
