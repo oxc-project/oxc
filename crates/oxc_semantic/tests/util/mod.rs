@@ -35,7 +35,12 @@ impl SemanticTester {
     }
 
     pub fn new(source_text: &'static str, source_type: SourceType) -> Self {
-        Self { allocator: Allocator::default(), source_type, source_text, use_module_record_builder: true }
+        Self {
+            allocator: Allocator::default(),
+            source_type,
+            source_text,
+            use_module_record_builder: true,
+        }
     }
 
     /// Set the [`SourceType`] to TypeScript (or JavaScript, using `false`)
@@ -143,7 +148,7 @@ pub struct SymbolTester<'a> {
     /// Name of the subject symbol
     target_symbol_name: String,
     /// Symbol data, or error if not found
-    data: Result<SymbolId, oxc_diagnostics::Error>,
+    test_result: Result<SymbolId, oxc_diagnostics::Error>,
 }
 
 impl<'a> SymbolTester<'a> {
@@ -157,7 +162,7 @@ impl<'a> SymbolTester<'a> {
             semantic.scopes().get_binding(semantic.scopes().root_scope_id(), &Atom::from(target));
         let data = decl.map_or_else(|| Err(miette!("Could not find declaration for {target}")), Ok);
 
-        SymbolTester { parent, semantic, target_symbol_name: target.to_string(), data }
+        SymbolTester { parent, semantic, target_symbol_name: target.to_string(), test_result: data }
     }
 
     pub(super) fn new_unique(
@@ -174,18 +179,17 @@ impl<'a> SymbolTester<'a> {
             _ => unreachable!()
         };
 
-        SymbolTester { parent, semantic, target_symbol_name: target.to_string(), data }
+        SymbolTester { parent, semantic, target_symbol_name: target.to_string(), test_result: data }
     }
 
     /// Checks if the resolved symbol contains all flags in `flags`, using [`SymbolFlags::contains()`]
     pub fn contains_flags(mut self, flags: SymbolFlags) -> Self {
-        self.data = match self.data {
+        self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let found_flags = self.semantic.symbols().get_flag(symbol_id);
                 if found_flags.contains(flags) {
                     Ok(symbol_id)
                 } else {
-                    // let decl_span = self.semantic.symbol_declaration(symbol_id).span();
                     Err(miette!(
                         "Expected {} to contain flags {:?}, but it had {:?}",
                         self.target_symbol_name,
@@ -200,7 +204,7 @@ impl<'a> SymbolTester<'a> {
     }
 
     pub fn intersects_flags(mut self, flags: SymbolFlags) -> Self {
-        self.data = match self.data {
+        self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let found_flags = self.semantic.symbols().get_flag(symbol_id);
                 if found_flags.intersects(flags) {
@@ -236,7 +240,7 @@ impl<'a> SymbolTester<'a> {
     where
         F: FnMut(&Reference) -> bool,
     {
-        self.data = match self.data {
+        self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let refs = {
                     self.semantic
@@ -259,7 +263,7 @@ impl<'a> SymbolTester<'a> {
 
     #[allow(clippy::wrong_self_convention)]
     pub fn is_exported(mut self) -> Self {
-        self.data = match self.data {
+        self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let binding = Atom::from(self.target_symbol_name.clone());
                 if self.semantic.module_record().exported_bindings.contains_key(&binding)
@@ -286,6 +290,6 @@ impl<'a> SymbolTester<'a> {
 
 impl<'a> From<SymbolTester<'a>> for Result<(), Error> {
     fn from(val: SymbolTester<'a>) -> Self {
-        val.data.map(|_| {}).map_err(|e| e.with_source_code(val.parent.source_text))
+        val.test_result.map(|_| {}).map_err(|e| e.with_source_code(val.parent.source_text))
     }
 }
