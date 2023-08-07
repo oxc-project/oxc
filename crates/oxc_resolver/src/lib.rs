@@ -46,7 +46,7 @@ use crate::{
 pub use crate::{
     error::{JSONError, ResolveError},
     file_system::{FileMetadata, FileSystem},
-    options::{Alias, AliasValue, ResolveOptions},
+    options::{Alias, AliasValue, ResolveOptions, Restriction},
     resolution::Resolution,
 };
 
@@ -138,6 +138,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 .and_then(|value| value.ok_or(err))
         })?;
         let path = self.load_realpath(&cached_path).unwrap_or_else(|| cached_path.to_path_buf());
+        // enhanced_resolve: restrictions
+        self.check_restrictions(&path)?;
         let ctx = ctx.borrow();
         Ok(Resolution {
             path,
@@ -359,6 +361,34 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         } else {
             None
         }
+    }
+
+    fn check_restrictions(&self, path: &Path) -> Result<(), ResolveError> {
+        // https://github.com/webpack/enhanced-resolve/blob/a998c7d218b7a9ec2461fc4fddd1ad5dd7687485/lib/RestrictionsPlugin.js#L19-L24
+        fn is_inside(path: &Path, parent: &Path) -> bool {
+            if !path.starts_with(parent) {
+                return false;
+            }
+            if path.as_os_str().len() == parent.as_os_str().len() {
+                return true;
+            }
+            path.strip_prefix(parent).is_ok_and(|p| p == Path::new("./"))
+        }
+        for restriction in &self.options.restrictions {
+            match restriction {
+                Restriction::Path(restricted_path) => {
+                    if !is_inside(path, restricted_path) {
+                        return Err(ResolveError::Restriction(path.to_path_buf()));
+                    }
+                }
+                Restriction::RegExp(_) => {
+                    return Err(ResolveError::Unimplemented(
+                        "Restriction with regex is unimplemented.",
+                    ))
+                }
+            }
+        }
+        Ok(())
     }
 
     fn load_index(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {

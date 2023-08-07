@@ -9,6 +9,7 @@ mod imports_field;
 mod incorrect_description_file;
 mod memory_fs;
 mod resolve;
+mod restrictions;
 mod roots;
 mod scoped_packages;
 mod simple;

@@ -29,7 +29,7 @@
 |      | resolveToContext | false                       | Resolve to a context instead of a file                                                                                                                    |
 |  ✅  | preferRelative   | false                       | Prefer to resolve module requests as relative request and fallback to resolving as module                                                                 |
 |  ✅  | preferAbsolute   | false                       | Prefer to resolve server-relative urls as absolute paths before falling back to resolve in roots                                                          |
-|      | restrictions     | []                          | A list of resolve restrictions                                                                                                                            |
+|  ✅  | restrictions     | []                          | A list of resolve restrictions                                                                                                                            |
 |  ✅  | roots            | []                          | A list of root paths                                                                                                                                      |
 |  ✅  | symlinks         | true                        | Whether to resolve symlinks to their symlinked location                                                                                                   |
 |      | unsafeCache      | false                       | Use this cache object to unsafely cache the successful requests
@@ -62,7 +62,7 @@ Crossed out test files are irrelevant.
 - [ ] pnp.test.js
 - [x] ~pr-53.test.js~
 - [x] resolve.test.js (need to add resolveToContext)
-- [ ] restrictions.test.js
+- [x] restrictions.test.js (partially done, regex is not supported yet)
 - [x] roots.test.js (need to add resolveToContext)
 - [x] scoped-packages.test.js
 - [x] simple.test.js

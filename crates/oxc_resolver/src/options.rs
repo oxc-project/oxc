@@ -84,6 +84,11 @@ pub struct ResolveOptions {
     /// Default `false`
     pub prefer_absolute: bool,
 
+    /// A list of resolve restrictions to restrict the paths that a request can be resolved on.
+    ///
+    /// Default `[]`
+    pub restrictions: Vec<Restriction>,
+
     /// A list of directories where requests of server-relative URLs (starting with '/') are resolved.
     /// On non-Windows systems these requests are resolved as an absolute path first.
     ///
@@ -111,6 +116,12 @@ pub enum AliasValue {
     Ignore,
 }
 
+#[derive(Debug, Clone)]
+pub enum Restriction {
+    Path(PathBuf),
+    RegExp(String),
+}
+
 impl Default for ResolveOptions {
     fn default() -> Self {
         Self {
@@ -127,6 +138,7 @@ impl Default for ResolveOptions {
             modules: vec!["node_modules".into()],
             prefer_relative: false,
             prefer_absolute: false,
+            restrictions: vec![],
             roots: vec![],
             symlinks: true,
         }
