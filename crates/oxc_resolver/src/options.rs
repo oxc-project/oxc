@@ -74,6 +74,11 @@ pub struct ResolveOptions {
     /// Default `["node_modules"]`
     pub modules: Vec<String>,
 
+    /// Resolve to a context instead of a file.
+    ///
+    /// Default `false`
+    pub resolve_to_context: bool,
+
     /// Prefer to resolve module requests as relative requests instead of using modules from node_modules directories.
     ///
     /// Default `false`
@@ -136,6 +141,7 @@ impl Default for ResolveOptions {
             fully_specified: false,
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
+            resolve_to_context: false,
             prefer_relative: false,
             prefer_absolute: false,
             restrictions: vec![],

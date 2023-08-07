@@ -109,7 +109,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         Self { options: options.sanitize(), cache: Cache::default() }
     }
 
-    pub fn new_with_file_system(options: ResolveOptions, file_system: Fs) -> Self {
+    pub fn new_with_file_system(file_system: Fs, options: ResolveOptions) -> Self {
         Self { cache: Cache::new(file_system), ..Self::new(options) }
     }
 
@@ -424,6 +424,12 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_as_directory(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
+        if !cached_path.is_dir(&self.cache.fs) {
+            return Ok(None);
+        }
+        if self.options.resolve_to_context {
+            return Ok(Some(cached_path.clone()));
+        }
         // TODO: Only package.json is supported, so warn about having other values
         // Checking for empty files is needed for omitting checks on package.json
         // 1. If X/package.json is a file,
@@ -481,10 +487,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     }
                 }
                 // c. LOAD_AS_DIRECTORY(DIR/X)
-                if cached_path.is_dir(&self.cache.fs) {
-                    if let Some(path) = self.load_as_directory(&cached_path, ctx)? {
-                        return Ok(Some(path));
-                    }
+                if let Some(path) = self.load_as_directory(&cached_path, ctx)? {
+                    return Ok(Some(path));
                 }
                 node_module_path.pop();
             }

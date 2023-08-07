@@ -27,26 +27,35 @@ fn alias() {
         ("/e/dir/file", ""),
     ]);
 
-    #[rustfmt::skip]
-    let options = ResolveOptions {
-        alias: vec![
-            ("aliasA".into(), vec![AliasValue::Path("a".into())]),
-            ("b$".into(), vec![AliasValue::Path("a/index".into())]),
-            ("c$".into(), vec![AliasValue::Path("/a/index".into())]),
-            ("multiAlias".into(), vec![AliasValue::Path("b".into()), AliasValue::Path("c".into()), AliasValue::Path("d".into()), AliasValue::Path("e".into()), AliasValue::Path("a".into())]),
-            // ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
-            ("/d/dir".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("/d/index.js".into(), vec![AliasValue::Path("/c/index".into())]),
-            // alias configuration should work
-            ("#".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("@".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("ignored".into(), vec![AliasValue::Ignore]),
-        ],
-        modules: vec!["/".into()],
-        ..ResolveOptions::default()
-    };
-
-    let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(options, file_system);
+    let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(
+        file_system,
+        ResolveOptions {
+            alias: vec![
+                ("aliasA".into(), vec![AliasValue::Path("a".into())]),
+                ("b$".into(), vec![AliasValue::Path("a/index".into())]),
+                ("c$".into(), vec![AliasValue::Path("/a/index".into())]),
+                (
+                    "multiAlias".into(),
+                    vec![
+                        AliasValue::Path("b".into()),
+                        AliasValue::Path("c".into()),
+                        AliasValue::Path("d".into()),
+                        AliasValue::Path("e".into()),
+                        AliasValue::Path("a".into()),
+                    ],
+                ),
+                // ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
+                ("/d/dir".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("/d/index.js".into(), vec![AliasValue::Path("/c/index".into())]),
+                // alias configuration should work
+                ("#".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("@".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("ignored".into(), vec![AliasValue::Ignore]),
+            ],
+            modules: vec!["/".into()],
+            ..ResolveOptions::default()
+        },
+    );
 
     #[rustfmt::skip]
     let pass = [
