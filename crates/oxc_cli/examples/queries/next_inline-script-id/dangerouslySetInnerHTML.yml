@@ -18,11 +18,7 @@ query: |
             start @output
             end @output
           }
-          spread_attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"]) {
-            span {
-              start # don't need
-            }
-          }
+          spread_attribute @fold @transform(op: "count") @filter(op: "=", value: ["$zero"])
           attribute @fold @transform(op: "count") @filter(op: ">", value: ["$zero"])  {
             name @filter(op: "=", value: ["$dangerouslySetInnerHTML"])
           }
