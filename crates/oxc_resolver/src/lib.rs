@@ -133,12 +133,12 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }));
         let cached_path = self.cache.value(path);
         let cached_path = self.require(&cached_path, specifier, &ctx).or_else(|err| {
-            // enhanced_resolve: try fallback
-            self.load_alias(&cached_path, specifier, &self.options.fallback, &ctx)
+            // enhanced-resolve: try fallback
+            self.load_alias(&cached_path, Some(specifier), &self.options.fallback, &ctx)
                 .and_then(|value| value.ok_or(err))
         })?;
         let path = self.load_realpath(&cached_path).unwrap_or_else(|| cached_path.to_path_buf());
-        // enhanced_resolve: restrictions
+        // enhanced-resolve: restrictions
         self.check_restrictions(&path)?;
         let ctx = ctx.borrow();
         Ok(Resolution {
@@ -160,9 +160,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let specifier = Specifier::parse(specifier).map_err(ResolveError::Specifier)?;
         ctx.with_query_fragment(specifier.query, specifier.fragment);
 
-        // enhanced_resolve: try alias
+        // enhanced-resolve: try alias
         if let Some(path) =
-            self.load_alias(cached_path, specifier.path.as_str(), &self.options.alias, ctx)?
+            self.load_alias(cached_path, Some(specifier.path.as_str()), &self.options.alias, ctx)?
         {
             return Ok(path);
         }
@@ -237,8 +237,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
         }
         // b. LOAD_AS_DIRECTORY(Y + X)
-        if let Some(path) = self.load_as_directory(&cached_path, ctx)? {
-            return Ok(path);
+        if cached_path.is_dir(&self.cache.fs) {
+            if let Some(path) = self.load_as_directory(&cached_path, ctx)? {
+                return Ok(path);
+            }
         }
         // c. THROW "not found"
         Err(ResolveError::NotFound(path))
@@ -417,6 +419,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 return Ok(Some(path));
             }
         }
+        // enhanced-resolve: try file as alias
+        if let Some(path) = self.load_alias(cached_path, None, &self.options.alias, ctx)? {
+            return Ok(Some(path));
+        }
         if cached_path.is_file(&self.cache.fs) {
             return Ok(Some(cached_path.clone()));
         }
@@ -424,9 +430,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_as_directory(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
-        if !cached_path.is_dir(&self.cache.fs) {
-            return Ok(None);
-        }
         if self.options.resolve_to_context {
             return Ok(Some(cached_path.clone()));
         }
@@ -617,38 +620,44 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         self.require(&cached_path, specifier, &ctx).map(Some)
     }
 
+    /// enhanced-resolve: AliasPlugin for [ResolveOptions::alias] and [ResolveOptions::fallback].
     fn load_alias(
         &self,
         cached_path: &CachedPath,
-        specifier: &str,
-        alias: &Alias,
+        specifier: Option<&str>,
+        aliases: &Alias,
         ctx: &ResolveContext,
     ) -> ResolveState {
-        for (alias, specifiers) in alias {
-            let exact_match = alias.strip_prefix(specifier).is_some_and(|c| c == "$");
-            if !(specifier.starts_with(alias) || exact_match) {
+        let inner_request =
+            specifier.map_or_else(|| cached_path.path().to_string_lossy(), Cow::Borrowed);
+        for (alias_key_raw, specifiers) in aliases {
+            let from = alias_key_raw.strip_suffix('$');
+            let only_module = from.is_some();
+            let alias_key = from.unwrap_or(alias_key_raw);
+            let exact_match = only_module && inner_request == alias_key;
+            if !(exact_match || inner_request.starts_with(alias_key)) {
                 continue;
             }
             for r in specifiers {
                 match r {
-                    AliasValue::Path(new_specifier) => {
-                        if new_specifier.starts_with(specifier) {
-                            continue;
-                        }
-                        let new_specifier = if exact_match {
-                            Cow::Borrowed(new_specifier)
-                        } else {
-                            Cow::Owned(specifier.replacen(alias, new_specifier, 1))
-                        };
-                        let ctx = ResolveContext::clone_from(ctx);
-                        match self.require(cached_path, &new_specifier, &ctx) {
-                            Err(ResolveError::NotFound(_)) => { /* noop */ }
-                            Ok(path) => return Ok(Some(path)),
-                            Err(err) => return Err(err),
+                    AliasValue::Path(alias) => {
+                        if inner_request.as_ref() != alias
+                            && !inner_request
+                                .strip_prefix(alias)
+                                .is_some_and(|prefix| prefix.starts_with('/'))
+                        {
+                            let new_request_str =
+                                format!("{alias}{}", &inner_request[alias_key.len()..]);
+                            let ctx = ResolveContext::clone_from(ctx);
+                            match self.require(cached_path, &new_request_str, &ctx) {
+                                Err(ResolveError::NotFound(_)) => { /* noop */ }
+                                Ok(path) => return Ok(Some(path)),
+                                Err(err) => return Err(err),
+                            }
                         }
                     }
                     AliasValue::Ignore => {
-                        return Err(ResolveError::Ignored(cached_path.path().join(alias)));
+                        return Err(ResolveError::Ignored(cached_path.path().join(alias_key)));
                     }
                 }
             }
@@ -756,7 +765,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             return Ok(None);
         };
         if package_json.exports.is_none() {
-            // enhanced_resolve: try browser field
+            // enhanced-resolve: try browser field
             return self.load_browser_field(
                 parent_url.path(),
                 Some(package_subpath),
@@ -806,6 +815,16 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 2. If subpath is equal to ".", then
         // Note: subpath is not prepended with a dot when passed in.
         if subpath.is_empty() {
+            // enhanced-resolve appends query and fragment when resolving exports field
+            // https://github.com/webpack/enhanced-resolve/blob/a998c7d218b7a9ec2461fc4fddd1ad5dd7687485/lib/ExportsFieldPlugin.js#L57-L62
+            // This is only need when querying the main export, otherwise ctx is passed through.
+            if ctx.borrow().query.is_some() || ctx.borrow().fragment.is_some() {
+                let query = ctx.borrow().query.clone().unwrap_or_default();
+                let fragment = ctx.borrow().fragment.clone().unwrap_or_default();
+                return Err(ResolveError::PackagePathNotExported(format!(
+                    "./{subpath}{query}{fragment}"
+                )));
+            }
             // 1. Let mainExport be undefined.
             let main_export = match exports {
                 ExportsField::None => None,
@@ -851,7 +870,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if let ExportsField::Map(exports) = exports {
             // 1. Let matchKey be the string "./" concatenated with subpath.
             // Note: `package_imports_exports_resolve` does not require the leading dot.
-            let match_key = subpath;
+            let match_key = &subpath;
             // 2. Let resolved be the result of PACKAGE_IMPORTS_EXPORTS_RESOLVE( matchKey, exports, packageURL, false, conditions).
             if let Some(path) = self.package_imports_exports_resolve(
                 match_key,
@@ -918,7 +937,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         conditions: &[String],
         ctx: &ResolveContext,
     ) -> ResolveState {
-        // enhanced_resolve behaves differently, it throws
+        // enhanced-resolve behaves differently, it throws
         // Error: CachedPath to directories is not possible with the exports field (specifier was ./dist/)
         if match_key.ends_with('/') {
             return Ok(None);
@@ -1013,7 +1032,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ) -> Result<Cow<'a, str>, ResolveError> {
             let target = if let Some(pattern_match) = pattern_match {
                 if !target_key.contains('*') && !target.contains('*') {
-                    // enhanced_resolve behaviour
+                    // enhanced-resolve behaviour
                     // TODO: [DEP0148] DeprecationWarning: Use of deprecated folder mapping "./dist/" in the "exports" field module resolution of the package at xxx/package.json.
                     if target_key.ends_with('/') && target.ends_with('/') {
                         Cow::Owned(format!("{target}{pattern_match}"))
@@ -1075,7 +1094,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 for (i, (key, target_value)) in target.iter().enumerate() {
                     // https://nodejs.org/api/packages.html#conditional-exports
                     // "default" - the generic fallback that always matches. Can be a CommonJS or ES module file. This condition should always come last.
-                    // Note: node.js does not throw this but enhanced_resolve does.
+                    // Note: node.js does not throw this but enhanced-resolve does.
                     let is_default = matches!(key, ExportsKey::CustomCondition(condition) if condition == "default");
                     if i < target.len() - 1 && is_default {
                         return Err(ResolveError::InvalidPackageConfigDefault(

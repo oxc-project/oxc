@@ -44,10 +44,9 @@ fn alias() {
                         AliasValue::Path("a".into()),
                     ],
                 ),
-                // ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
+                ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
                 ("/d/dir".into(), vec![AliasValue::Path("/c/dir".into())]),
                 ("/d/index.js".into(), vec![AliasValue::Path("/c/index".into())]),
-                // alias configuration should work
                 ("#".into(), vec![AliasValue::Path("/c/dir".into())]),
                 ("@".into(), vec![AliasValue::Path("/c/dir".into())]),
                 ("ignored".into(), vec![AliasValue::Ignore]),
@@ -71,11 +70,10 @@ fn alias() {
         ("should resolve '#' alias 2", "#/index", "/c/dir/index"),
         ("should resolve '@' alias 1", "@", "/c/dir/index"),
         ("should resolve '@' alias 2", "@/index", "/c/dir/index"),
-        // TODO recursive
-        // ("should resolve a recursive aliased module 1", "recursive", "/recursive/dir/index"),
-        // ("should resolve a recursive aliased module 2", "recursive/index", "/recursive/dir/index"),
-        // ("should resolve a recursive aliased module 3", "recursive/dir", "/recursive/dir/index"),
-        // ("should resolve a recursive aliased module 4", "recursive/dir/index", "/recursive/dir/index"),
+        ("should resolve a recursive aliased module 1", "recursive", "/recursive/dir/index"),
+        ("should resolve a recursive aliased module 2", "recursive/index", "/recursive/dir/index"),
+        ("should resolve a recursive aliased module 3", "recursive/dir", "/recursive/dir/index"),
+        ("should resolve a recursive aliased module 4", "recursive/dir/index", "/recursive/dir/index"),
         ("should resolve a file aliased module 1", "b", "/a/index"),
         ("should resolve a file aliased module 2", "c", "/a/index"),
         ("should resolve a file aliased module with a query 1", "b?query", "/a/index?query"),
@@ -86,9 +84,8 @@ fn alias() {
         ("should resolve a path in a file aliased module 4", "c/index", "/c/index"),
         ("should resolve a path in a file aliased module 5", "c/dir", "/c/dir/index"),
         ("should resolve a path in a file aliased module 6", "c/dir/index", "/c/dir/index"),
-        // TODO aliased file
-        // ("should resolve a file aliased file 1", "d", "/c/index"),
-        // ("should resolve a file aliased file 2", "d/dir/index", "/c/dir/index"),
+        ("should resolve a file aliased file 1", "d", "/c/index"),
+        ("should resolve a file aliased file 2", "d/dir/index", "/c/dir/index"),
         ("should resolve a file in multiple aliased dirs 1", "multiAlias/dir/file", "/e/dir/file"),
         ("should resolve a file in multiple aliased dirs 2", "multiAlias/anotherDir", "/e/anotherDir/index"),
     ];
@@ -110,7 +107,6 @@ fn alias() {
 }
 
 #[test]
-#[ignore = "TODO: absolute path"]
 fn absolute_path() {
     let f = super::fixture();
     let resolver = Resolver::new(ResolveOptions {
@@ -119,5 +115,5 @@ fn absolute_path() {
         ..ResolveOptions::default()
     });
     let resolution = resolver.resolve(&f, "foo/index");
-    assert_eq!(resolution, Err(ResolveError::Ignored(f)));
+    assert_eq!(resolution, Err(ResolveError::Ignored(f.join("foo"))));
 }

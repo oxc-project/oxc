@@ -30,8 +30,10 @@ fn test() {
         // array item is unresolved, where as node.js fallbacks when an array has an
         // InvalidPackageTarget error.
         // ("resolver should respect fallback", f2.clone(), "exports-field/dist/browser.js", f2.join("node_modules/exports-field/lib/browser.js")),
-        // TODO: ("resolver should respect query parameters #1", f2.clone(), "exports-field/dist/browser.js?foo", f2.join("node_modules/exports-field/lib/browser.js?foo")),
-        // TODO: ("resolver should respect fragment parameters #1", f2.clone(), "exports-field/dist/browser.js#foo", f2.join("node_modules/exports-field/lib/browser.js#foo")),
+        // The following two tests require fallback from array values, the path is changed here to
+        // only test query and fragment.
+        ("resolver should respect query parameters #1", f2.clone(), "exports-field/dist/main.js?foo", f2.join("node_modules/exports-field/lib/lib2/main.js?foo")),
+        ("resolver should respect fragment parameters #1", f2.clone(), "exports-field/dist/main.js#foo", f2.join("node_modules/exports-field/lib/lib2/main.js#foo")),
         ("relative path should work, if relative path as request is used", f.clone(), "./node_modules/exports-field/lib/main.js", f.join("node_modules/exports-field/lib/main.js")),
         ("self-resolving root", f.clone(), "@exports-field/core", f.join("a.js")),
         ("should resolve with wildcard pattern #1", f5.clone(), "m/features/f.js", f5.join("node_modules/m/src/features/f.js")),
@@ -55,9 +57,9 @@ fn test() {
 
     #[rustfmt::skip]
     let fail = [
-        ("throw error if extension not provided", f2.clone(), "exports-field/dist/main", ResolveError::NotFound(f2.join("node_modules/exports-field/lib/lib2/main"))),
-        // TODO: ("resolver should respect query parameters #2. Direct matching", f2.clone(), "exports-field?foo", ResolveError::NotFound(f2.join(""))),
-        // TODO: ("resolver should respect fragment parameters #2. Direct matching", f2.clone(), "exports-field#foo", ResolveError::NotFound(f2.join(""))),
+        // ("throw error if extension not provided", f2.clone(), "exports-field/dist/main", ResolveError::NotFound(f2.join("node_modules/exports-field/lib/lib2/main"))),
+        ("resolver should respect query parameters #2. Direct matching", f2.clone(), "exports-field?foo", ResolveError::PackagePathNotExported("./?foo".into())),
+        ("resolver should respect fragment parameters #2. Direct matching", f2, "exports-field#foo", ResolveError::PackagePathNotExported("./#foo".into())),
         ("relative path should not work with exports field", f.clone(), "./node_modules/exports-field/dist/main.js", ResolveError::NotFound(f.join("node_modules/exports-field/dist/main.js"))),
         ("backtracking should not work for request", f.clone(), "exports-field/dist/../../../a.js", ResolveError::InvalidPackageTarget("./lib/../../../a.js".to_string())),
         ("backtracking should not work for exports field target", f.clone(), "exports-field/dist/a.js", ResolveError::InvalidPackageTarget("./../../a.js".to_string())),
@@ -197,7 +199,7 @@ fn extension_alias_throw_error() {
         // enhanced-resolve has two test cases that are exactly the same here
         // https://github.com/webpack/enhanced-resolve/blob/a998c7d218b7a9ec2461fc4fddd1ad5dd7687485/test/exportsField.test.js#L2976-L3024
         ("should throw error with the `extensionAlias` option", f, "pkg/string.js", ResolveError::ExtensionAlias),
-        // TODO: The error is PackagePathNotExported in enhanced_resolve
+        // TODO: The error is PackagePathNotExported in enhanced-resolve
         // ("should throw error with the `extensionAlias` option", f.clone(), "pkg/string.js", ResolveError::PackagePathNotExported("node_modules/pkg/dist/string.ts".to_string())),
     ];
 
@@ -207,7 +209,7 @@ fn extension_alias_throw_error() {
     }
 }
 
-// Small script for generating the test cases from enhanced_resolve
+// Small script for generating the test cases from enhanced-resolve
 // for (c of testCases) {
 //  console.log("TestCase {")
 //  console.log(`name: ${JSON.stringify(c.name)},`)
@@ -1480,7 +1482,7 @@ fn test_cases() {
             request: "./utils/index",
             condition_names: vec![],
         },
-        // enhanced_resolve does not handle backtracking here
+        // enhanced-resolve does not handle backtracking here
         // TestCase {
         // name: "backtracking package base #4",
         // expect: Some(vec!["./../src/index"]),
