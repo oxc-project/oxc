@@ -5,7 +5,7 @@ use oxc_linter::LintContext;
 use oxc_query::Adapter;
 use oxc_semantic::Semantic;
 use serde::Deserialize;
-use trustfall::{execute_query, Schema, TransparentValue, TryIntoStruct};
+use trustfall::{execute_query, FieldValue, Schema, TransparentValue, TryIntoStruct};
 
 enum SpanInfo {
     SingleSpanInfo(SingleSpanInfo),
@@ -111,12 +111,16 @@ impl LinterPlugin {
                 {
                     println!("{v:#?}");
                 }
-                let multi = v.clone().try_into_struct::<MultipleSpanInfo>();
-                let single = v.try_into_struct::<SingleSpanInfo>();
-                single.map_or_else(
-                    |_| SpanInfo::MultipleSpanInfo(multi.unwrap()),
-                    SpanInfo::SingleSpanInfo,
-                )
+                match (v.get("span_start"), v.get("span_end")) {
+                    (Some(FieldValue::List(x)), Some(FieldValue::List(y))) if matches!(x[0], FieldValue::Int64(_)) && matches!(y[0], FieldValue::Int64(_)) => {
+                        v.try_into_struct::<MultipleSpanInfo>().map(SpanInfo::MultipleSpanInfo).expect("to be able to convert into MultipleSpanInfo")
+                    }
+                    (Some(FieldValue::Int64(_)), Some(FieldValue::Int64(_))) => {
+                        v.try_into_struct::<SingleSpanInfo>().map(SpanInfo::SingleSpanInfo).expect("to be able to convert into SingleSpanInfo")
+                    }
+                    (None, None) => panic!("No `span_start` and `span_end` were not `@output`'d from query '{}'", input_query.name),
+                    _ => panic!("Wrong type for `span_start` and `span_end` in query '{}'. Expected both to be Int or list of Int.", input_query.name),
+                }
             })
             .take(usize::MAX)
             {
