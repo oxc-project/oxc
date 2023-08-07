@@ -16,6 +16,7 @@ import { githubDark } from "@ddietr/codemirror-themes/github-dark";
 import { linter, lintGutter } from "@codemirror/lint";
 import { language, syntaxTree } from "@codemirror/language";
 import { autocompletion } from "@codemirror/autocomplete";
+import { indentWithTab } from "@codemirror/commands";
 import throttle from "lodash.throttle";
 
 import initWasm, {
@@ -97,7 +98,7 @@ class Playground {
       extensions: [
         basicSetup,
         EditorView.lineWrapping,
-        keymap.of(vscodeKeymap),
+        keymap.of([...vscodeKeymap, indentWithTab]),
         javascript(),
         githubDark,
         lintGutter(),
