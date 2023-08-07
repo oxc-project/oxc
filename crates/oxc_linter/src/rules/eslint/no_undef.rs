@@ -56,12 +56,10 @@ impl Rule for NoUndef {
                 if BUILTINS.contains_key(reference.name().as_str()) {
                     return;
                 }
-                if !self.type_of {
-                    for node in ctx.semantic().nodes().iter() {
-                        if has_typeof_operator(node, ctx) {
-                            return;
-                        }
-                    }
+
+                let node = ctx.nodes().get_node(reference.node_id());
+                if !self.type_of && has_typeof_operator(node, ctx) {
+                    return;
                 }
 
                 ctx.diagnostic(NoUndefDiagnostic(reference.name().clone(), reference.span()));
