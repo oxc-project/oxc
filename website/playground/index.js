@@ -24,7 +24,7 @@ import initWasm, {
   OxcLinterOptions,
   OxcMinifierOptions,
   OxcFormatterOptions,
-  OxcTypeCheckingOptions
+  OxcTypeCheckingOptions,
 } from "@oxc/wasm-web";
 
 const placeholderText = `
