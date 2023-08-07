@@ -1,16 +1,5 @@
 use std::path::PathBuf;
 
-pub type Alias = Vec<(String, Vec<AliasValue>)>;
-
-#[derive(Debug, Clone)]
-pub enum AliasValue {
-    /// The path value
-    Path(String),
-
-    /// The `false` value
-    Ignore,
-}
-
 /// Module Resolution Options
 ///
 /// Options are directly ported from [enhanced-resolve](https://github.com/webpack/enhanced-resolve#resolver-options).
@@ -68,7 +57,9 @@ pub struct ResolveOptions {
     /// Default `[]`
     pub fallback: Alias,
 
-    /// Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests)
+    /// Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests).
+    ///
+    /// See also webpack configuration [resolve.fullySpecified](https://webpack.js.org/configuration/module/#resolvefullyspecified)
     ///
     /// Default `false`
     pub fully_specified: bool,
@@ -83,6 +74,11 @@ pub struct ResolveOptions {
     /// Default `["node_modules"]`
     pub modules: Vec<String>,
 
+    /// Resolve to a context instead of a file.
+    ///
+    /// Default `false`
+    pub resolve_to_context: bool,
+
     /// Prefer to resolve module requests as relative requests instead of using modules from node_modules directories.
     ///
     /// Default `false`
@@ -92,6 +88,11 @@ pub struct ResolveOptions {
     ///
     /// Default `false`
     pub prefer_absolute: bool,
+
+    /// A list of resolve restrictions to restrict the paths that a request can be resolved on.
+    ///
+    /// Default `[]`
+    pub restrictions: Vec<Restriction>,
 
     /// A list of directories where requests of server-relative URLs (starting with '/') are resolved.
     /// On non-Windows systems these requests are resolved as an absolute path first.
@@ -105,6 +106,25 @@ pub struct ResolveOptions {
     ///
     /// Default `true`
     pub symlinks: bool,
+}
+
+/// Alias for [ResolveOptions::alias] and [ResolveOptions::fallback].
+pub type Alias = Vec<(String, Vec<AliasValue>)>;
+
+/// Alias Value for [ResolveOptions::alias] and [ResolveOptions::fallback].
+#[derive(Debug, Clone)]
+pub enum AliasValue {
+    /// The path value
+    Path(String),
+
+    /// The `false` value
+    Ignore,
+}
+
+#[derive(Debug, Clone)]
+pub enum Restriction {
+    Path(PathBuf),
+    RegExp(String),
 }
 
 impl Default for ResolveOptions {
@@ -121,8 +141,10 @@ impl Default for ResolveOptions {
             fully_specified: false,
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
+            resolve_to_context: false,
             prefer_relative: false,
             prefer_absolute: false,
+            restrictions: vec![],
             roots: vec![],
             symlinks: true,
         }

@@ -5,6 +5,10 @@ target/
 /website/node_modules/
 /crates/oxc_napi/node_modules/
 /benchmark/node_modules/
+/editor/vscode/node_modules/
+
+/editor/vscode/dist/
+/editor/vscode/*.vsix
 
 npm/cli-*
 

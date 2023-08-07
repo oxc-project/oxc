@@ -1,6 +1,6 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/resolve.test.js>
 
-use oxc_resolver::{Resolution, ResolveOptions, Resolver};
+use crate::{Resolution, ResolveOptions, Resolver};
 
 #[test]
 fn resolve() {
@@ -48,9 +48,8 @@ fn resolve() {
     }
 }
 
-#[test]
-#[ignore = "issue238Resolve"]
-fn issue238_resolve() {}
+// #[test]
+// fn issue238_resolve() {}
 
 #[test]
 fn prefer_relative() {
@@ -72,17 +71,17 @@ fn prefer_relative() {
 }
 
 #[test]
-#[ignore = "add resolveToContext option"]
 fn resolve_context() {
     let f = super::fixture();
-    let resolver = Resolver::default();
+    let resolver =
+        Resolver::new(ResolveOptions { resolve_to_context: true, ..ResolveOptions::default() });
 
     #[rustfmt::skip]
     let data = [
         ("context for fixtures", f.clone(), "./", f.clone()),
         ("context for fixtures/lib", f.clone(), "./lib", f.join("lib")),
         ("context for fixtures with ..", f.clone(), "./lib/../../fixtures/./lib/..", f.clone()),
-        ("context for fixtures with query", f.clone(), "./?query", f.clone().with_file_name("?query")),
+        ("context for fixtures with query", f.clone(), "./?query", f.clone().with_file_name("fixtures?query")),
     ];
 
     for (comment, path, request, expected) in data {

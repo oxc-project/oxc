@@ -1,0 +1,78 @@
+{
+  "name": "oxc-vscode",
+  "description": "oxc vscode extension",
+  "license": "MIT",
+  "version": "0.0.1",
+  "publisher": "oxc",
+	"displayName": "Oxc",
+  "categories": ["Linters"],
+  "repository": {
+		"type": "git",
+		"url": "https://github.com/web-infra-dev/oxc.git",
+		"directory": "editor/vscode"
+	},
+	"bugs": {
+		"url": "https://github.com/web-infra-dev/oxc/issues"
+	},
+  "keywords": [
+    "linter",
+    "language-server",
+    "oxc"
+  ],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "enabledApiProposals": [],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "oxc.restartServer",
+        "title": "Restart Oxc Server",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.showOutputChannel",
+        "title": "Show Output Channel",
+        "category": "Oxc"
+      },
+      {
+        "command": "oxc.showTraceOutputChannel",
+        "title": "Show Trace Output Channel",
+        "category": "Oxc"
+      }
+    ]
+  },
+  "scripts": {
+    "ts-build": "tsc -b",
+    "vscode:prepublish": "npm run build && npm run server:build:release",
+    "compile": "cross-env NODE_ENV=production tsc -b",
+    "watch": "tsc -b -w",
+    "test": "node ./dist/test/runTest.js",
+    "build": "cross-env NODE_ENV=production webpack --config webpack.config.js",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies",
+    "server:build:debug": "cargo build -p oxc_vscode",
+    "server:build:release": "cross-env CARGO_TARGET_DIR=./target cargo build -p oxc_vscode --release"
+  },
+  "devDependencies": {
+    "@types/mocha": "^8.0.0",
+    "@types/node": "^20.2.5",
+    "@types/vscode": "^1.80.0",
+    "@vscode/test-electron": "^2.3.3",
+    "@vscode/vsce": "^2.20.0",
+    "cross-env": "^7.0.2",
+    "mocha": "^8.0.1",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.1.6",
+    "vscode-uri": "^3.0.7",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  }
+}

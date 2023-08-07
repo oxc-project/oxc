@@ -45,6 +45,7 @@ mod eslint {
     pub mod no_empty_pattern;
     pub mod no_eval;
     pub mod no_ex_assign;
+    pub mod no_extra_boolean_cast;
     pub mod no_func_assign;
     pub mod no_global_assign;
     pub mod no_import_assign;
@@ -128,6 +129,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_empty_pattern,
     eslint::no_eval,
     eslint::no_ex_assign,
+    eslint::no_extra_boolean_cast,
     eslint::no_func_assign,
     eslint::no_global_assign,
     eslint::no_import_assign,

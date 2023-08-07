@@ -17,8 +17,9 @@ type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 // TODO: allocate everything into an arena or SoA
 #[derive(Debug, Deserialize)]
 pub struct PackageJson {
+    /// Path to `package.json`. Contains the `package.json` filename.
     #[serde(skip)]
-    pub path: PathBuf,
+    path: PathBuf,
 
     /// The "name" field defines your package's name.
     /// The "name" field can be used in addition to the "exports" field to self-reference a package using its name.
@@ -38,17 +39,16 @@ pub struct PackageJson {
     #[serde(default)]
     pub exports: ExportsField,
 
-    /// The browser field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
+    /// In addition to the "exports" field, there is a package "imports" field to create private mappings that only apply to import specifiers from within the package itself.
+    ///
+    /// <https://nodejs.org/api/packages.html#subpath-imports>
+    #[serde(default)]
+    pub imports: MatchObject,
+
+    /// The "browser" field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
     ///
     /// <https://github.com/defunctzombie/package-browser-field-spec>
     pub browser: Option<BrowserField>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(untagged)]
-pub enum BrowserField {
-    String(String),
-    Map(FxIndexMap<PathBuf, serde_json::Value>),
 }
 
 /// `matchObj` defined in `PACKAGE_IMPORTS_EXPORTS_RESOLVE`
@@ -76,7 +76,6 @@ impl ExportsField {
 pub enum ExportsKey {
     Main,
     Pattern(String),
-    Hash(String),
     CustomCondition(String),
 }
 
@@ -86,8 +85,8 @@ impl From<&str> for ExportsKey {
             Self::Main
         } else if key.starts_with("./") {
             Self::Pattern(key.trim_start_matches('.').to_string())
-        } else if let Some(key) = key.strip_prefix('#') {
-            Self::Hash(key.to_string())
+        } else if key.starts_with('#') {
+            Self::Pattern(key.to_string())
         } else {
             Self::CustomCondition(key.to_string())
         }
@@ -102,6 +101,13 @@ impl<'a, 'de: 'a> Deserialize<'de> for ExportsKey {
         let s: &'de str = Deserialize::deserialize(deserializer)?;
         Ok(Self::from(s))
     }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum BrowserField {
+    String(String),
+    Map(FxIndexMap<PathBuf, serde_json::Value>),
 }
 
 impl PackageJson {
@@ -126,12 +132,18 @@ impl PackageJson {
         Ok(package_json)
     }
 
+    /// Directory to `package.json`
+    pub fn directory(&self) -> &Path {
+        debug_assert!(self.path.file_name().is_some_and(|x| x == "package.json"));
+        self.path.parent().unwrap()
+    }
+
     /// Resolve the request string for this package.json by looking at the `browser` field.
     ///
     /// # Errors
     ///
     /// * Returns [ResolveError::Ignored] for `"path": false` in `browser` field.
-    pub fn resolve(
+    pub fn resolve_browser_field(
         &self,
         path: &Path,
         request: Option<&str>,
@@ -158,9 +170,7 @@ impl PackageJson {
     ) -> Result<Option<&'a str>, ResolveError> {
         match value {
             serde_json::Value::String(value) => Ok(Some(value.as_str())),
-            serde_json::Value::Bool(b) if !b => {
-                Err(ResolveError::Ignored(key.to_path_buf().into_boxed_path()))
-            }
+            serde_json::Value::Bool(b) if !b => Err(ResolveError::Ignored(key.to_path_buf())),
             _ => Ok(None),
         }
     }

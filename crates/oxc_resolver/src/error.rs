@@ -1,7 +1,6 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use crate::request::RequestError;
-
+/// All resolution errors.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum ResolveError {
     /// Ignored path
@@ -15,24 +14,24 @@ pub enum ResolveError {
     /// }
     /// ```
     /// See <https://github.com/defunctzombie/package-browser-field-spec#ignore-a-module>
-    Ignored(Box<Path>),
+    Ignored(PathBuf),
 
     /// Path not found
-    NotFound(Box<Path>),
+    NotFound(PathBuf),
 
     /// All of the aliased extension are not found
     ExtensionAlias,
 
-    /// All of the aliases are not found
-    Alias(String),
-
-    /// The provided path request cannot be parsed
-    Request(RequestError),
+    /// The provided path specifier cannot be parsed
+    Specifier(SpecifierError),
 
     /// JSON parse error
     JSON(JSONError),
 
-    // TODO: TypeError [ERR_INVALID_MODULE_SPECIFIER]: Invalid module "./dist/../../../a.js" request is not a valid subpath for the "exports" resolution of /xxx/package.json
+    /// Restricted by `ResolveOptions::restrictions`
+    Restriction(PathBuf),
+
+    // TODO: TypeError [ERR_INVALID_MODULE_SPECIFIER]: Invalid module "./dist/../../../a.js" specifier is not a valid subpath for the "exports" resolution of /xxx/package.json
     InvalidModuleSpecifier(String),
 
     // TODO: Error [ERR_INVALID_PACKAGE_TARGET]: Invalid "exports" target "./../../a.js" defined for './dist/a.js' in the package config /xxx/package.json
@@ -49,8 +48,18 @@ pub enum ResolveError {
 
     // TODO:  Expecting folder to folder mapping. "./data/timezones" should end with "/"
     InvalidPackageConfigDirectory(PathBuf),
+
+    PackageImportNotDefined(String),
+
+    Unimplemented(&'static str),
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum SpecifierError {
+    Empty,
+}
+
+/// JSON error from [serde_json::Error].
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct JSONError {
     pub path: PathBuf,
@@ -60,10 +69,6 @@ pub struct JSONError {
 }
 
 impl ResolveError {
-    pub fn is_not_found(&self) -> bool {
-        matches!(self, Self::NotFound(_) | Self::ExtensionAlias | Self::Alias(_))
-    }
-
     pub(crate) fn from_serde_json_error(path: PathBuf, error: &serde_json::Error) -> Self {
         Self::JSON(JSONError {
             path,

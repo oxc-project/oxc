@@ -35,10 +35,10 @@ oxc_type_synthesis = { workspace = true }
 # TODO temp, for type check output, replace with Miette
 codespan-reporting = "0.11.1"
 
-clap              = { workspace = true }
-dashmap           = { workspace = true }
-ignore            = { workspace = true, features = ["simd-accel"] }
-miette            = { workspace = true, features = ["fancy-no-backtrace"] }
-rayon             = { workspace = true }
-rustc-hash        = { workspace = true }
+clap       = { workspace = true }
+dashmap    = { workspace = true }
+ignore     = { workspace = true, features = ["simd-accel"] }
+miette     = { workspace = true, features = ["fancy-no-backtrace"] }
+rayon      = { workspace = true }
+rustc-hash = { workspace = true }
 # git2 = { version = "0.16.1", default_features = false }

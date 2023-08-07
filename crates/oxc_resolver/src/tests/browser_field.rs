@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use oxc_resolver::{Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{Resolution, ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("browser-module")
@@ -27,7 +27,7 @@ fn ignore() {
 
     for (path, request, expected) in data {
         let resolution = resolver.resolve(&path, request);
-        let expected = ResolveError::Ignored(expected.into());
+        let expected = ResolveError::Ignored(expected);
         assert_eq!(resolution, Err(expected), "{path:?} {request}");
     }
 }

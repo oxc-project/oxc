@@ -2,9 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use oxc_resolver::{AliasValue, Resolution, ResolveError, ResolveOptions, ResolverGeneric};
+use crate::{AliasValue, Resolution, ResolveError, ResolveOptions, ResolverGeneric};
 
-use crate::MemoryFS;
+use super::memory_fs::MemoryFS;
 
 #[test]
 #[cfg(not(target_os = "windows"))] // MemoryFS's path separator is always `/` so the test will not pass in windows.
@@ -27,23 +27,32 @@ fn fallback() {
         ("/e/dir/file", ""),
     ]);
 
-    #[rustfmt::skip]
-    let options = ResolveOptions {
-        fallback: vec![
-            ("aliasA".into(), vec![AliasValue::Path("a".into())]),
-            ("b$".into(), vec![AliasValue::Path("a/index".into())]),
-            ("c$".into(), vec![AliasValue::Path("/a/index".into())]),
-            ("multiAlias".into(), vec![AliasValue::Path("b".into()), AliasValue::Path("c".into()), AliasValue::Path("d".into()), AliasValue::Path("e".into()), AliasValue::Path("a".into())]),
-            ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
-            ("/d/dir".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("/d/index.js".into(), vec![AliasValue::Path("/c/index".into())]),
-            ("ignored".into(), vec![AliasValue::Ignore]),
-        ],
-        modules: vec!["/".into()],
-        ..ResolveOptions::default()
-    };
-
-    let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(options, file_system);
+    let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(
+        file_system,
+        ResolveOptions {
+            fallback: vec![
+                ("aliasA".into(), vec![AliasValue::Path("a".into())]),
+                ("b$".into(), vec![AliasValue::Path("a/index".into())]),
+                ("c$".into(), vec![AliasValue::Path("/a/index".into())]),
+                (
+                    "multiAlias".into(),
+                    vec![
+                        AliasValue::Path("b".into()),
+                        AliasValue::Path("c".into()),
+                        AliasValue::Path("d".into()),
+                        AliasValue::Path("e".into()),
+                        AliasValue::Path("a".into()),
+                    ],
+                ),
+                ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
+                ("/d/dir".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("/d/index.js".into(), vec![AliasValue::Path("/c/index".into())]),
+                ("ignored".into(), vec![AliasValue::Ignore]),
+            ],
+            modules: vec!["/".into()],
+            ..ResolveOptions::default()
+        },
+    );
 
     #[rustfmt::skip]
     let pass = [
@@ -80,7 +89,7 @@ fn fallback() {
 
     #[rustfmt::skip]
     let ignore = [
-        ("should resolve an ignore module", "ignored", ResolveError::Ignored(f.join("ignored").into_boxed_path()))
+        ("should resolve an ignore module", "ignored", ResolveError::Ignored(f.join("ignored")))
     ];
 
     for (comment, request, expected) in ignore {

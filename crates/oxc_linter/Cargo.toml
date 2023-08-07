@@ -28,9 +28,10 @@ regex       = { workspace = true }
 rustc-hash  = { workspace = true }
 phf         = { workspace = true, features = ["macros"] }
 num-traits  = { workspace = true }
+itertools  = { workspace = true }
 
 rust-lapper = "1.1.0"
-once_cell = "1.18.0"
+once_cell   = "1.18.0"
 
 [dev-dependencies]
 oxc_parser = { workspace = true }

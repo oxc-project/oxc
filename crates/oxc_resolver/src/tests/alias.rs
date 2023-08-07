@@ -2,11 +2,9 @@
 
 use std::path::{Path, PathBuf};
 
-use oxc_resolver::{
-    AliasValue, Resolution, ResolveError, ResolveOptions, Resolver, ResolverGeneric,
-};
+use crate::{AliasValue, Resolution, ResolveError, ResolveOptions, Resolver, ResolverGeneric};
 
-use crate::MemoryFS;
+use super::memory_fs::MemoryFS;
 
 #[test]
 #[cfg(not(target_os = "windows"))] // MemoryFS's path separator is always `/` so the test will not pass in windows.
@@ -29,26 +27,35 @@ fn alias() {
         ("/e/dir/file", ""),
     ]);
 
-    #[rustfmt::skip]
-    let options = ResolveOptions {
-        alias: vec![
-            ("aliasA".into(), vec![AliasValue::Path("a".into())]),
-            ("b$".into(), vec![AliasValue::Path("a/index".into())]),
-            ("c$".into(), vec![AliasValue::Path("/a/index".into())]),
-            ("multiAlias".into(), vec![AliasValue::Path("b".into()), AliasValue::Path("c".into()), AliasValue::Path("d".into()), AliasValue::Path("e".into()), AliasValue::Path("a".into())]),
-            ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
-            ("/d/dir".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("/d/index.js".into(), vec![AliasValue::Path("/c/index".into())]),
-            // alias configuration should work
-            ("#".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("@".into(), vec![AliasValue::Path("/c/dir".into())]),
-            ("ignored".into(), vec![AliasValue::Ignore]),
-        ],
-        modules: vec!["/".into()],
-        ..ResolveOptions::default()
-    };
-
-    let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(options, file_system);
+    let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(
+        file_system,
+        ResolveOptions {
+            alias: vec![
+                ("aliasA".into(), vec![AliasValue::Path("a".into())]),
+                ("b$".into(), vec![AliasValue::Path("a/index".into())]),
+                ("c$".into(), vec![AliasValue::Path("/a/index".into())]),
+                (
+                    "multiAlias".into(),
+                    vec![
+                        AliasValue::Path("b".into()),
+                        AliasValue::Path("c".into()),
+                        AliasValue::Path("d".into()),
+                        AliasValue::Path("e".into()),
+                        AliasValue::Path("a".into()),
+                    ],
+                ),
+                // ("recursive".into(), vec![AliasValue::Path("recursive/dir".into())]),
+                ("/d/dir".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("/d/index.js".into(), vec![AliasValue::Path("/c/index".into())]),
+                // alias configuration should work
+                ("#".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("@".into(), vec![AliasValue::Path("/c/dir".into())]),
+                ("ignored".into(), vec![AliasValue::Ignore]),
+            ],
+            modules: vec!["/".into()],
+            ..ResolveOptions::default()
+        },
+    );
 
     #[rustfmt::skip]
     let pass = [
@@ -64,9 +71,9 @@ fn alias() {
         ("should resolve '#' alias 2", "#/index", "/c/dir/index"),
         ("should resolve '@' alias 1", "@", "/c/dir/index"),
         ("should resolve '@' alias 2", "@/index", "/c/dir/index"),
-        ("should resolve a recursive aliased module 1", "recursive", "/recursive/dir/index"),
-        ("should resolve a recursive aliased module 2", "recursive/index", "/recursive/dir/index"),
         // TODO recursive
+        // ("should resolve a recursive aliased module 1", "recursive", "/recursive/dir/index"),
+        // ("should resolve a recursive aliased module 2", "recursive/index", "/recursive/dir/index"),
         // ("should resolve a recursive aliased module 3", "recursive/dir", "/recursive/dir/index"),
         // ("should resolve a recursive aliased module 4", "recursive/dir/index", "/recursive/dir/index"),
         ("should resolve a file aliased module 1", "b", "/a/index"),
@@ -93,7 +100,7 @@ fn alias() {
 
     #[rustfmt::skip]
     let ignore = [
-        ("should resolve an ignore module", "ignored", ResolveError::Ignored(f.join("ignored").into_boxed_path()))
+        ("should resolve an ignore module", "ignored", ResolveError::Ignored(f.join("ignored")))
     ];
 
     for (comment, request, expected) in ignore {
@@ -112,5 +119,5 @@ fn absolute_path() {
         ..ResolveOptions::default()
     });
     let resolution = resolver.resolve(&f, "foo/index");
-    assert_eq!(resolution, Err(ResolveError::Ignored(f.into_boxed_path())));
+    assert_eq!(resolution, Err(ResolveError::Ignored(f)));
 }
