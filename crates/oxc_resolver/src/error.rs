@@ -28,6 +28,9 @@ pub enum ResolveError {
     /// JSON parse error
     JSON(JSONError),
 
+    /// Restricted by `ResolveOptions::restrictions`
+    Restriction(PathBuf),
+
     // TODO: TypeError [ERR_INVALID_MODULE_SPECIFIER]: Invalid module "./dist/../../../a.js" specifier is not a valid subpath for the "exports" resolution of /xxx/package.json
     InvalidModuleSpecifier(String),
 
@@ -47,6 +50,8 @@ pub enum ResolveError {
     InvalidPackageConfigDirectory(PathBuf),
 
     PackageImportNotDefined(String),
+
+    Unimplemented(&'static str),
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
