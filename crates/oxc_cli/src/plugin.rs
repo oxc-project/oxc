@@ -106,7 +106,7 @@ impl LinterPlugin {
                 )
             })
             .map(|v| {
-                if env::var("OXC_PRINT_TFALL_OUTPUTS").unwrap_or_else(|_| "false".to_owned())
+                if env::var("OXC_PRINT_TRUSTFALL_OUTPUTS").unwrap_or_else(|_| "false".to_owned())
                     == "true"
                 {
                     println!("{v:#?}");
