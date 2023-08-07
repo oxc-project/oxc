@@ -15,6 +15,7 @@ import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
 import { linter, lintGutter } from "@codemirror/lint";
 import { language, syntaxTree } from "@codemirror/language";
+import { autocompletion } from "@codemirror/autocomplete";
 import throttle from "lodash.throttle";
 
 import initWasm, {
@@ -101,6 +102,7 @@ class Playground {
         githubDark,
         lintGutter(),
         stateListener,
+        autocompletion(),
         linter(
           () => {
             const diagnostics = this.oxc
