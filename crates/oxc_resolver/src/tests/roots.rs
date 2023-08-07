@@ -35,7 +35,6 @@ fn roots() {
 
     #[rustfmt::skip]
     let fail = [
-        // TODO should be "Module Not Found" error
         ("should not work with relative path", "fixtures/b.js", ResolveError::NotFound(f.clone()))
     ];
 
