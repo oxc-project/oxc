@@ -71,17 +71,17 @@ fn prefer_relative() {
 }
 
 #[test]
-#[ignore = "add resolveToContext option"]
 fn resolve_context() {
     let f = super::fixture();
-    let resolver = Resolver::default();
+    let resolver =
+        Resolver::new(ResolveOptions { resolve_to_context: true, ..ResolveOptions::default() });
 
     #[rustfmt::skip]
     let data = [
         ("context for fixtures", f.clone(), "./", f.clone()),
         ("context for fixtures/lib", f.clone(), "./lib", f.join("lib")),
         ("context for fixtures with ..", f.clone(), "./lib/../../fixtures/./lib/..", f.clone()),
-        ("context for fixtures with query", f.clone(), "./?query", f.clone().with_file_name("?query")),
+        ("context for fixtures with query", f.clone(), "./?query", f.clone().with_file_name("fixtures?query")),
     ];
 
     for (comment, path, request, expected) in data {
