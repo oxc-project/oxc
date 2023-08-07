@@ -209,7 +209,7 @@ class Playground {
     this.currentView = view;
 
     document.getElementById("mangle").style.visibility = "hidden";
-    document.getElementById("ir-copy").style.visibility = "hidden";
+    document.getElementById("ir-copy").style.display = "none";
     this.runOptions.format = false;
     this.runOptions.hir = false;
     this.runOptions.minify = false;
@@ -226,7 +226,7 @@ class Playground {
         text = JSON.stringify(this.oxc.hir, null, 2);
         break;
       case "ir":
-        document.getElementById("ir-copy").style.visibility = "visible";
+        document.getElementById("ir-copy").style.display = "inline";
         this.runOptions.ir = true;
         this.run();
         text = this.oxc.ir;
