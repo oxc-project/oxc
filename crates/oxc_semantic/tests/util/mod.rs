@@ -15,7 +15,7 @@ pub struct SemanticTester {
     source_type: SourceType,
     source_text: &'static str,
     /// SemanticBuilder option
-    module_builder: bool,
+    use_module_record_builder: bool,
 }
 
 impl SemanticTester {
@@ -35,7 +35,7 @@ impl SemanticTester {
     }
 
     pub fn new(source_text: &'static str, source_type: SourceType) -> Self {
-        Self { allocator: Allocator::default(), source_type, source_text, module_builder: true }
+        Self { allocator: Allocator::default(), source_type, source_text, use_module_record_builder: true }
     }
 
     /// Set the [`SourceType`] to TypeScript (or JavaScript, using `false`)
@@ -55,7 +55,7 @@ impl SemanticTester {
     /// Set [`SemanticBuilder`]'s `with_module_record_builder` option
     #[allow(dead_code)]
     pub fn with_module_record_builder(mut self, yes: bool) -> Self {
-        self.module_builder = yes;
+        self.use_module_record_builder = yes;
         self
     }
 
@@ -81,7 +81,7 @@ impl SemanticTester {
         let semantic_ret = SemanticBuilder::new(self.source_text, self.source_type)
             .with_check_syntax_error(true)
             .with_trivias(&parse.trivias)
-            .with_module_record_builder(self.module_builder)
+            .with_module_record_builder(self.use_module_record_builder)
             .build(program);
 
         if !semantic_ret.errors.is_empty() {
@@ -141,12 +141,7 @@ pub struct SymbolTester<'a> {
     /// Reference to semantic analysis results, from [`SemanticTester`]
     semantic: Semantic<'a>,
     /// Name of the subject symbol
-    target: String,
-    /// Test case source code.
-    ///
-    /// Technically, `semantic` also has a reference to the source code with lifetime 'a and this
-    /// _could_ also be 'a, but we need it to be 'static to work with miette.
-    // source: &'static str,
+    target_symbol_name: String,
     /// Symbol data, or error if not found
     data: Result<SymbolId, oxc_diagnostics::Error>,
 }
@@ -162,7 +157,7 @@ impl<'a> SymbolTester<'a> {
             semantic.scopes().get_binding(semantic.scopes().root_scope_id(), &Atom::from(target));
         let data = decl.map_or_else(|| Err(miette!("Could not find declaration for {target}")), Ok);
 
-        SymbolTester { parent, semantic, target: target.to_string(), data }
+        SymbolTester { parent, semantic, target_symbol_name: target.to_string(), data }
     }
 
     pub(super) fn new_unique(
@@ -179,7 +174,7 @@ impl<'a> SymbolTester<'a> {
             _ => unreachable!()
         };
 
-        SymbolTester { parent, semantic, target: target.to_string(), data }
+        SymbolTester { parent, semantic, target_symbol_name: target.to_string(), data }
     }
 
     /// Checks if the resolved symbol contains all flags in `flags`, using [`SymbolFlags::contains()`]
@@ -193,7 +188,7 @@ impl<'a> SymbolTester<'a> {
                     // let decl_span = self.semantic.symbol_declaration(symbol_id).span();
                     Err(miette!(
                         "Expected {} to contain flags {:?}, but it had {:?}",
-                        self.target,
+                        self.target_symbol_name,
                         flags,
                         found_flags
                     ))
@@ -213,7 +208,7 @@ impl<'a> SymbolTester<'a> {
                 } else {
                     Err(miette!(
                         "Expected {} to intersect with flags {:?}, but it had {:?}",
-                        self.target,
+                        self.target_symbol_name,
                         flags,
                         found_flags
                     ))
@@ -266,7 +261,7 @@ impl<'a> SymbolTester<'a> {
     pub fn is_exported(mut self) -> Self {
         self.data = match self.data {
             Ok(symbol_id) => {
-                let binding = Atom::from(self.target.clone());
+                let binding = Atom::from(self.target_symbol_name.clone());
                 if self.semantic.module_record().exported_bindings.contains_key(&binding)
                     && self.semantic.scopes().get_root_binding(&binding) == Some(symbol_id)
                 {
@@ -294,7 +289,3 @@ impl<'a> From<SymbolTester<'a>> for Result<(), Error> {
         val.data.map(|_| {}).map_err(|e| e.with_source_code(val.parent.source_text))
     }
 }
-
-// fn graphic_hook(diag: dyn Diagnostic) -> GraphicalReportHandler {
-//     Box::new(GraphicalReportHandler::new().tab_width(2))
-// }

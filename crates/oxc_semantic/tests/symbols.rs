@@ -17,7 +17,7 @@ fn test_class_simple() {
         .test();
 }
 
-#[ignore]
+#[ignore = "function symbols currently lack SymbolFlags::Function"]
 #[test]
 fn test_function_simple() {
     SemanticTester::js("function foo() { return }")
@@ -63,7 +63,7 @@ fn test_var_read_write() {
     .test();
 }
 
-#[ignore]
+#[ignore = "type aliases currently aren't in the symbol table"]
 #[test]
 fn test_types_simple() {
     let test = SemanticTester::ts(

@@ -159,8 +159,3 @@ impl ScopeTree {
         }
     }
 }
-
-// pub(crate) struct ScopeTreeIter {
-//     curr: ScopeId
-//     s
-// }
