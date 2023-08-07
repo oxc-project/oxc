@@ -80,8 +80,6 @@ class Playground {
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
     this.typeCheckOptions = new OxcTypeCheckingOptions();
-    // This will trigger `stateListener`.
-    this.updateEditorText(this.editor, this.urlParams.code || placeholderText);
   }
 
   initEditor() {
@@ -127,6 +125,7 @@ class Playground {
           { delay: 0 }
         ),
       ],
+      doc: this.urlParams.code || placeholderText,
     });
 
     return new EditorView({
