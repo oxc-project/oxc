@@ -34,8 +34,8 @@
 [docs-url]: https://docs.rs/oxc
 [code-size-badge]: https://img.shields.io/github/languages/code-size/web-infra-dev/oxc
 [code-size-url]: https://github.com/web-infra-dev/oxc
-[code-coverage-badge]: https://codecov.io/gh/Boshen/oxc/branch/main/graph/badge.svg
-[code-coverage-url]: https://codecov.io/gh/Boshen/oxc
+[code-coverage-badge]: https://codecov.io/github/web-infra-dev/oxc/branch/main/graph/badge.svg
+[code-coverage-url]: https://codecov.io/gh/web-infra-dev/oxc
 
 The Oxidation Compiler is creating a suite of high-performance tools for the JavaScript / TypeScript language re-written in Rust:
 
