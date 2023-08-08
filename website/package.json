@@ -10,6 +10,8 @@
     "wasm-build": "wasm-pack build --out-dir ../../npm/wasm-web --target web --release --scope oxc ../crates/oxc_wasm"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.9.0",
+    "@codemirror/commands": "^6.2.4",
     "@codemirror/lang-javascript": "^6.1.8",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-rust": "^6.0.1",

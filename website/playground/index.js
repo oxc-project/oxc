@@ -15,6 +15,8 @@ import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
 import { linter, lintGutter } from "@codemirror/lint";
 import { language, syntaxTree } from "@codemirror/language";
+import { autocompletion } from "@codemirror/autocomplete";
+import { indentWithTab, deleteLine } from "@codemirror/commands";
 import throttle from "lodash.throttle";
 
 import initWasm, {
@@ -24,7 +26,7 @@ import initWasm, {
   OxcLinterOptions,
   OxcMinifierOptions,
   OxcFormatterOptions,
-  OxcTypeCheckingOptions
+  OxcTypeCheckingOptions,
 } from "@oxc/wasm-web";
 
 const placeholderText = `
@@ -97,8 +99,6 @@ class Playground {
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
     this.typeCheckOptions = new OxcTypeCheckingOptions();
-    // This will trigger `stateListener`.
-    this.updateEditorText(this.editor, this.urlParams.code || placeholderText);
   }
 
   initEditor() {
@@ -115,11 +115,19 @@ class Playground {
       extensions: [
         basicSetup,
         EditorView.lineWrapping,
-        keymap.of(vscodeKeymap),
+        keymap.of([
+          ...vscodeKeymap,
+          indentWithTab,
+          {
+            key: "Delete",
+            shift: deleteLine,
+          },
+        ]),
         javascript(),
         githubDark,
         lintGutter(),
         stateListener,
+        autocompletion(),
         linter(
           () => {
             const diagnostics = this.oxc
@@ -136,6 +144,7 @@ class Playground {
           { delay: 0 }
         ),
       ],
+      doc: this.urlParams.code || placeholderText,
     });
 
     return new EditorView({
@@ -228,7 +237,7 @@ class Playground {
     this.currentView = view;
 
     document.getElementById("mangle").style.visibility = "hidden";
-    document.getElementById("ir-copy").style.visibility = "hidden";
+    document.getElementById("ir-copy").style.display = "none";
     this.runOptions.format = false;
     this.runOptions.hir = false;
     this.runOptions.minify = false;
@@ -245,7 +254,7 @@ class Playground {
         text = JSON.stringify(this.oxc.hir, null, 2);
         break;
       case "ir":
-        document.getElementById("ir-copy").style.visibility = "visible";
+        document.getElementById("ir-copy").style.display = "inline";
         this.runOptions.ir = true;
         this.run();
         text = this.oxc.ir;
