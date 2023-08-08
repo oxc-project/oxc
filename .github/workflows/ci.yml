@@ -6,11 +6,13 @@ on:
     types: [opened, synchronize]
     paths-ignore:
       - '**/*.md'
+      - '**/*.yml'
   push:
     branches:
       - main
     paths-ignore:
       - '**/*.md'
+      - '**/*.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}

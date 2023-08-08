@@ -6,6 +6,7 @@ on:
     types: [opened, synchronize]
     paths-ignore:
       - '**/*.md'
+      - '**/*.yml'
       - 'npm/**'
       - 'website/**'
       - 'crates/oxc/**'
@@ -22,6 +23,7 @@ on:
       - main
     paths-ignore:
       - 'npm/**'
+      - '**/*.yml'
       - 'website/**'
       - 'crates/oxc/**'
       - 'crates/oxc_cli/**'
