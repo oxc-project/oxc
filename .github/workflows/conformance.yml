@@ -22,8 +22,9 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'npm/**'
+      - '**/*.md'
       - '**/*.yml'
+      - 'npm/**'
       - 'website/**'
       - 'crates/oxc/**'
       - 'crates/oxc_cli/**'
