@@ -100,15 +100,21 @@ class Playground {
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
     this.typeCheckOptions = new OxcTypeCheckingOptions();
+
+    this.runOxc(this.editor.state.doc.toString());
+  }
+
+  runOxc(text) {
+    const sourceText = text;
+    this.urlParams.updateCode(sourceText);
+    this.oxc.sourceText = sourceText;
+    this.updateView();
   }
 
   initEditor() {
     const stateListener = EditorView.updateListener.of((view) => {
       if (view.docChanged) {
-        const sourceText = view.state.doc.toString();
-        this.urlParams.updateCode(sourceText);
-        this.oxc.sourceText = sourceText;
-        this.updateView();
+        this.runOxc(view.state.doc.toString());
       }
     });
 
