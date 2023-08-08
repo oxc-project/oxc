@@ -329,7 +329,6 @@ query {
   }
 
   updateEditorText(instance, text) {
-    console.log("updating text");
     const transaction = instance.state.update({
       changes: { from: 0, to: instance.state.doc.length, insert: text },
     });
