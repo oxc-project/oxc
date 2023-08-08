@@ -82,10 +82,12 @@ class Playground {
   currentView = "ast"; // "ast" | "hir" | "format" | "minify" | "ir"
   languageConf;
   urlParams;
+  viewerIsEditableConf;
 
   constructor() {
     this.languageConf = new Compartment();
     this.urlParams = new URLParams();
+    this.viewerIsEditableConf = new Compartment();
     this.editor = this.initEditor();
     this.viewer = this.initViewer();
   }
@@ -156,7 +158,22 @@ class Playground {
     return new EditorView({
       extensions: [
         githubDark,
-        EditorView.editable.of(false),
+        EditorState.transactionExtender.of((tr) => {
+          if (!tr.docChanged) return null;
+
+          let ext;
+
+          if (this.currentLanguage() === "graphql") {
+            ext = EditorView.editable.of(true);
+          } else {
+            ext = EditorView.editable.of(false);
+          }
+
+          return {
+            effects: this.viewerIsEditableConf.reconfigure(ext),
+          };
+        }),
+        this.viewerIsEditableConf.of(EditorView.editable.of(false)),
         EditorView.lineWrapping,
         this.languageConf.of(javascript()),
         // Change language according to the current view
@@ -176,6 +193,10 @@ class Playground {
             case "rust":
               if (currentLanguage == rustLanguage) return null;
               newLanguage = rust();
+              break;
+            case "graphql":
+              if (currentLanguage == graphqlLanguage) return null;
+              newLanguage = graphql(buildSchema(graphql_schema_text()));
               break;
           }
           return {
@@ -211,6 +232,8 @@ class Playground {
       case "ast":
       case "hir":
         return "json";
+      case "query":
+        return "graphql";
       default:
         return "javascript";
     }
