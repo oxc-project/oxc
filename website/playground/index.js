@@ -50,24 +50,23 @@ const DummyComponent:React.FC = () => {
 export default DummyComponent
 `.trim();
 
-
-const STORAGE_KEY_CODE = "playground.code"; 
+const STORAGE_KEY_CODE = "playground.code";
 
 const getCodeFromStorage = () => {
   try {
     return localStorage.getItem(STORAGE_KEY_CODE);
-  }catch(_e) {
+  } catch (_e) {
     return "";
   }
-}
+};
 
 const setCodeToStorage = (code) => {
   try {
     localStorage.setItem(STORAGE_KEY_CODE, code);
-  }catch(_e) {
+  } catch (_e) {
     return;
   }
-}
+};
 
 class Playground {
   oxc;
