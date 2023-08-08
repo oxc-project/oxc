@@ -1865,6 +1865,7 @@ dependencies = [
  "oxc_linter",
  "oxc_minifier",
  "oxc_parser",
+ "oxc_query",
  "oxc_semantic",
  "oxc_span",
  "oxc_type_synthesis",

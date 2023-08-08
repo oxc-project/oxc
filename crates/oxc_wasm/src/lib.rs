@@ -9,6 +9,7 @@ use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::{LintContext, Linter};
 use oxc_minifier::{CompressOptions, Compressor, ManglerBuilder, Printer, PrinterOptions};
 use oxc_parser::Parser;
+use oxc_query::SCHEMA_TEXT;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
@@ -24,6 +25,11 @@ use crate::options::{
 pub fn main() {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
+}
+
+#[wasm_bindgen]
+pub fn graphql_schema_text() -> String {
+    SCHEMA_TEXT.to_string()
 }
 
 #[wasm_bindgen]
