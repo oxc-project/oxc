@@ -29,17 +29,6 @@ impl<Fs: FileSystem> Cache<Fs> {
         Self { fs, ..Self::default() }
     }
 
-    /// # Panics
-    ///
-    /// * Path is file but does not have a parent
-    pub fn dirname(&self, cache_value: &CachedPath) -> CachedPath {
-        if cache_value.is_file(&self.fs) {
-            cache_value.parent.clone().unwrap()
-        } else {
-            cache_value.clone()
-        }
-    }
-
     pub fn value(&self, path: &Path) -> CachedPath {
         let hash = {
             let mut hasher = FxHasher::default();
@@ -57,7 +46,7 @@ impl<Fs: FileSystem> Cache<Fs> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct CachedPath(Arc<CachedPathImpl>);
 
 impl Deref for CachedPath {
@@ -74,7 +63,6 @@ impl AsRef<CachedPathImpl> for CachedPath {
     }
 }
 
-#[derive(Debug)]
 pub struct CachedPathImpl {
     path: Box<Path>,
     parent: Option<CachedPath>,

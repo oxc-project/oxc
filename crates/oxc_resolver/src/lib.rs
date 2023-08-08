@@ -181,10 +181,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 self.require_relative(cached_path, relative_path, ctx)
             }
             // 4. If X begins with '#'
-            SpecifierPath::Hash(specifier) => {
-                // a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
-                self.require_hash(cached_path, specifier, ctx)
-            }
+            SpecifierPath::Hash(specifier) => self.require_hash(cached_path, specifier, ctx),
             // (ESM) 5. Otherwise,
             // Note: specifier is now a bare specifier.
             // Set resolved the result of PACKAGE_RESOLVE(specifier, parentURL).
@@ -208,17 +205,18 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
         if self.options.roots.is_empty() {
             let cached_path = self.cache.value(Path::new("/"));
-            return self.load_package_self_or_node_modules(&cached_path, specifier, ctx);
-        }
-        for root in &self.options.roots {
-            let cached_path = self.cache.value(root);
-            if let Ok(path) =
-                self.require_relative(&cached_path, specifier.trim_start_matches('/'), ctx)
-            {
-                return Ok(path);
+            self.load_package_self_or_node_modules(&cached_path, specifier, ctx)
+        } else {
+            for root in &self.options.roots {
+                let cached_path = self.cache.value(root);
+                if let Ok(path) =
+                    self.require_relative(&cached_path, specifier.trim_start_matches('/'), ctx)
+                {
+                    return Ok(path);
+                }
             }
+            Err(ResolveError::NotFound(cached_path.to_path_buf()))
         }
-        Err(ResolveError::NotFound(cached_path.to_path_buf()))
     }
 
     // 3. If X begins with './' or '/' or '../'
@@ -252,11 +250,11 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         specifier: &str,
         ctx: &ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
-        let cached_path = self.cache.dirname(cached_path);
-        if let Some(path) = self.load_package_imports(&cached_path, specifier, ctx)? {
+        // a. LOAD_PACKAGE_IMPORTS(X, dirname(Y))
+        if let Some(path) = self.load_package_imports(cached_path, specifier, ctx)? {
             return Ok(path);
         }
-        self.load_package_self_or_node_modules(&cached_path, specifier, ctx)
+        self.load_package_self_or_node_modules(cached_path, specifier, ctx)
     }
 
     fn require_bare(
@@ -283,13 +281,12 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         if subpath.is_empty() {
             ctx.with_fully_specified(false);
         }
-        let dirname = self.cache.dirname(cached_path);
         // 5. LOAD_PACKAGE_SELF(X, dirname(Y))
-        if let Some(path) = self.load_package_self(&dirname, specifier, ctx)? {
+        if let Some(path) = self.load_package_self(cached_path, specifier, ctx)? {
             return Ok(path);
         }
         // 6. LOAD_NODE_MODULES(X, dirname(Y))
-        if let Some(path) = self.load_node_modules(&dirname, specifier, ctx)? {
+        if let Some(path) = self.load_node_modules(cached_path, specifier, ctx)? {
             return Ok(path);
         }
         // 7. THROW "not found"
@@ -593,11 +590,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             return Ok(Some(path));
         }
         // 1. let RESOLVED_PATH = fileURLToPath(MATCH)
-        // 2. If the file at RESOLVED_PATH exists, load RESOLVED_PATH as its extension
+        // 2. If the file at RESOLVED_PATH exists, load RESOLVED_PATH as its extension format. STOP
         if let Some(path) = self.load_as_file(cached_path, ctx)? {
             return Ok(Some(path));
         }
-        // format. STOP
         // 3. THROW "not found"
         Err(ResolveError::NotFound(cached_path.to_path_buf()))
     }
@@ -696,11 +692,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ctx: &ResolveContext,
     ) -> ResolveState {
         let (name, subpath) = Self::parse_package_specifier(specifier);
-        // 9. Let selfUrl be the result of PACKAGE_SELF_RESOLVE(packageName, packageSubpath, parentURL).
-        if let Some(path) = self.package_self_resolve(name, subpath, cached_path, ctx)? {
-            // 10. If selfUrl is not undefined, return selfUrl.
-            return Ok(Some(path));
-        }
         // 11. While parentURL is not the file system root,
         let mut parent_url = cached_path.path().to_path_buf();
         loop {
@@ -752,41 +743,6 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
 
         Err(ResolveError::NotFound(cached_path.to_path_buf()))
-    }
-
-    fn package_self_resolve(
-        &self,
-        package_name: &str,
-        package_subpath: &str,
-        parent_url: &CachedPath,
-        ctx: &ResolveContext,
-    ) -> ResolveState {
-        let Some(package_json) = parent_url.find_package_json(&self.cache.fs)? else {
-            return Ok(None);
-        };
-        if package_json.exports.is_none() {
-            // enhanced-resolve: try browser field
-            return self.load_browser_field(
-                parent_url.path(),
-                Some(package_subpath),
-                &package_json,
-                ctx,
-            );
-        }
-        if package_json
-            .name
-            .as_ref()
-            .is_some_and(|package_json_name| package_json_name == package_name)
-        {
-            return self.package_exports_resolve(
-                package_json.directory(),
-                package_subpath,
-                &package_json.exports,
-                &self.options.condition_names,
-                ctx,
-            );
-        }
-        Ok(None)
     }
 
     /// PACKAGE_EXPORTS_RESOLVE(packageURL, subpath, exports, conditions)
