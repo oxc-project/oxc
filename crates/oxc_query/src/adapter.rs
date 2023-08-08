@@ -23,7 +23,7 @@ pub struct Adapter<'a> {
     pub path_components: Vec<Option<String>>,
 }
 
-const SCHEMA_TEXT: &str = include_str!("./schema.graphql");
+pub const SCHEMA_TEXT: &str = include_str!("./schema.graphql");
 
 /// Returns the schema from a OnceLock
 ///
