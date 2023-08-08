@@ -34,9 +34,15 @@ dependencies:
   '@replit/codemirror-vscode-keymap':
     specifier: ^6.0.2
     version: 6.0.2(@codemirror/autocomplete@6.9.0)(@codemirror/commands@6.2.4)(@codemirror/language@6.7.0)(@codemirror/lint@6.2.1)(@codemirror/search@6.5.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)
+  cm6-graphql:
+    specifier: ^0.0.9
+    version: 0.0.9(@codemirror/autocomplete@6.9.0)(@codemirror/language@6.7.0)(@codemirror/lint@6.2.1)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/highlight@1.1.6)(graphql@16.7.1)
   codemirror:
     specifier: ^6.0.1
     version: 6.0.1(@lezer/common@1.0.2)
+  graphql:
+    specifier: ^16.7.1
+    version: 16.7.1
   lodash.throttle:
     specifier: ^4.1.1
     version: 4.1.1
@@ -480,6 +486,27 @@ packages:
       wrap-ansi: 7.0.0
     dev: true
 
+  /cm6-graphql@0.0.9(@codemirror/autocomplete@6.9.0)(@codemirror/language@6.7.0)(@codemirror/lint@6.2.1)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/highlight@1.1.6)(graphql@16.7.1):
+    resolution: {integrity: sha512-MhdQMuVGwnyEk3I1BiLhpMEhOC7sTxmbq205cjdDtHysB0EtNLBoccy+7+h/+So90otjwJcSaty6vwp22WN6kw==}
+    peerDependencies:
+      '@codemirror/autocomplete': ^6.0.0
+      '@codemirror/language': ^6.0.0
+      '@codemirror/lint': ^6.0.0
+      '@codemirror/state': ^6.1.0
+      '@codemirror/view': ^6.1.2
+      '@lezer/highlight': ^1.0.0
+      graphql: ^16.5.0
+    dependencies:
+      '@codemirror/autocomplete': 6.9.0(@codemirror/language@6.7.0)(@codemirror/state@6.2.1)(@codemirror/view@6.12.0)(@lezer/common@1.0.2)
+      '@codemirror/language': 6.7.0
+      '@codemirror/lint': 6.2.1
+      '@codemirror/state': 6.2.1
+      '@codemirror/view': 6.12.0
+      '@lezer/highlight': 1.1.6
+      graphql: 16.7.1
+      graphql-language-service: 5.1.7(graphql@16.7.1)
+    dev: false
+
   /codemirror@6.0.1(@lezer/common@1.0.2):
     resolution: {integrity: sha512-J8j+nZ+CdWmIeFIGXEFbFPtpiYacFMDR8GlHK3IyHQJMCaVRfGx9NT+Hxivv1ckLWPvNdZqndbr/7lVhrf/Svg==}
     dependencies:
@@ -620,6 +647,22 @@ packages:
       path-is-absolute: 1.0.1
     dev: true
 
+  /graphql-language-service@5.1.7(graphql@16.7.1):
+    resolution: {integrity: sha512-xkawYMJeoNYGhT+SpSH3c2qf6HpGHQ/duDmrseVHBpVCrXAiGnliXGSCC4jyMGgZQ05GytsZ12p0nUo7s6lSSw==}
+    hasBin: true
+    peerDependencies:
+      graphql: ^15.5.0 || ^16.0.0
+    dependencies:
+      graphql: 16.7.1
+      nullthrows: 1.1.1
+      vscode-languageserver-types: 3.17.3
+    dev: false
+
+  /graphql@16.7.1:
+    resolution: {integrity: sha512-DRYR9tf+UGU0KOsMcKAlXeFfX89UiiIZ0dRU3mR0yJfu6OjZqUcp68NnFLnqQU5RexygFoDy1EW+ccOYcPfmHg==}
+    engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
+    dev: false
+
   /has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
@@ -686,6 +729,10 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
     dev: true
+
+  /nullthrows@1.1.1:
+    resolution: {integrity: sha512-2vPPEi+Z7WqML2jZYddDIfy5Dqb0r2fze2zTxNNknZaFpVHU3mFB3R+DWeJWGVx0ecvttSGlJTI+WG+8Z4cDWw==}
+    dev: false
 
   /once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
@@ -840,6 +887,10 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
     dev: true
+
+  /vscode-languageserver-types@3.17.3:
+    resolution: {integrity: sha512-SYU4z1dL0PyIMd4Vj8YOqFvHu7Hz/enbWtpfnVbJHU4Nd1YNYx8u0ennumc6h48GQNeOLxmwySmnADouT/AuZA==}
+    dev: false
 
   /w3c-keyname@2.2.7:
     resolution: {integrity: sha512-XB8aa62d4rrVfoZYQaYNy3fy+z4nrfy2ooea3/0BnBzXW0tSdZ+lRgjzBZhk0La0H6h8fVyYCxx/qkQcAIuvfg==}

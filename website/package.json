@@ -21,7 +21,9 @@
     "@codemirror/view": "^6.12.0",
     "@ddietr/codemirror-themes": "^1.4.1",
     "@replit/codemirror-vscode-keymap": "^6.0.2",
+    "cm6-graphql": "^0.0.9",
     "codemirror": "^6.0.1",
+    "graphql": "^16.7.1",
     "lodash.throttle": "^4.1.1"
   },
   "devDependencies": {

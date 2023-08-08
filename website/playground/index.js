@@ -11,6 +11,7 @@ import {
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { rust, rustLanguage } from "@codemirror/lang-rust";
 import { json, jsonLanguage } from "@codemirror/lang-json";
+import { graphql, graphqlLanguage } from "cm6-graphql";
 import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
 import { linter, lintGutter } from "@codemirror/lint";
@@ -18,6 +19,7 @@ import { language, syntaxTree } from "@codemirror/language";
 import { autocompletion } from "@codemirror/autocomplete";
 import { indentWithTab, deleteLine } from "@codemirror/commands";
 import throttle from "lodash.throttle";
+import { buildSchema } from "graphql";
 
 import initWasm, {
   Oxc,
@@ -27,6 +29,7 @@ import initWasm, {
   OxcMinifierOptions,
   OxcFormatterOptions,
   OxcTypeCheckingOptions,
+  graphql_schema_text,
 } from "@oxc/wasm-web";
 
 const placeholderText = `
@@ -266,6 +269,8 @@ class Playground {
 
     document.getElementById("mangle").style.visibility = "hidden";
     document.getElementById("ir-copy").style.display = "none";
+    document.getElementById("runquery").style.display = "none";
+    document.getElementById("duration").style.display = "inline";
     this.runOptions.format = false;
     this.runOptions.hir = false;
     this.runOptions.minify = false;
@@ -298,12 +303,33 @@ class Playground {
         this.run();
         text = this.oxc.minifiedText;
         break;
+      case "query":
+        document.getElementById("runquery").style.display = "inline";
+        document.getElementById("duration").style.display = "none";
+        text = `
+query {
+  File {
+    import {
+      from_path @output
+
+      specific_import @fold {
+        original_name @output
+      }
+
+      default_import @fold {
+        local_name @output
+      }
+    }
+  }
+}`.trim();
+        break;
     }
 
     this.updateEditorText(this.viewer, text);
   }
 
   updateEditorText(instance, text) {
+    console.log("updating text");
     const transaction = instance.state.update({
       changes: { from: 0, to: instance.state.doc.length, insert: text },
     });
@@ -512,6 +538,10 @@ async function main() {
 
   document.getElementById("minify").onclick = function () {
     playground.updateView("minify");
+  };
+
+  document.getElementById("query").onclick = () => {
+    playground.updateView("query");
   };
 
   document.getElementById("syntax").onchange = function () {
