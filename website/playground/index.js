@@ -54,18 +54,19 @@ export default DummyComponent
 `.trim();
 
 const STORAGE_KEY_CODE = "playground.code";
+const STORAGE_KEY_QUERY = "playground.query";
 
-const getCodeFromStorage = () => {
+const getStringFromStorage = (whatToGet) => {
   try {
-    return localStorage.getItem(STORAGE_KEY_CODE);
+    return localStorage.getItem(whatToGet);
   } catch (_e) {
     return "";
   }
 };
 
-const setCodeToStorage = (code) => {
+const setStringToStorage = (whatToSet, value) => {
   try {
-    localStorage.setItem(STORAGE_KEY_CODE, code);
+    localStorage.setItem(whatToSet, value);
   } catch (_e) {
     return;
   }
@@ -170,22 +171,30 @@ class Playground {
       extensions: [
         linter(
           () => {
-            this.queryResultsViewer.dispatch(
-              this.queryResultsViewer.state.update({
+            if (this.currentLanguage() === "graphql") {
+              let queryResults = this.oxc.run_query(
+                this.parserOptions,
+                this.viewer.state.doc.toString()
+              );
+
+              let stateUpdate = this.queryResultsViewer.state.update({
                 changes: {
                   from: 0,
                   to: this.queryResultsViewer.state.doc.length,
-                  insert: JSON.stringify(
-                    this.oxc.run_query(
-                      this.parserOptions,
-                      this.viewer.state.doc.toString()
-                    ),
-                    null,
-                    2
-                  ),
+                  insert: JSON.stringify(queryResults, null, 2),
                 },
-              })
-            );
+              });
+
+              this.queryResultsViewer.dispatch(stateUpdate);
+            }
+          },
+          { delay: 0 }
+        ),
+        linter(
+          (data) => {
+            if (this.currentLanguage() === "graphql") {
+              setStringToStorage(STORAGE_KEY_QUERY, data.state.doc.toString());
+            }
           },
           { delay: 0 }
         ),
@@ -352,7 +361,8 @@ class Playground {
         document.getElementById("query-results-viewer").style.display =
           "inline";
         document.getElementById("duration").style.display = "none";
-        if (!this.viewer.state.doc.toString().startsWith("query {")) {
+        let savedQuery = getStringFromStorage(STORAGE_KEY_QUERY);
+        if (!savedQuery) {
           text = `
 query {
   File {
@@ -370,7 +380,7 @@ query {
   }
 }`.trim();
         } else {
-          return; // return early to avoid this.updateEditorText() call
+          text = savedQuery;
         }
         break;
     }
@@ -492,7 +502,7 @@ class URLParams {
     this.params = new URLSearchParams(window.location.search);
     this.code = this.params.has("code")
       ? this.decodeCode(this.params.get("code"))
-      : getCodeFromStorage();
+      : getStringFromStorage(STORAGE_KEY_CODE);
   }
 
   updateCode = throttle(
@@ -503,7 +513,7 @@ class URLParams {
         window.location.pathname
       }?${this.params.toString()}`;
       window.history.replaceState({ path: url }, "", url);
-      setCodeToStorage(code);
+      setStringToStorage(STORAGE_KEY_CODE, code);
     },
     URLParams.URL_UPDATE_THROTTLE,
     { trailing: true }
