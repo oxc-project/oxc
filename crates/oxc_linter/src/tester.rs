@@ -95,7 +95,7 @@ impl Tester {
     fn snapshot(&self) {
         let mut name = self.rule_name.replace('-', "_");
         if &self.extension == "d.ts" {
-            name.push_str(&"__declarations");
+            name.push_str("__declarations");
         }
         insta::with_settings!({ prepend_module_to_snapshot => false, }, {
             insta::assert_snapshot!(name.clone(), self.snapshot, &name);

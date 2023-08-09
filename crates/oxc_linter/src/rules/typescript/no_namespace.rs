@@ -92,6 +92,7 @@ fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 
