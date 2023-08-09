@@ -4,9 +4,7 @@
 
 use serde_json::json;
 
-use crate::{
-    MatchObject, PathUtil, Resolution, ResolveContext, ResolveError, ResolveOptions, Resolver,
-};
+use crate::{MatchObject, PathUtil, ResolveContext, ResolveError, ResolveOptions, Resolver};
 use std::path::Path;
 
 #[test]
@@ -32,7 +30,7 @@ fn test() {
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 

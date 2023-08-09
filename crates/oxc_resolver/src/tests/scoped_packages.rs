@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::{Resolution, ResolveOptions, Resolver};
+use crate::{ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("scoped")
@@ -25,7 +25,7 @@ fn scoped_packages() {
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&f, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }

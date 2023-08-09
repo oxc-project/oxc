@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::{Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("browser-module")
@@ -59,7 +59,7 @@ fn replace_file() {
     ];
 
     for (comment, path, request, expected) in data {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }

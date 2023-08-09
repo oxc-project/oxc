@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::{AliasValue, Resolution, ResolveError, ResolveOptions, Resolver, ResolverGeneric};
+use crate::{AliasValue, ResolveError, ResolveOptions, Resolver, ResolverGeneric};
 
 use super::memory_fs::MemoryFS;
 
@@ -91,7 +91,7 @@ fn alias() {
     ];
 
     for (comment, request, expected) in pass {
-        let resolved_path = resolver.resolve(f, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(f, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(PathBuf::from(expected)), "{comment} {request}");
     }
 

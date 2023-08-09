@@ -2,7 +2,7 @@
 
 use std::{env, path::PathBuf};
 
-use crate::{AliasValue, Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{AliasValue, ResolveError, ResolveOptions, Resolver};
 
 fn dirname() -> PathBuf {
     env::current_dir().unwrap().join("tests/enhanced_resolve/test")
@@ -29,7 +29,7 @@ fn roots() {
     ];
 
     for (comment, request, expected) in pass {
-        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&f, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {request}");
     }
 
@@ -52,7 +52,7 @@ fn resolve_to_context() {
         resolve_to_context: true,
         ..ResolveOptions::default()
     });
-    let resolved_path = resolver.resolve(&f, "/fixtures/lib").map(Resolution::full_path);
+    let resolved_path = resolver.resolve(&f, "/fixtures/lib").map(|r| r.full_path());
     let expected = f.join("lib");
     assert_eq!(resolved_path, Ok(expected));
 }
@@ -75,7 +75,7 @@ fn prefer_absolute() {
     ];
 
     for (comment, request, expected) in pass {
-        let resolved_path = resolver.resolve(&f, &request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&f, &request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {request}");
     }
 }

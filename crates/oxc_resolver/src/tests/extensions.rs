@@ -27,7 +27,7 @@ fn extensions() {
     ];
 
     for (comment, request, expected_path) in pass {
-        let resolved_path = resolver.resolve(&f, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&f, request).map(|r| r.full_path());
         let expected = f.join(expected_path);
         assert_eq!(resolved_path, Ok(expected), "{comment} {request} {expected_path}");
     }

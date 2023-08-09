@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::{Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("extension-alias")
@@ -31,7 +31,7 @@ fn extension_alias() {
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 
@@ -65,7 +65,7 @@ fn not_apply_to_extension_nor_main_files() {
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         let expected = f.join(expected);
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
