@@ -73,3 +73,25 @@ fn respect_enforce_extension() {
     assert_eq!(resolved.map(Resolution::into_path_buf), Ok(f.join("foo.ts")));
     // TODO: need to match missingDependencies returned from the resolve function
 }
+
+// Test for `.d.ts`, not part of enhanced-resolve.
+#[test]
+fn multi_dot_extension() {
+    let f = fixture();
+
+    let resolver = Resolver::new(ResolveOptions {
+        extensions: vec![".a.b.c".into(), ".d.ts".into(), ".ts".into(), ".js".into()],
+        ..ResolveOptions::default()
+    });
+
+    #[rustfmt::skip]
+    let pass = [
+        ("should resolve according to order of provided extensions", "./foo", "foo.ts"),
+    ];
+
+    for (comment, request, expected_path) in pass {
+        let resolved_path = resolver.resolve(&f, request).map(|r| r.full_path());
+        let expected = f.join(expected_path);
+        assert_eq!(resolved_path, Ok(expected), "{comment} {request} {expected_path}");
+    }
+}
