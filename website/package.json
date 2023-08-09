@@ -36,5 +36,10 @@
     "node": ">=16.13.0",
     "pnpm": ">=8.0.0"
   },
-  "packageManager": "pnpm@8.2.0"
+  "packageManager": "pnpm@8.2.0",
+  "pnpm": {
+    "patchedDependencies": {
+      "graphql-language-service@5.1.7": "patches/graphql-language-service@5.1.7.patch"
+    }
+  }
 }

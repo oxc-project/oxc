@@ -1,5 +1,10 @@
 lockfileVersion: '6.0'
 
+patchedDependencies:
+  graphql-language-service@5.1.7:
+    hash: h2xno3hujejjy6aavgwfbw75je
+    path: patches/graphql-language-service@5.1.7.patch
+
 dependencies:
   '@codemirror/autocomplete':
     specifier: ^6.9.0
@@ -504,7 +509,7 @@ packages:
       '@codemirror/view': 6.12.0
       '@lezer/highlight': 1.1.6
       graphql: 16.7.1
-      graphql-language-service: 5.1.7(graphql@16.7.1)
+      graphql-language-service: 5.1.7(patch_hash=h2xno3hujejjy6aavgwfbw75je)(graphql@16.7.1)
     dev: false
 
   /codemirror@6.0.1(@lezer/common@1.0.2):
@@ -647,7 +652,7 @@ packages:
       path-is-absolute: 1.0.1
     dev: true
 
-  /graphql-language-service@5.1.7(graphql@16.7.1):
+  /graphql-language-service@5.1.7(patch_hash=h2xno3hujejjy6aavgwfbw75je)(graphql@16.7.1):
     resolution: {integrity: sha512-xkawYMJeoNYGhT+SpSH3c2qf6HpGHQ/duDmrseVHBpVCrXAiGnliXGSCC4jyMGgZQ05GytsZ12p0nUo7s6lSSw==}
     hasBin: true
     peerDependencies:
@@ -657,6 +662,7 @@ packages:
       nullthrows: 1.1.1
       vscode-languageserver-types: 3.17.3
     dev: false
+    patched: true
 
   /graphql@16.7.1:
     resolution: {integrity: sha512-DRYR9tf+UGU0KOsMcKAlXeFfX89UiiIZ0dRU3mR0yJfu6OjZqUcp68NnFLnqQU5RexygFoDy1EW+ccOYcPfmHg==}
