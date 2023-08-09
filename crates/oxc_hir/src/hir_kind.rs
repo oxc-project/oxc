@@ -9,7 +9,7 @@ pub enum HirKind<'a> {
     Root,
 
     Program(&'a Program<'a>),
-    Directive(&'a Directive<'a>),
+    Directive(&'a Directive),
 
     BlockStatement(&'a BlockStatement<'a>),
     BreakStatement(&'a BreakStatement),

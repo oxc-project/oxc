@@ -271,7 +271,7 @@ pub trait Visit<'a>: Sized {
         self.leave_node(kind);
     }
 
-    fn visit_directive(&mut self, directive: &'a Directive<'a>) {
+    fn visit_directive(&mut self, directive: &'a Directive) {
         let kind = AstKind::Directive(directive);
         self.enter_node(kind);
         self.visit_string_literal(&directive.expression);
