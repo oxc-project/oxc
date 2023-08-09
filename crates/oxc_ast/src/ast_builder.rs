@@ -59,7 +59,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         source_type: SourceType,
         directives: Vec<'a, Directive>,
-        hashbang: Option<Hashbang<'a>>,
+        hashbang: Option<Hashbang>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
         Program { span, source_type, directives, hashbang, body }
@@ -113,12 +113,12 @@ impl<'a> AstBuilder<'a> {
         &self,
         span: Span,
         expression: StringLiteral,
-        directive: &'a str,
-    ) -> Directive<'a> {
+        directive: Atom,
+    ) -> Directive {
         Directive { span, expression, directive }
     }
 
-    pub fn hashbang(&self, span: Span, value: &'a str) -> Hashbang<'a> {
+    pub fn hashbang(&self, span: Span, value: Atom) -> Hashbang {
         Hashbang { span, value }
     }
 

@@ -17,8 +17,8 @@ pub struct Program<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub source_type: SourceType,
-    pub directives: Vec<'a, Directive<'a>>,
-    pub hashbang: Option<Hashbang<'a>>,
+    pub directives: Vec<'a, Directive>,
+    pub hashbang: Option<Hashbang>,
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -918,21 +918,21 @@ pub enum Statement<'a> {
 /// Directive Prologue
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct Directive<'a> {
+pub struct Directive {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub expression: StringLiteral,
     // directives should always use the unescaped raw string
-    pub directive: &'a str,
+    pub directive: Atom,
 }
 
 /// Hashbang
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize), serde(tag = "type"))]
-pub struct Hashbang<'a> {
+pub struct Hashbang {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub value: &'a str,
+    pub value: Atom,
 }
 
 /// Block Statement
@@ -1447,7 +1447,7 @@ impl<'a> FormalParameters<'a> {
 pub struct FunctionBody<'a> {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
-    pub directives: Vec<'a, Directive<'a>>,
+    pub directives: Vec<'a, Directive>,
     pub statements: Vec<'a, Statement<'a>>,
 }
 

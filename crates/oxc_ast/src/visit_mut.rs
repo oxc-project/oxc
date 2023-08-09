@@ -193,7 +193,7 @@ pub trait VisitMut<'a, 'b>: Sized {
         self.visit_statement(&mut stmt.body);
     }
 
-    fn visit_directive(&mut self, directive: &'b mut Directive<'a>) {
+    fn visit_directive(&mut self, directive: &'b mut Directive) {
         self.visit_string_literal(&mut directive.expression);
     }
 

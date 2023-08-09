@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::{Span, Atom};
 
 use super::{
     declaration::{VariableDeclarationContext, VariableDeclarationParent},
@@ -14,13 +14,13 @@ impl<'a> Parser<'a> {
     // Section 12
     // The InputElementHashbangOrRegExp goal is used at the start of a Script
     // or Module.
-    pub(crate) fn parse_hashbang(&mut self) -> Option<Hashbang<'a>> {
+    pub(crate) fn parse_hashbang(&mut self) -> Option<Hashbang> {
         if self.cur_kind() == Kind::HashbangComment {
             let span = self.start_span();
             self.bump_any();
             let span = self.end_span(span);
             let src = &self.source_text[span.start as usize + 2..span.end as usize];
-            Some(self.ast.hashbang(span, src))
+            Some(self.ast.hashbang(span, Atom::new_inline(src)))
         } else {
             None
         }
@@ -33,7 +33,7 @@ impl<'a> Parser<'a> {
     pub(crate) fn parse_directives_and_statements(
         &mut self,
         is_top_level: bool,
-    ) -> Result<(Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>)> {
+    ) -> Result<(Vec<'a, Directive>, Vec<'a, Statement<'a>>)> {
         let mut directives = self.ast.new_vec();
         let mut statements = self.ast.new_vec();
 
@@ -65,7 +65,7 @@ impl<'a> Parser<'a> {
                                 let src = &self.source_text
                                     [string.span.start as usize + 1..string.span.end as usize - 1];
                                 let directive =
-                                    self.ast.directive(expr.span, (*string).clone(), src);
+                                    self.ast.directive(expr.span, (*string).clone(), Atom::new_inline(src));
                                 directives.push(directive);
                                 continue;
                             }
