@@ -82,6 +82,7 @@ class Playground {
 
   editor;
   viewer;
+  queryResultsViewer;
   currentView = "ast"; // "ast" | "hir" | "format" | "minify" | "ir"
   languageConf;
   urlParams;
@@ -93,6 +94,7 @@ class Playground {
     this.viewerIsEditableConf = new Compartment();
     this.editor = this.initEditor();
     this.viewer = this.initViewer();
+    this.queryResultsViewer = this.initQueryResultsViewer();
   }
 
   initOxc() {
@@ -221,6 +223,13 @@ class Playground {
     });
   }
 
+  initQueryResultsViewer() {
+    return new EditorView({
+      extensions: [githubDark, EditorView.editable.of(false), json()],
+      parent: document.querySelector("#query-results-viewer"),
+    });
+  }
+
   run() {
     const start = new Date();
     this.oxc.run(
@@ -272,6 +281,7 @@ class Playground {
     document.getElementById("ir-copy").style.display = "none";
     document.getElementById("runquery").style.display = "none";
     document.getElementById("duration").style.display = "inline";
+    document.getElementById("query-results-viewer").style.display = "none";
     this.runOptions.format = false;
     this.runOptions.hir = false;
     this.runOptions.minify = false;
@@ -306,8 +316,11 @@ class Playground {
         break;
       case "query":
         document.getElementById("runquery").style.display = "inline";
+        document.getElementById("query-results-viewer").style.display =
+          "inline";
         document.getElementById("duration").style.display = "none";
-        text = `
+        if (!this.viewer.state.doc.toString().startsWith("query {")) {
+          text = `
 query {
   File {
     import {
@@ -323,6 +336,9 @@ query {
     }
   }
 }`.trim();
+        } else {
+          return; // return early to avoid this.updateEditorText() call
+        }
         break;
     }
 
@@ -542,6 +558,25 @@ async function main() {
 
   document.getElementById("query").onclick = () => {
     playground.updateView("query");
+  };
+
+  document.getElementById("runquery").onclick = () => {
+    playground.queryResultsViewer.dispatch(
+      playground.queryResultsViewer.state.update({
+        changes: {
+          from: 0,
+          to: playground.queryResultsViewer.state.doc.length,
+          insert: JSON.stringify(
+            playground.oxc.run_query(
+              playground.parserOptions,
+              playground.viewer.state.doc.toString()
+            ),
+            null,
+            2
+          ),
+        },
+      })
+    );
   };
 
   document.getElementById("syntax").onchange = function () {
