@@ -234,7 +234,12 @@ class Playground {
 
   initQueryResultsViewer() {
     return new EditorView({
-      extensions: [githubDark, EditorView.editable.of(false), json()],
+      extensions: [
+        githubDark,
+        EditorView.editable.of(false),
+        json(),
+        basicSetup,
+      ],
       parent: document.querySelector("#query-results-viewer"),
     });
   }
