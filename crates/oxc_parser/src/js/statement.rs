@@ -20,7 +20,7 @@ impl<'a> Parser<'a> {
             self.bump_any();
             let span = self.end_span(span);
             let src = &self.source_text[span.start as usize + 2..span.end as usize];
-            Some(self.ast.hashbang(span, Atom::new_inline(src)))
+            Some(self.ast.hashbang(span, Atom::from(src)))
         } else {
             None
         }
@@ -65,7 +65,7 @@ impl<'a> Parser<'a> {
                                 let src = &self.source_text
                                     [string.span.start as usize + 1..string.span.end as usize - 1];
                                 let directive =
-                                    self.ast.directive(expr.span, (*string).clone(), Atom::new_inline(src));
+                                    self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
                                 directives.push(directive);
                                 continue;
                             }
