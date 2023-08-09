@@ -168,6 +168,15 @@ class Playground {
   initViewer() {
     return new EditorView({
       extensions: [
+        basicSetup,
+        keymap.of([
+          ...vscodeKeymap,
+          indentWithTab,
+          {
+            key: "Delete",
+            shift: deleteLine,
+          },
+        ]),
         githubDark,
         EditorState.transactionExtender.of((tr) => {
           if (!tr.docChanged) return null;
