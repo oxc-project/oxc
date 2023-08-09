@@ -83,6 +83,8 @@ indexmap          = { version = "2.0.0" }
 index_vec         = { version = "0.1.3" }
 static_assertions = { version = "1.1.0" }
 stacker           = { version = "0.1.15" }
+trustfall         = { version = "0.6.0" }
+
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
