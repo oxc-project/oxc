@@ -261,7 +261,6 @@ impl Display for RuleKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::ESLint => write!(f, "eslint"),
-            // TODO: trim new lines
             Self::Typescript => write!(f, "typescript-eslint"),
             Self::Jest => write!(f, "eslint-plugin-jest"),
         }
