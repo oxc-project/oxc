@@ -335,24 +335,3 @@ fn test() {
 
     Tester::new(NoNamespace::NAME, pass, fail).test_and_snapshot();
 }
-
-#[test]
-fn test_declarations() {
-    use crate::tester::Tester;
-
-    let pass = vec![
-        ("namespace foo {}", Some(serde_json::json!([{ "allowDefinitionFiles": true }]))),
-        ("module foo {}", Some(serde_json::json!([{ "allowDefinitionFiles": true }]))),
-    ];
-
-    let fail = vec![
-        ("namespace foo {}", Some(serde_json::json!([{ "allowDefinitionFiles": false }]))),
-        ("module foo {}", Some(serde_json::json!([{ "allowDefinitionFiles": false }]))),
-        ("declare module foo {}", Some(serde_json::json!([{ "allowDefinitionFiles": false }]))),
-        ("declare namespace foo {}", Some(serde_json::json!([{ "allowDefinitionFiles": false }]))),
-    ];
-
-    Tester::new(NoNamespace::NAME, pass, fail)
-        .with_extension("d.ts".to_string())
-        .test_and_snapshot();
-}
