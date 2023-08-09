@@ -1,9 +1,10 @@
+use once_cell::sync::OnceCell as OnceLock;
 use std::{
     convert::AsRef,
     hash::{Hash, Hasher},
     ops::Deref,
     path::{Path, PathBuf},
-    sync::{Arc, OnceLock},
+    sync::Arc,
 };
 
 use dashmap::DashMap;
@@ -68,7 +69,7 @@ pub struct CachedPathImpl {
     parent: Option<CachedPath>,
     meta: OnceLock<Option<FileMetadata>>,
     symlink: OnceLock<Option<PathBuf>>,
-    package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
+    package_json: OnceLock<Option<Arc<PackageJson>>>,
 }
 
 impl CachedPathImpl {
@@ -124,7 +125,7 @@ impl CachedPathImpl {
         }
         let mut cache_value = Some(cache_value);
         while let Some(cv) = cache_value {
-            if let Some(package_json) = cv.package_json(fs).transpose()? {
+            if let Some(package_json) = cv.package_json(fs)? {
                 return Ok(Some(Arc::clone(&package_json)));
             }
             cache_value = cv.parent.as_deref();
@@ -140,19 +141,19 @@ impl CachedPathImpl {
     pub fn package_json<Fs: FileSystem>(
         &self,
         fs: &Fs,
-    ) -> Option<Result<Arc<PackageJson>, ResolveError>> {
-        // Change to `get_or_try_init` once it is stable
+    ) -> Result<Option<Arc<PackageJson>>, ResolveError> {
+        // Change to `std::sync::OnceLock::get_or_try_init` when it is stable.
         self.package_json
-            .get_or_init(|| {
+            .get_or_try_init(|| {
                 let package_json_path = self.path.join("package.json");
-                fs.read_to_string(&package_json_path).ok().map(|package_json_string| {
-                    PackageJson::parse(package_json_path.clone(), &package_json_string)
-                        .map(Arc::new)
-                        .map_err(|error| {
-                            ResolveError::from_serde_json_error(package_json_path, &error)
-                        })
-                })
+                let Ok(package_json_string) = fs.read_to_string(&package_json_path) else {
+                    return Ok(None)
+                };
+                PackageJson::parse(package_json_path.clone(), &package_json_string)
+                    .map(Arc::new)
+                    .map(Some)
+                    .map_err(|error| ResolveError::from_serde_json_error(package_json_path, &error))
             })
-            .clone()
+            .cloned()
     }
 }

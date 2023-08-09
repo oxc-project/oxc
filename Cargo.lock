@@ -1756,6 +1756,7 @@ dependencies = [
  "jemallocator",
  "mimalloc",
  "nodejs-resolver",
+ "once_cell",
  "rayon",
  "rustc-hash",
  "serde",

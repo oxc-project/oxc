@@ -435,7 +435,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 1. If X/package.json is a file,
         if !self.options.description_files.is_empty() {
             // a. Parse X/package.json, and look for "main" field.
-            if let Some(package_json) = cached_path.package_json(&self.cache.fs).transpose()? {
+            if let Some(package_json) = cached_path.package_json(&self.cache.fs)? {
                 // b. If "main" is a falsy value, GOTO 2.
                 if let Some(main_field) = &package_json.main {
                     // c. let M = X + (json main field)
@@ -512,7 +512,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         //    return.
         let (name, subpath) = Self::parse_package_specifier(specifier);
         let cached_path = self.cache.value(&path.join(name));
-        let Some(package_json) = cached_path.package_json(&self.cache.fs).transpose()? else {
+        let Some(package_json) = cached_path.package_json(&self.cache.fs)? else {
             return Ok(None);
         };
         // 3. Parse DIR/NAME/package.json, and look for "exports" field.
@@ -705,9 +705,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 //   1. Continue the next loop iteration.
                 if cached_path.is_dir(&self.cache.fs) {
                     // 4. Let pjson be the result of READ_PACKAGE_JSON(packageURL).
-                    if let Some(package_json) =
-                        cached_path.package_json(&self.cache.fs).transpose()?
-                    {
+                    if let Some(package_json) = cached_path.package_json(&self.cache.fs)? {
                         // 5. If pjson is not null and pjson.exports is not null or undefined, then
                         if !package_json.exports.is_none() {
                             // 1. Return the result of PACKAGE_EXPORTS_RESOLVE(packageURL, packageSubpath, pjson.exports, defaultConditions).
