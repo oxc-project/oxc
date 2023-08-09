@@ -1,14 +1,13 @@
 use once_cell::sync::OnceCell as OnceLock;
 use std::{
     convert::AsRef,
-    hash::{Hash, Hasher},
+    hash::{BuildHasherDefault, Hash, Hasher},
     ops::Deref,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use dashmap::DashMap;
-use identity_hash::BuildIdentityHasher;
 use rustc_hash::FxHasher;
 
 use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
@@ -16,7 +15,22 @@ use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
     // Using IdentityHasher to avoid double hashing in the `get` + `insert` case.
-    cache: DashMap<u64, CachedPath, BuildIdentityHasher<u64>>,
+    cache: DashMap<u64, CachedPath, BuildHasherDefault<IdentityHasher>>,
+}
+
+#[derive(Default)]
+struct IdentityHasher(u64);
+
+impl Hasher for IdentityHasher {
+    fn write(&mut self, _: &[u8]) {
+        panic!("Invalid use of IdentityHasher")
+    }
+    fn write_u64(&mut self, n: u64) {
+        self.0 = n;
+    }
+    fn finish(&self) -> u64 {
+        self.0
+    }
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
