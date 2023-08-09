@@ -126,9 +126,7 @@ impl<'a> SemanticBuilder<'a> {
 
     pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
         // First AST pass
-        if !self.source_type.is_typescript_definition() {
-            self.visit_program(program);
-        }
+        self.visit_program(program);
 
         // Second partial AST pass on top level import / export statements
         let module_record = if self.with_module_record_builder {

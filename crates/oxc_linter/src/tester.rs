@@ -14,6 +14,7 @@ pub struct Tester {
     expect_pass: Vec<(String, Option<Value>)>,
     expect_fail: Vec<(String, Option<Value>)>,
     snapshot: String,
+    extension: String,
 }
 
 impl Tester {
@@ -24,7 +25,13 @@ impl Tester {
     ) -> Self {
         let expect_pass = expect_pass.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(|(s, r)| (s.into(), r)).collect::<Vec<_>>();
-        Self { rule_name, expect_pass, expect_fail, snapshot: String::new() }
+        Self {
+            rule_name,
+            expect_pass,
+            expect_fail,
+            snapshot: String::new(),
+            extension: String::from("tsx"),
+        }
     }
 
     pub fn new_without_config<S: Into<String>>(
@@ -34,7 +41,18 @@ impl Tester {
     ) -> Self {
         let expect_pass = expect_pass.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(|s| (s.into(), None)).collect::<Vec<_>>();
-        Self { rule_name, expect_pass, expect_fail, snapshot: String::new() }
+        Self {
+            rule_name,
+            expect_pass,
+            expect_fail,
+            snapshot: String::new(),
+            extension: String::from("tsx"),
+        }
+    }
+
+    pub fn with_extension(&mut self, extension: String) -> &mut Self {
+        self.extension = extension;
+        self
     }
 
     pub fn test(&mut self) {
@@ -75,7 +93,10 @@ impl Tester {
     }
 
     fn snapshot(&self) {
-        let name = self.rule_name.replace('-', "_");
+        let mut name = self.rule_name.replace('-', "_");
+        if &self.extension == "d.ts" {
+            name.push_str(&"__declarations");
+        }
         insta::with_settings!({ prepend_module_to_snapshot => false, }, {
             insta::assert_snapshot!(name.clone(), self.snapshot, &name);
         });
@@ -83,15 +104,7 @@ impl Tester {
 
     fn run(&mut self, source_text: &str, config: Option<Value>) -> bool {
         let name = self.rule_name.replace('-', "_");
-        let c = config.clone();
-        let extension = c
-            .as_ref()
-            .and_then(|x| x.get(0))
-            .and_then(|x| x.get("extension"))
-            .and_then(|x| serde_json::Value::as_str(x))
-            .unwrap_or("tsx");
-        // println!("@@ TESTER {:?}", extension);
-        let path = PathBuf::from(name).with_extension(extension);
+        let path = PathBuf::from(name).with_extension(self.extension.clone());
         let allocator = Allocator::default();
         let result = self.run_rules(&allocator, &path, source_text, config, false);
         if result.is_empty() {

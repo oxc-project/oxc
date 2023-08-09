@@ -53,7 +53,11 @@ impl<'a> TestCase<'a> {
                 self.test_code.as_ref().map_or(Cow::Borrowed("None"), |option_code| {
                     Cow::Owned(format!("Some(serde_json::json!({option_code}))"))
                 });
-            Cow::Owned(format!(r#"({test_code:?}, {option_code})"#))
+            if test_code.contains('\n') {
+                Cow::Owned(format!(r#"("{}", {option_code})"#, test_code.replace('\n', "\n\t\t\t")))
+            } else {
+                Cow::Owned(format!(r#"({test_code:?}, {option_code})"#))
+            }
         })
     }
 
@@ -106,6 +110,9 @@ impl<'a> Visit<'a> for TestCase<'a> {
                                     continue;
                                 }
                                 tag_expr.quasi.quasi().map(|s| Cow::Borrowed(s.as_str()))
+                            }
+                            Expression::TemplateLiteral(tag_expr) => {
+                                tag_expr.quasi().map(|s| Cow::Borrowed(s.as_str()))
                             }
                             _ => continue,
                         }
