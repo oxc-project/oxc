@@ -168,6 +168,27 @@ class Playground {
   initViewer() {
     return new EditorView({
       extensions: [
+        linter(
+          () => {
+            this.queryResultsViewer.dispatch(
+              this.queryResultsViewer.state.update({
+                changes: {
+                  from: 0,
+                  to: this.queryResultsViewer.state.doc.length,
+                  insert: JSON.stringify(
+                    this.oxc.run_query(
+                      this.parserOptions,
+                      this.viewer.state.doc.toString()
+                    ),
+                    null,
+                    2
+                  ),
+                },
+              })
+            );
+          },
+          { delay: 0 }
+        ),
         basicSetup,
         keymap.of([
           ...vscodeKeymap,
@@ -293,7 +314,6 @@ class Playground {
 
     document.getElementById("mangle").style.visibility = "hidden";
     document.getElementById("ir-copy").style.display = "none";
-    document.getElementById("runquery").style.display = "none";
     document.getElementById("duration").style.display = "inline";
     document.getElementById("query-results-viewer").style.display = "none";
     this.runOptions.format = false;
@@ -329,7 +349,6 @@ class Playground {
         text = this.oxc.minifiedText;
         break;
       case "query":
-        document.getElementById("runquery").style.display = "inline";
         document.getElementById("query-results-viewer").style.display =
           "inline";
         document.getElementById("duration").style.display = "none";
@@ -572,25 +591,6 @@ async function main() {
 
   document.getElementById("query").onclick = () => {
     playground.updateView("query");
-  };
-
-  document.getElementById("runquery").onclick = () => {
-    playground.queryResultsViewer.dispatch(
-      playground.queryResultsViewer.state.update({
-        changes: {
-          from: 0,
-          to: playground.queryResultsViewer.state.doc.length,
-          insert: JSON.stringify(
-            playground.oxc.run_query(
-              playground.parserOptions,
-              playground.viewer.state.doc.toString()
-            ),
-            null,
-            2
-          ),
-        },
-      })
-    );
   };
 
   document.getElementById("syntax").onchange = function () {
