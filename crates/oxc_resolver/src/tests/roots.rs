@@ -60,7 +60,6 @@ fn resolve_to_context() {
 #[test]
 fn prefer_absolute() {
     let f = super::fixture();
-
     let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".js".into()],
         alias: vec![("foo".into(), vec![AliasValue::Path("/fixtures".into())])],

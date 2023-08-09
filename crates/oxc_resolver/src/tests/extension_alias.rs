@@ -1,16 +1,10 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/extension-alias.test.js>
 
-use std::path::PathBuf;
-
 use crate::{ResolveError, ResolveOptions, Resolver};
-
-fn fixture() -> PathBuf {
-    super::fixture().join("extension-alias")
-}
 
 #[test]
 fn extension_alias() {
-    let f = fixture();
+    let f = super::fixture().join("extension-alias");
 
     let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".js".into()],
@@ -46,17 +40,17 @@ fn extension_alias() {
     }
 }
 
+// should not apply extension alias to extensions or mainFiles field
 #[test]
 fn not_apply_to_extension_nor_main_files() {
-    // should not apply extension alias to extensions or mainFiles field
-    let options = ResolveOptions {
+    let f = super::fixture().join("extension-alias");
+
+    let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".js".into()],
         main_files: vec!["index.js".into()],
         extension_alias: vec![(".js".into(), vec![])],
         ..ResolveOptions::default()
-    };
-    let resolver = Resolver::new(options);
-    let f = fixture();
+    });
 
     #[rustfmt::skip]
     let pass = [

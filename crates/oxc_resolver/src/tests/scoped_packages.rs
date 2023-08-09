@@ -1,16 +1,10 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/scoped-packages.test.js>
 
-use std::path::PathBuf;
-
 use crate::{ResolveOptions, Resolver};
-
-fn fixture() -> PathBuf {
-    super::fixture().join("scoped")
-}
 
 #[test]
 fn scoped_packages() {
-    let f = fixture();
+    let f = super::fixture().join("scoped");
 
     let resolver = Resolver::new(ResolveOptions {
         alias_fields: vec!["browser".into()],

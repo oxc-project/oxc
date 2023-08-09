@@ -1,16 +1,10 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/extensions.test.js>
 
-use std::path::PathBuf;
-
 use crate::{EnforceExtension, Resolution, ResolveError, ResolveOptions, Resolver};
-
-fn fixture() -> PathBuf {
-    super::fixture().join("extensions")
-}
 
 #[test]
 fn extensions() {
-    let f = fixture();
+    let f = super::fixture().join("extensions");
 
     let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".ts".into(), ".js".into()],
@@ -44,10 +38,10 @@ fn extensions() {
     }
 }
 
-#[test]
 // should default enforceExtension to true when extensions includes an empty string
+#[test]
 fn default_enforce_extension() {
-    let f = fixture();
+    let f = super::fixture().join("extensions");
 
     let resolved = Resolver::new(ResolveOptions {
         extensions: vec![".ts".into(), String::new(), ".js".into()],
@@ -59,10 +53,10 @@ fn default_enforce_extension() {
     // TODO: need to match missingDependencies returned from the resolve function
 }
 
-#[test]
 // should respect enforceExtension when extensions includes an empty string
+#[test]
 fn respect_enforce_extension() {
-    let f = fixture();
+    let f = super::fixture().join("extensions");
 
     let resolved = Resolver::new(ResolveOptions {
         enforce_extension: EnforceExtension::Disabled,
@@ -77,7 +71,7 @@ fn respect_enforce_extension() {
 // Test for `.d.ts`, not part of enhanced-resolve.
 #[test]
 fn multi_dot_extension() {
-    let f = fixture();
+    let f = super::fixture().join("extensions");
 
     let resolver = Resolver::new(ResolveOptions {
         extensions: vec![".a.b.c".into(), ".d.ts".into(), ".ts".into(), ".js".into()],

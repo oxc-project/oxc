@@ -76,8 +76,8 @@ fn test() {
     }
 }
 
-#[test]
 // resolve using exports field, not a browser field #1
+#[test]
 fn exports_not_browser_field1() {
     let f = super::fixture().join("exports-field");
 
@@ -92,8 +92,8 @@ fn exports_not_browser_field1() {
     assert_eq!(resolved_path, Ok(f.join("node_modules/exports-field/lib/lib2/main.js")));
 }
 
-#[test]
 // resolve using exports field and a browser alias field #2
+#[test]
 fn exports_not_browser_field2() {
     let f2 = super::fixture().join("exports-field2");
 
@@ -108,8 +108,8 @@ fn exports_not_browser_field2() {
     assert_eq!(resolved_path, Ok(f2.join("node_modules/exports-field/lib/browser.js")));
 }
 
-#[test]
 // should resolve extension without fullySpecified
+#[test]
 fn extension_without_fully_specified() {
     let f2 = super::fixture().join("exports-field2");
 

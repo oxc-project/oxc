@@ -1,16 +1,10 @@
 //! <https://github.com/webpack/enhanced-resolve/blob/main/test/browserField.test.js>
 
-use std::path::PathBuf;
-
 use crate::{ResolveError, ResolveOptions, Resolver};
-
-fn fixture() -> PathBuf {
-    super::fixture().join("browser-module")
-}
 
 #[test]
 fn ignore() {
-    let f = fixture();
+    let f = super::fixture().join("browser-module");
 
     let resolver = Resolver::new(ResolveOptions {
         alias_fields: vec!["browser".into(), "innerBrowser1".into(), "innerBrowser2".into()],
@@ -34,7 +28,7 @@ fn ignore() {
 
 #[test]
 fn replace_file() {
-    let f = fixture();
+    let f = super::fixture().join("browser-module");
 
     let resolver = Resolver::new(ResolveOptions {
         alias_fields: vec!["browser".into()],
