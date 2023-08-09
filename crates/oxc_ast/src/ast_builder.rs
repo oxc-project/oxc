@@ -109,12 +109,7 @@ impl<'a> AstBuilder<'a> {
 
     /* ---------- Statements ---------- */
 
-    pub fn directive(
-        &self,
-        span: Span,
-        expression: StringLiteral,
-        directive: Atom,
-    ) -> Directive {
+    pub fn directive(&self, span: Span, expression: StringLiteral, directive: Atom) -> Directive {
         Directive { span, expression, directive }
     }
 

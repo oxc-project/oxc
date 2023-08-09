@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::{Span, Atom};
+use oxc_span::{Atom, Span};
 
 use super::{
     declaration::{VariableDeclarationContext, VariableDeclarationParent},
@@ -64,8 +64,11 @@ impl<'a> Parser<'a> {
                             if let Expression::StringLiteral(string) = &expr.expression {
                                 let src = &self.source_text
                                     [string.span.start as usize + 1..string.span.end as usize - 1];
-                                let directive =
-                                    self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
+                                let directive = self.ast.directive(
+                                    expr.span,
+                                    (*string).clone(),
+                                    Atom::from(src),
+                                );
                                 directives.push(directive);
                                 continue;
                             }
