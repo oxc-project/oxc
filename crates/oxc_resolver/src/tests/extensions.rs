@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use crate::{Resolution, ResolveError, ResolveOptions, Resolver};
+use crate::{EnforceExtension, Resolution, ResolveError, ResolveOptions, Resolver};
 
 fn fixture() -> PathBuf {
     super::fixture().join("extensions")
@@ -65,7 +65,7 @@ fn respect_enforce_extension() {
     let f = fixture();
 
     let resolved = Resolver::new(ResolveOptions {
-        enforce_extension: Some(false),
+        enforce_extension: EnforceExtension::Disabled,
         extensions: vec![".ts".into(), String::new(), ".js".into()],
         ..ResolveOptions::default()
     })

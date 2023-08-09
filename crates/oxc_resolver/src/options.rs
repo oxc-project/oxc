@@ -38,7 +38,7 @@ pub struct ResolveOptions {
     /// See <https://github.com/webpack/enhanced-resolve/pull/285>
     ///
     /// Default None, which is the same as `Some(false)` when the above empty rule is not applied.
-    pub enforce_extension: Option<bool>,
+    pub enforce_extension: EnforceExtension,
 
     /// An object which maps extension to extension aliases.
     ///
@@ -108,6 +108,27 @@ pub struct ResolveOptions {
     pub symlinks: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EnforceExtension {
+    Auto,
+    Enabled,
+    Disabled,
+}
+
+impl EnforceExtension {
+    pub fn is_auto(&self) -> bool {
+        *self == Self::Auto
+    }
+
+    pub fn is_enabled(&self) -> bool {
+        *self == Self::Enabled
+    }
+
+    pub fn is_disabled(&self) -> bool {
+        *self == Self::Disabled
+    }
+}
+
 /// Alias for [ResolveOptions::alias] and [ResolveOptions::fallback].
 pub type Alias = Vec<(String, Vec<AliasValue>)>;
 
@@ -134,7 +155,7 @@ impl Default for ResolveOptions {
             alias_fields: vec![],
             condition_names: vec![],
             description_files: vec!["package.json".into()],
-            enforce_extension: None,
+            enforce_extension: EnforceExtension::Auto,
             extension_alias: vec![],
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             fallback: vec![],
@@ -153,12 +174,12 @@ impl Default for ResolveOptions {
 
 impl ResolveOptions {
     pub(crate) fn sanitize(mut self) -> Self {
-        if self.enforce_extension.is_none() {
-            self.enforce_extension = Some(false);
+        if self.enforce_extension == EnforceExtension::Auto {
+            self.enforce_extension = EnforceExtension::Disabled;
             // Set `enforceExtension` to `true` when [ResolveOptions::extensions] contains an empty string.
             // See <https://github.com/webpack/enhanced-resolve/pull/285>
             if self.extensions.iter().any(String::is_empty) {
-                self.enforce_extension = Some(true);
+                self.enforce_extension = EnforceExtension::Enabled;
                 self.extensions.retain(String::is_empty);
             }
         }

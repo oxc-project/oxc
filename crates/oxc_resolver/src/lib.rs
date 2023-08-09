@@ -46,7 +46,7 @@ use crate::{
 pub use crate::{
     error::{JSONError, ResolveError},
     file_system::{FileMetadata, FileSystem},
-    options::{Alias, AliasValue, ResolveOptions, Restriction},
+    options::{Alias, AliasValue, EnforceExtension, ResolveOptions, Restriction},
     resolution::Resolution,
 };
 
@@ -394,7 +394,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         for main_file in &self.options.main_files {
             let main_path = cached_path.path().join(main_file);
             let cached_path = self.cache.value(&main_path);
-            if self.options.enforce_extension == Some(false) {
+            if self.options.enforce_extension.is_disabled() {
                 if let Some(path) = self.load_alias_or_file(&cached_path, ctx)? {
                     return Ok(Some(path));
                 }
