@@ -215,6 +215,7 @@ class Playground {
         EditorView.domEventHandlers({
           mouseover: this.highlightEditorFromViewer.bind(this),
         }),
+        autocompletion(),
       ],
       parent: document.querySelector("#viewer"),
     });
