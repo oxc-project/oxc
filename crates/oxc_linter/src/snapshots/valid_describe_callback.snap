@@ -242,4 +242,11 @@ expression: valid_describe_callback
    ╰────
   help: "Remove `async` keyword"
 
+  ⚠ "Unexpected argument(s) in describe callback"
+   ╭─[valid_describe_callback.tsx:1:1]
+ 1 │ describe('foo', async function (done) {})
+   ·                 ────────────────────────
+   ╰────
+  help: "Remove argument(s) of describe callback"
+
 

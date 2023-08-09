@@ -35,10 +35,12 @@ declare_oxc_lint!(
     /// - should not contain any `return` statements
     ///
     /// ### Why is this bad?
+    ///
     /// Using an improper `describe()` callback function can lead to unexpected test
     /// errors.
     ///
     /// ### Example
+    ///
     /// ```javascript
     /// // Async callback functions are not allowed
     /// describe('myFunction()', async () => {
@@ -57,7 +59,8 @@ declare_oxc_lint!(
     /// }));
     /// ```
     ValidDescribeCallback,
-    correctness
+    // because this rule has one test case not passed, will set to correctness when finished.
+    nursery
 );
 
 impl Rule for ValidDescribeCallback {
@@ -85,49 +88,38 @@ impl Rule for ValidDescribeCallback {
                 Expression::FunctionExpression(fn_expr) => {
                     if fn_expr.r#async {
                         diagnostic(ctx, fn_expr.span, Message::NoAsyncDescribeCallback);
-                    } else {
-                        let no_each_field = jest_fn_call
-                            .members
-                            .iter()
-                            .all(|member| member.is_name_unequal("each"));
-                        if no_each_field && fn_expr.params.parameters_count() > 0 {
-                            diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
-                        }
+                    }
+                    let no_each_fields =
+                        jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
+                    if no_each_fields && fn_expr.params.parameters_count() > 0 {
+                        diagnostic(ctx, fn_expr.span, Message::UnexpectedDescribeArgument);
+                    }
 
-                        let Some(ref body) = fn_expr.body else { return;};
-                        if let Some(span) = find_first_return_stmt(body) {
-                            diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
-                        }
+                    let Some(ref body) = fn_expr.body else { return;};
+                    if let Some(span) = find_first_return_stmt_span(body) {
+                        diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
                     }
                 }
                 Expression::ArrowExpression(arrow_expr) => {
                     if arrow_expr.r#async {
                         diagnostic(ctx, arrow_expr.span, Message::NoAsyncDescribeCallback);
-                    } else {
-                        let no_each_field = jest_fn_call
-                            .members
-                            .iter()
-                            .all(|member| member.is_name_unequal("each"));
-                        if no_each_field && arrow_expr.params.parameters_count() > 0 {
-                            diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
-                            return;
-                        }
+                    }
+                    let no_each_fields =
+                        jest_fn_call.members.iter().all(|member| member.is_name_unequal("each"));
+                    if no_each_fields && arrow_expr.params.parameters_count() > 0 {
+                        diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
+                    }
 
-                        if arrow_expr.expression && arrow_expr.body.statements.len() > 0 {
-                            let stmt = &arrow_expr.body.statements[0];
-                            let Statement::ExpressionStatement(expr_stmt) = stmt else { return; };
-                            if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                                diagnostic(
-                                    ctx,
-                                    call_expr.span,
-                                    Message::UnexpectedReturnInDescribe,
-                                );
-                            }
+                    if arrow_expr.expression && arrow_expr.body.statements.len() > 0 {
+                        let stmt = &arrow_expr.body.statements[0];
+                        let Statement::ExpressionStatement(expr_stmt) = stmt else { return; };
+                        if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
+                            diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
                         }
+                    }
 
-                        if let Some(span) = find_first_return_stmt(&arrow_expr.body) {
-                            diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
-                        }
+                    if let Some(span) = find_first_return_stmt_span(&arrow_expr.body) {
+                        diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
                     }
                 }
                 _ => diagnostic(ctx, expr.span(), Message::SecondArgumentMustBeFunction),
@@ -139,7 +131,7 @@ impl Rule for ValidDescribeCallback {
     }
 }
 
-fn find_first_return_stmt(function_body: &FunctionBody) -> Option<Span> {
+fn find_first_return_stmt_span(function_body: &FunctionBody) -> Option<Span> {
     function_body.statements.iter().find_map(|stmt| {
         if let Statement::ReturnStatement(return_stmt) = stmt {
             Some(return_stmt.span)
@@ -173,7 +165,9 @@ impl Message {
             Self::SecondArgumentMustBeFunction => {
                 ("Second argument must be a function", "Replace second argument with a function")
             }
-            Self::NoAsyncDescribeCallback => ("No async describe callback", "Remove `async` keyword"),
+            Self::NoAsyncDescribeCallback => {
+                ("No async describe callback", "Remove `async` keyword")
+            }
             Self::UnexpectedDescribeArgument => (
                 "Unexpected argument(s) in describe callback",
                 "Remove argument(s) of describe callback",
@@ -251,6 +245,7 @@ fn test() {
         ("describe('foo', async function () {})", None),
         ("xdescribe('foo', async function () {})", None),
         ("fdescribe('foo', async function () {})", None),
+        // TODO
         // ("
         //     import { fdescribe } from '@jest/globals';
         //     fdescribe('foo', async function () {})
