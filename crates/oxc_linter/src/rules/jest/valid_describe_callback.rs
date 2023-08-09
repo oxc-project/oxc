@@ -59,7 +59,7 @@ declare_oxc_lint!(
     /// }));
     /// ```
     ValidDescribeCallback,
-    // because this rule has one test case not passed, will set to correctness when finished.
+    // Because this rule has one test case not passed, will set to correctness when finished.
     nursery
 );
 
@@ -76,8 +76,8 @@ impl Rule for ValidDescribeCallback {
             return;
         }
 
-        // for better error notice
         if call_expr.arguments.len() == 1 {
+            // For better error notice, we locate it to arguments[0]
             diagnostic(ctx, call_expr.arguments[0].span(), Message::NameAndCallback);
             return;
         }
