@@ -14,7 +14,7 @@ categories.workspace   = true
 
 [dependencies]
 dashmap       = { workspace = true }
-serde         = { workspace = true }
+serde         = { workspace = true, features = ["derive"] } # derive for Deserialize from package.json
 serde_json    = { workspace = true }
 rustc-hash    = { workspace = true }
 indexmap      = { workspace = true, features = ["serde"] } # serde for Deserialize from package.json
