@@ -922,7 +922,9 @@ pub struct Directive {
     #[cfg_attr(feature = "serde", serde(flatten))]
     pub span: Span,
     pub expression: StringLiteral,
-    // directives should always use the unescaped raw string
+    /// A Use Strict Directive is an ExpressionStatement in a Directive Prologue whose StringLiteral is either of the exact code point sequences "use strict" or 'use strict'.
+    /// A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
+    /// <https://tc39.es/ecma262/#sec-directive-prologues-and-the-use-strict-directive>
     pub directive: Atom,
 }
 
