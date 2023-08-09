@@ -18,7 +18,6 @@ serde         = { workspace = true, features = ["derive"] }
 serde_json    = { workspace = true }
 rustc-hash    = { workspace = true }
 indexmap      = { workspace = true, features = ["serde"] }
-dunce         = "1.0.4"
 # Use `std::sync::OnceLock::get_or_try_init` when it is stable.
 once_cell     = "1.18.0"
 

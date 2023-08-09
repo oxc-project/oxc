@@ -68,6 +68,6 @@ impl FileSystem for FileSystemOs {
     }
 
     fn canonicalize<P: AsRef<Path>>(&self, path: P) -> io::Result<PathBuf> {
-        dunce::canonicalize(path)
+        path.as_ref().canonicalize()
     }
 }
