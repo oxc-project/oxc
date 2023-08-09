@@ -350,6 +350,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             if let Some(path) = self.load_alias_or_file(&cached_path, ctx)? {
                 return Ok(Some(path));
             }
+
+            // `std::path::PathBuf::set_extension` only removes 1 dot.
+            // This removes multi-dot extensions such as `.d.ts`.
+            let num_dots = extension.chars().filter(|c| *c == '.').count();
+            for _ in 0..num_dots {
+                path_with_extension.set_extension("");
+            }
         }
         Ok(None)
     }
