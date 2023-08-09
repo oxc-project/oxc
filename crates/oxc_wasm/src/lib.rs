@@ -1,6 +1,6 @@
 mod options;
 
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::BTreeMap, rc::Rc, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_ast_lower::AstLower;
@@ -8,12 +8,13 @@ use oxc_diagnostics::Error;
 use oxc_formatter::{Formatter, FormatterOptions};
 use oxc_linter::{LintContext, Linter};
 use oxc_minifier::{CompressOptions, Compressor, ManglerBuilder, Printer, PrinterOptions};
-use oxc_parser::Parser;
-use oxc_query::SCHEMA_TEXT;
-use oxc_semantic::SemanticBuilder;
+use oxc_parser::{Parser, ParserReturn};
+use oxc_query::{schema, Adapter, SCHEMA_TEXT};
+use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
 use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 use serde::Serialize;
+use trustfall::{execute_query, FieldValue, TransparentValue};
 use wasm_bindgen::prelude::*;
 
 use crate::options::{
@@ -237,5 +238,70 @@ impl Oxc {
 
     fn save_diagnostics(&self, diagnostics: Vec<Error>) {
         self.diagnostics.borrow_mut().extend(diagnostics);
+    }
+
+    #[wasm_bindgen]
+    pub fn run_query(
+        &self,
+        parser_options: &OxcParserOptions,
+        query: String,
+    ) -> Result<wasm_bindgen::JsValue, serde_wasm_bindgen::Error> {
+        let allocator = Allocator::default();
+        let source_text = &self.source_text;
+        let source_type = SourceType::from_path("test.tsx").unwrap_or_default();
+
+        let ParserReturn { errors: parse_errors, panicked, program: returned_program, trivias } =
+            Parser::new(&allocator, source_text, source_type)
+                .allow_return_outside_function(parser_options.allow_return_outside_function)
+                .parse();
+
+        let allocated_program = allocator.alloc(returned_program);
+
+        if panicked {
+            return "Panicked when parsing code.".to_string().serialize(&self.serializer);
+        }
+
+        if !parse_errors.is_empty() {
+            return format!("Errors when parsing: \n\n{parse_errors:#?}")
+                .serialize(&self.serializer);
+        }
+
+        let SemanticBuilderReturn { errors: semantic_errors, semantic } =
+            SemanticBuilder::new(source_text, source_type)
+                .with_trivias(&trivias)
+                .with_check_syntax_error(true)
+                .build(allocated_program);
+
+        if !semantic_errors.is_empty() {
+            return format!("Semantic errors: \n\n{semantic_errors:#?}")
+                .serialize(&self.serializer);
+        }
+
+        let inner = Rc::new(semantic);
+
+        let adapter = Adapter::new(inner, vec![Some("index.tsx".to_owned())]);
+
+        let arc_adapter = Arc::from(&adapter);
+        let empty: BTreeMap<Arc<str>, FieldValue> = BTreeMap::default();
+
+        execute_query(schema(), arc_adapter, &query, empty).map_or_else(
+            |e| e.to_string().serialize(&self.serializer),
+            |f| {
+                f.collect::<Vec<_>>()
+                    .into_iter()
+                    .map(|x| {
+                        // The default `FieldValue` JSON representation is explicit about its type, so we can get
+                        // reliable round-trip serialization of types tricky in JSON like integers and floats.
+                        //
+                        // The `TransparentValue` type is like `FieldValue` minus the explicit type representation,
+                        // so it's more like what we'd expect to normally find in JSON.
+                        let transparent: BTreeMap<_, TransparentValue> =
+                            x.into_iter().map(|(k, v)| (k, v.into())).collect();
+                        transparent
+                    })
+                    .collect::<Vec<_>>()
+                    .serialize(&self.serializer)
+            },
+        )
     }
 }
