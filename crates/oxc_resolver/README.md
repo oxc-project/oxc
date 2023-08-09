@@ -43,21 +43,21 @@ Crossed out test files are irrelevant.
 
 - [x] ~CachedInputFileSystem.test.js~
 - [x] ~SyncAsyncFileSystemDecorator.test.js~
-- [x] alias.test.js (need to fix a todo)
+- [x] alias.test.js
 - [x] browserField.test.js (reading the browser field is currently static - not read from the `browserField` option)
 - [ ] dependencies.test.js
 - [x] exportsField.test.js
 - [x] extension-alias.test.js
 - [x] extensions.test.js
-- [x] fallback.test.js (need to fix a todo)
+- [x] fallback.test.js
 - [x] ~forEachBail.test.js~
 - [x] fullSpecified.test.js
-- [ ] getPaths.test.js
+- [x] ~getPaths.test.js~
 - [x] identifier.test.js (see unit test in `crates/oxc_resolver/src/request.rs`)
 - [x] importsField.test.js
 - [x] incorrect-description-file.test.js (need to add ctx.fileDependencies)
 - [ ] missing.test.js
-- [ ] path.test.js
+- [x] path.test.js (see unit test in `crates/oxc_resolver/src/path.rs`)
 - [ ] plugins.test.js
 - [ ] pnp.test.js
 - [x] ~pr-53.test.js~

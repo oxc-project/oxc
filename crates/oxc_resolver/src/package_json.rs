@@ -43,7 +43,7 @@ pub struct PackageJson {
     ///
     /// <https://nodejs.org/api/packages.html#subpath-imports>
     #[serde(default)]
-    pub imports: MatchObject,
+    pub imports: Box<MatchObject>,
 
     /// The "browser" field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
     ///
@@ -71,7 +71,6 @@ impl ExportsField {
     }
 }
 
-// TODO: use compact string for these String fields
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum ExportsKey {
     Main,
