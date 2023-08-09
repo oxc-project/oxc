@@ -10,7 +10,7 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression,
         ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StringLiteral, TemplateLiteral,
+        PropertyKey, Statement, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
     },
     Visit,
 };
@@ -67,7 +67,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
             Expression::ObjectExpression(obj_expr) => self.visit_object_expression(obj_expr),
             Expression::CallExpression(call_expr) => self.visit_call_expression(call_expr),
             Expression::TaggedTemplateExpression(tag_expr) => {
-                self.visit_tagged_template_expression(tag_expr)
+                self.visit_tagged_template_expression(tag_expr);
             }
             _ => {}
         }
@@ -133,10 +133,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
         self.test_code = None;
     }
 
-    fn visit_tagged_template_expression(
-        &mut self,
-        expr: &'a oxc_ast::ast::TaggedTemplateExpression<'a>,
-    ) {
+    fn visit_tagged_template_expression(&mut self, expr: &'a TaggedTemplateExpression<'a>) {
         let Expression::Identifier(ident) = &expr.tag else {return;};
         if ident.name != "dedent" {
             return;
