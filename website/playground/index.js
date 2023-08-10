@@ -661,7 +661,7 @@ class URLParams {
       const url = `${window.location.protocol}//${window.location.host}${
         window.location.pathname
       }?${this.params.toString()}`;
-      // window.history.replaceState({ path: url }, "", url);
+      window.history.replaceState({ path: url }, "", url);
       setStringToStorage(STORAGE_KEY_CODE, code);
     },
     URLParams.URL_UPDATE_THROTTLE,
