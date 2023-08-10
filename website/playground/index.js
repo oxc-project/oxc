@@ -316,27 +316,34 @@ class Playground {
         this.queryResultViewerIsEditableConf.of(EditorView.editable.of(false)),
         linter(
           (data) => {
-            try {
-              if (this.showingQueryResultsOrArguments === "arguments") {
-                try {
-                  setStringToStorage(
-                    STORAGE_KEY_QUERY_ARGUMENTS,
-                    JSON.stringify(
-                      JSON.parse(data.state.doc.toString()), // parse so that if the json is invalid we will not save it because we will have thrown an error instead
-                      null,
-                      2
-                    )
-                  );
-                } catch {
-                  // invalid json in arguments view
-                }
+            if (this.showingQueryResultsOrArguments === "arguments") {
+              try {
+                setStringToStorage(
+                  STORAGE_KEY_QUERY_ARGUMENTS,
+                  JSON.stringify(
+                    JSON.parse(data.state.doc.toString()), // parse so that if the json is invalid we will not save it because we will have thrown an error instead
+                    null,
+                    2
+                  )
+                );
+              } catch {
+                // invalid json in arguments view
+                return [
+                  {
+                    from: 0,
+                    to: data.state.doc.length,
+                    message:
+                      "This is invalid JSON. Will not be saved until it is valid.",
+                    severity: "error",
+                  },
+                ];
               }
-            } finally {
-              return [];
             }
+            return [];
           },
           { delay: 0 }
         ),
+        lintGutter(),
       ],
       parent: document.querySelector("#query-results-viewer"),
     });
