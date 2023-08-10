@@ -21,7 +21,7 @@
 |  ✅  | fallback         | []                          | Same as `alias`, but only used if default resolving fails                                                                                                 |
 |  ✅  | fileSystem       |                             | The file system which should be used                                                                                                                      |
 |  ✅  | fullySpecified   | false                       | Request passed to resolve is already fully specified and extensions or main files are not resolved for it (they are still resolved for internal requests) |
-|      | mainFields       | ["main"]                    | A list of main fields in description files                                                                                                                |
+|  ✅  | mainFields       | ["main"]                    | A list of main fields in description files                                                                                                                |
 |  ✅  | mainFiles        | ["index"]                   | A list of main files in directories                                                                                                                       |
 |  ✅  | modules          | ["node_modules"]            | A list of directories to resolve modules from, can be absolute path or folder name                                                                        |
 |      | plugins          | []                          | A list of additional resolve plugins which should be applied                                                                                              |
@@ -43,21 +43,21 @@ Crossed out test files are irrelevant.
 
 - [x] ~CachedInputFileSystem.test.js~
 - [x] ~SyncAsyncFileSystemDecorator.test.js~
-- [x] alias.test.js (need to fix a todo)
+- [x] alias.test.js
 - [x] browserField.test.js (reading the browser field is currently static - not read from the `browserField` option)
 - [ ] dependencies.test.js
 - [x] exportsField.test.js
 - [x] extension-alias.test.js
 - [x] extensions.test.js
-- [x] fallback.test.js (need to fix a todo)
+- [x] fallback.test.js
 - [x] ~forEachBail.test.js~
 - [x] fullSpecified.test.js
-- [ ] getPaths.test.js
+- [x] ~getPaths.test.js~
 - [x] identifier.test.js (see unit test in `crates/oxc_resolver/src/request.rs`)
 - [x] importsField.test.js
 - [x] incorrect-description-file.test.js (need to add ctx.fileDependencies)
 - [ ] missing.test.js
-- [ ] path.test.js
+- [x] path.test.js (see unit test in `crates/oxc_resolver/src/path.rs`)
 - [ ] plugins.test.js
 - [ ] pnp.test.js
 - [x] ~pr-53.test.js~

@@ -106,9 +106,10 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[must_use]
-    pub fn with_trivias(mut self, trivias: &Rc<Trivias>) -> Self {
-        self.trivias = Rc::clone(trivias);
-        self.jsdoc = JSDocBuilder::new(self.source_text, trivias);
+    pub fn with_trivias(mut self, trivias: Trivias) -> Self {
+        let trivias = Rc::new(trivias);
+        self.trivias = Rc::clone(&trivias);
+        self.jsdoc = JSDocBuilder::new(self.source_text, &trivias);
         self
     }
 

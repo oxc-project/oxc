@@ -26,7 +26,6 @@ fn file_system() -> MemoryFS {
 #[test]
 #[cfg(not(target_os = "windows"))] // MemoryFS's path separator is always `/` so the test will not pass in windows.
 fn test() {
-    use crate::Resolution;
     let file_system = file_system();
 
     let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(
@@ -70,7 +69,7 @@ fn test() {
     ];
 
     for (comment, request, expected) in successful_resolves {
-        let resolution = resolver.resolve("/a", request).map(Resolution::full_path);
+        let resolution = resolver.resolve("/a", request).map(|r| r.full_path());
         assert_eq!(resolution, Ok(PathBuf::from(expected)), "{comment} {request}");
     }
 }
@@ -78,8 +77,6 @@ fn test() {
 #[test]
 #[cfg(not(target_os = "windows"))] // MemoryFS's path separator is always `/` so the test will not pass in windows.
 fn resolve_to_context() {
-    use crate::Resolution;
-
     let file_system = file_system();
 
     let resolver = ResolverGeneric::<MemoryFS>::new_with_file_system(
@@ -108,7 +105,7 @@ fn resolve_to_context() {
     ];
 
     for (comment, request, expected) in successful_resolves {
-        let resolution = resolver.resolve("/a", request).map(Resolution::full_path);
+        let resolution = resolver.resolve("/a", request).map(|r| r.full_path());
         assert_eq!(resolution, Ok(PathBuf::from(expected)), "{comment} {request}");
     }
 }

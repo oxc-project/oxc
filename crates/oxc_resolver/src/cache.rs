@@ -1,21 +1,36 @@
+use once_cell::sync::OnceCell as OnceLock;
 use std::{
     convert::AsRef,
-    hash::{Hash, Hasher},
+    hash::{BuildHasherDefault, Hash, Hasher},
     ops::Deref,
     path::{Path, PathBuf},
-    sync::{Arc, OnceLock},
+    sync::Arc,
 };
 
 use dashmap::DashMap;
-use identity_hash::BuildIdentityHasher;
 use rustc_hash::FxHasher;
 
-use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
+use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError, ResolveOptions};
 
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
     // Using IdentityHasher to avoid double hashing in the `get` + `insert` case.
-    cache: DashMap<u64, CachedPath, BuildIdentityHasher<u64>>,
+    cache: DashMap<u64, CachedPath, BuildHasherDefault<IdentityHasher>>,
+}
+
+#[derive(Default)]
+struct IdentityHasher(u64);
+
+impl Hasher for IdentityHasher {
+    fn write(&mut self, _: &[u8]) {
+        panic!("Invalid use of IdentityHasher")
+    }
+    fn write_u64(&mut self, n: u64) {
+        self.0 = n;
+    }
+    fn finish(&self) -> u64 {
+        self.0
+    }
 }
 
 impl<Fs: FileSystem> Default for Cache<Fs> {
@@ -68,7 +83,7 @@ pub struct CachedPathImpl {
     parent: Option<CachedPath>,
     meta: OnceLock<Option<FileMetadata>>,
     symlink: OnceLock<Option<PathBuf>>,
-    package_json: OnceLock<Option<Result<Arc<PackageJson>, ResolveError>>>,
+    package_json: OnceLock<Option<Arc<PackageJson>>>,
 }
 
 impl CachedPathImpl {
@@ -114,6 +129,7 @@ impl CachedPathImpl {
     pub fn find_package_json<Fs: FileSystem>(
         &self,
         fs: &Fs,
+        options: &ResolveOptions,
     ) -> Result<Option<Arc<PackageJson>>, ResolveError> {
         let mut cache_value = self;
         // Go up a directory when querying a file, this avoids a file read from example.js/package.json
@@ -124,7 +140,7 @@ impl CachedPathImpl {
         }
         let mut cache_value = Some(cache_value);
         while let Some(cv) = cache_value {
-            if let Some(package_json) = cv.package_json(fs).transpose()? {
+            if let Some(package_json) = cv.package_json(fs, options)? {
                 return Ok(Some(Arc::clone(&package_json)));
             }
             cache_value = cv.parent.as_deref();
@@ -140,19 +156,20 @@ impl CachedPathImpl {
     pub fn package_json<Fs: FileSystem>(
         &self,
         fs: &Fs,
-    ) -> Option<Result<Arc<PackageJson>, ResolveError>> {
-        // Change to `get_or_try_init` once it is stable
+        options: &ResolveOptions,
+    ) -> Result<Option<Arc<PackageJson>>, ResolveError> {
+        // Change to `std::sync::OnceLock::get_or_try_init` when it is stable.
         self.package_json
-            .get_or_init(|| {
+            .get_or_try_init(|| {
                 let package_json_path = self.path.join("package.json");
-                fs.read_to_string(&package_json_path).ok().map(|package_json_string| {
-                    PackageJson::parse(package_json_path.clone(), &package_json_string)
-                        .map(Arc::new)
-                        .map_err(|error| {
-                            ResolveError::from_serde_json_error(package_json_path, &error)
-                        })
-                })
+                let Ok(package_json_string) = fs.read_to_string(&package_json_path) else {
+                    return Ok(None)
+                };
+                PackageJson::parse(package_json_path.clone(), &package_json_string, options)
+                    .map(Arc::new)
+                    .map(Some)
+                    .map_err(|error| ResolveError::from_serde_json_error(package_json_path, &error))
             })
-            .clone()
+            .cloned()
     }
 }

@@ -46,7 +46,7 @@ use crate::{
 pub use crate::{
     error::{JSONError, ResolveError},
     file_system::{FileMetadata, FileSystem},
-    options::{Alias, AliasValue, ResolveOptions, Restriction},
+    options::{Alias, AliasValue, EnforceExtension, ResolveOptions, Restriction},
     resolution::Resolution,
 };
 
@@ -126,6 +126,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         self.resolve_impl(path.as_ref(), specifier)
     }
 
+    #[tracing::instrument(name = "resolve", level = "DEBUG", ret, skip(self), fields(options = %self.options))]
     fn resolve_impl(&self, path: &Path, specifier: &str) -> Result<Resolution, ResolveError> {
         let ctx = ResolveContext(RefCell::new(ResolveContextImpl {
             fully_specified: self.options.fully_specified,
@@ -302,7 +303,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     ) -> ResolveState {
         // 1. Find the closest package scope SCOPE to DIR.
         // 2. If no scope was found, return.
-        let Some(package_json) = cached_path.find_package_json(&self.cache.fs)? else {
+        let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)? else {
             return Ok(None);
         };
         // 3. If the SCOPE/package.json "imports" is null or undefined, return.
@@ -328,7 +329,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
         // 3. If X.json is a file, parse X.json to a JavaScript Object. STOP
         // 4. If X.node is a file, load X.node as binary addon. STOP
-        if let Some(path) = self.load_extensions(cached_path, &self.options.extensions, ctx)? {
+        if let Some(path) =
+            self.load_extensions(cached_path.path(), &self.options.extensions, ctx)?
+        {
             return Ok(Some(path));
         }
         Ok(None)
@@ -336,16 +339,18 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     fn load_extensions(
         &self,
-        cached_path: &CachedPath,
+        path: &Path,
         extensions: &[String],
         ctx: &ResolveContext,
     ) -> ResolveState {
         if ctx.borrow().fully_specified {
             return Ok(None);
         }
-        let mut path_with_extension = cached_path.path().to_path_buf();
         for extension in extensions {
-            path_with_extension.set_extension(extension);
+            let mut path_with_extension = path.to_path_buf().into_os_string();
+            path_with_extension.reserve_exact(extension.len());
+            path_with_extension.push(extension);
+            let path_with_extension = PathBuf::from(path_with_extension);
             let cached_path = self.cache.value(&path_with_extension);
             if let Some(path) = self.load_alias_or_file(&cached_path, ctx)? {
                 return Ok(Some(path));
@@ -394,7 +399,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         for main_file in &self.options.main_files {
             let main_path = cached_path.path().join(main_file);
             let cached_path = self.cache.value(&main_path);
-            if self.options.enforce_extension == Some(false) {
+            if self.options.enforce_extension.is_disabled() {
                 if let Some(path) = self.load_alias_or_file(&cached_path, ctx)? {
                     return Ok(Some(path));
                 }
@@ -402,7 +407,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
             // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
             // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
-            if let Some(path) = self.load_extensions(&cached_path, &self.options.extensions, ctx)? {
+            if let Some(path) =
+                self.load_extensions(cached_path.path(), &self.options.extensions, ctx)?
+            {
                 return Ok(Some(path));
             }
         }
@@ -410,7 +417,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     }
 
     fn load_alias_or_file(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
-        if let Some(package_json) = cached_path.find_package_json(&self.cache.fs)? {
+        if let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)? {
             let path = cached_path.path();
             if let Some(path) = self.load_browser_field(path, None, &package_json, ctx)? {
                 return Ok(Some(path));
@@ -435,9 +442,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 1. If X/package.json is a file,
         if !self.options.description_files.is_empty() {
             // a. Parse X/package.json, and look for "main" field.
-            if let Some(package_json) = cached_path.package_json(&self.cache.fs).transpose()? {
+            if let Some(package_json) = cached_path.package_json(&self.cache.fs, &self.options)? {
                 // b. If "main" is a falsy value, GOTO 2.
-                if let Some(main_field) = &package_json.main {
+                for main_field in &package_json.main_fields {
                     // c. let M = X + (json main field)
                     let main_field_path = cached_path.path().normalize_with(main_field);
                     // d. LOAD_AS_FILE(M)
@@ -449,10 +456,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     if let Some(path) = self.load_index(&cached_path, ctx)? {
                         return Ok(Some(path));
                     }
-                    // f. LOAD_INDEX(X) DEPRECATED
-                    // g. THROW "not found"
-                    return Err(ResolveError::NotFound(main_field_path));
                 }
+                // f. LOAD_INDEX(X) DEPRECATED
+                // g. THROW "not found"
             }
         }
         // 2. LOAD_INDEX(X)
@@ -512,7 +518,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         //    return.
         let (name, subpath) = Self::parse_package_specifier(specifier);
         let cached_path = self.cache.value(&path.join(name));
-        let Some(package_json) = cached_path.package_json(&self.cache.fs).transpose()? else {
+        let Some(package_json) = cached_path.package_json(&self.cache.fs, &self.options)? else {
             return Ok(None);
         };
         // 3. Parse DIR/NAME/package.json, and look for "exports" field.
@@ -544,7 +550,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     ) -> ResolveState {
         // 1. Find the closest package scope SCOPE to DIR.
         // 2. If no scope was found, return.
-        let Some(package_json) = cached_path.find_package_json(&self.cache.fs)? else {
+        let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)? else {
             return Ok(None);
         };
         // 3. If the SCOPE/package.json "exports" is null or undefined, return.
@@ -557,7 +563,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             );
         }
         // 4. If the SCOPE/package.json "name" is not the first segment of X, return.
-        let Some(subpath) = package_json.name.as_ref().and_then(|package_json_name| package_json_name.strip_prefix(specifier)) else {
+        let Some(subpath) = package_json.name.as_ref().and_then(|package_json_name| specifier.strip_prefix(package_json_name)) else {
             return Ok(None);
         };
         // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(SCOPE),
@@ -672,12 +678,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn load_extension_alias(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
         let Some(path_extension) = cached_path.path().extension() else { return Ok(None) };
         let Some((_, extensions)) =
-            self.options.extension_alias.iter().find(|(ext, _)| OsStr::new(ext) == path_extension)
+            self.options.extension_alias.iter().find(|(ext, _)| OsStr::new(ext.trim_start_matches('.')) == path_extension)
         else {
             return Ok(None);
         };
+        let path = cached_path.path().with_extension("");
         if let Some(path) =
-            self.load_extensions(cached_path, extensions, &ResolveContext::clone_from(ctx))?
+            self.load_extensions(&path, extensions, &ResolveContext::clone_from(ctx))?
         {
             return Ok(Some(path));
         }
@@ -706,7 +713,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                 if cached_path.is_dir(&self.cache.fs) {
                     // 4. Let pjson be the result of READ_PACKAGE_JSON(packageURL).
                     if let Some(package_json) =
-                        cached_path.package_json(&self.cache.fs).transpose()?
+                        cached_path.package_json(&self.cache.fs, &self.options)?
                     {
                         // 5. If pjson is not null and pjson.exports is not null or undefined, then
                         if !package_json.exports.is_none() {
@@ -722,11 +729,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         // 6. Otherwise, if packageSubpath is equal to ".", then
                         if subpath == "." {
                             // 1. If pjson.main is a string, then
-                            if let Some(main_field) = &package_json.main {
+                            for main_field in &package_json.main_fields {
                                 // 1. Return the URL resolution of main in packageURL.
                                 let path = cached_path.path().normalize_with(main_field);
-                                let value = self.cache.value(&path);
-                                return Ok(Some(value));
+                                let cached_path = self.cache.value(&path);
+                                if cached_path.is_file(&self.cache.fs) {
+                                    return Ok(Some(cached_path));
+                                }
                             }
                         }
                     }
@@ -860,7 +869,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
         // 3. Let packageURL be the result of LOOKUP_PACKAGE_SCOPE(parentURL).
         // 4. If packageURL is not null, then
-        if let Some(package_json) = cached_path.find_package_json(&self.cache.fs)? {
+        if let Some(package_json) = cached_path.find_package_json(&self.cache.fs, &self.options)? {
             // 1. Let pjson be the result of READ_PACKAGE_JSON(packageURL).
             // 2. If pjson.imports is a non-null Object, then
             if !package_json.imports.is_empty() {

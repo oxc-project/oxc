@@ -8,8 +8,8 @@ use crate::{ResolveError, ResolveOptions, Resolver, Restriction};
 // * should try to find alternative #2
 // * should try to find alternative #3
 
-#[test]
 // should respect string restriction
+#[test]
 fn restriction1() {
     let fixture = super::fixture();
     let f = fixture.join("restrictions");

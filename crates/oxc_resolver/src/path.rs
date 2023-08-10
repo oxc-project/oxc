@@ -89,3 +89,23 @@ impl PathUtil for Path {
         })
     }
 }
+
+// https://github.com/webpack/enhanced-resolve/blob/main/test/path.test.js
+#[test]
+fn is_invalid_exports_target() {
+    let test_cases = [
+        "../a.js",
+        "../",
+        "./a/b/../../../c.js",
+        "./a/b/../../../",
+        "./../../c.js",
+        "./../../",
+        "./a/../b/../../c.js",
+        "./a/../b/../../",
+        "./././../",
+    ];
+
+    for case in test_cases {
+        assert!(Path::new(case).is_invalid_exports_target(), "{case}");
+    }
+}

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 
 /// Module Resolution Options
 ///
@@ -38,7 +38,13 @@ pub struct ResolveOptions {
     /// See <https://github.com/webpack/enhanced-resolve/pull/285>
     ///
     /// Default None, which is the same as `Some(false)` when the above empty rule is not applied.
-    pub enforce_extension: Option<bool>,
+    pub enforce_extension: EnforceExtension,
+
+    /// A list of exports fields in description files.
+    /// This is currently unused, but values are passed in for logging purposes.
+    ///
+    /// Default `[]`. Should be `["exports"]` when enabled.
+    pub exports_fields: Vec<String>,
 
     /// An object which maps extension to extension aliases.
     ///
@@ -63,6 +69,11 @@ pub struct ResolveOptions {
     ///
     /// Default `false`
     pub fully_specified: bool,
+
+    /// A list of main fields in description files
+    ///
+    /// Default `["main"]`.
+    pub main_fields: Vec<String>,
 
     /// The filename to be used while resolving directories.
     ///
@@ -108,6 +119,27 @@ pub struct ResolveOptions {
     pub symlinks: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EnforceExtension {
+    Auto,
+    Enabled,
+    Disabled,
+}
+
+impl EnforceExtension {
+    pub fn is_auto(&self) -> bool {
+        *self == Self::Auto
+    }
+
+    pub fn is_enabled(&self) -> bool {
+        *self == Self::Enabled
+    }
+
+    pub fn is_disabled(&self) -> bool {
+        *self == Self::Disabled
+    }
+}
+
 /// Alias for [ResolveOptions::alias] and [ResolveOptions::fallback].
 pub type Alias = Vec<(String, Vec<AliasValue>)>;
 
@@ -134,11 +166,13 @@ impl Default for ResolveOptions {
             alias_fields: vec![],
             condition_names: vec![],
             description_files: vec!["package.json".into()],
-            enforce_extension: None,
+            enforce_extension: EnforceExtension::Auto,
             extension_alias: vec![],
+            exports_fields: vec![],
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             fallback: vec![],
             fully_specified: false,
+            main_fields: vec!["main".into()],
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
             resolve_to_context: false,
@@ -153,32 +187,76 @@ impl Default for ResolveOptions {
 
 impl ResolveOptions {
     pub(crate) fn sanitize(mut self) -> Self {
-        if self.enforce_extension.is_none() {
-            self.enforce_extension = Some(false);
+        if self.enforce_extension == EnforceExtension::Auto {
+            self.enforce_extension = EnforceExtension::Disabled;
             // Set `enforceExtension` to `true` when [ResolveOptions::extensions] contains an empty string.
             // See <https://github.com/webpack/enhanced-resolve/pull/285>
             if self.extensions.iter().any(String::is_empty) {
-                self.enforce_extension = Some(true);
+                self.enforce_extension = EnforceExtension::Enabled;
                 self.extensions.retain(String::is_empty);
             }
         }
-        self.extensions = Self::remove_leading_dots(self.extensions);
-        self.extension_alias = self
-            .extension_alias
-            .into_iter()
-            .map(|(extension, extensions)| {
-                (Self::remove_leading_dot(&extension), Self::remove_leading_dots(extensions))
-            })
-            .collect();
         self
     }
+}
 
-    // Remove the leading `.` because `Path::with_extension` does not accept the dot.
-    fn remove_leading_dot(s: &str) -> String {
-        s.trim_start_matches('.').to_string()
-    }
-
-    fn remove_leading_dots(v: Vec<String>) -> Vec<String> {
-        v.into_iter().map(|s| Self::remove_leading_dot(&s)).collect()
+// For tracing
+impl fmt::Display for ResolveOptions {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.alias.is_empty() {
+            write!(f, "alias:{:?},", self.alias)?;
+        }
+        if !self.alias_fields.is_empty() {
+            write!(f, "alias_fields:{:?},", self.alias_fields)?;
+        }
+        if !self.condition_names.is_empty() {
+            write!(f, "condition_names:{:?},", self.condition_names)?;
+        }
+        if self.enforce_extension.is_enabled() {
+            write!(f, "enforce_extension:{:?},", self.enforce_extension)?;
+        }
+        if !self.exports_fields.is_empty() {
+            write!(f, "exports_fields:{:?},", self.exports_fields)?;
+        }
+        if !self.extension_alias.is_empty() {
+            write!(f, "extension_alias:{:?},", self.extension_alias)?;
+        }
+        if !self.extensions.is_empty() {
+            write!(f, "extensions:{:?},", self.extensions)?;
+        }
+        if !self.fallback.is_empty() {
+            write!(f, "fallback:{:?},", self.fallback)?;
+        }
+        if self.fully_specified {
+            write!(f, "fully_specified:{:?},", self.fully_specified)?;
+        }
+        if !self.main_fields.is_empty() {
+            write!(f, "main_fields:{:?},", self.main_fields)?;
+        }
+        if !self.main_files.is_empty() {
+            write!(f, "main_files:{:?},", self.main_files)?;
+        }
+        if !self.modules.is_empty() {
+            write!(f, "modules:{:?},", self.modules)?;
+        }
+        if self.resolve_to_context {
+            write!(f, "resolve_to_context:{:?},", self.resolve_to_context)?;
+        }
+        if self.prefer_relative {
+            write!(f, "prefer_relative:{:?},", self.prefer_relative)?;
+        }
+        if self.prefer_absolute {
+            write!(f, "prefer_absolute:{:?},", self.prefer_absolute)?;
+        }
+        if !self.restrictions.is_empty() {
+            write!(f, "restrictions:{:?},", self.restrictions)?;
+        }
+        if !self.roots.is_empty() {
+            write!(f, "roots:{:?},", self.roots)?;
+        }
+        if self.symlinks {
+            write!(f, "symlinks:{:?},", self.symlinks)?;
+        }
+        Ok(())
     }
 }

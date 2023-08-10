@@ -30,7 +30,7 @@ impl<'a> Gen for Program<'a> {
     }
 }
 
-impl<'a> Gen for Directive<'a> {
+impl Gen for Directive {
     fn gen(&self, p: &mut Formatter) {
         p.print_indent();
         p.print(b'"');

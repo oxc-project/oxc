@@ -1,6 +1,6 @@
 use std::{env, fs, io, path::Path};
 
-use crate::{Resolution, ResolveOptions, Resolver};
+use crate::{ResolveOptions, Resolver};
 
 #[derive(Debug, Clone, Copy)]
 enum FileType {
@@ -113,12 +113,12 @@ fn test() -> io::Result<()> {
             |err| {
                 panic!("{err:?} {comment} {path:?} {request}");
             },
-            Resolution::full_path,
+            |r| r.full_path(),
         );
         assert_eq!(filename, root.join("lib/index.js"));
 
         let resolved_path =
-            resolver_without_symlinks.resolve(&path, request).map(Resolution::full_path);
+            resolver_without_symlinks.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(path.join(request)));
     }
 

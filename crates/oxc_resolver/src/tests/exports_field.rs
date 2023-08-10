@@ -2,9 +2,7 @@
 //!
 //! The huge exports field test cases are at the bottom of this file.
 
-use crate::{
-    ExportsField, PathUtil, Resolution, ResolveContext, ResolveError, ResolveOptions, Resolver,
-};
+use crate::{ExportsField, PathUtil, ResolveContext, ResolveError, ResolveOptions, Resolver};
 use serde_json::json;
 use std::path::Path;
 
@@ -51,7 +49,7 @@ fn test() {
     //   * should log the correct info
 
     for (comment, path, request, expected) in pass {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 
@@ -78,8 +76,8 @@ fn test() {
     }
 }
 
-#[test]
 // resolve using exports field, not a browser field #1
+#[test]
 fn exports_not_browser_field1() {
     let f = super::fixture().join("exports-field");
 
@@ -90,13 +88,12 @@ fn exports_not_browser_field1() {
         ..ResolveOptions::default()
     });
 
-    let resolved_path =
-        resolver.resolve(&f, "exports-field/dist/main.js").map(Resolution::full_path);
+    let resolved_path = resolver.resolve(&f, "exports-field/dist/main.js").map(|r| r.full_path());
     assert_eq!(resolved_path, Ok(f.join("node_modules/exports-field/lib/lib2/main.js")));
 }
 
-#[test]
 // resolve using exports field and a browser alias field #2
+#[test]
 fn exports_not_browser_field2() {
     let f2 = super::fixture().join("exports-field2");
 
@@ -107,13 +104,12 @@ fn exports_not_browser_field2() {
         ..ResolveOptions::default()
     });
 
-    let resolved_path =
-        resolver.resolve(&f2, "exports-field/dist/main.js").map(Resolution::full_path);
+    let resolved_path = resolver.resolve(&f2, "exports-field/dist/main.js").map(|r| r.full_path());
     assert_eq!(resolved_path, Ok(f2.join("node_modules/exports-field/lib/browser.js")));
 }
 
-#[test]
 // should resolve extension without fullySpecified
+#[test]
 fn extension_without_fully_specified() {
     let f2 = super::fixture().join("exports-field2");
 
@@ -124,7 +120,7 @@ fn extension_without_fully_specified() {
     });
 
     let resolved_path =
-        commonjs_resolver.resolve(&f2, "exports-field/dist/main").map(Resolution::full_path);
+        commonjs_resolver.resolve(&f2, "exports-field/dist/main").map(|r| r.full_path());
     assert_eq!(resolved_path, Ok(f2.join("node_modules/exports-field/lib/lib2/main.js")));
 }
 
@@ -151,7 +147,7 @@ fn extension_alias_1_2() {
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }
@@ -177,7 +173,7 @@ fn extension_alias_3() {
     ];
 
     for (comment, path, request, expected) in pass {
-        let resolved_path = resolver.resolve(&path, request).map(Resolution::full_path);
+        let resolved_path = resolver.resolve(&path, request).map(|r| r.full_path());
         assert_eq!(resolved_path, Ok(expected), "{comment} {path:?} {request}");
     }
 }

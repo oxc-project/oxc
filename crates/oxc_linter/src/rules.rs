@@ -80,10 +80,12 @@ mod typescript {
     pub mod no_empty_interface;
     pub mod no_extra_non_null_assertion;
     pub mod no_misused_new;
+    pub mod no_namespace;
     pub mod no_non_null_asserted_optional_chain;
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_var_requires;
+    pub mod prefer_as_const;
 }
 
 mod jest {
@@ -164,7 +166,9 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_unnecessary_type_constraint,
     typescript::no_misused_new,
     typescript::no_this_alias,
+    typescript::no_namespace,
     typescript::no_var_requires,
+    typescript::prefer_as_const,
     jest::no_disabled_tests,
     jest::no_test_prefixes,
     jest::no_focused_tests,

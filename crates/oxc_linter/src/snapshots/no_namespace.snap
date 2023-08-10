@@ -1,0 +1,357 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 101
+expression: no_namespace
+---
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ module foo {}
+   · ─────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace foo {}
+   · ────────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ module foo {}
+   · ─────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace foo {}
+   · ────────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ module foo {}
+   · ─────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace foo {}
+   · ────────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ declare module foo {}
+   ·         ─────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ declare namespace foo {}
+   ·         ────────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ declare module foo {}
+   ·         ─────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ declare namespace foo {}
+   ·         ────────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │ namespace Foo.Bar {}
+   · ────────────────────
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             namespace Foo.Bar {
+ 3 │ │                 namespace Baz.Bas {
+ 4 │ │                   interface X {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:1]
+ 2 │                 namespace Foo.Bar {
+ 3 │ ╭─▶               namespace Baz.Bas {
+ 4 │ │                   interface X {}
+ 5 │ ╰─▶               }
+ 6 │                 }
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             namespace A {
+ 3 │ │                 namespace B {
+ 4 │ │                   declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:1]
+ 2 │                 namespace A {
+ 3 │ ╭─▶               namespace B {
+ 4 │ │                   declare namespace C {}
+ 5 │ ╰─▶               }
+ 6 │                 }
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             namespace A {
+ 3 │ │                 namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:1]
+ 2 │                 namespace A {
+ 3 │ ╭─▶               namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ ╰─▶               }
+ 6 │                 }
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             namespace A {
+ 3 │ │                 declare namespace B {
+ 4 │ │                   namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             namespace A {
+ 3 │ │                 export declare namespace B {
+ 4 │ │                   namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             namespace A {
+ 3 │ │                 export declare namespace B {
+ 4 │ │                   declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             namespace A {
+ 3 │ │                 export declare namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             namespace A {
+ 3 │ │                 declare namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             namespace A {
+ 3 │ │                 export namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:1]
+ 2 │                 namespace A {
+ 3 │ ╭─▶               export namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ ╰─▶               }
+ 6 │                 }
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             export namespace A {
+ 3 │ │                 namespace B {
+ 4 │ │                   declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:1]
+ 2 │                 export namespace A {
+ 3 │ ╭─▶               namespace B {
+ 4 │ │                   declare namespace C {}
+ 5 │ ╰─▶               }
+ 6 │                 }
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             export namespace A {
+ 3 │ │                 namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:1]
+ 2 │                 export namespace A {
+ 3 │ ╭─▶               namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ ╰─▶               }
+ 6 │                 }
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             export namespace A {
+ 3 │ │                 declare namespace B {
+ 4 │ │                   namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             export namespace A {
+ 3 │ │                 export declare namespace B {
+ 4 │ │                   namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             export namespace A {
+ 3 │ │                 export declare namespace B {
+ 4 │ │                   declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             export namespace A {
+ 3 │ │                 export declare namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             export namespace A {
+ 3 │ │                 declare namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:1:1]
+ 1 │     
+ 2 │ ╭─▶             export namespace A {
+ 3 │ │                 export namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                       
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+  ⚠ ES2015 module syntax is preferred over namespaces.
+   ╭─[no_namespace.tsx:2:1]
+ 2 │                 export namespace A {
+ 3 │ ╭─▶               export namespace B {
+ 4 │ │                   export declare namespace C {}
+ 5 │ ╰─▶               }
+ 6 │                 }
+   ╰────
+  help: Replace the namespace with an ES2015 module
+
+

@@ -85,7 +85,7 @@ impl SemanticTester {
         let program = self.allocator.alloc(parse.program);
         let semantic_ret = SemanticBuilder::new(self.source_text, self.source_type)
             .with_check_syntax_error(true)
-            .with_trivias(&parse.trivias)
+            .with_trivias(parse.trivias)
             .with_module_record_builder(self.use_module_record_builder)
             .build(program);
 

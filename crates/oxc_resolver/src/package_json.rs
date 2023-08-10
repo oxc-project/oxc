@@ -10,7 +10,7 @@ use indexmap::IndexMap;
 use rustc_hash::FxHasher;
 use serde::Deserialize;
 
-use crate::{path::PathUtil, ResolveError};
+use crate::{path::PathUtil, ResolveError, ResolveOptions};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
@@ -30,8 +30,11 @@ pub struct PackageJson {
     /// The "main" field defines the entry point of a package when imported by name via a node_modules lookup. Its value is a path.
     /// When a package has an "exports" field, this will take precedence over the "main" field when importing the package by name.
     ///
+    /// Values are dynamically added from [ResolveOptions::main_fields].
+    ///
     /// <https://nodejs.org/api/packages.html#main>
-    pub main: Option<String>,
+    #[serde(skip)]
+    pub main_fields: Vec<String>,
 
     /// The "exports" field allows defining the entry points of a package when imported by name loaded either via a node_modules lookup or a self-reference to its own name.
     ///
@@ -43,7 +46,7 @@ pub struct PackageJson {
     ///
     /// <https://nodejs.org/api/packages.html#subpath-imports>
     #[serde(default)]
-    pub imports: MatchObject,
+    pub imports: Box<MatchObject>,
 
     /// The "browser" field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
     ///
@@ -71,7 +74,6 @@ impl ExportsField {
     }
 }
 
-// TODO: use compact string for these String fields
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum ExportsKey {
     Main,
@@ -111,8 +113,28 @@ pub enum BrowserField {
 }
 
 impl PackageJson {
-    pub fn parse(path: PathBuf, json: &str) -> Result<Self, serde_json::Error> {
-        let mut package_json: Self = serde_json::from_str(json)?;
+    pub fn parse(
+        path: PathBuf,
+        json: &str,
+        options: &ResolveOptions,
+    ) -> Result<Self, serde_json::Error> {
+        let mut package_json_value: serde_json::Value = serde_json::from_str(json.clone())?;
+
+        // Dynamically create `main_fields`.
+        let mut main_fields = vec![];
+        if let Some(package_json_value) = package_json_value.as_object_mut() {
+            for main_field_key in &options.main_fields {
+                if let Some(serde_json::Value::String(value)) =
+                    package_json_value.remove(main_field_key)
+                {
+                    main_fields.push(value);
+                }
+            }
+        }
+
+        // TODO: can this clone be avoided?
+        let mut package_json: Self = serde_json::from_str(json.clone())?;
+        package_json.main_fields = main_fields;
 
         // Normalize all relative paths to make browser_field a constant value lookup
         // TODO: fix BrowserField::String
