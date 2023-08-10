@@ -318,14 +318,56 @@ class Playground {
           (data) => {
             if (this.showingQueryResultsOrArguments === "arguments") {
               try {
-                setStringToStorage(
-                  STORAGE_KEY_QUERY_ARGUMENTS,
-                  JSON.stringify(
-                    JSON.parse(data.state.doc.toString()), // parse so that if the json is invalid we will not save it because we will have thrown an error instead
-                    null,
-                    2
-                  )
-                );
+                let parsed = JSON.parse(data.state.doc.toString()); // parse so that if the json is invalid we will not save it because we will have thrown an error instead
+                if (parsed) {
+                  if (typeof parsed === "object") {
+                    if (
+                      Object.entries(parsed).some(
+                        // todo: this only does depth 1, we should do depth n as in: inside arrays
+                        (x) => typeof x[1] === "object" && !Array.isArray(x[1])
+                      )
+                    ) {
+                      return [
+                        {
+                          from: 0,
+                          to: data.state.doc.length,
+                          message:
+                            "This is invalid for query arguments. The arguments will not be saved until there is are no subobjects in the object.",
+                          severity: "error",
+                        },
+                      ];
+                    } else {
+                      setStringToStorage(
+                        STORAGE_KEY_QUERY_ARGUMENTS,
+                        JSON.stringify(
+                          JSON.parse(data.state.doc.toString()), // parse so that if the json is invalid we will not save it because we will have thrown an error instead
+                          null,
+                          2
+                        )
+                      );
+                    }
+                  } else {
+                    return [
+                      {
+                        from: 0,
+                        to: data.state.doc.length,
+                        message:
+                          "This is invalid for query arguments. The arguments will not be saved until there is an object at the top level.",
+                        severity: "error",
+                      },
+                    ];
+                  }
+                } else {
+                  return [
+                    {
+                      from: 0,
+                      to: data.state.doc.length,
+                      message:
+                        "This is invalid for query arguments. The arguments will not be saved until there is an object at the top level.",
+                      severity: "error",
+                    },
+                  ];
+                }
               } catch {
                 // invalid json in arguments view
                 return [
