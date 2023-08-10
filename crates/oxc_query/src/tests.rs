@@ -17,7 +17,7 @@ fn run_query<T: for<'de> serde::Deserialize<'de> + std::cmp::Ord>(
     let ret = Parser::new(&allocator, code, source_type).parse();
     let program = allocator.alloc(ret.program);
     let semantic_ret =
-        SemanticBuilder::new(code, source_type).with_trivias(&ret.trivias).build(program);
+        SemanticBuilder::new(code, source_type).with_trivias(ret.trivias).build(program);
 
     let adapter = Adapter {
         path_components: vec![Some("index".to_string())],
@@ -199,7 +199,7 @@ fn test_invariants() {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     let semantic_ret =
-        SemanticBuilder::new(source_text, source_type).with_trivias(&ret.trivias).build(program);
+        SemanticBuilder::new(source_text, source_type).with_trivias(ret.trivias).build(program);
 
     let adapter = Adapter { path_components: vec![], semantic: Rc::new(semantic_ret.semantic) };
     check_adapter_invariants(schema(), &adapter);

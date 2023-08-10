@@ -167,7 +167,7 @@ impl IsolatedLintHandler {
 
         let program = allocator.alloc(ret.program);
         let semantic_ret = SemanticBuilder::new(&source_text, source_type)
-            .with_trivias(&ret.trivias)
+            .with_trivias(ret.trivias)
             .with_check_syntax_error(true)
             .with_module_record_builder(true)
             .build(program);

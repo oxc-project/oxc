@@ -173,15 +173,13 @@ impl Oxc {
 
         if run_options.syntax() && !run_options.lint() {
             let semantic_ret = SemanticBuilder::new(source_text, source_type)
-                .with_trivias(&ret.trivias)
+                .with_trivias(ret.trivias)
                 .with_check_syntax_error(true)
                 .build(program);
             self.save_diagnostics(semantic_ret.errors);
-        }
-
-        if run_options.lint() {
+        } else if run_options.lint() {
             let semantic_ret = SemanticBuilder::new(source_text, source_type)
-                .with_trivias(&ret.trivias)
+                .with_trivias(ret.trivias)
                 .with_check_syntax_error(true)
                 .build(program);
             self.save_diagnostics(semantic_ret.errors);
