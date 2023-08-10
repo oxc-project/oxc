@@ -29,6 +29,7 @@ oxc_type_synthesis = { workspace = true }
 oxc_minifier       = { workspace = true }
 oxc_span           = { workspace = true }
 oxc_query          = { workspace = true }
+serde_json         = { workspace = true }
 trustfall          = { workspace = true }
 
 

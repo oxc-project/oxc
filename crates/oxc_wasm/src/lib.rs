@@ -14,7 +14,7 @@ use oxc_semantic::{SemanticBuilder, SemanticBuilderReturn};
 use oxc_span::SourceType;
 use oxc_type_synthesis::{synthesize_program, Diagnostic as TypeCheckDiagnostic};
 use serde::Serialize;
-use trustfall::{execute_query, FieldValue, TransparentValue};
+use trustfall::{execute_query, TransparentValue};
 use wasm_bindgen::prelude::*;
 
 use crate::options::{
@@ -244,7 +244,8 @@ impl Oxc {
     pub fn run_query(
         &self,
         parser_options: &OxcParserOptions,
-        query: String,
+        query: &str,
+        query_arguments: String,
     ) -> Result<wasm_bindgen::JsValue, serde_wasm_bindgen::Error> {
         let allocator = Allocator::default();
         let source_text = &self.source_text;
@@ -282,9 +283,11 @@ impl Oxc {
         let adapter = Adapter::new(inner, vec![Some("index.tsx".to_owned())]);
 
         let arc_adapter = Arc::from(&adapter);
-        let empty: BTreeMap<Arc<str>, FieldValue> = BTreeMap::default();
 
-        execute_query(schema(), arc_adapter, &query, empty).map_or_else(
+        let arguments: BTreeMap<Arc<str>, TransparentValue> =
+            serde_json::from_str(&query_arguments).expect("to have a valid JSON object");
+
+        execute_query(schema(), arc_adapter, query, arguments).map_or_else(
             |e| e.to_string().serialize(&self.serializer),
             |f| {
                 f.collect::<Vec<_>>()

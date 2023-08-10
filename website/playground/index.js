@@ -55,6 +55,7 @@ export default DummyComponent
 
 const STORAGE_KEY_CODE = "playground.code";
 const STORAGE_KEY_QUERY = "playground.query";
+const STORAGE_KEY_QUERY_ARGUMENTS = "playground.query_arguments";
 
 const getStringFromStorage = (whatToGet) => {
   try {
@@ -88,14 +89,18 @@ class Playground {
   languageConf;
   urlParams;
   viewerIsEditableConf;
+  queryResultViewerIsEditableConf;
+  showingQueryResultsOrArguments;
 
   constructor() {
     this.languageConf = new Compartment();
     this.urlParams = new URLParams();
     this.viewerIsEditableConf = new Compartment();
+    this.queryResultViewerIsEditableConf = new Compartment();
     this.editor = this.initEditor();
     this.viewer = this.initViewer();
     this.queryResultsViewer = this.initQueryResultsViewer();
+    this.showingQueryResultsOrArguments = "results";
   }
 
   initOxc() {
@@ -166,34 +171,59 @@ class Playground {
     });
   }
 
+  runQuery() {
+    if (
+      // run query, and put results in query result viewer pane
+      this.currentLanguage() === "graphql" &&
+      this.showingQueryResultsOrArguments === "results"
+    ) {
+      let queryResults = this.oxc.run_query(
+        this.parserOptions,
+        this.viewer.state.doc.toString(),
+        getStringFromStorage(STORAGE_KEY_QUERY_ARGUMENTS) ?? {}
+      );
+
+      let output =
+        typeof queryResults === "string"
+          ? queryResults
+          : JSON.stringify(queryResults, null, 2);
+
+      let stateUpdate = this.queryResultsViewer.state.update({
+        changes: {
+          from: 0,
+          to: this.queryResultsViewer.state.doc.length,
+          insert: output,
+        },
+      });
+
+      this.queryResultsViewer.dispatch(stateUpdate);
+    }
+  }
+
   initViewer() {
     return new EditorView({
       extensions: [
         linter(
           () => {
-            if (this.currentLanguage() === "graphql") {
-              let queryResults = this.oxc.run_query(
-                this.parserOptions,
-                this.viewer.state.doc.toString()
-              );
-
-              let stateUpdate = this.queryResultsViewer.state.update({
-                changes: {
-                  from: 0,
-                  to: this.queryResultsViewer.state.doc.length,
-                  insert: JSON.stringify(queryResults, null, 2),
-                },
-              });
-
-              this.queryResultsViewer.dispatch(stateUpdate);
+            try {
+              this.runQuery();
+            } finally {
+              return [];
             }
           },
           { delay: 0 }
         ),
         linter(
           (data) => {
-            if (this.currentLanguage() === "graphql") {
-              setStringToStorage(STORAGE_KEY_QUERY, data.state.doc.toString());
+            try {
+              if (this.currentLanguage() === "graphql") {
+                setStringToStorage(
+                  STORAGE_KEY_QUERY,
+                  data.state.doc.toString()
+                );
+              }
+            } finally {
+              return [];
             }
           },
           { delay: 0 }
@@ -265,10 +295,48 @@ class Playground {
   initQueryResultsViewer() {
     return new EditorView({
       extensions: [
-        githubDark,
-        EditorView.editable.of(false),
-        json(),
         basicSetup,
+        githubDark,
+        json(),
+        EditorState.transactionExtender.of((tr) => {
+          if (!tr.docChanged) return null;
+
+          let ext;
+
+          if (this.showingQueryResultsOrArguments === "arguments") {
+            ext = EditorView.editable.of(true);
+          } else {
+            ext = EditorView.editable.of(false);
+          }
+
+          return {
+            effects: this.queryResultViewerIsEditableConf.reconfigure(ext),
+          };
+        }),
+        this.queryResultViewerIsEditableConf.of(EditorView.editable.of(false)),
+        linter(
+          (data) => {
+            try {
+              if (this.showingQueryResultsOrArguments === "arguments") {
+                try {
+                  setStringToStorage(
+                    STORAGE_KEY_QUERY_ARGUMENTS,
+                    JSON.stringify(
+                      JSON.parse(data.state.doc.toString()), // parse so that if the json is invalid we will not save it because we will have thrown an error instead
+                      null,
+                      2
+                    )
+                  );
+                } catch {
+                  // invalid json in arguments view
+                }
+              }
+            } finally {
+              return [];
+            }
+          },
+          { delay: 0 }
+        ),
       ],
       parent: document.querySelector("#query-results-viewer"),
     });
@@ -323,6 +391,7 @@ class Playground {
 
     document.getElementById("mangle").style.visibility = "hidden";
     document.getElementById("ir-copy").style.display = "none";
+    document.getElementById("query-args-or-outputs").style.display = "none";
     document.getElementById("duration").style.display = "inline";
     document.getElementById("query-results-viewer").style.display = "none";
     this.runOptions.format = false;
@@ -358,6 +427,8 @@ class Playground {
         text = this.oxc.minifiedText;
         break;
       case "query":
+        document.getElementById("query-args-or-outputs").style.display =
+          "inline";
         document.getElementById("query-results-viewer").style.display =
           "inline";
         document.getElementById("duration").style.display = "none";
@@ -386,6 +457,35 @@ query {
     }
 
     this.updateEditorText(this.viewer, text);
+    this.runQuery();
+  }
+
+  changeBetweenQueryResultsAndQueryArgumentsView() {
+    this.showingQueryResultsOrArguments =
+      this.showingQueryResultsOrArguments === "results"
+        ? "arguments"
+        : "results";
+
+    const { classList } = document.getElementById("query-args-or-outputs");
+    switch (this.showingQueryResultsOrArguments) {
+      case "results":
+        this.runQuery();
+        classList.add("query-button-red");
+        classList.remove("query-button-green");
+        break;
+      case "arguments":
+        this.updateEditorText(
+          this.queryResultsViewer,
+          getStringFromStorage(STORAGE_KEY_QUERY_ARGUMENTS) ?? "{}"
+        );
+        classList.add("query-button-green");
+        classList.remove("query-button-red");
+        break;
+      default:
+        throw new Error(
+          `Unknown value for this.showingQueryResultsOrArguments: ${this.showingQueryResultsOrArguments}`
+        );
+    }
   }
 
   updateEditorText(instance, text) {
@@ -481,6 +581,7 @@ query {
         break;
       }
     }
+    if (start === undefined) console.log({ editor: this.editor, start, end });
     this.highlightEditorRange(
       this.editor,
       EditorSelection.range(Number(start), Number(end))
@@ -512,7 +613,7 @@ class URLParams {
       const url = `${window.location.protocol}//${window.location.host}${
         window.location.pathname
       }?${this.params.toString()}`;
-      window.history.replaceState({ path: url }, "", url);
+      // window.history.replaceState({ path: url }, "", url);
       setStringToStorage(STORAGE_KEY_CODE, code);
     },
     URLParams.URL_UPDATE_THROTTLE,
@@ -601,6 +702,17 @@ async function main() {
 
   document.getElementById("query").onclick = () => {
     playground.updateView("query");
+  };
+
+  document.getElementById("query-args-or-outputs").onclick = () => {
+    playground.changeBetweenQueryResultsAndQueryArgumentsView();
+    if (playground.showingQueryResultsOrArguments === "results") {
+      document.getElementById("query-args-or-outputs").innerText =
+        "Show Query Arguments";
+    } else {
+      document.getElementById("query-args-or-outputs").innerText =
+        "Show Query Results";
+    }
   };
 
   document.getElementById("syntax").onchange = function () {
