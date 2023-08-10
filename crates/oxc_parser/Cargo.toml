@@ -31,3 +31,4 @@ num-bigint = { workspace = true }
 oxc_ast    = { workspace = true, features = ["serde"] }
 miette     = { workspace = true, features = ["fancy-no-backtrace"] }
 serde_json = { workspace = true }
+ouroboros  = "0.17.2" # for `multi-thread` example
