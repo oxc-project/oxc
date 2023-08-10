@@ -238,16 +238,20 @@ impl Oxc {
         self.diagnostics.borrow_mut().extend(diagnostics);
     }
 
+    /// # Errors
+    /// Will return `Err` only if a serde wasm bindgen serialization error occurs.
     #[wasm_bindgen]
     pub fn run_query(
         &self,
         parser_options: &OxcParserOptions,
         query: &str,
-        query_arguments: String,
+        query_arguments: &str,
     ) -> Result<wasm_bindgen::JsValue, serde_wasm_bindgen::Error> {
         let allocator = Allocator::default();
         let source_text = &self.source_text;
-        let source_type = SourceType::from_path("test.tsx").unwrap_or_default();
+        let Ok(source_type) = SourceType::from_path("test.tsx") else {
+            return "'test.tsx' source type invalid, this should never happen.\nPlease open an issue at https://github.com/web-infra-dev/oxc".to_string().serialize(&self.serializer);
+        };
 
         let ParserReturn { errors: parse_errors, panicked, program: returned_program, trivias } =
             Parser::new(&allocator, source_text, source_type)
@@ -282,8 +286,10 @@ impl Oxc {
 
         let arc_adapter = Arc::from(&adapter);
 
-        let arguments: BTreeMap<Arc<str>, TransparentValue> =
-            serde_json::from_str(&query_arguments).expect("to have a valid JSON object");
+        let Ok(arguments): Result<BTreeMap<Arc<str>, TransparentValue>, _> =
+            serde_json::from_str(query_arguments) else {
+                return "Query arguments is not valid json string, this should never happen.\nPlease open an issue at https://github.com/web-infra-dev/oxc".serialize(&self.serializer)
+            };
 
         execute_query(schema(), arc_adapter, query, arguments).map_or_else(
             |e| e.to_string().serialize(&self.serializer),
