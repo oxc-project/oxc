@@ -10,7 +10,7 @@ use std::{
 use dashmap::DashMap;
 use rustc_hash::FxHasher;
 
-use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError};
+use crate::{package_json::PackageJson, FileMetadata, FileSystem, ResolveError, ResolveOptions};
 
 pub struct Cache<Fs> {
     pub(crate) fs: Fs,
@@ -129,6 +129,7 @@ impl CachedPathImpl {
     pub fn find_package_json<Fs: FileSystem>(
         &self,
         fs: &Fs,
+        options: &ResolveOptions,
     ) -> Result<Option<Arc<PackageJson>>, ResolveError> {
         let mut cache_value = self;
         // Go up a directory when querying a file, this avoids a file read from example.js/package.json
@@ -139,7 +140,7 @@ impl CachedPathImpl {
         }
         let mut cache_value = Some(cache_value);
         while let Some(cv) = cache_value {
-            if let Some(package_json) = cv.package_json(fs)? {
+            if let Some(package_json) = cv.package_json(fs, options)? {
                 return Ok(Some(Arc::clone(&package_json)));
             }
             cache_value = cv.parent.as_deref();
@@ -155,6 +156,7 @@ impl CachedPathImpl {
     pub fn package_json<Fs: FileSystem>(
         &self,
         fs: &Fs,
+        options: &ResolveOptions,
     ) -> Result<Option<Arc<PackageJson>>, ResolveError> {
         // Change to `std::sync::OnceLock::get_or_try_init` when it is stable.
         self.package_json
@@ -163,7 +165,7 @@ impl CachedPathImpl {
                 let Ok(package_json_string) = fs.read_to_string(&package_json_path) else {
                     return Ok(None)
                 };
-                PackageJson::parse(package_json_path.clone(), &package_json_string)
+                PackageJson::parse(package_json_path.clone(), &package_json_string, options)
                     .map(Arc::new)
                     .map(Some)
                     .map_err(|error| ResolveError::from_serde_json_error(package_json_path, &error))
