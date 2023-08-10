@@ -85,7 +85,7 @@ fn check_and_report(
         let error_span = match &literal_type.literal {
             TSLiteral::StringLiteral(string_literal) => match initial_value_expression {
                 Expression::StringLiteral(initial_string) => {
-                    if string_literal.value.to_string().eq(&initial_string.value.to_string()) {
+                    if string_literal.value.eq(&initial_string.value) {
                         Some(string_literal.span)
                     } else {
                         None
