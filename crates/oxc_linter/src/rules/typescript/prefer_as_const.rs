@@ -81,51 +81,45 @@ fn check_and_report(
     ctx: &LintContext,
     can_fix: bool,
 ) {
-    match &ts_type {
-        TSType::TSLiteralType(literal_type) => {
-            let error_span = match &literal_type.literal {
-                TSLiteral::StringLiteral(string_literal) => match initial_value_expression {
-                    Expression::StringLiteral(initial_string) => {
-                        if string_literal.value.to_string().eq(&initial_string.value.to_string()) {
-                            Some(string_literal.span)
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                },
-                TSLiteral::NullLiteral(null_literal) => match initial_value_expression {
-                    Expression::NullLiteral(_) => Some(null_literal.span),
-                    _ => None,
-                },
-                TSLiteral::NumberLiteral(number_literal) => match initial_value_expression {
-                    Expression::NumberLiteral(initial_number) => {
-                        if number_literal.value == initial_number.value {
-                            Some(number_literal.span)
-                        } else {
-                            None
-                        }
-                    }
-                    _ => None,
-                },
-                _ => None,
-            };
-            match error_span {
-                Some(span) => {
-                    if can_fix {
-                        ctx.diagnostic_with_fix(PreferAsConstDiagnostic(span), || {
-                            let start = span.start;
-                            let end = span.end;
-                            Fix::new("const", Span { start, end })
-                        })
+    if let TSType::TSLiteralType(literal_type) = &ts_type {
+        let error_span = match &literal_type.literal {
+            TSLiteral::StringLiteral(string_literal) => match initial_value_expression {
+                Expression::StringLiteral(initial_string) => {
+                    if string_literal.value.to_string().eq(&initial_string.value.to_string()) {
+                        Some(string_literal.span)
                     } else {
-                        ctx.diagnostic(PreferAsConstDiagnostic(span));
+                        None
                     }
                 }
-                None => {}
+                _ => None,
+            },
+            TSLiteral::NullLiteral(null_literal) => match initial_value_expression {
+                Expression::NullLiteral(_) => Some(null_literal.span),
+                _ => None,
+            },
+            TSLiteral::NumberLiteral(number_literal) => match initial_value_expression {
+                Expression::NumberLiteral(initial_number) => {
+                    if (number_literal.value - initial_number.value).abs() < f64::EPSILON {
+                        Some(number_literal.span)
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            _ => None,
+        };
+        if let Some(span) = error_span {
+            if can_fix {
+                ctx.diagnostic_with_fix(PreferAsConstDiagnostic(span), || {
+                    let start = span.start;
+                    let end = span.end;
+                    Fix::new("const", Span { start, end })
+                });
+            } else {
+                ctx.diagnostic(PreferAsConstDiagnostic(span));
             }
         }
-        _ => {}
     }
 }
 
