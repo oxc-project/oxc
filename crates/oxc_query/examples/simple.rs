@@ -22,7 +22,7 @@ fn main() {
 
     let program = allocator.alloc(ret.program);
     let semantic_ret =
-        SemanticBuilder::new(&source_text, source_type).with_trivias(&ret.trivias).build(program);
+        SemanticBuilder::new(&source_text, source_type).with_trivias(ret.trivias).build(program);
 
     let adapter = Adapter::new(Rc::new(semantic_ret.semantic), vec![Some("index".to_string())]);
 

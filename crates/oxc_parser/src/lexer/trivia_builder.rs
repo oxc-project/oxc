@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use oxc_ast::Trivias;
 use oxc_span::Span;
 
@@ -9,8 +7,8 @@ pub struct TriviaBuilder {
 }
 
 impl TriviaBuilder {
-    pub fn build(self) -> Rc<Trivias> {
-        Rc::new(self.trivias)
+    pub fn build(self) -> Trivias {
+        self.trivias
     }
 
     pub fn add_single_line_comment(&mut self, start: u32, end: u32) {
