@@ -196,24 +196,7 @@ impl ResolveOptions {
                 self.extensions.retain(String::is_empty);
             }
         }
-        self.extensions = Self::remove_leading_dots(self.extensions);
-        self.extension_alias = self
-            .extension_alias
-            .into_iter()
-            .map(|(extension, extensions)| {
-                (Self::remove_leading_dot(&extension), Self::remove_leading_dots(extensions))
-            })
-            .collect();
         self
-    }
-
-    // Remove the leading `.` because `Path::with_extension` does not accept the dot.
-    fn remove_leading_dot(s: &str) -> String {
-        s.trim_start_matches('.').to_string()
-    }
-
-    fn remove_leading_dots(v: Vec<String>) -> Vec<String> {
-        v.into_iter().map(|s| Self::remove_leading_dot(&s)).collect()
     }
 }
 

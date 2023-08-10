@@ -348,8 +348,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
         for extension in extensions {
             let mut path_with_extension = path.to_path_buf().into_os_string();
-            path_with_extension.reserve_exact(1 + extension.len());
-            path_with_extension.push(".");
+            path_with_extension.reserve_exact(extension.len());
             path_with_extension.push(extension);
             let path_with_extension = PathBuf::from(path_with_extension);
             let cached_path = self.cache.value(&path_with_extension);
@@ -679,7 +678,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn load_extension_alias(&self, cached_path: &CachedPath, ctx: &ResolveContext) -> ResolveState {
         let Some(path_extension) = cached_path.path().extension() else { return Ok(None) };
         let Some((_, extensions)) =
-            self.options.extension_alias.iter().find(|(ext, _)| OsStr::new(ext) == path_extension)
+            self.options.extension_alias.iter().find(|(ext, _)| OsStr::new(ext.trim_start_matches('.')) == path_extension)
         else {
             return Ok(None);
         };
