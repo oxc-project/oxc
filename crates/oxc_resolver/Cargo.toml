@@ -13,14 +13,14 @@ rust-version.workspace = true
 categories.workspace   = true
 
 [dependencies]
-dashmap       = { workspace = true }
-serde         = { workspace = true, features = ["derive"] } # derive for Deserialize from package.json
-serde_json    = { workspace = true }
-rustc-hash    = { workspace = true }
-indexmap      = { workspace = true, features = ["serde"] } # serde for Deserialize from package.json
-dunce         = "1.0.4"
+dashmap    = { workspace = true }
+serde      = { workspace = true, features = ["derive"] } # derive for Deserialize from package.json
+serde_json = { workspace = true }
+rustc-hash = { workspace = true }
+indexmap   = { workspace = true, features = ["serde"] }  # serde for Deserialize from package.json
+dunce      = "1.0.4"
 # Use `std::sync::OnceLock::get_or_try_init` when it is stable.
-once_cell     = "1.18.0"
+once_cell = "1.18.0"
 
 [dev-dependencies]
 static_assertions = { workspace = true }

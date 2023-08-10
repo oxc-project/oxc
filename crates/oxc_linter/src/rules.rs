@@ -85,6 +85,7 @@ mod typescript {
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_var_requires;
+    pub mod prefer_as_const;
 }
 
 mod jest {
@@ -167,6 +168,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_this_alias,
     typescript::no_namespace,
     typescript::no_var_requires,
+    typescript::prefer_as_const,
     jest::no_disabled_tests,
     jest::no_test_prefixes,
     jest::no_focused_tests,
