@@ -581,7 +581,6 @@ query {
         break;
       }
     }
-    if (start === undefined) console.log({ editor: this.editor, start, end });
     this.highlightEditorRange(
       this.editor,
       EditorSelection.range(Number(start), Number(end))
