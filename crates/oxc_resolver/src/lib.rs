@@ -126,6 +126,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         self.resolve_impl(path.as_ref(), specifier)
     }
 
+    #[tracing::instrument(name = "resolve", level = "DEBUG", ret, skip(self), fields(options = %self.options))]
     fn resolve_impl(&self, path: &Path, specifier: &str) -> Result<Resolution, ResolveError> {
         let ctx = ResolveContext(RefCell::new(ResolveContextImpl {
             fully_specified: self.options.fully_specified,
