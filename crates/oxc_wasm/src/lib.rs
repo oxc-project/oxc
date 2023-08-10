@@ -267,7 +267,7 @@ impl Oxc {
 
         let SemanticBuilderReturn { errors: semantic_errors, semantic } =
             SemanticBuilder::new(source_text, source_type)
-                .with_trivias(&trivias)
+                .with_trivias(trivias)
                 .with_check_syntax_error(true)
                 .build(allocated_program);
 
