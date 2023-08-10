@@ -40,6 +40,12 @@ pub struct ResolveOptions {
     /// Default None, which is the same as `Some(false)` when the above empty rule is not applied.
     pub enforce_extension: EnforceExtension,
 
+    /// A list of exports fields in description files.
+    /// This is currently unused, but values are passed in for logging purposes.
+    ///
+    /// Default `[]`. Should be `["exports"]` when enabled.
+    pub exports_fields: Vec<String>,
+
     /// An object which maps extension to extension aliases.
     ///
     /// Default `{}`
@@ -63,6 +69,12 @@ pub struct ResolveOptions {
     ///
     /// Default `false`
     pub fully_specified: bool,
+
+    /// A list of main fields in description files
+    /// This is currently unused, but values are passed in for logging purposes.
+    ///
+    /// Default `[]`. Should be `["main"]` when enabled.
+    pub main_fields: Vec<String>,
 
     /// The filename to be used while resolving directories.
     ///
@@ -157,9 +169,11 @@ impl Default for ResolveOptions {
             description_files: vec!["package.json".into()],
             enforce_extension: EnforceExtension::Auto,
             extension_alias: vec![],
+            exports_fields: vec![],
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             fallback: vec![],
             fully_specified: false,
+            main_fields: vec![],
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
             resolve_to_context: false,
@@ -219,6 +233,9 @@ impl fmt::Display for ResolveOptions {
         if self.enforce_extension.is_enabled() {
             write!(f, "enforce_extension:{:?},", self.enforce_extension)?;
         }
+        if !self.exports_fields.is_empty() {
+            write!(f, "exports_fields:{:?},", self.exports_fields)?;
+        }
         if !self.extension_alias.is_empty() {
             write!(f, "extension_alias:{:?},", self.extension_alias)?;
         }
@@ -230,6 +247,9 @@ impl fmt::Display for ResolveOptions {
         }
         if self.fully_specified {
             write!(f, "fully_specified:{:?},", self.fully_specified)?;
+        }
+        if !self.main_fields.is_empty() {
+            write!(f, "main_fields:{:?},", self.main_fields)?;
         }
         if !self.main_files.is_empty() {
             write!(f, "main_files:{:?},", self.main_files)?;
