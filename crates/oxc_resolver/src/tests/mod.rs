@@ -7,6 +7,7 @@ mod fallback;
 mod full_specified;
 mod imports_field;
 mod incorrect_description_file;
+mod main_field;
 mod memory_fs;
 mod resolve;
 mod restrictions;

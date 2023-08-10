@@ -71,9 +71,8 @@ pub struct ResolveOptions {
     pub fully_specified: bool,
 
     /// A list of main fields in description files
-    /// This is currently unused, but values are passed in for logging purposes.
     ///
-    /// Default `[]`. Should be `["main"]` when enabled.
+    /// Default `["main"]`.
     pub main_fields: Vec<String>,
 
     /// The filename to be used while resolving directories.
@@ -173,7 +172,7 @@ impl Default for ResolveOptions {
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             fallback: vec![],
             fully_specified: false,
-            main_fields: vec![],
+            main_fields: vec!["main".into()],
             main_files: vec!["index".into()],
             modules: vec!["node_modules".into()],
             resolve_to_context: false,
