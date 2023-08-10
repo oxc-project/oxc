@@ -329,7 +329,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // 2. If X.js is a file, load X.js as JavaScript text. STOP
         // 3. If X.json is a file, parse X.json to a JavaScript Object. STOP
         // 4. If X.node is a file, load X.node as binary addon. STOP
-        if let Some(path) = self.load_extensions(cached_path, &self.options.extensions, ctx)? {
+        if let Some(path) =
+            self.load_extensions(cached_path.path(), &self.options.extensions, ctx)?
+        {
             return Ok(Some(path));
         }
         Ok(None)
@@ -337,26 +339,22 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
     fn load_extensions(
         &self,
-        cached_path: &CachedPath,
+        path: &Path,
         extensions: &[String],
         ctx: &ResolveContext,
     ) -> ResolveState {
         if ctx.borrow().fully_specified {
             return Ok(None);
         }
-        let mut path_with_extension = cached_path.path().to_path_buf();
         for extension in extensions {
-            path_with_extension.set_extension(extension);
+            let mut path_with_extension = path.to_path_buf().into_os_string();
+            path_with_extension.reserve_exact(1 + extension.len());
+            path_with_extension.push(".");
+            path_with_extension.push(extension);
+            let path_with_extension = PathBuf::from(path_with_extension);
             let cached_path = self.cache.value(&path_with_extension);
             if let Some(path) = self.load_alias_or_file(&cached_path, ctx)? {
                 return Ok(Some(path));
-            }
-
-            // `std::path::PathBuf::set_extension` only removes 1 dot.
-            // This removes multi-dot extensions such as `.d.ts`.
-            let num_dots = extension.chars().filter(|c| *c == '.').count();
-            for _ in 0..num_dots {
-                path_with_extension.set_extension("");
             }
         }
         Ok(None)
@@ -410,7 +408,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             // 1. If X/index.js is a file, load X/index.js as JavaScript text. STOP
             // 2. If X/index.json is a file, parse X/index.json to a JavaScript object. STOP
             // 3. If X/index.node is a file, load X/index.node as binary addon. STOP
-            if let Some(path) = self.load_extensions(&cached_path, &self.options.extensions, ctx)? {
+            if let Some(path) =
+                self.load_extensions(cached_path.path(), &self.options.extensions, ctx)?
+            {
                 return Ok(Some(path));
             }
         }
@@ -684,8 +684,9 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         else {
             return Ok(None);
         };
+        let path = cached_path.path().with_extension("");
         if let Some(path) =
-            self.load_extensions(cached_path, extensions, &ResolveContext::clone_from(ctx))?
+            self.load_extensions(&path, extensions, &ResolveContext::clone_from(ctx))?
         {
             return Ok(Some(path));
         }
