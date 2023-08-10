@@ -13,6 +13,7 @@ rust-version.workspace = true
 categories.workspace   = true
 
 [dependencies]
+tracing    = { workspace = true }
 dashmap    = { workspace = true }
 serde      = { workspace = true, features = ["derive"] } # derive for Deserialize from package.json
 serde_json = { workspace = true }
@@ -23,11 +24,12 @@ dunce      = "1.0.4"
 once_cell = "1.18.0"
 
 [dev-dependencies]
-static_assertions = { workspace = true }
-criterion         = { workspace = true }
-rayon             = { workspace = true } # for benchmark
-nodejs-resolver   = "0.0.88"             # for benchmark
-vfs               = "0.9.0"              # for testing with in memory file system
+static_assertions  = { workspace = true }
+criterion          = { workspace = true }
+rayon              = { workspace = true }                            # for benchmark
+nodejs-resolver    = "0.0.88"                                        # for benchmark
+vfs                = "0.9.0"                                         # for testing with in memory file system
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
 
 [target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
 jemallocator = { workspace = true }

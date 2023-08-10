@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 
 /// Module Resolution Options
 ///
@@ -201,5 +201,60 @@ impl ResolveOptions {
 
     fn remove_leading_dots(v: Vec<String>) -> Vec<String> {
         v.into_iter().map(|s| Self::remove_leading_dot(&s)).collect()
+    }
+}
+
+// For tracing
+impl fmt::Display for ResolveOptions {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if !self.alias.is_empty() {
+            write!(f, "alias:{:?},", self.alias)?;
+        }
+        if !self.alias_fields.is_empty() {
+            write!(f, "alias_fields:{:?},", self.alias_fields)?;
+        }
+        if !self.condition_names.is_empty() {
+            write!(f, "condition_names:{:?},", self.condition_names)?;
+        }
+        if self.enforce_extension.is_enabled() {
+            write!(f, "enforce_extension:{:?},", self.enforce_extension)?;
+        }
+        if !self.extension_alias.is_empty() {
+            write!(f, "extension_alias:{:?},", self.extension_alias)?;
+        }
+        if !self.extensions.is_empty() {
+            write!(f, "extensions:{:?},", self.extensions)?;
+        }
+        if !self.fallback.is_empty() {
+            write!(f, "fallback:{:?},", self.fallback)?;
+        }
+        if self.fully_specified {
+            write!(f, "fully_specified:{:?},", self.fully_specified)?;
+        }
+        if !self.main_files.is_empty() {
+            write!(f, "main_files:{:?},", self.main_files)?;
+        }
+        if !self.modules.is_empty() {
+            write!(f, "modules:{:?},", self.modules)?;
+        }
+        if self.resolve_to_context {
+            write!(f, "resolve_to_context:{:?},", self.resolve_to_context)?;
+        }
+        if self.prefer_relative {
+            write!(f, "prefer_relative:{:?},", self.prefer_relative)?;
+        }
+        if self.prefer_absolute {
+            write!(f, "prefer_absolute:{:?},", self.prefer_absolute)?;
+        }
+        if !self.restrictions.is_empty() {
+            write!(f, "restrictions:{:?},", self.restrictions)?;
+        }
+        if !self.roots.is_empty() {
+            write!(f, "roots:{:?},", self.roots)?;
+        }
+        if self.symlinks {
+            write!(f, "symlinks:{:?},", self.symlinks)?;
+        }
+        Ok(())
     }
 }
