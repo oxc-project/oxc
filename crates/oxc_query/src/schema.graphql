@@ -366,6 +366,7 @@ this will fire once per assignment.
 """
 type VariableDeclarationAST implements VariableDeclaration & ASTNode & HasSpan {
   left: AssignmentType!
+  right: Expression
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
