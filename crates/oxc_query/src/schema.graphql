@@ -277,6 +277,9 @@ type JSXText {
   span: Span!
 }
 
+"""
+If the number has a negative sign before it, it will not be a `NumberLiteral`
+"""
 interface NumberLiteral implements HasSpan & Expression {
   span: Span!
   """
