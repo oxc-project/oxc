@@ -24,7 +24,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// You may forget to uncomment the test. This rule raises a warning about commented out tests. It's similar to
+    /// You may forget to uncomment some tests. This rule raises a warning about commented out tests. It's similar to
     /// no-disabled-tests rule.
     ///
     /// ### Example
