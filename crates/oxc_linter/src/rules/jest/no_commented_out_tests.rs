@@ -161,12 +161,12 @@ fn test() {
         ("// test('has title but no callback')", None),
         (
             r#"
-        	        foo()
-        	        /*
-        	          describe('has title but no callback', () => {})
-        	        */
-        	        bar()
-        	      "#,
+              foo()
+              /*
+                describe('has title but no callback', () => {})
+              */
+              bar()
+            "#,
             None,
         ),
     ];
