@@ -279,6 +279,9 @@ type JSXText {
 
 interface NumberLiteral implements HasSpan & Expression {
   span: Span!
+  """
+  Nullable if the number is NaN
+  """
   number: Float
 
   # Expression
@@ -287,6 +290,9 @@ interface NumberLiteral implements HasSpan & Expression {
 
 type NumberLiteralAST implements HasSpan & ASTNode & Expression & NumberLiteral {
   span: Span!
+  """
+  Nullable if the number is NaN
+  """
   number: Float
   # ASTNode
   parent: ASTNode
