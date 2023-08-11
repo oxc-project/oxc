@@ -297,7 +297,7 @@ interface JSXElement implements Expression & HasSpan {
   span: Span!
 }
 
-type ObjectLiteral implements Expression & HasSpan {
+interface ObjectLiteral implements Expression & HasSpan {
   value(key: String!): [Expression!]!
 
   # Expression
@@ -306,7 +306,7 @@ type ObjectLiteral implements Expression & HasSpan {
   span: Span!
 }
 
-type ObjectLiteralAST implements Expression & HasSpan & ASTNode {
+type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode {
   value(key: String!): [Expression!]!
 
   # Expression
