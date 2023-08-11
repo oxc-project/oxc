@@ -90,6 +90,7 @@ mod typescript {
 }
 
 mod jest {
+    pub mod no_commented_out_tests;
     pub mod no_disabled_tests;
     pub mod no_focused_tests;
     pub mod no_test_prefixes;
@@ -176,4 +177,5 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_test_prefixes,
     jest::no_focused_tests,
     jest::valid_describe_callback,
+    jest::no_commented_out_tests,
 }
