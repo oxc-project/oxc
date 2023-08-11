@@ -3,7 +3,7 @@ use std::rc::Rc;
 use enum_as_inner::EnumAsInner;
 use oxc_ast::{
     ast::{
-        BindingPatternKind, Class, Expression, IdentifierName, IdentifierReference,
+        BindingPatternKind, Class, Expression, IdentifierName, IdentifierReference, IfStatement,
         ImportDeclaration, ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement,
         JSXExpressionContainer, JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild,
         JSXText, MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral,
@@ -53,6 +53,7 @@ pub enum Vertex<'a> {
     Url(Rc<Url>),
     VariableDeclaration(Rc<VariableDeclarationVertex<'a>>),
     ReturnStatementAST(Rc<ReturnStatementVertex<'a>>),
+    IfStatementAST(Rc<IfStatementVertex<'a>>),
     SpreadIntoObject(Rc<SpreadIntoObjectVertex<'a>>),
     ObjectEntry(Rc<ObjectEntryVertex<'a>>),
 }
@@ -95,6 +96,7 @@ impl<'a> Vertex<'a> {
             Self::Type(data) => data.span(),
             Self::VariableDeclaration(data) => data.variable_declaration.span,
             Self::ReturnStatementAST(data) => data.return_statement.span,
+            Self::IfStatementAST(data) => data.return_statement.span,
             Self::NumberLiteral(data) => data.number_literal.span,
             Self::Name(data) => data.name.span,
             Self::File
@@ -118,6 +120,7 @@ impl<'a> Vertex<'a> {
             Vertex::VariableDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::ObjectLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::ReturnStatementAST(data) => data.ast_node.map(|x| x.id()),
+            Vertex::IfStatementAST(data) => data.ast_node.map(|x| x.id()),
             Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::NumberLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::Name(data) => data.ast_node.map(|x| x.id()),
@@ -198,6 +201,7 @@ impl Typename for Vertex<'_> {
             Vertex::VariableDeclaration(vd) => vd.typename(),
             Vertex::Name(name) => name.typename(),
             Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
+            Vertex::IfStatementAST(_) => "IfStatementAST",
             Vertex::SpreadIntoObject(obj) => obj.typename(),
             Vertex::ObjectEntry(entry) => entry.typename(),
         }
@@ -209,6 +213,10 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
         match ast_node.kind() {
             AstKind::ReturnStatement(return_statement) => Self::ReturnStatementAST(
                 ReturnStatementVertex { ast_node: Some(ast_node), return_statement }.into(),
+            ),
+            AstKind::IfStatement(if_statement) => Self::IfStatementAST(
+                IfStatementVertex { ast_node: Some(ast_node), return_statement: if_statement }
+                    .into(),
             ),
             AstKind::JSXElement(element) => {
                 Self::JSXElement(JSXElementVertex { ast_node: Some(ast_node), element }.into())
@@ -380,6 +388,13 @@ impl<'a> Typename for JSXElementVertex<'a> {
             "JSXElement"
         }
     }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct IfStatementVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub return_statement: &'a IfStatement<'a>,
 }
 
 #[non_exhaustive]

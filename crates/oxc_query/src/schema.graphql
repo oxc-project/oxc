@@ -501,6 +501,17 @@ type ClassAST implements ASTNode & Class & HasSpan {
   span: Span!
 }
 
+type IfStatementAST implements ASTNode & HasSpan {
+  condition: Expression!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
 type ReturnStatementAST implements ASTNode & HasSpan {
   expression: Expression
 

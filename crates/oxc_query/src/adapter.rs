@@ -269,6 +269,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "IfStatementAST" => super::edges::resolve_if_statement_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "Import" | "ImportAST" => super::edges::resolve_import_edge(
                 contexts,
                 edge_name.as_ref(),

@@ -592,6 +592,59 @@ mod has_span {
     }
 }
 
+pub(super) fn resolve_if_statement_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => if_statement::span(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "condition" => if_statement::condition(contexts, resolve_info),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'IfStatementAST'"
+            )
+        }
+    }
+}
+
+mod if_statement {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+
+    pub(super) fn condition<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_if_statement_ast()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have an if_statement_ast vertex, instead have: {v:#?}")
+                    })
+                    .return_statement
+                    .test)
+                    .into(),
+            ))
+        })
+    }
+}
+
 pub(super) fn resolve_import_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
