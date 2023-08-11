@@ -1,0 +1,18 @@
+diff --git a/esm/interface/getAutocompleteSuggestions.js b/esm/interface/getAutocompleteSuggestions.js
+index ac159d132d095a789b966627d315f4238c79ab60..a3be2d27c9d5c7d6fd3745093301a07d28e79a8d 100644
+--- a/esm/interface/getAutocompleteSuggestions.js
++++ b/esm/interface/getAutocompleteSuggestions.js
+@@ -234,7 +234,12 @@ export function getAutocompleteSuggestions(schema, queryText, cursor, contextTok
+         return getSuggestionsForVariableDefinition(token, schema, kind);
+     }
+     if (kind === RuleKinds.DIRECTIVE) {
+-        return getSuggestionsForDirective(token, state, schema, kind);
++        // We should autocomplete fields on the line after we autocomplete a directive
++        if (state.needsAdvance) { // active after '@' or many other kinds of punctuation, so perfect for when we need to autocomplete directives
++            return getSuggestionsForDirective(token, state, schema, kind);
++        } else { // there has been no '@' so we should autocomplete fields
++            return getSuggestionsForFieldNames(token, typeInfo, opts);
++        }
+     }
+     return [];
+ }

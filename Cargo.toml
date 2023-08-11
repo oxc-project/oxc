@@ -85,6 +85,7 @@ static_assertions  = { version = "1.1.0" }
 stacker            = { version = "0.1.15" }
 tracing            = { version = "0.1" }
 tracing-subscriber = { version = "0.3" }
+trustfall         = { version = "0.6.0" }
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'

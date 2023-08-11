@@ -11,6 +11,7 @@ import {
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { rust, rustLanguage } from "@codemirror/lang-rust";
 import { json, jsonLanguage } from "@codemirror/lang-json";
+import { graphql, graphqlLanguage } from "cm6-graphql";
 import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
 import { linter, lintGutter } from "@codemirror/lint";
@@ -18,6 +19,7 @@ import { language, syntaxTree } from "@codemirror/language";
 import { autocompletion } from "@codemirror/autocomplete";
 import { indentWithTab, deleteLine } from "@codemirror/commands";
 import throttle from "lodash.throttle";
+import { buildSchema } from "graphql";
 
 import initWasm, {
   Oxc,
@@ -27,6 +29,7 @@ import initWasm, {
   OxcMinifierOptions,
   OxcFormatterOptions,
   OxcTypeCheckingOptions,
+  graphql_schema_text,
 } from "@oxc/wasm-web";
 
 const placeholderText = `
@@ -50,24 +53,25 @@ const DummyComponent:React.FC = () => {
 export default DummyComponent
 `.trim();
 
+const STORAGE_KEY_CODE = "playground.code";
+const STORAGE_KEY_QUERY = "playground.query";
+const STORAGE_KEY_QUERY_ARGUMENTS = "playground.query_arguments";
 
-const STORAGE_KEY_CODE = "playground.code"; 
-
-const getCodeFromStorage = () => {
+const getStringFromStorage = (whatToGet) => {
   try {
-    return localStorage.getItem(STORAGE_KEY_CODE);
-  }catch(_e) {
+    return localStorage.getItem(whatToGet);
+  } catch (_e) {
     return "";
   }
-}
+};
 
-const setCodeToStorage = (code) => {
+const setStringToStorage = (whatToSet, value) => {
   try {
-    localStorage.setItem(STORAGE_KEY_CODE, code);
-  }catch(_e) {
+    localStorage.setItem(whatToSet, value);
+  } catch (_e) {
     return;
   }
-}
+};
 
 class Playground {
   oxc;
@@ -80,15 +84,23 @@ class Playground {
 
   editor;
   viewer;
+  queryResultsViewer;
   currentView = "ast"; // "ast" | "hir" | "format" | "minify" | "ir"
   languageConf;
   urlParams;
+  viewerIsEditableConf;
+  queryResultViewerIsEditableConf;
+  showingQueryResultsOrArguments;
 
   constructor() {
     this.languageConf = new Compartment();
     this.urlParams = new URLParams();
+    this.viewerIsEditableConf = new Compartment();
+    this.queryResultViewerIsEditableConf = new Compartment();
     this.editor = this.initEditor();
     this.viewer = this.initViewer();
+    this.queryResultsViewer = this.initQueryResultsViewer();
+    this.showingQueryResultsOrArguments = "results";
   }
 
   initOxc() {
@@ -99,15 +111,21 @@ class Playground {
     this.linterOptions = new OxcLinterOptions();
     this.minifierOptions = new OxcMinifierOptions();
     this.typeCheckOptions = new OxcTypeCheckingOptions();
+
+    this.runOxc(this.editor.state.doc.toString());
+  }
+
+  runOxc(text) {
+    const sourceText = text;
+    this.urlParams.updateCode(sourceText);
+    this.oxc.sourceText = sourceText;
+    this.updateView();
   }
 
   initEditor() {
     const stateListener = EditorView.updateListener.of((view) => {
       if (view.docChanged) {
-        const sourceText = view.state.doc.toString();
-        this.urlParams.updateCode(sourceText);
-        this.oxc.sourceText = sourceText;
-        this.updateView();
+        this.runOxc(view.state.doc.toString());
       }
     });
 
@@ -153,11 +171,89 @@ class Playground {
     });
   }
 
+  runQuery() {
+    if (
+      // run query, and put results in query result viewer pane
+      this.currentLanguage() === "graphql" &&
+      this.showingQueryResultsOrArguments === "results"
+    ) {
+      let queryResults = this.oxc.run_query(
+        this.parserOptions,
+        this.viewer.state.doc.toString(),
+        getStringFromStorage(STORAGE_KEY_QUERY_ARGUMENTS) ?? {}
+      );
+
+      let output =
+        typeof queryResults === "string"
+          ? queryResults
+          : JSON.stringify(queryResults, null, 2);
+
+      let stateUpdate = this.queryResultsViewer.state.update({
+        changes: {
+          from: 0,
+          to: this.queryResultsViewer.state.doc.length,
+          insert: output,
+        },
+      });
+
+      this.queryResultsViewer.dispatch(stateUpdate);
+    }
+  }
+
   initViewer() {
     return new EditorView({
       extensions: [
+        linter(
+          () => {
+            try {
+              this.runQuery();
+            } finally {
+              return [];
+            }
+          },
+          { delay: 0 }
+        ),
+        linter(
+          (data) => {
+            try {
+              if (this.currentLanguage() === "graphql") {
+                setStringToStorage(
+                  STORAGE_KEY_QUERY,
+                  data.state.doc.toString()
+                );
+              }
+            } finally {
+              return [];
+            }
+          },
+          { delay: 0 }
+        ),
+        basicSetup,
+        keymap.of([
+          ...vscodeKeymap,
+          indentWithTab,
+          {
+            key: "Delete",
+            shift: deleteLine,
+          },
+        ]),
         githubDark,
-        EditorView.editable.of(false),
+        EditorState.transactionExtender.of((tr) => {
+          if (!tr.docChanged) return null;
+
+          let ext;
+
+          if (this.currentLanguage() === "graphql") {
+            ext = EditorView.editable.of(true);
+          } else {
+            ext = EditorView.editable.of(false);
+          }
+
+          return {
+            effects: this.viewerIsEditableConf.reconfigure(ext),
+          };
+        }),
+        this.viewerIsEditableConf.of(EditorView.editable.of(false)),
         EditorView.lineWrapping,
         this.languageConf.of(javascript()),
         // Change language according to the current view
@@ -178,6 +274,10 @@ class Playground {
               if (currentLanguage == rustLanguage) return null;
               newLanguage = rust();
               break;
+            case "graphql":
+              if (currentLanguage == graphqlLanguage) return null;
+              newLanguage = graphql(buildSchema(graphql_schema_text()));
+              break;
           }
           return {
             effects: this.languageConf.reconfigure(newLanguage),
@@ -186,8 +286,116 @@ class Playground {
         EditorView.domEventHandlers({
           mouseover: this.highlightEditorFromViewer.bind(this),
         }),
+        autocompletion(),
       ],
       parent: document.querySelector("#viewer"),
+    });
+  }
+
+  initQueryResultsViewer() {
+    return new EditorView({
+      extensions: [
+        basicSetup,
+        githubDark,
+        keymap.of([
+          ...vscodeKeymap,
+          indentWithTab,
+          {
+            key: "Delete",
+            shift: deleteLine,
+          },
+        ]),
+        json(),
+        EditorState.transactionExtender.of((tr) => {
+          if (!tr.docChanged) return null;
+
+          let ext;
+
+          if (this.showingQueryResultsOrArguments === "arguments") {
+            ext = EditorView.editable.of(true);
+          } else {
+            ext = EditorView.editable.of(false);
+          }
+
+          return {
+            effects: this.queryResultViewerIsEditableConf.reconfigure(ext),
+          };
+        }),
+        this.queryResultViewerIsEditableConf.of(EditorView.editable.of(false)),
+        linter(
+          (data) => {
+            if (this.showingQueryResultsOrArguments === "arguments") {
+              try {
+                let parsed = JSON.parse(data.state.doc.toString()); // parse so that if the json is invalid we will not save it because we will have thrown an error instead
+                if (parsed) {
+                  if (typeof parsed === "object") {
+                    if (
+                      Object.entries(parsed).some(
+                        // todo: this only does depth 1, we should do depth n as in: inside arrays
+                        (x) => typeof x[1] === "object" && !Array.isArray(x[1])
+                      )
+                    ) {
+                      return [
+                        {
+                          from: 0,
+                          to: data.state.doc.length,
+                          message:
+                            "This is invalid for query arguments. The arguments will not be saved until there is are no subobjects in the object.",
+                          severity: "error",
+                        },
+                      ];
+                    } else {
+                      setStringToStorage(
+                        STORAGE_KEY_QUERY_ARGUMENTS,
+                        JSON.stringify(
+                          JSON.parse(data.state.doc.toString()), // parse so that if the json is invalid we will not save it because we will have thrown an error instead
+                          null,
+                          2
+                        )
+                      );
+                    }
+                  } else {
+                    return [
+                      {
+                        from: 0,
+                        to: data.state.doc.length,
+                        message:
+                          "This is invalid for query arguments. The arguments will not be saved until there is an object at the top level.",
+                        severity: "error",
+                      },
+                    ];
+                  }
+                } else {
+                  return [
+                    {
+                      from: 0,
+                      to: data.state.doc.length,
+                      message:
+                        "This is invalid for query arguments. The arguments will not be saved until there is an object at the top level.",
+                      severity: "error",
+                    },
+                  ];
+                }
+              } catch {
+                // invalid json in arguments view
+                return [
+                  {
+                    from: 0,
+                    to: data.state.doc.length,
+                    message:
+                      "This is invalid JSON. Will not be saved until it is valid.",
+                    severity: "error",
+                  },
+                ];
+              }
+            }
+            return [];
+          },
+          { delay: 0 }
+        ),
+        lintGutter(),
+      ],
+      parent: document.querySelector("#query-results-viewer"),
     });
   }
 
@@ -212,6 +420,8 @@ class Playground {
       case "ast":
       case "hir":
         return "json";
+      case "query":
+        return "graphql";
       default:
         return "javascript";
     }
@@ -238,6 +448,9 @@ class Playground {
 
     document.getElementById("mangle").style.visibility = "hidden";
     document.getElementById("ir-copy").style.display = "none";
+    document.getElementById("query-args-or-outputs").style.display = "none";
+    document.getElementById("duration").style.display = "inline";
+    document.getElementById("query-results-viewer").style.display = "none";
     this.runOptions.format = false;
     this.runOptions.hir = false;
     this.runOptions.minify = false;
@@ -270,9 +483,66 @@ class Playground {
         this.run();
         text = this.oxc.minifiedText;
         break;
+      case "query":
+        document.getElementById("query-args-or-outputs").style.display =
+          "inline";
+        document.getElementById("query-results-viewer").style.display =
+          "inline";
+        document.getElementById("duration").style.display = "none";
+        let savedQuery = getStringFromStorage(STORAGE_KEY_QUERY);
+        if (!savedQuery) {
+          text = `
+query {
+  File {
+    import {
+      from_path @output
+
+      specific_import @fold {
+        original_name @output
+      }
+
+      default_import @fold {
+        local_name @output
+      }
+    }
+  }
+}`.trim();
+        } else {
+          text = savedQuery;
+        }
+        break;
     }
 
     this.updateEditorText(this.viewer, text);
+    this.runQuery();
+  }
+
+  changeBetweenQueryResultsAndQueryArgumentsView() {
+    this.showingQueryResultsOrArguments =
+      this.showingQueryResultsOrArguments === "results"
+        ? "arguments"
+        : "results";
+
+    const { classList } = document.getElementById("query-args-or-outputs");
+    switch (this.showingQueryResultsOrArguments) {
+      case "results":
+        this.runQuery();
+        classList.add("query-button-red");
+        classList.remove("query-button-green");
+        break;
+      case "arguments":
+        this.updateEditorText(
+          this.queryResultsViewer,
+          getStringFromStorage(STORAGE_KEY_QUERY_ARGUMENTS) ?? "{}"
+        );
+        classList.add("query-button-green");
+        classList.remove("query-button-red");
+        break;
+      default:
+        throw new Error(
+          `Unknown value for this.showingQueryResultsOrArguments: ${this.showingQueryResultsOrArguments}`
+        );
+    }
   }
 
   updateEditorText(instance, text) {
@@ -389,7 +659,7 @@ class URLParams {
     this.params = new URLSearchParams(window.location.search);
     this.code = this.params.has("code")
       ? this.decodeCode(this.params.get("code"))
-      : getCodeFromStorage();
+      : getStringFromStorage(STORAGE_KEY_CODE);
   }
 
   updateCode = throttle(
@@ -400,7 +670,7 @@ class URLParams {
         window.location.pathname
       }?${this.params.toString()}`;
       window.history.replaceState({ path: url }, "", url);
-      setCodeToStorage(code);
+      setStringToStorage(STORAGE_KEY_CODE, code);
     },
     URLParams.URL_UPDATE_THROTTLE,
     { trailing: true }
@@ -484,6 +754,21 @@ async function main() {
 
   document.getElementById("minify").onclick = function () {
     playground.updateView("minify");
+  };
+
+  document.getElementById("query").onclick = () => {
+    playground.updateView("query");
+  };
+
+  document.getElementById("query-args-or-outputs").onclick = () => {
+    playground.changeBetweenQueryResultsAndQueryArgumentsView();
+    if (playground.showingQueryResultsOrArguments === "results") {
+      document.getElementById("query-args-or-outputs").innerText =
+        "Show Query Arguments";
+    } else {
+      document.getElementById("query-args-or-outputs").innerText =
+        "Show Query Results";
+    }
   };
 
   document.getElementById("syntax").onchange = function () {
