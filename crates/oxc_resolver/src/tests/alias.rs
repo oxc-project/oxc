@@ -117,3 +117,18 @@ fn absolute_path() {
     let resolution = resolver.resolve(&f, "foo/index");
     assert_eq!(resolution, Err(ResolveError::Ignored(f.join("foo"))));
 }
+
+// Not part of enhanced-resolve
+#[test]
+fn infinite_recursion() {
+    let f = super::fixture();
+    let resolver = Resolver::new(ResolveOptions {
+        alias: vec![
+            ("./a".into(), vec![AliasValue::Path("./b".into())]),
+            ("./b".into(), vec![AliasValue::Path("./a".into())]),
+        ],
+        ..ResolveOptions::default()
+    });
+    let resolution = resolver.resolve(f, "./a");
+    assert_eq!(resolution, Err(ResolveError::Recursion));
+}

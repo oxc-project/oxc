@@ -52,6 +52,10 @@ pub enum ResolveError {
     PackageImportNotDefined(String),
 
     Unimplemented(&'static str),
+
+    // enhanced-resolve Error: Recursion in resolving
+    // Occurs when alias paths reference each other.
+    Recursion,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
