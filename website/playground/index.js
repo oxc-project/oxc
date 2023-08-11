@@ -297,6 +297,14 @@ class Playground {
       extensions: [
         basicSetup,
         githubDark,
+        keymap.of([
+          ...vscodeKeymap,
+          indentWithTab,
+          {
+            key: "Delete",
+            shift: deleteLine,
+          },
+        ]),
         json(),
         EditorState.transactionExtender.of((tr) => {
           if (!tr.docChanged) return null;
