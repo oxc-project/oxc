@@ -50,6 +50,8 @@ fn alias() {
                 ("#".into(), vec![AliasValue::Path("/c/dir".into())]),
                 ("@".into(), vec![AliasValue::Path("/c/dir".into())]),
                 ("ignored".into(), vec![AliasValue::Ignore]),
+                // not part of enhanced-resolve, added to make sure query in alias value works
+                ("alias_query".into(), vec![AliasValue::Path("a?query_after".into())]),
             ],
             modules: vec!["/".into()],
             ..ResolveOptions::default()
@@ -88,6 +90,8 @@ fn alias() {
         ("should resolve a file aliased file 2", "d/dir/index", "/c/dir/index"),
         ("should resolve a file in multiple aliased dirs 1", "multiAlias/dir/file", "/e/dir/file"),
         ("should resolve a file in multiple aliased dirs 2", "multiAlias/anotherDir", "/e/anotherDir/index"),
+        // not part of enhanced-resolve, added to make sure query in alias value works
+        ("should resolve query in alias value", "alias_query?query_before", "/a/index?query_after"),
     ];
 
     for (comment, request, expected) in pass {
