@@ -349,6 +349,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
+            "ObjectEntry" => super::edges::resolve_object_entry_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+            ),
             "ObjectLiteral" | "ObjectLiteralAST" => super::edges::resolve_object_literal_edge(
                 contexts,
                 edge_name.as_ref(),
@@ -377,6 +383,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
             ),
             "SpecificImport" => super::edges::resolve_specific_import_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+            ),
+            "SpreadIntoObject" => super::edges::resolve_spread_into_object_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,

@@ -326,8 +326,29 @@ interface JSXElement implements Expression & HasSpan {
   span: Span!
 }
 
+interface ObjectProperty implements HasSpan {
+  # HasSpan
+  span: Span!
+}
+
+type SpreadIntoObject implements ObjectProperty & HasSpan {
+  spread: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
+type ObjectEntry implements ObjectProperty & HasSpan {
+  key: Expression!
+  value: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
 interface ObjectLiteral implements Expression & HasSpan {
   value(key: String!): [Expression!]!
+  entry: [ObjectEntry!]!
 
   # Expression
   as_constant_string: String
@@ -337,6 +358,7 @@ interface ObjectLiteral implements Expression & HasSpan {
 
 type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode {
   value(key: String!): [Expression!]!
+  entry: [ObjectEntry!]!
 
   # Expression
   as_constant_string: String

@@ -7,8 +7,8 @@ use oxc_ast::{
         ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer,
         JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText,
         MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral, ObjectExpression,
-        PropertyDefinition, ReturnStatement, TSInterfaceDeclaration, TSType, TSTypeAnnotation,
-        VariableDeclarator,
+        ObjectPropertyKind, PropertyDefinition, ReturnStatement, TSInterfaceDeclaration, TSType,
+        TSTypeAnnotation, VariableDeclarator,
     },
     AstKind,
 };
@@ -52,6 +52,8 @@ pub enum Vertex<'a> {
     Url(Rc<Url>),
     VariableDeclaration(Rc<VariableDeclarationVertex<'a>>),
     ReturnStatementAST(Rc<ReturnStatementVertex<'a>>),
+    SpreadIntoObject(&'a ObjectPropertyKind<'a>),
+    ObjectEntry(&'a ObjectPropertyKind<'a>),
 }
 
 impl<'a> Vertex<'a> {
@@ -79,6 +81,8 @@ impl<'a> Vertex<'a> {
             Self::JSXSpreadChild(data) => data.span,
             Self::JSXText(data) => data.span,
             Self::ObjectLiteral(data) => data.object_expression.span,
+            Self::SpreadIntoObject(data) => data.span(),
+            Self::ObjectEntry(data) => data.span(),
             Self::SpecificImport(data) => data.span,
             Self::TypeAnnotation(data) => data.type_annotation.span,
             Self::Type(data) => data.span(),
@@ -126,6 +130,8 @@ impl<'a> Vertex<'a> {
             | Vertex::SpecificImport(_)
             | Vertex::Span(_)
             | Vertex::SearchParameter(_)
+            | Vertex::SpreadIntoObject(_)
+            | Vertex::ObjectEntry(_)
             | Vertex::ClassProperty(_) => None,
         }
     }
@@ -182,6 +188,8 @@ impl Typename for Vertex<'_> {
             Vertex::Url(_) => "URL",
             Vertex::VariableDeclaration(vd) => vd.typename(),
             Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
+            Vertex::SpreadIntoObject(_) => "SpreadIntoObject",
+            Vertex::ObjectEntry(_) => "ObjectEntry",
         }
     }
 }
