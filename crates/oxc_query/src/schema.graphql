@@ -201,6 +201,7 @@ interface InterfaceExtend {
 }
 
 interface Interface {
+  name: String!
   extend: [InterfaceExtend!]!
   name_span: Span!
   entire_span: Span!
@@ -355,6 +356,7 @@ type TypeAnnotationAST implements TypeAnnotation & ASTNode & HasSpan {
 }
 
 type InterfaceAST implements Interface & ASTNode & HasSpan {
+  name: String!
   extend: [InterfaceExtend!]!
   name_span: Span!
   entire_span: Span!
