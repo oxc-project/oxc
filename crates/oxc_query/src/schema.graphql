@@ -347,7 +347,7 @@ type ObjectEntry implements ObjectProperty & HasSpan {
 }
 
 interface ObjectLiteral implements Expression & HasSpan {
-  value(key: String!): [Expression!]!
+  value(key: String!): Expression
   entry: [ObjectEntry!]!
 
   # Expression
@@ -357,7 +357,7 @@ interface ObjectLiteral implements Expression & HasSpan {
 }
 
 type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode {
-  value(key: String!): [Expression!]!
+  value(key: String!): Expression
   entry: [ObjectEntry!]!
 
   # Expression
