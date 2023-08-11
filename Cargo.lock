@@ -1766,7 +1766,6 @@ dependencies = [
  "serde",
  "serde_json",
  "trustfall",
- "trustfall_core",
  "url",
 ]
 

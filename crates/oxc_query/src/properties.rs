@@ -8,7 +8,6 @@ use trustfall::{
     },
     FieldValue,
 };
-use trustfall_core::ir::value::FiniteF64;
 
 use super::vertex::Vertex;
 use crate::{
@@ -370,15 +369,19 @@ pub(super) fn resolve_number_literal_property<'a, 'b: 'a>(
             v.as_constant_string().map_or(FieldValue::Null, Into::into)
         }),
         "number" => resolve_property_with(contexts, |v| {
-            FiniteF64::try_from(
-                v.as_number_literal()
-                    .unwrap_or_else(|| {
-                        panic!("expected to have a numberliteral vertex, instead have: {v:#?}")
-                    })
-                    .number_literal
-                    .value,
-            )
-            .map_or_else(|_| FieldValue::Null, Into::into)
+            let number = v
+                .as_number_literal()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a numberliteral vertex, instead have: {v:#?}")
+                })
+                .number_literal
+                .value;
+
+            if number.is_finite() {
+                FieldValue::Float64(number)
+            } else {
+                FieldValue::Null
+            }
         }),
         _ => {
             unreachable!(
