@@ -638,6 +638,9 @@ query {
         break;
       }
     }
+    // if we didn't find a start or an end, return early
+    if (start === undefined || end === undefined) return;
+
     this.highlightEditorRange(
       this.editor,
       EditorSelection.range(Number(start), Number(end))
