@@ -7,8 +7,8 @@ use oxc_ast::{
         ImportDeclaration, ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement,
         JSXExpressionContainer, JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild,
         JSXText, MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral,
-        ObjectExpression, ObjectPropertyKind, PropertyDefinition, ReturnStatement,
-        TSInterfaceDeclaration, TSType, TSTypeAnnotation, VariableDeclarator,
+        ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyDefinition, ReturnStatement,
+        SpreadElement, TSInterfaceDeclaration, TSType, TSTypeAnnotation, VariableDeclarator,
     },
     AstKind,
 };
@@ -53,8 +53,8 @@ pub enum Vertex<'a> {
     Url(Rc<Url>),
     VariableDeclaration(Rc<VariableDeclarationVertex<'a>>),
     ReturnStatementAST(Rc<ReturnStatementVertex<'a>>),
-    SpreadIntoObject(&'a ObjectPropertyKind<'a>),
-    ObjectEntry(&'a ObjectPropertyKind<'a>),
+    SpreadIntoObject(Rc<SpreadIntoObjectVertex<'a>>),
+    ObjectEntry(Rc<ObjectEntryVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -82,8 +82,14 @@ impl<'a> Vertex<'a> {
             Self::JSXSpreadChild(data) => data.span,
             Self::JSXText(data) => data.span,
             Self::ObjectLiteral(data) => data.object_expression.span,
-            Self::SpreadIntoObject(data) => data.span(),
-            Self::ObjectEntry(data) => data.span(),
+            Self::SpreadIntoObject(data) => match data.property {
+                SpreadIntoObject::PropertyKind(pkind) => pkind.span(),
+                SpreadIntoObject::SpreadElement(spread) => spread.span,
+            },
+            Self::ObjectEntry(data) => match data.property {
+                PropertyKind::PropertyKind(kind) => kind.span(),
+                PropertyKind::ObjectProperty(property) => property.span,
+            },
             Self::SpecificImport(data) => data.span,
             Self::TypeAnnotation(data) => data.type_annotation.span,
             Self::Type(data) => data.span(),
@@ -115,6 +121,8 @@ impl<'a> Vertex<'a> {
             Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::NumberLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::Name(data) => data.ast_node.map(|x| x.id()),
+            Vertex::SpreadIntoObject(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ObjectEntry(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -133,8 +141,6 @@ impl<'a> Vertex<'a> {
             | Vertex::SpecificImport(_)
             | Vertex::Span(_)
             | Vertex::SearchParameter(_)
-            | Vertex::SpreadIntoObject(_)
-            | Vertex::ObjectEntry(_)
             | Vertex::ClassProperty(_) => None,
         }
     }
@@ -192,8 +198,8 @@ impl Typename for Vertex<'_> {
             Vertex::VariableDeclaration(vd) => vd.typename(),
             Vertex::Name(name) => name.typename(),
             Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
-            Vertex::SpreadIntoObject(_) => "SpreadIntoObject",
-            Vertex::ObjectEntry(_) => "ObjectEntry",
+            Vertex::SpreadIntoObject(obj) => obj.typename(),
+            Vertex::ObjectEntry(entry) => entry.typename(),
         }
     }
 }
@@ -234,6 +240,20 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::IdentifierName(identifier_name) => {
                 Self::Name(NameVertex { ast_node: Some(ast_node), name: identifier_name }.into())
             }
+            AstKind::ObjectProperty(property) => Self::ObjectEntry(
+                ObjectEntryVertex {
+                    ast_node: Some(ast_node),
+                    property: PropertyKind::ObjectProperty(property),
+                }
+                .into(),
+            ),
+            AstKind::SpreadElement(property) => Self::SpreadIntoObject(
+                SpreadIntoObjectVertex {
+                    ast_node: Some(ast_node),
+                    property: SpreadIntoObject::SpreadElement(property),
+                }
+                .into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -474,6 +494,52 @@ impl<'a> Typename for NameVertex<'a> {
             "NameAST"
         } else {
             "Name"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ObjectEntryVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub property: PropertyKind<'a>,
+}
+
+#[derive(Debug, Clone)]
+pub enum PropertyKind<'a> {
+    PropertyKind(&'a ObjectPropertyKind<'a>),
+    ObjectProperty(&'a ObjectProperty<'a>),
+}
+
+impl<'a> Typename for ObjectEntryVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ObjectEntryAST"
+        } else {
+            "ObjectEntry"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct SpreadIntoObjectVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub property: SpreadIntoObject<'a>,
+}
+
+#[derive(Debug, Clone)]
+pub enum SpreadIntoObject<'a> {
+    PropertyKind(&'a ObjectPropertyKind<'a>),
+    SpreadElement(&'a SpreadElement<'a>),
+}
+
+impl<'a> Typename for SpreadIntoObjectVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "SpreadIntoObjectAST"
+        } else {
+            "SpreadIntoObject"
         }
     }
 }
