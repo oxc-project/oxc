@@ -228,6 +228,23 @@ pub(super) fn resolve_import_property<'a, 'b: 'a>(
     }
 }
 
+pub(super) fn resolve_interface_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "name" => resolve_property_with(contexts, |v| {
+            v.as_interface().unwrap().interface.id.name.to_string().into()
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'InterfaceExtend'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_interface_extend_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
