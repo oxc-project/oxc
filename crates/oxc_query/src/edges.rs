@@ -1691,6 +1691,7 @@ pub(super) fn resolve_variable_declaration_edge<'a, 'b: 'a>(
     match edge_name {
         "span" => variable_declaration::span(contexts, resolve_info),
         "left" => variable_declaration::left(contexts, resolve_info),
+        "right" => variable_declaration::right(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
@@ -1739,6 +1740,25 @@ mod variable_declaration {
                     .id
                     .kind,
             )));
+        })
+    }
+
+    pub(super) fn right<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_variable_declaration()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a typeannotation vertex, instead have: {v:#?}")
+                    })
+                    .variable_declaration
+                    .init
+                    .as_ref()
+                    .into_iter()
+                    .map(Vertex::from),
+            )
         })
     }
 }
