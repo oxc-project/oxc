@@ -6,7 +6,7 @@ use oxc_ast::{
         BindingPatternKind, Class, Expression, IdentifierReference, ImportDeclaration,
         ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer,
         JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText,
-        MemberExpression, MethodDefinition, ModuleDeclaration, ObjectExpression,
+        MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral, ObjectExpression,
         PropertyDefinition, ReturnStatement, TSInterfaceDeclaration, TSType, TSTypeAnnotation,
         VariableDeclarator,
     },
@@ -42,6 +42,7 @@ pub enum Vertex<'a> {
     JSXSpreadChild(&'a JSXSpreadChild<'a>),
     JSXText(&'a JSXText),
     ObjectLiteral(Rc<ObjectLiteralVertex<'a>>),
+    NumberLiteral(Rc<NumberLiteralVertex<'a>>),
     PathPart(usize),
     SearchParameter(Rc<SearchParameterVertex>),
     Span(Span),
@@ -83,6 +84,7 @@ impl<'a> Vertex<'a> {
             Self::Type(data) => data.span(),
             Self::VariableDeclaration(data) => data.variable_declaration.span,
             Self::ReturnStatementAST(data) => data.return_statement.span,
+            Self::NumberLiteral(data) => data.number_literal.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -105,6 +107,7 @@ impl<'a> Vertex<'a> {
             Vertex::ObjectLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::ReturnStatementAST(data) => data.ast_node.map(|x| x.id()),
             Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
+            Vertex::NumberLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -156,6 +159,7 @@ impl Typename for Vertex<'_> {
             Vertex::File => "File",
             Vertex::Import(import) => import.typename(),
             Vertex::Interface(iface) => iface.typename(),
+            Vertex::NumberLiteral(nlit) => nlit.typename(),
             Vertex::InterfaceExtend(iex) => match **iex {
                 InterfaceExtendVertex::Identifier(_) => "SimpleExtend",
                 InterfaceExtendVertex::MemberExpression(_) => "MemberExtend",
@@ -212,6 +216,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::JSXOpeningElement(opening_element) => Self::JSXOpeningElement(
                 JSXOpeningElementVertex { ast_node: Some(ast_node), opening_element }.into(),
             ),
+            AstKind::NumberLiteral(number_literal) => Self::NumberLiteral(
+                NumberLiteralVertex { ast_node: Some(ast_node), number_literal }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -228,6 +235,9 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             ),
             Expression::JSXElement(element) => {
                 Vertex::JSXElement(JSXElementVertex { ast_node: None, element }.into())
+            }
+            Expression::NumberLiteral(number_literal) => {
+                Vertex::NumberLiteral(NumberLiteralVertex { ast_node: None, number_literal }.into())
             }
             _ => Vertex::Expression(expr),
         }
@@ -415,6 +425,23 @@ impl<'a> Typename for JSXOpeningElementVertex<'a> {
             "JSXOpeningElementAST"
         } else {
             "JSXOpeningElement"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct NumberLiteralVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub number_literal: &'a NumberLiteral<'a>,
+}
+
+impl<'a> Typename for NumberLiteralVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "NumberLiteralAST"
+        } else {
+            "NumberLiteral"
         }
     }
 }

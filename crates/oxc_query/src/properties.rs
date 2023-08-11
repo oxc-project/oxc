@@ -8,6 +8,7 @@ use trustfall::{
     },
     FieldValue,
 };
+use trustfall_core::ir::value::FiniteF64;
 
 use super::vertex::Vertex;
 use crate::{
@@ -351,6 +352,34 @@ pub(super) fn resolve_member_extend_property<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
         "str" => interface_extend_implem(contexts),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'MemberExtend'"
+            )
+        }
+    }
+}
+
+pub(super) fn resolve_number_literal_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        "number" => resolve_property_with(contexts, |v| {
+            FiniteF64::try_from(
+                v.as_number_literal()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a numberliteral vertex, instead have: {v:#?}")
+                    })
+                    .number_literal
+                    .value,
+            )
+            .map_or_else(|_| FieldValue::Null, Into::into)
+        }),
         _ => {
             unreachable!(
                 "attempted to read unexpected property '{property_name}' on type 'MemberExtend'"

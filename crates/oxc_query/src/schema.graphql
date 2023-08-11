@@ -277,6 +277,24 @@ type JSXText {
   span: Span!
 }
 
+interface NumberLiteral implements HasSpan & Expression {
+  span: Span!
+  number: Float
+
+  # Expression
+  as_constant_string: String
+}
+
+type NumberLiteralAST implements HasSpan & ASTNode & Expression & NumberLiteral {
+  span: Span!
+  number: Float
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+}
+
 # Expression
 
 interface JSXElement implements Expression & HasSpan {

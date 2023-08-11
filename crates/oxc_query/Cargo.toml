@@ -21,7 +21,8 @@ serde_json   = { workspace = true }
 url          = { workspace = true }
 trustfall    = { workspace = true }
 
-enum-as-inner = "0.6.0"
+trustfall_core = "0.6.0"
+enum-as-inner  = "0.6.0"
 
 [dev_dependencies]
 oxc_allocator = { workspace = true }
