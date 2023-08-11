@@ -96,6 +96,14 @@ pub(super) fn resolve_class_property<'a, 'b: 'a>(
                 })
                 .unwrap_or(FieldValue::Null)
         }),
+        "name" => resolve_property_with(contexts, |v| {
+            v.as_class()
+                .unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}"))
+                .class
+                .id
+                .as_ref()
+                .map_or_else(|| FieldValue::Null, |x| x.name.to_string().into())
+        }),
         "is_abstract" => resolve_property_with(contexts, |v| {
             v.as_class()
                 .unwrap_or_else(|| panic!("expected to have a class vertex, instead have: {v:#?}"))

@@ -226,6 +226,7 @@ type ClassMethod {
 }
 
 interface Class {
+  name: String
   is_abstract: Boolean!
 
   """
@@ -435,6 +436,7 @@ type JSXElementAST implements JSXElement & Expression & ASTNode & HasSpan {
 }
 
 type ClassAST implements ASTNode & Class & HasSpan {
+  name: String
   is_abstract: Boolean!
 
   """
