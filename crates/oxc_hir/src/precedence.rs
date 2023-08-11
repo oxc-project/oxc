@@ -25,7 +25,7 @@ impl<'a> GetPrecedence for Expression<'a> {
             Self::NewExpression(expr) => expr.precedence(),
             Self::CallExpression(expr) => expr.precedence(),
             Self::MemberExpression(expr) => expr.precedence(),
-            _ => Precedence::highest(),
+            _ => panic!("All cases should be covered"),
         }
     }
 }

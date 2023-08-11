@@ -83,12 +83,6 @@ impl<T: AsRef<str>> PartialEq<T> for Atom {
     }
 }
 
-impl PartialEq<Atom> for String {
-    fn eq(&self, other: &Atom) -> bool {
-        self.as_str() == other.0.as_str()
-    }
-}
-
 impl PartialEq<Atom> for &str {
     fn eq(&self, other: &Atom) -> bool {
         *self == other.0.as_str()
