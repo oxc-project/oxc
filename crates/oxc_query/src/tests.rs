@@ -142,7 +142,7 @@ fn test_object_literal_ast() {
     assert_eq!(
         vec![Output {
             __typename: "ObjectLiteralAST".to_owned(),
-            value_typename: "Expression".to_owned()
+            value_typename: "NumberLiteral".to_owned()
         }],
         results
     );
