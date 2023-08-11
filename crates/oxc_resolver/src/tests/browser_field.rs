@@ -32,6 +32,8 @@ fn replace_file() {
 
     let resolver = Resolver::new(ResolveOptions {
         alias_fields: vec!["browser".into()],
+        // Not part of enhanced-resolve. Added to make sure no interaction between these two fields.
+        main_fields: vec!["browser".into()],
         ..ResolveOptions::default()
     });
 
@@ -50,6 +52,8 @@ fn replace_file() {
         // TODO: resolve `innerBrowser2` field in `browser-module/pakckage.json`
         // ("should resolve in nested property 2", f.clone(), "./lib/main2.js", f.join("lib/browser.js")),
         ("should check only alias field properties", f.clone(), "./toString", f.join("lib/toString.js")),
+        // not part of enhanced-resolve
+        ("recursion", f.clone(), "module-c", f.join("node_modules/module-c.js")),
     ];
 
     for (comment, path, request, expected) in data {

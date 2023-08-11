@@ -78,6 +78,7 @@ impl ResolveContext {
             fully_specified: false,
             query: ctx.query.clone(),
             fragment: ctx.fragment.clone(),
+            resolving_alias: ctx.resolving_alias.clone(),
             depth: ctx.depth,
         }))
     }
@@ -90,6 +91,10 @@ impl ResolveContext {
     fn with_query_fragment(&self, query: Option<&str>, fragment: Option<&str>) {
         self.borrow_mut().query = query.map(ToString::to_string);
         self.borrow_mut().fragment = fragment.map(ToString::to_string);
+    }
+
+    fn with_resolving_alias(&self, alias: String) {
+        self.borrow_mut().resolving_alias = Some(alias);
     }
 
     fn test_for_infinite_recursion(&self) -> Result<(), ResolveError> {
@@ -107,6 +112,8 @@ struct ResolveContextImpl {
     fully_specified: bool,
     query: Option<String>,
     fragment: Option<String>,
+    /// The current resolving alias for bailing recursion alias.
+    resolving_alias: Option<String>,
     /// For avoiding infinite recursion, which will cause stack overflow.
     depth: u8,
 }
@@ -626,12 +633,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         package_json: &PackageJson,
         ctx: &ResolveContext,
     ) -> ResolveState {
-        if !self.options.alias_fields.iter().any(|field| field == "browser") {
-            return Ok(None);
-        }
         let Some(specifier) = package_json.resolve_browser_field(path, specifier)? else {
             return Ok(None);
         };
+        if ctx.borrow().resolving_alias.as_ref().is_some_and(|s| s == specifier) {
+            return Ok(None);
+        }
+        ctx.with_resolving_alias(specifier.to_string());
         let cached_path = self.cache.value(package_json.directory());
         let ctx = ResolveContext::clone_from(ctx);
         self.require(&cached_path, specifier, &ctx).map(Some)
