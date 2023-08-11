@@ -1375,7 +1375,7 @@ pub(super) fn resolve_number_literal_edge<'a, 'b: 'a>(
         "parent" => parents(contexts, adapter),
         _ => {
             unreachable!(
-                "attempted to resolve unexpected edge '{edge_name}' on type 'MemberExtend'"
+                "attempted to resolve unexpected edge '{edge_name}' on type 'NumberLiteral'"
             )
         }
     }

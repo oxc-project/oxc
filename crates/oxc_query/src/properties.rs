@@ -430,7 +430,7 @@ pub(super) fn resolve_number_literal_property<'a, 'b: 'a>(
         }),
         _ => {
             unreachable!(
-                "attempted to read unexpected property '{property_name}' on type 'MemberExtend'"
+                "attempted to read unexpected property '{property_name}' on type 'NumberLiteral'"
             )
         }
     }
