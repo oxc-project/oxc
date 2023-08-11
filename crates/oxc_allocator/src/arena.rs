@@ -48,14 +48,15 @@ impl<'alloc, T: ?Sized + Debug> Debug for Box<'alloc, T> {
     }
 }
 
-impl<'alloc, T> PartialEq for Box<'alloc, T>
-where
-    T: PartialEq<T> + ?Sized,
-{
-    fn eq(&self, other: &Box<'alloc, T>) -> bool {
-        PartialEq::eq(&**self, &**other)
-    }
-}
+// Unused right now.
+// impl<'alloc, T> PartialEq for Box<'alloc, T>
+// where
+// T: PartialEq<T> + ?Sized,
+// {
+// fn eq(&self, other: &Box<'alloc, T>) -> bool {
+// PartialEq::eq(&**self, &**other)
+// }
+// }
 
 impl<'alloc, T> Serialize for Box<'alloc, T>
 where

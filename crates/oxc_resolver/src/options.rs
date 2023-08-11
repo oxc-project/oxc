@@ -260,3 +260,47 @@ impl fmt::Display for ResolveOptions {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::{AliasValue, EnforceExtension, ResolveOptions, Restriction};
+    use std::path::PathBuf;
+
+    #[test]
+    fn enforce_extension() {
+        assert!(EnforceExtension::Auto.is_auto());
+        assert!(!EnforceExtension::Enabled.is_auto());
+        assert!(!EnforceExtension::Disabled.is_auto());
+
+        assert!(!EnforceExtension::Auto.is_enabled());
+        assert!(EnforceExtension::Enabled.is_enabled());
+        assert!(!EnforceExtension::Disabled.is_enabled());
+
+        assert!(!EnforceExtension::Auto.is_disabled());
+        assert!(!EnforceExtension::Enabled.is_disabled());
+        assert!(EnforceExtension::Disabled.is_disabled());
+    }
+
+    #[test]
+    fn display() {
+        let options = ResolveOptions {
+            alias: vec![("a".into(), vec![AliasValue::Ignore])],
+            alias_fields: vec!["browser".into()],
+            condition_names: vec!["require".into()],
+            enforce_extension: EnforceExtension::Enabled,
+            extension_alias: vec![(".js".into(), vec![".ts".into()])],
+            exports_fields: vec!["exports".into()],
+            fallback: vec![("fallback".into(), vec![AliasValue::Ignore])],
+            fully_specified: true,
+            resolve_to_context: true,
+            prefer_relative: true,
+            prefer_absolute: true,
+            restrictions: vec![Restriction::Path(PathBuf::from("restrictions"))],
+            roots: vec![PathBuf::from("roots")],
+            ..ResolveOptions::default()
+        };
+
+        let expected = r#"alias:[("a", [Ignore])],alias_fields:["browser"],condition_names:["require"],enforce_extension:Enabled,exports_fields:["exports"],extension_alias:[(".js", [".ts"])],extensions:[".js", ".json", ".node"],fallback:[("fallback", [Ignore])],fully_specified:true,main_fields:["main"],main_files:["index"],modules:["node_modules"],resolve_to_context:true,prefer_relative:true,prefer_absolute:true,restrictions:[Path("restrictions")],roots:["roots"],symlinks:true,"#;
+        assert_eq!(format!("{options}"), expected);
+    }
+}
