@@ -73,10 +73,12 @@ impl Deref for ResolveContext {
 
 impl ResolveContext {
     fn clone_from(ctx: &Self) -> Self {
+        let ctx = ctx.borrow();
         Self(RefCell::new(ResolveContextImpl {
             fully_specified: false,
-            query: ctx.borrow().query.clone(),
-            fragment: ctx.borrow().fragment.clone(),
+            query: ctx.query.clone(),
+            fragment: ctx.fragment.clone(),
+            depth: ctx.depth,
         }))
     }
 
@@ -89,6 +91,15 @@ impl ResolveContext {
         self.borrow_mut().query = query.map(ToString::to_string);
         self.borrow_mut().fragment = fragment.map(ToString::to_string);
     }
+
+    fn test_for_infinite_recursion(&self) -> Result<(), ResolveError> {
+        self.borrow_mut().depth += 1;
+        // 64 should be more than enough for detecting infinite recursion.
+        if self.borrow().depth > 64 {
+            return Err(ResolveError::Recursion);
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -96,6 +107,8 @@ struct ResolveContextImpl {
     fully_specified: bool,
     query: Option<String>,
     fragment: Option<String>,
+    /// For avoiding infinite recursion, which will cause stack overflow.
+    depth: u8,
 }
 
 impl<Fs: FileSystem> Default for ResolverGeneric<Fs> {
@@ -158,6 +171,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         specifier: &str,
         ctx: &ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
+        ctx.test_for_infinite_recursion()?;
+
         let specifier = Specifier::parse(specifier).map_err(ResolveError::Specifier)?;
         ctx.with_query_fragment(specifier.query, specifier.fragment);
 
