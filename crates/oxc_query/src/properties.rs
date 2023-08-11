@@ -376,6 +376,38 @@ pub(super) fn resolve_member_extend_property<'a, 'b: 'a>(
     }
 }
 
+pub(super) fn resolve_number_literal_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        "number" => resolve_property_with(contexts, |v| {
+            let number = v
+                .as_number_literal()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a numberliteral vertex, instead have: {v:#?}")
+                })
+                .number_literal
+                .value;
+
+            if number.is_finite() {
+                FieldValue::Float64(number)
+            } else {
+                FieldValue::Null
+            }
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'MemberExtend'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_object_literal_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
