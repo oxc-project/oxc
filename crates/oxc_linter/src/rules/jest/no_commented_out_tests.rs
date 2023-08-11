@@ -49,18 +49,18 @@ impl Rule for NoCommentedOutTests {
         //  /^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\(/mu
         let re =
             Regex::new(r#"(?mu)^\s*[xf]?(test|it|describe)(\.\w+|\[['"]\w+['"]\])?\s*\("#).unwrap();
-        let comment_with_test_list = comments.iter().filter_map(|(start, comment)| {
+        let commented_tests = comments.iter().filter_map(|(start, comment)| {
             let start = *start;
             let end = comment.end();
-            let comment_text = &source_text[(start as usize)..(end as usize)];
-            if re.is_match(comment_text) {
+            let text = &source_text[(start as usize)..(end as usize)];
+            if re.is_match(text) {
                 Some(Span::new(start, end))
             } else {
                 None
             }
         });
 
-        for span in comment_with_test_list {
+        for span in commented_tests {
             ctx.diagnostic(NoCommentedOutTestsDiagnostic(span));
         }
     }
