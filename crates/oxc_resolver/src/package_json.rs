@@ -49,9 +49,11 @@ pub struct PackageJson {
     pub imports: Box<MatchObject>,
 
     /// The "browser" field is provided by a module author as a hint to javascript bundlers or component tools when packaging modules for client side use.
+    /// Multiple values are configured by [ResolveOptions::alias_fields].
     ///
     /// <https://github.com/defunctzombie/package-browser-field-spec>
-    pub browser: Option<BrowserField>,
+    #[serde(skip)]
+    pub browser_fields: Vec<BrowserField>,
 }
 
 /// `matchObj` defined in `PACKAGE_IMPORTS_EXPORTS_RESOLVE`
@@ -113,6 +115,8 @@ pub enum BrowserField {
 }
 
 impl PackageJson {
+    /// # Panics
+    /// # Errors
     pub fn parse(
         path: PathBuf,
         json: &str,
@@ -120,14 +124,40 @@ impl PackageJson {
     ) -> Result<Self, serde_json::Error> {
         let mut package_json_value: serde_json::Value = serde_json::from_str(json.clone())?;
 
-        // Dynamically create `main_fields`.
-        let mut main_fields = vec![];
+        let mut main_fields = Vec::with_capacity(options.main_fields.len());
+        let mut browser_fields = Vec::with_capacity(options.alias_fields.len());
+
         if let Some(package_json_value) = package_json_value.as_object_mut() {
+            // Dynamically create `main_fields`.
             for main_field_key in &options.main_fields {
+                // Using `get` + `clone` instead of remove here
+                // because `main_fields` may contain `browser`, which is also used in `browser_fields.
                 if let Some(serde_json::Value::String(value)) =
-                    package_json_value.remove(main_field_key)
+                    package_json_value.get(main_field_key)
                 {
-                    main_fields.push(value);
+                    main_fields.push(value.clone());
+                }
+            }
+            // Dynamically create `browser_fields`.
+            let dir = path.parent().unwrap();
+            for browser_field_key in &options.alias_fields {
+                if let Some(value) = package_json_value.remove(browser_field_key) {
+                    let mut browser_field: BrowserField = serde_json::from_value(value)?;
+                    // Normalize all relative paths to make browser_field a constant value lookup
+                    if let BrowserField::Map(map) = &mut browser_field {
+                        let relative_paths = map
+                            .keys()
+                            .filter(|path| path.starts_with("."))
+                            .cloned()
+                            .collect::<Vec<_>>();
+                        for relative_path in relative_paths {
+                            if let Some(value) = map.remove(&relative_path) {
+                                let normalized_path = dir.normalize_with(relative_path);
+                                map.insert(normalized_path, value);
+                            }
+                        }
+                    }
+                    browser_fields.push(browser_field);
                 }
             }
         }
@@ -135,20 +165,7 @@ impl PackageJson {
         // TODO: can this clone be avoided?
         let mut package_json: Self = serde_json::from_str(json.clone())?;
         package_json.main_fields = main_fields;
-
-        // Normalize all relative paths to make browser_field a constant value lookup
-        // TODO: fix BrowserField::String
-        if let Some(BrowserField::Map(map)) = &mut package_json.browser {
-            let relative_paths =
-                map.keys().filter(|path| path.starts_with(".")).cloned().collect::<Vec<_>>();
-            let dir = path.parent().unwrap();
-            for relative_path in relative_paths {
-                if let Some(value) = map.remove(&relative_path) {
-                    let normalized_path = dir.normalize_with(relative_path);
-                    map.insert(normalized_path, value);
-                }
-            }
-        }
+        package_json.browser_fields = browser_fields;
 
         package_json.path = path;
         Ok(package_json)
@@ -170,20 +187,21 @@ impl PackageJson {
         path: &Path,
         request: Option<&str>,
     ) -> Result<Option<&str>, ResolveError> {
-        // TODO: return ResolveError if the provided `alias_fields` is not `browser` for future proof
-        match self.browser.as_ref() {
-            Some(BrowserField::Map(field_data)) => {
-                // look up by full path if request is empty
-                request
-                    .map_or_else(
-                        || field_data.get(path),
-                        |request| field_data.get(Path::new(request)),
-                    )
-                    .map_or_else(|| Ok(None), |value| Self::alias_value(path, value))
+        let request = request.map_or(path, |r| Path::new(r));
+        for browser in &self.browser_fields {
+            match browser {
+                BrowserField::Map(field_data) => {
+                    // look up by full path if request is empty
+                    if let Some(value) = field_data.get(request) {
+                        return Self::alias_value(path, value);
+                    }
+                }
+                BrowserField::String(value) => {
+                    return Ok(Some(value.as_str()));
+                }
             }
-            // TODO: implement <https://github.com/defunctzombie/package-browser-field-spec#alternate-main---basic>
-            _ => Ok(None),
         }
+        Ok(None)
     }
 
     fn alias_value<'a>(
