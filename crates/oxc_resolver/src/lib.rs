@@ -72,25 +72,17 @@ impl Deref for ResolveContext {
 }
 
 impl ResolveContext {
-    fn clone_from(ctx: &Self) -> Self {
-        let ctx = ctx.borrow();
-        Self(RefCell::new(ResolveContextImpl {
-            fully_specified: false,
-            query: ctx.query.clone(),
-            fragment: ctx.fragment.clone(),
-            resolving_alias: ctx.resolving_alias.clone(),
-            depth: ctx.depth,
-        }))
-    }
-
-    fn with_fully_specified(&self, yes: bool) -> &Self {
+    fn with_fully_specified(&self, yes: bool) {
         self.borrow_mut().fully_specified = yes;
-        self
     }
 
     fn with_query_fragment(&self, query: Option<&str>, fragment: Option<&str>) {
-        self.borrow_mut().query = query.map(ToString::to_string);
-        self.borrow_mut().fragment = fragment.map(ToString::to_string);
+        if let Some(query) = query {
+            self.borrow_mut().query.replace(query.to_string());
+        }
+        if let Some(fragment) = fragment {
+            self.borrow_mut().fragment.replace(fragment.to_string());
+        }
     }
 
     fn with_resolving_alias(&self, alias: String) {
@@ -161,12 +153,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let path = self.load_realpath(&cached_path).unwrap_or_else(|| cached_path.to_path_buf());
         // enhanced-resolve: restrictions
         self.check_restrictions(&path)?;
-        let ctx = ctx.borrow();
-        Ok(Resolution {
-            path,
-            query: ctx.query.clone().take(),
-            fragment: ctx.fragment.clone().take(),
-        })
+        let mut ctx = ctx.borrow_mut();
+        Ok(Resolution { path, query: ctx.query.take(), fragment: ctx.fragment.take() })
     }
 
     /// require(X) from module at path Y
@@ -641,8 +629,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         }
         ctx.with_resolving_alias(specifier.to_string());
         let cached_path = self.cache.value(package_json.directory());
-        let ctx = ResolveContext::clone_from(ctx);
-        self.require(&cached_path, specifier, &ctx).map(Some)
+        ctx.with_fully_specified(false);
+        self.require(&cached_path, specifier, ctx).map(Some)
     }
 
     /// enhanced-resolve: AliasPlugin for [ResolveOptions::alias] and [ResolveOptions::fallback].
@@ -666,6 +654,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             for r in specifiers {
                 match r {
                     AliasValue::Path(alias) => {
+                        let specifier = Specifier::parse(alias).map_err(ResolveError::Specifier)?;
+                        let alias = specifier.path.as_str();
                         if inner_request.as_ref() != alias
                             && !inner_request
                                 .strip_prefix(alias)
@@ -673,8 +663,10 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         {
                             let new_request_str =
                                 format!("{alias}{}", &inner_request[alias_key.len()..]);
-                            let ctx = ResolveContext::clone_from(ctx);
-                            match self.require(cached_path, &new_request_str, &ctx) {
+                            ctx.with_fully_specified(false);
+                            // Alias may contain `?query`, pass it along.
+                            ctx.with_query_fragment(specifier.query, specifier.fragment);
+                            match self.require(cached_path, &new_request_str, ctx) {
                                 Err(ResolveError::NotFound(_)) => { /* noop */ }
                                 Ok(path) => return Ok(Some(path)),
                                 Err(err) => return Err(err),
@@ -706,9 +698,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             return Ok(None);
         };
         let path = cached_path.path().with_extension("");
-        if let Some(path) =
-            self.load_extensions(&path, extensions, &ResolveContext::clone_from(ctx))?
-        {
+        ctx.with_fully_specified(false);
+        if let Some(path) = self.load_extensions(&path, extensions, ctx)? {
             return Ok(Some(path));
         }
         Err(ResolveError::ExtensionAlias)
@@ -763,9 +754,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         }
                     }
                     let subpath = format!(".{subpath}");
-                    return self
-                        .require(&cached_path, &subpath, &ResolveContext::clone_from(ctx))
-                        .map(Some);
+                    ctx.with_fully_specified(false);
+                    return self.require(&cached_path, &subpath, ctx).map(Some);
                 }
                 parent_url.pop();
             }
