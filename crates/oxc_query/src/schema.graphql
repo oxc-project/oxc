@@ -369,6 +369,21 @@ type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode 
   span: Span!
 }
 
+interface Name implements HasSpan {
+  name: String!
+  # HasSpan
+  span: Span!
+}
+
+type NameAST implements ASTNode & Name & HasSpan {
+  name: String!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
 interface Expression implements HasSpan {
   """
   Only non-null if the string can be trivially coerced to a constant string

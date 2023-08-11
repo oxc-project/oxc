@@ -3,12 +3,12 @@ use std::rc::Rc;
 use enum_as_inner::EnumAsInner;
 use oxc_ast::{
     ast::{
-        BindingPatternKind, Class, Expression, IdentifierReference, ImportDeclaration,
-        ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer,
-        JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText,
-        MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral, ObjectExpression,
-        ObjectPropertyKind, PropertyDefinition, ReturnStatement, TSInterfaceDeclaration, TSType,
-        TSTypeAnnotation, VariableDeclarator,
+        BindingPatternKind, Class, Expression, IdentifierName, IdentifierReference,
+        ImportDeclaration, ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement,
+        JSXExpressionContainer, JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild,
+        JSXText, MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral,
+        ObjectExpression, ObjectPropertyKind, PropertyDefinition, ReturnStatement,
+        TSInterfaceDeclaration, TSType, TSTypeAnnotation, VariableDeclarator,
     },
     AstKind,
 };
@@ -43,6 +43,7 @@ pub enum Vertex<'a> {
     JSXText(&'a JSXText),
     ObjectLiteral(Rc<ObjectLiteralVertex<'a>>),
     NumberLiteral(Rc<NumberLiteralVertex<'a>>),
+    Name(Rc<NameVertex<'a>>),
     PathPart(usize),
     SearchParameter(Rc<SearchParameterVertex>),
     Span(Span),
@@ -89,6 +90,7 @@ impl<'a> Vertex<'a> {
             Self::VariableDeclaration(data) => data.variable_declaration.span,
             Self::ReturnStatementAST(data) => data.return_statement.span,
             Self::NumberLiteral(data) => data.number_literal.span,
+            Self::Name(data) => data.name.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -112,6 +114,7 @@ impl<'a> Vertex<'a> {
             Vertex::ReturnStatementAST(data) => data.ast_node.map(|x| x.id()),
             Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::NumberLiteral(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Name(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -187,6 +190,7 @@ impl Typename for Vertex<'_> {
             Vertex::Type(_) => "Type",
             Vertex::Url(_) => "URL",
             Vertex::VariableDeclaration(vd) => vd.typename(),
+            Vertex::Name(name) => name.typename(),
             Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
             Vertex::SpreadIntoObject(_) => "SpreadIntoObject",
             Vertex::ObjectEntry(_) => "ObjectEntry",
@@ -227,6 +231,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::NumberLiteral(number_literal) => Self::NumberLiteral(
                 NumberLiteralVertex { ast_node: Some(ast_node), number_literal }.into(),
             ),
+            AstKind::IdentifierName(identifier_name) => {
+                Self::Name(NameVertex { ast_node: Some(ast_node), name: identifier_name }.into())
+            }
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -450,6 +457,23 @@ impl<'a> Typename for NumberLiteralVertex<'a> {
             "NumberLiteralAST"
         } else {
             "NumberLiteral"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct NameVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub name: &'a IdentifierName,
+}
+
+impl<'a> Typename for NameVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "NameAST"
+        } else {
+            "Name"
         }
     }
 }
