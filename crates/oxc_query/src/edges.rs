@@ -1415,13 +1415,10 @@ pub(super) fn resolve_object_entry_edge<'a, 'b: 'a>(
 }
 
 mod object_entry {
-    use oxc_ast::ast::ObjectPropertyKind;
     use trustfall::provider::{
         resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
         VertexIterator,
     };
-
-    use crate::vertex::PropertyKind;
 
     use super::{super::vertex::Vertex, get_span};
 
@@ -1437,18 +1434,13 @@ mod object_entry {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let key = match v.as_object_entry().map_or_else(
-                || panic!("expected to have a objectentry vertex, instead have: {v:#?}"),
-                |x| &x.property,
-            ) {
-                PropertyKind::ObjectProperty(prop) => &prop.key,
-                PropertyKind::PropertyKind(pkind) => match pkind {
-                    ObjectPropertyKind::ObjectProperty(prop) => &prop.key,
-                    ObjectPropertyKind::SpreadProperty(_) => {
-                        unreachable!("Should never have a SpreadProperty in a ObjectEntry vertex")
-                    }
-                },
-            };
+            let key = &v
+                .as_object_entry()
+                .map_or_else(
+                    || panic!("expected to have a objectentry vertex, instead have: {v:#?}"),
+                    |x| &x.property,
+                )
+                .key;
 
             let vertex: Vertex<'_> = match &key {
                 oxc_ast::ast::PropertyKey::Identifier(_) => return Box::new(std::iter::empty()), // TODO: FINISH
@@ -1467,18 +1459,13 @@ mod object_entry {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let value = match v.as_object_entry().map_or_else(
-                || panic!("expected to have a objectentry vertex, instead have: {v:#?}"),
-                |x| &x.property,
-            ) {
-                PropertyKind::ObjectProperty(prop) => &prop.value,
-                PropertyKind::PropertyKind(pkind) => match pkind {
-                    ObjectPropertyKind::ObjectProperty(prop) => &prop.value,
-                    ObjectPropertyKind::SpreadProperty(_) => {
-                        unreachable!("Should never have a SpreadProperty in a ObjectEntry vertex")
-                    }
-                },
-            };
+            let value = &v
+                .as_object_entry()
+                .map_or_else(
+                    || panic!("expected to have a objectentry vertex, instead have: {v:#?}"),
+                    |x| &x.property,
+                )
+                .value;
 
             Box::new(std::iter::once(value.into()))
         })
@@ -1525,7 +1512,7 @@ mod object_literal {
     use super::{super::vertex::Vertex, get_span};
     use crate::{
         util::expr_to_maybe_const_string,
-        vertex::{ObjectEntryVertex, PropertyKind, SpreadIntoObject, SpreadIntoObjectVertex},
+        vertex::{ObjectEntryVertex, SpreadIntoObjectVertex},
     };
 
     pub(super) fn span<'a, 'b: 'a>(
@@ -1578,24 +1565,14 @@ mod object_literal {
                 panic!("expected to have an objectliteral vertex, instead have: {v:#?}")
             });
 
-            Box::new(obj.object_expression.properties.iter().map(|property| {
-                match property {
-                    oxc_ast::ast::ObjectPropertyKind::ObjectProperty(_) => Vertex::ObjectEntry(
-                        ObjectEntryVertex {
-                            property: PropertyKind::PropertyKind(property),
-                            ast_node: None,
-                        }
-                        .into(),
-                    ),
-                    oxc_ast::ast::ObjectPropertyKind::SpreadProperty(spread) => {
-                        Vertex::SpreadIntoObject(
-                            SpreadIntoObjectVertex {
-                                property: SpreadIntoObject::SpreadElement(spread),
-                                ast_node: None,
-                            }
-                            .into(),
-                        )
-                    }
+            Box::new(obj.object_expression.properties.iter().map(|property| match property {
+                oxc_ast::ast::ObjectPropertyKind::ObjectProperty(property) => {
+                    Vertex::ObjectEntry(ObjectEntryVertex { property, ast_node: None }.into())
+                }
+                oxc_ast::ast::ObjectPropertyKind::SpreadProperty(property) => {
+                    Vertex::SpreadIntoObject(
+                        SpreadIntoObjectVertex { property, ast_node: None }.into(),
+                    )
                 }
             }))
         })
@@ -1806,20 +1783,17 @@ pub(super) fn resolve_spread_into_object_edge<'a, 'b: 'a>(
         "value" => resolve_spread_into_object_edge::value(contexts, resolve_info),
         _ => {
             unreachable!(
-                "attempted to resolve unexpected edge '{edge_name}' on type 'SpecificImport'"
+                "attempted to resolve unexpected edge '{edge_name}' on type 'SpreadIntoObject'"
             )
         }
     }
 }
 
 mod resolve_spread_into_object_edge {
-    use oxc_ast::ast::ObjectPropertyKind;
     use trustfall::provider::{
         resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
         VertexIterator,
     };
-
-    use crate::vertex::SpreadIntoObject;
 
     use super::{super::vertex::Vertex, get_span};
 
@@ -1828,20 +1802,13 @@ mod resolve_spread_into_object_edge {
         _resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
         resolve_neighbors_with(contexts, |v| {
-            let argument = match v.as_spread_into_object().map_or_else(
-                || panic!("expected to have a spreadintoobject vertex, instead have: {v:#?}"),
-                |x| &x.property,
-            ) {
-                SpreadIntoObject::SpreadElement(spread_element) => &spread_element.argument,
-                SpreadIntoObject::PropertyKind(property_kind) => match property_kind {
-                    ObjectPropertyKind::SpreadProperty(spread_property) => {
-                        &spread_property.argument
-                    }
-                    ObjectPropertyKind::ObjectProperty(_) => {
-                        unreachable!("Should never have an ObjectProperty in a ObjectEntry vertex")
-                    }
-                },
-            };
+            let argument = &v
+                .as_spread_into_object()
+                .map_or_else(
+                    || panic!("expected to have a spreadintoobject vertex, instead have: {v:#?}"),
+                    |x| &x.property,
+                )
+                .argument;
 
             Box::new(std::iter::once(argument.into()))
         })

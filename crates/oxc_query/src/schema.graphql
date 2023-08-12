@@ -331,14 +331,25 @@ interface ObjectProperty implements HasSpan {
   span: Span!
 }
 
-type SpreadIntoObject implements ObjectProperty & HasSpan {
-  spread: Expression!
+interface SpreadIntoObject implements ObjectProperty & HasSpan {
+  value: Expression!
 
   # HasSpan
   span: Span!
 }
 
-type ObjectEntry implements ObjectProperty & HasSpan {
+type SpreadIntoObjectAST implements ASTNode & SpreadIntoObject & ObjectProperty & HasSpan {
+  value: Expression!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+interface ObjectEntry implements ObjectProperty & HasSpan {
   key: Expression!
   value: Expression!
 
@@ -346,9 +357,21 @@ type ObjectEntry implements ObjectProperty & HasSpan {
   span: Span!
 }
 
+type ObjectEntryAST implements ASTNode & ObjectEntry & ObjectProperty & HasSpan {
+  key: Expression!
+  value: Expression!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
 interface ObjectLiteral implements Expression & HasSpan {
   value(key: String!): Expression
-  entry: [ObjectEntry!]!
+  entry: [ObjectProperty!]!
 
   # Expression
   as_constant_string: String
@@ -358,7 +381,7 @@ interface ObjectLiteral implements Expression & HasSpan {
 
 type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode {
   value(key: String!): Expression
-  entry: [ObjectEntry!]!
+  entry: [ObjectProperty!]!
 
   # Expression
   as_constant_string: String
