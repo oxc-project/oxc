@@ -109,6 +109,13 @@ fn get_nearest_undefined_declare_span(ctx: &LintContext) -> Option<Span> {
     span
 }
 
+#[inline]
+fn check_and_diagnostic(atom: Atom, span: Span, ctx: &LintContext) {
+    if PRE_DEFINE_VAR.contains_key(atom.as_str()) {
+        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(atom, span));
+    }
+}
+
 impl Rule for NoShadowRestrictedNames {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let kind = node.kind();
@@ -147,12 +154,7 @@ impl Rule for NoShadowRestrictedNames {
             },
             AstKind::Function(function) => {
                 if let Some(bind_ident) = function.id.as_ref() {
-                    if PRE_DEFINE_VAR.contains_key(bind_ident.name.as_str()) {
-                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                            bind_ident.name.clone(),
-                            bind_ident.span,
-                        ));
-                    }
+                    check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
                 }
                 for param in function.params.items.iter() {
                     if let Some(value) = binding_pattern_is_global_obj(&param.pattern, false) {
@@ -162,12 +164,7 @@ impl Rule for NoShadowRestrictedNames {
             }
             AstKind::Class(class_decl) => {
                 if let Some(bind_ident) = class_decl.id.as_ref() {
-                    if PRE_DEFINE_VAR.contains_key(bind_ident.name.as_str()) {
-                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                            bind_ident.name.clone(),
-                            bind_ident.span,
-                        ));
-                    }
+                    check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
                 }
             }
             AstKind::CatchClause(catch_clause) => {
@@ -179,20 +176,10 @@ impl Rule for NoShadowRestrictedNames {
             }
             AstKind::MethodDefinition(method_definition) => match &method_definition.key {
                 PropertyKey::Identifier(ident) => {
-                    if PRE_DEFINE_VAR.contains_key(ident.name.as_str()) {
-                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                            ident.name.clone(),
-                            ident.span,
-                        ));
-                    }
+                    check_and_diagnostic(ident.name.clone(), ident.span, ctx);
                 }
                 PropertyKey::PrivateIdentifier(ident) => {
-                    if PRE_DEFINE_VAR.contains_key(ident.name.as_str()) {
-                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                            ident.name.clone(),
-                            ident.span,
-                        ));
-                    }
+                    check_and_diagnostic(ident.name.clone(), ident.span, ctx);
                 }
                 PropertyKey::Expression(_) => {}
             },
