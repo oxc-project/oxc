@@ -96,6 +96,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "DotPropertyAST" | "DotProperty" => super::properties::resolve_dot_property_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "Expression" => super::properties::resolve_expression_property(
                 contexts,
                 property_name.as_ref(),
@@ -243,6 +248,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
+            ),
+            "DotPropertyAST" | "DotProperty" => super::edges::resolve_dot_property_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
             ),
             "DefaultImport" => super::edges::resolve_default_import_edge(
                 contexts,

@@ -57,6 +57,7 @@ pub enum Vertex<'a> {
     IfStatementAST(Rc<IfStatementVertex<'a>>),
     SpreadIntoObject(Rc<SpreadIntoObjectVertex<'a>>),
     ObjectEntry(Rc<ObjectEntryVertex<'a>>),
+    DotProperty(Rc<DotPropertyVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -80,6 +81,7 @@ impl<'a> Vertex<'a> {
             Self::JSXExpressionContainer(data) => data.span,
             Self::JSXFragment(data) => data.span,
             Self::JSXOpeningElement(data) => data.opening_element.span,
+            Self::DotProperty(data) => data.static_member_expr.span,
             Self::JSXSpreadAttribute(data) => data.span,
             Self::JSXSpreadChild(data) => data.span,
             Self::JSXText(data) => data.span,
@@ -121,6 +123,7 @@ impl<'a> Vertex<'a> {
             Vertex::Name(data) => data.ast_node.map(|x| x.id()),
             Vertex::SpreadIntoObject(data) => data.ast_node.map(|x| x.id()),
             Vertex::ObjectEntry(data) => data.ast_node.map(|x| x.id()),
+            Vertex::DotProperty(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -173,6 +176,7 @@ impl Typename for Vertex<'_> {
             Vertex::Import(import) => import.typename(),
             Vertex::Interface(iface) => iface.typename(),
             Vertex::NumberLiteral(nlit) => nlit.typename(),
+            Vertex::DotProperty(dot_property) => dot_property.typename(),
             Vertex::InterfaceExtend(iex) => match **iex {
                 InterfaceExtendVertex::Identifier(_) => "SimpleExtend",
                 InterfaceExtendVertex::MemberExpression(_) => "MemberExtend",
@@ -249,6 +253,20 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::SpreadElement(property) => Self::SpreadIntoObject(
                 SpreadIntoObjectVertex { ast_node: Some(ast_node), property }.into(),
             ),
+            AstKind::MemberExpression(member_expr)
+                if matches!(member_expr, MemberExpression::StaticMemberExpression(_)) =>
+            {
+                match member_expr {
+                    MemberExpression::StaticMemberExpression(member_expr) => Self::DotProperty(
+                        DotPropertyVertex {
+                            ast_node: Some(ast_node),
+                            static_member_expr: member_expr,
+                        }
+                        .into(),
+                    ),
+                    _ => unreachable!("we should only ever have StaticMemberExpression"),
+                }
+            }
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -268,6 +286,18 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             }
             Expression::NumberLiteral(number_literal) => {
                 Vertex::NumberLiteral(NumberLiteralVertex { ast_node: None, number_literal }.into())
+            }
+            Expression::MemberExpression(member_expr)
+                if matches!(**member_expr, MemberExpression::StaticMemberExpression(_)) =>
+            {
+                match &**member_expr {
+                    MemberExpression::StaticMemberExpression(static_member_expr) => {
+                        Vertex::DotProperty(
+                            DotPropertyVertex { ast_node: None, static_member_expr }.into(),
+                        )
+                    }
+                    _ => unreachable!("we should only ever have StaticMemberExpression"),
+                }
             }
             _ => Vertex::Expression(expr),
         }
@@ -530,6 +560,23 @@ impl<'a> Typename for SpreadIntoObjectVertex<'a> {
             "SpreadIntoObjectAST"
         } else {
             "SpreadIntoObject"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct DotPropertyVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub static_member_expr: &'a StaticMemberExpression<'a>,
+}
+
+impl<'a> Typename for DotPropertyVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "DotPropertyAST"
+        } else {
+            "DotProperty"
         }
     }
 }

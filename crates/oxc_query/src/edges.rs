@@ -391,6 +391,83 @@ mod default_import {
     }
 }
 
+pub(super) fn resolve_dot_property_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => dot_property::span(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "called_on" => dot_property::called_on(contexts, resolve_info),
+        "accessed_property" => dot_property::accessed_property(contexts, resolve_info),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'ClassProperty'"
+            )
+        }
+    }
+}
+
+mod dot_property {
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use crate::vertex::NameVertex;
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+
+    pub(super) fn called_on<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_dot_property()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a dotproperty vertex, instead have: {v:#?}")
+                    })
+                    .static_member_expr
+                    .object)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn accessed_property<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(Vertex::Name(
+                NameVertex {
+                    ast_node: None,
+                    name: &v
+                        .as_dot_property()
+                        .unwrap_or_else(|| {
+                            panic!("expected to have a dotproperty vertex, instead have: {v:#?}")
+                        })
+                        .static_member_expr
+                        .property,
+                }
+                .into(),
+            )))
+        })
+    }
+}
+
 pub(super) fn resolve_expression_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,

@@ -407,6 +407,39 @@ type NameAST implements ASTNode & Name & HasSpan {
   span: Span!
 }
 
+interface DotProperty implements HasSpan & Expression {
+  """
+  In "data.user.name", this would be "data.user"
+  """
+  called_on: Expression!
+  """
+  In "data.user.name", this would be "name"
+  """
+  accessed_property: Name!
+  # Expression
+  as_constant_string: String
+  # HasSpan
+  span: Span!
+}
+
+type DotPropertyAST implements DotProperty & ASTNode & HasSpan & Expression {
+  """
+  In "data.user.name", this would be "data.user"
+  """
+  called_on: Expression!
+  """
+  In "data.user.name", this would be "name"
+  """
+  accessed_property: Name!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
+  # HasSpan
+  span: Span!
+}
+
 interface Expression implements HasSpan {
   """
   Only non-null if the string can be trivially coerced to a constant string
