@@ -385,6 +385,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
+                self,
             ),
             "ObjectLiteral" | "ObjectLiteralAST" => super::edges::resolve_object_literal_edge(
                 contexts,
@@ -392,6 +393,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
                 self,
+            ),
+            "ObjectProperty" => super::edges::resolve_object_property_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
             ),
             "PathPart" => super::edges::resolve_path_part_edge(
                 contexts,
@@ -425,6 +432,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     edge_name.as_ref(),
                     parameters,
                     resolve_info,
+                    self,
                 )
             }
             "TypeAnnotation" | "TypeAnnotationAST" => super::edges::resolve_type_annotation_edge(
