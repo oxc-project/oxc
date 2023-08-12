@@ -181,15 +181,6 @@ impl Rule for NoShadowRestrictedNames {
                     }
                 }
             }
-            AstKind::MethodDefinition(method_definition) => match &method_definition.key {
-                PropertyKey::Identifier(ident) => {
-                    check_and_diagnostic(ident.name.clone(), ident.span, ctx);
-                }
-                PropertyKey::PrivateIdentifier(ident) => {
-                    check_and_diagnostic(ident.name.clone(), ident.span, ctx);
-                }
-                PropertyKey::Expression(_) => {}
-            },
             _ => {}
         }
     }
@@ -211,6 +202,8 @@ fn test() {
         ("var undefined;", None),
         ("var normal, undefined;", None),
         ("var undefined; doSomething(undefined);", None),
+        ("class foo { undefined() { } }", None),
+        ("class foo { #undefined() { } }", None),
         ("var normal, undefined; var undefined;", None),
     ];
 
@@ -226,8 +219,7 @@ fn test() {
         ("try {} catch(undefined: undefined) {}", None),
         ("var [undefined] = [1]", None),
         ("class undefined { }", None),
-        ("class foo { undefined() { } }", None),
-        ("class foo { #undefined() { } }", None),
+        ("class foo { undefined(undefined) { } }", None),
         ("class foo { #undefined(undefined) { } }", None),
     ];
 
