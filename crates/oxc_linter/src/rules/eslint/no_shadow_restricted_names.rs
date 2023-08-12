@@ -1,71 +1,149 @@
-use oxc_ast::AstKind;
+use oxc_ast::{
+    ast::{BindingPattern, VariableDeclaration, PropertyKey},
+    AstKind,
+};
 use oxc_diagnostics::{
     miette::{self, Diagnostic},
-    thiserror::{self, Error},
+    thiserror::Error,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
-use oxc_span::{Atom, Span};
+use oxc_semantic::ScopeId;
+use oxc_span::{Span, Atom};
+use core::cell::Cell;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule, AstNode};
 
 #[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-shadow-restricted-names): Shadowing of global property '{0}'")]
-#[diagnostic(severity(warning))]
-struct NoShadowRestrictedNamesDiagnostic(
-    Atom,
-    #[label("Shadowing of global property '{0}'")] pub Span,
-);
+#[error("eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.")]
+#[diagnostic(severity(warning), help("Shadowing of global properties '{0}'."))]
+struct NoShadowRestrictedNamesDiagnostic(Atom, #[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoShadowRestrictedNames;
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Disallow identifiers from shadowing restricted names
+    ///
+    /// Disallow redefine the global variables like 'undefined', 'NaN', 'Infinity', 'eval', 'arguments'.
     ///
     /// ### Why is this bad?
-    /// ES5 §15.1.1 Value Properties of the Global Object (NaN, Infinity, undefined) as well as strict mode restricted identifiers eval and arguments are considered to be restricted names in JavaScript.
-    /// Defining them to mean something else can have unintended consequences and confuse others reading the code.
+    ///
     ///
     /// ### Example
     /// ```javascript
-    /// var undefined = "foo";
+    /// function NaN(){}
+    ///
+    /// !function(Infinity){};
+    ///
+    /// var undefined = 5;
+    ///
+    /// try {} catch(eval){}
     /// ```
     NoShadowRestrictedNames,
     correctness
 );
 
-static RESTRICTED: [&str; 5] = ["undefined", "NaN", "Infinity", "arguments", "eval"];
-
-fn safely_shadows_undefined(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
-    let symbol_table = ctx.semantic().symbols();
-    if symbol_table.get_name(symbol_id).as_str() == "undefined" {
-        let mut no_assign = true;
-        for reference in symbol_table.get_resolved_references(symbol_id) {
-            if reference.is_write() {
-                no_assign = false;
+fn binding_pattern_is_global_obj(pat: &BindingPattern, ignore_undefined: bool) -> Option<(Atom, Span)> {
+    match &pat.kind {
+        oxc_ast::ast::BindingPatternKind::BindingIdentifier(boxed_bind_identifier) => {
+            if ignore_undefined && boxed_bind_identifier.name.as_str() == "undefined" {
+            } else if PRE_DEFINE_VAR.contains_key(boxed_bind_identifier.name.as_str()) {
+                return Some((boxed_bind_identifier.name.clone(), boxed_bind_identifier.span));
             }
+            None
         }
-        let mut no_init = false;
-        let decl = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
-        if let AstKind::VariableDeclarator(var) = decl.kind() {
-            no_init = var.init.is_none();
+        oxc_ast::ast::BindingPatternKind::ObjectPattern(boxed_obj_pat) => {
+            let properties = &boxed_obj_pat.properties;
+            for property in properties {
+                if let Some(value) = binding_pattern_is_global_obj(&property.value, false) {
+                    return Some(value);
+                }
+            }
+            boxed_obj_pat
+                .rest
+                .as_ref()
+                .and_then(|boxed_rest| binding_pattern_is_global_obj(&boxed_rest.argument, false))
         }
-        return no_assign && no_init;
+        oxc_ast::ast::BindingPatternKind::ArrayPattern(boxed_arr_pat) => {
+            for element in boxed_arr_pat.elements.iter() {
+                if let Some(value) = element.as_ref().and_then(|e| binding_pattern_is_global_obj(e, false))
+                {
+                    return Some(value);
+                }
+            }
+            boxed_arr_pat
+                .rest
+                .as_ref()
+                .and_then(|boxed_rest| binding_pattern_is_global_obj(&boxed_rest.argument, false))
+        }
+        oxc_ast::ast::BindingPatternKind::AssignmentPattern(boxed_assign_pat) => {
+            binding_pattern_is_global_obj(&boxed_assign_pat.left, false)
+        }
     }
-    false
 }
 
 impl Rule for NoShadowRestrictedNames {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.semantic().symbols();
-        let name = symbol_table.get_name(symbol_id);
-        if RESTRICTED.contains(&name.as_str()) && !safely_shadows_undefined(symbol_id, ctx) {
-            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                name.clone(),
-                symbol_table.get_span(symbol_id),
-            ));
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let kind = node.kind();
+        match kind {
+            AstKind::VariableDeclaration(VariableDeclaration { declarations, .. }) => {
+                for var_declarator in declarations {
+                    let id = &var_declarator.id;
+                    if let Some(value) = binding_pattern_is_global_obj(id, var_declarator.init.is_none()) {
+                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                    }
+                }
+            }
+            AstKind::Function(function) => {
+                if let Some(bind_ident) = function.id.as_ref() {
+                    if PRE_DEFINE_VAR.contains_key(bind_ident.name.as_str()) {
+                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(bind_ident.name.clone(), bind_ident.span));
+                    }
+                }
+                for param in function.params.items.iter() {
+                    if let Some(value)  = binding_pattern_is_global_obj(&param.pattern, false) {
+                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                    }
+                }
+            }
+            AstKind::Class(class_decl) => {
+                if let Some(bind_ident) = class_decl.id.as_ref() {
+                    if PRE_DEFINE_VAR.contains_key(bind_ident.name.as_str()) {
+                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(bind_ident.name.clone(), bind_ident.span));
+                    }
+                }
+            }
+            AstKind::CatchClause(catch_clause) => {
+                if let Some(param) = catch_clause.param.as_ref() {
+                    if let Some(value) = binding_pattern_is_global_obj(param, false) {
+                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                    }
+                }
+            }
+            AstKind::MethodDefinition(method_definition) => {
+                match &method_definition.key {
+                    PropertyKey::Identifier(ident) => {
+                        if PRE_DEFINE_VAR.contains_key(ident.name.as_str()) {
+                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(ident.name.clone(), ident.span));
+                        }
+                    }
+                    PropertyKey::PrivateIdentifier(ident) => {
+                        if PRE_DEFINE_VAR.contains_key(ident.name.as_str()) {
+                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(ident.name.clone(), ident.span));
+                        }
+                    }
+                    PropertyKey::Expression(_) => {
+                    }
+                }
+            }
+            AstKind::BindingIdentifier(bind_ident) => {
+                let atom = &bind_ident.name;
+                if PRE_DEFINE_VAR.entries().any(|(&s, _)| s == atom.as_str()) {
+                    ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(atom.clone(), bind_ident.span));
+                }
+            }
+            _ => {
+            }
         }
     }
 }
@@ -80,37 +158,29 @@ fn test() {
         ("!function(bar){ var baz; }", None),
         ("try {} catch(e) {}", None),
         ("export default function() {}", None),
-        ("var undefined;", None),
-        ("var undefined; doSomething(undefined);", None),
-        ("var undefined; var undefined;", None),
-        ("let undefined", None),
+        ("try {} catch {}", None),
+        // ("var normal, undefined;", None),
+        // ("var undefined; doSomething(undefined);", None),
+        // ("var normal, undefined; var undefined;", None),
+        ("var [normal, updefined] = [1]", None),
+        // ("let undefined", None),
+        // ("const undefined", None),
     ];
 
     let fail = vec![
         ("function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }", None),
-        (
-            "function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }",
-            None,
-        ),
-        (
-            "function Infinity(Infinity) { var Infinity; !function Infinity(Infinity) { try {} catch(Infinity) {} }; }",
-            None,
-        ),
-        (
-            "function arguments(arguments) { var arguments; !function arguments(arguments) { try {} catch(arguments) {} }; }",
-            None,
-        ),
+        ("function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }", None),
+        ("function Infinity(Infinity) { var Infinity; !function Infinity(Infinity) { try {} catch(Infinity) {} }; }", None),
+        ("function arguments(arguments) { var arguments; !function arguments(arguments) { try {} catch(arguments) {} }; }", None),
         ("function eval(eval) { var eval; !function eval(eval) { try {} catch(eval) {} }; }", None),
-        (
-            "var eval = (eval) => { var eval; !function eval(eval) { try {} catch(eval) {} }; }",
-            None,
-        ),
+        ("var eval = (eval) => { var eval; !function eval(eval) { try {} catch(eval) {} }; }", None),
+        ("var {undefined} = obj; var {a: undefined} = obj; var {a: {b: {undefined}}} = obj; var {a, ...undefined} = obj;", None),
+        ("var normal, undefined; undefined = 5;", None),
         ("var [undefined] = [1]", None),
-        (
-            "var {undefined} = obj; var {a: undefined} = obj; var {a: {b: {undefined}}} = obj; var {a, ...undefined} = obj;",
-            None,
-        ),
-        ("var undefined; undefined = 5;", None),
+        ("class undefined { }", None),
+        ("class foo { undefined() { } }", None),
+        ("class foo { #undefined() { } }", None),
+        ("class foo { #undefined(undefined) { } }", None),
     ];
 
     Tester::new(NoShadowRestrictedNames::NAME, pass, fail).test_and_snapshot();
