@@ -13,6 +13,7 @@ use oxc_ast::{
     },
     AstKind,
 };
+use oxc_macros::TypeName;
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{GetSpan, Span};
 use trustfall::provider::Typename;
@@ -305,20 +306,10 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
 }
 
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct ClassVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub class: &'a Class<'a>,
-}
-
-impl<'a> Typename for ClassVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "ClassAST"
-        } else {
-            "Class"
-        }
-    }
 }
 
 #[non_exhaustive]
@@ -336,37 +327,17 @@ pub struct ClassPropertyVertex<'a> {
 }
 
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct ImportVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub import: &'a ImportDeclaration<'a>,
 }
 
-impl<'a> Typename for ImportVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "ImportAST"
-        } else {
-            "Import"
-        }
-    }
-}
-
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct InterfaceVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub interface: &'a TSInterfaceDeclaration<'a>,
-}
-
-impl<'a> Typename for InterfaceVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "InterfaceAST"
-        } else {
-            "Interface"
-        }
-    }
 }
 
 #[non_exhaustive]
@@ -391,20 +362,10 @@ impl<'a> From<&'a Expression<'a>> for InterfaceExtendVertex<'a> {
 }
 
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct JSXElementVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
     pub element: &'a JSXElement<'a>,
-}
-
-impl<'a> Typename for JSXElementVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "JSXElementAST"
-        } else {
-            "JSXElement"
-        }
-    }
 }
 
 #[non_exhaustive]
@@ -422,20 +383,10 @@ pub struct ReturnStatementVertex<'a> {
 }
 
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct TypeAnnotationVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub type_annotation: &'a TSTypeAnnotation<'a>,
-}
-
-impl<'a> Typename for TypeAnnotationVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "TypeAnnotationAST"
-        } else {
-            "TypeAnnotation"
-        }
-    }
 }
 
 #[non_exhaustive]
@@ -446,137 +397,57 @@ pub struct SearchParameterVertex {
 }
 
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct VariableDeclarationVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub variable_declaration: &'a VariableDeclarator<'a>,
 }
 
-impl<'a> Typename for VariableDeclarationVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "VariableDeclarationAST"
-        } else {
-            "VariableDeclaration"
-        }
-    }
-}
-
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct ObjectLiteralVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub object_expression: &'a ObjectExpression<'a>,
 }
 
-impl<'a> Typename for ObjectLiteralVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "ObjectLiteralAST"
-        } else {
-            "ObjectLiteral"
-        }
-    }
-}
-
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct JSXOpeningElementVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
     pub opening_element: &'a JSXOpeningElement<'a>,
 }
 
-impl<'a> Typename for JSXOpeningElementVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "JSXOpeningElementAST"
-        } else {
-            "JSXOpeningElement"
-        }
-    }
-}
-
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct NumberLiteralVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub number_literal: &'a NumberLiteral<'a>,
 }
 
-impl<'a> Typename for NumberLiteralVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "NumberLiteralAST"
-        } else {
-            "NumberLiteral"
-        }
-    }
-}
-
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct NameVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
     pub name: &'a IdentifierName,
 }
 
-impl<'a> Typename for NameVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "NameAST"
-        } else {
-            "Name"
-        }
-    }
-}
-
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct ObjectEntryVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
     pub property: &'a ObjectProperty<'a>,
 }
 
-impl<'a> Typename for ObjectEntryVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "ObjectEntryAST"
-        } else {
-            "ObjectEntry"
-        }
-    }
-}
-
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct SpreadIntoObjectVertex<'a> {
     pub ast_node: Option<AstNode<'a>>,
     pub property: &'a SpreadElement<'a>,
 }
 
-impl<'a> Typename for SpreadIntoObjectVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "SpreadIntoObjectAST"
-        } else {
-            "SpreadIntoObject"
-        }
-    }
-}
-
 #[non_exhaustive]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypeName)]
 pub struct DotPropertyVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub static_member_expr: &'a StaticMemberExpression<'a>,
-}
-
-impl<'a> Typename for DotPropertyVertex<'a> {
-    fn typename(&self) -> &'static str {
-        if self.ast_node.is_some() {
-            "DotPropertyAST"
-        } else {
-            "DotProperty"
-        }
-    }
 }

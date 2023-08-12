@@ -1,7 +1,9 @@
 use syn::parse_macro_input;
+use typename::impl_typename_macro;
 
 mod declare_all_lint_rules;
 mod declare_oxc_lint;
+mod typename;
 
 /// Macro used to declare an oxc lint rule
 ///
@@ -57,4 +59,18 @@ pub fn declare_all_lint_rules(input: proc_macro::TokenStream) -> proc_macro::Tok
     let metadata = parse_macro_input!(input as declare_all_lint_rules::AllLintRulesMeta);
 
     declare_all_lint_rules::declare_all_lint_rules(metadata).into()
+}
+
+/// Adds an implementation of Trustfall's Typename trait to a struct based on the
+/// struct's name. If the struct was named `ClassVertex`, the implementation would
+/// implement the function to return "ClassAST" if `self.ast_node.is_some()`
+/// and "Class" otherwise.
+#[proc_macro_derive(TypeName)]
+pub fn typename_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    // Construct a representation of Rust code as a syntax tree
+    // that we can manipulate
+    let ast = syn::parse(input).expect("to be able to parse the input into a struct");
+
+    // Build the trait implementation
+    impl_typename_macro(&ast)
 }

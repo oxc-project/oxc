@@ -1763,6 +1763,7 @@ dependencies = [
  "enum-as-inner",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_macros",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
