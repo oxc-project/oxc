@@ -74,14 +74,10 @@ pub const BUILTINS: Map<&'static str, bool> = phf_map! {
     "WeakSet" => false
 };
 
-pub const PRE_DEFINE_VAR: Map<&'static str, bool> = phf_map!{
+pub const PRE_DEFINE_VAR: Map<&'static str, bool> = phf_map! {
     "undefined" => false,
-    "null" => false,
     "Infinity" => false,
     "NaN" => false,
     "eval" => false,
     "arguments" => false,
-    "this" => false,
-    "super" => false,
-    "globalThis" => false,
 };
