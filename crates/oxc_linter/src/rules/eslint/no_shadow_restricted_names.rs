@@ -1,7 +1,6 @@
 use oxc_ast::{
     ast::{
-        ArrayAssignmentTarget, AssignmentTarget, AssignmentTargetPattern, BindingPattern,
-        Expression, PropertyKey, SimpleAssignmentTarget, VariableDeclaration,
+        AssignmentTarget, BindingPattern, Expression, SimpleAssignmentTarget, VariableDeclaration,
     },
     AstKind,
 };
@@ -92,18 +91,15 @@ fn get_nearest_undefined_declare_span(ctx: &LintContext) -> Option<Span> {
     let mut span: Option<Span> = None;
     for node in nodes.iter() {
         let kind = node.kind();
-        match kind {
-            AstKind::VariableDeclaration(VariableDeclaration { declarations, .. }) => {
-                for var_declarator in declarations {
-                    let id = &var_declarator.id;
-                    if let Some((name, s)) = binding_pattern_is_global_obj(id, false) {
-                        if name == "undefined" {
-                            span = Some(s);
-                        }
+        if let AstKind::VariableDeclaration(VariableDeclaration { declarations, .. }) = kind {
+            for var_declarator in declarations {
+                let id = &var_declarator.id;
+                if let Some((name, s)) = binding_pattern_is_global_obj(id, false) {
+                    if name == "undefined" {
+                        span = Some(s);
                     }
                 }
             }
-            _ => {}
         }
     }
     span
@@ -130,18 +126,15 @@ impl Rule for NoShadowRestrictedNames {
                     }
                 }
             }
-            AstKind::ExpressionStatement(expr_stat) => match &expr_stat.expression {
-                Expression::AssignmentExpression(assign_expr) => {
+            AstKind::ExpressionStatement(expr_stat) => {
+                if let Expression::AssignmentExpression(assign_expr) = &expr_stat.expression {
                     let left = &assign_expr.left;
                     match left {
                         AssignmentTarget::SimpleAssignmentTarget(
                             SimpleAssignmentTarget::AssignmentTargetIdentifier(ati),
                         ) if ati.name == "undefined" => {
-                            let span = if let Some(span) = get_nearest_undefined_declare_span(ctx) {
-                                span
-                            } else {
-                                ati.span
-                            };
+                            let span = get_nearest_undefined_declare_span(ctx)
+                                .map_or(ati.span, |span| span);
                             ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
                                 ati.name.clone(),
                                 span,
@@ -150,8 +143,7 @@ impl Rule for NoShadowRestrictedNames {
                         _ => {}
                     }
                 }
-                _ => {}
-            },
+            }
             AstKind::Function(function) => {
                 if let Some(bind_ident) = function.id.as_ref() {
                     check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
