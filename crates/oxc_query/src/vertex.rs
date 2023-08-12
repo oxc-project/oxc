@@ -3,11 +3,12 @@ use std::rc::Rc;
 use enum_as_inner::EnumAsInner;
 use oxc_ast::{
     ast::{
-        BindingPatternKind, Class, Expression, IdentifierReference, ImportDeclaration,
-        ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer,
-        JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText,
-        MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral, ObjectExpression,
-        PropertyDefinition, ReturnStatement, TSInterfaceDeclaration, TSType, TSTypeAnnotation,
+        BindingPatternKind, Class, Expression, IdentifierName, IdentifierReference, IfStatement,
+        ImportDeclaration, ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement,
+        JSXExpressionContainer, JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild,
+        JSXText, MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral,
+        ObjectExpression, ObjectProperty, PropertyDefinition, ReturnStatement, SpreadElement,
+        StaticMemberExpression, TSInterfaceDeclaration, TSType, TSTypeAnnotation,
         VariableDeclarator,
     },
     AstKind,
@@ -43,6 +44,7 @@ pub enum Vertex<'a> {
     JSXText(&'a JSXText),
     ObjectLiteral(Rc<ObjectLiteralVertex<'a>>),
     NumberLiteral(Rc<NumberLiteralVertex<'a>>),
+    Name(Rc<NameVertex<'a>>),
     PathPart(usize),
     SearchParameter(Rc<SearchParameterVertex>),
     Span(Span),
@@ -52,6 +54,10 @@ pub enum Vertex<'a> {
     Url(Rc<Url>),
     VariableDeclaration(Rc<VariableDeclarationVertex<'a>>),
     ReturnStatementAST(Rc<ReturnStatementVertex<'a>>),
+    IfStatementAST(Rc<IfStatementVertex<'a>>),
+    SpreadIntoObject(Rc<SpreadIntoObjectVertex<'a>>),
+    ObjectEntry(Rc<ObjectEntryVertex<'a>>),
+    DotProperty(Rc<DotPropertyVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -75,16 +81,21 @@ impl<'a> Vertex<'a> {
             Self::JSXExpressionContainer(data) => data.span,
             Self::JSXFragment(data) => data.span,
             Self::JSXOpeningElement(data) => data.opening_element.span,
+            Self::DotProperty(data) => data.static_member_expr.span,
             Self::JSXSpreadAttribute(data) => data.span,
             Self::JSXSpreadChild(data) => data.span,
             Self::JSXText(data) => data.span,
             Self::ObjectLiteral(data) => data.object_expression.span,
+            Self::SpreadIntoObject(data) => data.property.span,
+            Self::ObjectEntry(data) => data.property.span,
             Self::SpecificImport(data) => data.span,
             Self::TypeAnnotation(data) => data.type_annotation.span,
             Self::Type(data) => data.span(),
             Self::VariableDeclaration(data) => data.variable_declaration.span,
             Self::ReturnStatementAST(data) => data.return_statement.span,
+            Self::IfStatementAST(data) => data.return_statement.span,
             Self::NumberLiteral(data) => data.number_literal.span,
+            Self::Name(data) => data.name.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -106,8 +117,13 @@ impl<'a> Vertex<'a> {
             Vertex::VariableDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::ObjectLiteral(data) => data.ast_node.map(|x| x.id()),
             Vertex::ReturnStatementAST(data) => data.ast_node.map(|x| x.id()),
+            Vertex::IfStatementAST(data) => data.ast_node.map(|x| x.id()),
             Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::NumberLiteral(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Name(data) => data.ast_node.map(|x| x.id()),
+            Vertex::SpreadIntoObject(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ObjectEntry(data) => data.ast_node.map(|x| x.id()),
+            Vertex::DotProperty(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -160,6 +176,7 @@ impl Typename for Vertex<'_> {
             Vertex::Import(import) => import.typename(),
             Vertex::Interface(iface) => iface.typename(),
             Vertex::NumberLiteral(nlit) => nlit.typename(),
+            Vertex::DotProperty(dot_property) => dot_property.typename(),
             Vertex::InterfaceExtend(iex) => match **iex {
                 InterfaceExtendVertex::Identifier(_) => "SimpleExtend",
                 InterfaceExtendVertex::MemberExpression(_) => "MemberExtend",
@@ -181,7 +198,11 @@ impl Typename for Vertex<'_> {
             Vertex::Type(_) => "Type",
             Vertex::Url(_) => "URL",
             Vertex::VariableDeclaration(vd) => vd.typename(),
+            Vertex::Name(name) => name.typename(),
             Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
+            Vertex::IfStatementAST(_) => "IfStatementAST",
+            Vertex::SpreadIntoObject(obj) => obj.typename(),
+            Vertex::ObjectEntry(entry) => entry.typename(),
         }
     }
 }
@@ -191,6 +212,10 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
         match ast_node.kind() {
             AstKind::ReturnStatement(return_statement) => Self::ReturnStatementAST(
                 ReturnStatementVertex { ast_node: Some(ast_node), return_statement }.into(),
+            ),
+            AstKind::IfStatement(if_statement) => Self::IfStatementAST(
+                IfStatementVertex { ast_node: Some(ast_node), return_statement: if_statement }
+                    .into(),
             ),
             AstKind::JSXElement(element) => {
                 Self::JSXElement(JSXElementVertex { ast_node: Some(ast_node), element }.into())
@@ -219,6 +244,29 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::NumberLiteral(number_literal) => Self::NumberLiteral(
                 NumberLiteralVertex { ast_node: Some(ast_node), number_literal }.into(),
             ),
+            AstKind::IdentifierName(identifier_name) => {
+                Self::Name(NameVertex { ast_node: Some(ast_node), name: identifier_name }.into())
+            }
+            AstKind::ObjectProperty(property) => {
+                Self::ObjectEntry(ObjectEntryVertex { ast_node: Some(ast_node), property }.into())
+            }
+            AstKind::SpreadElement(property) => Self::SpreadIntoObject(
+                SpreadIntoObjectVertex { ast_node: Some(ast_node), property }.into(),
+            ),
+            AstKind::MemberExpression(member_expr)
+                if matches!(member_expr, MemberExpression::StaticMemberExpression(_)) =>
+            {
+                match member_expr {
+                    MemberExpression::StaticMemberExpression(member_expr) => Self::DotProperty(
+                        DotPropertyVertex {
+                            ast_node: Some(ast_node),
+                            static_member_expr: member_expr,
+                        }
+                        .into(),
+                    ),
+                    _ => unreachable!("we should only ever have StaticMemberExpression"),
+                }
+            }
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -238,6 +286,18 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             }
             Expression::NumberLiteral(number_literal) => {
                 Vertex::NumberLiteral(NumberLiteralVertex { ast_node: None, number_literal }.into())
+            }
+            Expression::MemberExpression(member_expr)
+                if matches!(**member_expr, MemberExpression::StaticMemberExpression(_)) =>
+            {
+                match &**member_expr {
+                    MemberExpression::StaticMemberExpression(static_member_expr) => {
+                        Vertex::DotProperty(
+                            DotPropertyVertex { ast_node: None, static_member_expr }.into(),
+                        )
+                    }
+                    _ => unreachable!("we should only ever have StaticMemberExpression"),
+                }
             }
             _ => Vertex::Expression(expr),
         }
@@ -349,6 +409,13 @@ impl<'a> Typename for JSXElementVertex<'a> {
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]
+pub struct IfStatementVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub return_statement: &'a IfStatement<'a>,
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
 pub struct ReturnStatementVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub return_statement: &'a ReturnStatement<'a>,
@@ -442,6 +509,74 @@ impl<'a> Typename for NumberLiteralVertex<'a> {
             "NumberLiteralAST"
         } else {
             "NumberLiteral"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct NameVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub name: &'a IdentifierName,
+}
+
+impl<'a> Typename for NameVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "NameAST"
+        } else {
+            "Name"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ObjectEntryVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub property: &'a ObjectProperty<'a>,
+}
+
+impl<'a> Typename for ObjectEntryVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ObjectEntryAST"
+        } else {
+            "ObjectEntry"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct SpreadIntoObjectVertex<'a> {
+    pub ast_node: Option<AstNode<'a>>,
+    pub property: &'a SpreadElement<'a>,
+}
+
+impl<'a> Typename for SpreadIntoObjectVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "SpreadIntoObjectAST"
+        } else {
+            "SpreadIntoObject"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct DotPropertyVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub static_member_expr: &'a StaticMemberExpression<'a>,
+}
+
+impl<'a> Typename for DotPropertyVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "DotPropertyAST"
+        } else {
+            "DotProperty"
         }
     }
 }

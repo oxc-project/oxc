@@ -39,7 +39,8 @@
   "packageManager": "pnpm@8.2.0",
   "pnpm": {
     "patchedDependencies": {
-      "graphql-language-service@5.1.7": "patches/graphql-language-service@5.1.7.patch"
+      "graphql-language-service@5.1.7": "patches/graphql-language-service@5.1.7.patch",
+      "@ddietr/codemirror-themes@1.4.1": "patches/@ddietr__codemirror-themes@1.4.1.patch"
     }
   }
 }

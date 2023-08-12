@@ -96,6 +96,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "DotPropertyAST" | "DotProperty" => super::properties::resolve_dot_property_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "Expression" => super::properties::resolve_expression_property(
                 contexts,
                 property_name.as_ref(),
@@ -139,6 +144,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
             ),
             "MemberExtend" => super::properties::resolve_member_extend_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
+            "NameAST" | "Name" => super::properties::resolve_name_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
@@ -239,6 +249,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "DotPropertyAST" | "DotProperty" => super::edges::resolve_dot_property_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "DefaultImport" => super::edges::resolve_default_import_edge(
                 contexts,
                 edge_name.as_ref(),
@@ -263,6 +280,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
+            ),
+            "IfStatementAST" => super::edges::resolve_if_statement_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
             ),
             "Import" | "ImportAST" => super::edges::resolve_import_edge(
                 contexts,
@@ -342,7 +366,21 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "NameAST" | "Name" => super::edges::resolve_name_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "NumberLiteralAST" | "NumberLiteral" => super::edges::resolve_number_literal_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "ObjectEntryAST" | "ObjectEntry" => super::edges::resolve_object_entry_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -355,6 +393,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
                 self,
+            ),
+            "ObjectProperty" => super::edges::resolve_object_property_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
             ),
             "PathPart" => super::edges::resolve_path_part_edge(
                 contexts,
@@ -382,6 +426,15 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 parameters,
                 resolve_info,
             ),
+            "SpreadIntoObjectAST" | "SpreadIntoObject" => {
+                super::edges::resolve_spread_into_object_edge(
+                    contexts,
+                    edge_name.as_ref(),
+                    parameters,
+                    resolve_info,
+                    self,
+                )
+            }
             "TypeAnnotation" | "TypeAnnotationAST" => super::edges::resolve_type_annotation_edge(
                 contexts,
                 edge_name.as_ref(),
