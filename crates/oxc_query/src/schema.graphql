@@ -326,8 +326,52 @@ interface JSXElement implements Expression & HasSpan {
   span: Span!
 }
 
+interface ObjectProperty implements HasSpan {
+  # HasSpan
+  span: Span!
+}
+
+interface SpreadIntoObject implements ObjectProperty & HasSpan {
+  value: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
+type SpreadIntoObjectAST implements ASTNode & SpreadIntoObject & ObjectProperty & HasSpan {
+  value: Expression!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+interface ObjectEntry implements ObjectProperty & HasSpan {
+  key: Expression!
+  value: Expression!
+
+  # HasSpan
+  span: Span!
+}
+
+type ObjectEntryAST implements ASTNode & ObjectEntry & ObjectProperty & HasSpan {
+  key: Expression!
+  value: Expression!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
 interface ObjectLiteral implements Expression & HasSpan {
-  value(key: String!): [Expression!]!
+  value(key: String!): Expression
+  entry: [ObjectProperty!]!
 
   # Expression
   as_constant_string: String
@@ -336,13 +380,62 @@ interface ObjectLiteral implements Expression & HasSpan {
 }
 
 type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode {
-  value(key: String!): [Expression!]!
+  value(key: String!): Expression
+  entry: [ObjectProperty!]!
 
   # Expression
   as_constant_string: String
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+interface Name implements HasSpan {
+  name: String!
+  # HasSpan
+  span: Span!
+}
+
+type NameAST implements ASTNode & Name & HasSpan {
+  name: String!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
+interface DotProperty implements HasSpan & Expression {
+  """
+  In "data.user.name", this would be "data.user"
+  """
+  called_on: Expression!
+  """
+  In "data.user.name", this would be "name"
+  """
+  accessed_property: Name!
+  # Expression
+  as_constant_string: String
+  # HasSpan
+  span: Span!
+}
+
+type DotPropertyAST implements DotProperty & ASTNode & HasSpan & Expression {
+  """
+  In "data.user.name", this would be "data.user"
+  """
+  called_on: Expression!
+  """
+  In "data.user.name", this would be "name"
+  """
+  accessed_property: Name!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # Expression
+  as_constant_string: String
   # HasSpan
   span: Span!
 }
@@ -455,6 +548,17 @@ type ClassAST implements ASTNode & Class & HasSpan {
   """
   name_span: Span
   entire_class_span: Span!
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+
+  # HasSpan
+  span: Span!
+}
+
+type IfStatementAST implements ASTNode & HasSpan {
+  condition: Expression!
 
   # ASTNode
   parent: ASTNode

@@ -196,6 +196,23 @@ pub(super) fn resolve_default_import_property<'a, 'b: 'a>(
     }
 }
 
+pub(super) fn resolve_dot_property_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "as_constant_string" => resolve_property_with(contexts, |v| {
+            v.as_constant_string().map_or(FieldValue::Null, Into::into)
+        }),
+        _ => {
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'DotProperty'"
+            )
+        }
+    }
+}
+
 pub(super) fn resolve_expression_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
@@ -384,6 +401,26 @@ pub(super) fn resolve_member_extend_property<'a, 'b: 'a>(
     }
 }
 
+pub(super) fn resolve_name_property<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    property_name: &str,
+    _resolve_info: &ResolveInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
+    match property_name {
+        "name" => resolve_property_with(contexts, |v| {
+            v.as_name()
+                .unwrap_or_else(|| panic!("expected to have a name vertex, instead have: {v:#?}"))
+                .name
+                .name
+                .to_string()
+                .into()
+        }),
+        _ => {
+            unreachable!("attempted to read unexpected property '{property_name}' on type 'Name'")
+        }
+    }
+}
+
 pub(super) fn resolve_number_literal_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
@@ -410,7 +447,7 @@ pub(super) fn resolve_number_literal_property<'a, 'b: 'a>(
         }),
         _ => {
             unreachable!(
-                "attempted to read unexpected property '{property_name}' on type 'MemberExtend'"
+                "attempted to read unexpected property '{property_name}' on type 'NumberLiteral'"
             )
         }
     }
