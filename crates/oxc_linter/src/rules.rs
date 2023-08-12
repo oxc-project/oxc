@@ -77,6 +77,7 @@ mod typescript {
     pub mod adjacent_overload_signatures;
     pub mod consistent_type_exports;
     pub mod isolated_declaration;
+    pub mod no_duplicate_enum_values;
     pub mod no_empty_interface;
     pub mod no_extra_non_null_assertion;
     pub mod no_misused_new;
@@ -160,6 +161,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::adjacent_overload_signatures,
     typescript::consistent_type_exports,
     typescript::isolated_declaration,
+    typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,
     typescript::no_extra_non_null_assertion,
     typescript::no_non_null_asserted_optional_chain,

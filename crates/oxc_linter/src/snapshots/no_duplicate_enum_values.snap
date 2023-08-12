@@ -1,0 +1,38 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 80
+expression: no_duplicate_enum_values
+---
+  ⚠ Disallow duplicate enum member values
+   ╭─[no_duplicate_enum_values.tsx:3:1]
+ 3 │               A = 1,
+ 4 │               B = 1,
+   ·                   ─
+ 5 │             }
+   ╰────
+
+  ⚠ Disallow duplicate enum member values
+   ╭─[no_duplicate_enum_values.tsx:3:1]
+ 3 │               A = 'A',
+ 4 │               B = 'A',
+   ·                   ───
+ 5 │             }
+   ╰────
+
+  ⚠ Disallow duplicate enum member values
+   ╭─[no_duplicate_enum_values.tsx:3:1]
+ 3 │               A = 'A',
+ 4 │               B = 'A',
+   ·                   ───
+ 5 │               C = 1,
+   ╰────
+
+  ⚠ Disallow duplicate enum member values
+   ╭─[no_duplicate_enum_values.tsx:5:1]
+ 5 │               C = 1,
+ 6 │               D = 1,
+   ·                   ─
+ 7 │             }
+   ╰────
+
+
