@@ -92,6 +92,7 @@ mod jest {
     pub mod no_disabled_tests;
     pub mod no_focused_tests;
     pub mod no_test_prefixes;
+    pub mod valid_describe_callback;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -172,4 +173,5 @@ oxc_macros::declare_all_lint_rules! {
     jest::no_disabled_tests,
     jest::no_test_prefixes,
     jest::no_focused_tests,
+    jest::valid_describe_callback,
 }

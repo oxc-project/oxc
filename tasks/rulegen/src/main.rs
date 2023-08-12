@@ -10,7 +10,7 @@ use oxc_ast::{
     ast::{
         Argument, ArrayExpression, ArrayExpressionElement, CallExpression, Expression,
         ExpressionStatement, ObjectExpression, ObjectProperty, ObjectPropertyKind, Program,
-        PropertyKey, Statement, StringLiteral, TemplateLiteral,
+        PropertyKey, Statement, StringLiteral, TaggedTemplateExpression, TemplateLiteral,
     },
     Visit,
 };
@@ -73,6 +73,9 @@ impl<'a> Visit<'a> for TestCase<'a> {
             Expression::TemplateLiteral(lit) => self.visit_template_literal(lit),
             Expression::ObjectExpression(obj_expr) => self.visit_object_expression(obj_expr),
             Expression::CallExpression(call_expr) => self.visit_call_expression(call_expr),
+            Expression::TaggedTemplateExpression(tag_expr) => {
+                self.visit_tagged_template_expression(tag_expr);
+            }
             _ => {}
         }
     }
@@ -137,6 +140,15 @@ impl<'a> Visit<'a> for TestCase<'a> {
 
     fn visit_string_literal(&mut self, lit: &'a StringLiteral) {
         self.code = Some(Cow::Borrowed(lit.value.as_str()));
+        self.test_code = None;
+    }
+
+    fn visit_tagged_template_expression(&mut self, expr: &'a TaggedTemplateExpression<'a>) {
+        let Expression::Identifier(ident) = &expr.tag else {return;};
+        if ident.name != "dedent" {
+            return;
+        }
+        self.code = expr.quasi.quasi().map(|s| Cow::Borrowed(s.as_str()));
         self.test_code = None;
     }
 }
