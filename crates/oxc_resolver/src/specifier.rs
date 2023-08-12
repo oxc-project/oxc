@@ -1,78 +1,77 @@
 use crate::error::SpecifierError;
+use std::borrow::Cow;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Specifier<'a> {
-    pub path: SpecifierPath<'a>,
+    path: Cow<'a, str>,
+    pub kind: SpecifierKind,
     pub query: Option<&'a str>,
     pub fragment: Option<&'a str>,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum SpecifierPath<'a> {
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum SpecifierKind {
     /// `/path`
-    Absolute(&'a str),
+    Absolute,
 
     /// `./path`, `../path`
-    Relative(&'a str),
+    Relative,
 
     /// `#path`
-    Hash(&'a str),
+    Hash,
 
     /// Specifier without any leading syntax is called a bare specifier.
-    Bare(&'a str),
-}
-
-impl<'a> SpecifierPath<'a> {
-    pub fn as_str(&self) -> &str {
-        match self {
-            Self::Absolute(s) | Self::Relative(s) | Self::Hash(s) | Self::Bare(s) => s,
-        }
-    }
+    Bare,
 }
 
 impl<'a> Specifier<'a> {
+    pub fn path(&'a self) -> &'a str {
+        self.path.as_ref()
+    }
+
+    pub fn set_path(&mut self, path: &'a str) {
+        self.path = Cow::Borrowed(path);
+    }
+
     pub fn parse(specifier: &'a str) -> Result<Specifier<'a>, SpecifierError> {
         if specifier.is_empty() {
             return Err(SpecifierError::Empty);
         }
-
-        let (path, query, fragment) = match specifier.as_bytes()[0] {
-            b'/' => {
-                let (path, query, fragment) = Self::parse_query_framgment(specifier, 1);
-                (SpecifierPath::Absolute(path), query, fragment)
-            }
-            b'.' => {
-                let (path, query, fragment) = Self::parse_query_framgment(specifier, 1);
-                (SpecifierPath::Relative(path), query, fragment)
-            }
-            b'#' => {
-                let (path, query, fragment) = Self::parse_query_framgment(specifier, 1);
-                (SpecifierPath::Hash(path), query, fragment)
-            }
-            _ => {
-                let (path, query, fragment) = Self::parse_query_framgment(specifier, 0);
-                (SpecifierPath::Bare(path), query, fragment)
-            }
+        let (kind, offset) = match specifier.as_bytes()[0] {
+            b'/' => (SpecifierKind::Absolute, 1),
+            b'.' => (SpecifierKind::Relative, 1),
+            b'#' => (SpecifierKind::Hash, 1),
+            _ => (SpecifierKind::Bare, 0),
         };
-
-        Ok(Self { path, query, fragment })
+        let (path, query, fragment) = Self::parse_query_framgment(specifier, offset);
+        Ok(Self { path, kind, query, fragment })
     }
 
-    fn parse_query_framgment(specifier: &str, skip: usize) -> (&str, Option<&str>, Option<&str>) {
+    fn parse_query_framgment(
+        specifier: &'a str,
+        skip: usize,
+    ) -> (Cow<'a, str>, Option<&str>, Option<&str>) {
         let mut query_start: Option<usize> = None;
         let mut fragment_start: Option<usize> = None;
 
-        for (i, c) in specifier.as_bytes().iter().enumerate().skip(skip) {
-            if *c == b'?' {
+        let mut prev = specifier.chars().next().unwrap();
+        let mut escaped_indexes = vec![];
+        for (i, c) in specifier.chars().enumerate().skip(skip) {
+            if c == '?' {
                 query_start = Some(i);
             }
-            if *c == b'#' {
-                fragment_start = Some(i);
-                break;
+            if c == '#' {
+                if prev == '\0' {
+                    escaped_indexes.push(i - 1);
+                } else {
+                    fragment_start = Some(i);
+                    break;
+                }
             }
+            prev = c;
         }
 
-        match (query_start, fragment_start) {
+        let (path, query, fragment) = match (query_start, fragment_start) {
             (Some(i), Some(j)) => {
                 debug_assert!(i < j);
                 (&specifier[..i], Some(&specifier[i..j]), Some(&specifier[j..]))
@@ -80,18 +79,32 @@ impl<'a> Specifier<'a> {
             (Some(i), None) => (&specifier[..i], Some(&specifier[i..]), None),
             (None, Some(j)) => (&specifier[..j], None, Some(&specifier[j..])),
             _ => (specifier, None, None),
-        }
+        };
+
+        let path = if escaped_indexes.is_empty() {
+            Cow::Borrowed(path)
+        } else {
+            // Remove the `\0` characters for a legal path.
+            Cow::Owned(
+                path.chars()
+                    .enumerate()
+                    .filter_map(|(i, c)| (!escaped_indexes.contains(&i)).then_some(c))
+                    .collect::<String>(),
+            )
+        };
+
+        (path, query, fragment)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Specifier, SpecifierError, SpecifierPath};
+    use super::{Specifier, SpecifierError, SpecifierKind};
 
     #[test]
     #[cfg(target_pointer_width = "64")]
     fn size_asserts() {
-        static_assertions::assert_eq_size!(Specifier, [u8; 56]);
+        static_assertions::assert_eq_size!(Specifier, [u8; 64]);
     }
 
     #[test]
@@ -104,7 +117,8 @@ mod tests {
     fn absolute() -> Result<(), SpecifierError> {
         let specifier = "/test?#";
         let parsed = Specifier::parse(specifier)?;
-        assert_eq!(parsed.path, SpecifierPath::Absolute("/test"));
+        assert_eq!(parsed.path, "/test");
+        assert_eq!(parsed.kind, SpecifierKind::Absolute);
         assert_eq!(parsed.query, Some("?"));
         assert_eq!(parsed.fragment, Some("#"));
         Ok(())
@@ -117,7 +131,8 @@ mod tests {
             let mut r = specifier.to_string();
             r.push_str("?#");
             let parsed = Specifier::parse(&r)?;
-            assert_eq!(parsed.path, SpecifierPath::Relative(specifier));
+            assert_eq!(parsed.path, specifier);
+            assert_eq!(parsed.kind, SpecifierKind::Relative);
             assert_eq!(parsed.query, Some("?"));
             assert_eq!(parsed.fragment, Some("#"));
         }
@@ -131,7 +146,8 @@ mod tests {
             let mut r = specifier.to_string();
             r.push_str("?#");
             let parsed = Specifier::parse(&r)?;
-            assert_eq!(parsed.path, SpecifierPath::Hash(specifier));
+            assert_eq!(parsed.path, specifier);
+            assert_eq!(parsed.kind, SpecifierKind::Hash);
             assert_eq!(parsed.query, Some("?"));
             assert_eq!(parsed.fragment, Some("#"));
         }
@@ -145,7 +161,8 @@ mod tests {
             let mut r = specifier.to_string();
             r.push_str("?#");
             let parsed = Specifier::parse(&r)?;
-            assert_eq!(parsed.path, SpecifierPath::Bare(specifier));
+            assert_eq!(parsed.path, specifier);
+            assert_eq!(parsed.kind, SpecifierKind::Bare);
             assert_eq!(parsed.query, Some("?"));
             assert_eq!(parsed.fragment, Some("#"));
         }
@@ -169,7 +186,7 @@ mod tests {
 
         for (specifier_str, query, fragment) in data {
             let specifier = Specifier::parse(specifier_str)?;
-            assert_eq!(specifier.path.as_str(), "a", "{specifier_str}");
+            assert_eq!(specifier.path, "a", "{specifier_str}");
             assert_eq!(specifier.query, query, "{specifier_str}");
             assert_eq!(specifier.fragment, fragment, "{specifier_str}");
         }
@@ -193,7 +210,7 @@ mod tests {
 
         for (specifier_str, path, query, fragment) in data {
             let specifier = Specifier::parse(specifier_str)?;
-            assert_eq!(specifier.path.as_str(), path, "{specifier_str}");
+            assert_eq!(specifier.path, path, "{specifier_str}");
             assert_eq!(specifier.query.unwrap_or(""), query, "{specifier_str}");
             assert_eq!(specifier.fragment.unwrap_or(""), fragment, "{specifier_str}");
         }
@@ -217,7 +234,7 @@ mod tests {
 
         for (specifier_str, path, query, fragment) in data {
             let specifier = Specifier::parse(specifier_str)?;
-            assert_eq!(specifier.path.as_str(), path, "{specifier_str}");
+            assert_eq!(specifier.path, path, "{specifier_str}");
             assert_eq!(specifier.query.unwrap_or(""), query, "{specifier_str}");
             assert_eq!(specifier.fragment.unwrap_or(""), fragment, "{specifier_str}");
         }

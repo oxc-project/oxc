@@ -37,9 +37,12 @@ fn resolve() {
         ("find node_modules outside of node_modules", f.join("browser-module/node_modules"), "m1/a", f.join("node_modules/m1/a.js")),
         ("don't crash on main field pointing to self", f.clone(), "./main-field-self", f.join("./main-field-self/index.js")),
         ("don't crash on main field pointing to self (2)", f.clone(), "./main-field-self2", f.join("./main-field-self2/index.js")),
-        // ("handle fragment edge case (no fragment)", f.clone(), "./no#fragment/#/#", f.join("no\0#fragment/\0#/\0#.js")),
-        // ("handle fragment edge case (fragment)", f.clone(), "./no#fragment/#/", f.join("no.js#fragment/#/")),
-        // ("handle fragment escaping", f.clone(), "./no\0#fragment/\0#/\0##fragment", f.join("no\0#fragment/\0#\0#.js#fragment")),
+        // enhanced-resolve has `#` prepended with a `\0`, they are removed from the
+        // following 3 expected test results.
+        // See https://github.com/webpack/enhanced-resolve#escaping
+        ("handle fragment edge case (no fragment)", f.clone(), "./no#fragment/#/#", f.join("no#fragment/#/#.js")),
+        ("handle fragment edge case (fragment)", f.clone(), "./no#fragment/#/", f.join("no.js#fragment/#/")),
+        ("handle fragment escaping", f.clone(), "./no\0#fragment/\0#/\0##fragment", f.join("no#fragment/#/#.js#fragment")),
     ];
 
     for (comment, path, request, expected) in pass {
