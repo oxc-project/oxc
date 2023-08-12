@@ -39,7 +39,7 @@ oxc_query          = { path = "crates/oxc_query" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_vscode       = { path = "editor/vscode/server" }
 
-bitflags           = { version = "2.3.3" }
+bitflags           = { version = "2.4.0" }
 bumpalo            = { version = "3.13.0" }
 clap               = { version = "4.3.19" }
 compact_str        = { version = "0.7.1" }
@@ -52,7 +52,7 @@ flate2             = { version = "1.0.26" }
 futures            = { version = "0.3.28" }
 ignore             = { version = "0.4.20" }
 itertools          = { version = "0.11.0" }
-jemallocator       = { version = "0.5.0" }
+jemallocator       = { version = "0.5.4" }
 lazy_static        = { version = "1.4.0" }
 miette             = { version = "5.10.0" }
 mimalloc           = { version = "0.1.37" }
@@ -65,12 +65,12 @@ proc-macro2        = { version = "1.0.66" }
 project-root       = { version = "0.2.2" }
 quote              = { version = "1.0.32" }
 rayon              = { version = "1.7.0" }
-regex              = { version = "1.9.1" }
+regex              = { version = "1.9.3" }
 rustc-hash         = { version = "1.1.0", default-features = false, features = ["std"] }
 ryu-js             = { version = "0.2.2" }
 ropey              = { version = "1.6.0" }
-serde              = { version = "1.0.175" }
-serde_json         = { version = "1.0.103" }
+serde              = { version = "1.0.183" }
+serde_json         = { version = "1.0.104" }
 syn                = { version = "=1" }
 thiserror          = { version = "1.0.44" }
 tokio              = { version = "1" }
