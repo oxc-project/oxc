@@ -162,6 +162,13 @@ impl Rule for NoShadowRestrictedNames {
                     }
                 }
             }
+            AstKind::ArrowExpression(arrow_expr) => {
+                for param in arrow_expr.params.items.iter() {
+                    if let Some(value) = binding_pattern_is_global_obj(&param.pattern, false) {
+                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                    }
+                }
+            }
             AstKind::Class(class_decl) => {
                 if let Some(bind_ident) = class_decl.id.as_ref() {
                     check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
