@@ -116,11 +116,6 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "InterfaceExtend" => super::properties::resolve_interface_extend_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-            ),
             "JSXAttribute" => super::properties::resolve_jsxattribute_property(
                 contexts,
                 property_name.as_ref(),
@@ -139,11 +134,6 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 )
             }
             "JSXText" => super::properties::resolve_jsxtext_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-            ),
-            "MemberExtend" => super::properties::resolve_member_extend_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
@@ -178,11 +168,6 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "SimpleExtend" => super::properties::resolve_simple_extend_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-            ),
             "Span" => super::properties::resolve_span_property(
                 contexts,
                 property_name.as_ref(),
@@ -193,12 +178,6 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
-            ),
-            "Type" => super::properties::resolve_type_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-                self,
             ),
             _ => {
                 unreachable!(

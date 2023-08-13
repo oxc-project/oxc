@@ -179,7 +179,6 @@ interface A extends B.C {}
 B.C is always more than one identifier.
 """
 type MemberExtend implements InterfaceExtend {
-  str: String!
   span: Span!
 }
 
@@ -188,15 +187,10 @@ interface A extends B {}
 B is always just one identifier.
 """
 type SimpleExtend implements InterfaceExtend {
-  str: String!
   span: Span!
 }
 
 interface InterfaceExtend {
-  """
-  Null if not decidabled such as
-  """
-  str: String
   span: Span!
 }
 
@@ -248,7 +242,6 @@ interface Class {
 }
 
 interface Type {
-  str: String!
   span: Span!
 }
 
