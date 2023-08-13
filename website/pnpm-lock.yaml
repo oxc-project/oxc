@@ -5,7 +5,7 @@ patchedDependencies:
     hash: yiqcshcf2sgzcw3iuyryzsfwbe
     path: patches/@ddietr__codemirror-themes@1.4.1.patch
   graphql-language-service@5.1.7:
-    hash: dwdfvlg6z5bahyweye3zjop2qq
+    hash: psqsi4ra3xanzjr6p43kxkrwwy
     path: patches/graphql-language-service@5.1.7.patch
 
 dependencies:
@@ -513,7 +513,7 @@ packages:
       '@codemirror/view': 6.12.0
       '@lezer/highlight': 1.1.6
       graphql: 16.7.1
-      graphql-language-service: 5.1.7(patch_hash=dwdfvlg6z5bahyweye3zjop2qq)(graphql@16.7.1)
+      graphql-language-service: 5.1.7(patch_hash=psqsi4ra3xanzjr6p43kxkrwwy)(graphql@16.7.1)
     dev: false
 
   /codemirror@6.0.1(@lezer/common@1.0.2):
@@ -656,7 +656,7 @@ packages:
       path-is-absolute: 1.0.1
     dev: true
 
-  /graphql-language-service@5.1.7(patch_hash=dwdfvlg6z5bahyweye3zjop2qq)(graphql@16.7.1):
+  /graphql-language-service@5.1.7(patch_hash=psqsi4ra3xanzjr6p43kxkrwwy)(graphql@16.7.1):
     resolution: {integrity: sha512-xkawYMJeoNYGhT+SpSH3c2qf6HpGHQ/duDmrseVHBpVCrXAiGnliXGSCC4jyMGgZQ05GytsZ12p0nUo7s6lSSw==}
     hasBin: true
     peerDependencies:
