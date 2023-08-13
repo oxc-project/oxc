@@ -1,7 +1,6 @@
 use std::convert::Into;
 
-use oxc_ast::ast::{BindingPatternKind, Expression, MemberExpression};
-use oxc_span::GetSpan;
+use oxc_ast::ast::{BindingPatternKind, Expression};
 use trustfall::{
     provider::{
         field_property, resolve_property_with, ContextIterator, ContextOutcomeIterator, ResolveInfo,
