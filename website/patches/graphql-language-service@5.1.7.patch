@@ -1,5 +1,5 @@
 diff --git a/esm/interface/getAutocompleteSuggestions.js b/esm/interface/getAutocompleteSuggestions.js
-index ac159d132d095a789b966627d315f4238c79ab60..a3be2d27c9d5c7d6fd3745093301a07d28e79a8d 100644
+index ac159d132d095a789b966627d315f4238c79ab60..59b43348eb0755149719e2dd2b3ba63d0d6e77a3 100644
 --- a/esm/interface/getAutocompleteSuggestions.js
 +++ b/esm/interface/getAutocompleteSuggestions.js
 @@ -234,7 +234,12 @@ export function getAutocompleteSuggestions(schema, queryText, cursor, contextTok
@@ -16,3 +16,16 @@ index ac159d132d095a789b966627d315f4238c79ab60..a3be2d27c9d5c7d6fd3745093301a07d
      }
      return [];
  }
+@@ -442,7 +447,11 @@ function getSuggestionsForFragmentTypeConditions(token, typeInfo, schema, _kind)
+             const possibleIfaceMap = Object.create(null);
+             for (const type of possibleObjTypes) {
+                 for (const iface of type.getInterfaces()) {
+-                    possibleIfaceMap[iface.name] = iface;
++                    // Only allow interfaces to be autocompleted that implement
++                    // the type of the fragment.
++                    if (iface._interfaces.some(x => x === typeInfo.parentType.name)) {
++                        possibleIfaceMap[iface.name] = iface;
++                    }
+                 }
+             }
+             possibleTypes = possibleObjTypes.concat(objectValues(possibleIfaceMap));
