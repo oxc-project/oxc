@@ -164,7 +164,9 @@ fn test_parent_query() {
                 ast_node {
                     ... on TypeAnnotationAST {
                         type {
-                            type_: str @output
+                            span {
+                                type_: str @output
+                            }
                         }
                         parent {
                             tn1: __typename @output

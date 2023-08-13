@@ -1745,6 +1745,105 @@ mod path_part {
     }
 }
 
+pub(super) fn resolve_reassignment_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "parent" => parents(contexts, adapter),
+        "ancestor" => ancestors(contexts, adapter),
+        "span" => reassignment::span(contexts, resolve_info),
+        "left_as_expression" => reassignment::left_as_expression(contexts, resolve_info),
+        "right" => reassignment::right(contexts, resolve_info),
+        _ => {
+            unreachable!(
+                "attempted to resolve unexpected edge '{edge_name}' on type 'Reassignment'"
+            )
+        }
+    }
+}
+
+mod reassignment {
+    use std::convert::Into;
+
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn left_as_expression<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            match &v
+                .as_reassignment()
+                .unwrap_or_else(|| {
+                    panic!("expected to have a reassignment vertex, instead have: {v:#?}")
+                })
+                .assignment_expression
+                .left
+            {
+                oxc_ast::ast::AssignmentTarget::SimpleAssignmentTarget(target) => {
+                    let expr = match target {
+                        oxc_ast::ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(
+                            assignment_target,
+                        ) => Vertex::try_from_identifier_reference(assignment_target),
+                        oxc_ast::ast::SimpleAssignmentTarget::MemberAssignmentTarget(membexpr) => {
+                            Vertex::try_from_member_expression(membexpr)
+                        }
+                        oxc_ast::ast::SimpleAssignmentTarget::TSAsExpression(it) => {
+                            Some((&it.expression).into())
+                        }
+                        oxc_ast::ast::SimpleAssignmentTarget::TSSatisfiesExpression(it) => {
+                            Some((&it.expression).into())
+                        }
+                        oxc_ast::ast::SimpleAssignmentTarget::TSNonNullExpression(it) => {
+                            Some((&it.expression).into())
+                        }
+                        oxc_ast::ast::SimpleAssignmentTarget::TSTypeAssertion(it) => {
+                            Some((&it.expression).into())
+                        }
+                    };
+                    Box::new(expr.into_iter().map(Into::into))
+                }
+                oxc_ast::ast::AssignmentTarget::AssignmentTargetPattern(_) => {
+                    Box::new(std::iter::empty())
+                }
+            }
+        })
+    }
+
+    pub(super) fn right<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_reassignment()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a reassignment vertex, instead have: {v:#?}")
+                    })
+                    .assignment_expression
+                    .right)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_return_statement_ast_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,

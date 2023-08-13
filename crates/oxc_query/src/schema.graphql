@@ -179,7 +179,6 @@ interface A extends B.C {}
 B.C is always more than one identifier.
 """
 type MemberExtend implements InterfaceExtend {
-  str: String!
   span: Span!
 }
 
@@ -188,15 +187,10 @@ interface A extends B {}
 B is always just one identifier.
 """
 type SimpleExtend implements InterfaceExtend {
-  str: String!
   span: Span!
 }
 
 interface InterfaceExtend {
-  """
-  Null if not decidabled such as
-  """
-  str: String
   span: Span!
 }
 
@@ -248,7 +242,6 @@ interface Class {
 }
 
 interface Type {
-  str: String!
   span: Span!
 }
 
@@ -260,6 +253,7 @@ interface TypeAnnotation implements HasSpan {
 type Span {
   start: Int!
   end: Int!
+  str: String!
 }
 
 type JSXSpreadChild {
@@ -390,6 +384,43 @@ type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode 
   ancestor: [ASTNode!]!
   # HasSpan
   span: Span!
+}
+
+"""
+Any assignment that isn't a variable declaration, which means no const/let/var.
+ie: "a = 1;", "a /= 1;", "a += 1;", etc.
+"""
+interface Reassignment implements HasSpan & Expression {
+  """
+  Only nonnull if the left is not an object or array destructuring.
+  examples that this would be usable: "a = 12;", "a.b = 'apple';"
+  """
+  left_as_expression: Expression
+  right: Expression!
+  # Expression
+  as_constant_string: String
+  # HasSpan
+  span: Span!
+}
+
+"""
+Any assignment that isn't a variable declaration, which means no const/let/var.
+ie: "a = 1;", "a /= 1;", "a += 1;", etc.
+"""
+type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
+  """
+  Only nonnull if the left is not an object or array destructuring.
+  examples that this would be usable: "a = 12;", "a.b = 'apple';"
+  """
+  left_as_expression: Expression
+  right: Expression!
+  # Expression
+  as_constant_string: String
+  # HasSpan
+  span: Span!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
 }
 
 interface Name implements HasSpan {

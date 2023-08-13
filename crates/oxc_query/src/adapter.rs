@@ -31,7 +31,7 @@ pub const SCHEMA_TEXT: &str = include_str!("./schema.graphql");
 /// If the schema parse returns an error, which will not happen unless the schema get's corrupted.
 pub fn schema() -> &'static Schema {
     // internal note: this might not parser correctly due to making an incorrect schema during development
-    SCHEMA.get_or_init(|| Schema::parse(SCHEMA_TEXT).expect("not a valid schema"))
+    SCHEMA.get_or_init(|| Schema::parse(SCHEMA_TEXT).unwrap_or_else(|e| panic!("{}", e)))
 }
 
 impl<'a> Adapter<'a> {
@@ -116,11 +116,6 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "InterfaceExtend" => super::properties::resolve_interface_extend_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-            ),
             "JSXAttribute" => super::properties::resolve_jsxattribute_property(
                 contexts,
                 property_name.as_ref(),
@@ -139,11 +134,6 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 )
             }
             "JSXText" => super::properties::resolve_jsxtext_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-            ),
-            "MemberExtend" => super::properties::resolve_member_extend_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
@@ -173,12 +163,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
-            "SearchParameter" => super::properties::resolve_search_parameter_property(
+            "ReassignmentAST" | "Reassignment" => super::properties::resolve_reassignment_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
             ),
-            "SimpleExtend" => super::properties::resolve_simple_extend_property(
+            "SearchParameter" => super::properties::resolve_search_parameter_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
@@ -187,17 +177,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
+                self,
             ),
             "SpecificImport" => super::properties::resolve_specific_import_property(
                 contexts,
                 property_name.as_ref(),
                 resolve_info,
-            ),
-            "Type" => super::properties::resolve_type_property(
-                contexts,
-                property_name.as_ref(),
-                resolve_info,
-                self,
             ),
             _ => {
                 unreachable!(
@@ -401,6 +386,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
             ),
             "PathPart" => super::edges::resolve_path_part_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "ReassignmentAST" | "Reassignment" => super::edges::resolve_reassignment_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
