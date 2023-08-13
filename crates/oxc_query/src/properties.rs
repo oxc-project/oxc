@@ -558,8 +558,15 @@ pub(super) fn resolve_span_property<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     property_name: &str,
     _resolve_info: &ResolveInfo,
+    adapter: &'a Adapter<'b>,
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, FieldValue> {
     match property_name {
+        "str" => resolve_property_with(contexts, |v| {
+            let span = v
+                .as_span()
+                .unwrap_or_else(|| panic!("expected to have a span vertex, instead have: {v:#?}"));
+            adapter.semantic.source_text()[span.start as usize..span.end as usize].into()
+        }),
         "end" => resolve_property_with(contexts, |v| {
             v.as_span()
                 .unwrap_or_else(|| panic!("expected to have a span vertex, instead have: {v:#?}"))

@@ -260,6 +260,7 @@ interface TypeAnnotation implements HasSpan {
 type Span {
   start: Int!
   end: Int!
+  str: String!
 }
 
 type JSXSpreadChild {
