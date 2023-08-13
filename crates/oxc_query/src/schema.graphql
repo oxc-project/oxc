@@ -392,6 +392,43 @@ type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode 
   span: Span!
 }
 
+"""
+Any assignment that isn't a variable declaration, which means no const/let/var.
+ie: "a = 1;", "a /= 1;", "a += 1;", etc.
+"""
+interface Reassignment implements HasSpan & Expression {
+  """
+  Only nonnull if the left is not an object or array destructuring.
+  examples that this would be usable: "a = 12;", "a.b = 'apple';"
+  """
+  left_as_expression: Expression
+  right: Expression!
+  # Expression
+  as_constant_string: String
+  # HasSpan
+  span: Span!
+}
+
+"""
+Any assignment that isn't a variable declaration, which means no const/let/var.
+ie: "a = 1;", "a /= 1;", "a += 1;", etc.
+"""
+type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
+  """
+  Only nonnull if the left is not an object or array destructuring.
+  examples that this would be usable: "a = 12;", "a.b = 'apple';"
+  """
+  left_as_expression: Expression
+  right: Expression!
+  # Expression
+  as_constant_string: String
+  # HasSpan
+  span: Span!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+}
+
 interface Name implements HasSpan {
   name: String!
   # HasSpan

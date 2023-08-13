@@ -3,13 +3,13 @@ use std::rc::Rc;
 use enum_as_inner::EnumAsInner;
 use oxc_ast::{
     ast::{
-        BindingPatternKind, Class, Expression, IdentifierName, IdentifierReference, IfStatement,
-        ImportDeclaration, ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement,
-        JSXExpressionContainer, JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild,
-        JSXText, MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral,
-        ObjectExpression, ObjectProperty, PropertyDefinition, ReturnStatement, SpreadElement,
-        StaticMemberExpression, TSInterfaceDeclaration, TSType, TSTypeAnnotation,
-        VariableDeclarator,
+        AssignmentExpression, BindingPatternKind, Class, Expression, IdentifierName,
+        IdentifierReference, IfStatement, ImportDeclaration, ImportDefaultSpecifier,
+        ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer, JSXFragment,
+        JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText, MemberExpression,
+        MethodDefinition, ModuleDeclaration, NumberLiteral, ObjectExpression, ObjectProperty,
+        PropertyDefinition, ReturnStatement, SpreadElement, StaticMemberExpression,
+        TSInterfaceDeclaration, TSType, TSTypeAnnotation, VariableDeclarator,
     },
     AstKind,
 };
@@ -58,6 +58,7 @@ pub enum Vertex<'a> {
     SpreadIntoObject(Rc<SpreadIntoObjectVertex<'a>>),
     ObjectEntry(Rc<ObjectEntryVertex<'a>>),
     DotProperty(Rc<DotPropertyVertex<'a>>),
+    Reassignment(Rc<ReassignmentVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -95,6 +96,7 @@ impl<'a> Vertex<'a> {
             Self::ReturnStatementAST(data) => data.return_statement.span,
             Self::IfStatementAST(data) => data.return_statement.span,
             Self::NumberLiteral(data) => data.number_literal.span,
+            Self::Reassignment(data) => data.assignment_expression.span,
             Self::Name(data) => data.name.span,
             Self::File
             | Self::Url(_)
@@ -124,6 +126,7 @@ impl<'a> Vertex<'a> {
             Vertex::SpreadIntoObject(data) => data.ast_node.map(|x| x.id()),
             Vertex::ObjectEntry(data) => data.ast_node.map(|x| x.id()),
             Vertex::DotProperty(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Reassignment(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -203,6 +206,7 @@ impl Typename for Vertex<'_> {
             Vertex::IfStatementAST(_) => "IfStatementAST",
             Vertex::SpreadIntoObject(obj) => obj.typename(),
             Vertex::ObjectEntry(entry) => entry.typename(),
+            Vertex::Reassignment(reassignment) => reassignment.typename(),
         }
     }
 }
@@ -267,6 +271,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
                     _ => unreachable!("we should only ever have StaticMemberExpression"),
                 }
             }
+            AstKind::AssignmentExpression(assignment_expression) => Vertex::Reassignment(
+                ReassignmentVertex { ast_node: Some(ast_node), assignment_expression }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -287,18 +294,14 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             Expression::NumberLiteral(number_literal) => {
                 Vertex::NumberLiteral(NumberLiteralVertex { ast_node: None, number_literal }.into())
             }
-            Expression::MemberExpression(member_expr)
-                if matches!(**member_expr, MemberExpression::StaticMemberExpression(_)) =>
-            {
-                match &**member_expr {
-                    MemberExpression::StaticMemberExpression(static_member_expr) => {
-                        Vertex::DotProperty(
-                            DotPropertyVertex { ast_node: None, static_member_expr }.into(),
-                        )
-                    }
-                    _ => unreachable!("we should only ever have StaticMemberExpression"),
-                }
+            Expression::MemberExpression(me) => {
+                let vertex = Vertex::try_from_member_expression(me);
+
+                vertex.unwrap_or(Vertex::Expression(expr))
             }
+            Expression::AssignmentExpression(assignment_expression) => Vertex::Reassignment(
+                ReassignmentVertex { ast_node: None, assignment_expression }.into(),
+            ),
             _ => Vertex::Expression(expr),
         }
     }
@@ -577,6 +580,23 @@ impl<'a> Typename for DotPropertyVertex<'a> {
             "DotPropertyAST"
         } else {
             "DotProperty"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ReassignmentVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub assignment_expression: &'a AssignmentExpression<'a>,
+}
+
+impl<'a> Typename for ReassignmentVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ReassignmentAST"
+        } else {
+            "Reassignment"
         }
     }
 }
