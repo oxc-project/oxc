@@ -163,6 +163,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
+            "ReassignmentAST" | "Reassignment" => super::properties::resolve_reassignment_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "SearchParameter" => super::properties::resolve_search_parameter_property(
                 contexts,
                 property_name.as_ref(),
