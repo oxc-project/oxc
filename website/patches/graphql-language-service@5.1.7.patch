@@ -1,5 +1,5 @@
 diff --git a/esm/interface/getAutocompleteSuggestions.js b/esm/interface/getAutocompleteSuggestions.js
-index ac159d132d095a789b966627d315f4238c79ab60..ae348a3faaefd66c60b0c9d36487a53b9e254c53 100644
+index ac159d132d095a789b966627d315f4238c79ab60..a5c69725101bdf5919e27cd55c42e231813b0543 100644
 --- a/esm/interface/getAutocompleteSuggestions.js
 +++ b/esm/interface/getAutocompleteSuggestions.js
 @@ -63,6 +63,9 @@ const hasTypeSystemDefinitions = (sdl) => {
@@ -40,7 +40,7 @@ index ac159d132d095a789b966627d315f4238c79ab60..ae348a3faaefd66c60b0c9d36487a53b
 -                    possibleIfaceMap[iface.name] = iface;
 +                    // Only allow interfaces to be autocompleted that implement
 +                    // the type of the fragment.
-+                    if (iface._interfaces.some(x => x === typeInfo.parentType.name)) {
++                    if (iface._interfaces.some(iface => iface.name === typeInfo.parentType.name)) {
 +                        possibleIfaceMap[iface.name] = iface;
 +                    }
                  }
