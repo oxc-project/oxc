@@ -163,6 +163,25 @@ impl<'a> Vertex<'a> {
             _ => None,
         }
     }
+
+    // todo: remove `Option` when the match covers all the cases
+    pub fn try_from_member_expression(member_expression: &'a MemberExpression<'a>) -> Option<Self> {
+        match &member_expression {
+            MemberExpression::StaticMemberExpression(static_member_expr) => {
+                Some(Vertex::DotProperty(
+                    DotPropertyVertex { ast_node: None, static_member_expr }.into(),
+                ))
+            }
+            _ => None,
+        }
+    }
+
+    // todo: remove `Option` when this doesn't return none
+    pub fn try_from_identifier_reference(
+        _identifier_reference: &'a IdentifierReference,
+    ) -> Option<Self> {
+        None
+    }
 }
 
 impl Typename for Vertex<'_> {
