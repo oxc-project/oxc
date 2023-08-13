@@ -1,22 +1,38 @@
 diff --git a/esm/interface/getAutocompleteSuggestions.js b/esm/interface/getAutocompleteSuggestions.js
-index ac159d132d095a789b966627d315f4238c79ab60..59b43348eb0755149719e2dd2b3ba63d0d6e77a3 100644
+index ac159d132d095a789b966627d315f4238c79ab60..752ee175ff182fba684caea97bffedd05bd0a721 100644
 --- a/esm/interface/getAutocompleteSuggestions.js
 +++ b/esm/interface/getAutocompleteSuggestions.js
-@@ -234,7 +234,12 @@ export function getAutocompleteSuggestions(schema, queryText, cursor, contextTok
+@@ -63,6 +63,9 @@ const hasTypeSystemDefinitions = (sdl) => {
+     }
+     return hasTypeSystemDef;
+ };
++const primitives = new Set(['Int', 'Float', 'String', 'Boolean'])
++const propertyDirectives = new Set(['fold', 'recurse', 'optional', 'transform'])
++const edgeDirectives = new Set(['filter', 'tag', 'output', 'transform'])
+ export function getAutocompleteSuggestions(schema, queryText, cursor, contextToken, fragmentDefs, options) {
+     var _a;
+     const opts = Object.assign(Object.assign({}, options), { schema });
+@@ -234,7 +237,18 @@ export function getAutocompleteSuggestions(schema, queryText, cursor, contextTok
          return getSuggestionsForVariableDefinition(token, schema, kind);
      }
      if (kind === RuleKinds.DIRECTIVE) {
 -        return getSuggestionsForDirective(token, state, schema, kind);
 +        // We should autocomplete fields on the line after we autocomplete a directive
-+        if (state.needsAdvance) { // active after '@' or many other kinds of punctuation, so perfect for when we need to autocomplete directives
-+            return getSuggestionsForDirective(token, state, schema, kind);
++        if (state.needsAdvance) { // active after '@' or many other kinds of punctuation, so perfect for when we need to autocomplete directives.
++            // further restrict the directives we suggest based on the type of the field we are on
++            // x.label does not include the '@'
++            if (primitives.has(typeInfo.fieldDef.type.name)) {
++                return getSuggestionsForDirective(token, state, schema, kind).filter(x => propertyDirectives.has(x.label))
++            } else {
++                return getSuggestionsForDirective(token, state, schema, kind).filter(x => edgeDirectives.has(x.label))
++            }
 +        } else { // there has been no '@' so we should autocomplete fields
 +            return getSuggestionsForFieldNames(token, typeInfo, opts);
 +        }
      }
      return [];
  }
-@@ -442,7 +447,11 @@ function getSuggestionsForFragmentTypeConditions(token, typeInfo, schema, _kind)
+@@ -442,7 +456,11 @@ function getSuggestionsForFragmentTypeConditions(token, typeInfo, schema, _kind)
              const possibleIfaceMap = Object.create(null);
              for (const type of possibleObjTypes) {
                  for (const iface of type.getInterfaces()) {
