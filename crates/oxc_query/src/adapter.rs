@@ -106,6 +106,11 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "FnCallAST" | "FnCall" => super::properties::resolve_fn_call_property(
+                contexts,
+                property_name.as_ref(),
+                resolve_info,
+            ),
             "ImportAST" | "Import" => super::properties::resolve_import_property(
                 contexts,
                 property_name.as_ref(),
@@ -209,6 +214,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
+            "Argument" => super::edges::resolve_argument_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+            ),
             "AssignmentType" => super::edges::resolve_assignment_type_edge(
                 contexts,
                 edge_name.as_ref(),
@@ -254,6 +265,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
             ),
             "File" => super::edges::resolve_file_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "FnCallAST" | "FnCall" => super::edges::resolve_fn_call_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
