@@ -52,6 +52,7 @@ fn alias() {
                 ("ignored".into(), vec![AliasValue::Ignore]),
                 // not part of enhanced-resolve, added to make sure query in alias value works
                 ("alias_query".into(), vec![AliasValue::Path("a?query_after".into())]),
+                ("alias_fragment".into(), vec![AliasValue::Path("a#fragment_after".into())]),
             ],
             modules: vec!["/".into()],
             ..ResolveOptions::default()
@@ -92,6 +93,7 @@ fn alias() {
         ("should resolve a file in multiple aliased dirs 2", "multiAlias/anotherDir", "/e/anotherDir/index"),
         // not part of enhanced-resolve, added to make sure query in alias value works
         ("should resolve query in alias value", "alias_query?query_before", "/a/index?query_after"),
+        ("should resolve query in alias value", "alias_fragment#fragment_before", "/a/index#fragment_after"),
     ];
 
     for (comment, request, expected) in pass {
