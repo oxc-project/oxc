@@ -559,23 +559,25 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         };
         // 3. Parse DIR/NAME/package.json, and look for "exports" field.
         // 4. If "exports" is null or undefined, return.
-        if package_json.exports.is_none() {
+        if package_json.exports.is_empty() {
             return Ok(None);
         };
         // 5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(DIR/NAME), "." + SUBPATH,
         //    `package.json` "exports", ["node", "require"]) defined in the ESM resolver.
         // Note: The subpath is not prepended with a dot on purpose
-        let Some(path) = self.package_exports_resolve(
-            cached_path.path(),
-            subpath,
-            &package_json.exports,
-            &self.options.condition_names,
-            ctx
-        )? else {
-            return Ok(None)
-        };
-        // 6. RESOLVE_ESM_MATCH(MATCH)
-        self.resolve_esm_match(&path, &package_json, ctx)
+        for exports in &package_json.exports {
+            if let Some(path) = self.package_exports_resolve(
+                cached_path.path(),
+                subpath,
+                exports,
+                &self.options.condition_names,
+                ctx,
+            )? {
+                // 6. RESOLVE_ESM_MATCH(MATCH)
+                return self.resolve_esm_match(&path, &package_json, ctx);
+            };
+        }
+        Ok(None)
     }
 
     fn load_package_self(
@@ -590,7 +592,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             return Ok(None);
         };
         // 3. If the SCOPE/package.json "exports" is null or undefined, return.
-        if package_json.exports.is_none() {
+        if package_json.exports.is_empty() {
             return self.load_browser_field(
                 cached_path.path(),
                 Some(specifier),
@@ -608,17 +610,19 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let package_url = package_json.directory();
         // Note: The subpath is not prepended with a dot on purpose
         // because `package_exports_resolve` matches subpath without the leading dot.
-        let Some(cached_path) = self.package_exports_resolve(
-            package_url,
-            subpath,
-            &package_json.exports,
-            &self.options.condition_names,
-            ctx
-        )? else {
-            return Ok(None);
-        };
-        // 6. RESOLVE_ESM_MATCH(MATCH)
-        self.resolve_esm_match(&cached_path, &package_json, ctx)
+        for exports in &package_json.exports {
+            if let Some(cached_path) = self.package_exports_resolve(
+                package_url,
+                subpath,
+                exports,
+                &self.options.condition_names,
+                ctx,
+            )? {
+                // 6. RESOLVE_ESM_MATCH(MATCH)
+                return self.resolve_esm_match(&cached_path, &package_json, ctx);
+            }
+        }
+        Ok(None)
     }
 
     /// RESOLVE_ESM_MATCH(MATCH)
@@ -760,15 +764,19 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         cached_path.package_json(&self.cache.fs, &self.options)?
                     {
                         // 5. If pjson is not null and pjson.exports is not null or undefined, then
-                        if !package_json.exports.is_none() {
+                        if !package_json.exports.is_empty() {
                             // 1. Return the result of PACKAGE_EXPORTS_RESOLVE(packageURL, packageSubpath, pjson.exports, defaultConditions).
-                            return self.package_exports_resolve(
-                                cached_path.path(),
-                                subpath,
-                                &package_json.exports,
-                                &self.options.condition_names,
-                                ctx,
-                            );
+                            for exports in &package_json.exports {
+                                if let Some(path) = self.package_exports_resolve(
+                                    cached_path.path(),
+                                    subpath,
+                                    exports,
+                                    &self.options.condition_names,
+                                    ctx,
+                                )? {
+                                    return Ok(Some(path));
+                                }
+                            }
                         }
                         // 6. Otherwise, if packageSubpath is equal to ".", then
                         if subpath == "." {

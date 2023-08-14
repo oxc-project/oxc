@@ -16,7 +16,7 @@ categories.workspace   = true
 tracing    = { workspace = true }
 dashmap    = { workspace = true }
 serde      = { workspace = true, features = ["derive"] } # derive for Deserialize from package.json
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["preserve_order"] } # preserve_order: package_json.exports requires order such as `["require", "import", "default"]`
 rustc-hash = { workspace = true }
 indexmap   = { workspace = true, features = ["serde"] }  # serde for Deserialize from package.json
 dunce      = "1.0.4"
