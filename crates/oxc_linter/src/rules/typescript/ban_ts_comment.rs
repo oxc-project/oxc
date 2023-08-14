@@ -13,13 +13,13 @@ use crate::{context::LintContext, rule::Rule};
 pub enum BanTsCommentDiagnostic {
     #[error("Do not use @ts-{0} because it alters compilation errors.")]
     #[diagnostic(severity(warning))]
-    TsDirectiveComment(String, #[label] Span),
+    Comment(String, #[label] Span),
     #[error("Include a description after the @ts-{0} directive to explain why the @ts-{0} is necessary. The description must be {1} characters or longer.")]
     #[diagnostic(severity(warning))]
-    TsDirectiveCommentRequiresDescription(String, u64, #[label] Span),
+    CommentRequiresDescription(String, u64, #[label] Span),
     #[error("The description for the @ts-{0} directive must match the {1} format.")]
     #[diagnostic(severity(warning))]
-    TsDirectiveCommentDescriptionNotMatchPattern(String, String, #[label] Span),
+    CommentDescriptionNotMatchPattern(String, String, #[label] Span),
 }
 
 #[derive(Debug, Clone)]
@@ -53,20 +53,20 @@ pub enum DirectiveConfig {
 impl DirectiveConfig {
     fn from_json(value: &serde_json::Value) -> Option<Self> {
         match value {
-            serde_json::Value::Bool(b) => Some(DirectiveConfig::Boolean(*b)),
+            serde_json::Value::Bool(b) => Some(Self::Boolean(*b)),
             serde_json::Value::String(s) => {
                 if s == "allow-with-description" {
-                    Some(DirectiveConfig::RequireDescription)
-               }
-               else {
-                None
-               }
-            },
+                    Some(Self::RequireDescription)
+                } else {
+                    None
+                }
+            }
             serde_json::Value::Object(o) => {
-              let re = o.get("descriptionFormat")
-              .map_or(None, serde_json::Value::as_str)
-              .map(|pattern| Regex::new(pattern).ok()).flatten();
-              Some(DirectiveConfig::DescriptionFormat(re))
+                let re = o
+                    .get("descriptionFormat")
+                    .and_then(serde_json::Value::as_str)
+                    .and_then(|pattern| Regex::new(pattern).ok());
+                Some(Self::DescriptionFormat(re))
             }
             _ => None,
         }
@@ -125,45 +125,43 @@ impl Rule for BanTsComment {
 
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().trivias().comments();
-        for (start, comment) in comments.iter() {
+        for (start, comment) in comments {
             let regex = if comment.is_single_line() { &SINGLELINE } else { &MULTILINE };
             let raw = &ctx.semantic().source_text()[*start as usize..comment.end() as usize];
 
             if let Some(captures) = regex.captures(raw) {
-                // safe to unwrap, it capture success, it can always capture one of four directives
+                // safe to unwrap, if capture success, it can always capture one of the four directives
                 let directive = captures.name("directive").unwrap().as_str();
                 let description = captures.name("description").map_or("", |m| m.as_str().trim());
 
                 match self.option(directive) {
                     DirectiveConfig::Boolean(on) => {
                         if *on {
-                            ctx.diagnostic(BanTsCommentDiagnostic::TsDirectiveComment(
+                            ctx.diagnostic(BanTsCommentDiagnostic::Comment(
                                 directive.to_string(),
-                                Span { start: start.clone(), end: comment.end() },
-                            ))
+                                Span { start: *start, end: comment.end() },
+                            ));
                         }
                     }
                     config => {
                         if (description.len() as u64) < self.minimum_description_length {
-                            ctx.diagnostic(
-                                BanTsCommentDiagnostic::TsDirectiveCommentRequiresDescription(
-                                    directive.to_string(),
-                                    self.minimum_description_length,
-                                    Span { start: start.clone(), end: comment.end() },
-                                ),
-                            )
+                            ctx.diagnostic(BanTsCommentDiagnostic::CommentRequiresDescription(
+                                directive.to_string(),
+                                self.minimum_description_length,
+                                Span { start: *start, end: comment.end() },
+                            ));
                         }
-                        
+
                         if let DirectiveConfig::DescriptionFormat(Some(ref re)) = config {
-                          if !re.is_match(description) {
-                            ctx.diagnostic(
-                                BanTsCommentDiagnostic::TsDirectiveCommentDescriptionNotMatchPattern(
-                                    directive.to_string(),
-                                    re.to_string(),
-                                    Span { start: start.clone(), end: comment.end() },
-                                ),
-                            )
-                          }
+                            if !re.is_match(description) {
+                                ctx.diagnostic(
+                                    BanTsCommentDiagnostic::CommentDescriptionNotMatchPattern(
+                                        directive.to_string(),
+                                        re.to_string(),
+                                        Span { start: *start, end: comment.end() },
+                                    ),
+                                );
+                            }
                         }
                     }
                 }
@@ -200,6 +198,7 @@ impl BanTsComment {
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn test() {
     use crate::tester::Tester;
 
