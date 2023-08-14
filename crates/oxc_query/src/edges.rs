@@ -683,7 +683,7 @@ pub(super) fn resolve_fn_call_edge<'a, 'b: 'a>(
         "callee" => fn_call::callee(contexts, resolve_info),
         "arguments" => fn_call::arguments(contexts, resolve_info),
         _ => {
-            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'HasSpan'")
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'FnCall'")
         }
     }
 }
