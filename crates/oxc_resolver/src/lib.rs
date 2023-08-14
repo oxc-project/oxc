@@ -43,7 +43,7 @@ use crate::{
     file_system::FileSystemOs,
     package_json::{ExportsField, ExportsKey, MatchObject},
     path::PathUtil,
-    specifier::{Specifier, SpecifierKind},
+    specifier::Specifier,
 };
 pub use crate::{
     error::{JSONError, ResolveError},
@@ -169,7 +169,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         let specifier = Specifier::parse(specifier).map_err(ResolveError::Specifier)?;
         ctx.with_query_fragment(specifier.query, specifier.fragment);
         let cached_path = self.cache.value(path);
-        let cached_path = self.require(&cached_path, &specifier, &ctx).or_else(|err| {
+        let cached_path = self.require(&cached_path, specifier.path(), &ctx).or_else(|err| {
             // enhanced-resolve: try fallback
             self.load_alias(&cached_path, Some(specifier.path()), &self.options.fallback, &ctx)
                 .and_then(|value| value.ok_or(err))
@@ -192,7 +192,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn require(
         &self,
         cached_path: &CachedPath,
-        specifier: &Specifier,
+        specifier: &str,
         ctx: &ResolveContext,
     ) -> Result<CachedPath, ResolveError> {
         ctx.test_for_infinite_recursion()?;
@@ -204,27 +204,26 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
 
         // enhanced-resolve: try alias
         if let Some(path) =
-            self.load_alias(cached_path, Some(specifier.path()), &self.options.alias, ctx)?
+            self.load_alias(cached_path, Some(specifier), &self.options.alias, ctx)?
         {
             return Ok(path);
         }
 
-        let specifier_str = specifier.path();
-        match specifier.kind {
+        match specifier.as_bytes()[0] {
             // 1. If X is a core module,
             //    a. return the core module
             //    b. STOP
             // 2. If X begins with '/'
             //    a. set Y to be the file system root
-            SpecifierKind::Absolute => self.require_absolute(cached_path, specifier_str, ctx),
+            b'/' => self.require_absolute(cached_path, specifier, ctx),
             // 3. If X begins with './' or '/' or '../'
-            SpecifierKind::Relative => self.require_relative(cached_path, specifier_str, ctx),
+            b'.' => self.require_relative(cached_path, specifier, ctx),
             // 4. If X begins with '#'
-            SpecifierKind::Hash => self.require_hash(cached_path, specifier_str, ctx),
+            b'#' => self.require_hash(cached_path, specifier, ctx),
             // (ESM) 5. Otherwise,
             // Note: specifier is now a bare specifier.
             // Set resolved the result of PACKAGE_RESOLVE(specifier, parentURL).
-            SpecifierKind::Bare => self.require_bare(cached_path, specifier_str, ctx),
+            _ => self.require_bare(cached_path, specifier, ctx),
         }
     }
 
@@ -319,15 +318,13 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
     fn try_fragment_as_path(
         &self,
         cached_path: &CachedPath,
-        specifier: &Specifier,
+        specifier: &str,
         ctx: &ResolveContext,
     ) -> Option<CachedPath> {
         if ctx.borrow().fragment.is_some() && ctx.borrow().query.is_none() {
             let fragment = ctx.borrow_mut().fragment.take().unwrap();
-            let path = format!("{}{fragment}", specifier.path());
-            let mut specifier = specifier.clone();
-            specifier.set_path(&path);
-            if let Ok(path) = self.require(cached_path, &specifier, ctx) {
+            let path = format!("{specifier}{fragment}");
+            if let Ok(path) = self.require(cached_path, &path, ctx) {
                 return Some(path);
             }
             ctx.borrow_mut().fragment.replace(fragment);
@@ -689,7 +686,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         ctx.with_resolving_alias(specifier.path().to_string());
         ctx.with_fully_specified(false);
         let cached_path = self.cache.value(package_json.directory());
-        self.require(&cached_path, &specifier, ctx).map(Some)
+        self.require(&cached_path, specifier.path(), ctx).map(Some)
     }
 
     /// enhanced-resolve: AliasPlugin for [ResolveOptions::alias] and [ResolveOptions::fallback].
@@ -712,27 +709,37 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
             }
             for r in specifiers {
                 match r {
-                    AliasValue::Path(alias) => {
-                        let specifier = Specifier::parse(alias).map_err(ResolveError::Specifier)?;
-                        let alias = specifier.path();
-                        if inner_request.as_ref() != alias
-                            && !inner_request
-                                .strip_prefix(alias)
-                                .is_some_and(|prefix| prefix.starts_with('/'))
-                        {
-                            let new_specifier =
-                                format!("{alias}{}", &inner_request[alias_key.len()..]);
-                            let new_specifier = Specifier::parse(&new_specifier)
-                                .map_err(ResolveError::Specifier)?;
-                            ctx.with_fully_specified(false);
-                            // Alias may contain `?query`, pass it along.
-                            ctx.with_query_fragment(specifier.query, specifier.fragment);
-                            match self.require(cached_path, &new_specifier, ctx) {
-                                Err(ResolveError::NotFound(_)) => { /* noop */ }
-                                Ok(path) => return Ok(Some(path)),
-                                Err(err) => return Err(err),
+                    AliasValue::Path(alias_value) => {
+                        let specifier =
+                            Specifier::parse(alias_value).map_err(ResolveError::Specifier)?;
+
+                        // `#` can be a fragment or a path, try fragment as path first
+                        if specifier.query.is_none() && specifier.fragment.is_some() {
+                            if let Some(path) = self.load_alias_value(
+                                cached_path,
+                                alias_key,
+                                alias_value, // pass in original alias value, not parsed
+                                inner_request.as_ref(),
+                                ctx,
+                            )? {
+                                return Ok(Some(path));
                             }
                         }
+
+                        // Then try path without query and fragment
+                        let old_query = ctx.borrow().query.clone();
+                        let old_fragment = ctx.borrow().fragment.clone();
+                        ctx.with_query_fragment(specifier.query, specifier.fragment);
+                        if let Some(path) = self.load_alias_value(
+                            cached_path,
+                            alias_key,
+                            specifier.path(), // pass in passed alias value
+                            inner_request.as_ref(),
+                            ctx,
+                        )? {
+                            return Ok(Some(path));
+                        }
+                        ctx.with_query_fragment(old_query.as_deref(), old_fragment.as_deref());
                     }
                     AliasValue::Ignore => {
                         let path = cached_path.path().normalize_with(alias_key);
@@ -740,6 +747,28 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     }
                 }
             }
+        }
+        Ok(None)
+    }
+
+    fn load_alias_value(
+        &self,
+        cached_path: &CachedPath,
+        alias_key: &str,
+        alias_value: &str,
+        request: &str,
+        ctx: &ResolveContext,
+    ) -> ResolveState {
+        if request != alias_value
+            && !request.strip_prefix(alias_value).is_some_and(|prefix| prefix.starts_with('/'))
+        {
+            let new_specifier = format!("{alias_value}{}", &request[alias_key.len()..]);
+            ctx.with_fully_specified(false);
+            return match self.require(cached_path, &new_specifier, ctx) {
+                Err(ResolveError::NotFound(_)) => Ok(None),
+                Ok(path) => return Ok(Some(path)),
+                Err(err) => return Err(err),
+            };
         }
         Ok(None)
     }
@@ -823,7 +852,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                     let specifier = Specifier::parse(&subpath).map_err(ResolveError::Specifier)?;
                     ctx.with_fully_specified(false);
                     ctx.with_query_fragment(specifier.query, specifier.fragment);
-                    return self.require(&cached_path, &specifier, ctx).map(Some);
+                    return self.require(&cached_path, specifier.path(), ctx).map(Some);
                 }
                 parent_url.pop();
             }

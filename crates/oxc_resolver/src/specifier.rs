@@ -4,24 +4,8 @@ use std::borrow::Cow;
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Specifier<'a> {
     path: Cow<'a, str>,
-    pub kind: SpecifierKind,
     pub query: Option<&'a str>,
     pub fragment: Option<&'a str>,
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum SpecifierKind {
-    /// `/path`
-    Absolute,
-
-    /// `./path`, `../path`
-    Relative,
-
-    /// `#path`
-    Hash,
-
-    /// Specifier without any leading syntax is called a bare specifier.
-    Bare,
 }
 
 impl<'a> Specifier<'a> {
@@ -29,22 +13,16 @@ impl<'a> Specifier<'a> {
         self.path.as_ref()
     }
 
-    pub fn set_path(&mut self, path: &'a str) {
-        self.path = Cow::Borrowed(path);
-    }
-
     pub fn parse(specifier: &'a str) -> Result<Specifier<'a>, SpecifierError> {
         if specifier.is_empty() {
             return Err(SpecifierError::Empty);
         }
-        let (kind, offset) = match specifier.as_bytes()[0] {
-            b'/' => (SpecifierKind::Absolute, 1),
-            b'.' => (SpecifierKind::Relative, 1),
-            b'#' => (SpecifierKind::Hash, 1),
-            _ => (SpecifierKind::Bare, 0),
+        let offset = match specifier.as_bytes()[0] {
+            b'/' | b'.' | b'#' => 1,
+            _ => 0,
         };
         let (path, query, fragment) = Self::parse_query_framgment(specifier, offset);
-        Ok(Self { path, kind, query, fragment })
+        Ok(Self { path, query, fragment })
     }
 
     fn parse_query_framgment(
@@ -99,13 +77,7 @@ impl<'a> Specifier<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Specifier, SpecifierError, SpecifierKind};
-
-    #[test]
-    #[cfg(target_pointer_width = "64")]
-    fn size_asserts() {
-        static_assertions::assert_eq_size!(Specifier, [u8; 64]);
-    }
+    use super::{Specifier, SpecifierError};
 
     #[test]
     fn empty() {
@@ -118,7 +90,6 @@ mod tests {
         let specifier = "/test?#";
         let parsed = Specifier::parse(specifier)?;
         assert_eq!(parsed.path, "/test");
-        assert_eq!(parsed.kind, SpecifierKind::Absolute);
         assert_eq!(parsed.query, Some("?"));
         assert_eq!(parsed.fragment, Some("#"));
         Ok(())
@@ -132,7 +103,6 @@ mod tests {
             r.push_str("?#");
             let parsed = Specifier::parse(&r)?;
             assert_eq!(parsed.path, specifier);
-            assert_eq!(parsed.kind, SpecifierKind::Relative);
             assert_eq!(parsed.query, Some("?"));
             assert_eq!(parsed.fragment, Some("#"));
         }
@@ -147,7 +117,6 @@ mod tests {
             r.push_str("?#");
             let parsed = Specifier::parse(&r)?;
             assert_eq!(parsed.path, specifier);
-            assert_eq!(parsed.kind, SpecifierKind::Hash);
             assert_eq!(parsed.query, Some("?"));
             assert_eq!(parsed.fragment, Some("#"));
         }
@@ -162,7 +131,6 @@ mod tests {
             r.push_str("?#");
             let parsed = Specifier::parse(&r)?;
             assert_eq!(parsed.path, specifier);
-            assert_eq!(parsed.kind, SpecifierKind::Bare);
             assert_eq!(parsed.query, Some("?"));
             assert_eq!(parsed.fragment, Some("#"));
         }
