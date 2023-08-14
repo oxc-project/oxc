@@ -32,14 +32,16 @@ use std::{
     cell::RefCell,
     cmp::Ordering,
     ffi::OsStr,
+    fmt,
     ops::Deref,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use crate::{
     cache::{Cache, CachedPath},
     file_system::FileSystemOs,
-    package_json::{ExportsField, ExportsKey, MatchObject, PackageJson},
+    package_json::{ExportsField, ExportsKey, MatchObject},
     path::PathUtil,
     specifier::{Specifier, SpecifierKind},
 };
@@ -47,6 +49,7 @@ pub use crate::{
     error::{JSONError, ResolveError},
     file_system::{FileMetadata, FileSystem},
     options::{Alias, AliasValue, EnforceExtension, ResolveOptions, Restriction},
+    package_json::PackageJson,
     resolution::Resolution,
 };
 
@@ -56,7 +59,13 @@ pub type Resolver = ResolverGeneric<FileSystemOs>;
 /// Generic implementation of the resolver, can be configured by the [FileSystem] trait.
 pub struct ResolverGeneric<Fs> {
     options: ResolveOptions,
-    cache: Cache<Fs>,
+    cache: Arc<Cache<Fs>>,
+}
+
+impl<Fs> fmt::Debug for ResolverGeneric<Fs> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.options.fmt(f)
+    }
 }
 
 type ResolveState = Result<Option<CachedPath>, ResolveError>;
@@ -118,11 +127,24 @@ impl<Fs: FileSystem> Default for ResolverGeneric<Fs> {
 
 impl<Fs: FileSystem> ResolverGeneric<Fs> {
     pub fn new(options: ResolveOptions) -> Self {
-        Self { options: options.sanitize(), cache: Cache::default() }
+        Self { options: options.sanitize(), cache: Arc::new(Cache::default()) }
     }
 
     pub fn new_with_file_system(file_system: Fs, options: ResolveOptions) -> Self {
-        Self { cache: Cache::new(file_system), ..Self::new(options) }
+        Self { cache: Arc::new(Cache::new(file_system)), ..Self::new(options) }
+    }
+
+    #[must_use]
+    pub fn clone_with_options(&self, options: ResolveOptions) -> Self {
+        Self { options: options.sanitize(), cache: Arc::clone(&self.cache) }
+    }
+
+    pub fn options(&self) -> &ResolveOptions {
+        &self.options
+    }
+
+    pub fn clear_cache(&self) {
+        self.cache.clear();
     }
 
     /// Resolve `specifier` at `path`
@@ -156,7 +178,12 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
         // enhanced-resolve: restrictions
         self.check_restrictions(&path)?;
         let mut ctx = ctx.borrow_mut();
-        Ok(Resolution { path, query: ctx.query.take(), fragment: ctx.fragment.take() })
+        Ok(Resolution {
+            path,
+            query: ctx.query.take(),
+            fragment: ctx.fragment.take(),
+            package_json: cached_path.find_package_json(&self.cache.fs, &self.options)?,
+        })
     }
 
     /// require(X) from module at path Y
@@ -698,7 +725,7 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                             let new_specifier = Specifier::parse(&new_specifier)
                                 .map_err(ResolveError::Specifier)?;
                             ctx.with_fully_specified(false);
-                            // Override query and fragment from the alias
+                            // Alias may contain `?query`, pass it along.
                             ctx.with_query_fragment(specifier.query, specifier.fragment);
                             match self.require(cached_path, &new_specifier, ctx) {
                                 Err(ResolveError::NotFound(_)) => { /* noop */ }
@@ -708,7 +735,8 @@ impl<Fs: FileSystem> ResolverGeneric<Fs> {
                         }
                     }
                     AliasValue::Ignore => {
-                        return Err(ResolveError::Ignored(cached_path.path().join(alias_key)));
+                        let path = cached_path.path().normalize_with(alias_key);
+                        return Err(ResolveError::Ignored(path));
                     }
                 }
             }

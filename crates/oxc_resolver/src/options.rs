@@ -144,7 +144,7 @@ impl EnforceExtension {
 pub type Alias = Vec<(String, Vec<AliasValue>)>;
 
 /// Alias Value for [ResolveOptions::alias] and [ResolveOptions::fallback].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum AliasValue {
     /// The path value
     Path(String),
