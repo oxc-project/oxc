@@ -108,7 +108,9 @@ impl<'a> Visit<'a> for TestCase<'a> {
                             Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
                             // eslint-plugin-jest use dedent to strips indentation from multi-line strings
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                let Expression::Identifier(ident) = &tag_expr.tag else {continue;};
+                                let Expression::Identifier(ident) = &tag_expr.tag else {
+                                    continue;
+                                };
                                 if ident.name != "dedent" {
                                     continue;
                                 }
@@ -144,7 +146,9 @@ impl<'a> Visit<'a> for TestCase<'a> {
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &'a TaggedTemplateExpression<'a>) {
-        let Expression::Identifier(ident) = &expr.tag else {return;};
+        let Expression::Identifier(ident) = &expr.tag else {
+            return;
+        };
         if ident.name != "dedent" {
             return;
         }
@@ -292,14 +296,7 @@ fn detect_proxy() -> Option<ureq::Proxy> {
         };
     }
 
-    try_env!(
-        "ALL_PROXY",
-        "all_proxy",
-        "HTTPS_PROXY",
-        "https_proxy",
-        "HTTP_PROXY",
-        "http_proxy"
-    );
+    try_env!("ALL_PROXY", "all_proxy", "HTTPS_PROXY", "https_proxy", "HTTP_PROXY", "http_proxy");
     None
 }
 
