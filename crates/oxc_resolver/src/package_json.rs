@@ -4,6 +4,7 @@
 use std::{
     hash::BuildHasherDefault,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use indexmap::IndexMap;
@@ -19,6 +20,10 @@ pub struct PackageJson {
     /// Path to `package.json`. Contains the `package.json` filename.
     #[serde(skip)]
     path: PathBuf,
+
+    #[serde(skip)]
+    #[serde(default)]
+    raw_json: Arc<serde_json::Value>,
 
     /// The "name" field defines your package's name.
     /// The "name" field can be used in addition to the "exports" field to self-reference a package using its name.
@@ -166,6 +171,7 @@ impl PackageJson {
         }
 
         package_json.path = path;
+        package_json.raw_json = Arc::new(package_json_value);
         Ok(package_json)
     }
 
@@ -188,6 +194,15 @@ impl PackageJson {
     }
 
     /// Directory to `package.json`
+    pub fn raw_json(&self) -> &serde_json::Value {
+        self.raw_json.as_ref()
+    }
+
+    /// Directory to `package.json`
+    ///
+    /// # Panics
+    ///
+    /// * When the package.json path is misconfigured.
     pub fn directory(&self) -> &Path {
         debug_assert!(self.path.file_name().is_some_and(|x| x == "package.json"));
         self.path.parent().unwrap()

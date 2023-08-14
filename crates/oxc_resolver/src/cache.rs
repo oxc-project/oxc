@@ -44,6 +44,10 @@ impl<Fs: FileSystem> Cache<Fs> {
         Self { fs, ..Self::default() }
     }
 
+    pub fn clear(&self) {
+        self.cache.clear();
+    }
+
     pub fn value(&self, path: &Path) -> CachedPath {
         let hash = {
             let mut hasher = FxHasher::default();
