@@ -279,6 +279,39 @@ impl Display for RuleKind {
     }
 }
 
+fn detect_proxy() -> Option<ureq::Proxy> {
+    macro_rules! try_env {
+        ($($env:literal),+) => {
+            $(
+                if let Ok(env) = std::env::var($env) {
+                    if let Ok(proxy) = ureq::Proxy::new(env) {
+                        return Some(proxy);
+                    }
+                }
+            )+
+        };
+    }
+
+    try_env!(
+        "ALL_PROXY",
+        "all_proxy",
+        "HTTPS_PROXY",
+        "https_proxy",
+        "HTTP_PROXY",
+        "http_proxy"
+    );
+    None
+}
+
+fn agent() -> ureq::Agent {
+    let builder = ureq::AgentBuilder::new();
+    if let Some(proxy) = detect_proxy() {
+        builder.proxy(proxy).build()
+    } else {
+        builder.build()
+    }
+}
+
 fn main() {
     let mut args = std::env::args();
     args.next();
@@ -295,7 +328,7 @@ fn main() {
     };
     println!("Reading test file from {rule_test_path}");
 
-    let body = ureq::get(&rule_test_path).call().map(Response::into_string);
+    let body = agent().get(&rule_test_path).call().map(Response::into_string);
     let pass_cases;
     let fail_cases;
     let context = match body {
