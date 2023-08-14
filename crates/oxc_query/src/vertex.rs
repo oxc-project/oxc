@@ -3,12 +3,12 @@ use std::rc::Rc;
 use enum_as_inner::EnumAsInner;
 use oxc_ast::{
     ast::{
-        AssignmentExpression, BindingPatternKind, Class, Expression, IdentifierName,
-        IdentifierReference, IfStatement, ImportDeclaration, ImportDefaultSpecifier,
-        ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer, JSXFragment,
-        JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText, MemberExpression,
-        MethodDefinition, ModuleDeclaration, NumberLiteral, ObjectExpression, ObjectProperty,
-        PropertyDefinition, ReturnStatement, SpreadElement, StaticMemberExpression,
+        AssignmentExpression, BindingPatternKind, CallExpression, Class, Expression,
+        IdentifierName, IdentifierReference, IfStatement, ImportDeclaration,
+        ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer,
+        JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText,
+        MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral, ObjectExpression,
+        ObjectProperty, PropertyDefinition, ReturnStatement, SpreadElement, StaticMemberExpression,
         TSInterfaceDeclaration, TSType, TSTypeAnnotation, VariableDeclarator,
     },
     AstKind,
@@ -59,6 +59,8 @@ pub enum Vertex<'a> {
     ObjectEntry(Rc<ObjectEntryVertex<'a>>),
     DotProperty(Rc<DotPropertyVertex<'a>>),
     Reassignment(Rc<ReassignmentVertex<'a>>),
+    FnCall(Rc<FnCallVertex<'a>>),
+    Argument(Span),
 }
 
 impl<'a> Vertex<'a> {
@@ -98,6 +100,8 @@ impl<'a> Vertex<'a> {
             Self::NumberLiteral(data) => data.number_literal.span,
             Self::Reassignment(data) => data.assignment_expression.span,
             Self::Name(data) => data.name.span,
+            Self::FnCall(data) => data.call_expression.span,
+            Self::Argument(data) => *data,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -127,6 +131,7 @@ impl<'a> Vertex<'a> {
             Vertex::ObjectEntry(data) => data.ast_node.map(|x| x.id()),
             Vertex::DotProperty(data) => data.ast_node.map(|x| x.id()),
             Vertex::Reassignment(data) => data.ast_node.map(|x| x.id()),
+            Vertex::FnCall(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -145,6 +150,7 @@ impl<'a> Vertex<'a> {
             | Vertex::SpecificImport(_)
             | Vertex::Span(_)
             | Vertex::SearchParameter(_)
+            | Vertex::Argument(_)
             | Vertex::ClassProperty(_) => None,
         }
     }
@@ -225,7 +231,9 @@ impl Typename for Vertex<'_> {
             Vertex::IfStatementAST(_) => "IfStatementAST",
             Vertex::SpreadIntoObject(obj) => obj.typename(),
             Vertex::ObjectEntry(entry) => entry.typename(),
+            Vertex::FnCall(fncall) => fncall.typename(),
             Vertex::Reassignment(reassignment) => reassignment.typename(),
+            Vertex::Argument(_) => "Argument",
         }
     }
 }
@@ -293,6 +301,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::AssignmentExpression(assignment_expression) => Vertex::Reassignment(
                 ReassignmentVertex { ast_node: Some(ast_node), assignment_expression }.into(),
             ),
+            AstKind::CallExpression(call_expression) => {
+                Vertex::FnCall(FnCallVertex { ast_node: Some(ast_node), call_expression }.into())
+            }
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -321,6 +332,9 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             Expression::AssignmentExpression(assignment_expression) => Vertex::Reassignment(
                 ReassignmentVertex { ast_node: None, assignment_expression }.into(),
             ),
+            Expression::CallExpression(call_expression) => {
+                Vertex::FnCall(FnCallVertex { ast_node: None, call_expression }.into())
+            }
             _ => Vertex::Expression(expr),
         }
     }
@@ -616,6 +630,23 @@ impl<'a> Typename for ReassignmentVertex<'a> {
             "ReassignmentAST"
         } else {
             "Reassignment"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct FnCallVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub call_expression: &'a CallExpression<'a>,
+}
+
+impl<'a> Typename for FnCallVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "FnCallAST"
+        } else {
+            "FnCall"
         }
     }
 }

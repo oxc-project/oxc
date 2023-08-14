@@ -5,6 +5,35 @@ use trustfall::provider::{
 use super::vertex::Vertex;
 use crate::Adapter;
 
+pub(super) fn resolve_argument_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => argument::span(contexts, resolve_info),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Argument'")
+        }
+    }
+}
+
+mod argument {
+    use trustfall::provider::{
+        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_astnode_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
@@ -637,6 +666,83 @@ mod file {
                 Some((*x).into())
             }))
         })
+    }
+}
+
+pub(super) fn resolve_fn_call_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+    adapter: &'a Adapter<'b>,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => fn_call::span(contexts, resolve_info),
+        "ancestor" => ancestors(contexts, adapter),
+        "parent" => parents(contexts, adapter),
+        "callee" => fn_call::callee(contexts, resolve_info),
+        "arguments" => fn_call::arguments(contexts, resolve_info),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'FnCall'")
+        }
+    }
+}
+
+mod fn_call {
+    use oxc_ast::ast::Argument;
+    use oxc_span::GetSpan;
+    use trustfall::provider::{
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
+    };
+
+    use super::super::vertex::Vertex;
+
+    pub(super) fn callee<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(std::iter::once(
+                (&v.as_fn_call()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a fncall vertex, instead have: {v:#?}")
+                    })
+                    .call_expression
+                    .callee)
+                    .into(),
+            ))
+        })
+    }
+
+    pub(super) fn arguments<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_fn_call()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a fncall vertex, instead have: {v:#?}")
+                    })
+                    .call_expression
+                    .arguments
+                    .iter()
+                    .map(|x| {
+                        Vertex::Argument(match x {
+                            Argument::SpreadElement(spread) => spread.span,
+                            Argument::Expression(expr) => expr.span(),
+                        })
+                    }),
+            )
+        })
+    }
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        super::get_span(contexts)
     }
 }
 
