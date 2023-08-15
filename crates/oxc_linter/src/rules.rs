@@ -75,6 +75,7 @@ mod eslint {
 
 mod typescript {
     pub mod adjacent_overload_signatures;
+    pub mod ban_ts_comment;
     pub mod consistent_type_exports;
     pub mod isolated_declaration;
     pub mod no_duplicate_enum_values;
@@ -160,6 +161,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::use_isnan,
     eslint::valid_typeof,
     typescript::adjacent_overload_signatures,
+    typescript::ban_ts_comment,
     typescript::consistent_type_exports,
     typescript::isolated_declaration,
     typescript::no_duplicate_enum_values,
