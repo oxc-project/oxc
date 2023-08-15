@@ -332,6 +332,9 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             Expression::CallExpression(call_expression) => {
                 Vertex::FnCall(FnCallVertex { ast_node: None, call_expression }.into())
             }
+            Expression::FunctionExpression(fn_expression) => Vertex::FnDeclaration(
+                FnDeclarationVertex { ast_node: None, function: fn_expression }.into(),
+            ),
             _ => Vertex::Expression(expr),
         }
     }
