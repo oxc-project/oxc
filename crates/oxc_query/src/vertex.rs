@@ -314,7 +314,7 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
         // FIXME: We just get rid of all parentheses here, but we shouldn't do that...
 
         // NOTE: When string literal / template literal is added, add to as_constant_string
-        match &expr.get_inner_expression() {
+        match &expr {
             Expression::ObjectExpression(object_expression) => Vertex::ObjectLiteral(
                 ObjectLiteralVertex { ast_node: None, object_expression }.into(),
             ),

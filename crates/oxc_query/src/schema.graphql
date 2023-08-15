@@ -285,6 +285,7 @@ interface NumberLiteral implements HasSpan & Expression {
 
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
 }
 
 type NumberLiteralAST implements HasSpan & ASTNode & Expression & NumberLiteral {
@@ -298,6 +299,7 @@ type NumberLiteralAST implements HasSpan & ASTNode & Expression & NumberLiteral 
   ancestor: [ASTNode!]!
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
 }
 
 # Expression
@@ -316,6 +318,7 @@ interface JSXElement implements Expression & HasSpan {
   child_count: Int!
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
@@ -369,6 +372,7 @@ interface ObjectLiteral implements Expression & HasSpan {
 
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
@@ -379,6 +383,7 @@ type ObjectLiteralAST implements ObjectLiteral & Expression & HasSpan & ASTNode 
 
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
@@ -396,6 +401,7 @@ interface FnCall implements Expression & HasSpan {
 
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
@@ -406,6 +412,7 @@ type FnCallAST implements FnCall & Expression & HasSpan & ASTNode {
 
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
@@ -426,6 +433,7 @@ interface Reassignment implements HasSpan & Expression {
   right: Expression!
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
@@ -443,6 +451,7 @@ type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
   right: Expression!
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
   # ASTNode
@@ -476,6 +485,7 @@ interface DotProperty implements HasSpan & Expression {
   accessed_property: Name!
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
@@ -494,6 +504,7 @@ type DotPropertyAST implements DotProperty & ASTNode & HasSpan & Expression {
   ancestor: [ASTNode!]!
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # HasSpan
   span: Span!
 }
@@ -504,6 +515,7 @@ interface Expression implements HasSpan {
   ie: const a = "apple"; const b = `blueberry`
   """
   as_constant_string: String
+  strip_parens: Expression!
 
   # HasSpan
   span: Span!
@@ -579,6 +591,7 @@ type JSXElementAST implements JSXElement & Expression & ASTNode & HasSpan {
   child_count: Int!
   # Expression
   as_constant_string: String
+  strip_parens: Expression!
   # ASTNode
   parent: ASTNode
   ancestor: [ASTNode!]!
