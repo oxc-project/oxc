@@ -124,9 +124,49 @@ fn extension_without_fully_specified() {
     assert_eq!(resolved_path, Ok(f2.join("node_modules/exports-field/lib/lib2/main.js")));
 }
 
-// #[test]
-// field name path #1 - #5
-// fn field_name() {}
+#[test]
+fn field_name_path() {
+    let f2 = super::fixture().join("exports-field2");
+    let f3 = super::fixture().join("exports-field3");
+
+    // field name path #1 #2 #3
+    let exports_fields = [
+        vec![vec!["exportsField".into(), "exports".into()]],
+        vec![vec!["exportsField".into(), "exports".into()], vec!["exports".into()]],
+        vec![vec!["exports".into()], vec!["exportsField".into(), "exports".into()]],
+    ];
+
+    for exports_fields in exports_fields {
+        let resolver = Resolver::new(ResolveOptions {
+            alias_fields: vec!["browser".into()],
+            exports_fields,
+            extensions: vec![".js".into()],
+            ..ResolveOptions::default()
+        });
+        let resolved_path = resolver.resolve(&f3, "exports-field").map(|r| r.full_path());
+        assert_eq!(resolved_path, Ok(f3.join("node_modules/exports-field/main.js")));
+    }
+
+    // field name path #4
+    let resolver = Resolver::new(ResolveOptions {
+        alias_fields: vec!["browser".into()],
+        exports_fields: vec![vec!["exports".into()]],
+        extensions: vec![".js".into()],
+        ..ResolveOptions::default()
+    });
+    let resolved_path = resolver.resolve(&f2, "exports-field").map(|r| r.full_path());
+    assert_eq!(resolved_path, Ok(f2.join("node_modules/exports-field/index.js")));
+
+    // field name path #5
+    let resolver = Resolver::new(ResolveOptions {
+        alias_fields: vec!["browser".into()],
+        exports_fields: vec![vec!["ex".into()], vec!["exports_field".into(), "exports".into()]],
+        extensions: vec![".js".into()],
+        ..ResolveOptions::default()
+    });
+    let resolved_path = resolver.resolve(&f3, "exports-field").map(|r| r.full_path());
+    assert_eq!(resolved_path, Ok(f3.join("node_modules/exports-field/index")));
+}
 
 #[test]
 fn extension_alias_1_2() {

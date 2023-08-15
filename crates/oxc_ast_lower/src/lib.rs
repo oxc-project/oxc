@@ -1439,7 +1439,6 @@ impl<'a> AstLower<'a> {
         } else {
             (SymbolFlags::empty(), SymbolFlags::empty())
         };
-        let includes = includes | SymbolFlags::Function;
         let id =
             func.id.as_ref().map(|ident| self.lower_binding_identifier(ident, includes, excludes));
         self.enter_function_scope();

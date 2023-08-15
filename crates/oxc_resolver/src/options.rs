@@ -41,10 +41,10 @@ pub struct ResolveOptions {
     pub enforce_extension: EnforceExtension,
 
     /// A list of exports fields in description files.
-    /// This is currently unused, but values are passed in for logging purposes.
+    /// Can be a path to json object such as `["path", "to", "exports"]`.
     ///
-    /// Default `[]`. Should be `["exports"]` when enabled.
-    pub exports_fields: Vec<String>,
+    /// Default `[["exports"]]`.
+    pub exports_fields: Vec<Vec<String>>,
 
     /// An object which maps extension to extension aliases.
     ///
@@ -144,7 +144,7 @@ impl EnforceExtension {
 pub type Alias = Vec<(String, Vec<AliasValue>)>;
 
 /// Alias Value for [ResolveOptions::alias] and [ResolveOptions::fallback].
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum AliasValue {
     /// The path value
     Path(String),
@@ -168,7 +168,7 @@ impl Default for ResolveOptions {
             description_files: vec!["package.json".into()],
             enforce_extension: EnforceExtension::Auto,
             extension_alias: vec![],
-            exports_fields: vec![],
+            exports_fields: vec![vec!["exports".into()]],
             extensions: vec![".js".into(), ".json".into(), ".node".into()],
             fallback: vec![],
             fully_specified: false,
@@ -289,7 +289,7 @@ mod test {
             condition_names: vec!["require".into()],
             enforce_extension: EnforceExtension::Enabled,
             extension_alias: vec![(".js".into(), vec![".ts".into()])],
-            exports_fields: vec!["exports".into()],
+            exports_fields: vec![vec!["exports".into()]],
             fallback: vec![("fallback".into(), vec![AliasValue::Ignore])],
             fully_specified: true,
             resolve_to_context: true,
@@ -300,7 +300,7 @@ mod test {
             ..ResolveOptions::default()
         };
 
-        let expected = r#"alias:[("a", [Ignore])],alias_fields:["browser"],condition_names:["require"],enforce_extension:Enabled,exports_fields:["exports"],extension_alias:[(".js", [".ts"])],extensions:[".js", ".json", ".node"],fallback:[("fallback", [Ignore])],fully_specified:true,main_fields:["main"],main_files:["index"],modules:["node_modules"],resolve_to_context:true,prefer_relative:true,prefer_absolute:true,restrictions:[Path("restrictions")],roots:["roots"],symlinks:true,"#;
+        let expected = r#"alias:[("a", [Ignore])],alias_fields:["browser"],condition_names:["require"],enforce_extension:Enabled,exports_fields:[["exports"]],extension_alias:[(".js", [".ts"])],extensions:[".js", ".json", ".node"],fallback:[("fallback", [Ignore])],fully_specified:true,main_fields:["main"],main_files:["index"],modules:["node_modules"],resolve_to_context:true,prefer_relative:true,prefer_absolute:true,restrictions:[Path("restrictions")],roots:["roots"],symlinks:true,"#;
         assert_eq!(format!("{options}"), expected);
     }
 }

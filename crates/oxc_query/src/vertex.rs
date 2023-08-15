@@ -55,6 +55,7 @@ pub enum Vertex<'a> {
     Argument(Span),
     FunctionBody(Rc<FunctionBodyVertex<'a>>),
     Statement(&'a Statement<'a>),
+    Argument(Span),
 }
 
 impl<'a> Vertex<'a> {

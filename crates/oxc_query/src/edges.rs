@@ -39,7 +39,6 @@ mod arrow_function {
         super::get_span(contexts)
     }
 }
-
 pub(super) fn resolve_argument_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,
@@ -820,7 +819,7 @@ pub(super) fn resolve_fn_call_edge<'a, 'b: 'a>(
         "parent" => parents(contexts, adapter),
         "strip_parens" => strip_parens(contexts),
         _ => {
-            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'HasSpan'")
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'FnCall'")
         }
     }
 }

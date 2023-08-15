@@ -1038,7 +1038,15 @@ impl<'a> Gen for ObjectProperty<'a> {
 impl<'a> Gen for PropertyKey<'a> {
     fn gen(&self, p: &mut Formatter) {
         match self {
-            Self::Identifier(ident) => ident.gen(p),
+            Self::Identifier(ident) => {
+                if p.quote_property_with_double_quotes {
+                    p.print(b'\"');
+                }
+                ident.gen(p);
+                if p.quote_property_with_double_quotes {
+                    p.print(b'\"');
+                }
+            }
             Self::PrivateIdentifier(ident) => ident.gen(p),
             Self::Expression(expr) => expr.gen(p),
         }

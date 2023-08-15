@@ -16,7 +16,7 @@
 |  ✅  | conditionNames   | []                          | A list of exports field condition names                                                                                                                   |
 |  ✅  | descriptionFiles | ["package.json"]            | A list of description files to read from                                                                                                                  |
 |  ✅  | enforceExtension | false                       | Enforce that a extension from extensions must be used                                                                                                     |
-|      | exportsFields    | ["exports"]                 | A list of exports fields in description files                                                                                                             |
+|  ✅  | exportsFields    | ["exports"]                 | A list of exports fields in description files                                                                                                             |
 |  ✅  | extensions       | [".js", ".json", ".node"]   | A list of extensions which should be tried for files                                                                                                      |
 |  ✅  | fallback         | []                          | Same as `alias`, but only used if default resolving fails                                                                                                 |
 |  ✅  | fileSystem       |                             | The file system which should be used                                                                                                                      |
