@@ -401,35 +401,6 @@ interface FnCall implements Expression & HasSpan {
 
   # Expression
   as_constant_string: String
-  strip_parens: Expression!
-  # HasSpan
-  span: Span!
-}
-
-type FnCallAST implements FnCall & Expression & HasSpan & ASTNode {
-  callee: Expression!
-  arguments: [Argument!]!
-
-  # Expression
-  as_constant_string: String
-  strip_parens: Expression!
-  # ASTNode
-  parent: ASTNode
-  ancestor: [ASTNode!]!
-  # HasSpan
-  span: Span!
-}
-
-interface Argument {
-  span: Span!
-}
-
-interface FnCall implements Expression & HasSpan {
-  callee: Expression!
-  arguments: [Argument!]!
-
-  # Expression
-  as_constant_string: String
   # HasSpan
   span: Span!
 }
