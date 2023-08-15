@@ -10,6 +10,7 @@ use oxc_diagnostics::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
+use serde_json::json;
 
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule, AstNode};
 
@@ -131,13 +132,13 @@ impl Rule for NoShadowRestrictedNames {
                         ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
                     }
                 }
-                AstKind::ArrowExpression(arrow_expr) => {
-                    for param in arrow_expr.params.items.iter() {
-                        if let Some(value) = binding_pattern_is_global_obj(&param.pattern) {
-                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
-                        }
-                    }
-                }
+                // AstKind::ArrowExpression(arrow_expr) => {
+                //     for param in arrow_expr.params.items.iter() {
+                //         if let Some(value) = binding_pattern_is_global_obj(&param.pattern) {
+                //             ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                //         }
+                //     }
+                // }
                 AstKind::Class(class_decl) => {
                     if let Some(bind_ident) = class_decl.id.as_ref() {
                         check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
@@ -169,7 +170,13 @@ fn test() {
         ("export default function() {}", None),
         ("try {} catch {}", None),
         ("var undefined;", None),
-        ("var undefined;", None),
+        ("var undefined;var undefined", None),
+        (
+            "let undefined",
+            Some(json!({
+                "parserOptions": { "ecmaVersion": 2019 }
+            })),
+        ),
         ("var normal, undefined;", None),
         ("var undefined; doSomething(undefined);", None),
         ("class foo { undefined() { } }", None),
