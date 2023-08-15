@@ -214,6 +214,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
         resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Self::Vertex, VertexIterator<'a, Self::Vertex>> {
         match type_name.as_ref() {
+            "ArrowFunctionAST" | "ArrowFunction" => super::edges::resolve_arrow_function_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "ASTNode" => super::edges::resolve_astnode_edge(
                 contexts,
                 edge_name.as_ref(),

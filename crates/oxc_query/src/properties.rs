@@ -206,7 +206,9 @@ pub(super) fn resolve_fn_declaration_property<'a, 'b: 'a>(
                 .map_or_else(|| FieldValue::Null, |f| f.name.to_string().into())
         }),
         _ => {
-            unreachable!("attempted to read unexpected property '{property_name}' on type 'FnCall'")
+            unreachable!(
+                "attempted to read unexpected property '{property_name}' on type 'FnDeclaration'"
+            )
         }
     }
 }

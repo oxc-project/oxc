@@ -459,6 +459,19 @@ type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
   ancestor: [ASTNode!]!
 }
 
+interface ArrowFunction implements HasSpan {
+  # HasSpan
+  span: Span!
+}
+
+type ArrowFunctionAST implements HasSpan & ArrowFunction & ASTNode {
+  # HasSpan
+  span: Span!
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+}
+
 """
 A function defined in the sourcecode.
 """

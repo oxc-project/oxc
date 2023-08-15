@@ -51,6 +51,7 @@ pub enum Vertex<'a> {
     Reassignment(Rc<ReassignmentVertex<'a>>),
     FnCall(Rc<FnCallVertex<'a>>),
     FnDeclaration(Rc<FnDeclarationVertex<'a>>),
+    ArrowFunction(Rc<ArrowFunctionVertex<'a>>),
     Argument(Span),
 }
 
@@ -94,6 +95,7 @@ impl<'a> Vertex<'a> {
             Self::FnCall(data) => data.call_expression.span,
             Self::Argument(data) => *data,
             Self::FnDeclaration(data) => data.function.span,
+            Self::ArrowFunction(data) => data.arrow_expression.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -125,6 +127,7 @@ impl<'a> Vertex<'a> {
             Vertex::Reassignment(data) => data.ast_node.map(|x| x.id()),
             Vertex::FnCall(data) => data.ast_node.map(|x| x.id()),
             Vertex::FnDeclaration(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -228,6 +231,7 @@ impl Typename for Vertex<'_> {
             Vertex::Reassignment(reassignment) => reassignment.typename(),
             Vertex::Argument(_) => "Argument",
             Vertex::FnDeclaration(fndecl) => fndecl.typename(),
+            Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
         }
     }
 }
@@ -301,6 +305,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::Function(function) => Vertex::FnDeclaration(
                 FnDeclarationVertex { ast_node: Some(ast_node), function }.into(),
             ),
+            AstKind::ArrowExpression(arrow_expression) => Vertex::ArrowFunction(
+                ArrowFunctionVertex { ast_node: Some(ast_node), arrow_expression }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -334,6 +341,9 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             }
             Expression::FunctionExpression(fn_expression) => Vertex::FnDeclaration(
                 FnDeclarationVertex { ast_node: None, function: fn_expression }.into(),
+            ),
+            Expression::ArrowExpression(arrow_expression) => Vertex::ArrowFunction(
+                ArrowFunctionVertex { ast_node: None, arrow_expression }.into(),
             ),
             _ => Vertex::Expression(expr),
         }
@@ -664,6 +674,23 @@ impl<'a> Typename for FnDeclarationVertex<'a> {
             "FnDeclarationAST"
         } else {
             "FnDeclaration"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArrowFunctionVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub arrow_expression: &'a ArrowExpression<'a>,
+}
+
+impl<'a> Typename for ArrowFunctionVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArrowFunctionAST"
+        } else {
+            "ArrowFunction"
         }
     }
 }
