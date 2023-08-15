@@ -106,6 +106,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 property_name.as_ref(),
                 resolve_info,
             ),
+            "FnDeclarationAST" | "FnDeclaration" => {
+                super::properties::resolve_fn_declaration_property(
+                    contexts,
+                    property_name.as_ref(),
+                    resolve_info,
+                )
+            }
             "FnCallAST" | "FnCall" => super::properties::resolve_fn_call_property(
                 contexts,
                 property_name.as_ref(),
@@ -207,6 +214,13 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
         resolve_info: &ResolveEdgeInfo,
     ) -> ContextOutcomeIterator<'a, Self::Vertex, VertexIterator<'a, Self::Vertex>> {
         match type_name.as_ref() {
+            "ArrowFunctionAST" | "ArrowFunction" => super::edges::resolve_arrow_function_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
             "ASTNode" => super::edges::resolve_astnode_edge(
                 contexts,
                 edge_name.as_ref(),
@@ -263,6 +277,20 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 edge_name.as_ref(),
                 parameters,
                 resolve_info,
+            ),
+            "FunctionBodyAST" | "FunctionBody" => super::edges::resolve_function_body_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
+            ),
+            "FnDeclarationAST" | "FnDeclaration" => super::edges::resolve_fn_declaration_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+                self,
             ),
             "File" => super::edges::resolve_file_edge(
                 contexts,
@@ -417,7 +445,7 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                 resolve_info,
                 self,
             ),
-            "ReturnStatementAST" => super::edges::resolve_return_statement_ast_edge(
+            "ReturnAST" | "ReturnStatement" => super::edges::resolve_return_edge(
                 contexts,
                 edge_name.as_ref(),
                 parameters,
@@ -445,6 +473,12 @@ impl<'a, 'b: 'a> trustfall::provider::Adapter<'a> for &'a Adapter<'b> {
                     self,
                 )
             }
+            "Statement" => super::edges::resolve_statement_edge(
+                contexts,
+                edge_name.as_ref(),
+                parameters,
+                resolve_info,
+            ),
             "TypeAnnotation" | "TypeAnnotationAST" => super::edges::resolve_type_annotation_edge(
                 contexts,
                 edge_name.as_ref(),

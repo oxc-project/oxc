@@ -1,18 +1,8 @@
 use std::rc::Rc;
 
 use enum_as_inner::EnumAsInner;
-use oxc_ast::{
-    ast::{
-        AssignmentExpression, BindingPatternKind, CallExpression, Class, Expression,
-        IdentifierName, IdentifierReference, IfStatement, ImportDeclaration,
-        ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer,
-        JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText,
-        MemberExpression, MethodDefinition, ModuleDeclaration, NumberLiteral, ObjectExpression,
-        ObjectProperty, PropertyDefinition, ReturnStatement, SpreadElement, StaticMemberExpression,
-        TSInterfaceDeclaration, TSType, TSTypeAnnotation, VariableDeclarator,
-    },
-    AstKind,
-};
+#[allow(clippy::wildcard_imports)]
+use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::{GetSpan, Span};
 use trustfall::provider::Typename;
@@ -53,14 +43,18 @@ pub enum Vertex<'a> {
     Type(&'a TSType<'a>),
     Url(Rc<Url>),
     VariableDeclaration(Rc<VariableDeclarationVertex<'a>>),
-    ReturnStatementAST(Rc<ReturnStatementVertex<'a>>),
+    Return(Rc<ReturnVertex<'a>>),
     IfStatementAST(Rc<IfStatementVertex<'a>>),
     SpreadIntoObject(Rc<SpreadIntoObjectVertex<'a>>),
     ObjectEntry(Rc<ObjectEntryVertex<'a>>),
     DotProperty(Rc<DotPropertyVertex<'a>>),
     Reassignment(Rc<ReassignmentVertex<'a>>),
     FnCall(Rc<FnCallVertex<'a>>),
+    FnDeclaration(Rc<FnDeclarationVertex<'a>>),
+    ArrowFunction(Rc<ArrowFunctionVertex<'a>>),
     Argument(Span),
+    FunctionBody(Rc<FunctionBodyVertex<'a>>),
+    Statement(&'a Statement<'a>),
 }
 
 impl<'a> Vertex<'a> {
@@ -95,13 +89,17 @@ impl<'a> Vertex<'a> {
             Self::TypeAnnotation(data) => data.type_annotation.span,
             Self::Type(data) => data.span(),
             Self::VariableDeclaration(data) => data.variable_declaration.span,
-            Self::ReturnStatementAST(data) => data.return_statement.span,
+            Self::Return(data) => data.return_statement.span,
             Self::IfStatementAST(data) => data.return_statement.span,
             Self::NumberLiteral(data) => data.number_literal.span,
             Self::Reassignment(data) => data.assignment_expression.span,
             Self::Name(data) => data.name.span,
             Self::FnCall(data) => data.call_expression.span,
             Self::Argument(data) => *data,
+            Self::FnDeclaration(data) => data.function.span,
+            Self::ArrowFunction(data) => data.arrow_expression.span,
+            Self::FunctionBody(data) => data.function_body.span,
+            Self::Statement(data) => data.span(),
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -122,7 +120,7 @@ impl<'a> Vertex<'a> {
             Vertex::TypeAnnotation(data) => data.ast_node.map(|x| x.id()),
             Vertex::VariableDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::ObjectLiteral(data) => data.ast_node.map(|x| x.id()),
-            Vertex::ReturnStatementAST(data) => data.ast_node.map(|x| x.id()),
+            Vertex::Return(data) => data.ast_node.map(|x| x.id()),
             Vertex::IfStatementAST(data) => data.ast_node.map(|x| x.id()),
             Vertex::JSXOpeningElement(data) => data.ast_node.map(|x| x.id()),
             Vertex::NumberLiteral(data) => data.ast_node.map(|x| x.id()),
@@ -132,7 +130,11 @@ impl<'a> Vertex<'a> {
             Vertex::DotProperty(data) => data.ast_node.map(|x| x.id()),
             Vertex::Reassignment(data) => data.ast_node.map(|x| x.id()),
             Vertex::FnCall(data) => data.ast_node.map(|x| x.id()),
+            Vertex::FnDeclaration(data) => data.ast_node.map(|x| x.id()),
+            Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
+            Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
+            | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
             | Vertex::Expression(_)
@@ -227,13 +229,17 @@ impl Typename for Vertex<'_> {
             Vertex::Url(_) => "URL",
             Vertex::VariableDeclaration(vd) => vd.typename(),
             Vertex::Name(name) => name.typename(),
-            Vertex::ReturnStatementAST(_) => "ReturnStatementAST",
+            Vertex::Return(ret) => ret.typename(),
             Vertex::IfStatementAST(_) => "IfStatementAST",
             Vertex::SpreadIntoObject(obj) => obj.typename(),
             Vertex::ObjectEntry(entry) => entry.typename(),
             Vertex::FnCall(fncall) => fncall.typename(),
             Vertex::Reassignment(reassignment) => reassignment.typename(),
             Vertex::Argument(_) => "Argument",
+            Vertex::FnDeclaration(fndecl) => fndecl.typename(),
+            Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
+            Vertex::FunctionBody(fn_body) => fn_body.typename(),
+            Vertex::Statement(_) => "Statement",
         }
     }
 }
@@ -241,9 +247,9 @@ impl Typename for Vertex<'_> {
 impl<'a> From<AstNode<'a>> for Vertex<'a> {
     fn from(ast_node: AstNode<'a>) -> Self {
         match ast_node.kind() {
-            AstKind::ReturnStatement(return_statement) => Self::ReturnStatementAST(
-                ReturnStatementVertex { ast_node: Some(ast_node), return_statement }.into(),
-            ),
+            AstKind::ReturnStatement(return_statement) => {
+                Self::Return(ReturnVertex { ast_node: Some(ast_node), return_statement }.into())
+            }
             AstKind::IfStatement(if_statement) => Self::IfStatementAST(
                 IfStatementVertex { ast_node: Some(ast_node), return_statement: if_statement }
                     .into(),
@@ -304,7 +310,27 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::CallExpression(call_expression) => {
                 Vertex::FnCall(FnCallVertex { ast_node: Some(ast_node), call_expression }.into())
             }
+            AstKind::Function(function) => Vertex::FnDeclaration(
+                FnDeclarationVertex { ast_node: Some(ast_node), function }.into(),
+            ),
+            AstKind::ArrowExpression(arrow_expression) => Vertex::ArrowFunction(
+                ArrowFunctionVertex { ast_node: Some(ast_node), arrow_expression }.into(),
+            ),
+            AstKind::FunctionBody(function_body) => Vertex::FunctionBody(
+                FunctionBodyVertex { ast_node: Some(ast_node), function_body }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
+        }
+    }
+}
+
+impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
+    fn from(stmt: &'a Statement<'a>) -> Self {
+        match &stmt {
+            Statement::ReturnStatement(return_statement) => {
+                Vertex::Return(ReturnVertex { ast_node: None, return_statement }.into())
+            }
+            _ => Vertex::Statement(stmt),
         }
     }
 }
@@ -314,7 +340,7 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
         // FIXME: We just get rid of all parentheses here, but we shouldn't do that...
 
         // NOTE: When string literal / template literal is added, add to as_constant_string
-        match &expr.get_inner_expression() {
+        match &expr {
             Expression::ObjectExpression(object_expression) => Vertex::ObjectLiteral(
                 ObjectLiteralVertex { ast_node: None, object_expression }.into(),
             ),
@@ -335,6 +361,12 @@ impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
             Expression::CallExpression(call_expression) => {
                 Vertex::FnCall(FnCallVertex { ast_node: None, call_expression }.into())
             }
+            Expression::FunctionExpression(fn_expression) => Vertex::FnDeclaration(
+                FnDeclarationVertex { ast_node: None, function: fn_expression }.into(),
+            ),
+            Expression::ArrowExpression(arrow_expression) => Vertex::ArrowFunction(
+                ArrowFunctionVertex { ast_node: None, arrow_expression }.into(),
+            ),
             _ => Vertex::Expression(expr),
         }
     }
@@ -452,9 +484,19 @@ pub struct IfStatementVertex<'a> {
 
 #[non_exhaustive]
 #[derive(Debug, Clone)]
-pub struct ReturnStatementVertex<'a> {
+pub struct ReturnVertex<'a> {
     ast_node: Option<AstNode<'a>>,
     pub return_statement: &'a ReturnStatement<'a>,
+}
+
+impl<'a> Typename for ReturnVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ReturnAST"
+        } else {
+            "ReturnStatement"
+        }
+    }
 }
 
 #[non_exhaustive]
@@ -647,6 +689,57 @@ impl<'a> Typename for FnCallVertex<'a> {
             "FnCallAST"
         } else {
             "FnCall"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct FnDeclarationVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub function: &'a Function<'a>,
+}
+
+impl<'a> Typename for FnDeclarationVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "FnDeclarationAST"
+        } else {
+            "FnDeclaration"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct ArrowFunctionVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub arrow_expression: &'a ArrowExpression<'a>,
+}
+
+impl<'a> Typename for ArrowFunctionVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "ArrowFunctionAST"
+        } else {
+            "ArrowFunction"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct FunctionBodyVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub function_body: &'a FunctionBody<'a>,
+}
+
+impl<'a> Typename for FunctionBodyVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "FunctionBodyAST"
+        } else {
+            "FunctionBody"
         }
     }
 }
