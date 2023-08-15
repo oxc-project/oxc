@@ -464,12 +464,12 @@ interface Statement {
   span: Span!
 }
 
-interface FunctionBody {
+interface FunctionBody implements HasSpan {
   # HasSpan
   span: Span!
 }
 
-type FunctionBodyAST {
+type FunctionBodyAST implements HasSpan & ASTNode & FunctionBody {
   # HasSpan
   span: Span!
   # ASTNode
