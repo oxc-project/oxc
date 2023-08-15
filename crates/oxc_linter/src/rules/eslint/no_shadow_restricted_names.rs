@@ -43,14 +43,10 @@ declare_oxc_lint!(
     correctness
 );
 
-fn binding_pattern_is_global_obj(
-    pat: &BindingPattern,
-    ignore_undefined: bool,
-) -> Option<(Atom, Span)> {
+fn binding_pattern_is_global_obj(pat: &BindingPattern) -> Option<(Atom, Span)> {
     match &pat.kind {
         oxc_ast::ast::BindingPatternKind::BindingIdentifier(boxed_bind_identifier) => {
-            if ignore_undefined && boxed_bind_identifier.name.as_str() == "undefined" {
-            } else if PRE_DEFINE_VAR.contains_key(boxed_bind_identifier.name.as_str()) {
+            if PRE_DEFINE_VAR.contains_key(boxed_bind_identifier.name.as_str()) {
                 return Some((boxed_bind_identifier.name.clone(), boxed_bind_identifier.span));
             }
             None
@@ -58,19 +54,18 @@ fn binding_pattern_is_global_obj(
         oxc_ast::ast::BindingPatternKind::ObjectPattern(boxed_obj_pat) => {
             let properties = &boxed_obj_pat.properties;
             for property in properties {
-                if let Some(value) = binding_pattern_is_global_obj(&property.value, false) {
+                if let Some(value) = binding_pattern_is_global_obj(&property.value) {
                     return Some(value);
                 }
             }
             boxed_obj_pat
                 .rest
                 .as_ref()
-                .and_then(|boxed_rest| binding_pattern_is_global_obj(&boxed_rest.argument, false))
+                .and_then(|boxed_rest| binding_pattern_is_global_obj(&boxed_rest.argument))
         }
         oxc_ast::ast::BindingPatternKind::ArrayPattern(boxed_arr_pat) => {
             for element in boxed_arr_pat.elements.iter() {
-                if let Some(value) =
-                    element.as_ref().and_then(|e| binding_pattern_is_global_obj(e, false))
+                if let Some(value) = element.as_ref().and_then(|e| binding_pattern_is_global_obj(e))
                 {
                     return Some(value);
                 }
@@ -78,31 +73,12 @@ fn binding_pattern_is_global_obj(
             boxed_arr_pat
                 .rest
                 .as_ref()
-                .and_then(|boxed_rest| binding_pattern_is_global_obj(&boxed_rest.argument, false))
+                .and_then(|boxed_rest| binding_pattern_is_global_obj(&boxed_rest.argument))
         }
         oxc_ast::ast::BindingPatternKind::AssignmentPattern(boxed_assign_pat) => {
-            binding_pattern_is_global_obj(&boxed_assign_pat.left, false)
+            binding_pattern_is_global_obj(&boxed_assign_pat.left)
         }
     }
-}
-
-fn get_nearest_undefined_declare_span(ctx: &LintContext) -> Option<Span> {
-    let nodes = ctx.nodes();
-    let mut span: Option<Span> = None;
-    for node in nodes.iter() {
-        let kind = node.kind();
-        if let AstKind::VariableDeclaration(VariableDeclaration { declarations, .. }) = kind {
-            for var_declarator in declarations {
-                let id = &var_declarator.id;
-                if let Some((name, s)) = binding_pattern_is_global_obj(id, false) {
-                    if name == "undefined" {
-                        span = Some(s);
-                    }
-                }
-            }
-        }
-    }
-    span
 }
 
 #[inline]
@@ -113,67 +89,69 @@ fn check_and_diagnostic(atom: Atom, span: Span, ctx: &LintContext) {
 }
 
 impl Rule for NoShadowRestrictedNames {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let kind = node.kind();
-        match kind {
-            AstKind::VariableDeclaration(VariableDeclaration { declarations, .. }) => {
-                for var_declarator in declarations {
-                    let id = &var_declarator.id;
-                    if let Some(value) =
-                        binding_pattern_is_global_obj(id, var_declarator.init.is_none())
-                    {
-                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
-                    }
-                }
-            }
-            AstKind::ExpressionStatement(expr_stat) => {
-                if let Expression::AssignmentExpression(assign_expr) = &expr_stat.expression {
-                    let left = &assign_expr.left;
-                    match left {
-                        AssignmentTarget::SimpleAssignmentTarget(
-                            SimpleAssignmentTarget::AssignmentTargetIdentifier(ati),
-                        ) if ati.name == "undefined" => {
-                            let span = get_nearest_undefined_declare_span(ctx)
-                                .map_or(ati.span, |span| span);
-                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
-                                ati.name.clone(),
-                                span,
-                            ));
+    fn run_once<'a>(&self, ctx: &LintContext<'a>) {
+        let mut nearest_span: Option<Span> = None;
+        for node in ctx.nodes().iter() {
+            let kind = node.kind();
+            match kind {
+                AstKind::VariableDeclarator(decl) => {
+                    if let Some((atom, span)) = binding_pattern_is_global_obj(&decl.id) {
+                        if atom.as_str() != "undefined" || decl.init.is_some() {
+                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(atom, span));
+                        } else {
+                            nearest_span = Some(span);
                         }
-                        _ => {}
                     }
                 }
-            }
-            AstKind::Function(function) => {
-                if let Some(bind_ident) = function.id.as_ref() {
-                    check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
+                AstKind::ExpressionStatement(expr_stat) => {
+                    if let Expression::AssignmentExpression(assign_expr) = &expr_stat.expression {
+                        let left = &assign_expr.left;
+                        match left {
+                            AssignmentTarget::SimpleAssignmentTarget(
+                                SimpleAssignmentTarget::AssignmentTargetIdentifier(ati),
+                            ) if ati.name == "undefined" => {
+                                if let Some(span) = nearest_span {
+                                    ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(
+                                        ati.name.clone(),
+                                        span,
+                                    ));
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
                 }
-                for param in function.params.items.iter() {
-                    if let Some(value) = binding_pattern_is_global_obj(&param.pattern, false) {
+                AstKind::Function(function) => {
+                    if let Some(bind_ident) = function.id.as_ref() {
+                        check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
+                    }
+                }
+                AstKind::FormalParameter(param) => {
+                    if let Some(value) = binding_pattern_is_global_obj(&param.pattern) {
                         ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
                     }
                 }
-            }
-            AstKind::ArrowExpression(arrow_expr) => {
-                for param in arrow_expr.params.items.iter() {
-                    if let Some(value) = binding_pattern_is_global_obj(&param.pattern, false) {
-                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                AstKind::ArrowExpression(arrow_expr) => {
+                    for param in arrow_expr.params.items.iter() {
+                        if let Some(value) = binding_pattern_is_global_obj(&param.pattern) {
+                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                        }
                     }
                 }
-            }
-            AstKind::Class(class_decl) => {
-                if let Some(bind_ident) = class_decl.id.as_ref() {
-                    check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
-                }
-            }
-            AstKind::CatchClause(catch_clause) => {
-                if let Some(param) = catch_clause.param.as_ref() {
-                    if let Some(value) = binding_pattern_is_global_obj(param, false) {
-                        ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                AstKind::Class(class_decl) => {
+                    if let Some(bind_ident) = class_decl.id.as_ref() {
+                        check_and_diagnostic(bind_ident.name.clone(), bind_ident.span, ctx);
                     }
                 }
+                AstKind::CatchClause(catch_clause) => {
+                    if let Some(param) = catch_clause.param.as_ref() {
+                        if let Some(value) = binding_pattern_is_global_obj(param) {
+                            ctx.diagnostic(NoShadowRestrictedNamesDiagnostic(value.0, value.1));
+                        }
+                    }
+                }
+                _ => {}
             }
-            _ => {}
         }
     }
 }
