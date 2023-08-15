@@ -459,6 +459,30 @@ type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
   ancestor: [ASTNode!]!
 }
 
+"""
+A function defined in the sourcecode.
+"""
+interface FnDeclaration implements HasSpan {
+  """
+  If this function is used an an expression, the name can be omitted.
+  ie: "const a = function() {};"
+  """
+  name: String
+
+  # HasSpan
+  span: Span!
+}
+
+type FnDeclarationAST implements ASTNode & FnDeclaration & HasSpan {
+  name: String
+
+  # ASTNode
+  parent: ASTNode
+  ancestor: [ASTNode!]!
+  # HasSpan
+  span: Span!
+}
+
 interface Name implements HasSpan {
   name: String!
   # HasSpan

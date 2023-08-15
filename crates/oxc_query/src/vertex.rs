@@ -3,7 +3,7 @@ use std::rc::Rc;
 use enum_as_inner::EnumAsInner;
 use oxc_ast::{
     ast::{
-        AssignmentExpression, BindingPatternKind, CallExpression, Class, Expression,
+        AssignmentExpression, BindingPatternKind, CallExpression, Class, Expression, Function,
         IdentifierName, IdentifierReference, IfStatement, ImportDeclaration,
         ImportDefaultSpecifier, ImportSpecifier, JSXAttribute, JSXElement, JSXExpressionContainer,
         JSXFragment, JSXOpeningElement, JSXSpreadAttribute, JSXSpreadChild, JSXText,
@@ -60,6 +60,7 @@ pub enum Vertex<'a> {
     DotProperty(Rc<DotPropertyVertex<'a>>),
     Reassignment(Rc<ReassignmentVertex<'a>>),
     FnCall(Rc<FnCallVertex<'a>>),
+    FnDeclaration(Rc<FnDeclarationVertex<'a>>),
     Argument(Span),
 }
 
@@ -102,6 +103,7 @@ impl<'a> Vertex<'a> {
             Self::Name(data) => data.name.span,
             Self::FnCall(data) => data.call_expression.span,
             Self::Argument(data) => *data,
+            Self::FnDeclaration(data) => data.function.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -132,6 +134,7 @@ impl<'a> Vertex<'a> {
             Vertex::DotProperty(data) => data.ast_node.map(|x| x.id()),
             Vertex::Reassignment(data) => data.ast_node.map(|x| x.id()),
             Vertex::FnCall(data) => data.ast_node.map(|x| x.id()),
+            Vertex::FnDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -234,6 +237,7 @@ impl Typename for Vertex<'_> {
             Vertex::FnCall(fncall) => fncall.typename(),
             Vertex::Reassignment(reassignment) => reassignment.typename(),
             Vertex::Argument(_) => "Argument",
+            Vertex::FnDeclaration(fndecl) => fndecl.typename(),
         }
     }
 }
@@ -304,6 +308,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             AstKind::CallExpression(call_expression) => {
                 Vertex::FnCall(FnCallVertex { ast_node: Some(ast_node), call_expression }.into())
             }
+            AstKind::Function(function) => Vertex::FnDeclaration(
+                FnDeclarationVertex { ast_node: Some(ast_node), function }.into(),
+            ),
             _ => Vertex::ASTNode(ast_node),
         }
     }
@@ -647,6 +654,23 @@ impl<'a> Typename for FnCallVertex<'a> {
             "FnCallAST"
         } else {
             "FnCall"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct FnDeclarationVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub function: &'a Function<'a>,
+}
+
+impl<'a> Typename for FnDeclarationVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "FnDeclarationAST"
+        } else {
+            "FnDeclaration"
         }
     }
 }
