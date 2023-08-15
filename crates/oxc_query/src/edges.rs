@@ -2308,6 +2308,35 @@ mod type_annotation {
     }
 }
 
+pub(super) fn resolve_statement_edge<'a, 'b: 'a>(
+    contexts: ContextIterator<'a, Vertex<'b>>,
+    edge_name: &str,
+    _parameters: &EdgeParameters,
+    resolve_info: &ResolveEdgeInfo,
+) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+    match edge_name {
+        "span" => statement::span(contexts, resolve_info),
+        _ => {
+            unreachable!("attempted to resolve unexpected edge '{edge_name}' on type 'Statement'")
+        }
+    }
+}
+
+mod statement {
+    use trustfall::provider::{
+        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+    };
+
+    use super::{super::vertex::Vertex, get_span};
+
+    pub(super) fn span<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        get_span(contexts)
+    }
+}
+
 pub(super) fn resolve_type_edge<'a, 'b: 'a>(
     contexts: ContextIterator<'a, Vertex<'b>>,
     edge_name: &str,

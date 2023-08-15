@@ -459,6 +459,11 @@ type ReassignmentAST implements HasSpan & ASTNode & Reassignment & Expression {
   ancestor: [ASTNode!]!
 }
 
+interface Statement {
+  # HasSpan
+  span: Span!
+}
+
 interface FunctionBody {
   # HasSpan
   span: Span!

@@ -54,6 +54,7 @@ pub enum Vertex<'a> {
     ArrowFunction(Rc<ArrowFunctionVertex<'a>>),
     Argument(Span),
     FunctionBody(Rc<FunctionBodyVertex<'a>>),
+    Statement(&'a Statement<'a>),
 }
 
 impl<'a> Vertex<'a> {
@@ -98,6 +99,7 @@ impl<'a> Vertex<'a> {
             Self::FnDeclaration(data) => data.function.span,
             Self::ArrowFunction(data) => data.arrow_expression.span,
             Self::FunctionBody(data) => data.function_body.span,
+            Self::Statement(data) => data.span(),
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -132,6 +134,7 @@ impl<'a> Vertex<'a> {
             Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
             Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
+            | Vertex::Statement(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
             | Vertex::Expression(_)
@@ -236,6 +239,7 @@ impl Typename for Vertex<'_> {
             Vertex::FnDeclaration(fndecl) => fndecl.typename(),
             Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
             Vertex::FunctionBody(fn_body) => fn_body.typename(),
+            Vertex::Statement(_) => "Statement",
         }
     }
 }
