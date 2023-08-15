@@ -20,6 +20,7 @@ use serde::Serialize;
 use ureq::Response;
 
 mod json;
+mod request;
 mod template;
 
 const ESLINT_TEST_PATH: &str =
@@ -108,7 +109,9 @@ impl<'a> Visit<'a> for TestCase<'a> {
                             Expression::StringLiteral(s) => Some(Cow::Borrowed(s.value.as_str())),
                             // eslint-plugin-jest use dedent to strips indentation from multi-line strings
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                let Expression::Identifier(ident) = &tag_expr.tag else {continue;};
+                                let Expression::Identifier(ident) = &tag_expr.tag else {
+                                    continue;
+                                };
                                 if ident.name != "dedent" {
                                     continue;
                                 }
@@ -144,7 +147,9 @@ impl<'a> Visit<'a> for TestCase<'a> {
     }
 
     fn visit_tagged_template_expression(&mut self, expr: &'a TaggedTemplateExpression<'a>) {
-        let Expression::Identifier(ident) = &expr.tag else {return;};
+        let Expression::Identifier(ident) = &expr.tag else {
+            return;
+        };
         if ident.name != "dedent" {
             return;
         }
@@ -295,7 +300,7 @@ fn main() {
     };
     println!("Reading test file from {rule_test_path}");
 
-    let body = ureq::get(&rule_test_path).call().map(Response::into_string);
+    let body = request::agent().get(&rule_test_path).call().map(Response::into_string);
     let pass_cases;
     let fail_cases;
     let context = match body {
