@@ -324,6 +324,14 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
     }
 }
 
+impl<'a> From<&'a Statement<'a>> for Vertex<'a> {
+    fn from(stmt: &'a Statement<'a>) -> Self {
+        match &stmt {
+            _ => Vertex::Statement(stmt),
+        }
+    }
+}
+
 impl<'a> From<&'a Expression<'a>> for Vertex<'a> {
     fn from(expr: &'a Expression<'a>) -> Self {
         // FIXME: We just get rid of all parentheses here, but we shouldn't do that...

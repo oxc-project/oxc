@@ -583,6 +583,7 @@ pub(super) fn resolve_function_body_edge<'a, 'b: 'a>(
 ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
     match edge_name {
         "span" => function_body::span(contexts, resolve_info),
+        "statement" => function_body::statement(contexts, resolve_info),
         "ancestor" => ancestors(contexts, adapter),
         "parent" => parents(contexts, adapter),
         _ => {
@@ -592,11 +593,32 @@ pub(super) fn resolve_function_body_edge<'a, 'b: 'a>(
 }
 
 mod function_body {
+    use std::convert::Into;
+
     use trustfall::provider::{
-        ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo, VertexIterator,
+        resolve_neighbors_with, ContextIterator, ContextOutcomeIterator, ResolveEdgeInfo,
+        VertexIterator,
     };
 
     use super::super::vertex::Vertex;
+
+    pub(super) fn statement<'a, 'b: 'a>(
+        contexts: ContextIterator<'a, Vertex<'b>>,
+        _resolve_info: &ResolveEdgeInfo,
+    ) -> ContextOutcomeIterator<'a, Vertex<'b>, VertexIterator<'a, Vertex<'b>>> {
+        resolve_neighbors_with(contexts, |v| {
+            Box::new(
+                v.as_function_body()
+                    .unwrap_or_else(|| {
+                        panic!("expected to have a fnbody vertex, instead have: {v:#?}")
+                    })
+                    .function_body
+                    .statements
+                    .iter()
+                    .map(Into::into),
+            )
+        })
+    }
 
     pub(super) fn span<'a, 'b: 'a>(
         contexts: ContextIterator<'a, Vertex<'b>>,
