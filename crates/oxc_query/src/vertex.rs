@@ -53,6 +53,7 @@ pub enum Vertex<'a> {
     FnDeclaration(Rc<FnDeclarationVertex<'a>>),
     ArrowFunction(Rc<ArrowFunctionVertex<'a>>),
     Argument(Span),
+    FunctionBody(Rc<FunctionBodyVertex<'a>>),
 }
 
 impl<'a> Vertex<'a> {
@@ -96,6 +97,7 @@ impl<'a> Vertex<'a> {
             Self::Argument(data) => *data,
             Self::FnDeclaration(data) => data.function.span,
             Self::ArrowFunction(data) => data.arrow_expression.span,
+            Self::FunctionBody(data) => data.function_body.span,
             Self::File
             | Self::Url(_)
             | Self::PathPart(_)
@@ -128,6 +130,7 @@ impl<'a> Vertex<'a> {
             Vertex::FnCall(data) => data.ast_node.map(|x| x.id()),
             Vertex::FnDeclaration(data) => data.ast_node.map(|x| x.id()),
             Vertex::ArrowFunction(data) => data.ast_node.map(|x| x.id()),
+            Vertex::FunctionBody(data) => data.ast_node.map(|x| x.id()),
             Vertex::DefaultImport(_)
             | Vertex::AssignmentType(_)
             | Vertex::ClassMethod(_)
@@ -232,6 +235,7 @@ impl Typename for Vertex<'_> {
             Vertex::Argument(_) => "Argument",
             Vertex::FnDeclaration(fndecl) => fndecl.typename(),
             Vertex::ArrowFunction(arrow_fn) => arrow_fn.typename(),
+            Vertex::FunctionBody(fn_body) => fn_body.typename(),
         }
     }
 }
@@ -307,6 +311,9 @@ impl<'a> From<AstNode<'a>> for Vertex<'a> {
             ),
             AstKind::ArrowExpression(arrow_expression) => Vertex::ArrowFunction(
                 ArrowFunctionVertex { ast_node: Some(ast_node), arrow_expression }.into(),
+            ),
+            AstKind::FunctionBody(function_body) => Vertex::FunctionBody(
+                FunctionBodyVertex { ast_node: Some(ast_node), function_body }.into(),
             ),
             _ => Vertex::ASTNode(ast_node),
         }
@@ -691,6 +698,23 @@ impl<'a> Typename for ArrowFunctionVertex<'a> {
             "ArrowFunctionAST"
         } else {
             "ArrowFunction"
+        }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Debug, Clone)]
+pub struct FunctionBodyVertex<'a> {
+    ast_node: Option<AstNode<'a>>,
+    pub function_body: &'a FunctionBody<'a>,
+}
+
+impl<'a> Typename for FunctionBodyVertex<'a> {
+    fn typename(&self) -> &'static str {
+        if self.ast_node.is_some() {
+            "FunctionBodyAST"
+        } else {
+            "FunctionBody"
         }
     }
 }
