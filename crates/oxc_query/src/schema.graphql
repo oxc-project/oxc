@@ -473,6 +473,9 @@ interface FnDeclaration implements HasSpan {
   span: Span!
 }
 
+"""
+A function defined in the sourcecode.
+"""
 type FnDeclarationAST implements ASTNode & FnDeclaration & HasSpan {
   name: String
 
