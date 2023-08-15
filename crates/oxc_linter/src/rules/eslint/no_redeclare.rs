@@ -65,12 +65,10 @@ impl Rule for NoRedeclare {
     fn run_once(&self, ctx: &LintContext) {
         let redeclare_variables = ctx.semantic().redeclare_variables();
         let total = redeclare_variables.len();
-        let mut current = 0;
 
-        while current <= total {
+        for current in 0..=total {
             if let Some(current_variable) = redeclare_variables.get(current) {
-                let mut idx = current + 1;
-                while idx <= total {
+                for idx in (current + 1)..=total {
                     if let Some(next_variable) = redeclare_variables.get(idx) {
                         if next_variable.name == current_variable.name
                             && next_variable.scope_id == current_variable.scope_id
@@ -102,10 +100,8 @@ impl Rule for NoRedeclare {
                             }
                         }
                     }
-                    idx += 1;
                 }
             }
-            current += 1;
         }
     }
 }
